@@ -22,8 +22,9 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
-from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                           linkage_tree, _fix_connectivity)
+from sklearn.cluster._agglomerative import (_hc_cut, _TREE_BUILDERS,
+                                            linkage_tree,
+                                            _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
@@ -750,17 +751,3 @@ def test_dist_threshold_invalid_parameters():
         AgglomerativeClustering(n_clusters=None,
                                 distance_threshold=1,
                                 compute_full_tree=False).fit(X)
-
-
-def test_n_components_deprecation():
-    # Test that a Deprecation warning is thrown when n_components_
-    # attribute is accessed
-
-    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
-    agc = AgglomerativeClustering().fit(X)
-
-    match = ("``n_components_`` attribute was deprecated "
-             "in favor of ``n_connected_components_``")
-    with pytest.warns(FutureWarning, match=match):
-        n = agc.n_components_
-    assert n == agc.n_connected_components_

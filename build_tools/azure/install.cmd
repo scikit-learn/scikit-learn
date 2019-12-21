@@ -25,7 +25,11 @@ IF "%PYTHON_ARCH%"=="64" (
     pip install numpy scipy cython pytest wheel pillow joblib
 )
 if "%COVERAGE%" == "true" (
-    pip install coverage codecov pytest-cov
+    @rem Using coverage 5.0 will trigger relpath between 2 windows
+    @rem paths from different drives. Pinning can be removed when
+    @rem https://github.com/scikit-learn/scikit-learn/issues/15908
+    @rem is resolved.
+    pip install coverage==4.5.3 codecov pytest-cov
 )
 python --version
 pip --version

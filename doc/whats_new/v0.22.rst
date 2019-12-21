@@ -2,6 +2,59 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_22_1:
+
+Version 0.22.1
+==============
+
+**In Development**
+
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.22.0. It also includes minor documentation improvements and some bug fixes.
+
+Changelog
+---------
+
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now uses the same
+  stopping criterion as with the default ``algorithm="full"``. :pr:`15930` by
+  :user:`inder128`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.permutation_importance` will return the same
+  `importances` when a `random_state` is given for both `n_jobs=1` or
+  `n_jobs>1` both with shared memory backends (thread-safety) and
+  isolated memory, process-based backends.
+  Also avoid casting the data as object dtype and avoid read-only error
+  on large dataframes with `n_jobs>1` as reported in :issue:`15810`.
+  Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
+  :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.plot_confusion_matrix` now raises error when `normalize`
+  is invalid. Previously, it runs fine with no normalization.
+  :pr:`15888` by `Hanmin Qin`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
+  boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.plot_partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
+
 .. _changes_0_22:
 
 Version 0.22.0

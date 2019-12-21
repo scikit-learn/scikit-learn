@@ -283,6 +283,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
@@ -1352,7 +1356,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support : int (if average is not None) or array of int, shape =\
+    support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1842,10 +1846,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -1986,7 +1990,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
+def hamming_loss(y_true, y_pred, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -2000,17 +2004,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
-
-    labels : array, shape = [n_labels], optional (default='deprecated')
-        Integer array of labels. If not provided, labels will be inferred
-        from y_true and y_pred.
-
-        .. versionadded:: 0.18
-        .. deprecated:: 0.21
-           This parameter ``labels`` is deprecated in version 0.21 and will
-           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
-           for the number of labels when y_true is binary label indicators,
-           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2070,12 +2063,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
-
-    if labels is not None:
-        warnings.warn("The labels parameter is unused. It was"
-                      " deprecated in version 0.21 and"
-                      " will be removed in version 0.23",
-                      FutureWarning)
 
     if sample_weight is None:
         weight_average = 1.

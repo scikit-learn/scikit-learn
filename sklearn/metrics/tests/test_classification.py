@@ -486,7 +486,7 @@ def test_multilabel_confusion_matrix_errors():
     # Bad sample_weight
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
-    with pytest.raises(ValueError, match="bad input shape"):
+    with pytest.raises(ValueError, match="should be a 1d array"):
         multilabel_confusion_matrix(y_true, y_pred,
                                     sample_weight=[[1, 2, 3],
                                                    [2, 3, 4],
@@ -524,6 +524,13 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     assert_allclose(cm, expected_results)
     assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_wrong_option():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(ValueError, match='normalize must be one of'):
+        confusion_matrix(y_test, y_pred, normalize=True)
 
 
 def test_confusion_matrix_normalize_single_class():
@@ -1176,11 +1183,6 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
-    assert_warns_message(FutureWarning,
-                         "The labels parameter is unused. It was"
-                         " deprecated in version 0.21 and"
-                         " will be removed in version 0.23",
-                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_jaccard_score_validation():

@@ -23,7 +23,7 @@ from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _refresh_cache
-from ._svmlight_format import load_svmlight_files
+from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
