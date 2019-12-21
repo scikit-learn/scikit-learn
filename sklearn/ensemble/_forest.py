@@ -617,8 +617,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             converted into a sparse ``csr_matrix``.
 
         use_sample_weight : boolean variable with default False, if set to True,
-                       will predict with predict_proba_with_sample_weight 
-                       instead of predict_proba
+                       will predict with predict_proba where use_sample_weight
+                       will be set to True instead of the default False
 
         Returns
         -------
