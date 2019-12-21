@@ -231,3 +231,22 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
+
+
+@pytest.mark.parametrize("values_format", ['e', 'n'])
+def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
+                                      fitted_clf, values_format):
+    # Make sure plot text is formatted with 'values_format'.
+    X, y = data
+    cm = confusion_matrix(y, y_pred)
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 include_values=True,
+                                 values_format=values_format)
+
+    assert disp.text_.shape == (n_classes, n_classes)
+
+    expected_text = np.array([format(v, values_format)
+                              for v in cm.ravel(order="C")])
+    text_text = np.array([
+        t.get_text() for t in disp.text_.ravel(order="C")])
+    assert_array_equal(expected_text, text_text)
