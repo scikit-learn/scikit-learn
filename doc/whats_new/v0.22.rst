@@ -46,6 +46,10 @@ Changelog
   correctly to maximize contrast with its background. :pr:`15936` by
   `Thomas Fan`_ and :user:`DizietAsahi`.
 
+- |Fix| :func:`metrics.classification_report` does no longer ignore the
+  value of the ``zero_division`` keyword argument. :pr:`15879`
+  by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+
 :mod:`sklearn.utils`
 ....................
 
