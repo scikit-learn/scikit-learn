@@ -625,10 +625,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
-        if not sample_weight:
-            proba = self.predict_proba(X)
-        else:
-            proba = self.predict_proba_with_sample_weight(X)
+        proba = self.predict_proba(X, sample_weight=sample_weight)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
@@ -702,63 +699,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                                   for j in np.atleast_1d(self.n_classes_)]
             Parallel(n_jobs=n_jobs, verbose=self.verbose,
                      **_joblib_parallel_args(require="sharedmem"))(
-                delayed(_accumulate_prediction)(e.predict_proba_with_sample_weight,
+                delayed(_accumulate_prediction)(e.predict_proba,
                                                 X, all_proba, lock, all_sample_weights)
                 for e in self.estimators_)
             for proba in all_proba:
                 this_normalizer = proba.sum(axis=1)
                 proba /= this_normalizer[:, np.newaxis]
-
-        if len(all_proba) == 1:
-            return all_proba[0]
-        else:
-            return all_proba
-
-    def predict_proba_with_sample_weight(self, X):
-        """
-        Predict class probabilities for X.
-
-        The predicted class probabilities of an input sample is the weighted
-        sum of class probabilities from each tree in the forest. Weights are 
-        calculated by the number of samples in the training set in the node 
-        the input sample falls into. Class probabilities are then normalized
-        to sum to 1 for each input sample.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-
-        Returns
-        -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute :term:`classes_`.
-        """
-        check_is_fitted(self)
-        # Check data
-        X = self._validate_X_predict(X)
-
-        # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
-
-        # avoid storing the output of every estimator by summing them here
-        all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
-                     for j in np.atleast_1d(self.n_classes_)]
-        all_sample_weights = [np.zeros(X.shape[0], dtype=np.float64)
-                              for j in np.atleast_1d(self.n_classes_)]
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction_with_sample_weight)(e.predict_proba_with_sample_weight,
-                                                               X, all_proba, all_sample_weights, lock)
-            for e in self.estimators_)
-        for proba in all_proba:
-            this_normalizer = proba.sum(axis=1)
-            proba /= this_normalizer[:, np.newaxis]
 
         if len(all_proba) == 1:
             return all_proba[0]
