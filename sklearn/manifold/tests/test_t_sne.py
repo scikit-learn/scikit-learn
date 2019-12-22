@@ -932,10 +932,10 @@ def test_tsne_with_euclidean_distance(method):
     tsne_params = {'verbose': 1, 'perplexity': 40, 'n_iter': 250,
                    'learning_rate': 50, 'n_components': n_embedding,
                    'random_state': 0, 'method': method}
-    
+
     tsne_ref = TSNE(**tsne_params, metric='precomputed')
     tsne_now = TSNE(**tsne_params, metric='euclidean')
-    
+
     precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
     ref = tsne_ref.fit_transform(precomputed_X)
 
@@ -952,11 +952,11 @@ def test_tsne_metric_params(method):
     n_embedding = 3
     n_samples = 100
     X = random_state.randn(n_samples, n_features)
-    
+
     tsne_params = {'verbose': 1, 'perplexity': 40, 'n_iter': 250,
                    'learning_rate': 50, 'n_components': n_embedding,
                    'random_state': 0, 'method': method}
-    
+
     tsne_ref = TSNE(**tsne_params, metric='precomputed')
     tsne_now = TSNE(**tsne_params)
 
@@ -966,7 +966,7 @@ def test_tsne_metric_params(method):
 
     tsne_now.set_params(metric='minkowski', metric_params={'p': 2})
     now = tsne_now.fit_transform(X)
-    
+
     assert_array_equal(ref, now)
 
     # 2. check case metric='wminkowsi', p=2, and w=np.ones(n_features)
