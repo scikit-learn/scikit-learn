@@ -893,7 +893,7 @@ def test_tsne_n_jobs(method):
 
 
 def test_tsne_with_mahalanobis_distance():
-    """Make sure that tha mahalanobis distance works with metric_params
+    """Make sure that mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
     random_state = check_random_state(0)
     n_features = 10
@@ -922,7 +922,7 @@ def test_tsne_with_mahalanobis_distance():
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_tsne_metric_params(method):
-    """Make sure that tha mahalanobis distance works with metric_params
+    """Make sure that mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
     random_state = check_random_state(0)
     n_features = 10
