@@ -16,7 +16,8 @@ from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
 
 from ..utils import Bunch
-from ..utils import check_random_state, check_pandas_support
+from ..utils import check_random_state
+from ..utils import check_pandas_support
 
 import numpy as np
 
