@@ -930,10 +930,10 @@ def test_tsne_metric_params(method):
     n_samples = 100
     X = random_state.randn(n_samples, n_features)
     tsne_ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', method=method)
+                    n_components=n_embedding, random_state=0,
+                    metric='precomputed', method=method)
     tsne_now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, method=method)
+                    n_components=n_embedding, random_state=0, method=method)
 
     # 1. check case metric='minkowski', p=2
     precomputed_X = squareform(pdist(X, metric='minkowski', p=2), checks=True)
@@ -941,7 +941,7 @@ def test_tsne_metric_params(method):
 
     tsne_now.set_params(metric='minkowski', metric_params={'p': 2})
     now = tsne_now.fit_transform(X)
-    
+
     assert_array_equal(ref, now)
 
     # 2. check case metric='euclidean', p=2
