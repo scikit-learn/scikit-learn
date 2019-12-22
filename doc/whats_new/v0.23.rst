@@ -112,3 +112,12 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| add ``metric_params`` parameter to
+  :class:`manifold.TSNE` constructor for additional parameters of distance
+  metric to use in optimization. :issue:`11793`
+  by :user:`Dario Cannone <darioka>` and
+  :user:`Federico Pisanu <federicopisanu>`.
