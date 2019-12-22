@@ -446,14 +446,17 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     # when n_components == min(n_samples, n_features)
     n, p = 100, 3
     rng = np.random.RandomState(0)
-    X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
+    Xl = rng.randn(n, p) * .1 + np.array([3, 4, 5])
+    Xt = rng.randn(n, p) * .1 + np.array([3, 4, 5])
 
     pca = PCA(n_components=p, svd_solver=svd_solver)
-    pca.fit(X)
+    pca.fit(Xl)
     assert pca.noise_variance_ == 0
 
-    pca.fit(X.T)
+    pca.fit(Xl.T)
     assert pca.noise_variance_ == 0
+    # ensure pca.score works for n_components == n_samples < n_features
+    pca.score(Xt.T)
 
 
 @pytest.mark.parametrize(
