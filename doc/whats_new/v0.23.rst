@@ -106,3 +106,9 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
+  :pr:`15926` by :user:`Loïc Estève <lesteve>`.

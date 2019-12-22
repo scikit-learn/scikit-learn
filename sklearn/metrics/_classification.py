@@ -283,6 +283,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
@@ -1960,7 +1964,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
-            average=average, sample_weight=sample_weight)
+            average=average, sample_weight=sample_weight,
+            zero_division=zero_division)
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:

@@ -20,7 +20,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -152,6 +151,22 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['precision']) == float
     assert type(expected_report['setosa']['support']) == int
     assert type(expected_report['macro avg']['support']) == int
+
+
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_classification_report_zero_division_warning(zero_division):
+    y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
+    with warnings.catch_warnings(record=True) as record:
+        classification_report(
+            y_true, y_pred, zero_division=zero_division, output_dict=True)
+        if zero_division == "warn":
+            assert len(record) > 1
+            for item in record:
+                msg = ("Use `zero_division` parameter to control this "
+                       "behavior.")
+                assert msg in str(item.message)
+        else:
+            assert not record
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
@@ -486,7 +501,7 @@ def test_multilabel_confusion_matrix_errors():
     # Bad sample_weight
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
-    with pytest.raises(ValueError, match="bad input shape"):
+    with pytest.raises(ValueError, match="should be a 1d array"):
         multilabel_confusion_matrix(y_true, y_pred,
                                     sample_weight=[[1, 2, 3],
                                                    [2, 3, 4],
@@ -524,6 +539,13 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     assert_allclose(cm, expected_results)
     assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_wrong_option():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(ValueError, match='normalize must be one of'):
+        confusion_matrix(y_test, y_pred, normalize=True)
 
 
 def test_confusion_matrix_normalize_single_class():

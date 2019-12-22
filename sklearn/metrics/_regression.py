@@ -801,7 +801,7 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
 
     Gamma deviance is equivalent to the Tweedie deviance with
     the power parameter `p=2`. It is invariant to scaling of
-    the target variable, and mesures relative errors.
+    the target variable, and measures relative errors.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
 

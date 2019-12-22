@@ -2262,6 +2262,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 col = col.take(subsample_idx, mode='clip')
             self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+        # Due to floating-point precision error in `np.nanpercentile`,
+        # make sure that quantiles are monotonically increasing.
+        # Upstream issue in numpy:
+        # https://github.com/numpy/numpy/issues/14685
+        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2305,6 +2310,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 self.quantiles_.append(
                         np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+        # due to floating-point precision error in `np.nanpercentile`,
+        # make sure the quantiles are monotonically increasing
+        # Upstream issue in numpy:
+        # https://github.com/numpy/numpy/issues/14685
+        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
@@ -2678,6 +2688,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
