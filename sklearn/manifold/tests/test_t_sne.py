@@ -929,42 +929,36 @@ def test_tsne_metric_params(method):
     n_embedding = 3
     n_samples = 100
     X = random_state.randn(n_samples, n_features)
+    tsne_ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0,
+               metric='precomputed', method=method)
+    tsne_now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
+               n_components=n_embedding, random_state=0, method=method)
 
     # 1. check case metric='minkowski', p=2
     precomputed_X = squareform(pdist(X, metric='minkowski', p=2), checks=True)
-    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', method=method
-               ).fit_transform(precomputed_X)
+    ref = tsne_ref.fit_transform(precomputed_X)
 
-    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='minkowski',
-               metric_params={'p': 2}, method=method).fit_transform(X)
+    tsne_now.set_params(metric='minkowski', metric_params={'p': 2})
+    now = tsne_now.fit_transform(X)
+    
     assert_array_equal(ref, now)
 
     # 2. check case metric='euclidean', p=2
     precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
-    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', method=method
-               ).fit_transform(precomputed_X)
+    ref = tsne_ref.fit_transform(precomputed_X)
 
-    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='euclidean',
-               method=method).fit_transform(X)
+    tsne_now.set_params(metric='euclidean')
+    now = tsne_now.fit_transform(X)
     assert_array_equal(ref, now)
 
     # 3. check case metric='wminkowsi', p=2, and w=np.ones(n_features)
     precomputed_X = squareform(pdist(X, metric='wminkowski', p=2,
                                      w=np.ones(n_features)),
                                checks=True)
-    ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', method=method
-               ).fit_transform(precomputed_X)
+    ref = tsne_ref.fit_transform(precomputed_X)
 
-    now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='wminkowski',
-               metric_params={'p': 2, 'w': np.ones(n_features)}, method=method
-               ).fit_transform(X)
+    tsne_now.set_params(metric='wminkowski',
+                        metric_params={'p': 2, 'w': np.ones(n_features)})
+    now = tsne_now.fit_transform(X)
     assert_array_equal(ref, now)
