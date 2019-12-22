@@ -56,12 +56,11 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             Estimated precision of data.
         """
         n_features = self.components_.shape[1]
-        n_samples = self.n_samples_
 
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if self.n_components_ == min(n_samples, n_features):
+        if self.n_components_ == min(self.explained_variance_.shape):
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
