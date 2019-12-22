@@ -152,12 +152,13 @@ def test_convergence_warning():
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)
-    
+
+
 def test_non_zero_normalizer():
     # This is a non-regression test for #15946
     X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='knn', 
-                                           max_iter=100, 
+    mdl = label_propagation.LabelSpreading(kernel='knn',
+                                           max_iter=100,
                                            n_neighbors=1)
     assert_no_warnings(mdl.fit, X, y)
