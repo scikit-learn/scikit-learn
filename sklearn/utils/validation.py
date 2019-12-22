@@ -863,9 +863,8 @@ def check_is_fitted(estimator, attributes=None, msg=None):
         estimator instance for which the check is performed.
 
     attributes : str, list or tuple of str or None, default=None
-        attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
+        Attribute name(s) given as string or a list/tuple of strings
+        Eg.: ``["coef_", "estimator_", ...], "coef_"``
 
         If None, `estimator` is considered fitted if there exist an attribute
         that starts or ends with a underscore and does not start
