@@ -921,6 +921,29 @@ def test_tsne_with_mahalanobis_distance():
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_with_euclidean_distance(method):
+    """Make sure that euclidean distance computation works properly"""
+    random_state = check_random_state(0)
+    n_features = 10
+    n_embedding = 3
+    n_samples = 500
+    X = random_state.randn(n_samples, n_features)
+
+    tsne_params = {'verbose': 1, 'perplexity': 40, 'n_iter': 250,
+                   'learning_rate': 50, 'n_components': n_embedding,
+                   'random_state': 0, 'method': method}
+    
+    tsne_ref = TSNE(**tsne_params, metric='precomputed')
+    tsne_now = TSNE(**tsne_params, metric='euclidean')
+    
+    precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
+    ref = tsne_ref.fit_transform(precomputed_X)
+
+    now = tsne_now.fit_transform(X)
+    assert_array_equal(ref, now)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_tsne_metric_params(method):
     """Make sure that mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
@@ -929,11 +952,13 @@ def test_tsne_metric_params(method):
     n_embedding = 3
     n_samples = 100
     X = random_state.randn(n_samples, n_features)
-    tsne_ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0,
-               metric='precomputed', method=method)
-    tsne_now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, method=method)
+    
+    tsne_params = {'verbose': 1, 'perplexity': 40, 'n_iter': 250,
+                   'learning_rate': 50, 'n_components': n_embedding,
+                   'random_state': 0, 'method': method}
+    
+    tsne_ref = TSNE(**tsne_params, metric='precomputed')
+    tsne_now = TSNE(**tsne_params)
 
     # 1. check case metric='minkowski', p=2
     precomputed_X = squareform(pdist(X, metric='minkowski', p=2), checks=True)
@@ -944,15 +969,7 @@ def test_tsne_metric_params(method):
     
     assert_array_equal(ref, now)
 
-    # 2. check case metric='euclidean', p=2
-    precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
-    ref = tsne_ref.fit_transform(precomputed_X)
-
-    tsne_now.set_params(metric='euclidean')
-    now = tsne_now.fit_transform(X)
-    assert_array_equal(ref, now)
-
-    # 3. check case metric='wminkowsi', p=2, and w=np.ones(n_features)
+    # 2. check case metric='wminkowsi', p=2, and w=np.ones(n_features)
     precomputed_X = squareform(pdist(X, metric='wminkowski', p=2,
                                      w=np.ones(n_features)),
                                checks=True)
