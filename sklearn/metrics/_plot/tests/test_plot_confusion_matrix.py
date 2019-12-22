@@ -200,7 +200,7 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[0, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
     assert_allclose(disp.text_[1, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
 
-    # oof-diagonal text is white
+    # off-diagonal text is white
     assert_allclose(disp.text_[0, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
     assert_allclose(disp.text_[1, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
 
@@ -209,9 +209,23 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[0, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
     assert_allclose(disp.text_[1, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
 
-    # oof-diagonal text is black
+    # off-diagonal text is black
     assert_allclose(disp.text_[0, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
     assert_allclose(disp.text_[1, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+    # Regression test for #15920
+    cm = np.array([[19, 34], [32, 58]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
+
+    disp.plot(cmap=pyplot.cm.Blues)
+    min_color = pyplot.cm.Blues(0)
+    max_color = pyplot.cm.Blues(255)
+    assert_allclose(disp.text_[0, 0].get_color(), max_color)
+    assert_allclose(disp.text_[0, 1].get_color(), max_color)
+    assert_allclose(disp.text_[1, 0].get_color(), max_color)
+    assert_allclose(disp.text_[1, 1].get_color(), min_color)
+
+
 
 
 @pytest.mark.parametrize(

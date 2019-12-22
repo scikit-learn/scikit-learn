@@ -85,6 +85,15 @@ Changelog
   :class:`linear_model.RidgeClassifierCV`.
   :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` yields stack trace information
+  in fit failed warning messages in addition to previously emitted
+  type and details.
+  :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -97,3 +106,9 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
+  :pr:`15926` by :user:`Loïc Estève <lesteve>`.
