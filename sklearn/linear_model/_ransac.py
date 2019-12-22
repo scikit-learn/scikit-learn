@@ -373,7 +373,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-            residuals_subset = loss_function(y, y_pred)
+            if sample_weight is None:
+                residuals_subset = loss_function(y, y_pred)
+            else:
+                residuals_subset = loss_function(y, y_pred) * sample_weight
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
