@@ -85,11 +85,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         `iterated_power`. If this is not sufficient, for maximum precision
         you should choose 'lapack'.
 
-    iterated_power : int, optional
+    iterated_power : int, default=3
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int, RandomState instance or None, optional (default=0)
+    random_state : int, RandomState instance or None, default=0
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
