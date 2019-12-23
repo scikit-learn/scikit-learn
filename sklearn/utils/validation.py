@@ -1272,11 +1272,14 @@ def _deprecate_positional_args(f):
     return inner_f
 
 
-def _check_fit_params(fit_params):
+def _check_fit_params(X, fit_params):
     """Check and validate the parameters passed during `fit`.
 
     Parameters
     ----------
+    X : array-like of shape (n_samples, n_features)
+        Data array.
+
     fit_params : dict
         Dictionary containing the parameters passed at fit.
 
@@ -1287,7 +1290,8 @@ def _check_fit_params(fit_params):
     """
     fit_params_validated = {}
     for param_key, param_value in fit_params.items():
-        if not _is_arraylike(param_value):
+        if (not _is_arraylike(param_value) or
+                _num_samples(param_value) != _num_samples(X)):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             fit_params_validated[param_key] = param_value

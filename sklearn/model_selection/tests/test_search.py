@@ -1880,7 +1880,7 @@ def _custom_lgbm_metric(y_test, y_pred):
     [(GridSearchCV, {'learning_rate': [0.1, 0.01]}),
      (RandomizedSearchCV, {'learning_rate': uniform(0.01, 0.1)})]
 )
-def test_scalar_fit_param_lgbm(metric, SearchCV, param_search):
+def test_scalar_fit_param_lightgbm(metric, SearchCV, param_search):
     # check support for scalar values in fit_params in LightGBM
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
