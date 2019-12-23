@@ -94,6 +94,10 @@ Changelog
   type and details.
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
+- |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
+  when `y=None`.
+  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
