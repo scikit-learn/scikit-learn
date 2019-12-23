@@ -38,7 +38,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     n_y : integer
         The size of the grid in the y direction.
     n_z : integer, optional
-        The size of the grid in the z direction, defaults to 1
+        The size of the grid in the z direction, defaults=1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
     edges_deep = np.vstack((vertices[:, :, :-1].ravel(),
@@ -145,9 +145,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
         pixels.
     return_as : np.ndarray or a sparse matrix class, optional
         The class to use to build the returned adjacency matrix.
-    dtype : None or dtype, optional
-        The data of the returned sparse matrix. By default it is the
-        dtype of img
+    dtype : None or dtype, default=None
+        The data of the returned sparse matrix.
 
     Notes
     -----
@@ -175,14 +174,14 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         Dimension in x axis
     n_y : int
         Dimension in y axis
-    n_z : int, optional, default 1
+    n_z : int, default=1
         Dimension in z axis
     mask : ndarray of booleans, optional
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, optional
         The class to use to build the returned adjacency matrix.
-    dtype : dtype, optional, default int
+    dtype : dtype, default=int
         The data of the returned sparse matrix. By default it is int
 
     Notes
@@ -216,7 +215,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         The height of a patch
     p_w : int
         The width of a patch
-    max_patches : integer or float, optional default is None
+    max_patches : integer or float, default=None
         The maximum number of patches to extract. If max_patches is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
@@ -357,12 +356,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     patch_size : tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
-    max_patches : integer or float, optional default is None
+    max_patches : integer or float, default=None
         The maximum number of patches to extract. If max_patches is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for random sampling when
         `max_patches` is not None. Use an int to make the randomness
         deterministic.
@@ -491,12 +490,12 @@ class PatchExtractor(BaseEstimator):
     patch_size : tuple of ints (patch_height, patch_width)
         the dimensions of one patch
 
-    max_patches : integer or float, optional default is None
+    max_patches : integer or float, default=None
         The maximum number of patches per image to extract. If max_patches is a
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for random sampling when
         `max_patches` is not None. Use an int to make the randomness
         deterministic.
