@@ -1272,7 +1272,7 @@ def _deprecate_positional_args(f):
     return inner_f
 
 
-def _check_fit_params(X, fit_params):
+def _check_fit_params(X, fit_params, indices=None):
     """Check and validate the parameters passed during `fit`.
 
     Parameters
@@ -1283,11 +1283,15 @@ def _check_fit_params(X, fit_params):
     fit_params : dict
         Dictionary containing the parameters passed at fit.
 
+    indices : array-like of shape (n_samples,), default=None
+        Indices to be selected if the parameter has the same size than `X`.
+
     Returns
     -------
     fit_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
+    from . import _safe_indexing
     fit_params_validated = {}
     for param_key, param_value in fit_params.items():
         if (not _is_arraylike(param_value) or
@@ -1299,5 +1303,9 @@ def _check_fit_params(X, fit_params):
             # Any other fit_params should support indexing
             # (e.g. for cross-validation).
             fit_params_validated[param_key] = _make_indexable(param_value)
+            if indices is not None:
+                fit_params_validated[param_key] = _safe_indexing(
+                    fit_params_validated[param_key], indices
+                )
 
     return fit_params_validated
