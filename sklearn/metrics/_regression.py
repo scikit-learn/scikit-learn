@@ -191,7 +191,7 @@ def mean_absolute_error(y_true, y_pred,
 
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
-                       multioutput='uniform_average', 
+                       multioutput='uniform_average',
                        squared=True):
     """Mean squared error regression loss
 
