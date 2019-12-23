@@ -38,25 +38,25 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional
+    n_components : int, default=256
         Number of binary hidden units.
 
-    learning_rate : float, optional
+    learning_rate : float, default=0.1
         The learning rate for weight updates. It is *highly* recommended
         to tune this hyper-parameter. Reasonable values are in the
         10**[0., -3.] range.
 
-    batch_size : int, optional
+    batch_size : int, default=10
         Number of examples per minibatch.
 
-    n_iter : int, optional
+    n_iter : int, default=10
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : int, optional
+    verbose : int, default=0
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or RandomState, optional
+    random_state : integer or RandomState, default=None
         A random number generator instance to define the state of the
         random permutations generator. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
