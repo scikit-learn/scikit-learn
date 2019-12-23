@@ -861,7 +861,8 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    class_weight : dict, {class_label: weight} or "balanced" or None, default=None
+    class_weight : dict, {class_label: weight} or "balanced" or None, \
+            default=None
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
