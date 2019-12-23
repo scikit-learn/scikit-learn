@@ -978,13 +978,14 @@ def test_cross_val_predict_unbalanced():
 def test_cross_val_predict_y_none():
     # ensure that cross_val_predict works when y is None
     mock_classifier = MockClassifier()
-    X = np.random.random((100, 10))
+    rng = np.random.RandomState(42)
+    X = rng.random((100, 10))
     y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
                               method='predict')
-    assert np.all(X[:, 0] == y_hat)
+    assert_allclose(X[:, 0], y_hat)
     y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
                                     method='predict_proba')
-    assert np.all(y_hat_proba == X)
+    assert_allclose(X, y_hat_proba)
 
 
 def test_cross_val_score_sparse_fit_params():
