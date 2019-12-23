@@ -138,7 +138,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If ``False``, return the number of correctly classified samples.
         Otherwise, return the fraction of correctly classified samples.
 
@@ -633,7 +633,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -848,7 +848,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
@@ -938,7 +938,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1062,7 +1062,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1288,7 +1288,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    beta : float, 1.0 by default
+    beta : float, default=1.0
         The strength of recall versus precision in the F-score.
 
     labels : list, optional
@@ -1300,7 +1300,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1514,7 +1514,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1631,7 +1631,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1822,7 +1822,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         When ``output_dict`` is ``True``, this will be ignored and the
         returned values will not be rounded.
 
-    output_dict : bool (default = False)
+    output_dict : bool, default=False
         If True, return output as dict
 
     zero_division : "warn", 0 or 1, default="warn"
@@ -2114,14 +2114,14 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    labels : array-like, optional (default=None)
+    labels : array-like, default=None
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
@@ -2232,7 +2232,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
-    labels : array, optional, default None
+    labels : array, default=None
         Contains all the labels for the problem. Used in multiclass hinge loss.
 
     sample_weight : array-like of shape (n_samples,), default=None
