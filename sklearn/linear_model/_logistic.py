@@ -529,7 +529,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}, \
+            default='lbfgs'
         Numerical solver to use.
 
     coef : array-like, shape (n_features,), default=None
@@ -888,7 +889,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}, \
+            default='lbfgs'
         Decides which solver to use.
 
     penalty : str, 'l1', 'l2', or 'elasticnet', default='l2'
