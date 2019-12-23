@@ -26,10 +26,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_bins : int or array-like, shape (n_features,) (default=5)
+    n_bins : int or array-like, shape (n_features,) default=5
         The number of bins to produce. Raises ValueError if ``n_bins < 2``.
 
-    encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
+    encode : {'onehot', 'onehot-dense', 'ordinal'}, default='onehot'
         Method used to encode the transformed result.
 
         onehot
@@ -43,7 +43,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         ordinal
             Return the bin identifier encoded as an integer value.
 
-    strategy : {'uniform', 'quantile', 'kmeans'}, (default='quantile')
+    strategy : {'uniform', 'quantile', 'kmeans'}, default='quantile'
         Strategy used to define the widths of the bins.
 
         uniform
