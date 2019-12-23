@@ -308,7 +308,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         .. versionadded:: 0.19
            SAGA solver.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
@@ -321,7 +321,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -352,7 +352,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     coef : array of shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
-    n_iter : int, optional
+    n_iter : int, default=None
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
@@ -643,7 +643,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
@@ -688,7 +688,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         .. versionadded:: 0.19
            SAGA solver.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -798,14 +798,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
     tol : float, default=1e-3
         Precision of the solution.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1641,7 +1641,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         If None, the negative mean squared error if cv is 'auto' or None
         (i.e. when using generalized cross-validation), and r2 score otherwise.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1658,7 +1658,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    gcv_mode : {None, 'auto', 'svd', eigen'}, optional
+    gcv_mode : {None, 'auto', 'svd', eigen'}, default='auto'
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
@@ -1679,7 +1679,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     Attributes
     ----------
     cv_values_ : array of shape (n_samples, n_alphas) or \
-        shape (n_samples, n_targets, n_alphas), optional
+        shape (n_samples, n_targets, n_alphas), default=None
         Cross-validation values for each alpha (if ``store_cv_values=True``\
         and ``cv=None``). After ``fit()`` has been called, this attribute \
         will contain the mean squared errors (by default) or the values \
@@ -1755,7 +1755,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1767,7 +1767,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1783,7 +1783,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    cv_values_ : array of shape (n_samples, n_targets, n_alphas), optional
+    cv_values_ : array of shape (n_samples, n_targets, n_alphas), default=None
         Cross-validation values for each alpha (if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
