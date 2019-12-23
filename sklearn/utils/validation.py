@@ -16,8 +16,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, Parameter
-from inspect import isclass, isfunction, ismethod, ismodule
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -1288,12 +1287,8 @@ def _check_fit_params(fit_params):
     """
     fit_params_validated = {}
     for param_key, param_value in fit_params.items():
-        is_scalar = [
-            check(param_value)
-            for check in [np.isscalar, ismodule, isclass, ismethod, isfunction]
-        ]
-        if any(is_scalar):
-            # keep scalar as is for backward-compatibility
+        if not _is_arraylike(param_value):
+            # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             fit_params_validated[param_key] = param_value
         else:

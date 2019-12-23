@@ -1847,7 +1847,7 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
      (RandomizedSearchCV, {'a': np.random.randint(1, 3, size=2)})]
 )
 def test_scalar_fit_param(SearchCV, param_search):
-    # check general support for scalar in fit_params
+    # unofficially sanctioned tolerance for scalar values in fit_params
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
     class TestEstimator(BaseEstimator, ClassifierMixin):
@@ -1880,7 +1880,7 @@ def _custom_lgbm_metric(y_test, y_pred):
      (RandomizedSearchCV, {'learning_rate': uniform(0.01, 0.1)})]
 )
 def test_scalar_fit_param_lgbm(metric, SearchCV, param_search):
-    # check support for scalar in fit_params in LightGBM
+    # check support for scalar values in fit_params in LightGBM
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
     lgbm = pytest.importorskip("lightgbm")
@@ -1890,6 +1890,12 @@ def test_scalar_fit_param_lgbm(metric, SearchCV, param_search):
     model = SearchCV(
         lgbm.LGBMClassifier(n_estimators=5), param_search
     )
+
+    # NOTE: `fit_params` should be data dependent (e.g. `sample_weight`) which
+    # is not the case for the following parameters. But this abuse is common in
+    # popular third-party libraries and we should tolerate this behavior for
+    # now and be careful not to break support for those without following
+    # proper deprecation cycle.
     fit_params = {
         'eval_set': [(X_valid, y_valid)],
         'eval_metric': metric,
