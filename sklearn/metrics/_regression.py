@@ -191,7 +191,8 @@ def mean_absolute_error(y_true, y_pred,
 
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
-                       multioutput='uniform_average', squared=True):
+                       multioutput='uniform_average', 
+                       squared=True):
     """Mean squared error regression loss
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
@@ -218,7 +219,7 @@ def mean_squared_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : boolean value, optional (default = True)
+    squared : boolean value, default=True
         If True returns MSE value, if False returns RMSE value.
 
     Returns
