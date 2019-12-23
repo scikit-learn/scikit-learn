@@ -1855,7 +1855,7 @@ def test_scalar_fit_param(SearchCV, param_search):
             self.a = a
 
         def fit(self, X, y, r=None):
-            assert r == 42
+            self.r_ = r
 
         def predict(self, X):
             return np.zeros(shape=(len(X)))
@@ -1863,7 +1863,7 @@ def test_scalar_fit_param(SearchCV, param_search):
     model = SearchCV(TestEstimator(), param_search)
     X, y = make_classification(random_state=42)
     model.fit(X, y, r=42)
-
+    assert model.best_estimator_.r_ == 42
 
 def _custom_lgbm_metric(y_test, y_pred):
     # y_pred are probablities which need to be thresholded
