@@ -86,7 +86,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. By default, ``np.finfo(np.float).eps`` is used.
@@ -205,7 +205,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. By default, ``np.finfo(np.float).eps`` is used.
@@ -333,7 +333,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. By default, ``np.finfo(np.float).eps`` is used
@@ -792,7 +792,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     n_nonzero_coefs : int, default=500
         Target number of non-zero coefficients. Use ``np.inf`` for no limit.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -1013,7 +1013,7 @@ class LassoLars(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -1174,7 +1174,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -1289,7 +1289,7 @@ class LarsCV(Lars):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. By default, ``np.finfo(np.float).eps`` is used.
@@ -1506,7 +1506,7 @@ class LassoLarsCV(LarsCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. By default, ``np.finfo(np.float).eps`` is used.
@@ -1649,7 +1649,7 @@ class LassoLarsIC(LassoLars):
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
