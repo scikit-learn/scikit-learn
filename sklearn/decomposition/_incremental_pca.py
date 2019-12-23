@@ -41,12 +41,12 @@ class IncrementalPCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int or None, (default=None)
+    n_components : int or None, default=None
         Number of components to keep. If ``n_components `` is ``None``,
         then ``n_components`` is set to ``min(n_samples, n_features)``.
 
-    whiten : bool, optional
-        When True (False by default) the ``components_`` vectors are divided
+    whiten : bool, default=False
+        When True the ``components_`` vectors are divided
         by ``n_samples`` times ``components_`` to ensure uncorrelated outputs
         with unit component-wise variances.
 
@@ -55,11 +55,11 @@ class IncrementalPCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making data respect some hard-wired assumptions.
 
-    copy : bool, (default=True)
+    copy : bool, default=True
         If False, X will be overwritten. ``copy=False`` can be used to
         save memory but is unsafe for general use.
 
-    batch_size : int or None, (default=None)
+    batch_size : int or None, default=None
         The number of samples to use for each batch. Only used when calling
         ``fit``. If ``batch_size`` is ``None``, then ``batch_size``
         is inferred from the data and set to ``5 * n_features``, to provide a
