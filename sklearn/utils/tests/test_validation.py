@@ -1072,12 +1072,12 @@ def test_check_fit_params():
     }
     result = _check_fit_params(fit_params)
 
-    assert isinstance(fit_params['list'], list)
-    assert isinstance(fit_params['tuple'], tuple)
-    assert isinstance(fit_params['array'], np.ndarray)
-    assert isinstance(fit_params['sparse'], sp.csc_matrix)
-    assert isfunction(fit_params['scalar-func'])
-    assert isclass(fit_params['scalar-class'])
-    assert fit_params['scalar-int'] == 1
-    assert fit_params['scalar-str'] == 'xxx'
-    assert fit_params['None'] is None
+    assert isinstance(result['list'], list)
+    assert isinstance(result['tuple'], tuple)
+    assert isinstance(result['array'], np.ndarray)
+    assert isinstance(result['sparse'], sp.csr_matrix)
+    assert isfunction(result['scalar-func'])
+    assert isclass(result['scalar-class'])
+    assert result['scalar-int'] == 1
+    assert result['scalar-str'] == 'xxx'
+    assert result['None'] is None
