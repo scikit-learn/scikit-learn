@@ -40,10 +40,10 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
         Specifies if a constant (a.k.a. bias or intercept) will be
         added to the decision function.
 
-    n_samples : int, optional
+    n_samples : int, default=None
         Number of rows in X. Useful if is_saga=True.
 
-    is_saga : boolean, optional
+    is_saga : boolean, default=False
         Whether to return step size for the SAGA algorithm or the SAG
         algorithm.
 
@@ -118,10 +118,10 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         Target values. With loss='multinomial', y must be label encoded
         (see preprocessing.LabelEncoder).
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like, shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).
 
-    loss : 'log' | 'squared' | 'multinomial'
+    loss : 'log' | 'squared' | 'multinomial', default='log'
         Loss function that will be optimized:
         -'log' is the binary logistic loss, as used in LogisticRegression.
         -'squared' is the squared loss, as used in Ridge.
@@ -131,42 +131,42 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         .. versionadded:: 0.18
            *loss='multinomial'*
 
-    alpha : float, optional
+    alpha : float, default=1.
         L2 regularization term in the objective function
         ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
 
-    beta : float, optional
+    beta : float, default=0.
         L1 regularization term in the objective function
         ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
         Defaults to 0.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The max number of passes over the training data if the stopping
         criteria is not reached. Defaults to 1000.
 
-    tol : double, optional
+    tol : double, default=.001
         The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    check_input : bool, default True
+    check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
 
-    max_squared_sum : float, default None
+    max_squared_sum : float, default=None
         Maximum squared sum of X over samples. If None, it will be computed,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem : dict, optional
+    warm_start_mem : dict, default=False
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:
@@ -180,7 +180,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
             - 'seen': array of boolean describing the seen samples.
             - 'num_seen': the number of seen samples.
 
-    is_saga : boolean, optional
+    is_saga : boolean, default=False
         Whether to use the SAGA algorithm or the SAG algorithm. SAGA behaves
         better in the first epochs, and allow for l1 regularisation.
 
