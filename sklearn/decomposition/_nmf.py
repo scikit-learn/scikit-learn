@@ -77,7 +77,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         If beta == 0, this is the Itakura-Saito divergence.
         Else, this is the general beta-divergence.
 
-    square_root : boolean, default False
+    square_root : bool, default=False
         If True, return np.sqrt(2 * res)
         For beta == 2, it corresponds to the Frobenius norm.
 
@@ -287,7 +287,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -444,35 +444,35 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     H : array-like, shape (n_components, n_features)
         Initial guess for the solution.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : integer, default=200
         Maximum number of iterations before timing out.
 
-    l1_reg_W : double, default: 0.
+    l1_reg_W : double, default=0.
         L1 regularization parameter for W.
 
-    l1_reg_H : double, default: 0.
+    l1_reg_H : double, default=0.
         L1 regularization parameter for H.
 
-    l2_reg_W : double, default: 0.
+    l2_reg_W : double, default=0.
         L2 regularization parameter for W.
 
-    l2_reg_H : double, default: 0.
+    l2_reg_H : double, default=0.
         L2 regularization parameter for H.
 
-    update_H : boolean, default: True
+    update_H : boolean, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    verbose : integer, default: 0
+    verbose : integer, default=0
         The verbosity level.
 
-    shuffle : boolean, default: False
+    shuffle : boolean, default=False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -728,7 +728,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     H : array-like, shape (n_components, n_features)
         Initial guess for the solution.
 
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or string, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -736,29 +736,29 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
 
-    max_iter : integer, default: 200
+    max_iter : integer, default=200
         Number of iterations.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    l1_reg_W : double, default: 0.
+    l1_reg_W : double, default=0.
         L1 regularization parameter for W.
 
-    l1_reg_H : double, default: 0.
+    l1_reg_H : double, default=0.
         L1 regularization parameter for H.
 
-    l2_reg_W : double, default: 0.
+    l2_reg_W : double, default=0.
         L2 regularization parameter for W.
 
-    l2_reg_H : double, default: 0.
+    l2_reg_H : double, default=0.
         L2 regularization parameter for H.
 
-    update_H : boolean, default: True
+    update_H : boolean, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    verbose : integer, default: 0
+    verbose : integer, default=0
         The verbosity level.
 
     Returns
@@ -915,7 +915,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
 
-    update_H : boolean, default: True
+    update_H : boolean, default=True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
@@ -933,7 +933,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or string, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -943,16 +943,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
         .. versionadded:: 0.19
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : integer, default=200
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
+    alpha : double, default=0.
         Constant that multiplies the regularization terms.
 
-    l1_ratio : double, default: 0.
+    l1_ratio : double, default=0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -963,16 +963,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    verbose : integer, default: 0
+    verbose : integer, default=0
         The verbosity level.
 
-    shuffle : boolean, default: False
+    shuffle : boolean, default=False
         If true, randomize the order of coordinates in the CD solver.
 
     Returns
@@ -1140,7 +1140,7 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or string, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -1150,26 +1150,26 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.19
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Tolerance of the stopping condition.
 
-    max_iter : integer, default: 200
+    max_iter : integer, default=200
         Maximum number of iterations before timing out.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    alpha : double, default: 0.
+    alpha : double, default=0.
         Constant that multiplies the regularization terms. Set it to zero to
         have no regularization.
 
         .. versionadded:: 0.17
            *alpha* used in the Coordinate Descent solver.
 
-    l1_ratio : double, default: 0.
+    l1_ratio : double, default=0.
         The regularization mixing parameter, with 0 <= l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an elementwise L2 penalty
         (aka Frobenius Norm).
@@ -1183,7 +1183,7 @@ class NMF(TransformerMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    shuffle : boolean, default: False
+    shuffle : boolean, default=False
         If true, randomize the order of coordinates in the CD solver.
 
         .. versionadded:: 0.17
