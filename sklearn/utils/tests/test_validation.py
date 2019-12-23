@@ -1072,13 +1072,8 @@ def test_check_fit_params(indices):
     result = _check_fit_params(X, fit_params, indices)
     indices_ = indices if indices is not None else list(range(X.shape[0]))
 
-    assert isinstance(result['list'], list)
-    assert isinstance(result['array'], np.ndarray)
-    assert result['sparse-col'].format == 'csr'
-    assert result['sparse-row'].format == 'csc'
-    assert result['scalar-int'] == 1
-    assert result['scalar-str'] == 'xxx'
-    assert result['None'] is None
+    for key in ['sparse-row', 'scalar-int', 'scalar-str', 'None']:
+        assert result[key] is fit_params[key]
 
     assert result['list'] == _safe_indexing(fit_params['list'], indices_)
     assert_array_equal(
@@ -1087,7 +1082,4 @@ def test_check_fit_params(indices):
     assert_allclose_dense_sparse(
         result['sparse-col'],
         _safe_indexing(fit_params['sparse-col'], indices_)
-    )
-    assert_allclose_dense_sparse(
-        result['sparse-row'], fit_params['sparse-row']
     )
