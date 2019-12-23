@@ -14,6 +14,8 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
+from copy import deepcopy
+
 import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel, delayed
@@ -24,7 +26,7 @@ from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.validation import check_is_fitted, has_fit_parameter, _check_sample_weight
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
@@ -32,12 +34,14 @@ __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
 
 
-def _fit_estimator(estimator, X, y, sample_weight=None):
+def _fit_estimator(estimator, X, y, sample_weight=None, fit_param=None):
+    if fit_param is None:
+        fit_param = {}
     estimator = clone(estimator)
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight, **fit_param)
     else:
-        estimator.fit(X, y)
+        estimator.fit(X, y, **fit_param)
     return estimator
 
 
@@ -58,6 +62,16 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
         else:
             estimator.partial_fit(X, y)
     return estimator
+
+
+def _partial_param_filter(fit_param, i):
+    if not fit_param:
+        return None
+    fit_param_ = deepcopy(fit_param)
+    if 'eval_set' in fit_param_:
+        fit_param_['eval_set'] = (fit_param_['eval_set'][0],
+                                  fit_param_['eval_set'][1][:, i])
+    return fit_param_
 
 
 class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
@@ -103,6 +117,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                          accept_sparse=True)
 
         if y.ndim == 1:
+
             raise ValueError("y must have at least two dimensions for "
                              "multi-output regression but has only one.")
 
@@ -121,7 +136,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, fit_param=None):
         """ Fit the model to data.
         Fit a separate model for each output variable.
 
@@ -138,6 +153,12 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
+
+        fit_param: dict, default=None. A parameter dict for estimator to call
+            `estimator.fit`. if None, then the estimator fit the data in a
+            default way. To custom the fit process, just add the train
+            parameters to the fit_param dict.
+
 
         Returns
         -------
@@ -164,9 +185,23 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        if fit_param is None:
+            fit_param = {}
+
+        if 'eval_set' in fit_param:
+            eval_x, eval_y = check_X_y(fit_param['eval_set'][0],
+                                       fit_param['eval_set'][1],
+                                       multi_output=True,
+                                       accept_sparse=True)
+            fit_param['eval_set'] = (eval_x, eval_y)
+
+            if eval_y.ndim != y.ndim:
+                raise ValueError("Bad eval set shape {0}".format(eval_y.shape))
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
-                self.estimator, X, y[:, i], sample_weight)
+                self.estimator, X, y[:, i], sample_weight,
+                _partial_param_filter(fit_param, i))
             for i in range(y.shape[1]))
         return self
 
