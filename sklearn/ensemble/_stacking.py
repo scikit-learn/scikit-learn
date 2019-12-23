@@ -288,7 +288,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
            will increase. ``cv`` is not used for model evaluation but for
            prediction.
 
-    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, default="auto"
+    stack_method : {'auto', 'predict_proba', 'decision_function', \
+        'predict'}, default="auto"
         Methods called for each base estimator. It can be:
 
         * if 'auto', it will try to invoke, for each estimator,

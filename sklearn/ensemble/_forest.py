@@ -976,7 +976,8 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : {'balanced', 'balanced_subsample'}, dict, list of dicts or None, default=None
+    class_weight : {'balanced', 'balanced_subsample'}, dict, list of \
+        dicts or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1573,7 +1574,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : {'balanced', 'balanced_subsample'}, dict, list of dicts or None, default=None
+    class_weight : {'balanced', 'balanced_subsample'}, dict, list of \
+        dicts or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
