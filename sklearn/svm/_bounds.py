@@ -28,16 +28,16 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
     y : array, shape = [n_samples]
         Target vector relative to X
 
-    loss : {'squared_hinge', 'log'}, default 'squared_hinge'
+    loss : {'squared_hinge', 'log'}, default='squared_hinge'
         Specifies the loss function.
         With 'squared_hinge' it is the squared hinge loss (a.k.a. L2 loss).
         With 'log' it is the loss of logistic regression models.
 
-    fit_intercept : bool, default: True
+    fit_intercept : bool, default=True
         Specifies if the intercept should be fitted by the model.
         It must match the fit() method parameter.
 
-    intercept_scaling : float, default: 1
+    intercept_scaling : float, default=1
         when fit_intercept is True, instance vector x becomes
         [x, intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
