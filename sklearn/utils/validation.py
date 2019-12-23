@@ -213,16 +213,16 @@ def check_consistent_length(*arrays):
                          " samples: %r" % [int(l) for l in lengths])
 
 
-def _convert_iterable(iterable):
-    """Helper convert iterable to arrays of sparse matrices.
+def _make_indexable(iterable):
+    """Ensure iterable supports indexing or convert to an indexable variant.
 
-    Convert sparse matrices to csr and non-interable objects to arrays.
-    Let passes `None`.
+    Convert sparse matrices to csr and other non-indexable iterable to arrays.
+    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
 
     Parameters
     ----------
     iterable : {list, dataframe, array, sparse} or None
-        Object to be converted to a sliceable iterable.
+        Object to be converted to an indexable iterable.
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
@@ -245,7 +245,7 @@ def indexable(*iterables):
     *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
-    result = [_convert_iterable(X) for X in iterables]
+    result = [_make_indexable(X) for X in iterables]
     check_consistent_length(*result)
     return result
 
@@ -1284,7 +1284,7 @@ def _check_fit_params(fit_params):
     Returns
     -------
     fit_params_validated : dict
-        Validated parameters. We ensure that the values are iterable.
+        Validated parameters. We ensure that the values support indexing.
     """
     fit_params_validated = {}
     for param_key, param_value in fit_params.items():
@@ -1297,7 +1297,8 @@ def _check_fit_params(fit_params):
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             fit_params_validated[param_key] = param_value
         else:
-            # ensure iterable will be sliceable
-            fit_params_validated[param_key] = _convert_iterable(param_value)
+            # Any other fit_params should support indexing
+            # (e.g. for cross-validation).
+            fit_params_validated[param_key] = _make_indexable(param_value)
 
     return fit_params_validated
