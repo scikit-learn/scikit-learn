@@ -830,7 +830,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, _check_fit_params, train)
+    fit_params = _check_fit_params(X, fit_params, train)
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
