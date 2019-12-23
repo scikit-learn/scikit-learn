@@ -21,6 +21,15 @@ Changelog
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` will accept scalar provided in
+  `fit_params`. Change in 0.22 was breaking backward compatibility.
+  :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_0_22:
 
 Version 0.22.0
