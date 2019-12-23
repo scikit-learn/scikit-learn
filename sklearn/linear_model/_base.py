@@ -59,10 +59,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
     y : array_like, shape (n_samples, )
         Target values.
 
-    sample_weight : numpy array of shape (n_samples,)
+    sample_weight : numpy array of shape (n_samples,), default=None
         The weight of each sample
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -382,12 +382,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : bool, optional, default True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, optional, default False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -395,10 +395,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
         an estimator with ``normalize=False``.
 
-    copy_X : bool, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. This will only provide
         speedup for n_targets > 1 and sufficient large problems.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
