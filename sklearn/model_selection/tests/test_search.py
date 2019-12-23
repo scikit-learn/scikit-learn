@@ -1849,7 +1849,12 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
     assert (preds_original == preds_precomputed).all(), attr_message
 
 
-def test_scalar_fit_param():
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [(GridSearchCV, {'a': [0.1, 0.01]}),
+     (RandomizedSearchCV, {'a': np.random.randint(1, 3, size=2)})]
+)
+def test_scalar_fit_param(SearchCV, param_search):
     # check general support for scalar in fit_params
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
@@ -1863,7 +1868,7 @@ def test_scalar_fit_param():
         def predict(self, X):
             return np.zeros(shape=(len(X)))
 
-    model = GridSearchCV(TestEstimator(), param_grid={'a': [1, 2]})
+    model = SearchCV(TestEstimator(), param_search)
     X, y = make_classification(random_state=42)
     model.fit(X, y, r=42)
 
@@ -1877,7 +1882,12 @@ def _custom_lgbm_metric(y_test, y_pred):
 
 
 @pytest.mark.parametrize("metric", ['auc', _custom_lgbm_metric])
-def test_scalar_fit_param_lgbm(metric):
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [(GridSearchCV, {'learning_rate': [0.1, 0.01]}),
+     (RandomizedSearchCV, {'learning_rate': uniform(0.01, 0.1)})]
+)
+def test_scalar_fit_param_lgbm(metric, SearchCV, param_search):
     # check support for scalar in fit_params in LightGBM
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
@@ -1885,9 +1895,8 @@ def test_scalar_fit_param_lgbm(metric):
     X_train, X_valid, y_train, y_valid = train_test_split(
         *make_classification(random_state=42), random_state=42
     )
-    model = GridSearchCV(
-        lgbm.LGBMClassifier(n_estimators=5),
-        param_grid={'learning_rate': [0.1, 0.01]}
+    model = SearchCV(
+        lgbm.LGBMClassifier(n_estimators=5), param_search
     )
     fit_params = {
         'eval_set': [(X_valid, y_valid)],
