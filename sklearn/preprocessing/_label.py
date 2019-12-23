@@ -85,13 +85,13 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     ----------
     values : array
         Values to factorize or encode.
-    uniques : array, optional
+    uniques : array, default=None
         If passed, uniques are not determined from passed values (this
         can be because the user specified categories, or because they
         already have been determined in fit).
-    encode : bool, default False
+    encode : bool, default=False
         If True, also encode the values into integer codes based on `uniques`.
-    check_unknown : bool, default True
+    check_unknown : bool, default=True
         If True, check for values in ``values`` that are not in ``unique``
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
@@ -131,7 +131,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         Values to check for unknowns.
     uniques : array
         Allowed uniques values.
-    return_mask : bool, default False
+    return_mask : bool, default=False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
 
@@ -325,13 +325,13 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
 
-    neg_label : int (default: 0)
+    neg_label : int, default=0
         Value with which negative labels must be encoded.
 
-    pos_label : int (default: 1)
+    pos_label : int, default=1
         Value with which positive labels must be encoded.
 
-    sparse_output : boolean (default: False)
+    sparse_output : bool, default=False
         True if the returned array from transform is desired to be in sparse
         CSR format.
 
@@ -347,7 +347,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         'continuous-multioutput', 'binary', 'multiclass',
         'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
-    sparse_input_ : boolean,
+    sparse_input_ : bool,
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
 
@@ -557,13 +557,13 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     classes : array-like of shape [n_classes]
         Uniquely holds the label for each class.
 
-    neg_label : int (default: 0)
+    neg_label : int, default=0
         Value with which negative labels must be encoded.
 
-    pos_label : int (default: 1)
+    pos_label : int, default=1
         Value with which positive labels must be encoded.
 
-    sparse_output : boolean (default: False),
+    sparse_output : bool, default=False,
         Set to true if output binary array is desired in CSR sparse format
 
     Returns
@@ -796,11 +796,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes : array-like of shape [n_classes] (optional)
+    classes : array-like of shape [n_classes], default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output : boolean (default: False),
+    sparse_output : bool, default=False,
         Set to true if output binary array is desired in CSR sparse format
 
     Attributes
