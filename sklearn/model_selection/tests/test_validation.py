@@ -979,7 +979,7 @@ def test_cross_val_predict_y_none():
     # ensure that cross_val_predict works when y is None
     mock_classifier = MockClassifier()
     rng = np.random.RandomState(42)
-    X = rng.random((100, 10))
+    X = rng.rand(100, 10)
     y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
                               method='predict')
     assert_allclose(X[:, 0], y_hat)
