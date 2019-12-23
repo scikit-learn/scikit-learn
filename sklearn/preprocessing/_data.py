@@ -90,19 +90,19 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     X : {array-like, sparse matrix}
         The data to center and scale.
 
-    axis : int (0 by default)
+    axis : int, default=0
         axis used to compute the means and standard deviations along. If 0,
         independently standardize each feature, otherwise (if 1) standardize
         each sample.
 
-    with_mean : boolean, True by default
+    with_mean : bool, default=True
         If True, center the data before scaling.
 
-    with_std : boolean, True by default
+    with_std : bool, default=True
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    copy : boolean, optional, default True
+    copy : bool, default=True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSC matrix and if axis is 1).
@@ -553,20 +553,20 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    copy : boolean, optional, default True
+    copy : bool, default=True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
 
-    with_mean : boolean, True by default
+    with_mean : boolean, default=True
         If True, center the data before scaling.
         This does not work (and will raise an exception) when attempted on
         sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean, True by default
+    with_std : boolean, default=True
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
@@ -784,7 +784,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
-        copy : bool, optional (default: None)
+        copy : bool, default=None
             Copy the input X or not.
         """
         check_is_fitted(self)
@@ -815,7 +815,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
-        copy : bool, optional (default: None)
+        copy : bool, default=None
             Copy the input X or not.
 
         Returns
@@ -866,7 +866,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    copy : boolean, optional, default is True
+    copy : bool, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
@@ -1043,11 +1043,11 @@ def maxabs_scale(X, axis=0, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data.
 
-    axis : int (0 by default)
+    axis : int, default=0
         axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
-    copy : boolean, optional, default is True
+    copy : boolean, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
@@ -1113,14 +1113,14 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    with_centering : boolean, True by default
+    with_centering : boolean, default=True
         If True, center the data before scaling.
         This will cause ``transform`` to raise an exception when attempted on
         sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_scaling : boolean, True by default
+    with_scaling : boolean, default=True
         If True, scale the data to interquartile range.
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
@@ -1129,7 +1129,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
-    copy : boolean, optional, default is True
+    copy : bool, default=True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
@@ -1300,15 +1300,15 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
     X : array-like
         The data to center and scale.
 
-    axis : int (0 by default)
+    axis : int, default=0
         axis used to compute the medians and IQR along. If 0,
         independently scale each feature, otherwise (if 1) scale
         each sample.
 
-    with_centering : boolean, True by default
+    with_centering : boolean, default=True
         If True, center the data before scaling.
 
-    with_scaling : boolean, True by default
+    with_scaling : boolean, default=True
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
@@ -1318,7 +1318,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
         .. versionadded:: 0.18
 
-    copy : boolean, optional, default is True
+    copy : bool, default=True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
@@ -1376,20 +1376,20 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    degree : integer
+    degree : integer, default=2
         The degree of the polynomial features. Default = 2.
 
-    interaction_only : boolean, default = False
+    interaction_only : boolean, default=False
         If true, only interaction features are produced: features that are
         products of at most ``degree`` *distinct* input features (so not
         ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
 
-    include_bias : boolean
-        If True (default), then include a bias column, the feature in which
+    include_bias : boolean, default=True
+        If True, then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
-    order : str in {'C', 'F'}, default 'C'
+    order : str in {'C', 'F'}, default='C'
         Order of output array in the dense case. 'F' order is faster to
         compute, but may slow down subsequent estimators.
 
@@ -1467,7 +1467,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        input_features : list of string, length n_features, optional
+        input_features : list of string, length n_features, default=None
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
@@ -1653,20 +1653,20 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         scipy.sparse matrices should be in CSR format to avoid an
         un-necessary copy.
 
-    norm : 'l1', 'l2', or 'max', optional ('l2' by default)
+    norm : 'l1', 'l2', or 'max', default='l2'
         The norm to use to normalize each non zero sample (or each non-zero
         feature if axis is 0).
 
-    axis : 0 or 1, optional (1 by default)
+    axis : 0 or 1, default=1
         axis used to normalize the data along. If 1, independently normalize
         each sample, otherwise (if 0) normalize each feature.
 
-    copy : boolean, optional, default True
+    copy : bool, default=True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
-    return_norm : boolean, default False
+    return_norm : bool, default=False
         whether to return the computed norms
 
     Returns
@@ -1760,10 +1760,10 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    norm : 'l1', 'l2', or 'max', optional ('l2' by default)
+    norm : 'l1', 'l2', or 'max', default='l2'
         The norm to use to normalize each non zero sample.
 
-    copy : boolean, optional, default True
+    copy : boolean, default=True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
@@ -1822,7 +1822,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
-        copy : bool, optional (default: None)
+        copy : bool, default=None
             Copy the input X or not.
         """
         copy = copy if copy is not None else self.copy
@@ -1845,11 +1845,11 @@ def binarize(X, threshold=0.0, copy=True):
         scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
 
-    threshold : float, optional (0.0 by default)
+    threshold : float, default=0.0
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default True
+    copy : boolean, default=True
         set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
@@ -1896,11 +1896,11 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    threshold : float, optional (0.0 by default)
+    threshold : float, default0.0
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default True
+    copy : boolean, default=True
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
@@ -2045,7 +2045,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
 
-        copy : boolean, optional, default True
+        copy : boolean, default=True
             Set to False to perform inplace computation.
 
         Returns
@@ -2153,7 +2153,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_quantiles : int, optional (default=1000 or n_samples)
+    n_quantiles : int, default=1000 or n_samples
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
         If n_quantiles is larger than the number of samples, n_quantiles is set
@@ -2161,28 +2161,28 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         a better approximation of the cumulative distribution function
         estimator.
 
-    output_distribution : str, optional (default='uniform')
+    output_distribution : str, default='uniform'
         Marginal distribution for the transformed data. The choices are
         'uniform' (default) or 'normal'.
 
-    ignore_implicit_zeros : bool, optional (default=False)
+    ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, optional (default=1e5)
+    subsample : int, default=1e5
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default=True)
+    copy : boolean, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array).
 
@@ -2477,7 +2477,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         X : ndarray, shape (n_samples, n_features)
             The data used to scale along the features axis.
 
-        inverse : bool, optional (default=False)
+        inverse : bool, default=False
             If False, apply forward transform. If True, apply
             inverse transform.
 
@@ -2578,11 +2578,11 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     X : array-like, sparse matrix
         The data to transform.
 
-    axis : int, (default=0)
+    axis : int, default=0
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, optional (default=1000 or n_samples)
+    n_quantiles : int, default=1000 or n_samples
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
         If n_quantiles is larger than the number of samples, n_quantiles is set
@@ -2590,28 +2590,28 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         a better approximation of the cumulative distribution function
         estimator.
 
-    output_distribution : str, optional (default='uniform')
+    output_distribution : str, default='uniform'
         Marginal distribution for the transformed data. The choices are
         'uniform' (default) or 'normal'.
 
-    ignore_implicit_zeros : bool, optional (default=False)
+    ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
         matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
-    subsample : int, optional (default=1e5)
+    subsample : int, default=1e5
         Maximum number of samples used to estimate the quantiles for
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default=True)
+    copy : boolean, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
@@ -2693,17 +2693,17 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    method : str, (default='yeo-johnson')
+    method : str, default='yeo-johnson'
         The power transform method. Available methods are:
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
 
-    standardize : boolean, default=True
+    standardize : bool, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
         transformed output.
 
-    copy : boolean, optional, default=True
+    copy : bool, default=True
         Set to False to perform inplace computation during transformation.
 
     Attributes
@@ -3058,7 +3058,7 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
         Set to True to apply zero-mean, unit-variance normalization to the
         transformed output.
 
-    copy : boolean, optional, default=True
+    copy : bool, default=True
         Set to False to perform inplace computation during transformation.
 
     Returns
