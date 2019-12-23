@@ -1299,4 +1299,5 @@ def _check_fit_params(fit_params):
         else:
             # ensure iterable will be sliceable
             fit_params_validated[param_key] = _convert_iterable(param_value)
+
     return fit_params_validated
