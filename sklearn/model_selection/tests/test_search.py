@@ -36,6 +36,7 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -1849,8 +1850,9 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
 
 
 def test_scalar_fit_param():
-    # test that a scalar fit param is supported with a warning.
-    # TODO: it should raise an error from v0.24. Issue #15805
+    # check general support for scalar in fit_params
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15805
     class TestEstimator(BaseEstimator, ClassifierMixin):
         def __init__(self, a=None):
             self.a = a
@@ -1861,7 +1863,36 @@ def test_scalar_fit_param():
         def predict(self, X):
             return np.zeros(shape=(len(X)))
 
-    cv = GridSearchCV(TestEstimator(), param_grid={'a': [1, 2]})
-    X, y = make_classification()
-    with pytest.warns(FutureWarning, match="Support for scaler fit params"):
-        cv.fit(X, y, r=42)
+    model = GridSearchCV(TestEstimator(), param_grid={'a': [1, 2]})
+    X, y = make_classification(random_state=42)
+    model.fit(X, y, r=42)
+
+
+def _custom_lgbm_metric(y_test, y_pred):
+    # y_pred are probablities which need to be thresholded
+    y_pred = (y_pred > 0.5).astype(int)
+    acc = accuracy_score(y_test, y_pred)
+    # required output of format: (eval_name, eval_result, is_higher_better)
+    return ('accuracy', acc, True)
+
+
+@pytest.mark.parametrize("metric", ['auc', _custom_lgbm_metric])
+def test_scalar_fit_param_lgbm(metric):
+    # check support for scalar in fit_params in LightGBM
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15805
+    lgbm = pytest.importorskip("lightgbm")
+    X_train, X_valid, y_train, y_valid = train_test_split(
+        *make_classification(random_state=42), random_state=42
+    )
+    model = GridSearchCV(
+        lgbm.LGBMClassifier(n_estimators=5),
+        param_grid={'learning_rate': [0.1, 0.01]}
+    )
+    fit_params = {
+        'eval_set': [(X_valid, y_valid)],
+        'eval_metric': metric,
+        'early_stopping_rounds': 5,
+        'verbose': False
+    }
+    model.fit(X_train, y_train, **fit_params)
