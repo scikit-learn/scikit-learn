@@ -50,19 +50,19 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
-    n_iter : int, optional (default 5)
+    n_iter : int, default=5
         Number of iterations for randomized SVD solver. Not used by ARPACK. The
         default is larger than the default in
         `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
         may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None, optional, default = None
+    random_state : int, RandomState instance or None, default = None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    tol : float, optional
+    tol : float, default=0.0
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
