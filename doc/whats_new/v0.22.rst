@@ -58,7 +58,7 @@ Changelog
 ..............................
 
 - |Fix| :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` will accept scalar provided in
+  :class:`model_selection.RandomizedSearchCV` accept scalar values provided in
   `fit_params`. Change in 0.22 was breaking backward compatibility.
   :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
