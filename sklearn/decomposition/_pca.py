@@ -148,7 +148,7 @@ class PCA(_BasePCA):
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
-    whiten : bool, optional (default False)
+    whiten : bool, default=False
         When True (False by default) the `components_` vectors are multiplied
         by the square root of n_samples and then divided by the singular values
         to ensure uncorrelated outputs with unit component-wise variances.
@@ -158,7 +158,7 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : str {'auto', 'full', 'arpack', 'randomized'}
+    svd_solver : str {'auto', 'full', 'arpack', 'randomized'}, default='auto'
         If auto :
             The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
@@ -178,18 +178,18 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0, optional (default .0)
+    tol : float >= 0, default=.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0, or 'auto', (default 'auto')
+    iterated_power : int >= 0, or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance or None, optional (default None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
