@@ -72,21 +72,21 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
-    max_iter : int, 1000 by default
+    max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-    copy_cov : boolean, optional
+    copy_cov : boolean, default=True
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
-    check_input : boolean, optional
+    check_input : boolean, default=True
         If False, the input arrays X and dictionary will not be checked.
 
-    verbose : int
+    verbose : int, default=0
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    positive: boolean
+    positive: bool, default=False
         Whether to enforce a positivity constraint on the sparse code.
 
         .. versionadded:: 0.20
@@ -224,12 +224,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    n_nonzero_coefs : int, 0.1 * n_features by default
+    n_nonzero_coefs : int, default = 0.1 * n_features
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    alpha : float, 1. by default
+    alpha : float, default=1.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -238,7 +238,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    copy_cov : boolean, optional
+    copy_cov : boolean, default=True
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
@@ -246,23 +246,23 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
-    max_iter : int, 1000 by default
+    max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    check_input : boolean, optional
+    check_input : boolean, default=True
         If False, the input arrays X and dictionary will not be checked.
 
-    verbose : int, optional
+    verbose : int, default=0
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    positive : boolean, optional
+    positive : boolean, default=False
         Whether to enforce positivity when finding the encoding.
 
         .. versionadded:: 0.20
@@ -361,13 +361,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    positive : boolean, optional
+    positive : boolean, default=False
         Whether to enforce positivity when finding the dictionary.
 
         .. versionadded:: 0.20
@@ -464,7 +464,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -476,13 +476,13 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     code_init : array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
-    callback : callable or None, optional (default: None)
+    callback : callable or None, default=None
         Callable that gets invoked every five iterations
 
-    verbose : bool, optional (default: False)
+    verbose : bool, default=False
         To control the verbosity of the procedure.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -501,7 +501,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
         .. versionadded:: 0.20
 
-    method_max_iter : int, optional (default=1000)
+    method_max_iter : int, default=1000
         Maximum number of iterations to perform.
 
         .. versionadded:: 0.22
@@ -660,19 +660,19 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     dict_init : array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
 
-    callback : callable or None, optional (default: None)
+    callback : callable or None, default=None
         callable that gets invoked every five iterations
 
     batch_size : int,
         The number of samples to take in each batch.
 
-    verbose : bool, optional (default: False)
+    verbose : bool, default=False
         To control the verbosity of the procedure.
 
     shuffle : boolean,
         Whether to shuffle the data before splitting it in batches.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -685,17 +685,17 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    iter_offset : int, default 0
+    iter_offset : int, default=0
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    return_inner_stats : boolean, optional
+    return_inner_stats : boolean, default=False
         Return the inner statistics A (dictionary covariance) and B
         (data approximation). Useful to restart the algorithm in an
         online setting. If return_inner_stats is True, return_code is
@@ -721,7 +721,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         .. versionadded:: 0.20
 
-    method_max_iter : int, optional (default=1000)
+    method_max_iter : int, default=1000
         Maximum number of iterations to perform when solving the lasso problem.
 
         .. versionadded:: 0.22
@@ -1273,7 +1273,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1300,12 +1300,12 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, default=0.1 * n_features
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha : float, 1. by default
+    transform_alpha : float, default=1.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -1314,15 +1314,15 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    verbose : bool, optional (default: False)
+    verbose : bool, default=False
         To control the verbosity of the procedure.
 
-    split_sign : bool, False by default
+    split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -1338,7 +1338,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
         .. versionadded:: 0.20
 
-    transform_max_iter : int, optional (default=1000)
+    transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
@@ -1455,7 +1455,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
         y : Ignored
 
-        iter_offset : integer, optional
+        iter_offset : integer, default=None
             The number of iteration on data batches that has been
             performed before this call to partial_fit. This is optional:
             if no number is passed, the memory of the object is
