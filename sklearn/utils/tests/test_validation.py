@@ -1059,6 +1059,7 @@ def test_deprecate_positional_args_warns_for_class():
 
 
 def test_check_fit_params():
+    X = np.random.randn(4, 2)
     fit_params = {
         'list': [1, 2, 3, 4],
         'tuple': (1, 2, 3, 4),
@@ -1070,12 +1071,12 @@ def test_check_fit_params():
         'scalar-str': 'xxx',
         'None': None,
     }
-    result = _check_fit_params(fit_params)
+    result = _check_fit_params(X, fit_params)
 
     assert isinstance(result['list'], list)
     assert isinstance(result['tuple'], tuple)
     assert isinstance(result['array'], np.ndarray)
-    assert isinstance(result['sparse'], sp.csr_matrix)
+    assert result['sparse'].format == 'csc'
     assert isfunction(result['scalar-func'])
     assert isclass(result['scalar-class'])
     assert result['scalar-int'] == 1
