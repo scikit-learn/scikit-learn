@@ -825,7 +825,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         In order to avoid this, one should increase the intercept_scaling.
         such that the feature vector becomes [x, intercept_scaling].
 
-    class_weight : {dict, 'balanced'}, optional
+    class_weight : {dict, 'balanced'}, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -850,7 +850,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -870,12 +870,12 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                  'epsilon_insensitive', 'squared_epsilon_insensitive}
         The loss function used to fit the model.
 
-    epsilon : float, optional (default=0.1)
+    epsilon : float, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight : array-like, optional
+    sample_weight : array-like, default=None
         Weights assigned to each sample.
 
     Returns
