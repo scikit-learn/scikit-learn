@@ -26,28 +26,28 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2' (default='l2')
+    penalty : str, 'l1' or 'l2', default='l2'
         Specifies the norm used in the penalization. The 'l2'
         penalty is the standard used in SVC. The 'l1' leads to ``coef_``
         vectors that are sparse.
 
-    loss : str, 'hinge' or 'squared_hinge' (default='squared_hinge')
+    loss : str, 'hinge' or 'squared_hinge', default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
 
-    dual : bool, (default=True)
+    dual : bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Tolerance for stopping criteria.
 
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
 
-    multi_class : str, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : str, 'ovr' or 'crammer_singer', default='ovr'
         Determines the multi-class strategy if `y` contains more than
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
@@ -58,12 +58,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
         will be ignored.
 
-    fit_intercept : bool, optional (default=True)
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, optional (default=1)
+    intercept_scaling : float, default=1
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -74,7 +74,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : {dict, 'balanced'}, optional
+    class_weight : {dict, 'balanced'}, default=None
         Set the parameter C of class i to ``class_weight[i]*C`` for
         SVC. If not given, all classes are supposed to have
         weight one.
@@ -82,12 +82,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data for the dual coordinate descent (if ``dual=True``). When
         ``dual=False`` the underlying implementation of :class:`LinearSVC`
@@ -97,7 +97,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         None, the random number generator is the RandomState instance used by
         `np.random`.
 
-    max_iter : int, (default=1000)
+    max_iter : int, default=1000
         The maximum number of iterations to be run.
 
     Attributes
@@ -267,29 +267,29 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    epsilon : float, optional (default=0.0)
+    epsilon : float, default=0.0
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set ``epsilon=0``.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Tolerance for stopping criteria.
 
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
 
-    loss : string, optional (default='epsilon_insensitive')
+    loss : string, default='epsilon_insensitive'
         Specifies the loss function. The epsilon-insensitive loss
         (standard SVR) is the L1 loss, while the squared epsilon-insensitive
         loss ('squared_epsilon_insensitive') is the L2 loss.
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : boolean, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, optional (default=1)
+    intercept_scaling : float, default=1
         When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -300,23 +300,23 @@ class LinearSVR(RegressorMixin, LinearModel):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    dual : bool, (default=True)
+    dual : bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    max_iter : int, (default=1000)
+    max_iter : int, default=1000
         The maximum number of iterations to be run.
 
     Attributes
@@ -456,12 +456,12 @@ class SVC(BaseSVC):
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive. The penalty
         is a squared l2 penalty.
 
-    kernel : string, optional (default='rbf')
+    kernel : string, default='rbf'
         Specifies the kernel type to be used in the algorithm.
         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
         a callable.
@@ -469,11 +469,11 @@ class SVC(BaseSVC):
         used to pre-compute the kernel matrix from data matrices; that matrix
         should be an array of shape ``(n_samples, n_samples)``.
 
-    degree : int, optional (default=3)
+    degree : int, default=3
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : {'scale', 'auto'} or float, optional (default='scale')
+    gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
@@ -483,20 +483,20 @@ class SVC(BaseSVC):
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
 
-    coef0 : float, optional (default=0.0)
+    coef0 : float, default=0.0
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking : boolean, optional (default=True)
+    shrinking : boolean, default=True
         Whether to use the shrinking heuristic.
 
-    probability : boolean, optional (default=False)
+    probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, will slow down that method as it internally uses
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance for stopping criterion.
 
     cache_size : float, optional
@@ -510,12 +510,12 @@ class SVC(BaseSVC):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    verbose : bool, default: False
+    verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter : int, optional (default=-1)
+    max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr', default='ovr'
@@ -534,7 +534,7 @@ class SVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    break_ties : bool, optional (default=False)
+    break_ties : bool, default=False
         If true, ``decision_function_shape='ovr'``, and number of classes > 2,
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
@@ -543,7 +543,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the
         seed used by the random number generator; If RandomState instance,
@@ -665,23 +665,23 @@ class NuSVC(BaseSVC):
 
     Parameters
     ----------
-    nu : float, optional (default=0.5)
+    nu : float, default=0.5
         An upper bound on the fraction of training errors and a lower
         bound of the fraction of support vectors. Should be in the
         interval (0, 1].
 
-    kernel : string, optional (default='rbf')
+    kernel : string, default='rbf'
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    degree : int, optional (default=3)
+    degree : int, default=3
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : {'scale', 'auto'} or float, optional (default='scale')
+    gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
@@ -691,38 +691,38 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
 
-    coef0 : float, optional (default=0.0)
+    coef0 : float, default=0.0
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking : boolean, optional (default=True)
+    shrinking : boolean, default=True
         Whether to use the shrinking heuristic.
 
-    probability : boolean, optional (default=False)
+    probability : boolean, default=False
         Whether to enable probability estimates. This must be enabled prior
         to calling `fit`, will slow down that method as it internally uses
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance for stopping criterion.
 
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
-    class_weight : {dict, 'balanced'}, optional
+    class_weight : {dict, 'balanced'}, default=None
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one. The "balanced" mode uses the values of y to automatically
         adjust weights inversely proportional to class frequencies as
         ``n_samples / (n_classes * np.bincount(y))``
 
-    verbose : bool, default: False
+    verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter : int, optional (default=-1)
+    max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
 
     decision_function_shape : 'ovo', 'ovr', default='ovr'
@@ -740,7 +740,7 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    break_ties : bool, optional (default=False)
+    break_ties : bool, default=False
         If true, ``decision_function_shape='ovr'``, and number of classes > 2,
         :term:`predict` will break ties according to the confidence values of
         :term:`decision_function`; otherwise the first class among the tied
@@ -749,7 +749,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the seed
         used by the random number generator; If RandomState instance,
@@ -873,18 +873,18 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : string, optional (default='rbf')
+    kernel : string, default='rbf'
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    degree : int, optional (default=3)
+    degree : int, default=3
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : {'scale', 'auto'} or float, optional (default='scale')
+    gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
@@ -894,36 +894,36 @@ class SVR(RegressorMixin, BaseLibSVM):
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
 
-    coef0 : float, optional (default=0.0)
+    coef0 : float, default=0.0
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance for stopping criterion.
 
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
         The penalty is a squared l2 penalty.
 
-    epsilon : float, optional (default=0.1)
+    epsilon : float, default=0.1
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
          with points predicted within a distance epsilon from the actual
          value.
 
-    shrinking : boolean, optional (default=True)
+    shrinking : boolean, default=True
         Whether to use the shrinking heuristic.
 
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
-    verbose : bool, default: False
+    verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter : int, optional (default=-1)
+    max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -1005,26 +1005,26 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    nu : float, optional
+    nu : float, default=0.5
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
         default 0.5 will be taken.
 
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Penalty parameter C of the error term.
 
-    kernel : string, optional (default='rbf')
+    kernel : string, default='rbf'
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    degree : int, optional (default=3)
+    degree : int, default=3
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : {'scale', 'auto'} or float, optional (default='scale')
+    gamma : {'scale', 'auto'} or float, default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
@@ -1034,25 +1034,25 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
 
-    coef0 : float, optional (default=0.0)
+    coef0 : float, default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking : boolean, optional (default=True)
+    shrinking : boolean, default=True)
         Whether to use the shrinking heuristic.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance for stopping criterion.
 
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
-    verbose : bool, default: False
+    verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter : int, optional (default=-1)
+    max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
@@ -1128,18 +1128,18 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : string, optional (default='rbf')
+    kernel : string, default='rbf'
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
          a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
-    degree : int, optional (default=3)
+    degree : int, default=3
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : {'scale', 'auto'} or float, optional (default='scale')
+    gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
@@ -1149,31 +1149,31 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
 
-    coef0 : float, optional (default=0.0)
+    coef0 : float, default=0.0
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    tol : float, optional
+    tol : float, default=1e-3
         Tolerance for stopping criterion.
 
-    nu : float, optional
+    nu : float, default=0.5
         An upper bound on the fraction of training
         errors and a lower bound of the fraction of support
         vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    shrinking : boolean, optional
+    shrinking : boolean, default=True
         Whether to use the shrinking heuristic.
 
-    cache_size : float, optional
+    cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
 
-    verbose : bool, default: False
+    verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work
         properly in a multithreaded context.
 
-    max_iter : int, optional (default=-1)
+    max_iter : int, default=-1
         Hard limit on iterations within solver, or -1 for no limit.
 
     Attributes
