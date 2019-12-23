@@ -16,7 +16,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, isclass, Parameter
+from inspect import signature, Parameter
+from inspect import isclass, isfunction, ismethod, ismodule
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -212,6 +213,26 @@ def check_consistent_length(*arrays):
                          " samples: %r" % [int(l) for l in lengths])
 
 
+def _convert_iterable(iterable):
+    """Helper convert iterable to arrays of sparse matrices.
+
+    Convert sparse matrices to csr and non-interable objects to arrays.
+    Let passes `None`.
+
+    Parameters
+    ----------
+    iterable : {list, dataframe, array, sparse} or None
+        Object to be converted to a sliceable iterable.
+    """
+    if sp.issparse(iterable):
+        return iterable.tocsr()
+    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+        return iterable
+    elif iterable is None:
+        return iterable
+    return np.array(iterable)
+
+
 def indexable(*iterables):
     """Make arrays indexable for cross-validation.
 
@@ -224,16 +245,7 @@ def indexable(*iterables):
     *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
-    result = []
-    for X in iterables:
-        if sp.issparse(X):
-            result.append(X.tocsr())
-        elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
-            result.append(X)
-        elif X is None:
-            result.append(X)
-        else:
-            result.append(np.array(X))
+    result = [_convert_iterable(X) for X in iterables]
     check_consistent_length(*result)
     return result
 
@@ -1257,3 +1269,32 @@ def _deprecate_positional_args(f):
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
+
+
+def _check_fit_params(fit_params):
+    """Check and validate the parameters passed during `fit`.
+
+    Parameters
+    ----------
+    fit_params : dict
+        Dictionary containing the parameters passed at fit.
+
+    Returns
+    -------
+    fit_params_validated : dict
+        Validated parameters. We ensure that the values are iterable.
+    """
+    fit_params_validated = {}
+    for param_key, param_value in fit_params.items():
+        is_scalar = [
+            check(param_value)
+            for check in [np.isscalar, ismodule, isclass, ismethod, isfunction]
+        ]
+        if any(is_scalar):
+            # keep scalar as is for backward-compatibility
+            # https://github.com/scikit-learn/scikit-learn/issues/15805
+            fit_params_validated[param_key] = param_value
+        else:
+            # ensure iterable will be sliceable
+            fit_params_validated[param_key] = _convert_iterable(param_value)
+    return fit_params_validated

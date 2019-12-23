@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted
+from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -648,15 +648,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
-        # make sure fit_params are sliceable
-        # TODO: remove in 0.24
-        try:
-            fit_params_values = indexable(*fit_params.values())
-            fit_params = dict(zip(fit_params.keys(), fit_params_values))
-        except TypeError:
-            warnings.warn("Support for scaler fit params is deprecated. "
-                          "Passing scalar values as a fit parameter will "
-                          "raise an error in v0.24", FutureWarning)
+        fit_params = _check_fit_params(fit_params)
 
         n_splits = cv.get_n_splits(X, y, groups)
 
