@@ -219,33 +219,25 @@ def test_grid_search_pipeline_steps():
     assert not hasattr(param_grid['regressor'][1], 'coef_')
 
 
-def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_SearchCV_with_fit_params(SearchCV):
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
-    searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
+    searcher = SearchCV(
+        clf, {'foo_param': [1, 2, 3]}, cv=2, error_score="raise"
+    )
 
     # The CheckingClassifier generates an assertion error if
     # a parameter is missing or has length != len(X).
-    assert_raise_message(AssertionError,
-                         "Expected fit parameter(s) ['eggs'] not seen.",
-                         searcher.fit, X, y, spam=np.ones(10))
-    assert_raise_message(
-        ValueError,
-        "Found input variables with inconsistent numbers of samples: [",
-        searcher.fit, X, y, spam=np.ones(1),
-        eggs=np.zeros(10))
+    err_msg = r"Expected fit parameter\(s\) \['eggs'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        searcher.fit(X, y, spam=np.ones(10))
+
+    err_msg = "Fit parameter spam has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        searcher.fit(X, y, spam=np.ones(1), eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
-
-
-def test_grid_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(GridSearchCV,
-                                                  error_score='raise')
-
-
-def test_random_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1,
-                                                  error_score='raise')
 
 
 @ignore_warnings
