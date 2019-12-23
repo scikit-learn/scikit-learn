@@ -175,7 +175,7 @@ def test_cross_validator_with_default_params():
         # Test that train, test indices returned are integers
         for train, test in cv.split(X, y, groups):
             assert np.asarray(train).dtype.kind == 'i'
-            assert np.asarray(train).dtype.kind == 'i'
+            assert np.asarray(test).dtype.kind == 'i'
 
         # Test if the repr works without any errors
         assert cv_repr == repr(cv)

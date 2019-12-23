@@ -1161,7 +1161,7 @@ Methods
 
             TODO: `This gist
             <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            higlights the use of the different formats for multilabel.
+            highlights the use of the different formats for multilabel.
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
