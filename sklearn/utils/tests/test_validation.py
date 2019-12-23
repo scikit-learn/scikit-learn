@@ -4,6 +4,7 @@ import warnings
 import os
 
 from tempfile import NamedTemporaryFile
+from inspect import isclass, isfunction
 from itertools import product
 
 import pytest
@@ -28,6 +29,7 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
+from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
@@ -46,6 +48,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     FLOAT_DTYPES)
+from sklearn.utils.validation import _check_fit_params
 
 import sklearn
 
@@ -1053,3 +1056,28 @@ def test_deprecate_positional_args_warns_for_class():
     with pytest.warns(FutureWarning,
                       match=r"Pass c=3, d=4 as keyword args"):
         A2(1, 2, 3, 4)
+
+
+def test_check_fit_params():
+    fit_params = {
+        'list': [1, 2, 3, 4],
+        'tuple': (1, 2, 3, 4),
+        'array': np.array([1, 2, 3, 4]),
+        'sparse': sp.csc_matrix([1, 2, 3, 4]),
+        'scalar-func': accuracy_score,
+        'scalar-class': KNeighborsClassifier,
+        'scalar-int': 1,
+        'scalar-str': 'xxx',
+        'None': None,
+    }
+    result = _check_fit_params(fit_params)
+
+    assert isinstance(fit_params['list'], list)
+    assert isinstance(fit_params['tuple'], tuple)
+    assert isinstance(fit_params['array'], np.ndarray)
+    assert isinstance(fit_params['sparse'], sp.csc_matrix)
+    assert isfunction(fit_params['scalar-func'])
+    assert isclass(fit_params['scalar-class'])
+    assert fit_params['scalar-int'] == 1
+    assert fit_params['scalar-str'] == 'xxx'
+    assert fit_params['None'] is None

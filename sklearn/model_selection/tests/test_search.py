@@ -1862,7 +1862,7 @@ def test_scalar_fit_param(SearchCV, param_search):
         def __init__(self, a=None):
             self.a = a
 
-        def fit(self, X, y, r):
+        def fit(self, X, y, r=None):
             assert r == 42
 
         def predict(self, X):
