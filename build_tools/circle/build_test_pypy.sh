@@ -19,8 +19,10 @@ python --version
 which python
 
 pip install -U pip
-pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy Cython pytest scipy
-pip install sphinx numpydoc docutils joblib pillow
+pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy
+pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 scipy
+pip install --extra-index-url https://antocuni.github.io/pypy-wheels/ubuntu Cython
+pip install sphinx numpydoc docutils joblib pillow pytest
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
