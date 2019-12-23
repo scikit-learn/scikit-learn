@@ -35,10 +35,6 @@ Changelog
   Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
   :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
-- |Fix| :func:`inspection.plot_partial_dependence` and
-  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
-  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
-
 :mod:`sklearn.metrics`
 ......................
 
