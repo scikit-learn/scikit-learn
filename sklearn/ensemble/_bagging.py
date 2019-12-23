@@ -664,7 +664,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The predicted classes.
         """
         predicted_probabilitiy = self.predict_proba(X)
@@ -794,7 +794,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        score : array, shape = [n_samples, k]
+        score : ndarray of shape (n_samples, k)
             The decision function of the input samples. The columns correspond
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
@@ -1006,7 +1006,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         Returns
         -------
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self)

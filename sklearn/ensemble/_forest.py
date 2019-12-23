@@ -217,7 +217,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
+        X_leaves : array_like of shape (n_samples, n_estimators)
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
@@ -244,11 +244,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        indicator : sparse csr array, shape = [n_samples, n_nodes]
+        indicator : sparse matrix of shape (n_samples, n_nodes)
             Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
+            indicates that the samples goes through the nodes. The returned
+            matrix is a sparse matrix of CSR format.
 
-        n_nodes_ptr : array of size (n_estimators + 1, )
+        n_nodes_ptr : ndarray of size (n_estimators + 1,)
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
 
@@ -271,7 +272,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Internally, its dtype will be converted
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
@@ -415,11 +416,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     def feature_importances_(self):
         """
         Return the feature importances (the higher, the more important the
-           feature).
+        feature).
 
         Returns
         -------
-        feature_importances_ : array, shape = [n_features]
+        feature_importances_ : ndarray of shape (n_features,)
             The values of this array sum to 1, unless all trees are single node
             trees consisting of only the root node, in which case it will be an
             array of zeros.
@@ -599,14 +600,14 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
         proba = self.predict_proba(X)
@@ -639,14 +640,14 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
+        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -686,14 +687,14 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
+        p : ndarray of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -751,14 +752,14 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The predicted values.
         """
         check_is_fitted(self)
@@ -1027,10 +1028,10 @@ class RandomForestClassifier(ForestClassifier):
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier of shape (n_estimators,)
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,) or a list of such arrays
+    classes_ : ndarray of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
@@ -1051,7 +1052,7 @@ class RandomForestClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1318,7 +1319,7 @@ class RandomForestRegressor(ForestRegressor):
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor of shape (n_estimators,)
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -1625,10 +1626,10 @@ class ExtraTreesClassifier(ForestClassifier):
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier of shape (n_estimators,)
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,) or a list of such arrays
+    classes_ : ndarray of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
@@ -1649,7 +1650,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1908,7 +1909,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor of shape (n_estimators,)
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2178,7 +2179,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix) of shape (n_samples, n_features)
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
@@ -2204,7 +2205,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data used to build forests. Use ``dtype=np.float32`` for
             maximum efficiency.
 
@@ -2217,7 +2218,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed : sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
         X = check_array(X, accept_sparse=['csc'])
@@ -2239,14 +2240,14 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csr_matrix`` for maximum efficiency.
 
         Returns
         -------
-        X_transformed : sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
         check_is_fitted(self)
