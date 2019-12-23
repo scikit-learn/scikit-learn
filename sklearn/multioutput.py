@@ -26,7 +26,7 @@ from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted, has_fit_parameter, _check_sample_weight
+from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
