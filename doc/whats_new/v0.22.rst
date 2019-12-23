@@ -63,6 +63,13 @@ Changelog
   :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.plot_partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
