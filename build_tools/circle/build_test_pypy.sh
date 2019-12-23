@@ -18,10 +18,7 @@ source pypy-env/bin/activate
 python --version
 which python
 
-# XXX: numpy version pinning can be reverted once PyPy
-#      compatibility is resolved for numpy v1.6.x. For instance,
-#      when PyPy3 >6.0 is released (see numpy/numpy#12740)
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
+pip install --extra-index https://antocuni.github.io/pypy-wheels/manylinux2010 numpy Cython pytest
 pip install scipy sphinx numpydoc docutils joblib pillow
 
 ccache -M 512M
