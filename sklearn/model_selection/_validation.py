@@ -942,8 +942,6 @@ def _index_param_value(X, v, indices):
     if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
         # pass through: skip indexing
         return v
-    if sp.issparse(v):
-        v = v.tocsr()
     return _safe_indexing(v, indices)
 
 

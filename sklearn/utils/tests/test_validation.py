@@ -1064,7 +1064,7 @@ def test_check_fit_params():
         'list': [1, 2, 3, 4],
         'tuple': (1, 2, 3, 4),
         'array': np.array([1, 2, 3, 4]),
-        'sparse': sp.csc_matrix([1, 2, 3, 4]),
+        'sparse': sp.csc_matrix([1, 2, 3, 4]).T,
         'scalar-func': accuracy_score,
         'scalar-class': KNeighborsClassifier,
         'scalar-int': 1,
@@ -1076,7 +1076,7 @@ def test_check_fit_params():
     assert isinstance(result['list'], list)
     assert isinstance(result['tuple'], tuple)
     assert isinstance(result['array'], np.ndarray)
-    assert result['sparse'].format == 'csc'
+    assert result['sparse'].format == 'csr'
     assert isfunction(result['scalar-func'])
     assert isclass(result['scalar-class'])
     assert result['scalar-int'] == 1
