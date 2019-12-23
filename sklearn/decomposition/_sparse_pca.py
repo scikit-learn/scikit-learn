@@ -64,7 +64,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -79,7 +79,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     verbose : int
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -257,7 +257,7 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter : int,
         number of iterations to perform for each mini batch
 
-    callback : callable or None, optional (default: None)
+    callback : callable or None, default=None
         callable that gets invoked every five iterations
 
     batch_size : int,
@@ -269,7 +269,7 @@ class MiniBatchSparsePCA(SparsePCA):
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -282,7 +282,7 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
