@@ -70,7 +70,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default=True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
     """
     if l1_ratio == 0:
@@ -154,39 +154,39 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     y : ndarray, shape (n_samples,), or (n_samples, n_outputs)
         Target values
 
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    alphas : ndarray, optional
+    alphas : ndarray, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like, optional
+    Xy : array-like, default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : array, shape (n_features, ) | None
+    coef_init : array, shape (n_features, ) | None, default=None
         The initial values of the coefficients.
 
-    verbose : bool or integer
+    verbose : bool or integer, default=False
         Amount of verbosity.
 
-    return_n_iter : bool
+    return_n_iter : bool, default=False
         whether to return the number of iterations or not.
 
-    positive : bool, default False
+    positive : bool, default=False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
@@ -302,7 +302,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
         Target values.
 
-    l1_ratio : float, optional
+    l1_ratio : float, default=0.5
         Number between 0 and 1 passed to elastic net (scaling between
         l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso.
 
@@ -310,10 +310,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, optional
+    alphas : ndarray, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -322,27 +322,27 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like, optional
+    Xy : array-like, default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    copy_X : bool, optional, default True
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : array, shape (n_features, ) | None
+    coef_init : array, shape (n_features, ) | None, default=None
         The initial values of the coefficients.
 
-    verbose : bool or int
+    verbose : bool or int, default=False
         Amount of verbosity.
 
-    return_n_iter : bool
+    return_n_iter : bool, default=False
         Whether to return the number of iterations or not.
 
-    positive : bool, default False
+    positive : bool, default=False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
-    check_input : bool, default True
+    check_input : bool, default=True
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
 
@@ -526,7 +526,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    alpha : float, optional
+    alpha : float, default=1.0
         Constant that multiplies the penalty terms. Defaults to 1.0.
         See the notes for the exact mathematical meaning of this
         parameter. ``alpha = 0`` is equivalent to an ordinary least square,
@@ -534,17 +534,17 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    l1_ratio : float
+    l1_ratio : float, default=0.5
         The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
         ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If ``False``, the
         data is assumed to be already centered.
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -557,27 +557,27 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``True`` to preserve sparsity.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    positive : bool, optional
+    positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -585,7 +585,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -811,19 +811,19 @@ class Lasso(ElasticNet):
 
     Parameters
     ----------
-    alpha : float, optional
+    alpha : float, default=1.0
         Constant that multiplies the L1 term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    fit_intercept : boolean, optional, default True
+    fit_intercept : boolean, default=True
         Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -837,27 +837,27 @@ class Lasso(ElasticNet):
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    positive : bool, optional
+    positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -865,7 +865,7 @@ class Lasso(ElasticNet):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -956,21 +956,21 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     path_params : dictionary
         Parameters passed to the path function
 
-    alphas : array-like, optional
+    alphas : array-like, default=None
         Array of float that is used for cross-validation. If not
         provided, computed using 'path'.
 
-    l1_ratio : float, optional
+    l1_ratio : float, default=1
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
         < l1_ratio < 1``, the penalty is a combination of L1 and L2.
 
-    X_order : {'F', 'C', or None}, optional
+    X_order : {'F', 'C', or None}, default=None
         The order of the arrays expected by the path function to
         avoid memory copies
 
-    dtype : a numpy dtype or None
+    dtype : a numpy dtype or None, default=None
         The dtype of the arrays expected by the path function to
         avoid memory copies
     """
@@ -1240,23 +1240,23 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     Parameters
     ----------
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    alphas : numpy array, optional
+    alphas : numpy array, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    fit_intercept : boolean, default True
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1264,24 +1264,24 @@ class LassoCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1298,19 +1298,19 @@ class LassoCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : bool or integer
+    verbose : bool or integer, default=False
         Amount of verbosity.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    positive : bool, optional
+    positive : bool, default=False
         If positive, restrict regression coefficients to be positive
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -1318,7 +1318,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -1402,7 +1402,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Parameters
     ----------
-    l1_ratio : float or array of floats, optional
+    l1_ratio : float or array of floats, default=0.5
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
@@ -1414,23 +1414,23 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
         .9, .95, .99, 1]``
 
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path, used for each l1_ratio.
 
-    alphas : numpy array, optional
+    alphas : numpy array, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1438,21 +1438,21 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1469,22 +1469,22 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    positive : bool, optional
+    positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -1492,7 +1492,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -1623,21 +1623,21 @@ class MultiTaskElasticNet(Lasso):
 
     Parameters
     ----------
-    alpha : float, optional
+    alpha : float, default=None
         Constant that multiplies the L1/L2 term. Defaults to 1.0
 
-    l1_ratio : float
+    l1_ratio : float, default=0.5
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
         For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
         is an L2 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1645,24 +1645,24 @@ class MultiTaskElasticNet(Lasso):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -1670,7 +1670,7 @@ class MultiTaskElasticNet(Lasso):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -1815,7 +1815,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     Parameters
     ----------
-    alpha : float, optional
+    alpha : float, default=None
         Constant that multiplies the L1/L2 term. Defaults to 1.0
 
     fit_intercept : boolean
@@ -1823,7 +1823,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1831,24 +1831,24 @@ class MultiTaskLasso(MultiTaskElasticNet):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    warm_start : bool, optional
+    warm_start : bool, default=None
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -1856,7 +1856,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -1950,23 +1950,23 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
         .9, .95, .99, 1]``
 
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    alphas : array-like, optional
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If not provided, set automatically.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1974,16 +1974,16 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -2000,20 +2000,20 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation. Note that this is
         used only if multiple values for l1_ratio are given.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -2021,7 +2021,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -2126,23 +2126,23 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     Parameters
     ----------
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    alphas : array-like, optional
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If not provided, set automatically.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -2150,19 +2150,19 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : int, optional
+    max_iter : int, default=1000
         The maximum number of iterations.
 
-    tol : float, optional
+    tol : float, default=1e-4
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -2179,17 +2179,17 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    verbose : bool or integer
+    verbose : bool or integer, default=False
         Amount of verbosity.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation. Note that this is
         used only if multiple values for l1_ratio are given.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
@@ -2197,7 +2197,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'
 
-    selection : str, default 'cyclic'
+    selection : str, default='cyclic'
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
