@@ -4,7 +4,6 @@ import warnings
 import os
 
 from tempfile import NamedTemporaryFile
-from inspect import isclass, isfunction
 from itertools import product
 
 import pytest
@@ -34,6 +33,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
+from sklearn.utils import _safe_indexing
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
@@ -1058,29 +1058,37 @@ def test_deprecate_positional_args_warns_for_class():
         A2(1, 2, 3, 4)
 
 
-def test_check_fit_params():
+@pytest.mark.parametrize("indices", [None, [1, 3]])
+def test_check_fit_params(indices):
     X = np.random.randn(4, 2)
     fit_params = {
         'list': [1, 2, 3, 4],
-        'tuple': (1, 2, 3, 4),
         'array': np.array([1, 2, 3, 4]),
         'sparse-col': sp.csc_matrix([1, 2, 3, 4]).T,
         'sparse-row': sp.csc_matrix([1, 2, 3, 4]),
-        'scalar-func': accuracy_score,
-        'scalar-class': KNeighborsClassifier,
         'scalar-int': 1,
         'scalar-str': 'xxx',
         'None': None,
     }
-    result = _check_fit_params(X, fit_params)
+    result = _check_fit_params(X, fit_params, indices)
+    indices_ = indices if indices is not None else list(range(X.shape[0]))
 
     assert isinstance(result['list'], list)
-    assert isinstance(result['tuple'], tuple)
     assert isinstance(result['array'], np.ndarray)
     assert result['sparse-col'].format == 'csr'
     assert result['sparse-row'].format == 'csc'
-    assert isfunction(result['scalar-func'])
-    assert isclass(result['scalar-class'])
     assert result['scalar-int'] == 1
     assert result['scalar-str'] == 'xxx'
     assert result['None'] is None
+
+    assert result['list'] == _safe_indexing(fit_params['list'], indices_)
+    assert_array_equal(
+        result['array'], _safe_indexing(fit_params['array'], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result['sparse-col'],
+        _safe_indexing(fit_params['sparse-col'], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result['sparse-row'], fit_params['sparse-row']
+    )
