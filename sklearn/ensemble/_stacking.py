@@ -38,7 +38,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0,
+                 stack_method="auto", n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
@@ -265,7 +265,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         A classifier which will be used to combine the base estimators.
         The default classifier is a `LogisticRegression`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, an iterable or None, default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -288,8 +288,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
            will increase. ``cv`` is not used for model evaluation but for
            prediction.
 
-    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
-            default='auto'
+    stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, default="auto"
         Methods called for each base estimator. It can be:
 
         * if 'auto', it will try to invoke, for each estimator,
@@ -299,7 +298,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           `'predict'`. If the method is not implemented by the estimator, it
           will raise an error.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, default=None
         The number of jobs to run in parallel all `estimators` `fit`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
@@ -366,7 +365,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, passthrough=False,
+                 stack_method="auto", n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
             estimators=estimators,
@@ -521,7 +520,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         A regressor which will be used to combine the base estimators.
         The default regressor is a `RidgeCV`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, an iterable or None, default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -544,7 +543,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
            will increase. ``cv`` is not used for model evaluation but for
            prediction.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.

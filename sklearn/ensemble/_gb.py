@@ -145,7 +145,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
+                 warm_start=False, presort="deprecated",
                  validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-4):
 
@@ -781,29 +781,29 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'deviance', 'exponential'}, optional (default='deviance')
+    loss : {'deviance', 'exponential'}, default="deviance"
         loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
         boosting recovers the AdaBoost algorithm.
 
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
-    n_estimators : int (default=100)
+    n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
-    subsample : float, optional (default=1.0)
+    subsample : float, default=1.0
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : string, optional (default="friedman_mse")
+    criterion : {'friedman_mse', 'mse', 'mae'}, default="friedman_mse"
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
         score by Friedman, "mse" for mean squared error, and "mae" for
@@ -813,7 +813,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.18
 
-    min_samples_split : int, float, optional (default=2)
+    min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
@@ -824,7 +824,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_samples_leaf : int, float, optional (default=1)
+    min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
         least ``min_samples_leaf`` training samples in each of the left and
@@ -839,18 +839,18 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, optional (default=0.)
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_depth : integer, optional (default=3)
+    max_depth : int, default=3
         maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_impurity_decrease : float, optional (default=0.)
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -868,7 +868,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float or None, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -878,19 +878,19 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    init : estimator or 'zero', optional (default=None)
+    init : {'zero'}, estimator or None, default=None
         An estimator object that is used to compute the initial predictions.
         ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : {'auto', 'sqrt', 'log2'}, int, float or None, default=None
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -909,34 +909,34 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    verbose : int, default: 0
+    verbose : int, default=0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
         than 1 then it prints progress and performance for every tree.
 
-    max_leaf_nodes : int or None, optional (default=None)
+    max_leaf_nodes : int or None, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    warm_start : bool, default: False
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : deprecated, default='deprecated'
+    presort : {'deprecated'}, default="deprecated"
         This parameter is deprecated and will be removed in v0.24.
 
         .. deprecated :: 0.22
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default None
+    n_iter_no_change : int or None, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
         default it is set to None to disable early stopping. If set to a
@@ -947,14 +947,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.20
 
-    tol : float, optional, default 1e-4
+    tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
 
         .. versionadded:: 0.20
 
-    ccp_alpha : non-negative float, optional (default=0.0)
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
@@ -1029,14 +1029,14 @@ shape (n_estimators, ``loss_.K``)
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
+    def __init__(self, loss="deviance", learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, criterion="friedman_mse", min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.0,
+                 max_depth=3, min_impurity_decrease=0.0,
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='deprecated', validation_fraction=0.1,
+                 presort="deprecated", validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
@@ -1252,30 +1252,30 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
+    loss : {'ls', 'lad', 'huber', 'quantile'}, default="ls"
         loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
-    n_estimators : int (default=100)
+    n_estimators : int, default=100
         The number of boosting stages to perform. Gradient boosting
         is fairly robust to over-fitting so a large number usually
         results in better performance.
 
-    subsample : float, optional (default=1.0)
+    subsample : float, default=1.0
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
         Boosting. `subsample` interacts with the parameter `n_estimators`.
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : string, optional (default="friedman_mse")
+    criterion : {'friedman_mse', 'mse', 'mae'}, default="friedman_mse"
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
         score by Friedman, "mse" for mean squared error, and "mae" for
@@ -1285,7 +1285,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.18
 
-    min_samples_split : int, float, optional (default=2)
+    min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
 
         - If int, then consider `min_samples_split` as the minimum number.
@@ -1296,7 +1296,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_samples_leaf : int, float, optional (default=1)
+    min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
         least ``min_samples_leaf`` training samples in each of the left and
@@ -1311,18 +1311,18 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, optional (default=0.)
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_depth : integer, optional (default=3)
+    max_depth : int, default=3
         maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_impurity_decrease : float, optional (default=0.)
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1340,7 +1340,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=0)
+    min_impurity_split : float or None, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1350,20 +1350,20 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    init : estimator or 'zero', optional (default=None)
+    init : {'zero'}, estimator or None, default=None
         An estimator object that is used to compute the initial predictions.
         ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
         initial raw predictions are set to zero. By default a
         ``DummyEstimator`` is used, predicting either the average target value
         (for loss='ls'), or a quantile for the other losses.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : {'auto', 'sqrt', 'log2'}, int, float or None, default=None
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1382,38 +1382,38 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    alpha : float (default=0.9)
+    alpha : float, default=0.9
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
 
-    verbose : int, default: 0
+    verbose : int, default=0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
         than 1 then it prints progress and performance for every tree.
 
-    max_leaf_nodes : int or None, optional (default=None)
+    max_leaf_nodes : int or None, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    warm_start : bool, default: False
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : deprecated, default='deprecated'
+    presort : {'deprecated'}, default="deprecated"
         This parameter is deprecated and will be removed in v0.24.
 
         .. deprecated :: 0.22
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
 
-    n_iter_no_change : int, default None
+    n_iter_no_change : int or None, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
         default it is set to None to disable early stopping. If set to a
@@ -1424,14 +1424,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.20
 
-    tol : float, optional, default 1e-4
+    tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
 
         .. versionadded:: 0.20
 
-    ccp_alpha : non-negative float, optional (default=0.0)
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
@@ -1493,13 +1493,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
+    def __init__(self, loss="ls", learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, criterion="friedman_mse", min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.0,
+                 max_depth=3, min_impurity_decrease=0.0,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
+                 warm_start=False, presort="deprecated",
                  validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 

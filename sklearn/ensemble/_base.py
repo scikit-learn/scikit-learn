@@ -85,13 +85,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object or None, default=None
         The base estimator from which the ensemble is built.
 
-    n_estimators : integer
+    n_estimators : int, default=10
         The number of estimators in the ensemble.
 
-    estimator_params : list of strings
+    estimator_params : list of strings or tuple of strings, default=tuple()
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 

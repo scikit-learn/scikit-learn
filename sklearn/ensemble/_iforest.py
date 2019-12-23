@@ -50,10 +50,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Parameters
     ----------
-    n_estimators : int, optional (default=100)
+    n_estimators : int, default=100
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, optional (default="auto")
+    max_samples : {'auto'}, int or float, default="auto"
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
@@ -62,7 +62,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
-    contamination : 'auto' or float, optional (default='auto')
+    contamination : {'auto'} or float, default="auto"
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
         on the scores of the samples.
@@ -75,24 +75,24 @@ class IsolationForest(OutlierMixin, BaseBagging):
            The default value of ``contamination`` changed from 0.1
            to ``'auto'``.
 
-    max_features : int or float, optional (default=1.0)
+    max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator.
 
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : bool, optional (default=False)
+    bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
         is performed.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
         :meth:`predict`. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    behaviour : str, default='deprecated'
+    behaviour : {'deprecated'}, default="deprecated"
         This parameter has not effect, is deprecated, and will be removed.
 
         .. versionadded:: 0.20
@@ -106,16 +106,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
            ``behaviour`` parameter is deprecated in 0.22 and removed in
            0.24.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Controls the verbosity of the tree building process.
 
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
@@ -182,10 +182,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
                  n_estimators=100,
                  max_samples="auto",
                  contamination="auto",
-                 max_features=1.,
+                 max_features=1.0,
                  bootstrap=False,
                  n_jobs=None,
-                 behaviour='deprecated',
+                 behaviour="deprecated",
                  random_state=None,
                  verbose=0,
                  warm_start=False):
