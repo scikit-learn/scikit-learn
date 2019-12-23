@@ -38,15 +38,15 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     n_nonzero_coefs : int
         Targeted number of non-zero elements
 
-    tol : float
+    tol : float, default=None
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_X : bool, optional
+    copy_X : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -153,22 +153,22 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_nonzero_coefs : int
         Targeted number of non-zero elements
 
-    tol_0 : float
+    tol_0 : float, default=None
         Squared norm of y, required if tol is not None.
 
-    tol : float
+    tol : float, default=None
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_Gram : bool, optional
+    copy_Gram : bool, default=True
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy : bool, optional
+    copy_Xy : bool, default=True
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -291,23 +291,23 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute : {True, False, 'auto'},
+    precompute : {True, False, 'auto'}, default=False
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
-    copy_X : bool, optional
+    copy_X : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    return_n_iter : bool, optional default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -427,26 +427,26 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared : array-like, shape (n_targets,)
+    norms_squared : array-like, shape (n_targets,), default=None
         Squared L2 norms of the lines of y. Required if tol is not None.
 
-    copy_Gram : bool, optional
+    copy_Gram : bool, default=True
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy : bool, optional
+    copy_Xy : bool, default=True
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    return_n_iter : bool, optional default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -550,15 +550,15 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float, optional
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : boolean, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -566,7 +566,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : {True, False, 'auto'}, default 'auto'
+    precompute : {True, False, 'auto'}, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
         :term:`n_samples` is very large. Note that if you already have such
@@ -694,16 +694,16 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     y_test : array, shape (n_samples)
         The target variable to compute the residues on
 
-    copy : boolean, optional
+    copy : boolean, default=True
         Whether X_train, X_test, y_train and y_test should be copied.  If
         False, they may be overwritten.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : boolean, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -711,7 +711,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : integer, default=100
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 100 by default.
 
@@ -762,17 +762,17 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    copy : bool, optional
+    copy : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : boolean, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -780,11 +780,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : integer, default=None
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -801,13 +801,13 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean or integer, optional
+    verbose : boolean or integer, default=False
         Sets the verbosity amount
 
     Attributes
