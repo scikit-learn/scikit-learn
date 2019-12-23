@@ -1,3 +1,4 @@
+
 # Authors: Rob Zinkov, Mathieu Blondel
 # License: BSD 3 clause
 
@@ -89,7 +90,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
 
-    class_weight : dict, {class_label: weight} or "balanced" or None, default=None
+    class_weight : dict, {class_label: weight} or "balanced" or None, \
+            default=None
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
