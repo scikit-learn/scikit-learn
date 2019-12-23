@@ -51,6 +51,7 @@ numpydoc_class_members_toctree = False
 if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
     imgmath_image_format = 'svg'
+    mathjax_path = ''
 else:
     extensions.append('sphinx.ext.mathjax')
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
