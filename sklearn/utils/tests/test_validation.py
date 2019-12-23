@@ -28,7 +28,6 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
-from sklearn.metrics import accuracy_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
