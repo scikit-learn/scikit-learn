@@ -1865,6 +1865,7 @@ def test_scalar_fit_param(SearchCV, param_search):
     model.fit(X, y, r=42)
     assert model.best_estimator_.r_ == 42
 
+
 def _custom_lgbm_metric(y_test, y_pred):
     # y_pred are probablities which need to be thresholded
     y_pred = (y_pred > 0.5).astype(int)
