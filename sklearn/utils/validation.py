@@ -872,8 +872,8 @@ def check_is_fitted(estimator, attributes=None, msg=None):
         Eg.: ``["coef_", "estimator_", ...], "coef_"``
 
         If `None`, `estimator` is considered fitted if there exist an
-        attribute that starts or ends with a underscore and does not start
-        with double underscore.
+        attribute that ends with a underscore and does not start with double
+        underscore.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
