@@ -852,7 +852,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes=None, msg=None):
+def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -885,6 +885,9 @@ def check_is_fitted(estimator, attributes=None, msg=None):
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
+
     Returns
     -------
     None
@@ -906,7 +909,7 @@ def check_is_fitted(estimator, attributes=None, msg=None):
     if attributes is not None:
         if not isinstance(attributes, (list, tuple)):
             attributes = [attributes]
-        attrs = all([hasattr(estimator, attr) for attr in attributes])
+        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
     else:
         attrs = [v for v in vars(estimator)
                  if v.endswith("_") and not v.startswith("__")]
