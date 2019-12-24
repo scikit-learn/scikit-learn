@@ -56,7 +56,7 @@ def test_fetch_asframe():
 )
 def test_pandas_dependency_message():
     try:
-        import pandas
+        import pandas  # noqa
         pytest.skip("This test requires pandas to be not installed")
     except ImportError:
         # Check that pandas is imported lazily and that an informative error
