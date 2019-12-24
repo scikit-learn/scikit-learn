@@ -862,12 +862,12 @@ def check_is_fitted(estimator, attributes=None, msg=None):
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : str, list or tuple of str or None, default=None
+    attributes : str, list or tuple of str, default=None
         Attribute name(s) given as string or a list/tuple of strings
         Eg.: ``["coef_", "estimator_", ...], "coef_"``
 
-        If None, `estimator` is considered fitted if there exist an attribute
-        that starts or ends with a underscore and does not start
+        If `None`, `estimator` is considered fitted if there exist an
+        attribute that starts or ends with a underscore and does not start
         with double underscore.
 
     msg : string
@@ -904,8 +904,7 @@ def check_is_fitted(estimator, attributes=None, msg=None):
         attrs = all([hasattr(estimator, attr) for attr in attributes])
     else:
         attrs = [v for v in vars(estimator)
-                 if (v.endswith("_") or v.startswith("_"))
-                 and not v.startswith("__")]
+                 if v.endswith("_") and not v.startswith("__")]
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
