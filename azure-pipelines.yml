@@ -71,11 +71,11 @@ jobs:
         JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
-      # It runs tests requiring pandas and PyAMG.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        # FIXME: pinned until SciPy wheels are available for Python 3.8
-        PYTHON_VERSION: '3.8'
+        # Pin the python version to 3.7 since lightgbm is not available for 3.8
+        PYTHON_VERSION: '3.7'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
