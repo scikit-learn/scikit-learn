@@ -350,8 +350,9 @@ boolean mask array or callable
         """
         check_is_fitted(self)
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
-            if trans == 'drop':
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop' or (
+                    hasattr(column, '__len__') and not len(column)):
                 continue
             elif trans == 'passthrough':
                 raise NotImplementedError(

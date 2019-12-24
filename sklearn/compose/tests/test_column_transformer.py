@@ -1266,3 +1266,19 @@ def test_make_column_selector_pickle():
     selector_picked = pickle.loads(pickle.dumps(selector))
 
     assert_array_equal(selector(X_df), selector_picked(X_df))
+
+
+def test_feature_names_empty_columns():
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({"x1": ["a", "a", "b", "c"], "x2": ["z", "z", "z", "z"]})
+
+    ct = ColumnTransformer(
+        transformers=[
+            ("ohe", OneHotEncoder(), ["x1", "x2"]),
+            ("empty_features", OneHotEncoder(), []),
+        ],
+    )
+
+    ct.fit(df)
+    assert ct.get_feature_names() == ["x1", "x2"]
