@@ -54,14 +54,14 @@ def test_fetch_asframe():
     _is_california_housing_dataset_not_available(),
     reason='Download California Housing dataset to run this test'
 )
-def test_pandas_dependency_message()
+def test_pandas_dependency_message():
     try:
         import pandas
         pytest.skip("This test requires pandas to be not installed")
     except ImportError:
-        # Check that pandas is imported lazily and that an informative error message is
-        # raised when pandas is missing:
-        expected_msg = "fetch_california_housing with as_frame=True requires pandas"
+        # Check that pandas is imported lazily and that an informative error
+        # message is raised when pandas is missing:
+        expected_msg = ('fetch_california_housing with as_frame=True'
+                        ' requires pandas')
         with pytest.raises(ImportError, match=expected_msg):
             fetch_california_housing(as_frame=True)
-            
