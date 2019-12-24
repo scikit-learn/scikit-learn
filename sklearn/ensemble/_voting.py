@@ -401,7 +401,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Returns
         -------
         self : object
-            Returns self.
+            Fitted estimator.
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
@@ -436,9 +436,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        predictions
-            Array-like of shape (n_samples, n_classifiers), being
-            values predicted by each regressor.
+        predictions: array of shape (n_samples, n_classifiers)
+            Values predicted by each regressor.
         """
         check_is_fitted(self)
         return self._predict(X)

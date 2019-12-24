@@ -539,13 +539,8 @@ class TransformerMixin:
         y : numpy array of shape [n_samples]
             Target values.
 
-<<<<<<< HEAD
-        **fit_params : Any number of parameters
-            Fit parameters.
-=======
         **fit_params : dict
             Additional fit parameters.
->>>>>>> 9408203ac43f69f51ec068d4ae7a721761e94c9d
 
         Returns
         -------
@@ -560,7 +555,6 @@ class TransformerMixin:
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
-
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
