@@ -126,7 +126,7 @@ class SimpleImputer(_BaseImputer):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    strategy : string, optional (default="mean")
+    strategy : string, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -141,16 +141,16 @@ class SimpleImputer(_BaseImputer):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
-    fill_value : string or numerical value, optional (default=None)
+    fill_value : string or numerical value, default=None
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
-    verbose : integer, optional (default=0)
+    verbose : integer, default=0
         Controls the verbosity of the imputer.
 
-    copy : boolean, optional (default=True)
+    copy : boolean, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
@@ -159,7 +159,7 @@ class SimpleImputer(_BaseImputer):
         - If X is encoded as a CSR matrix;
         - If add_indicator=True.
 
-    add_indicator : boolean, optional (default=False)
+    add_indicator : boolean, default=False
         If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
@@ -470,7 +470,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         `missing_values` will be indicated (True in the output array), the
         other values will be marked as False.
 
-    features : str, optional
+    features : str, default=None
         Whether the imputer mask should represent all or a subset of
         features.
 
@@ -478,7 +478,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
           features containing missing values during fit time.
         - If "all", the imputer mask will represent all features.
 
-    sparse : boolean or "auto", optional
+    sparse : boolean or "auto", default=None
         Whether the imputer mask format should be sparse or dense.
 
         - If "auto" (default), the imputer mask will be of same type as
@@ -486,7 +486,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, optional
+    error_on_new : boolean, default=None
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
         in fit. This is applicable only when ``features="missing-only"``.
