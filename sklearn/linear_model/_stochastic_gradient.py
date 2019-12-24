@@ -98,8 +98,20 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         # but we are not allowed to set attributes
         self._validate_params()
 
-    def set_params(self, *args, **kwargs):
-        super().set_params(*args, **kwargs)
+    def set_params(self, **kwargs):
+        """Set and validate the parameters of estimator.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self : object
+            Estimator instance.
+        """
+        super().set_params(**kwargs)
         self._validate_params()
         return self
 
@@ -627,10 +639,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of the training data
+            Subset of the training data.
 
         y : numpy array, shape (n_samples,)
-            Subset of the target values
+            Subset of the target values.
 
         classes : array, shape (n_classes,)
             Classes across all calls to partial_fit.
@@ -646,7 +658,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns an instance of self.
+        self :
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         if self.class_weight in ['balanced']:
@@ -670,10 +683,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : numpy array, shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
@@ -685,11 +698,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
-            constructor) if class_weight is specified
+            constructor) if class_weight is specified.
 
         Returns
         -------
-        self : returns an instance of self.
+        self :
+            Returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
@@ -777,8 +791,8 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, default=0
-        The verbosity level
+    verbose : int, default=0
+        The verbosity level.
 
     epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
@@ -802,7 +816,7 @@ class SGDClassifier(BaseSGDClassifier):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : str, optional
         The learning rate schedule:
 
         'constant':
@@ -855,7 +869,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -898,6 +912,14 @@ class SGDClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    sklearn.svm.LinearSVC: Linear support vector classification.
+    LogisticRegression: Logistic regression.
+    Perceptron: Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
+        ``SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant",
+        penalty=None)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -910,11 +932,6 @@ class SGDClassifier(BaseSGDClassifier):
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.LinearSVC, LogisticRegression, Perceptron
-
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
@@ -958,6 +975,7 @@ class SGDClassifier(BaseSGDClassifier):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data for prediction.
 
         Returns
         -------
@@ -1034,7 +1052,8 @@ class SGDClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data for prediction.
 
         Returns
         -------

@@ -49,7 +49,7 @@ feature, code or documentation improvement).
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a compiler with OpenMP_ support for your platform. See intructions
+#. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
@@ -101,6 +101,12 @@ Build dependencies
 
 Building Scikit-learn also requires:
 
+..
+    # The following places need to be in sync with regard to Cython version:
+    # - .circleci config file
+    # - sklearn/_build_utils/__init__.py
+    # - advanced installation guide
+
 - Cython >= 0.28.5
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
@@ -108,10 +114,12 @@ Building Scikit-learn also requires:
 
 .. note::
 
-   It is possible to build scikit-learn without OpenMP support by setting the
-   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
-   not recommended since it will force some estimators to run in sequential
-   mode.
+   If OpenMP is not supported by the compiler, the build will be done with
+   OpenMP functionalities disabled. This is not recommended since it will force
+   some estimators to run in sequential mode instead of leveraging thread-based
+   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+   (before cythonization) will force the build to fail if OpenMP is not
+   supported.
 
 Since version 0.21, scikit-learn automatically detects and use the linear
 algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
@@ -217,9 +225,13 @@ to enable OpenMP support:
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you use the conda package manager, you can install the ``compilers``
-meta-package from the conda-forge channel, which provides OpenMP-enabled C/C++
-compilers based on the llvm toolchain.
+If you use the conda package manager (version >= 4.7), you can install the
+``compilers`` meta-package from the conda-forge channel, which provides
+OpenMP-enabled C/C++ compilers based on the llvm toolchain.
+
+First install the macOS command line tools::
+
+    xcode-select --install
 
 It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
@@ -252,7 +264,8 @@ variables::
     echo $LDFLAGS
 
 They point to files and folders from your ``sklearn-dev`` conda environment
-(in particular in the bin/, include/ and lib/ subfolders).
+(in particular in the bin/, include/ and lib/ subfolders). For instance
+``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
 
 In the log, you should see the compiled extension being built with the clang
 and clang++ compilers installed by conda with the ``-fopenmp`` command line
@@ -264,11 +277,17 @@ macOS compilers from Homebrew
 Another solution is to enable OpenMP support for the clang compiler shipped
 by default on macOS.
 
-You first need to install the OpenMP library using Homebrew_::
+First install the macOS command line tools::
+
+    xcode-select --install
+
+Install the Homebrew_ package manager for macOS.
+
+Install the LLVM OpenMP library::
 
     brew install libomp
 
-Then you need to set the following environment variables::
+Set the following environment variables::
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -355,7 +374,7 @@ Finally, build the package using the standard command::
 
     pip install --verbose --editable .
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
