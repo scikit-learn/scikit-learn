@@ -1844,7 +1844,7 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [(GridSearchCV, {'a': [0.1, 0.01]}),
-     (RandomizedSearchCV, {'a': np.random.randint(1, 3, size=2)})]
+     (RandomizedSearchCV, {'a': uniform(1, 3)})]
 )
 def test_scalar_fit_param(SearchCV, param_search):
     # unofficially sanctioned tolerance for scalar values in fit_params
