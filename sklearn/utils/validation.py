@@ -857,6 +857,9 @@ def check_is_fitted(estimator, attributes=None, msg=None):
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
+    This utility is meant to be used internally by estimators them-selves,
+    typically in their own predict / transform methods.
+
     Parameters
     ----------
     estimator : estimator instance.
