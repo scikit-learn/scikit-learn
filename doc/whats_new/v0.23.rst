@@ -94,6 +94,10 @@ Changelog
   type and details.
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
+- |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
+  when `y=None`.
+  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -106,3 +110,9 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
+  :pr:`15926` by :user:`Loïc Estève <lesteve>`.
