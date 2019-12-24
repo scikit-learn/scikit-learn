@@ -92,6 +92,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
+    # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps
 fi
 

@@ -36,7 +36,6 @@ jobs:
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
-        LIGHTGBM_VERSION: '*'
         PILLOW_VERSION: '*'
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
@@ -72,7 +71,7 @@ jobs:
         JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
-      # It runs tests requiring pandas and PyAMG.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.8'
