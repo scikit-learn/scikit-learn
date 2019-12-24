@@ -12,7 +12,7 @@ class Perceptron(BaseSGDClassifier):
     Parameters
     ----------
 
-    penalty : 'l2' or 'l1' or 'elasticnet', default=None
+    penalty : {'l2','l1','elasticnet'}, default=None
         The penalty (aka regularization term) to be used.
 
     alpha : float, default=0.0001
@@ -30,7 +30,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float or None, default=1e-3
+    tol : float, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
@@ -39,7 +39,7 @@ class Perceptron(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level
 
     eta0 : double, default=1
@@ -97,18 +97,18 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
+    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else [n_classes,\
             n_features]
         Weights assigned to the features.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
     t_ : int
