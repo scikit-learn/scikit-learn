@@ -244,12 +244,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples, )
+        y : ndarray of shape (n_samples, )
             Target values.
 
         Returns
         -------
-        validation_mask : array, shape (n_samples, )
+        validation_mask : ndarray of shape (n_samples, )
             Equal to 1 on the validation set, 0 on the training set.
         """
         n_samples = y.shape[0]
@@ -641,10 +641,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data.
 
-        y : numpy array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Subset of the target values.
 
-        classes : array, shape (n_classes,), default=None
+        classes : ndarray of shape (n_classes,), default=None
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -685,13 +685,13 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
-        y : numpy array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values.
 
-        coef_init : array, shape (n_classes, n_features), default=None
+        coef_init : ndarray of shape (n_classes, n_features), default=None
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : array, shape (n_classes,), default=None
+        intercept_init : ndarray of shape (n_classes,), default=None
             The initial intercept to warm-start the optimization.
 
         sample_weight : array-like, shape (n_samples,), default=None
@@ -754,7 +754,7 @@ class SGDClassifier(BaseSGDClassifier):
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
-    penalty : str, 'none', 'l2', 'l1', or 'elasticnet', default='l2'
+    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -892,11 +892,11 @@ class SGDClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
-            n_features)
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
     n_iter_ : int
@@ -978,7 +978,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         Returns
         -------
-        array, shape (n_samples, n_classes)
+        ndarray of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
 
@@ -1197,13 +1197,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data
 
-        y : numpy array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values
 
-        coef_init : array, shape (n_features,), default=None
+        coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : array, shape (1,), default=None
+        intercept_init : ndarray of shape (1,), default=None
             The initial intercept to warm-start the optimization.
 
         sample_weight : array-like, shape (n_samples,), default=None
@@ -1228,7 +1228,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        array, shape (n_samples,)
+        ndarray of shape (n_samples,)
            Predicted target values per element in X.
         """
         check_is_fitted(self)
@@ -1248,7 +1248,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         Returns
         -------
-        array, shape (n_samples,)
+        ndarray of shape (n_samples,)
            Predicted target values per element in X.
         """
         return self._decision_function(X)
@@ -1370,7 +1370,7 @@ class SGDRegressor(BaseSGDRegressor):
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
 
-    penalty : str, 'none', 'l2', 'l1', or 'elasticnet', default='l2'
+    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -1405,7 +1405,7 @@ class SGDRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level.
 
     epsilon : float, default=0.1
@@ -1489,16 +1489,16 @@ class SGDRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : ndarray of shape (n_features,)
         Weights assigned to the features.
 
-    intercept_ : array, shape (1,)
+    intercept_ : ndarray of shape (1,)
         The intercept term.
 
-    average_coef_ : array, shape (n_features,)
+    average_coef_ : ndarray of shape (n_features,)
         Averaged weights assigned to the features.
 
-    average_intercept_ : array, shape (1,)
+    average_intercept_ : ndarray of shape (1,)
         The averaged intercept term.
 
     n_iter_ : int
