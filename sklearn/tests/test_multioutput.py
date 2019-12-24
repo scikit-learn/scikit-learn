@@ -563,24 +563,28 @@ def test_deprecation():
         A(SGDRegressor(random_state=0, max_iter=5))
 
 
-def test_test_multi_target_regression_with_fit_param():
-    import lightgbm as lgb
+def test_test_multi_target_regression_with_fit_params():
+
+    class GradientBoostingRegressorTestFitParam(GradientBoostingRegressor):
+        def fit(self, X, y, sample_weight=None, monitor=None, **fit_params):
+            self.fit_params = fit_params
+            super().fit(X, y, sample_weight=sample_weight)
+
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
-    X_eval, y_eval = X[50:70], y[50:70]
-    X_test, y_test = X[70:], y[70:]
+    X_test, y_test = X[50:], y[50:]
+    sample_weight = np.random.random((50, ))
 
     references = np.zeros_like(y_test)
     for n in range(3):
-        rgr = lgb.LGBMRegressor(random_state=0)
-        rgr.fit(X_train, y_train[:, n])
+        rgr = GradientBoostingRegressorTestFitParam(random_state=0)
+        rgr.fit(X_train, y_train[:, n], sample_weight=sample_weight)
         references[:, n] = rgr.predict(X_test)
 
-    rgr = MultiOutputRegressor(lgb.LGBMRegressor())
-    fit_param = {'eval_set': (X_eval, y_eval), 'early_stopping_rounds': 2}
-    rgr.fit(X_train, y_train, fit_param=fit_param)
+    rgr = GradientBoostingRegressorTestFitParam(random_state=0)
+    rgr = MultiOutputRegressor(rgr)
+    rgr.fit(X_train, y_train, sample_weight=sample_weight, should_succeed=True)
     y_pred = rgr.predict(X_test)
-    try:
-        assert_almost_equal(references, y_pred)
-    except:
-        print('pass')
+    assert_almost_equal(references, y_pred)
+    for estimator_ in rgr.estimators_:
+        assert 'should_succeed' in estimator_.fit_params
