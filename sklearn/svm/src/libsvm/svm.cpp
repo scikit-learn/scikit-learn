@@ -58,6 +58,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdarg.h>
 #include "svm.h"
+#include "immintrin.h"
+#include "stdint.h"
 
 #ifndef _LIBSVM_CPP
 typedef float Qfloat;
@@ -392,10 +394,41 @@ Kernel::~Kernel()
 double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 {
 	double sum = 0;
-
 	int dim = min(px->dim, py->dim);
+#if defined(__AVX512F__)
+	double* base_x = px->values;
+	double* base_y = py->values;
+	int alignment;
+	int align_x =(int) (((uintptr_t) base_x) & (sizeof(__m512d)-1));
+	if (align_x) {
+		int offset = (sizeof(__m512d) - align_x) / sizeof(double);
+		alignment= offset < dim ? offset : dim;
+	} else {
+		alignment = 0;
+	}
+	for (int j = 0; j < alignment; j++) {
+		sum += (px->values)[j] * (py->values)[j];
+	}
+	int n_dim = (dim - alignment) / sizeof(double);
+	base_x = base_x + alignment;
+	base_y = base_y + alignment;
+	__m512d rk512_sum = _mm512_setzero_pd();
+	__m512d rk512_0;
+	__m512d rk512_1;
+	int n_i;
+	for (n_i = 0; n_i < n_dim; n_i++) {
+		rk512_0 = _mm512_load_pd(base_x + (n_i<<3));
+		rk512_1 = _mm512_loadu_pd(base_y + (n_i<<3));
+		rk512_sum = _mm512_fmadd_pd(rk512_0, rk512_1, rk512_sum);
+	}
+	sum = _mm512_reduce_add_pd(rk512_sum);
+	for (int i = (n_i<<3) + alignment; i < dim; i++) {
+		sum += (px->values)[i] * (py->values)[i];
+	}
+#else	
 	for (int i = 0; i < dim; i++)
 		sum += (px->values)[i] * (py->values)[i];
+#endif	
 	return sum;
 }
 
@@ -404,8 +437,40 @@ double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
 	double sum = 0;
 
 	int dim = min(px.dim, py.dim);
+#if defined(__AVX512F__)
+	double* base_x = px.values;
+	double* base_y = py.values;
+	int alignment;
+	int align_x =(int) (((uintptr_t) base_x) & (sizeof(__m512d)-1));
+	if (align_x) {
+		int offset = (sizeof(__m512d) - align_x) / sizeof(double);
+		alignment = offset < dim ? offset : dim;
+	} else {
+		alignment = 0;
+	}
+	for (int j = 0; j < alignment; j++) {
+		sum += px.values[j] * py.values[j];
+	}
+	int n_dim = (dim - alignment) / 8;
+	base_x = base_x + alignment;
+	base_y = base_y + alignment;
+	__m512d rk512_sum = _mm512_setzero_pd();
+	__m512d rk512_0;
+	__m512d rk512_1;
+	int n_i;
+	for (n_i = 0; n_i < n_dim; n_i++) {
+		rk512_0 = _mm512_load_pd(base_x + (n_i<<3));
+		rk512_1 = _mm512_loadu_pd(base_y + (n_i<<3));
+		rk512_sum = _mm512_fmadd_pd(rk512_0, rk512_1, rk512_sum);
+	}
+	sum = _mm512_reduce_add_pd(rk512_sum);
+	for (int i = (n_i<<3) + alignment; i < dim; i++) {
+		sum += px.values[i] * py.values[i];
+	}
+#else	
 	for (int i = 0; i < dim; i++)
 		sum += px.values[i] * py.values[i];
+#endif
 	return sum;
 }
 #else
@@ -446,11 +511,47 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			double sum = 0;
 #ifdef _DENSE_REP
 			int dim = min(x->dim, y->dim), i;
+#if defined(__AVX512F__)
+			double* base_x = x->values;
+			double* base_y = y->values;
+			int alignment;
+			int align_x =(int) (((uintptr_t) base_x) & (sizeof(__m512d)-1));
+			if (align_x) {
+				int offset = (sizeof(__m512d) - align_x) / sizeof(double);
+				alignment = offset < dim ? offset : dim;
+			} else {
+				alignment = 0;
+			}
+			for (int j = 0; j < alignment; j++) {
+				double d = x->values[i] - y->values[i];
+				sum += d*d;
+			}
+			int n_dim = (dim - alignment) / sizeof(double);
+			base_x = base_x + alignment;
+			base_y = base_y + alignment;
+			int n_i;
+			__m512d rk512_0;
+			__m512d rk512_1;
+			__m512d rk512_2;
+			__m512d rk512_sum = _mm512_setzero_pd();
+			for (n_i = 0; n_i < n_dim; n_i++) {
+				rk512_0 = _mm512_load_pd(base_x + (n_i<<3));
+				rk512_1 = _mm512_loadu_pd(base_y + (n_i<<3));
+				rk512_2 = _mm512_sub_pd(rk512_0, rk512_1);
+				rk512_sum = _mm512_fmadd_pd(rk512_2, rk512_2, rk512_sum);
+			}
+			sum = _mm512_reduce_add_pd(rk512_sum);
+			for (i = (n_i<<3) + alignment; i < dim; i++) {
+				double d = x->values[i] - y->values[i];
+				sum += d*d;
+			}
+#else
 			for (i = 0; i < dim; i++)
 			{
 				double d = x->values[i] - y->values[i];
 				sum += d*d;
 			}
+#endif
 			for (; i < x->dim; i++)
 				sum += x->values[i] * x->values[i];
 			for (; i < y->dim; i++)
