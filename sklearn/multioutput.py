@@ -141,9 +141,8 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Only supported if the underlying regressor supports sample
             weights.
 
-        fit_params : optional parameters for estimator to call
-            `estimator.fit`.
-
+        **fit_params : dict of string -> object
+            Parameters passed to the ``estimator.fit`` method of each step.
 
         Returns
         -------
