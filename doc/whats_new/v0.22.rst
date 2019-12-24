@@ -67,13 +67,6 @@ Changelog
   restore some backward compatibility with the behavior of this utility in
   version 0.21. :pr:`15947` by `Thomas Fan`_.
 
-:mod:`sklearn.inspection`
-.........................
-
-- |Fix| :func:`inspection.plot_partial_dependence` and 
-  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
-  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
-
 .. _changes_0_22:
 
 Version 0.22.0
