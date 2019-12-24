@@ -54,9 +54,9 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| :class:`compose.ColumnTransformer` method ``get_feature_names`` now returns
-  correct results when one of the transformer steps applies on an empty column list
-  :pr:`15963` by `Roman Yurchak`_.
+- |Fix| :class:`compose.ColumnTransformer` method ``get_feature_names`` now
+  returns correct results when one of the transformer steps applies on an
+  empty list of columns :pr:`15963` by `Roman Yurchak`_.
 
 :mod:`sklearn.datasets`
 .......................
