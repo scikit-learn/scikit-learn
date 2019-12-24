@@ -563,13 +563,13 @@ def test_deprecation():
         A(SGDRegressor(random_state=0, max_iter=5))
 
 
+class GradientBoostingRegressorTestFitParam(GradientBoostingRegressor):
+    def fit(self, X, y, sample_weight=None, monitor=None, **fit_params):
+        self.fit_params = fit_params
+        super().fit(X, y, sample_weight=sample_weight)
+
+
 def test_test_multi_target_regression_with_fit_params():
-
-    class GradientBoostingRegressorTestFitParam(GradientBoostingRegressor):
-        def fit(self, X, y, sample_weight=None, monitor=None, **fit_params):
-            self.fit_params = fit_params
-            super().fit(X, y, sample_weight=sample_weight)
-
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
     X_test, y_test = X[50:], y[50:]
