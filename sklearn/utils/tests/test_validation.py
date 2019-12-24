@@ -15,7 +15,6 @@ import scipy.sparse as sp
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
@@ -51,7 +50,6 @@ from sklearn.utils.validation import (
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import TempMemmap
@@ -677,6 +675,34 @@ def test_check_is_fitted():
 
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
+
+
+def test_check_is_fitted_attributes():
+    class MyEstimator():
+        def fit(self, X, y):
+            return self
+
+    msg = "not fitted"
+    est = MyEstimator()
+
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.a_ = "a"
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.b_ = "b"
+    check_is_fitted(est, attributes=["a_", "b_"])
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
 
 
 @pytest.mark.parametrize("wrap",
