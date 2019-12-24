@@ -48,3 +48,17 @@ def test_fetch_asframe():
     assert frame.shape == (20640, 9)
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.DataFrame)
+
+
+def _pandas_is_missing():
+    try:
+        import pandas
+    except ImportError:
+        raise SkipTest('fetch_california_housing with as_frame=True'
+                       ' requires pandas')
+
+
+@pytest.mark.skipif(
+    _pandas_is_missing(),
+    reason='Import pandas library to run this test'
+)

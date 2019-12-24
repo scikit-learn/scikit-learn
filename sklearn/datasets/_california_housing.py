@@ -84,6 +84,8 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
 
+        .. versionadded:: 0.23
+
     Returns
     -------
     dataset : dict-like object with the following attributes:
@@ -109,6 +111,8 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     frame : pandas DataFrame
         Only present when `as_frame=True`. DataFrame with ``data`` and
         ``target``.
+
+        .. versionadded:: 0.23
 
     Notes
     -----
