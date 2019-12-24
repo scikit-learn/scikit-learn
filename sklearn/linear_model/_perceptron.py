@@ -97,8 +97,8 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
+    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else \
+        [n_classes, n_features]
         Weights assigned to the features.
 
     intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
