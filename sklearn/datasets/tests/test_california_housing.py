@@ -50,15 +50,18 @@ def test_fetch_asframe():
     assert isinstance(bunch.target, pd.DataFrame)
 
 
-def _pandas_is_missing():
+@pytest.mark.skipif(
+    _is_california_housing_dataset_not_available(),
+    reason='Download California Housing dataset to run this test'
+)
+def test_pandas_dependency_message()
     try:
         import pandas
+        pytest.skip("This test requires pandas to be not installed")
     except ImportError:
-        raise SkipTest('fetch_california_housing with as_frame=True'
-                       ' requires pandas')
-
-
-@pytest.mark.skipif(
-    _pandas_is_missing(),
-    reason='Import pandas library to run this test'
-)
+        # Check that pandas is imported lazily and that an informative error message is
+        # raised when pandas is missing:
+        expected_msg = "fetch_california_housing with as_frame=True requires pandas"
+        with pytest.raises(ImportError, match=expected_msg):
+            fetch_california_housing(as_frame=True)
+            
