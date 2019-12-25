@@ -166,9 +166,10 @@ def check_classification_targets(y):
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
                       'multilabel-indicator', 'multilabel-sequences']:
-        raise ValueError(
-            "Sparse multilabel-indicator are not supported. Lable type: %r"
-            % y_type)
+        if issparse(y):
+            raise TypeError("multilabel-indicator of type Sparse are not supported.")
+        else:
+            raise ValueError("Unknown Lable type: %r" % y_type)
 
 
 def type_of_target(y):
