@@ -798,7 +798,7 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2 3 4 5 6 7] TEST: [8 9]
     TRAIN: [0 1 2 3 4 5 6 7 8 9] TEST: [10 11]
     >>> # Add in a 2 period gap
-    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2, gap_size=2)
+    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2, gap=2)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
