@@ -168,7 +168,7 @@ def check_classification_targets(y):
                       'multilabel-indicator', 'multilabel-sequences']:
         raise ValueError(
             "Sparse multilabel-indicator are not supported. Lable type: %r"
-             % y_type)
+            % y_type)
 
 
 def type_of_target(y):
