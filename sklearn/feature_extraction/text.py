@@ -5,8 +5,10 @@
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
+#          Angel Delgado <delgadopanadero@gmail.com>
 #
 # License: BSD 3 clause
+
 """
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
@@ -1558,7 +1560,7 @@ class TfidfVectorizer(CountVectorizer):
     decode_error : {'strict', 'ignore', 'replace'} (default='strict')
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. By default, it is
-        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        'strict', meaning that a UnicodeDecodeError will be raised. Otherpython
         values are 'ignore' and 'replace'.
 
     strip_accents : {'ascii', 'unicode', None} (default=None)
@@ -1896,3 +1898,515 @@ class TfidfVectorizer(CountVectorizer):
 
     def _more_tags(self):
         return {'X_types': ['string'], '_skip_test': True}
+		
+		
+class TffvTransformer(BaseEstimator, TransformerMixin):
+    """
+    This object is performs an improvement from the tf-idf vectorization specially in
+    inbalanced text classification according to the results obtained in
+
+        Liu, Y. et al., Imbalanced text classification:
+        A term weighting approach, Expert Systems with Applications (2007),
+        doi:10.1016/j.eswa.2007.10.042
+
+    This new scheme directly utilizes two critical information ratios, i.e. relevance
+    indicators. Such relevance indicators are nicely supported by probability estimates
+    which embody the category membership.
+
+    Fundamental information elements used for feature selection in text classification
+    A denotes the number of documents belonging to category ci where the term tk occurs
+    at least once; B denotes the number of documents not belonging to category ci where
+    the term tk occurs at least once; C denotes the number of documents belonging to
+    category ci where the term tk does not occur; D denotes the number of documents not
+    belonging to category ci where the term tk does not occur.
+
+    We decide to compute those term values using the most direct information, e.g. A, B
+    and C, and combine them in a sensible way which is different from existing feature
+    selection measures. From Table 2, two important ratios which directly indicate
+    terms’ relevance with respect to a specific category are noted, i.e. A/B and A/C:
+
+       A/B: if term tk is highly relevant to category ci only, which basically indicates
+       that tk is a good feature to represent category ci, then the value of A/B tends
+       to be higher.
+
+       A/C: given two terms tk, tl and a category ci, the term with a higher value of A/C,
+       will be the better feature to represent ci, since a larger portion of it occurs
+       with category ci.
+
+    In the following of this paper, we name A/B and A/C relevance indicators since these
+    two ratios immediately indicate the term’s strength in representing a category. In
+    fact, these two indicators are nicely supported by probability estimates.
+
+    https://ccc.inaoep.mx/~villasen/bib/Imbalanced%20text%20classification-%20A%20term%20weighting%20approach.pdf
+
+    Parameters
+    ----------
+    norm : 'l1', 'l2' or None, optional (default='l2')
+        Each output row will have unit norm, either:
+        * 'l2': Sum of squares of vector elements is 1. The cosine
+        similarity between two vectors is their dot product when l2 norm has
+        been applied.
+        * 'l1': Sum of absolute values of vector elements is 1.
+        See :func:`preprocessing.normalize`
+    use_fv : boolean (default=True)
+        Enable the feature value implementation reweighting.
+    sublinear_tf : boolean (default=False)
+        Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
+    Attributes
+    ----------
+    fv_ : array, shape (n_features)
+        The vector of values of the feature value coeficients; only defined
+        if  ``use_fv`` is True.
+
+    References
+    ----------
+    ..  Liu, Y. et al., Imbalanced text classification:
+        A term weighting approach, Expert Systems with Applications (2007),
+        doi:10.1016/j.eswa.2007.10.042
+
+    """
+
+    ###############################  WARNING  ###################################
+    # The tffv take into account no only the term frequency and in a document and
+    # accross the documents, but also the frecuency of a term in "the category". I
+    # suppose that "the category" to use is the real category of the document in
+    # the training dataset. In other case, the documents should have a different
+    # tffv representation for each category.
+    #
+    # The problem is, How do I encode new documents in the tffv representation not
+    # knowing the intrinsic caterogry?
+    #
+    # AD HOC SOLUTIONS:
+    #  - Compute the tffv for both categories and take the maximum of both for each
+    #    word
+    #  - Compute the tffv only for the minor category.
+
+    def __init__(self, norm='l2', use_fv=True, sublinear_tf=False):
+        self.norm = norm
+        self.use_fv = use_fv
+        self.sublinear_tf = sublinear_tf
+
+    def fit(self, X, y):
+
+        """
+        Learn the -fv vector through the relevance terms:
+
+          - A/B: if term tk is highly relevant to category ci only, which basically
+            indicates that tk is a good feature to represent category ci, then the value
+            of A/B tends to be higher.
+
+          - A/C: given two terms tk, tl and a category ci, the term with a higher value
+            of A/C, will be the better feature to represent ci, since a larger portion
+            of it occurs with category ci.
+
+        Parameters
+        ----------
+        X : sparse matrix, [n_samples, n_features]
+            a matrix of term/token counts
+
+        y : array-like, shape = [n_samples]
+            Target values.
+        """
+
+        X = check_array(X, accept_sparse=('csr', 'csc'))
+
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X)
+
+        dtype = X.dtype if X.dtype in FLOAT_DTYPES else np.float64
+
+        if self.use_fv:
+            n_samples, n_features = X.shape
+            labels = np.unique(y).tolist()
+
+            a_values = np.zeros(shape=[n_features, len(labels)])
+            b_values = np.zeros(shape=[n_features, len(labels)])
+            c_values = np.zeros(shape=[n_features, len(labels)])
+            d_values = np.zeros(shape=[n_features, len(labels)])
+            targets = np.array(y).reshape((-1, 1))
+
+            # Information theory values
+            for i in range(n_features):
+                for l in range(len(labels)):
+                    # Number of documents from the category C that has the term T
+                    a_values[i, l] = np.sum(np.logical_and(targets == labels[l], X[:, i].todense() != 0))
+                    # Number of documents not from the category C that has the term T
+                    b_values[i, l] = np.sum(np.logical_and(targets != labels[l], X[:, i].todense() != 0))
+                    # Number of documents from the category C that has not the term T
+                    c_values[i, l] = np.sum(np.logical_and(targets == labels[l], X[:, i].todense() == 0))
+                    # Number of documents not from the category C that has not the term T
+                    d_values[i, l] = np.sum(np.logical_and(targets != labels[l], X[:, i].todense() == 0))
+
+            # This is specific to this implementation
+            with np.errstate(divide='ignore', invalid='ignore'):
+                relevance = np.divide(np.square(a_values),np.multiply(b_values,c_values))
+                relevance = np.nan_to_num(relevance)
+
+            fv_values = np.log(1+relevance)
+            fv_values = np.amax(fv_values, axis=1)
+
+            # Write coeficients as a diagonal matrix
+            self._fv_diag = sp.diags(fv_values,
+                                     offsets=0,
+                                     shape=(n_features, n_features),
+                                     format="csr",
+                                     dtype=dtype)
+
+        return self
+
+    def transform(self, X, copy=True):
+
+        """
+        Transform a count matrix to a tf or tf-fv representation
+
+        Parameters
+        ----------
+        X : sparse matrix, [n_samples, n_features]
+            a matrix of term/token counts
+        copy : boolean, default True
+            Whether to copy X and operate on the copy or perform in-place
+            operations.
+
+        Returns
+        -------
+        vectors : sparse matrix, [n_samples, n_features]
+        """
+
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
+        if not sp.issparse(X):
+            X = sp.csr_matrix(X, dtype=np.float64)
+
+        n_samples, n_features = X.shape
+
+        if self.sublinear_tf:
+            np.log(X.data, X.data)
+            X.data += 1
+
+        if self.use_fv:
+            check_is_fitted(self, msg='fv vector is not fitted')
+            expected_n_features = self._fv_diag.shape[0]
+            if n_features != expected_n_features:
+                raise ValueError("Input has n_features=%d while the model "
+                                 "has been trained with n_features=%d" % \
+                                 (n_features, expected_n_features))
+            X = X * self._fv_diag
+
+        if self.norm:
+            X = normalize(X, norm=self.norm, copy=False)
+
+        return X
+
+    @property
+    def fv_(self):
+        # if _fv is not set, this will raise an attribute error,
+        # which means hasattr(self, "fv_") is False
+        return np.ravel(self._fv_diag.sum(axis=0))
+
+    @fv_.setter
+    def fv_(self, value):
+        value = np.asarray(value, dtype=np.float64)
+        n_features = value.shape[0]
+        self._fv_diag = sp.spdiags(value, diags=0, m=n_features,
+                                   n=n_features, format='csr')
+
+
+class TffvVectorizer(CountVectorizer):
+    """
+    Convert a collection of raw documents to a matrix of TF-IDF features.
+    Equivalent to :class:`CountVectorizer` followed by :class:`TffvTransformer`.
+    This follows the same idea as the TfidfVectorizer.
+
+    Parameters
+    ----------
+    input : str {'filename', 'file', 'content'}
+        If 'filename', the sequence passed as an argument to fit is
+        expected to be a list of filenames that need reading to fetch
+        the raw content to analyze.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
+    encoding : str, default='utf-8'
+        If bytes or files are given to analyze, this encoding is used to
+        decode.
+    decode_error : {'strict', 'ignore', 'replace'} (default='strict')
+        Instruction on what to do if a byte sequence is given to analyze that
+        contains characters not of the given `encoding`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
+    strip_accents : {'ascii', 'unicode', None} (default=None)
+        Remove accents and perform other character normalization
+        during the preprocessing step.
+        'ascii' is a fast method that only works on characters that have
+        an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
+        Both 'ascii' and 'unicode' use NFKD normalization from
+        :func:`unicodedata.normalize`.
+    lowercase : bool (default=True)
+        Convert all characters to lowercase before tokenizing.
+    preprocessor : callable or None (default=None)
+        Override the preprocessing (string transformation) stage while
+        preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
+    tokenizer : callable or None (default=None)
+        Override the string tokenization step while preserving the
+        preprocessing and n-grams generation steps.
+        Only applies if ``analyzer == 'word'``.
+    analyzer : str, {'word', 'char', 'char_wb'} or callable
+        Whether the feature should be made of word or character n-grams.
+        Option 'char_wb' creates character n-grams only from text inside
+        word boundaries; n-grams at the edges of words are padded with space.
+        If a callable is passed it is used to extract the sequence of features
+        out of the raw, unprocessed input.
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
+    stop_words : str {'english'}, list, or None (default=None)
+        If a string, it is passed to _check_stop_list and the appropriate stop
+        list is returned. 'english' is currently the only supported string
+        value.
+        There are several known issues with 'english' and you should
+        consider an alternative (see :ref:`stop_words`).
+        If a list, that list is assumed to contain stop words, all of which
+        will be removed from the resulting tokens.
+        Only applies if ``analyzer == 'word'``.
+        If None, no stop words will be used. max_df can be set to a value
+        in the range [0.7, 1.0) to automatically detect and filter stop
+        words based on intra corpus document frequency of terms.
+    token_pattern : str
+        Regular expression denoting what constitutes a "token", only used
+        if ``analyzer == 'word'``. The default regexp selects tokens of 2
+        or more alphanumeric characters (punctuation is completely ignored
+        and always treated as a token separator).
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
+        The lower and upper boundary of the range of n-values for different
+        n-grams to be extracted. All values of n such that min_n <= n <= max_n
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
+    max_df : float in range [0.0, 1.0] or int (default=1.0)
+        When building the vocabulary ignore terms that have a document
+        frequency strictly higher than the given threshold (corpus-specific
+        stop words).
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+    min_df : float in range [0.0, 1.0] or int (default=1)
+        When building the vocabulary ignore terms that have a document
+        frequency strictly lower than the given threshold. This value is also
+        called cut-off in the literature.
+        If float, the parameter represents a proportion of documents, integer
+        absolute counts.
+        This parameter is ignored if vocabulary is not None.
+    max_features : int or None (default=None)
+        If not None, build a vocabulary that only consider the top
+        max_features ordered by term frequency across the corpus.
+        This parameter is ignored if vocabulary is not None.
+    vocabulary : Mapping or iterable, optional (default=None)
+        Either a Mapping (e.g., a dict) where keys are terms and values are
+        indices in the feature matrix, or an iterable over terms. If not
+        given, a vocabulary is determined from the input documents.
+    binary : bool (default=False)
+        If True, all non-zero term counts are set to 1. This does not mean
+        outputs will have only 0/1 values, only that the tf term in tf-idf
+        is binary. (Set idf and normalization to False to get 0/1 outputs).
+    dtype : type, optional (default=float64)
+        Type of the matrix returned by fit_transform() or transform().
+    norm : 'l1', 'l2' or None, optional (default='l2')
+        Each output row will have unit norm, either:
+        * 'l2': Sum of squares of vector elements is 1. The cosine
+        similarity between two vectors is their dot product when l2 norm has
+        been applied.
+        * 'l1': Sum of absolute values of vector elements is 1.
+        See :func:`preprocessing.normalize`.
+    use_fv : bool (default=True)
+        Enable feature value reweighting.
+    sublinear_tf : bool (default=False)
+        Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
+    Attributes
+    ----------
+    vocabulary_ : dict
+        A mapping of terms to feature indices.
+    fixed_vocabulary_: bool
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+    idf_ : array, shape (n_features)
+        The inverse document frequency (IDF) vector; only defined
+        if ``use_idf`` is True.
+    stop_words_ : set
+        Terms that were ignored because they either:
+          - occurred in too many documents (`max_df`)
+          - occurred in too few documents (`min_df`)
+          - were cut off by feature selection (`max_features`).
+        This is only available if no vocabulary was given.
+
+    See Also
+    --------
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
+    TffvTransformer : Performs the feature values transformation from a provided
+        matrix of counts.
+    TfidfTransformer : Performs the TF-IDF transformation from a provided
+        matrix of counts.
+
+    Notes
+    -----
+    The ``stop_words_`` attribute can get large and increase the model size
+    when pickling. This attribute is provided only for introspection and can
+    be safely removed using delattr or set to None before pickling.
+    """
+
+    def __init__(self,
+                 input='content',
+                 encoding='utf-8',
+                 decode_error='strict',
+                 strip_accents=None,
+                 lowercase=True,
+                 preprocessor=None,
+                 tokenizer=None,
+                 analyzer='word',
+                 stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1),
+                 max_df=1.0,
+                 min_df=1,
+                 max_features=None,
+                 vocabulary=None,
+                 binary=False,
+                 dtype=np.float64,
+                 norm='l2',
+                 use_fv=True,
+                 sublinear_tf=False):
+
+        super().__init__(input=input,
+                         encoding=encoding,
+                         decode_error=decode_error,
+                         strip_accents=strip_accents,
+                         lowercase=lowercase,
+                         preprocessor=preprocessor,
+                         tokenizer=tokenizer,
+                         analyzer=analyzer,
+                         stop_words=stop_words,
+                         token_pattern=token_pattern,
+                         ngram_range=ngram_range,
+                         max_df=max_df,
+                         min_df=min_df,
+                         max_features=max_features,
+                         vocabulary=vocabulary,
+                         binary=binary,
+                         dtype=dtype)
+
+        self._tffv = TffvTransformer(norm=norm,
+                                     use_fv=use_fv,
+                                     sublinear_tf=sublinear_tf)
+
+    # Broadcast the TFFV parameters to the underlying transformer instance
+    # for easy grid search and repr
+
+    @property
+    def norm(self):
+        return self._tffv.norm
+
+    @norm.setter
+    def norm(self, value):
+        self._tffv.norm = value
+
+    @property
+    def use_fv(self):
+        return self._tffv.use_fv
+
+    @use_fv.setter
+    def use_fv(self, value):
+        self._tffv.use_fv = value
+
+    @property
+    def sublinear_tf(self):
+        return self._tffv.sublinear_tf
+
+    @sublinear_tf.setter
+    def sublinear_tf(self, value):
+        self._tffv.sublinear_tf = value
+
+    @property
+    def fv_(self):
+        return self._tffv.fv_
+
+    @fv_.setter
+    def fv_(self, value):
+        self._validate_vocabulary()
+        if hasattr(self, 'vocabulary_'):
+            if len(self.vocabulary_) != len(value):
+                raise ValueError("fv length = %d must be equal "
+                                 "to vocabulary size = %d" %
+                                 (len(value), len(self.vocabulary)))
+        self._tffv.fv_ = value
+
+    def _check_params(self):
+        if self.dtype not in FLOAT_DTYPES:
+            warnings.warn("Only {} 'dtype' should be used. {} 'dtype' will "
+                          "be converted to np.float64."
+                          .format(FLOAT_DTYPES, self.dtype),
+                          UserWarning)
+
+    def fit(self, raw_documents, y):
+
+        """
+        Learn vocabulary and fv from training set.
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            An iterable which yields either str, unicode or file objects.
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Fitted vectorizer.
+        """
+
+        self._check_params()
+        X = super().fit_transform(raw_documents)
+        self._tffv.fit(X, y)
+        return self
+
+    def fit_transform(self, raw_documents, y):
+
+        """
+        Learn vocabulary and fv, return term-document matrix.
+        This is equivalent to fit followed by transform, but more efficiently
+        implemented.
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            An iterable which yields either str, unicode or file objects.
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            Tf-fv-weighted document-term matrix.
+        """
+
+        self._check_params()
+        X = super().fit_transform(raw_documents)
+        self._tffv.fit(X, y)
+        # X is already a transformed view of raw_documents so
+        # we set copy to False
+        return self._tffv.transform(X, copy=False)
+
+    def transform(self, raw_documents, copy=True):
+        check_is_fitted(self, msg='fv vector is not fitted')
+        X = super().transform(raw_documents)
+        return self._tffv.transform(X, copy=False)
+
+    def _more_tags(self):
+        return {'X_types': ['string'], '_skip_test': True}
+
