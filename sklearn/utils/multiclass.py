@@ -171,7 +171,7 @@ def check_classification_targets(y):
                 "multilabel-indicator of type Sparse are not supported."
                 )
         else:
-            raise ValueError("Unknown Lable type: %r" % y_type)
+            raise ValueError("Unknown lable type: %r" % y_type)
 
 
 def type_of_target(y):
