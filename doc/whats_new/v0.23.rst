@@ -66,6 +66,12 @@ Changelog
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
+  
 :mod:`sklearn.linear_model`
 ...........................
 

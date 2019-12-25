@@ -494,21 +494,6 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
-<<<<<<< HEAD
-- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
-
-- |Feature| Gaussian process models on structured data: :class:`gaussian_process.GaussianProcessRegressor`
-  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
-  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
-  to their training/prediction methods.
-  A user-defined kernel should be provided for computing the kernel matrix among
-  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
-  to notify the GPR/GPC model that it handles non-vectorial samples.
-  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
-
-=======
->>>>>>> 9408203ac43f69f51ec068d4ae7a721761e94c9d
 :mod:`sklearn.impute`
 .....................
 
