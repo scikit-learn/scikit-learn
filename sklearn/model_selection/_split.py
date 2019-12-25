@@ -852,7 +852,8 @@ class TimeSeriesSplit(_BaseKFold):
         n_splits = self.n_splits
         n_folds = n_splits + 1
         gap = self.gap
-        test_size = self.test_size if self.test_size else n_samples // n_folds
+        test_size = self.test_size if self.test_size is not None \
+            else n_samples // n_folds
 
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
