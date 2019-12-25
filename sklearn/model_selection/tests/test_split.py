@@ -1544,11 +1544,11 @@ def test_time_series_test_size():
                          TimeSeriesSplit(n_splits=5, test_size=2).split(X))
 
 
-def test_time_series_gap_size():
+def test_time_series_gap():
     X = np.zeros((10, 1))
 
     # Test alone
-    splits = TimeSeriesSplit(n_splits=2, gap_size=2).split(X)
+    splits = TimeSeriesSplit(n_splits=2, gap=2).split(X)
 
     train, test = next(splits)
     assert_array_equal(train, [0, 1])
@@ -1559,7 +1559,7 @@ def test_time_series_gap_size():
     assert_array_equal(test, [7, 8, 9])
 
     # Test with max_train_size
-    splits = TimeSeriesSplit(n_splits=3, gap_size=2, max_train_size=2).split(X)
+    splits = TimeSeriesSplit(n_splits=3, gap=2, max_train_size=2).split(X)
 
     train, test = next(splits)
     assert_array_equal(train, [0, 1])
@@ -1574,7 +1574,7 @@ def test_time_series_gap_size():
     assert_array_equal(test, [8, 9])
 
     # Test with test_size
-    splits = TimeSeriesSplit(n_splits=2, gap_size=2,
+    splits = TimeSeriesSplit(n_splits=2, gap=2,
                              max_train_size=4, test_size=2).split(X)
 
     train, test = next(splits)
@@ -1587,9 +1587,9 @@ def test_time_series_gap_size():
 
     # Verify proper error is thrown
     assert_raises_regexp(ValueError,
-                         "Too many splits.*and gap_size",
+                         "Too many splits.*and gap",
                          next,
-                         TimeSeriesSplit(n_splits=4, gap_size=2).split(X))
+                         TimeSeriesSplit(n_splits=4, gap=2).split(X))
 
 
 def test_nested_cv():
