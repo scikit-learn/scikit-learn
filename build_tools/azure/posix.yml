@@ -2,15 +2,18 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  dependsOn: []
 
 jobs:
 - job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
+    PYTEST_VERSION: '5.2.1'
     OMP_NUM_THREADS: '4'
     OPENBLAS_NUM_THREADS: '4'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
@@ -21,7 +24,10 @@ jobs:
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
-      condition: eq(variables['DISTRIB'], 'conda')
+      condition: startsWith(variables['DISTRIB'], 'conda')
+    - bash: sudo chown -R $USER $CONDA
+      displayName: Take ownership of conda installation
+      condition: startsWith(variables['DISTRIB'], 'conda')
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'

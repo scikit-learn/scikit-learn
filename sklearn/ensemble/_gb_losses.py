@@ -879,6 +879,6 @@ LOSS_FUNCTIONS = {
     'lad': LeastAbsoluteError,
     'huber': HuberLossFunction,
     'quantile': QuantileLossFunction,
-    'deviance': None,    # for both, multinomial and binomial
+    'deviance': None,  # for both, multinomial and binomial
     'exponential': ExponentialLoss,
 }

@@ -11,11 +11,18 @@ IF "%PYTHON_ARCH%"=="64" (
     call deactivate
     @rem Clean up any left-over from a previous build
     conda remove --all -q -y -n %VIRTUALENV%
-    conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython pytest wheel pillow
+    conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython matplotlib wheel pillow joblib
 
     call activate %VIRTUALENV%
+
+    IF "%PYTEST_VERSION%"=="*" (
+        pip install pytest
+    ) else (
+        pip install pytest==%PYTEST_VERSION%
+    )
+    pip install pytest-xdist
 ) else (
-    pip install numpy scipy cython pytest wheel pillow
+    pip install numpy scipy cython pytest wheel pillow joblib
 )
 if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov

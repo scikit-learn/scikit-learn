@@ -92,7 +92,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         For multi-output, the weights of each column of y will be multiplied.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
     indices : array-like, shape (n_subsample,), or None

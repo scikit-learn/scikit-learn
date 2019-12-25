@@ -3,12 +3,11 @@ from scipy import sparse as sp
 
 import pytest
 
-from sklearn.svm.bounds import l1_min_c
+from sklearn.svm._bounds import l1_min_c
 from sklearn.svm import LinearSVC
-from sklearn.linear_model.logistic import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_raise_message
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -45,8 +44,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log': LogisticRegression(penalty='l1', solver='liblinear',
-                                  multi_class='ovr'),
+        'log': LogisticRegression(penalty='l1', solver='liblinear'),
         'squared_hinge': LinearSVC(loss='squared_hinge',
                                    penalty='l1', dual=False),
     }[loss]
@@ -68,8 +66,10 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 def test_ill_posed_min_c():
     X = [[0, 0], [0, 0]]
     y = [0, 1]
-    assert_raises(ValueError, l1_min_c, X, y)
+    with pytest.raises(ValueError):
+        l1_min_c(X, y)
 
 
 def test_unsupported_loss():
-    assert_raises(ValueError, l1_min_c, dense_X, Y1, 'l1')
+    with pytest.raises(ValueError):
+        l1_min_c(dense_X, Y1, 'l1')
