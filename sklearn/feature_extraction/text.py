@@ -27,7 +27,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
-from ._hashing import FeatureHasher
+from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT, deprecated
@@ -1150,7 +1150,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        if indptr[-1] > 2147483648:  # = 2**31 - 1
+        if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
@@ -1223,8 +1223,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             X.data.fill(1)
 
         if not self.fixed_vocabulary_:
-            X = self._sort_features(X, vocabulary)
-
             n_doc = X.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
@@ -1239,6 +1237,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                                                        max_doc_count,
                                                        min_doc_count,
                                                        max_features)
+
+            X = self._sort_features(X, vocabulary)
 
             self.vocabulary_ = vocabulary
 
