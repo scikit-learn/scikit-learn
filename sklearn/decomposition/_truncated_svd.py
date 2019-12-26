@@ -38,7 +38,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Read more in the :ref:`User Guide <LSA>`.
 
     .. versionadded:: 0.14
-    
+
     Parameters
     ----------
     n_components : int, default = 2
