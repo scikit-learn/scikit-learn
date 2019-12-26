@@ -26,6 +26,7 @@ from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
 from sklearn.datasets._base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.datasets.tests.test_common import check_as_frame
 
 from sklearn.externals._pilutil import pillow_installed
 
@@ -183,6 +184,8 @@ def test_load_diabetes():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_diabetes))
+    # test as_frame option
+    check_as_frame(res, partial(load_diabetes))
 
 
 def test_load_linnerud():
@@ -196,6 +199,8 @@ def test_load_linnerud():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_linnerud))
+    # test as_frame option
+    check_as_frame(res, partial(load_linnerud))
 
 
 def test_load_iris():
@@ -208,6 +213,8 @@ def test_load_iris():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_iris))
+    # test as_frame option
+    check_as_frame(res, partial(load_iris))
 
 
 def test_load_wine():
@@ -219,6 +226,8 @@ def test_load_wine():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_wine))
+    # test as_frame option
+    check_as_frame(res, partial(load_wine))
 
 
 def test_load_breast_cancer():
@@ -231,6 +240,8 @@ def test_load_breast_cancer():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_breast_cancer))
+    # test as_frame option
+    check_as_frame(res, partial(load_breast_cancer))
 
 
 def test_load_boston():
@@ -243,6 +254,8 @@ def test_load_boston():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_boston))
+    # test as_frame option
+    check_as_frame(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():
