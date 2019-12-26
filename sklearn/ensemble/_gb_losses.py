@@ -52,7 +52,7 @@ class LossFunction(metaclass=ABCMeta):
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
 
@@ -202,7 +202,7 @@ class LeastSquaresError(RegressionLossFunction):
         raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         if sample_weight is None:
@@ -285,7 +285,7 @@ class LeastAbsoluteError(RegressionLossFunction):
         raw_predictions : array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         if sample_weight is None:
@@ -361,7 +361,7 @@ class HuberLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -401,7 +401,7 @@ class HuberLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -443,7 +443,7 @@ class QuantileLossFunction(RegressionLossFunction):
     n_classes : int
         Number of classes.
 
-    alpha : float, optional (default = 0.9)
+    alpha : float, default = 0.9
         The percentile.
     """
     def __init__(self, n_classes, alpha=0.9):
@@ -466,7 +466,7 @@ class QuantileLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -596,7 +596,7 @@ class BinomialDeviance(ClassificationLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array , shape (n_samples,), optional
+        sample_weight : 1d array , shape (n_samples,), default=None
             Sample weights.
         """
         # logaddexp(0, v) == log(1.0 + exp(v))
@@ -703,7 +703,7 @@ class MultinomialDeviance(ClassificationLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         # create one-hot label encoding
@@ -731,7 +731,7 @@ class MultinomialDeviance(ClassificationLossFunction):
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        k : int, optional default=0
+        k : int, default=0
             The index of the class.
         """
         return y - np.nan_to_num(np.exp(raw_predictions[:, k] -
@@ -810,7 +810,7 @@ class ExponentialLoss(ClassificationLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
