@@ -171,7 +171,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         .. versionchanged:: 0.22
             Fixed a bug which did not pass **fit_params to the underlying
-            regressor
+            regressor.
 
         """
         y = check_array(y, accept_sparse=False, force_all_finite=True,
