@@ -87,17 +87,19 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD
+    >>> from scipy.sparse import random as sparse_random
     >>> from sklearn.random_projection import sparse_random_matrix
-    >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
+    >>> X = sparse_random(100, 100, density=0.01, format='csr',
+    ...                   random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> print(svd.explained_variance_ratio_)
-    [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    [0.0646... 0.0633... 0.0639... 0.0535... 0.0406...]
     >>> print(svd.explained_variance_ratio_.sum())
-    0.249...
+    0.286...
     >>> print(svd.singular_values_)
-    [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    [1.553... 1.512...  1.510... 1.370... 1.199...]
 
     See also
     --------

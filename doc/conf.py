@@ -16,6 +16,7 @@ import sys
 import os
 import warnings
 import re
+from packaging.version import parse
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -50,6 +51,7 @@ numpydoc_class_members_toctree = False
 if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
     imgmath_image_format = 'svg'
+    mathjax_path = ''
 else:
     extensions.append('sphinx.ext.mathjax')
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
@@ -85,7 +87,7 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 #
 # The short X.Y version.
 import sklearn
-version = sklearn.__version__
+version = parse(sklearn.__version__).base_version
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 
@@ -245,17 +247,16 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
-if 'dev' in version:
+v = parse(release)
+if v.release is None:
+    raise ValueError(
+        'Ill-formed version: {!r}. Version should follow '
+        'PEP440'.format(version))
+
+if v.is_devrelease:
     binder_branch = 'master'
 else:
-    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
-    if match is None:
-        raise ValueError(
-            'Ill-formed version: {!r}. Expected either '
-            "a version containing 'dev' "
-            'or a version like X.Y or X.Y.Z.'.format(version))
-
-    major, minor = match.groups()
+    major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
 
 
@@ -304,7 +305,9 @@ sphinx_gallery_conf = {
         'branch': binder_branch,
         'dependencies': './binder/requirements.txt',
         'use_jupyter_lab': True
-    }
+    },
+    # avoid generating too many cross links
+    'inspect_global_variables': False,
 }
 
 

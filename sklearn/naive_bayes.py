@@ -21,23 +21,23 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, check_consistent_length
+from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils.validation import _check_sample_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
 
 
-class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
+class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
@@ -115,7 +115,7 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
-class GaussianNB(BaseNB):
+class GaussianNB(_BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
@@ -139,26 +139,23 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    class_prior_ : array, shape (n_classes,)
-        probability of each class.
-
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
+
+    class_prior_ : array, shape (n_classes,)
+        probability of each class.
 
     classes_ : array, shape (n_classes,)
         class labels known to the classifier
 
-    theta_ : array, shape (n_classes, n_features)
-        mean of each feature per class
+    epsilon_ : float
+        absolute additive value to variances
 
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
-    epsilon_ : float
-        absolute additive value to variances
-
-    classes_ : array-like, shape (n_classes,)
-        Unique class labels.
+    theta_ : array, shape (n_classes, n_features)
+        mean of each feature per class
 
     Examples
     --------
@@ -359,8 +356,7 @@ class GaussianNB(BaseNB):
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            check_consistent_length(y, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
@@ -461,13 +457,13 @@ class GaussianNB(BaseNB):
 _ALPHA_MIN = 1e-10
 
 
-class BaseDiscreteNB(BaseNB):
+class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
     Any estimator based on this class should provide:
 
     __init__
-    _joint_log_likelihood(X) as per BaseNB
+    _joint_log_likelihood(X) as per _BaseNB
     """
 
     def _check_X(self, X):
@@ -662,7 +658,7 @@ class BaseDiscreteNB(BaseNB):
         return {'poor_score': True}
 
 
-class MultinomialNB(BaseDiscreteNB):
+class MultinomialNB(_BaseDiscreteNB):
     """
     Naive Bayes classifier for multinomial models
 
@@ -689,38 +685,35 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
-
-    intercept_ : array, shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
-        as a linear model.
-
-    feature_log_prob_ : array, shape (n_classes, n_features)
-        Empirical log probability of features
-        given a class, ``P(x_i|y)``.
-
-    coef_ : array, shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
-        as a linear model.
-
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class.
+
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
+
+    coef_ : array, shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        as a linear model.
 
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    feature_log_prob_ : array, shape (n_classes, n_features)
+        Empirical log probability of features
+        given a class, ``P(x_i|y)``.
+
+    intercept_ : array, shape (n_classes, )
+        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+        as a linear model.
+
     n_features_ : int
         Number of features of each sample.
-
-    classes_ : array-like, shape (n_classes,)
-        Unique class labels.
 
     Examples
     --------
@@ -782,7 +775,7 @@ class MultinomialNB(BaseDiscreteNB):
                 self.class_log_prior_)
 
 
-class ComplementNB(BaseDiscreteNB):
+class ComplementNB(_BaseDiscreteNB):
     """The Complement Naive Bayes classifier described in Rennie et al. (2003).
 
     The Complement Naive Bayes classifier was designed to correct the "severe
@@ -810,33 +803,30 @@ class ComplementNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class. Only used in edge
-        case with a single class in the training set.
-
-    feature_log_prob_ : array, shape (n_classes, n_features)
-        Empirical weights for class complements.
-
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class. Only used in edge
+        case with a single class in the training set.
+
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-
-    feature_count_ : array, shape (n_classes, n_features)
-        Number of samples encountered for each (class, feature) during fitting.
-        This value is weighted by the sample weight when provided.
-
-    n_features_ : int
-        Number of features of each sample.
 
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
 
-    classes_ : array of shape (n_classes,)
-        The classes labels.
+    feature_count_ : array, shape (n_classes, n_features)
+        Number of samples encountered for each (class, feature) during fitting.
+        This value is weighted by the sample weight when provided.
+
+    feature_log_prob_ : array, shape (n_classes, n_features)
+        Empirical weights for class complements.
+
+    n_features_ : int
+        Number of features of each sample.
 
     Examples
     --------
@@ -882,7 +872,7 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        # _BaseNB.predict uses argmax, but ComplementNB operates with argmin.
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
             feature_log_prob = logged / summed
@@ -898,7 +888,7 @@ class ComplementNB(BaseDiscreteNB):
         return jll
 
 
-class BernoulliNB(BaseDiscreteNB):
+class BernoulliNB(_BaseDiscreteNB):
     """Naive Bayes classifier for multivariate Bernoulli models.
 
     Like MultinomialNB, this classifier is suitable for discrete data. The
@@ -917,7 +907,7 @@ class BernoulliNB(BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean, optional (default=True)
+    fit_prior : bool, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
@@ -927,15 +917,12 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape = [n_classes]
-        Log probability of each class (smoothed).
-
-    feature_log_prob_ : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
     class_count_ : array, shape = [n_classes]
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
+
+    class_log_prior_ : array, shape = [n_classes]
+        Log probability of each class (smoothed).
 
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
@@ -945,11 +932,12 @@ class BernoulliNB(BaseDiscreteNB):
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    feature_log_prob_ : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
+
     n_features_ : int
         Number of features of each sample.
 
-    classes_ : array of shape (n_classes,)
-        The classes labels.
 
     Examples
     --------
@@ -966,7 +954,6 @@ class BernoulliNB(BaseDiscreteNB):
 
     References
     ----------
-
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
@@ -1028,7 +1015,7 @@ class BernoulliNB(BaseDiscreteNB):
         return jll
 
 
-class CategoricalNB(BaseDiscreteNB):
+class CategoricalNB(_BaseDiscreteNB):
     """Naive Bayes classifier for categorical features
 
     The categorical Naive Bayes classifier is suitable for classification with
@@ -1055,22 +1042,25 @@ class CategoricalNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
-
-    feature_log_prob_ : list of arrays, len n_features
+    category_count_ : list of arrays, len n_features
         Holds arrays of shape (n_classes, n_categories of respective feature)
-        for each feature. Each array provides the empirical log probability
-        of categories given the respective feature and class, ``P(x_i|y)``.
+        for each feature. Each array provides the number of samples
+        encountered for each class and category of the specific feature.
 
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    category_count_ : list of arrays, len n_features
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class.
+
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
+    feature_log_prob_ : list of arrays, len n_features
         Holds arrays of shape (n_classes, n_categories of respective feature)
-        for each feature. Each array provides the number of samples
-        encountered for each class and category of the specific feature.
+        for each feature. Each array provides the empirical log probability
+        of categories given the respective feature and class, ``P(x_i|y)``.
 
     n_features_ : int
         Number of features of each sample.
@@ -1237,3 +1227,17 @@ class CategoricalNB(BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+# TODO: remove in 0.24
+@deprecated("BaseNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseNB(_BaseNB):
+    pass
+
+
+# TODO: remove in 0.24
+@deprecated("BaseDiscreteNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseDiscreteNB(_BaseDiscreteNB):
+    pass

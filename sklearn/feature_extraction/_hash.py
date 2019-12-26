@@ -43,6 +43,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     n_features : integer, optional
@@ -99,7 +101,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if not isinstance(n_features, numbers.Integral):
             raise TypeError("n_features must be integral, got %r (%s)."
                             % (n_features, type(n_features)))
-        elif n_features < 1 or n_features >= 2 ** 31:
+        elif n_features < 1 or n_features >= np.iinfo(np.int32).max + 1:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
         if input_type not in ("dict", "pair", "string"):

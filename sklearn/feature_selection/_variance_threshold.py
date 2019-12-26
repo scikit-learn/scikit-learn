@@ -31,6 +31,10 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
     variances_ : array, shape (n_features,)
         Variances of individual features.
 
+    Notes
+    -----
+    Allows NaN in the input.
+
     Examples
     --------
     The following dataset has integer features, two of which are the same
@@ -63,7 +67,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, ('csr', 'csc'), dtype=np.float64)
+        X = check_array(X, ('csr', 'csc'), dtype=np.float64,
+                        force_all_finite='allow-nan')
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)
@@ -71,16 +76,18 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                 mins, maxes = min_max_axis(X, axis=0)
                 peak_to_peaks = maxes - mins
         else:
-            self.variances_ = np.var(X, axis=0)
+            self.variances_ = np.nanvar(X, axis=0)
             if self.threshold == 0:
                 peak_to_peaks = np.ptp(X, axis=0)
 
         if self.threshold == 0:
             # Use peak-to-peak to avoid numeric precision issues
             # for constant features
-            self.variances_ = np.minimum(self.variances_, peak_to_peaks)
+            compare_arr = np.array([self.variances_, peak_to_peaks])
+            self.variances_ = np.nanmin(compare_arr, axis=0)
 
-        if np.all(self.variances_ <= self.threshold):
+        if np.all(~np.isfinite(self.variances_) |
+                  (self.variances_ <= self.threshold)):
             msg = "No feature in X meets the variance threshold {0:.5f}"
             if X.shape[0] == 1:
                 msg += " (X contains only one sample)"
@@ -92,3 +99,6 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         check_is_fitted(self)
 
         return self.variances_ > self.threshold
+
+    def _more_tags(self):
+        return {'allow_nan': True}

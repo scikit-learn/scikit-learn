@@ -14,7 +14,7 @@ This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
-The plots show four 1-way and two 1-way partial dependence plots (ommitted for
+The plots show four 1-way and two 1-way partial dependence plots (omitted for
 :class:`~sklearn.neural_network.MLPRegressor` due to computation time). The
 target variables for the one-way PDP are: median income (`MedInc`), average
 occupants per household (`AvgOccup`), median house age (`HouseAge`), and
@@ -107,7 +107,6 @@ tic = time()
 # with the brute method.
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 plot_partial_dependence(est, X_train, features,
-                        feature_names=X_train.columns.tolist(),
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
@@ -148,7 +147,6 @@ tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms',
             ('AveOccup', 'HouseAge')]
 plot_partial_dependence(est, X_train, features,
-                        feature_names=X_train.columns.tolist(),
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()

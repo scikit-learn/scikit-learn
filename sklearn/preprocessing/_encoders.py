@@ -171,6 +171,8 @@ class OneHotEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
+    .. versionchanged:: 0.20
+
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
@@ -403,12 +405,14 @@ class OneHotEncoder(_BaseEncoder):
             n_values = [len(cats) for cats in self.categories_]
 
         mask = X_mask.ravel()
-        n_values = np.array([0] + n_values)
-        feature_indices = np.cumsum(n_values)
+        feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
-        indptr = X_mask.sum(axis=1).cumsum()
-        indptr = np.insert(indptr, 0, 0)
-        data = np.ones(n_samples * n_features)[mask]
+
+        indptr = np.empty(n_samples + 1, dtype=np.int)
+        indptr[0] = 0
+        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.cumsum(indptr[1:], out=indptr[1:])
+        data = np.ones(indptr[-1])
 
         out = sparse.csr_matrix((data, indices, indptr),
                                 shape=(n_samples, feature_indices[-1]),
@@ -550,6 +554,8 @@ class OrdinalEncoder(_BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+
+    .. versionchanged:: 0.20.1
 
     Parameters
     ----------

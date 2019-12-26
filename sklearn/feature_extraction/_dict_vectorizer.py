@@ -154,7 +154,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X = [X] if isinstance(X, Mapping) else X
 
         indices = array("i")
-        indptr = array("i", [0])
+        indptr = [0]
         # XXX we could change values to an array.array as well, but it
         # would require (heuristic) conversion of dtype to typecode...
         values = []
@@ -182,7 +182,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             raise ValueError("Sample sequence X is empty.")
 
         indices = np.frombuffer(indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
         result_matrix = sp.csr_matrix((values, indices, indptr),
