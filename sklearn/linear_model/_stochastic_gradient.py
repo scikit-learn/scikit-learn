@@ -644,11 +644,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Subset of the target values.
 
-<<<<<<< HEAD
-        classes : ndarray of shape (n_classes,)
-=======
         classes : ndarray of shape (n_classes,), default=None
->>>>>>> upstream/master
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -692,17 +688,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Target values.
 
-<<<<<<< HEAD
-        coef_init : ndarray of shape (n_classes, n_features)
-            The initial coefficients to warm-start the optimization.
-
-        intercept_init : ndarray of shape (n_classes,)
-=======
         coef_init : ndarray of shape (n_classes, n_features), default=None
             The initial coefficients to warm-start the optimization.
 
         intercept_init : ndarray of shape (n_classes,), default=None
->>>>>>> upstream/master
             The initial intercept to warm-start the optimization.
 
         sample_weight : array-like, shape (n_samples,), default=None
