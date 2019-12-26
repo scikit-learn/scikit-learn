@@ -359,7 +359,7 @@ def load_wine(return_X_y=False, as_frame=False):
                  feature_names=feature_names)
 
 
-def load_iris(return_X_y=False):
+def load_iris(return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -383,6 +383,13 @@ def load_iris(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -396,6 +403,12 @@ def load_iris(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     Notes
     -----
@@ -416,6 +429,8 @@ def load_iris(return_X_y=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
+    feature_names = ['sepal length (cm)', 'sepal width (cm)',
+                     'petal length (cm)', 'petal width (cm)']
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
     iris_csv_filename = join(module_path, 'data', 'iris.csv')
@@ -423,18 +438,27 @@ def load_iris(return_X_y=False):
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_iris",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_names)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'],
+                 feature_names=feature_names,
                  filename=iris_csv_filename)
 
 
-def load_breast_cancer(return_X_y=False):
+def load_breast_cancer(return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -458,6 +482,13 @@ def load_breast_cancer(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -471,6 +502,12 @@ def load_breast_cancer(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
@@ -511,10 +548,20 @@ def load_breast_cancer(return_X_y=False):
                               'worst concavity', 'worst concave points',
                               'worst symmetry', 'worst fractal dimension'])
 
+    frame = None
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_breast_cancer",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_names)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=feature_names,
@@ -601,7 +648,7 @@ def load_digits(n_class=10, return_X_y=False):
                  DESCR=descr)
 
 
-def load_diabetes(return_X_y=False):
+def load_diabetes(return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -621,6 +668,13 @@ def load_diabetes(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -633,7 +687,15 @@ def load_diabetes(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
     """
+    feature_names = ['age', 'sex', 'bmi', 'bp',
+                     's1', 's2', 's3', 's4', 's5', 's6']
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
     data_filename = join(base_dir, 'diabetes_data.csv.gz')
@@ -644,17 +706,29 @@ def load_diabetes(return_X_y=False):
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    target_names = ['target', ]
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_diabetes",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_names)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target, DESCR=fdescr,
-                 feature_names=['age', 'sex', 'bmi', 'bp',
-                                's1', 's2', 's3', 's4', 's5', 's6'],
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
+                 DESCR=fdescr,
+                 feature_names=feature_names,
+                 target_names=target_names,
                  data_filename=data_filename,
                  target_filename=target_filename)
 
 
-def load_linnerud(return_X_y=False):
+def load_linnerud(return_X_y=False, as_frame=False):
     """Load and return the linnerud dataset (multivariate regression).
 
     ==============   ============================
@@ -674,6 +748,13 @@ def load_linnerud(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -689,6 +770,12 @@ def load_linnerud(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
     """
     base_dir = join(dirname(__file__), 'data/')
     data_filename = join(base_dir, 'linnerud_exercise.csv')
@@ -707,18 +794,28 @@ def load_linnerud(return_X_y=False):
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
+    frame = None
+    if as_frame:
+        frame, data_exercise, data_physiological = _convert_data_dataframe("load_linnerud",
+                                                                           data_exercise,
+                                                                           data_physiological,
+                                                                           header_exercise,
+                                                                           header_physiological)
+
     if return_X_y:
         return data_exercise, data_physiological
 
-    return Bunch(data=data_exercise, feature_names=header_exercise,
+    return Bunch(data=data_exercise,
+                 feature_names=header_exercise,
                  target=data_physiological,
                  target_names=header_physiological,
+                 frame=frame,
                  DESCR=descr,
                  data_filename=data_filename,
                  target_filename=target_filename)
 
 
-def load_boston(return_X_y=False):
+def load_boston(return_X_y=False, as_frame=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -738,6 +835,13 @@ def load_boston(return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -750,6 +854,12 @@ def load_boston(return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     Notes
     -----
@@ -784,13 +894,23 @@ def load_boston(return_X_y=False):
             data[i] = np.asarray(d[:-1], dtype=np.float64)
             target[i] = np.asarray(d[-1], dtype=np.float64)
 
+    frame = None
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_boston",
+                                                      data,
+                                                      target,
+                                                      feature_names[:-1],
+                                                      feature_names[-1])
+
     if return_X_y:
         return data, target
 
     return Bunch(data=data,
                  target=target,
+                 frame=frame,
                  # last column is target value
                  feature_names=feature_names[:-1],
+                 target_names=feature_names[-1],
                  DESCR=descr_text,
                  filename=data_file_name)
 
@@ -971,4 +1091,3 @@ def _refresh_cache(files, compress):
             warnings.warn(message=message, category=FutureWarning)
 
     return data[0] if len(data) == 1 else data
- 
