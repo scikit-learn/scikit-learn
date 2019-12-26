@@ -296,6 +296,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+
+        if issparse(y):
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+                )
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
