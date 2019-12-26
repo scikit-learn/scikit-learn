@@ -1268,8 +1268,10 @@ def test_make_column_selector_pickle():
     assert_array_equal(selector(X_df), selector_picked(X_df))
 
 
-@pytest.mark.parametrize('empty_col', [[], np.array([], dtype=np.int), lambda x: []],
-                        ids=['list', 'array', 'callable'])
+@pytest.mark.parametrize(
+    'empty_col', [[], np.array([], dtype=np.int), lambda x: []],
+    ids=['list', 'array', 'callable']
+)
 def test_feature_names_empty_columns(empty_col):
     pd = pytest.importorskip('pandas')
 
