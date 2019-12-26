@@ -529,7 +529,6 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
             The predicted probabilities.
 
         .. versionadded:: 0.20
-        
         """
 
     @abstractmethod
