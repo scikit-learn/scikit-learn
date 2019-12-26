@@ -803,7 +803,7 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         assert est.min_impurity_split is None, (
-            "Failed, min_impurity_split = {0} > 1e-7".format(
+            "Failed, min_impurity_split = {0} != None".format(
                 est.min_impurity_split))
         try:
             assert_warns(FutureWarning, est.fit, X, y)

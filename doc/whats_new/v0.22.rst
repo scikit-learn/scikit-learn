@@ -2,12 +2,70 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_22_1:
+
+Version 0.22.1
+==============
+
+**In Development**
+
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.22.0. It also includes minor documentation improvements and some bug fixes.
+
+Changelog
+---------
+
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now uses the same
+  stopping criterion as with the default ``algorithm="full"``. :pr:`15930` by
+  :user:`inder128`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.permutation_importance` will return the same
+  `importances` when a `random_state` is given for both `n_jobs=1` or
+  `n_jobs>1` both with shared memory backends (thread-safety) and
+  isolated memory, process-based backends.
+  Also avoid casting the data as object dtype and avoid read-only error
+  on large dataframes with `n_jobs>1` as reported in :issue:`15810`.
+  Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
+  :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
+
+- |Fix| :func:`inspection.plot_partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.plot_confusion_matrix` now raises error when `normalize`
+  is invalid. Previously, it runs fine with no normalization.
+  :pr:`15888` by `Hanmin Qin`_.
+
+- |Fix| :func:`metrics.plot_confusion_matrix` now colors the label color
+  correctly to maximize contrast with its background. :pr:`15936` by
+  `Thomas Fan`_ and :user:`DizietAsahi`.
+
+- |Fix| :func:`metrics.classification_report` does no longer ignore the
+  value of the ``zero_division`` keyword argument. :pr:`15879`
+  by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
+  boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
 .. _changes_0_22:
 
 Version 0.22.0
 ==============
 
-**In Development**
+**December 3 2019**
 
 For a short description of the main highlights of the release, please
 refer to
@@ -101,6 +159,7 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`cross_decomposition.CCA` when using scipy >= 1.3 |Fix|
 
 Details are listed in the changelog below.
 
@@ -177,7 +236,7 @@ Changelog
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
   1.12.
-  :pr:`14510` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14510` by `Guillaume Lemaitre`_.
 
 - |Fix| Fixed a bug in :class:`compose.TransformedTargetRegressor` which did not
   pass `**fit_params` to the underlying regressor.
@@ -192,15 +251,25 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
+- |Feature| :class:`cross_decomposition.PLSCanonical` and
+  :class:`cross_decomposition.PLSRegression` have a new function
+  ``inverse_transform`` to transform data to the original space.
+  :pr:`15304` by :user:`Jaime Ferrando Huertas <jiwidi>`.
+
+- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
+  eigenvalues found by the solver for numerical or conditioning issues. This
+  ensures consistency of results across solvers (different choices for
+  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
+  ``'lobpcg'`` (see :issue:`12068`).
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
+
 - |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
-- |Feature| :class:`cross_decomposition.PLSCanonical` and
-  :class:`cross_decomposition.PLSRegression` have a new function
-  ``inverse_transform`` to transform data to the original space`.
-  :pr:`15304` by :user:`Jaime Ferrando Huertas <jiwidi>`.
+- |Fix| :class:`cross_decomposition.CCA` now produces the same results with
+  scipy 1.3 and previous scipy versions. :pr:`15661` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -219,16 +288,20 @@ Changelog
   `weights` parameter, i.e. list or numpy.array, instead of list only.
   :pr:`14764` by :user:`Cat Chenal <CatChenal>`.
 
+- |Enhancement| The parameter `normalize` was added to
+   :func:`datasets.fetch_20newsgroups_vectorized`.
+   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
+
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
 
- - |Enhancement| The parameter `normalize` was added to
-   :func:`datasets.fetch_20newsgroups_vectorized`.
-   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
-
 :mod:`sklearn.decomposition`
 ............................
+
+- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
+  matrices now uses batching to avoid briefly allocating an array with size
+  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
 
 - |Enhancement| :func:`decomposition.dict_learning()` and
   :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
@@ -251,21 +324,17 @@ Changelog
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
-- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
-  matrices now uses batching to avoid briefly allocating an array with size
-  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
-
 :mod:`sklearn.dummy`
 ....................
+
+- |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
+  of the provided constant in multiouput cases.
+  :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
 - |API| The default value of the `strategy` parameter in
   :class:`dummy.DummyClassifier` will change from `'stratified'` in version
   0.22 to `'prior'` in 0.24. A FutureWarning is raised when the default value
   is used. :pr:`15382` by `Thomas Fan`_.
-
-- |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
-  of the provided constant in multiouput cases.
-  :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
 - |API| The ``outputs_2d_`` attribute is deprecated in
   :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`. It is
@@ -290,24 +359,33 @@ Changelog
     and `Olivier Grisel`_.
   - |Feature| Estimators now have an additional `warm_start` parameter that
     enables warm starting. :pr:`14012` by :user:`Johann Faouzi <johannfaouzi>`.
+  - |Feature| :func:`inspection.partial_dependence` and
+    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+    method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| for :class:`ensemble.HistGradientBoostingClassifier` the
     training loss or score is now monitored on a class-wise stratified
     subsample to preserve the class balance of the original training set.
     :pr:`14194` by :user:`Johann Faouzi <johannfaouzi>`.
-  - |Feature| :func:`inspection.partial_dependence` and
-    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
-    method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now supports
     the 'least_absolute_deviation' loss. :pr:`13896` by `Nicolas Hug`_.
   - |Fix| Estimators now bin the training and validation data separately to
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
   - |Fix| Fixed a bug where early stopping would break with string targets.
-    :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
+    :pr:`14710` by `Guillaume Lemaitre`_.
   - |Fix| :class:`ensemble.HistGradientBoostingClassifier` now raises an error
     if ``categorical_crossentropy`` loss is given for a binary classification
     problem. :pr:`14869` by `Adrin Jalali`_.
 
   Note that pickles from 0.21 will not work in 0.22.
+
+- |Enhancement| Addition of ``max_samples`` argument allows limiting
+  size of bootstrap samples to be less than size of dataset. Added to
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`. :pr:`14682` by
+  :user:`Matt Hancock <notmatthancock>` and
+  :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
@@ -324,12 +402,23 @@ Changelog
   failing when the underlying estimators were not outputting consistent array
   dimensions. Note that it should be replaced by refactoring the common tests
   in the future.
-  :pr:`14305` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14305` by `Guillaume Lemaitre`_.
 
 - |Fix| :class:`ensemble.AdaBoostClassifier` computes probabilities based on
   the decision function as in the literature. Thus, `predict` and
   `predict_proba` give consistent results.
-  :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14114` by `Guillaume Lemaitre`_.
+
+- |Fix| Stacking and Voting estimators now ensure that their underlying
+  estimators are either all classifiers or all regressors.
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
+  now raise consistent error messages.
+  :pr:`15084` by `Guillaume Lemaitre`_.
+
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights only.
+  :pr:`14294` by `Guillaume Lemaitre`_.
 
 - |API| ``presort`` is now deprecated in
   :class:`ensemble.GradientBoostingClassifier` and
@@ -337,29 +426,6 @@ Changelog
   Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
   and :class:`ensemble.HistGradientBoostingRegressor` instead.
   :pr:`14907` by `Adrin Jalali`_.
-
-- |Enhancement| Addition of ``max_samples`` argument allows limiting
-  size of bootstrap samples to be less than size of dataset. Added to
-  :class:`ensemble.ForestClassifier`,
-  :class:`ensemble.ForestRegressor`,
-  :class:`ensemble.RandomForestClassifier`,
-  :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`,
-  :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`. :pr:`14682` by
-  :user:`Matt Hancock <notmatthancock>` and
-  :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
-
-- |Fix| Stacking and Voting estimators now ensure that their underlying
-  estimators are either all classifiers or all regressors.
-  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
-  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
-  now raise consistent error messages.
-  :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
-  by the max of the samples with non-null weights only.
-  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -375,11 +441,6 @@ Changelog
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
 
-- |API| Deprecated unused `copy` param for
-  :meth:`feature_extraction.text.TfidfVectorizer.transform` it will be
-  removed in v0.24. :pr:`14520` by
-  :user:`Guillem G. Subies <guillemgsubies>`.
-
 - |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
   removes accents from strings that are in NFKD normalized form. :pr:`15100` by
   :user:`Daniel Grady <DGrady>`.
@@ -387,6 +448,11 @@ Changelog
 - |Fix| Fixed a bug that caused :class:`feature_extraction.DictVectorizer` to raise
   an `OverflowError` during the `transform` operation when producing a `scipy.sparse`
   matrix on large input data. :pr:`15463` by :user:`Norvan Sahiner <norvan>`.
+
+- |API| Deprecated unused `copy` param for
+  :meth:`feature_extraction.text.TfidfVectorizer.transform` it will be
+  removed in v0.24. :pr:`14520` by
+  :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -408,7 +474,16 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
-- |Feature| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
+- |Feature| Gaussian process models on structured data: :class:`gaussian_process.GaussianProcessRegressor`
+  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
+  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
+  to their training/prediction methods.
+  A user-defined kernel should be provided for computing the kernel matrix among
+  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  to notify the GPR/GPC model that it handles non-vectorial samples.
+  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
+
+- |Efficiency| :func:`gaussian_process.GaussianProcessClassifier.log_marginal_likelihood`
   and :func:`gaussian_process.GaussianProcessRegressor.log_marginal_likelihood` now
   accept a ``clone_kernel=True`` keyword argument. When set to ``False``,
   the kernel attribute is modified, but may result in a performance improvement.
@@ -424,22 +499,18 @@ Changelog
 
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
-  `Thomas Fan`_.
-
-- |Enhancement| Adds parameter `add_indicator` to :class:`impute.KNNImputer`
-  to get indicator of missing data.
-  :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
+  `Thomas Fan`_ and :pr:`15010` by `Guillaume Lemaitre`_.
 
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
   is False by default, which, when True, will skip computation on features that
   have no missing values during the fit phase. :issue:`13773` by
   :user:`Sergey Feldman <sergeyf>`.
 
-- |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
-  By :user:`Sergey Feldman <sergeyf>`.
-
 - |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
   computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
+
+- |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
+  By :user:`Sergey Feldman <sergeyf>`.
 
 - |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
   imputed in the reverse desired order with ``imputation_order`` either
@@ -467,7 +538,7 @@ Changelog
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
   In addition :func:`inspection.plot_partial_dependence` will use the column
   names by default when a dataframe is passed.
-  :pr:`14028` and :pr:`15429` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14028` and :pr:`15429` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -479,14 +550,14 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Efficiency| The 'liblinear' logistic regression solver is now faster and
+  requires less memory.
+  :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
+
 - |Enhancement| :class:`linear_model.BayesianRidge` now accepts hyperparameters
   ``alpha_init`` and ``lambda_init`` which can be used to set the initial value
   of the maximization procedure in :term:`fit`.
   :pr:`13618` by :user:`Yoshihiro Uchida <c56pony>`.
-
-- |Efficiency| The 'liblinear' logistic regression solver is now faster and
-  requires less memory.
-  :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
@@ -495,26 +566,26 @@ Changelog
 
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
   and non-contiguous arrays and makes a conversion instead of failing.
-  :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`14458` by `Guillaume Lemaitre`_.
 
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
-- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
+- |Fix| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |FIX| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
   ``scores_``, ``n_iter_`` and ``coefs_paths_`` attribute would have a wrong
   ordering with ``penalty='elastic-net'``. :pr:`15044` by `Nicolas Hug`_
 
-- |FIX| :class:`linear_model.MultiTaskLassoCV` and
+- |Fix| :class:`linear_model.MultiTaskLassoCV` and
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
 
-- |FIX| The liblinear solver now supports ``sample_weight``.
-  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Fix| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by `Guillaume Lemaitre`_.
 
 :mod:`sklearn.manifold`
 .......................
@@ -533,9 +604,6 @@ Changelog
   ``method="barnes-hut"`` by computing the gradient in parallel.
   :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
-- |API| Deprecate ``training_data_`` unused attribute in
-  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
-
 - |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
   :class:`manifold.SpectralEmbedding` and :class:`cluster.SpectralClustering`)
   computed wrong eigenvalues with ``eigen_solver='amg'`` when
@@ -547,8 +615,15 @@ Changelog
   :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
   :pr:`13707` by :user:`Scott White <whitews>`
 
+- |API| Deprecate ``training_data_`` unused attribute in
+  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
+
 :mod:`sklearn.metrics`
 ......................
+
+- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
+  curves. This function introduces the visualization API described in
+  the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
 
 - |Feature| Added a new parameter ``zero_division`` to multiple classification
   metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
@@ -556,10 +631,6 @@ Changelog
   :func:`classification_report`. This allows to set returned value for
   ill-defined metrics.
   :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
-
-- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
-  curves. This function introduces the visualization API described in
-  the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
 
 - |Feature| Added the :func:`metrics.pairwise.nan_euclidean_distances` metric,
   which calculates euclidean distances in the presence of missing values.
@@ -572,6 +643,9 @@ Changelog
 
 - |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
   precision recall curves. :pr:`14936` by `Thomas Fan`_.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` has been added to plot
+  confusion matrices. :pr:`15083` by `Thomas Fan`_.
 
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
@@ -588,6 +662,10 @@ Changelog
   :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
   `Roman Yurchak`_.
 
+- |Efficiency| Improved performance of
+  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
+  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
+
 - |Enhancement| The parameter ``beta`` in :func:`metrics.fbeta_score` is
   updated to accept the zero and `float('+inf')` value.
   :pr:`13231` by :user:`Dong-hee Na <corona10>`.
@@ -599,22 +677,10 @@ Changelog
 - |Enhancement| Allow computing averaged metrics in the case of no true positives.
   :pr:`14595` by `Andreas Müller`_.
 
-- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
-  precomputed distance matrix contains non-zero diagonal entries.
-  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
-
 - |Enhancement| Multilabel metrics now supports list of lists as input.
   :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`,
   :user:`Herilalaina Rakotoarison <herilalaina>`,
   :user:`Léonard Binet <leonardbinet>`.
-
-- |API| ``scoring="neg_brier_score"`` should be used instead of
-  ``scoring="brier_score_loss"`` which is now deprecated.
-  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
-
-- |Efficiency| Improved performance of
-  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
-  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
 
 - |Enhancement| :func:`metrics.median_absolute_error` now supports
   ``multioutput`` parameter.
@@ -623,6 +689,19 @@ Changelog
 - |Enhancement| 'roc_auc_ovr_weighted' and 'roc_auc_ovo_weighted' can now be
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
+
+- |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
+  `normalize` allowing to normalize the confusion matrix by column, rows, or
+  overall.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
+  precomputed distance matrix contains non-zero diagonal entries.
+  :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
+
+- |API| ``scoring="neg_brier_score"`` should be used instead of
+  ``scoring="brier_score_loss"`` which is now deprecated.
+  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -644,15 +723,15 @@ Changelog
   where one test set could be `n_classes` larger than another. Test sets should
   now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
 
+- |Fix| The `cv_results_` attribute of :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` now only contains unfitted
+  estimators. This potentially saves a lot of memory since the state of the
+  estimators isn't stored. :pr:`#15096` by `Andreas Müller`_.
+
 - |API| :class:`model_selection.KFold` and
   :class:`model_selection.StratifiedKFold` now raise a warning if
   `random_state` is set but `shuffle` is False. This will raise an error in
   0.24.
-
-- |Fix| The `cv_results_` attribute of :class:`model_selection.GridSearchCV`
-  and :class:`model_selection.RandomizedSearchCV` now only contains unfitted
-  estimators. This potentially saves a lot of memory since the state of the
-  estimators isn't stored. :pr:`#15096` by :user:`Andreas Müller <amueller>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -720,12 +799,12 @@ Changelog
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
+- |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
+  to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
+
 - |API| `None` as a transformer is now deprecated in
   :class:`pipeline.FeatureUnion`. Please use `'drop'` instead. :pr:`15053` by
   `Thomas Fan`_.
-
-- |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
-  to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -743,8 +822,12 @@ Changelog
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
+
 :mod:`sklearn.model_selection`
-..................
+..............................
 
 - |Fix| :class:`model_selection.GridSearchCV` and
   `model_selection.RandomizedSearchCV` now supports the
@@ -754,7 +837,6 @@ Changelog
   'precomputed').
   :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
   :user:`Xun Tang <xun-tang>`.
-
 
 :mod:`sklearn.svm`
 ..................
@@ -772,7 +854,7 @@ Changelog
 - |Fix| :class:`svm.SVC`, :class:`svm.SVR`, :class:`svm.NuSVR` and
   :class:`svm.OneClassSVM` when received values negative or zero
   for parameter ``sample_weight`` in method fit(), generated an
-  invalid model. This behavior occured only in some border scenarios.
+  invalid model. This behavior occurred only in some border scenarios.
   Now in these cases, fit() will fail with an Exception.
   :pr:`14286` by :user:`Alex Shacked <alexshacked>`.
 
@@ -783,8 +865,8 @@ Changelog
 - |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
-- |FIX| The liblinear solver now supports ``sample_weight``.
-  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Fix| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by `Guillaume Lemaitre`_.
 
 
 :mod:`sklearn.tree`
@@ -797,7 +879,6 @@ Changelog
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`,
   :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
@@ -825,22 +906,7 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
-- |API| The following utils have been deprecated and are now private:
-
-  - ``utils.choose_check_classifiers_labels``
-  - ``utils.enforce_estimator_tags_y``
-  - ``utils.optimize.newton_cg``
-  - ``utils.random.random_choice_csc``
-  - ``utils.safe_indexing``
-  - ``utils.mocking``
-  - ``utils.fast_dict``
-  - ``utils.seq_dataset``
-  - ``utils.weight_vector``
-  - ``utils.fixes.parallel_helper`` (removed)
-  - All of ``utils.testing`` except for ``all_estimators`` which is now in
-    ``utils``.
-
-- A new random variable, :class:`utils.fixes.loguniform` implements a
+- |Feature| A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
   for ``loguniform(1, 100)``. See :issue:`11232` by
@@ -851,7 +917,7 @@ Changelog
   ``axis`` parameter to index array-like across rows and columns. The column
   indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
   DataFrame. An additional refactoring was done. :pr:`14035` and :pr:`14475`
-  by :user:`Guillaume Lemaitre <glemaitre>`.
+  by `Guillaume Lemaitre`_.
 
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
@@ -873,6 +939,18 @@ Changelog
   - ``mocking.CheckingClassifier``
   - ``optimize.newton_cg``
   - ``random.random_choice_csc``
+  - ``utils.choose_check_classifiers_labels``
+  - ``utils.enforce_estimator_tags_y``
+  - ``utils.optimize.newton_cg``
+  - ``utils.random.random_choice_csc``
+  - ``utils.safe_indexing``
+  - ``utils.mocking``
+  - ``utils.fast_dict``
+  - ``utils.seq_dataset``
+  - ``utils.weight_vector``
+  - ``utils.fixes.parallel_helper`` (removed)
+  - All of ``utils.testing`` except for ``all_estimators`` which is now in
+    ``utils``.
 
 :mod:`sklearn.isotonic`
 ..................................
@@ -881,9 +959,12 @@ Changelog
   when `X.dtype == 'float32'` and `X.dtype != y.dtype`.
   :pr:`14902` by :user:`Lucas <lostcoaster>`.
 
-
 Miscellaneous
 .............
+
+- |Fix| Port `lobpcg` from SciPy which implement some bug fixes but only
+  available in 1.3+.
+  :pr:`13609` and :pr:`14971` by `Guillaume Lemaitre`_.
 
 - |API| Scikit-learn now converts any input data structure implementing a
   duck array to a numpy array (using ``__array__``) to ensure consistent
@@ -894,10 +975,6 @@ Miscellaneous
 - |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
   using a non-fitted estimators are now more uniform.
   :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
-
-- |Fix| Port `lobpcg` from SciPy which implement some bug fixes but only
-  available in 1.3+.
-  :pr:`13609` and :pr:`14971` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
 ---------------------------
@@ -935,5 +1012,66 @@ These changes mostly affect library developers.
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
 
 - |Fix| The estimators tags resolution now follows the regular MRO. They used
-  to be overridable only once. :pr:`14884` by :user:`Andreas Müller
-  <amueller>`.
+  to be overridable only once. :pr:`14884` by `Andreas Müller`_.
+
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.20, including:
+
+Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav Sagar,
+Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin Jalali,
+Agamemnon Krasoulis, Alec Peters, Alessandro Surace, Alexandre de Siqueira,
+Alexandre Gramfort, alexgoryainov, Alex Henrie, Alex Itkes, alexshacked, Allen
+Akinkunle, Anaël Beaugnon, Anders Kaseorg, Andrea Maldonado, Andrea Navarrete,
+Andreas Mueller, Andreas Schuderer, Andrew Nystrom, Angela Ambroz, Anisha
+Keshavan, Ankit Jha, Antonio Gutierrez, Anuja Kelkar, Archana Alva,
+arnaudstiegler, arpanchowdhry, ashimb9, Ayomide Bamidele, Baran Buluttekin,
+barrycg, Bharat Raghunathan, Bill Mill, Biswadip Mandal, blackd0t, Brian G.
+Barkley, Brian Wignall, Bryan Yang, c56pony, camilaagw, cartman_nabana,
+catajara, Cat Chenal, Cathy, cgsavard, Charles Vesteghem, Chiara Marmo, Chris
+Gregory, Christian Lorentzen, Christos Aridas, Dakota Grusak, Daniel Grady,
+Daniel Perry, Danna Naser, DatenBergwerk, David Dormagen, deeplook, Dillon
+Niederhut, Dong-hee Na, Dougal J. Sutherland, DrGFreeman, Dylan Cashman,
+edvardlindelof, Eric Larson, Eric Ndirangu, Eunseop Jeong, Fanny,
+federicopisanu, Felix Divo, flaviomorelli, FranciDona, Franco M. Luque, Frank
+Hoang, Frederic Haase, g0g0gadget, Gabriel Altay, Gabriel do Vale Rios, Gael
+Varoquaux, ganevgv, gdex1, getgaurav2, Gideon Sonoiya, Gordon Chen, gpapadok,
+Greg Mogavero, Grzegorz Szpak, Guillaume Lemaitre, Guillem García Subies,
+H4dr1en, hadshirt, Hailey Nguyen, Hanmin Qin, Hannah Bruce Macdonald, Harsh
+Mahajan, Harsh Soni, Honglu Zhang, Hossein Pourbozorg, Ian Sanders, Ingrid
+Spielman, J-A16, jaehong park, Jaime Ferrando Huertas, James Hill, James Myatt,
+Jay, jeremiedbb, Jérémie du Boisberranger, jeromedockes, Jesper Dramsch, Joan
+Massich, Joanna Zhang, Joel Nothman, Johann Faouzi, Jonathan Rahn, Jon Cusick,
+Jose Ortiz, Kanika Sabharwal, Katarina Slama, kellycarmody, Kennedy Kang'ethe,
+Kensuke Arai, Kesshi Jordan, Kevad, Kevin Loftis, Kevin Winata, Kevin Yu-Sheng
+Li, Kirill Dolmatov, Kirthi Shankar Sivamani, krishna katyal, Lakshmi Krishnan,
+Lakshya KD, LalliAcqua, lbfin, Leland McInnes, Léonard Binet, Loic Esteve,
+loopyme, lostcoaster, Louis Huynh, lrjball, Luca Ionescu, Lutz Roeder,
+MaggieChege, Maithreyi Venkatesh, Maltimore, Maocx, Marc Torrellas, Marie
+Douriez, Markus, Markus Frey, Martina G. Vilas, Martin Oywa, Martin Thoma,
+Masashi SHIBATA, Maxwell Aladago, mbillingr, m-clare, Meghann Agarwal, m.fab,
+Micah Smith, miguelbarao, Miguel Cabrera, Mina Naghshhnejad, Ming Li, motmoti,
+mschaffenroth, mthorrell, Natasha Borders, nezar-a, Nicolas Hug, Nidhin
+Pattaniyil, Nikita Titov, Nishan Singh Mann, Nitya Mandyam, norvan,
+notmatthancock, novaya, nxorable, Oleg Stikhin, Oleksandr Pavlyk, Olivier
+Grisel, Omar Saleem, Owen Flanagan, panpiort8, Paolo, Paolo Toccaceli, Paresh
+Mathur, Paula, Peng Yu, Peter Marko, pierretallotte, poorna-kumar, pspachtholz,
+qdeffense, Rajat Garg, Raphaël Bournhonesque, Ray, Ray Bell, Rebekah Kim, Reza
+Gharibi, Richard Payne, Richard W, rlms, Robert Juergens, Rok Mihevc, Roman
+Feldbauer, Roman Yurchak, R Sanjabi, RuchitaGarde, Ruth Waithera, Sackey, Sam
+Dixon, Samesh Lakhotia, Samuel Taylor, Sarra Habchi, Scott Gigante, Scott
+Sievert, Scott White, Sebastian Pölsterl, Sergey Feldman, SeWook Oh, she-dares,
+Shreya V, Shubham Mehta, Shuzhe Xiao, SimonCW, smarie, smujjiga, Sönke
+Behrends, Soumirai, Sourav Singh, stefan-matcovici, steinfurt, Stéphane
+Couvreur, Stephan Tulkens, Stephen Cowley, Stephen Tierney, SylvainLan,
+th0rwas, theoptips, theotheo, Thierno Ibrahima DIOP, Thomas Edwards, Thomas J
+Fan, Thomas Moreau, Thomas Schmitt, Tilen Kusterle, Tim Bicker, Timsaur, Tim
+Staley, Tirth Patel, Tola A, Tom Augspurger, Tom Dupré la Tour, topisan, Trevor
+Stephens, ttang131, Urvang Patel, Vathsala Achar, veerlosar, Venkatachalam N,
+Victor Luzgin, Vincent Jeanselme, Vincent Lostanlen, Vladimir Korolev,
+vnherdeiro, Wenbo Zhao, Wendy Hu, willdarnell, William de Vazelhes,
+wolframalpha, xavier dupré, xcjason, x-martian, xsat, xun-tang, Yinglr,
+yokasre, Yu-Hang "Maxin" Tang, Yulia Zamriy, Zhao Feng
