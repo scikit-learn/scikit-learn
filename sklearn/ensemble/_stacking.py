@@ -114,10 +114,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : ndarray of shape (n_samples,) or default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -395,10 +395,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Training vectors, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -627,10 +627,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
