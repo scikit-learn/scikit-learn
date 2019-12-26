@@ -1336,6 +1336,15 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
         est.fit(X, y)
 
 
+def test_forest_y_sparse():
+    X = [[1, 2, 3]]
+    y = csr_matrix([4, 5, 6])
+    est = RandomForestClassifier()
+    msg = "sparse multilabel-indicator for y is not supported."
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+
 @pytest.mark.parametrize(
     'ForestClass', [RandomForestClassifier, RandomForestRegressor]
 )
