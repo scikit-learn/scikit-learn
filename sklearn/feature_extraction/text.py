@@ -1826,14 +1826,8 @@ class TfidfVectorizer(CountVectorizer):
 
         Returns
         -------
-<<<<<<< HEAD
-        self : TfidfVectorizer
-
-            Raise warning if a parameter choice means that another parameter will be unused on calling the fit() method.
-=======
         self : object
             Fitted vectorizer.
->>>>>>> 725ca8f32e1877881064886a422d8dc35449d7fe
         """
         self._check_params()
         self._warn_for_unused_params()

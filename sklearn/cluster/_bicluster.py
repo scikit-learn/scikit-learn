@@ -189,7 +189,7 @@ class SpectralCoclustering(BaseSpectral):
 
     Read more in the :ref:`User Guide <spectral_coclustering>`.
 
-    .. version:: 0.14
+    .. versionadded:: 0.14
 
     Parameters
     ----------

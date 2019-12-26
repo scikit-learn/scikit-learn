@@ -752,6 +752,8 @@ class TimeSeriesSplit(_BaseKFold):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -762,8 +764,6 @@ class TimeSeriesSplit(_BaseKFold):
 
     max_train_size : int, optional
         Maximum size for a single training set.
-
-        ..versionadded:: 0.19
 
     Examples
     --------

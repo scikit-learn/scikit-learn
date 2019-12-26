@@ -189,7 +189,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
 
-    ..versionadded:: 0.18
+    .. versionadded:: 0.18
     """
 
     @abstractmethod
