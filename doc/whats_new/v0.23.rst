@@ -58,6 +58,11 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
+- |Feature| :func:`datasets.fetch_california_housing` now supports
+  heterogeneous data using pandas by setting `as_frame=True`. :pr:`15950`
+  by :user:`Stephanie Andrews <gitsteph>` and
+  :user:`Reshama Shaikh <reshamas>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
