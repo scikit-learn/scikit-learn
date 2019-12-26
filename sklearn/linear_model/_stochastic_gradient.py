@@ -362,11 +362,11 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     sample_weight : numpy array of shape [n_samples, ]
         The weight of each sample
 
-    validation_mask : numpy array of shape [n_samples, ] or None
+    validation_mask : numpy array of shape [n_samples, ], default=None
         Precomputed validation mask in case _fit_binary is called in the
         context of a one-vs-rest reduction.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -644,7 +644,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Subset of the target values.
 
+<<<<<<< HEAD
         classes : ndarray of shape (n_classes,)
+=======
+        classes : ndarray of shape (n_classes,), default=None
+>>>>>>> upstream/master
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -652,7 +656,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
@@ -688,13 +692,20 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Target values.
 
+<<<<<<< HEAD
         coef_init : ndarray of shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
 
         intercept_init : ndarray of shape (n_classes,)
+=======
+        coef_init : ndarray of shape (n_classes, n_features), default=None
+            The initial coefficients to warm-start the optimization.
+
+        intercept_init : ndarray of shape (n_classes,), default=None
+>>>>>>> upstream/master
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
@@ -738,7 +749,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : str, default: 'hinge'
+    loss : str, default='hinge'
         The loss function to be used. Defaults to 'hinge', which gives a
         linear SVM.
 
@@ -754,42 +765,41 @@ class SGDClassifier(BaseSGDClassifier):
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
-    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
+    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
-    alpha : float
+    alpha : float, default=0.0001
         Constant that multiplies the regularization term. Defaults to 0.0001.
         Also used to compute learning_rate when set to 'optimal'.
 
-    l1_ratio : float
+    l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional (default=1000)
+    max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional (default=1e-3)
+    tol : float, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
 
         .. versionadded:: 0.19
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to True.
 
     verbose : int, default=0
         The verbosity level.
@@ -802,21 +812,21 @@ class SGDClassifier(BaseSGDClassifier):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : str, optional
+    learning_rate : str, default='optimal'
         The learning rate schedule:
 
         'constant':
@@ -832,12 +842,12 @@ class SGDClassifier(BaseSGDClassifier):
             training loss by tol or fail to increase validation score by tol if
             early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : double
+    eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : double
+    power_t : double, default=0.5
         The exponent for inverse scaling learning rate [default 0.5].
 
     early_stopping : bool, default=False
@@ -861,7 +871,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    class_weight : dict, {class_label: weight} or "balanced" or None, optional
+    class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
@@ -1140,7 +1150,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         y : numpy array of shape (n_samples,)
             Subset of target values
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
@@ -1201,13 +1211,13 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         y : ndarray of shape (n_samples,)
             Target values
 
-        coef_init : ndarray of shape (n_features,)
+        coef_init : ndarray of shape (n_features,), default=None
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : ndarray of shape (1,)
+        intercept_init : ndarray of shape (1,), default=None
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -1359,7 +1369,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : str, default: 'squared_loss'
+    loss : str, default='squared_loss'
         The loss function to be used. The possible values are 'squared_loss',
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
 
@@ -1371,44 +1381,42 @@ class SGDRegressor(BaseSGDRegressor):
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
 
-    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
+    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
-    alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
+    alpha : float, default=0.0001
+        Constant that multiplies the regularization term.
         Also used to compute learning_rate when set to 'optimal'.
 
-    l1_ratio : float
+    l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-        Defaults to 0.15.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
+        data is assumed to be already centered.
 
-    max_iter : int, optional (default=1000)
+    max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional (default=1e-3)
+    tol : float, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
 
         .. versionadded:: 0.19
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
-        Defaults to True.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level.
 
     epsilon : float, default=0.1
@@ -1419,14 +1427,14 @@ class SGDRegressor(BaseSGDRegressor):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : string, default='invscaling'
         The learning rate schedule:
 
         'constant':
@@ -1442,12 +1450,12 @@ class SGDRegressor(BaseSGDRegressor):
             training loss by tol or fail to increase validation score by tol if
             early_stopping is True, the current learning rate is divided by 5.
 
-    eta0 : double
+    eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
 
-    power_t : double
-        The exponent for inverse scaling learning rate [default 0.25].
+    power_t : double, default=0.25
+        The exponent for inverse scaling learning rate.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
