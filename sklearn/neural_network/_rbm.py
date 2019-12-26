@@ -113,7 +113,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
@@ -290,7 +290,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Values of the visible layer. Must be all-boolean (not checked).
 
         Returns
@@ -328,7 +328,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         Returns
