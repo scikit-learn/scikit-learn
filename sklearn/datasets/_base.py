@@ -258,7 +258,7 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-def load_wine(return_X_y=False):
+def load_wine(return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
     .. versionadded:: 0.18
@@ -282,6 +282,13 @@ def load_wine(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -291,6 +298,12 @@ def load_wine(return_X_y=False):
         and 'DESCR', the full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
     standard format from:
@@ -308,31 +321,42 @@ def load_wine(return_X_y=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
+    feature_names = ['alcohol',
+                     'malic_acid',
+                     'ash',
+                     'alcalinity_of_ash',
+                     'magnesium',
+                     'total_phenols',
+                     'flavanoids',
+                     'nonflavanoid_phenols',
+                     'proanthocyanins',
+                     'color_intensity',
+                     'hue',
+                     'od280/od315_of_diluted_wines',
+                     'proline']
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'wine_data.csv')
 
     with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_wine",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_names)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['alcohol',
-                                'malic_acid',
-                                'ash',
-                                'alcalinity_of_ash',
-                                'magnesium',
-                                'total_phenols',
-                                'flavanoids',
-                                'nonflavanoid_phenols',
-                                'proanthocyanins',
-                                'color_intensity',
-                                'hue',
-                                'od280/od315_of_diluted_wines',
-                                'proline'])
+                 feature_names=feature_names)
 
 
 def load_iris(return_X_y=False):
@@ -947,3 +971,4 @@ def _refresh_cache(files, compress):
             warnings.warn(message=message, category=FutureWarning)
 
     return data[0] if len(data) == 1 else data
+ 
