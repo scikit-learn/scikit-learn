@@ -1268,7 +1268,9 @@ def test_make_column_selector_pickle():
     assert_array_equal(selector(X_df), selector_picked(X_df))
 
 
-def test_feature_names_empty_columns():
+@pytest.mark.parametrize('empty_col', [[], np.array([], dtype=np.int), lambda x: []],
+                        ids=['list', 'array', 'callable'])
+def test_feature_names_empty_columns(empty_col):
     pd = pytest.importorskip('pandas')
 
     df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
@@ -1276,7 +1278,7 @@ def test_feature_names_empty_columns():
     ct = ColumnTransformer(
         transformers=[
             ("ohe", OneHotEncoder(), ["col1", "col2"]),
-            ("empty_features", OneHotEncoder(), []),
+            ("empty_features", OneHotEncoder(), empty_col),
         ],
     )
 
