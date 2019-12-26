@@ -17,6 +17,7 @@ import hashlib
 
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_pandas_support
 
 import numpy as np
 
@@ -65,6 +66,17 @@ def clear_data_home(data_home=None):
     """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
+
+
+def _convert_data_dataframe(caller_name, data, target,
+                            feature_names, target_names):
+    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
+    data_df = pd.DataFrame(data, columns=feature_names)
+    target_df = pd.DataFrame(target, columns=target_names)
+    combined_df = pd.concat([data_df, target_df], axis=1)
+    X = combined_df[feature_names]
+    y = combined_df[target_names]
+    return combined_df, X, y
 
 
 def load_files(container_path, description=None, categories=None,
