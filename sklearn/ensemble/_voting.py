@@ -193,7 +193,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         sample_weight : ndarray of shape (n_samples,), default=None
@@ -390,7 +390,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : ndarray of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         sample_weight : ndarray of shape (n_samples,), default=None
