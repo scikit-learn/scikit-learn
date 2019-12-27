@@ -321,6 +321,12 @@ def load_wine(return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
+    module_path = dirname(__file__)
+    data, target, target_names = load_data(module_path, 'wine_data.csv')
+
+    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     feature_names = ['alcohol',
                      'malic_acid',
                      'ash',
@@ -334,19 +340,15 @@ def load_wine(return_X_y=False, as_frame=False):
                      'hue',
                      'od280/od315_of_diluted_wines',
                      'proline']
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'wine_data.csv')
-
-    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
-        fdescr = rst_file.read()
 
     frame = None
+    target_columns = ['target', ]
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_wine",
                                                       data,
                                                       target,
                                                       feature_names,
-                                                      target_names)
+                                                      target_columns)
 
     if return_X_y:
         return data, target
@@ -429,8 +431,6 @@ def load_iris(return_X_y=False, as_frame=False):
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    feature_names = ['sepal length (cm)', 'sepal width (cm)',
-                     'petal length (cm)', 'petal width (cm)']
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
     iris_csv_filename = join(module_path, 'data', 'iris.csv')
@@ -438,13 +438,17 @@ def load_iris(return_X_y=False, as_frame=False):
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    feature_names = ['sepal length (cm)', 'sepal width (cm)',
+                     'petal length (cm)', 'petal width (cm)']
+
     frame = None
+    target_columns = ['target', ]
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_iris",
                                                       data,
                                                       target,
                                                       feature_names,
-                                                      target_names)
+                                                      target_columns)
 
     if return_X_y:
         return data, target
@@ -549,12 +553,13 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
                               'worst symmetry', 'worst fractal dimension'])
 
     frame = None
+    target_columns = ['target', ]
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_breast_cancer",
                                                       data,
                                                       target,
                                                       feature_names,
-                                                      target_names)
+                                                      target_columns)
 
     if return_X_y:
         return data, target
@@ -694,8 +699,6 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.23
     """
-    feature_names = ['age', 'sex', 'bmi', 'bp',
-                     's1', 's2', 's3', 's4', 's5', 's6']
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
     data_filename = join(base_dir, 'diabetes_data.csv.gz')
@@ -706,14 +709,17 @@ def load_diabetes(return_X_y=False, as_frame=False):
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    feature_names = ['age', 'sex', 'bmi', 'bp',
+                     's1', 's2', 's3', 's4', 's5', 's6']
+
     frame = None
-    target_names = ['target', ]
+    target_columns = ['target', ]
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_diabetes",
                                                       data,
                                                       target,
                                                       feature_names,
-                                                      target_names)
+                                                      target_columns)
 
     if return_X_y:
         return data, target
@@ -723,7 +729,6 @@ def load_diabetes(return_X_y=False, as_frame=False):
                  frame=frame,
                  DESCR=fdescr,
                  feature_names=feature_names,
-                 target_names=target_names,
                  data_filename=data_filename,
                  target_filename=target_filename)
 
@@ -895,12 +900,13 @@ def load_boston(return_X_y=False, as_frame=False):
             target[i] = np.asarray(d[-1], dtype=np.float64)
 
     frame = None
+    target_columns = list(feature_names[-1])
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_boston",
                                                       data,
                                                       target,
                                                       feature_names[:-1],
-                                                      feature_names[-1])
+                                                      target_columns)
 
     if return_X_y:
         return data, target
@@ -910,7 +916,7 @@ def load_boston(return_X_y=False, as_frame=False):
                  frame=frame,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 target_names=feature_names[-1],
+                 target_names=target_columns,
                  DESCR=descr_text,
                  filename=data_file_name)
 
