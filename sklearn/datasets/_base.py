@@ -573,7 +573,7 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
                  filename=csv_filename)
 
 
-def load_digits(n_class=10, return_X_y=False):
+def load_digits(n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -599,6 +599,13 @@ def load_digits(n_class=10, return_X_y=False):
 
         .. versionadded:: 0.18
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     data : Bunch
@@ -611,6 +618,12 @@ def load_digits(n_class=10, return_X_y=False):
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
     https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
@@ -642,6 +655,17 @@ def load_digits(n_class=10, return_X_y=False):
         idx = target < n_class
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
+
+    feature_names = ['dim_{}'.format(i) for i in range(flat_data.shape[1])]
+
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, flat_data, target = _convert_data_dataframe("load_digits",
+                                                           flat_data,
+                                                           target,
+                                                           feature_names,
+                                                           target_columns)
 
     if return_X_y:
         return flat_data, target
