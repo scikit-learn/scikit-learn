@@ -900,7 +900,7 @@ def load_boston(return_X_y=False, as_frame=False):
             target[i] = np.asarray(d[-1], dtype=np.float64)
 
     frame = None
-    target_columns = list(feature_names[-1])
+    target_columns = np.array([feature_names[-1], ])
     if as_frame:
         frame, data, target = _convert_data_dataframe("load_boston",
                                                       data,
