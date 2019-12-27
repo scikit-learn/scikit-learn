@@ -53,12 +53,28 @@ Changelog
 - |Fix| :func:`metrics.classification_report` does no longer ignore the
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+  
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
+  return sparse weight matrix.
+  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
 :mod:`sklearn.utils`
 ....................
 
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.check_is_fitted` accepts back an explicit ``attributes``
+  argument to check for specific attributes as explicit markers of a fitted
+  estimator. When no explicit ``attributes`` are provided, only the attributes
+  that end with a underscore and do not start with double underscore are used
+  as "fitted" markers. The ``all_or_any`` argument is also no longer
+  deprecated. This change is made to restore some backward compatibility with
+  the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
 
 .. _changes_0_22:
 
