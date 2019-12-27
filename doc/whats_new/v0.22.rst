@@ -63,7 +63,8 @@ Changelog
 - |Fix| :func:`utils.check_is_fifted` accepts back an explicit ``attributes``
   argument to check for specific attributes as explicit markers of a fitted
   estimator. When no explicit ``attributes`` are provided, only the attributes
-  ending with a single "_" are used as "fitted" markers. This change is made to
+  ending with a single "_" are used as "fitted" markers. The ``all_or_any``
+  argument is also no longer deprecated. This change is made to
   restore some backward compatibility with the behavior of this utility in
   version 0.21. :pr:`15947` by `Thomas Fan`_.
 
