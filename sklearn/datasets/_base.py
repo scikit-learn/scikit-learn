@@ -825,12 +825,13 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     frame = None
     if as_frame:
-        frame, data_exercise, data_physiological = _convert_data_dataframe("load_linnerud",
-                                                                           data_exercise,
-                                                                           data_physiological,
-                                                                           header_exercise,
-                                                                           header_physiological)
-
+        (frame,
+         data_exercise,
+         data_physiological) = _convert_data_dataframe("load_linnerud",
+                                                       data_exercise,
+                                                       data_physiological,
+                                                       header_exercise,
+                                                       header_physiological)
     if return_X_y:
         return data_exercise, data_physiological
 
