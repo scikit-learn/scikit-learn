@@ -1284,7 +1284,7 @@ def _check_fit_params(X, fit_params, indices=None):
         Dictionary containing the parameters passed at fit.
 
     indices : array-like of shape (n_samples,), default=None
-        Indices to be selected if the parameter has the same size than `X`.
+        Indices to be selected if the parameter has the same size as `X`.
 
     Returns
     -------
@@ -1303,9 +1303,8 @@ def _check_fit_params(X, fit_params, indices=None):
             # Any other fit_params should support indexing
             # (e.g. for cross-validation).
             fit_params_validated[param_key] = _make_indexable(param_value)
-            if indices is not None:
-                fit_params_validated[param_key] = _safe_indexing(
-                    fit_params_validated[param_key], indices
-                )
+            fit_params_validated[param_key] = _safe_indexing(
+                fit_params_validated[param_key], indices
+            )
 
     return fit_params_validated
