@@ -60,7 +60,7 @@ Changelog
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
 
-- |Fix| :func:`utils.check_is_fifted` accepts back an explicit ``attributes``
+- |Fix| :func:`utils.check_is_fitted` accepts back an explicit ``attributes``
   argument to check for specific attributes as explicit markers of a fitted
   estimator. When no explicit ``attributes`` are provided, only the attributes
   ending with a single "_" are used as "fitted" markers. The ``all_or_any``
