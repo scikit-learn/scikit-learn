@@ -1150,7 +1150,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        if indptr[-1] > 2147483648:  # = 2**31 - 1
+        if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
@@ -1498,7 +1498,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, msg='idf vector is not fitted')
+            # idf_ being a property, the automatic attributes detection
+            # does not work as usual and we need to specify the attribute
+            # name:
+            check_is_fitted(self, attributes=["idf_"],
+                            msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1883,7 +1887,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, msg='The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The TF-IDF vectorizer is not fitted')
 
         # FIXME Remove copy parameter support in 0.24
         if copy != "deprecated":
