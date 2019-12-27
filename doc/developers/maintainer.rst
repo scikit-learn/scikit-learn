@@ -91,11 +91,10 @@ available to users.
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
-In terms of including changes, the first RC is a pure copy of the ``master``
-with a release version number, and ideally counts as a *feature freeze*. Each
-coming release candidate and the final release afterwards will include minor
-documentation changes and bug fixes. Any major enhancement or feature should be
-excluded.
+In terms of including changes, the first RC ideally counts as a *feature
+freeze*. Each coming release candidate and the final release afterwards will
+include minor documentation changes and bug fixes. Any major enhancement or
+feature should be excluded.
 
 The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
@@ -109,6 +108,14 @@ while preparing the release.
 Making a release
 ----------------
 
+0. Create a branch, and note that this is done only once for a major release,
+   and minor releases happen on the same branch::
+
+     $ git checkout -b 0.99.X
+
+   Again, note that the `X` is a literal there and `99` is replaced by the
+   release number. The branches are called ``0.19.X``, ``0.20.X``, ...
+
 1. Update docs. Note that this is for the final release, not necessarily for
    the RC releases.
 
@@ -117,9 +124,10 @@ Making a release
 
         $ git shortlog -s 0.99.33.. | cut -f2- | sort --ignore-case | tr '\n' ';' | sed 's/;/, /g;s/, $//'
 
-   - Update the release date in whats_new.rst
+   - Update the release date in ``whats_new.rst``
 
-   - Edit the doc/templates/index.html to change the 'News' entry of the front page.
+   - Edit the doc/templates/index.html to change the 'News' entry of the front
+     page.
 
    - Note that these changes should be made in master and cherry-picked into
      the release branch, only before the final release.
@@ -156,11 +164,12 @@ Making a release
    that the tests pass.
 
 4. Proceed with caution. Ideally, tags should be created when you're almost
-   certain that the release is ready to avoid premature tagging. You can test
-   upload the sdist to test.pypi.org, and test the next step by setting
-   ``BUILD_COMMIT`` to the branch name (``0.22.X`` for instance) in a PR to the
-   wheel building repo. Once all works, you can proceed with tagging. Create
-   the tag and push it (if it's an RC, it can be 0.xxrc1 for instance)::
+   certain that the release is ready, since adding a tag to the main repo can
+   trigger certain automated processes. You can test upload the ``sdist`` to
+   ``test.pypi.org``, and test the next step by setting ``BUILD_COMMIT`` to the
+   branch name (``0.22.X`` for instance) in a PR to the wheel building repo.
+   Once all works, you can proceed with tagging. Create the tag and push it (if
+   it's an RC, it can be ``0.xxrc1`` for instance)::
 
     $ git tag -a 0.999
 
