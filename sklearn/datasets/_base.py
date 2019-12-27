@@ -838,7 +838,6 @@ def load_linnerud(return_X_y=False, as_frame=False):
     return Bunch(data=data_exercise,
                  feature_names=header_exercise,
                  target=data_physiological,
-                 target_names=header_physiological,
                  frame=frame,
                  DESCR=descr,
                  data_filename=data_filename,
@@ -941,7 +940,6 @@ def load_boston(return_X_y=False, as_frame=False):
                  frame=frame,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 target_names=target_columns,
                  DESCR=descr_text,
                  filename=data_file_name)
 
