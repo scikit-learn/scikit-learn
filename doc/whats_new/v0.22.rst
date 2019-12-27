@@ -53,6 +53,14 @@ Changelog
 - |Fix| :func:`metrics.classification_report` does no longer ignore the
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+  
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
+  return sparse weight matrix.
+  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
 :mod:`sklearn.utils`
 ....................
