@@ -8,7 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
-from ..utils import check_array, safe_indexing
+from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
 
 __all__ = ['TransformedTargetRegressor']
@@ -17,10 +17,10 @@ __all__ = ['TransformedTargetRegressor']
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
-    Useful for applying a non-linear transformation in regression
-    problems. This transformation can be given as a Transformer such as the
-    QuantileTransformer or as a function and its inverse such as ``log`` and
-    ``exp``.
+    Useful for applying a non-linear transformation to the target ``y`` in
+    regression problems. This transformation can be given as a Transformer
+    such as the QuantileTransformer or as a function and its inverse such as
+    ``log`` and ``exp``.
 
     The computation during ``fit`` is::
 
@@ -38,7 +38,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         transformer.inverse_transform(regressor.predict(X))
 
-    Read more in the :ref:`User Guide <preprocessing_targets>`.
+    Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
     Parameters
     ----------
@@ -139,7 +139,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self.transformer_.fit(y)
         if self.check_inverse:
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
-            y_sel = safe_indexing(y, idx_selected)
+            y_sel = _safe_indexing(y, idx_selected)
             y_sel_t = self.transformer_.transform(y_sel)
             if not np.allclose(y_sel,
                                self.transformer_.inverse_transform(y_sel_t)):
@@ -210,7 +210,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         Returns

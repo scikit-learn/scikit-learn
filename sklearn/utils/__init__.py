@@ -1,6 +1,10 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+import pkgutil
+import inspect
+from importlib import import_module
+from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
@@ -9,6 +13,7 @@ import numbers
 import platform
 import struct
 import timeit
+from pathlib import Path
 
 import warnings
 import numpy as np
@@ -25,7 +30,7 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, check_scalar)
-from ._namedarray import NamedArray
+from ._namedarray import NamedArray, make_namedarray
 from .. import get_config
 
 
@@ -37,29 +42,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-# deprecate the joblib API in sklearn in favor of using directly joblib
-msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
-       "Please import this functionality directly from joblib, which can "
-       "be installed with: pip install joblib.")
-deprecate = deprecated(msg)
-
-delayed = deprecate(_joblib.delayed)
-cpu_count = deprecate(_joblib.cpu_count)
-hash = deprecate(_joblib.hash)
-effective_n_jobs = deprecate(_joblib.effective_n_jobs)
-
-
-# for classes, deprecated will change the object in _joblib module so we need
-# to subclass them.
-@deprecate
-class Memory(_joblib.Memory):
-    pass
-
-
-@deprecate
-class Parallel(_joblib.Parallel):
-    pass
-
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -68,9 +50,11 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
-           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle", "check_matplotlib_support", "NamedArray"]
+           "parallel_backend", "register_parallel_backend",
+           "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "NamedArray", "make_namedarray"
+          ]
+>>>>>>> upstream/master
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -189,6 +173,8 @@ def _array_indexing(array, key, key_dtype, axis):
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
             key = np.asarray(key)
+    if isinstance(key, tuple):
+        key = list(key)
     return array[key] if axis == 0 else array[:, key]
 
 
@@ -199,6 +185,8 @@ def _pandas_indexing(X, key, key_dtype, axis):
         # FIXME: solved in pandas 0.25
         key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
+    elif isinstance(key, tuple):
+        key = list(key)
     # check whether we should index with loc or iloc
     indexer = X.iloc if key_dtype == 'int' else X.loc
     return indexer[:, key] if axis else indexer[key]
@@ -216,13 +204,16 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
-def _determine_key_type(key):
+def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
     Parameters
     ----------
     key : scalar, slice or array-like
         The key from which we want to infer the data type.
+
+    accept_slice : bool, default=True
+        Whether or not to raise an error if the key is a slice.
 
     Returns
     -------
@@ -245,6 +236,11 @@ def _determine_key_type(key):
         except KeyError:
             raise ValueError(err_msg)
     if isinstance(key, slice):
+        if not accept_slice:
+            raise TypeError(
+                'Only array-like or scalar are supported. '
+                'A Python slice was given.'
+            )
         if key.start is None and key.stop is None:
             return None
         key_start_type = _determine_key_type(key.start)
@@ -255,7 +251,7 @@ def _determine_key_type(key):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
-    if isinstance(key, list):
+    if isinstance(key, (list, tuple)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}
         if not key_type:
@@ -271,8 +267,63 @@ def _determine_key_type(key):
     raise ValueError(err_msg)
 
 
+# TODO: remove in 0.24
+@deprecated("safe_indexing is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
+
+    .. deprecated:: 0.22
+        This function was deprecated in version 0.22 and will be removed in
+        version 0.24.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
+
+    indices : bool, int, str, slice, array-like
+
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
+
+    axis : int, default=0
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    return _safe_indexing(X, indices, axis)
+
+
+def _safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    .. warning::
+
+        This utility is documented, but **private**. This means that
+        backward compatibility might be broken without any deprecation
+        cycle.
 
     Parameters
     ----------
@@ -353,13 +404,13 @@ def _get_column_indices(X, key):
 
     key_dtype = _determine_key_type(key)
 
-    if isinstance(key, list) and not key:
+    if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
-            idx = safe_indexing(np.arange(n_columns), key)
+            idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'
@@ -550,7 +601,7 @@ def resample(*arrays, **options):
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -1036,3 +1087,99 @@ def check_pandas_support(caller_name):
         raise ImportError(
             "{} requires pandas.".format(caller_name)
         ) from e
+
+
+def all_estimators(type_filter=None):
+    """Get a list of all estimators from sklearn.
+
+    This function crawls the module and gets all classes that inherit
+    from BaseEstimator. Classes that are defined in test-modules are not
+    included.
+    By default meta_estimators such as GridSearchCV are also not included.
+
+    Parameters
+    ----------
+    type_filter : string, list of string,  or None, default=None
+        Which kind of estimators should be returned. If None, no filter is
+        applied and all estimators are returned.  Possible values are
+        'classifier', 'regressor', 'cluster' and 'transformer' to get
+        estimators only of these specific types, or a list of these to
+        get the estimators that fit at least one of the types.
+
+    Returns
+    -------
+    estimators : list of tuples
+        List of (name, class), where ``name`` is the class name as string
+        and ``class`` is the actuall type of the class.
+    """
+    # lazy import to avoid circular imports from sklearn.base
+    from ._testing import ignore_warnings
+    from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                        TransformerMixin, ClusterMixin)
+
+    def is_abstract(c):
+        if not(hasattr(c, '__abstractmethods__')):
+            return False
+        if not len(c.__abstractmethods__):
+            return False
+        return True
+
+    all_classes = []
+    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    root = str(Path(__file__).parent.parent)  # sklearn package
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
+    with ignore_warnings(category=FutureWarning):
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix='sklearn.'):
+            mod_parts = modname.split(".")
+            if (any(part in modules_to_ignore for part in mod_parts)
+                    or '._' in modname):
+                continue
+            module = import_module(modname)
+            classes = inspect.getmembers(module, inspect.isclass)
+            classes = [(name, est_cls) for name, est_cls in classes
+                       if not name.startswith("_")]
+
+            # TODO: Remove when FeatureHasher is implemented in PYPY
+            # Skips FeatureHasher for PYPY
+            if IS_PYPY and 'feature_extraction' in modname:
+                classes = [(name, est_cls) for name, est_cls in classes
+                           if name == "FeatureHasher"]
+
+            all_classes.extend(classes)
+
+    all_classes = set(all_classes)
+
+    estimators = [c for c in all_classes
+                  if (issubclass(c[1], BaseEstimator) and
+                      c[0] != 'BaseEstimator')]
+    # get rid of abstract base classes
+    estimators = [c for c in estimators if not is_abstract(c[1])]
+
+    if type_filter is not None:
+        if not isinstance(type_filter, list):
+            type_filter = [type_filter]
+        else:
+            type_filter = list(type_filter)  # copy
+        filtered_estimators = []
+        filters = {'classifier': ClassifierMixin,
+                   'regressor': RegressorMixin,
+                   'transformer': TransformerMixin,
+                   'cluster': ClusterMixin}
+        for name, mixin in filters.items():
+            if name in type_filter:
+                type_filter.remove(name)
+                filtered_estimators.extend([est for est in estimators
+                                            if issubclass(est[1], mixin)])
+        estimators = filtered_estimators
+        if type_filter:
+            raise ValueError("Parameter type_filter must be 'classifier', "
+                             "'regressor', 'transformer', 'cluster' or "
+                             "None, got"
+                             " %s." % repr(type_filter))
+
+    # drop duplicates, sort for reproducibility
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))

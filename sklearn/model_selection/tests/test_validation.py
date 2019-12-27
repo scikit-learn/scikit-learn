@@ -13,16 +13,16 @@ from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
@@ -52,7 +52,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
@@ -213,6 +213,9 @@ class MockClassifier:
         if self.allow_nd:
             T = T.reshape(len(T), -1)
         return T[:, 0]
+
+    def predict_proba(self, T):
+        return T
 
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
@@ -972,6 +975,19 @@ def test_cross_val_predict_unbalanced():
                               decimal=12)
 
 
+def test_cross_val_predict_y_none():
+    # ensure that cross_val_predict works when y is None
+    mock_classifier = MockClassifier()
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 10)
+    y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                              method='predict')
+    assert_allclose(X[:, 0], y_hat)
+    y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                                    method='predict_proba')
+    assert_allclose(X, y_hat_proba)
+
+
 def test_cross_val_score_sparse_fit_params():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1098,8 +1114,6 @@ def test_learning_curve_incremental_learning_unsupervised():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -1167,8 +1181,6 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
@@ -1411,7 +1423,6 @@ def test_cross_val_predict_with_method():
             LogisticRegression(solver="liblinear"))
 
 
-@pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
@@ -1637,8 +1648,14 @@ def test_fit_and_score_failing():
                        "partition for these parameters will be set to %f. "
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
                                           error_message))
-    # check if the same warning is triggered
-    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+
+    def test_warn_trace(msg):
+        assert 'Traceback (most recent call last):\n' in msg
+        split = msg.splitlines()  # note: handles more than '\n'
+        mtb = split[0] + '\n' + split[-1]
+        return warning_message in mtb
+    # check traceback is included
+    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
