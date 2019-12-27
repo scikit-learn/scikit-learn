@@ -150,6 +150,8 @@ def test_load_digits():
 
     # test return_X_y option
     check_return_X_y(digits, partial(load_digits))
+    # test as_frame option
+    check_as_frame(digits, partial(load_digits))
 
 
 def test_load_digits_n_class_lt_10():
