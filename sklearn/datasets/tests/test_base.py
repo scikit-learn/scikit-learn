@@ -194,7 +194,6 @@ def test_load_linnerud():
     res = load_linnerud()
     assert res.data.shape == (20, 3)
     assert res.target.shape == (20, 3)
-    assert len(res.target_names) == 3
     assert res.DESCR
     assert os.path.exists(res.data_filename)
     assert os.path.exists(res.target_filename)
