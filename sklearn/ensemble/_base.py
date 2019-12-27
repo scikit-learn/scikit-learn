@@ -19,8 +19,6 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
-MAX_RAND_SEED = np.iinfo(np.int32).max
-
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
@@ -71,7 +69,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == 'random_state' or key.endswith('__random_state'):
-            to_set[key] = random_state.randint(MAX_RAND_SEED)
+            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)

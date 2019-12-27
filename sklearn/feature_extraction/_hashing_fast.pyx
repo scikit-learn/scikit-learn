@@ -88,7 +88,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indices_a = np.frombuffer(indices, dtype=np.int32)
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
-    if indptr[-1] > 2147483648:  # = 2**31
+    if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         if sp_version < (0, 14):
             raise ValueError(('sparse CSR array has {} non-zero '
                               'elements and requires 64 bit indexing, '

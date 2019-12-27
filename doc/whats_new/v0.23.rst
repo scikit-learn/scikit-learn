@@ -58,6 +58,11 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
+- |Feature| :func:`datasets.fetch_california_housing` now supports
+  heterogeneous data using pandas by setting `as_frame=True`. :pr:`15950`
+  by :user:`Stephanie Andrews <gitsteph>` and
+  :user:`Reshama Shaikh <reshamas>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -66,6 +71,12 @@ Changelog
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
+  
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -85,6 +96,19 @@ Changelog
   :class:`linear_model.RidgeClassifierCV`.
   :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` yields stack trace information
+  in fit failed warning messages in addition to previously emitted
+  type and details.
+  :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
+
+- |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
+  when `y=None`.
+  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -97,3 +121,9 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
+  :pr:`15926` by :user:`Loïc Estève <lesteve>`.
