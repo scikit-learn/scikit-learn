@@ -10,7 +10,8 @@ def check_pandas_dependency_message(fetch_func):
     except ImportError:
         # Check that pandas is imported lazily and that an informative error
         # message is raised when pandas is missing:
-        expected_msg = ('{} with as_frame=True requires pandas'.format(fetch_func.__name__))
+        expected_msg = ('{} with as_frame=True requires pandas'
+                        .format(fetch_func.__name__))
         with pytest.raises(ImportError, match=expected_msg):
             fetch_func(as_frame=True)
 
