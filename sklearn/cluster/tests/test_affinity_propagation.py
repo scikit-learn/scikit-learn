@@ -58,11 +58,28 @@ def test_affinity_propagation():
                                              copy=False)
     assert_array_equal(labels, labels_no_copy)
 
+    # Test preference string input
+    preference = '100%'
+    af = AffinityPropagation(preference=preference, verbose=True)
+    labels = af.fit(X).labels_
+    assert_equal(max(labels), n_samples-1)
+
+    preference = '0%'
+    af = AffinityPropagation(preference=preference, verbose=True)
+    labels = af.fit(X).labels_
+    assert_equal(max(labels), 2)
+
     # Test input validation
     with pytest.raises(ValueError):
         affinity_propagation(S[:, :-1])
     with pytest.raises(ValueError):
         affinity_propagation(S, damping=0)
+    with pytest.raises(ValueError):
+        affinity_propagation(S, preference='101%')
+    with pytest.raises(ValueError):
+        affinity_propagation(S, preference='-101.3%')
+    with pytest.raises(ValueError):
+        affinity_propagation(S, preference='42.0')
     af = AffinityPropagation(affinity="unknown")
     with pytest.raises(ValueError):
         af.fit(X)
