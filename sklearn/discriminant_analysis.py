@@ -433,6 +433,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if n_samples == n_classes:
             raise ValueError("The number of samples must be more "
                              "than the number of classes.")
+        if n_classes < 2:
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
+
 
         if self.priors is None:  # estimate priors from sample
             _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
