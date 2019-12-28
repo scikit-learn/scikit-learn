@@ -376,8 +376,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # avoid division by zero in normalization
         std[std == 0] = 1.
         fac = 1. / (n_samples - n_classes)
-
         # 2) Within variance scaling
+
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
         U, S, V = linalg.svd(X, full_matrices=False)
@@ -388,6 +388,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         # 3) Between variance scaling
         # Scale weighted centers
+	fac = 1. / (n_classes - 1)
         X = np.dot(((np.sqrt((n_samples * self.priors_) * fac)) *
                     (self.means_ - self.xbar_).T).T, scalings)
         # Centers are living in a space with n_classes-1 dim (maximum)
