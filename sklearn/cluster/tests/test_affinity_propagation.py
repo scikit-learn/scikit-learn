@@ -62,12 +62,12 @@ def test_affinity_propagation():
     preference = '100%'
     af = AffinityPropagation(preference=preference, verbose=True)
     labels = af.fit(X).labels_
-    assert_equal(max(labels), n_samples-1)
+    assert max(labels) == n_samples-1
 
     preference = '0%'
     af = AffinityPropagation(preference=preference, verbose=True)
     labels = af.fit(X).labels_
-    assert_equal(max(labels), 2)
+    assert max(labels) == 2
 
     # Test input validation
     with pytest.raises(ValueError):
