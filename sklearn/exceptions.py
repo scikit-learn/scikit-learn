@@ -139,8 +139,7 @@ class FitFailedWarning(RuntimeWarning):
     ...     print(repr(w[-1].message))
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
-    Details:
-    \\nTraceback (most recent call last):...\\nValueError:
+    Details:...Traceback (most recent call last):...ValueError:
     Penalty term must be positive; got (C=-2)\\n')
 
 

@@ -37,7 +37,7 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name.endswith(('hashing.FeatureHasher',
+            if item.name.endswith(('_hash.FeatureHasher',
                                    'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
