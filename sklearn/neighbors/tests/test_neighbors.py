@@ -17,14 +17,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
 from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
 import joblib

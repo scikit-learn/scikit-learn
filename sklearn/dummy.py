@@ -13,7 +13,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
@@ -28,6 +28,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     (real) classifiers. Do not use it for real problems.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -44,6 +46,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
           class
+
+          .. versionchanged:: 0.22
+             The default value of `strategy` will change to "prior" in version
+             0.24. Starting from version 0.22, a warning will be raised if
+             `strategy` is not explicitly set.
 
           .. versionadded:: 0.17
              Dummy Classifier now supports prior fitting strategy using
@@ -92,7 +99,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
-    def __init__(self, strategy="stratified", random_state=None,
+    def __init__(self, strategy="warn", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -118,11 +125,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         """
         allowed_strategies = ("most_frequent", "stratified", "uniform",
                               "constant", "prior")
-        if self.strategy not in allowed_strategies:
+
+        # TODO: Remove in 0.24
+        if self.strategy == "warn":
+            warnings.warn("The default value of strategy will change from "
+                          "stratified to prior in 0.24.", FutureWarning)
+            self._strategy = "stratified"
+        elif self.strategy not in allowed_strategies:
             raise ValueError("Unknown strategy type: %s, expected one of %s."
                              % (self.strategy, allowed_strategies))
+        else:
+            self._strategy = self.strategy
 
-        if self.strategy == "uniform" and sp.issparse(y):
+        if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn('A local copy of the target data has been converted '
                           'to a numpy array. Predicting on sparse target data '
@@ -141,9 +156,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
-        check_consistent_length(X, y, sample_weight)
+        check_consistent_length(X, y)
 
-        if self.strategy == "constant":
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
+
+        if self._strategy == "constant":
             if self.constant is None:
                 raise ValueError("Constant target value has to be specified "
                                  "when the constant strategy is used.")
@@ -157,7 +175,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        if self.strategy == "constant":
+        if self._strategy == "constant":
             for k in range(self.n_outputs_):
                 if not any(constant[k][0] == c for c in self.classes_[k]):
                     # Checking in case of constant strategy if the constant
@@ -206,43 +224,43 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             class_prior_ = [class_prior_]
             constant = [constant]
         # Compute probability only once
-        if self.strategy == "stratified":
+        if self._strategy == "stratified":
             proba = self.predict_proba(X)
             if self.n_outputs_ == 1:
                 proba = [proba]
 
         if self.sparse_output_:
             class_prob = None
-            if self.strategy in ("most_frequent", "prior"):
+            if self._strategy in ("most_frequent", "prior"):
                 classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 class_prob = class_prior_
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 raise ValueError("Sparse target prediction is not "
                                  "supported with the uniform strategy")
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 classes_ = [np.array([c]) for c in constant]
 
             y = _random_choice_csc(n_samples, classes_, class_prob,
-                                  self.random_state)
+                                   self.random_state)
         else:
-            if self.strategy in ("most_frequent", "prior"):
+            if self._strategy in ("most_frequent", "prior"):
                 y = np.tile([classes_[k][class_prior_[k].argmax()] for
                              k in range(self.n_outputs_)], [n_samples, 1])
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for
                                k in range(self.n_outputs_)]).T
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
                        for k in range(self.n_outputs_)]
                 y = np.vstack(ret).T
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 y = np.tile(self.constant, (n_samples, 1))
 
             if self.n_outputs_ == 1:
@@ -286,22 +304,22 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         P = []
         for k in range(self.n_outputs_):
-            if self.strategy == "most_frequent":
+            if self._strategy == "most_frequent":
                 ind = class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
-            elif self.strategy == "prior":
+            elif self._strategy == "prior":
                 out = np.ones((n_samples, 1)) * class_prior_[k]
 
-            elif self.strategy == "stratified":
+            elif self._strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
                 out = out.astype(np.float64)
 
-            elif self.strategy == "uniform":
+            elif self._strategy == "uniform":
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
                 out /= n_classes_[k]
 
-            elif self.strategy == "constant":
+            elif self._strategy == "constant":
                 ind = np.where(classes_[k] == constant[k])
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
                 out[:, ind] = 1.0
@@ -389,6 +407,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     strategy : str
@@ -471,8 +491,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)

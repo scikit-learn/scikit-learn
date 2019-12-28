@@ -2,6 +2,7 @@ import warnings
 import functools
 import sys
 
+
 __all__ = ["deprecated"]
 
 
@@ -64,7 +65,7 @@ class deprecated:
         init = cls.__init__
 
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            warnings.warn(msg, category=FutureWarning)
             return init(*args, **kwargs)
         cls.__init__ = wrapped
 
@@ -83,7 +84,7 @@ class deprecated:
 
         @functools.wraps(fun)
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            warnings.warn(msg, category=FutureWarning)
             return fun(*args, **kwargs)
 
         wrapped.__doc__ = self._update_doc(wrapped.__doc__)
@@ -98,7 +99,7 @@ class deprecated:
 
         @property
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
 
         return wrapped
@@ -113,7 +114,7 @@ class deprecated:
 
 
 def _is_deprecated(func):
-    """Helper to check if func is wraped by our deprecated decorator"""
+    """Helper to check if func is wrapped by our deprecated decorator"""
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
@@ -140,4 +141,4 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
         "part of the private API."
     ).format(deprecated_path=deprecated_path, correct_path=correct_path)
 
-    warnings.warn(message, DeprecationWarning)
+    warnings.warn(message, FutureWarning)

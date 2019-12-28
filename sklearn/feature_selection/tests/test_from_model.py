@@ -1,26 +1,42 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import (RandomForestClassifier,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class NaNTagRandomForest(RandomForestClassifier):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                         random_state=None, tol=None)
@@ -234,8 +250,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
@@ -266,8 +280,6 @@ def test_calling_fit_reinitializes():
     assert transformer.estimator_.C == 100
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_prefit():
     # Test all possible combinations of the prefit parameter.
 
@@ -307,8 +319,6 @@ def test_threshold_string():
     assert_array_almost_equal(X_transform, data[:, mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
@@ -320,3 +330,40 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert X_transform.shape[1] > model.transform(data).shape[1]
+
+
+def test_fit_accepts_nan_inf():
+    # Test that fit doesn't check for np.inf and np.nan values.
+    clf = HistGradientBoostingClassifier(random_state=0)
+
+    model = SelectFromModel(estimator=clf)
+
+    nan_data = data.copy()
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.fit(data, y)
+
+
+def test_transform_accepts_nan_inf():
+    # Test that transform doesn't check for np.inf and np.nan values.
+    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    nan_data = data.copy()
+
+    model = SelectFromModel(estimator=clf)
+    model.fit(nan_data, y)
+
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.transform(nan_data)
+
+
+def test_allow_nan_tag_comes_from_estimator():
+    allow_nan_est = NaNTag()
+    model = SelectFromModel(estimator=allow_nan_est)
+    assert model._get_tags()['allow_nan'] is True
+
+    no_nan_est = NoNaNTag()
+    model = SelectFromModel(estimator=no_nan_est)
+    assert model._get_tags()['allow_nan'] is False

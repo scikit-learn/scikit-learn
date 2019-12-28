@@ -1,6 +1,4 @@
-"""
-Base class for ensemble-based estimators.
-"""
+"""Base class for ensemble-based estimators."""
 
 # Authors: Gilles Louppe
 # License: BSD 3 clause
@@ -21,8 +19,6 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
-MAX_RAND_SEED = np.iinfo(np.int32).max
-
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
@@ -42,14 +38,13 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
 
 
 def _set_random_states(estimator, random_state=None):
-    """Sets fixed random_state parameters for an estimator
+    """Set fixed random_state parameters for an estimator.
 
     Finds all parameters ending ``random_state`` and sets them to integers
     derived from ``random_state``.
 
     Parameters
     ----------
-
     estimator : estimator supporting get/set_params
         Estimator with potential randomness managed by random_state
         parameters.
@@ -74,7 +69,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == 'random_state' or key.endswith('__random_state'):
-            to_set[key] = random_state.randint(MAX_RAND_SEED)
+            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)
@@ -106,6 +101,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+
     # overwrite _required_parameters from MetaEstimatorMixin
     _required_parameters = []
 
@@ -122,8 +118,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute, set the
-        `base_estimator_` attribute."""
+        """Check the estimator and the n_estimator attribute.
+
+        Sets the base_estimator_` attributes.
+        """
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
@@ -159,15 +157,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return estimator
 
     def __len__(self):
-        """Returns the number of estimators in the ensemble."""
+        """Return the number of estimators in the ensemble."""
         return len(self.estimators_)
 
     def __getitem__(self, index):
-        """Returns the index'th estimator in the ensemble."""
+        """Return the index'th estimator in the ensemble."""
         return self.estimators_[index]
 
     def __iter__(self):
-        """Returns iterator over estimators in the ensemble."""
+        """Return iterator over estimators in the ensemble."""
         return iter(self.estimators_)
 
 
@@ -204,6 +202,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         training data. If an estimator has been set to `'drop'`, it will not
         appear in `estimators_`.
     """
+
     _required_parameters = ['estimators']
 
     @property
@@ -230,7 +229,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             warnings.warn(
                 "Using 'None' to drop an estimator from the ensemble is "
                 "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead.", DeprecationWarning
+                "Use the string 'drop' instead.", FutureWarning
             )
 
         has_estimator = any(est not in (None, 'drop') for est in estimators)
@@ -254,7 +253,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return names, estimators
 
     def set_params(self, **params):
-        """Set the parameters of an estimator from the ensemble.
+        """
+        Set the parameters of an estimator from the ensemble.
 
         Valid parameter keys can be listed with `get_params()`.
 
@@ -271,7 +271,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return self
 
     def get_params(self, deep=True):
-        """Get the parameters of an estimator from the ensemble.
+        """
+        Get the parameters of an estimator from the ensemble.
 
         Parameters
         ----------

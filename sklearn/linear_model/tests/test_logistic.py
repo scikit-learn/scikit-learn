@@ -16,25 +16,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import shuffle
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
-from sklearn.utils.testing import skip_if_no_parallel
+from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
-    logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
@@ -390,8 +388,20 @@ def test_logistic_regression_path_convergence_fail():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
     Cs = [1e3]
-    assert_warns(ConvergenceWarning, _logistic_regression_path,
-                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
+
+    # Check that the convergence message points to both a model agnostic
+    # advice (scaling the data) and to the logistic regression specific
+    # documentation that includes hints on the solver configuration.
+    with pytest.warns(ConvergenceWarning) as record:
+        _logistic_regression_path(
+            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge" in warn_msg
+    assert "Increase the number of iterations" in warn_msg
+    assert "scale the data" in warn_msg
+    assert "linear_model.html#logistic-regression" in warn_msg
 
 
 def test_liblinear_dual_random_state():
@@ -1725,13 +1735,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
-
-
-def test_logistic_regression_path_deprecation():
-
-    assert_warns_message(DeprecationWarning,
-                         "logistic_regression_path was deprecated",
-                         logistic_regression_path, X, Y1)
 
 
 @pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))

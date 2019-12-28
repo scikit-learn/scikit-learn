@@ -414,6 +414,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    @property
+    def _pairwise(self):
+        # allows cross-validation to see 'precomputed' metrics
+        return getattr(self.estimator, '_pairwise', False)
+
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
@@ -727,8 +732,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            self.best_estimator_ = clone(base_estimator).set_params(
-                **self.best_params_)
+            # we clone again after setting params in case some
+            # of the params are estimators as well.
+            self.best_estimator_ = clone(clone(base_estimator).set_params(
+                **self.best_params_))
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
@@ -815,7 +822,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.iid != 'deprecated':
             warnings.warn(
                 "The parameter 'iid' is deprecated in 0.22 and will be "
-                "removed in 0.24.", DeprecationWarning
+                "removed in 0.24.", FutureWarning
             )
             iid = self.iid
         else:
@@ -941,7 +948,7 @@ class GridSearchCV(BaseSearchCV):
         returns the selected ``best_index_`` given ``cv_results_``. In that
         case, the ``best_estimator_`` and ``best_parameters_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
-        attribute will not be availble.
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
@@ -1170,6 +1177,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
+    .. versionadded:: 0.14
+
     Parameters
     ----------
     estimator : estimator object.
@@ -1269,7 +1278,7 @@ class RandomizedSearchCV(BaseSearchCV):
         returns the selected ``best_index_`` given the ``cv_results``. In that
         case, the ``best_estimator_`` and ``best_parameters_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
-        attribute will not be availble.
+        attribute will not be available.
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
