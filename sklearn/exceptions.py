@@ -140,7 +140,7 @@ class FitFailedWarning(RuntimeWarning):
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
     Details:...Traceback (most recent call last):...ValueError:
-    Penalty term must be positive; got (C=-2)\\n')
+    Penalty term must be positive; got (C=-2)...
 
 
     .. versionchanged:: 0.18
