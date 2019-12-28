@@ -62,7 +62,7 @@ def test_affinity_propagation():
     preference = '100%'
     af = AffinityPropagation(preference=preference, verbose=True)
     labels = af.fit(X).labels_
-    assert max(labels) == n_samples-1
+    assert max(labels) == X.shape[0]-1
 
     preference = '0%'
     af = AffinityPropagation(preference=preference, verbose=True)
