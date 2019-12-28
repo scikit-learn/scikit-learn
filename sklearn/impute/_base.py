@@ -437,7 +437,8 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                mask, missing_mask = _get_mask(X, self.missing_values, True)
+                mask = _get_mask(X.data, self.missing_values)
+                _, missing_mask = _get_mask(X_, self.missing_values, True)
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=np.int),
                     np.diff(X.indptr))[mask]
@@ -628,7 +629,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         self._precomputed = False
         if sparse.issparse(X) or isinstance(X, np.ndarray):
-            if self.missing_values and X.dtype == 'bool':
+            if X.dtype == 'bool':
                 self._precomputed = True
 
         # Need not validate X again as it would have already been validated
