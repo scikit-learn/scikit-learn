@@ -385,6 +385,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
         scalings = (V[:rank] / std).T / S[:rank]
+        fac = 1. / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
