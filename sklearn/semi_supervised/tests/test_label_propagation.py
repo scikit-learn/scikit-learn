@@ -166,7 +166,7 @@ def test_non_zero_normalizer():
                                            n_neighbors=1)
     assert_no_warnings(mdl.fit, X, y)
 
-    
+
 def test_predict_sparse_callable_kernel():
     # This is a non-regression test for #15866
 
