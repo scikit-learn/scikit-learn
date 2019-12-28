@@ -201,4 +201,3 @@ def test_predict_sparse_callable_kernel():
     model = label_propagation.LabelPropagation(kernel=topk_rbf)
     model.fit(X_train, y_train)
     assert model.score(X_test, y_test) >= 0.9
-
