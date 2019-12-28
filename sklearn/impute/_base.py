@@ -266,7 +266,6 @@ class SimpleImputer(_BaseImputer):
         self : SimpleImputer
         """
         X = self._validate_input(X)
-        super()._fit_indicator(X)
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -302,18 +301,9 @@ class SimpleImputer(_BaseImputer):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
-<<<<<<< HEAD
 
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=True,
-                error_on_new=False)
-            self.indicator_.fit(missing_mask)
-        else:
-            self.indicator_ = None
+        super()._fit_indicator(missing_mask)
 
-=======
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -415,12 +405,7 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
 
         X = self._validate_input(X)
-<<<<<<< HEAD
         X_ = X.copy()
-=======
-        X_indicator = super()._transform_indicator(X)
-
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
@@ -452,16 +437,10 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-<<<<<<< HEAD
                 mask, missing_mask = _get_mask(X, self.missing_values, True)
-                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                    np.diff(X.indptr))[mask]
-=======
-                mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=np.int),
                     np.diff(X.indptr))[mask]
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
@@ -474,19 +453,9 @@ class SimpleImputer(_BaseImputer):
 
             X[coordinates] = values
 
-<<<<<<< HEAD
-        if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(missing_mask)
-            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X = hstack((X, X_trans_indicator))
+        X_indicator = super()._transform_indicator(missing_mask)
 
-        return X
-
-    def _more_tags(self):
-        return {'allow_nan': True}
-=======
         return super()._concatenate_indicator(X, X_indicator)
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):

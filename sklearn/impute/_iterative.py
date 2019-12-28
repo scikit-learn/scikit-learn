@@ -172,7 +172,7 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer  
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
@@ -573,23 +573,12 @@ class IterativeImputer(_BaseImputer):
         self._max_value = np.inf if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
-<<<<<<< HEAD
+
         X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                                missing_values=True,
-                                error_on_new=False,
-                                )
-            X_trans_indicator = self.indicator_.fit_transform(missing_mask)
-        else:
-            self.indicator_ = None
+        super()._fit_indicator(missing_mask)
+        X_indicator = super()._transform_indicator(missing_mask)
 
-=======
-        super()._fit_indicator(X)
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
@@ -677,15 +666,9 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-<<<<<<< HEAD
         X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
-        if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(missing_mask)
-=======
-        X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
->>>>>>> 2287d2d229b763c7592127106c8947872e7326c2
+        X_indicator = super()._transform_indicator(missing_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return super()._concatenate_indicator(Xt, X_indicator)
