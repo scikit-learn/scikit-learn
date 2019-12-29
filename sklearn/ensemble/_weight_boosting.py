@@ -104,7 +104,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
@@ -182,7 +182,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             The target values (class labels).
 
-        sample_weight : ndarray of shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
@@ -190,7 +190,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        sample_weight : ndarray of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
@@ -220,7 +220,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             Labels for X.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Yields
@@ -421,7 +421,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : array-like of shape (n_samples,)
             The target values (class labels).
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             ``1 / n_samples``.
 
@@ -473,7 +473,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : array-like of shape (n_samples,)
             The target values (class labels).
 
-        sample_weight : ndarray of shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
@@ -481,7 +481,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        sample_weight : ndarray of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
@@ -977,7 +977,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         y : array-like of shape (n_samples,)
             The target values (real numbers).
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
@@ -1016,7 +1016,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : ndarray of shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
@@ -1024,7 +1024,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Returns
         -------
-        sample_weight : ndarray of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
