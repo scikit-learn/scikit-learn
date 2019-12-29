@@ -104,7 +104,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : ndarray of shape (n_classifiers,), default=`None`
+    weights : array-like of shape (n_classifiers,), default=`None`
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
@@ -133,7 +133,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    classes_ : ndarray of shape (n_predictions,)
+    classes_ : array-like of shape (n_predictions,)
         The classes labels.
 
     See Also
@@ -196,7 +196,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -231,7 +231,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        maj : ndarray of shape (n_samples,)
+        maj : array-like of shape (n_samples,)
             Predicted class labels.
         """
         check_is_fitted(self)
@@ -271,7 +271,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Returns
         -------
-        avg : ndarray of shape (n_samples, n_classes)
+        avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
         if self.voting == 'hard':
@@ -336,7 +336,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    weights : ndarray of shape (n_regressors,), default=`None`
+    weights : array-like of shape (n_regressors,), default=`None`
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
@@ -393,7 +393,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
