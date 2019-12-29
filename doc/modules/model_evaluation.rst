@@ -91,7 +91,7 @@ Scoring                           Function                                      
 'explained_variance'              :func:`metrics.explained_variance_score`
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_absolute_percentage_error' :func:`metrics.mean_absolute_percentage_error`
+'mean_absolute_percentage_error'  :func:`metrics.mean_absolute_percentage_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
