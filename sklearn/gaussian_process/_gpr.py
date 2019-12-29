@@ -47,16 +47,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float or array-like, optional (default: 1e-10)
-        Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations.
-        This can also prevent a potential numerical issue during fitting, by
-        ensuring that the calculated values form a positive definite matrix.
-        If an array is passed, it must have the same number of entries as the
-        data used for fitting and is used as datapoint-dependent noise level.
-        Note that this is equivalent to adding a WhiteKernel with c=alpha.
-        Allowing to specify the noise level directly as a parameter is mainly
-        for convenience and for consistency with Ridge.
+    alpha : float, optional (default: 1e-10)
+        Value added to the diagonal of the kernel matrix to prevent potential
+        numerical issues associated with finding the inverse of the kernel
+        matrix. Note that alpha  does not represent measurement noise variance
+        - for problems involving measurement noise, WhiteKernel is recommended.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
