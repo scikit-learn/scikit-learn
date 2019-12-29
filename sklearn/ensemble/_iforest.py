@@ -232,7 +232,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
