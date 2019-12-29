@@ -56,7 +56,7 @@ class ConfusionMatrixDisplay:
             Colormap recognized by matplotlib.
 
         xticks_rotation : {'vertical', 'horizontal'} or float, \
-                         default='vertical'
+                         default='horizontal'
             Rotation of xtick labels.
 
         values_format : str, default=None
@@ -93,7 +93,7 @@ class ConfusionMatrixDisplay:
                 values_format = '.2g'
 
             # print text with appropriate color depending on background
-            thresh = (cm.max() - cm.min()) / 2.
+            thresh = (cm.max() + cm.min()) / 2.0
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
                 self.text_[i, j] = ax.text(j, i,
@@ -117,9 +117,9 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
-                          labels=None, display_labels=None,
-                          include_values=True, normalize=None,
+def plot_confusion_matrix(estimator, X, y_true, labels=None,
+                          sample_weight=None, normalize=None,
+                          display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
@@ -138,13 +138,18 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     y : array-like of shape (n_samples,)
         Target values.
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder or
         select a subset of labels. If `None` is given, those that appear at
         least once in `y_true` or `y_pred` are used in sorted order.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes confusion matrix over the true (rows), predicted (columns)
+        conditions or all the population. If None, confusion matrix will not be
+        normalized.
 
     display_labels : array-like of shape (n_classes,), default=None
         Target names used for plotting. By default, `labels` will be used if
@@ -154,13 +159,8 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     include_values : bool, default=True
         Includes values in confusion matrix.
 
-    normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes confusion matrix over the true (rows), predicted (columns)
-        conditions or all the population. If None, confusion matrix will not be
-        normalized.
-
     xticks_rotation : {'vertical', 'horizontal'} or float, \
-                        default='vertical'
+                        default='horizontal'
         Rotation of xtick labels.
 
     values_format : str, default=None
@@ -183,10 +183,6 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
 
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
-
-    if normalize not in {'true', 'pred', 'all', None}:
-        raise ValueError("normalize must be one of {'true', 'pred', "
-                         "'all', None}")
 
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,

@@ -91,8 +91,7 @@ Scoring                           Function                                      
 'explained_variance'              :func:`metrics.explained_variance_score`
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_absolute_percentage_error'
-                                  :func:`metrics.mean_absolute_percentage_error`
+'neg_mean_absolute_percentage_error' :func:`metrics.mean_absolute_percentage_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
@@ -1350,8 +1349,8 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly
-(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+class. The OvO and OvR algorithms support weighting uniformly
+(``average='macro'``) and by prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
@@ -1382,10 +1381,10 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
-The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
-OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+[PD2000]_. The algorithm is functionally the same as the multilabel case. To
+enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
 ``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
@@ -1423,6 +1422,10 @@ to the given limit.
        `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38.
+
+    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
+       Stern School of Business, New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
@@ -1722,7 +1725,7 @@ relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
 DCG score is
 
 .. math::
@@ -1962,8 +1965,8 @@ function::
 Mean absolute percentage error
 ------------------------------
 The :func: The `mean_absolute_percentage_error` (MAPE), also known as mean absolute
-percentage deviation (MAPD), is a measure of prediction accuracy of a forecasting
-method in statistics, for example in trend estimation, also used as a loss function
+percentage deviation (MAPD), is a measure of prediction accuracy of a regression
+method in statistics, for example in price prediction, also used as a loss function
 for regression problems in machine learning. It is blind to global scaling of the 
 target as long as the prediction is scaled like the true y.
 

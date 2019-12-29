@@ -10,7 +10,6 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
-from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
 
@@ -219,15 +218,6 @@ def test_calinski_harabasz_score():
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(calinski_harabasz_score(X, labels),
                   45 * (40 - 4) / (5 * (4 - 1)))
-
-
-def test_deprecated_calinski_harabaz_score():
-    depr_message = ("Function 'calinski_harabaz_score' has been renamed "
-                    "to 'calinski_harabasz_score' "
-                    "and will be removed in version 0.23.")
-    assert_warns_message(FutureWarning, depr_message,
-                         calinski_harabaz_score,
-                         np.ones((10, 2)), [0] * 5 + [1] * 5)
 
 
 def test_davies_bouldin_score():

@@ -12,25 +12,25 @@ class Perceptron(BaseSGDClassifier):
     Parameters
     ----------
 
-    penalty : None, 'l2' or 'l1' or 'elasticnet'
-        The penalty (aka regularization term) to be used. Defaults to None.
+    penalty : {'l2','l1','elasticnet'}, default=None
+        The penalty (aka regularization term) to be used.
 
-    alpha : float
+    alpha : float, default=0.0001
         Constant that multiplies the regularization term if regularization is
-        used. Defaults to 0.0001
+        used.
 
-    fit_intercept : bool
+    fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
+        data is assumed to be already centered.
 
-    max_iter : int, optional (default=1000)
+    max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional (default=1e-3)
+    tol : float, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
@@ -39,20 +39,20 @@ class Perceptron(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, default=0
+    verbose : int, default=0
         The verbosity level
 
-    eta0 : double
-        Constant by which the updates are multiplied. Defaults to 1.
+    eta0 : double, default=1
+        Constant by which the updates are multiplied.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -80,7 +80,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.20
 
-    class_weight : dict, {class_label: weight} or "balanced" or None, optional
+    class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
@@ -97,18 +97,18 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
+    coef_ : ndarray of shape = [1, n_features] if n_classes == 2 else \
+        [n_classes, n_features]
         Weights assigned to the features.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
     t_ : int

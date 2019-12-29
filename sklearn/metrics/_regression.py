@@ -789,7 +789,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     message = ("Mean Tweedie deviance error with power={} can only be used on "
                .format(power))
     if power < 0:
-        # 'Extreme stable', y_true any realy number, y_pred > 0
+        # 'Extreme stable', y_true any real number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
         dev = 2 * (np.power(np.maximum(y_true, 0), 2 - power)
@@ -873,7 +873,7 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
 
     Gamma deviance is equivalent to the Tweedie deviance with
     the power parameter `p=2`. It is invariant to scaling of
-    the target variable, and mesures relative errors.
+    the target variable, and measures relative errors.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
 

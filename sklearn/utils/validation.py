@@ -339,7 +339,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=None, estimator=None):
+                ensure_min_features=1, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -414,14 +414,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean or None, optional (default=None)
-        Raise DataConversionWarning if the dtype of the input data structure
-        does not match the requested dtype, causing a memory copy.
-
-        .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
-            removed in 0.23.
-
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -430,14 +422,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
     """
-    # warn_on_dtype deprecation
-    if warn_on_dtype is not None:
-        warnings.warn(
-            "'warn_on_dtype' is deprecated in version 0.21 and will be "
-            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
-            "warning.",
-            FutureWarning, stacklevel=2)
-
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -454,9 +438,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        dtypes_orig = np.array(array.dtypes)
+        dtypes_orig = list(array.dtypes)
+        # pandas boolean dtype __array__ interface coerces bools to objects
+        for i, dtype_iter in enumerate(dtypes_orig):
+            if dtype_iter.kind == 'b':
+                dtypes_orig[i] = np.object
+
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
-            dtype_orig = np.result_type(*array.dtypes)
+            dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -577,23 +566,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                              % (n_features, array.shape, ensure_min_features,
                                 context))
 
-    if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
-        msg = ("Data with input dtype %s was converted to %s%s."
-               % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning, stacklevel=2)
-
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
-
-    if (warn_on_dtype and dtypes_orig is not None and
-            {array.dtype} != set(dtypes_orig)):
-        # if there was at the beginning some other types than the final one
-        # (for instance in a DataFrame that can contain several dtypes) then
-        # some data must have been converted
-        msg = ("Data with input dtype %s were all converted to %s%s."
-               % (', '.join(map(str, sorted(set(dtypes_orig)))), array.dtype,
-                  context))
-        warnings.warn(msg, DataConversionWarning, stacklevel=3)
 
     return array
 
@@ -621,7 +595,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=None, estimator=None):
+              estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -706,14 +680,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean or None, optional (default=None)
-        Raise DataConversionWarning if the dtype of the input data structure
-        does not match the requested dtype, causing a memory copy.
-
-        .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
-             removed in 0.23.
-
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -735,7 +701,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
                     ensure_2d=ensure_2d, allow_nd=allow_nd,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
-                    warn_on_dtype=warn_on_dtype,
                     estimator=estimator)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
@@ -778,7 +743,9 @@ def column_or_1d(y, warn=False):
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
-    raise ValueError("bad input shape {0}".format(shape))
+    raise ValueError(
+        "y should be a 1d array, "
+        "got an array of shape {} instead.".format(shape))
 
 
 def check_random_state(seed):
@@ -885,23 +852,28 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes='deprecated', msg=None,
-                    all_or_any='deprecated'):
+def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
+    This utility is meant to be used internally by estimators themselves,
+    typically in their own predict / transform methods.
+
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : deprecated, ignored
-        .. deprecated:: 0.22
-           `attributes` is deprecated, is currently ignored and will be removed
-           in 0.23.
+    attributes : str, list or tuple of str, default=None
+        Attribute name(s) given as string or a list/tuple of strings
+        Eg.: ``["coef_", "estimator_", ...], "coef_"``
+
+        If `None`, `estimator` is considered fitted if there exist an
+        attribute that ends with a underscore and does not start with double
+        underscore.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -913,10 +885,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : deprecated, ignored
-        .. deprecated:: 0.21
-           `all_or_any` is deprecated, is currently ignored and will be removed
-           in 0.23.
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
 
     Returns
     -------
@@ -927,14 +897,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     NotFittedError
         If the attributes are not found.
     """
-    if attributes != 'deprecated':
-        warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", FutureWarning)
-    if all_or_any != 'deprecated':
-        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", FutureWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
@@ -944,9 +906,13 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator)
-             if (v.endswith("_") or v.startswith("_"))
-             and not v.startswith("__")]
+    if attributes is not None:
+        if not isinstance(attributes, (list, tuple)):
+            attributes = [attributes]
+        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
+    else:
+        attrs = [v for v in vars(estimator)
+                 if v.endswith("_") and not v.startswith("__")]
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})

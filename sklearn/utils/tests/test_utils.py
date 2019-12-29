@@ -9,10 +9,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils._testing import (assert_raises,
-                                   assert_array_equal,
-                                   assert_allclose_dense_sparse,
-                                   assert_raises_regex,
-                                   assert_warns_message, assert_no_warnings)
+                                    assert_array_equal,
+                                    assert_allclose_dense_sparse,
+                                    assert_raises_regex,
+                                    assert_warns_message,
+                                    assert_no_warnings,
+                                    _convert_container)
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
@@ -234,25 +236,6 @@ def test_determine_key_type_error():
 def test_determine_key_type_slice_error():
     with pytest.raises(TypeError, match="Only array-like or scalar are"):
         _determine_key_type(slice(0, 2, 1), accept_slice=False)
-
-
-def _convert_container(container, constructor_name, columns_name=None):
-    if constructor_name == 'list':
-        return list(container)
-    elif constructor_name == 'tuple':
-        return tuple(container)
-    elif constructor_name == 'array':
-        return np.asarray(container)
-    elif constructor_name == 'sparse':
-        return sp.csr_matrix(container)
-    elif constructor_name == 'dataframe':
-        pd = pytest.importorskip('pandas')
-        return pd.DataFrame(container, columns=columns_name)
-    elif constructor_name == 'series':
-        pd = pytest.importorskip('pandas')
-        return pd.Series(container)
-    elif constructor_name == 'slice':
-        return slice(container[0], container[1])
 
 
 @pytest.mark.parametrize(
@@ -654,38 +637,10 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-    def check_warning(*args, **kw):
-        return assert_warns_message(
-            FutureWarning, "deprecated in version 0.20.1",
-            *args, **kw)
-
-    # Ensure that the joblib API is deprecated in sklearn.util
-    from sklearn.utils import Parallel, Memory, delayed
-    from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory, str(tmpdir))
-    check_warning(hash, 1)
-    check_warning(Parallel)
-    check_warning(cpu_count)
-    check_warning(effective_n_jobs, 1)
-    check_warning(delayed, dummy_func)
 
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
     from sklearn.utils import parallel_backend, register_parallel_backend
-    assert_no_warnings(parallel_backend, 'loky', None)
-    assert_no_warnings(register_parallel_backend, 'failing', None)
-
-    # Ensure that the deprecation have no side effect in sklearn.utils._joblib
-    from sklearn.utils._joblib import Parallel, Memory, delayed
-    from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
-    from sklearn.utils._joblib import parallel_backend
-    from sklearn.utils._joblib import register_parallel_backend
-    assert_no_warnings(Memory, str(tmpdir))
-    assert_no_warnings(hash, 1)
-    assert_no_warnings(Parallel)
-    assert_no_warnings(cpu_count)
-    assert_no_warnings(effective_n_jobs, 1)
-    assert_no_warnings(delayed, dummy_func)
     assert_no_warnings(parallel_backend, 'loky', None)
     assert_no_warnings(register_parallel_backend, 'failing', None)
 

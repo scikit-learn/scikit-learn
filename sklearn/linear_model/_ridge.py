@@ -245,11 +245,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, LinearOperator} of shape \
+    X : {ndarray, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
         Training data
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
+    y : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     alpha : float or array-like of shape (n_targets,)
@@ -268,7 +268,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+        default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -308,7 +309,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         .. versionadded:: 0.19
            SAGA solver.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
@@ -321,7 +322,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -349,14 +350,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     Returns
     -------
-    coef : array of shape (n_features,) or (n_targets, n_features)
+    coef : ndarray of shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
     n_iter : int, optional
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
-    intercept : float or array of shape (n_targets,)
+    intercept : float or ndarray of shape (n_targets,)
         The intercept of the model. Only returned if `return_intercept`
         is True and if X is a scipy sparse array.
 
@@ -618,7 +619,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Parameters
     ----------
-    alpha : {float, array-like of shape (n_targets,)}, default=1.0
+    alpha : {float, ndarray of shape (n_targets,)}, default=1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
@@ -643,7 +644,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         For 'sparse_cg' and 'lsqr' solvers, the default value is determined
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
@@ -651,7 +652,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     tol : float, default=1e-3
         Precision of the solution.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+        default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -688,7 +690,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         .. versionadded:: 0.19
            SAGA solver.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -700,14 +702,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    n_iter_ : None or array of shape (n_targets,)
+    n_iter_ : None or ndarray of shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
@@ -747,13 +749,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Training data
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or array-like of shape (n_samples,), default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
@@ -798,14 +800,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_iter : int, optional
+    max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
     tol : float, default=1e-3
         Precision of the solution.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -813,7 +815,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}, \
+        default='auto'
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -847,7 +850,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           .. versionadded:: 0.19
            SAGA solver.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -856,20 +859,20 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    n_iter_ : None or array of shape (n_targets,)
+    n_iter_ : None or ndarray of shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     See Also
@@ -907,13 +910,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values.
 
-        sample_weight : float or array-like of shape (n_samples,), default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
@@ -1054,6 +1057,16 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
+class _IdentityEstimator:
+    """Hack to call a scorer when we already have the predictions."""
+
+    def decision_function(self, y_predict):
+        return y_predict
+
+    def predict(self, y_predict):
+        return y_predict
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1086,6 +1099,10 @@ class _RidgeGCV(LinearModel):
     when the model was fitted with all examples but this example.
 
     looe = y - loov = c / diag(G^-1)
+
+    The best score (negative mean squared error or user-provided scoring) is
+    stored in the `best_score_` attribute, and the selected hyperparameter in
+    `alpha_`.
 
     References
     ----------
@@ -1121,7 +1138,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The preprocessed design matrix.
 
         sqrt_sw : ndarray of shape (n_samples,)
@@ -1411,13 +1428,13 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Training data. Will be cast to float64 if necessary.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to float64 if necessary.
 
-        sample_weight : float or array-like of shape (n_samples,), default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
@@ -1462,43 +1479,40 @@ class _RidgeGCV(LinearModel):
         else:
             sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
 
+        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)),
-                             dtype=X.dtype)
-        C = []
-        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
+        if self.store_cv_values:
+            self.cv_values_ = np.empty(
+                (n_samples * n_y, len(self.alphas)), dtype=X.dtype)
+
+        best_coef, best_score, best_alpha = None, None, None
+
         for i, alpha in enumerate(self.alphas):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
-                cv_values[:, i] = squared_errors.ravel()
+                alpha_score = -squared_errors.mean()
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                cv_values[:, i] = predictions.ravel()
-            C.append(c)
+                alpha_score = scorer(
+                    _IdentityEstimator(), predictions.ravel(), y.ravel())
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = predictions.ravel()
 
-        if error:
-            best = cv_values.mean(axis=0).argmin()
-        else:
-            # The scorer want an object that will make the predictions but
-            # they are already computed efficiently by _RidgeGCV. This
-            # identity_estimator will just return them
-            def identity_estimator():
-                pass
-            identity_estimator.decision_function = lambda y_predict: y_predict
-            identity_estimator.predict = lambda y_predict: y_predict
+            if (best_score is None) or (alpha_score > best_score):
+                best_coef, best_score, best_alpha = c, alpha_score, alpha
 
-            # signature of scorer is (estimator, X, y)
-            out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
-                   for i in range(len(self.alphas))]
-            best = np.argmax(out)
-
-        self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
+        self.alpha_ = best_alpha
+        self.best_score_ = best_score
+        self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
         X_offset += X_mean * X_scale
@@ -1509,7 +1523,7 @@ class _RidgeGCV(LinearModel):
                 cv_values_shape = n_samples, len(self.alphas)
             else:
                 cv_values_shape = n_samples, n_y, len(self.alphas)
-            self.cv_values_ = cv_values.reshape(cv_values_shape)
+            self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
 
@@ -1532,14 +1546,14 @@ class _BaseRidgeCV(LinearModel):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Training data. If using GCV, will be cast to float64
             if necessary.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary.
 
-        sample_weight : float or array-like of shape (n_samples,), default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
@@ -1565,6 +1579,7 @@ class _BaseRidgeCV(LinearModel):
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
+            self.best_score_ = estimator.best_score_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -1580,6 +1595,7 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
+            self.best_score_ = gs.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -1621,14 +1637,14 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    scoring : string, callable or None, default=None
+    scoring : string, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If None, the negative mean squared error if cv is 'auto' or None
         (i.e. when using generalized cross-validation), and r2 score otherwise.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1645,7 +1661,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    gcv_mode : {None, 'auto', 'svd', eigen'}, optional
+    gcv_mode : {'auto', 'svd', eigen'}, default='auto'
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
@@ -1657,7 +1673,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         The 'auto' mode is the default and is intended to pick the cheaper
         option of the two depending on the shape of the training data.
 
-    store_cv_values : boolean, default=False
+    store_cv_values : bool, default=False
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
@@ -1665,22 +1681,25 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    cv_values_ : array of shape (n_samples, n_alphas) or \
+    cv_values_ : ndarray of shape (n_samples, n_alphas) or \
         shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (if ``store_cv_values=True``\
         and ``cv=None``). After ``fit()`` has been called, this attribute \
         will contain the mean squared errors (by default) or the values \
         of the ``{loss,score}_func`` function (if provided in the constructor).
 
-    coef_ : array of shape (n_features) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
     alpha_ : float
         Estimated regularization parameter.
+
+    best_score_ : float
+        Score of base estimator with best alpha.
 
     Examples
     --------
@@ -1734,12 +1753,12 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    scoring : string, callable or None, default=None
+    scoring : string, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1751,7 +1770,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    class_weight : dict or 'balanced', optional
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1759,7 +1778,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    store_cv_values : boolean, default=False
+    store_cv_values : bool, default=False
         Flag indicating if the cross-validation values corresponding to
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
@@ -1767,26 +1786,29 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    cv_values_ : array of shape (n_samples, n_targets, n_alphas), optional
+    cv_values_ : ndarray of shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
         ``{loss,score}_func`` function (if provided in the constructor). This
         attribute exists only when ``store_cv_values`` is True.
 
-    coef_ : array of shape (1, n_features) or (n_targets, n_features)
+    coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
     alpha_ : float
-        Estimated regularization parameter
+        Estimated regularization parameter.
 
-    classes_ : array of shape (n_classes,)
+    best_score_ : float
+        Score of base estimator with best alpha.
+
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     Examples
@@ -1824,15 +1846,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features. When using GCV,
             will be cast to float64 if necessary.
 
-        y : array-like of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary.
 
-        sample_weight : float or array-like of shape (n_samples,), default=None
+        sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
