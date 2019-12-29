@@ -280,7 +280,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. In the case of
@@ -419,7 +419,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        feature_importances_ : array, shape = [n_features]
+        feature_importances_ : ndarray of shape = [n_features]
             The values of this array sum to 1, unless all trees are single node
             trees consisting of only the root node, in which case it will be an
             array of zeros.
@@ -2183,7 +2183,7 @@ class RandomTreesEmbedding(BaseForest):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. In the case of
@@ -2208,7 +2208,7 @@ class RandomTreesEmbedding(BaseForest):
             Input data used to build forests. Use ``dtype=np.float32`` for
             maximum efficiency.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. In the case of
