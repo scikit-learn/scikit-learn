@@ -136,28 +136,28 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      # - lint
-      # - doc:
-      #     requires:
-      #       - lint
-      # - doc-min-dependencies:
-      #     requires:
-      #       - lint
-      - pypy3
-      #     filters:
-      #       branches:
-      #         only:
-      #           - 0.20.X
-      # - deploy:
-      #     requires:
-      #       - doc
-  # pypy:
-  #   triggers:
-  #     - schedule:
-  #         cron: "0 0 * * *"
-  #         filters:
-  #           branches:
-  #             only:
-  #               - master
+      - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
+      - pypy3:
+          filters:
+            branches:
+              only:
+                - 0.20.X
+      - deploy:
+          requires:
+            - doc
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - pypy3
