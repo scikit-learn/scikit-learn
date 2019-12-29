@@ -266,7 +266,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Override value used when constructing base estimator. Only
             supported if the base estimator has a max_depth parameter.
 
-        sample_weight : ndarray of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if the base estimator supports
             sample weighting.
