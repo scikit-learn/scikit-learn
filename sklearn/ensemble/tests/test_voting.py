@@ -357,17 +357,6 @@ def test_voting_classifier_set_params():
     assert eclf2.estimators[0][1].get_params() == clf1.get_params()
     assert eclf2.estimators[1][1].get_params() == clf2.get_params()
 
-<<<<<<< HEAD
-    eclf1.set_params(lr__C=10.0)
-    eclf2.set_params(nb__max_depth=5)
-
-    assert eclf1.estimators[0][1].get_params()['C'] == 10.0
-    assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
-    assert (eclf1.get_params()["lr__C"] ==
-            eclf1.get_params()["lr"].get_params()['C'])
-
-=======
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee
 
 # TODO: Remove parametrization in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize("drop", [None, 'drop'])
@@ -525,36 +514,6 @@ def test_check_estimators_voting_estimator(estimator):
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
-<<<<<<< HEAD
-@pytest.mark.parametrize('pattern',
-                         [r'\[Voting\].*\(classifier 1 of 3\)'
-                          ' Processing lr, total=.*\n'
-                          r'\[Voting\].*\(classifier 2 of 3\)'
-                          ' Processing rf, total=.*\n'
-                          r'\[Voting\].*\(classifier 3 of 3\)'
-                          ' Processing gnb, total=.*\n$'])
-def test_voting_verbose(pattern, capsys):
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
-    clf3 = GaussianNB()
-    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
-    y = np.array([1, 1, 2, 2])
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft').fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft', verbose=False).fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft', verbose=True).fit(X, y)
-    assert re.match(pattern, capsys.readouterr()[0])
-=======
 # TODO: Remove in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "Voter, BaseEstimator",
@@ -570,4 +529,3 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
            "Use the string 'drop' instead.")
     with pytest.warns(FutureWarning, match=msg):
         est.fit(X, y)
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee

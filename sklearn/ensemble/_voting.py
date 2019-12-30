@@ -32,30 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 
 
-<<<<<<< HEAD:sklearn/ensemble/voting.py
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
-                            message_clsname='', message=None):
-    """Private function used to fit an estimator within a job."""
-    with _print_elapsed_time(message_clsname, message):
-        if sample_weight is not None:
-            try:
-                estimator.fit(X, y, sample_weight=sample_weight)
-            except TypeError as exc:
-                if "unexpected keyword argument 'sample_weight'" in str(exc):
-                    raise ValueError(
-                     "Underlying estimator {} does not support sample weights."
-                     .format(estimator.__class__.__name__)
-                    ) from exc
-                raise
-        else:
-            estimator.fit(X, y)
-        return estimator
-
-
-class _BaseVoting(_BaseComposition, TransformerMixin):
-=======
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee:sklearn/ensemble/_voting.py
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -96,21 +73,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         self.named_estimators_ = Bunch()
 
-<<<<<<< HEAD:sklearn/ensemble/voting.py
-    def _log_message(self, name, idx, total):
-        if not self.verbose:
-            return None
-        return '(classifier %d of %d) Processing %s' % (idx+1, total, name)
-
-    def set_params(self, **params):
-        """ Setting the parameters for the ensemble estimator
-=======
         # Uses None or 'drop' as placeholder for dropped estimators
         est_iter = iter(self.estimators_)
         for name, est in self.estimators:
             current_est = est if est in (None, 'drop') else next(est_iter)
             self.named_estimators_[name] = current_est
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee:sklearn/ensemble/_voting.py
 
         return self
 
@@ -216,15 +183,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-<<<<<<< HEAD:sklearn/ensemble/voting.py
-    def __init__(self, estimators, voting='hard', verbose=False, weights=None,
-                 n_jobs=None, flatten_transform=True):
-        self.estimators = estimators
-=======
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
         super().__init__(estimators=estimators)
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee:sklearn/ensemble/_voting.py
         self.voting = voting
         self.verbose = verbose
         self.weights = weights
@@ -427,14 +388,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
 
-<<<<<<< HEAD:sklearn/ensemble/voting.py
-    def __init__(self, estimators, verbose=False, weights=None, n_jobs=None):
-        self.estimators = estimators
-        self.verbose = verbose
-=======
     def __init__(self, estimators, weights=None, n_jobs=None):
         super().__init__(estimators=estimators)
->>>>>>> 1e166f77f83d8d973283e205e1e1b882b5a45bee:sklearn/ensemble/_voting.py
         self.weights = weights
         self.n_jobs = n_jobs
 
