@@ -61,8 +61,7 @@ class ConfusionMatrixDisplay:
 
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
-            the format specification is '.2f' for a normalized matrix, and
-            'd' for a unnormalized matrix.
+            the format specification is '.2g'.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -93,7 +92,7 @@ class ConfusionMatrixDisplay:
                 values_format = '.2g'
 
             # print text with appropriate color depending on background
-            thresh = (cm.max() - cm.min()) / 2.
+            thresh = (cm.max() + cm.min()) / 2.0
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
                 self.text_[i, j] = ax.text(j, i,
@@ -165,8 +164,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
-        the format specification is '.2f' for a normalized matrix, and
-        'd' for a unnormalized matrix.
+        the format specification is '.2g'.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.

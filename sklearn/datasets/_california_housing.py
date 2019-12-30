@@ -31,6 +31,7 @@ import logging
 import joblib
 
 from . import get_data_home
+from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
@@ -49,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_california_housing(data_home=None, download_if_missing=True,
-                             return_X_y=False):
+                             return_X_y=False, as_frame=False):
     """Load the California housing dataset (regression).
 
     ==============   ==============
@@ -78,15 +79,24 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
 
         .. versionadded:: 0.20
 
+    as_frame : boolean, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     dataset : dict-like object with the following attributes:
 
     dataset.data : ndarray, shape [20640, 8]
         Each row corresponding to the 8 feature values in order.
+        If ``as_frame`` is True, ``data`` is a pandas object.
 
     dataset.target : numpy array of shape (20640,)
         Each value corresponds to the average house value in units of 100,000.
+        If ``as_frame`` is True, ``target`` is a pandas object.
 
     dataset.feature_names : array of length 8
         Array of ordered feature names used in the dataset.
@@ -97,6 +107,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.23
 
     Notes
     -----
@@ -155,10 +171,24 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
         descr = dfile.read()
 
-    if return_X_y:
-        return data, target
+    X = data
+    y = target
 
-    return Bunch(data=data,
-                 target=target,
+    frame = None
+    target_names = ["MedHouseVal", ]
+    if as_frame:
+        frame, X, y = _convert_data_dataframe("fetch_california_housing",
+                                              data,
+                                              target,
+                                              feature_names,
+                                              target_names)
+
+    if return_X_y:
+        return X, y
+
+    return Bunch(data=X,
+                 target=y,
+                 frame=frame,
+                 target_names=target_names,
                  feature_names=feature_names,
                  DESCR=descr)

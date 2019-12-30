@@ -35,6 +35,10 @@ Changelog
   Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
   :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
+- |Fix| :func:`inspection.plot_partial_dependence` and
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -42,18 +46,35 @@ Changelog
   is invalid. Previously, it runs fine with no normalization.
   :pr:`15888` by `Hanmin Qin`_.
 
+- |Fix| :func:`metrics.plot_confusion_matrix` now colors the label color
+  correctly to maximize contrast with its background. :pr:`15936` by
+  `Thomas Fan`_ and :user:`DizietAsahi`.
+
+- |Fix| :func:`metrics.classification_report` does no longer ignore the
+  value of the ``zero_division`` keyword argument. :pr:`15879`
+  by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+  
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
+  return sparse weight matrix.
+  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
+
 :mod:`sklearn.utils`
 ....................
 
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
 
-:mod:`sklearn.inspection`
-.........................
-
-- |Fix| :func:`inspection.plot_partial_dependence` and
-  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
-  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
+- |Fix| :func:`utils.check_is_fitted` accepts back an explicit ``attributes``
+  argument to check for specific attributes as explicit markers of a fitted
+  estimator. When no explicit ``attributes`` are provided, only the attributes
+  that end with a underscore and do not start with double underscore are used
+  as "fitted" markers. The ``all_or_any`` argument is also no longer
+  deprecated. This change is made to restore some backward compatibility with
+  the behavior of this utility in version 0.21. :pr:`15947` by `Thomas Fan`_.
 
 .. _changes_0_22:
 
@@ -816,6 +837,10 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
 
 :mod:`sklearn.model_selection`
 ..............................

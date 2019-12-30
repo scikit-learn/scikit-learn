@@ -339,7 +339,7 @@ architecture (e.g. ARM), you can install the system versions::
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
+    sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
 Linux compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

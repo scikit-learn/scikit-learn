@@ -20,7 +20,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -152,6 +151,22 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['precision']) == float
     assert type(expected_report['setosa']['support']) == int
     assert type(expected_report['macro avg']['support']) == int
+
+
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_classification_report_zero_division_warning(zero_division):
+    y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
+    with warnings.catch_warnings(record=True) as record:
+        classification_report(
+            y_true, y_pred, zero_division=zero_division, output_dict=True)
+        if zero_division == "warn":
+            assert len(record) > 1
+            for item in record:
+                msg = ("Use `zero_division` parameter to control this "
+                       "behavior.")
+                assert msg in str(item.message)
+        else:
+            assert not record
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
