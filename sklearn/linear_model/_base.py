@@ -382,7 +382,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : bool, optional, default True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
