@@ -26,7 +26,7 @@ from ..base import clone
 from ._base import _parallel_fit_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
-from ..utils import Bunch, _print_elapsed_time
+from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -183,8 +183,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
-                 flatten_transform=True):
+    def __init__(self, estimators, voting='hard', verbose=False, weights=None,
+                 n_jobs=None, flatten_transform=True):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.verbose = verbose
