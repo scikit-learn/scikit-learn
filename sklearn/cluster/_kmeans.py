@@ -953,6 +953,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
+        best_labels, best_inertia, best_centers = None, None, None
+
         algorithm = self.algorithm
         if algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn("algorithm='elkan' doesn't make sense for a single "
@@ -978,7 +980,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # limit number of threads in second level of nested parallelism
         # (i.e. BLAS) to avoid oversubsciption.
         with threadpool_limits(limits=1, user_api="blas"):
-            best_inertia = None
             for seed in seeds:
                 # run a k-means once
                 labels, inertia, centers, n_iter_ = kmeans_single(
