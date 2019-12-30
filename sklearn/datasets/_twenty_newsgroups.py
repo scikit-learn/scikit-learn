@@ -285,11 +285,16 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = [strip_newsgroup_quoting(text) for text in data.data]
 
     if len(remove) > 0:
-        empty_idxs = {i for (i, text) in enumerate(data.data) if len(text) == 0}
-        data.data = [text for (i, text) in enumerate(data.data) if i not in empty_idxs]
-        data.target = np.array(
-            [target for (i, target) in enumerate(data.target) if i not in empty_idxs]
-        )
+        empty_idxs = {
+            i for (i, text) in enumerate(data.data) if len(text) == 0
+        }
+        data.data = [
+            text for (i, text) in enumerate(data.data) if i not in empty_idxs
+        ]
+        data.target = np.array([
+            target for (i, target) in enumerate(data.target)
+            if i not in empty_idxs
+        ])
 
     if categories is not None:
         labels = [(data.target_names.index(cat), cat) for cat in categories]
