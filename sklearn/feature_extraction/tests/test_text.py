@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -30,7 +31,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.utils.testing import (assert_almost_equal,
+from sklearn.utils._testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
                                    SkipTest, assert_no_warnings,
@@ -95,6 +96,21 @@ def test_strip_accents():
     # mix letters accentuated and not
     a = "this is à test"
     expected = 'this is a test'
+    assert strip_accents_unicode(a) == expected
+
+    # strings that are already decomposed
+    a = "o\u0308"  # o with diaresis
+    expected = "o"
+    assert strip_accents_unicode(a) == expected
+
+    # combining marks by themselves
+    a = "\u0300\u0301\u0302\u0303"
+    expected = ""
+    assert strip_accents_unicode(a) == expected
+
+    # Multiple combining marks on one character
+    a = "o\u0308\u0304"
+    expected = "o"
     assert strip_accents_unicode(a) == expected
 
 
@@ -276,7 +292,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
     assert (set(pipe.named_steps['count'].vocabulary_) ==
-                 set(what_we_like))
+            set(what_we_like))
     assert X.shape[1] == len(what_we_like)
 
 
@@ -527,7 +543,7 @@ def test_tfidf_vectorizer_deprecationwarning():
     msg = ("'copy' param is unused and has been deprecated since "
            "version 0.22. Backward compatibility for 'copy' will "
            "be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tv = TfidfVectorizer()
         train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)
@@ -1083,6 +1099,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
     assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
     assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    vec.fit(["some text", "some other text"])
     assert_raise_message(ValueError, message, vec.transform, "hello world!")
 
 
@@ -1121,7 +1138,7 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
     expected_warning_cls = warning_cls if warning_expected else None
     with pytest.warns(expected_warning_cls,
                       match=warning_msg_match) as record:
-            X_idf = vectorizer.fit_transform(X)
+        X_idf = vectorizer.fit_transform(X)
     if expected_warning_cls is None:
         relevant_warnings = [w for w in record
                              if isinstance(w, warning_cls)]
@@ -1304,3 +1321,53 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
 
     with pytest.raises(Exception, match="testing"):
         Estimator(analyzer=analyzer, input='file').fit_transform([f])
+
+
+@pytest.mark.parametrize(
+    'Vectorizer',
+    [CountVectorizer, HashingVectorizer, TfidfVectorizer]
+)
+@pytest.mark.parametrize(
+    'stop_words, tokenizer, preprocessor, ngram_range, token_pattern,'
+    'analyzer, unused_name, ovrd_name, ovrd_msg',
+    [(["you've", "you'll"], None, None, (1, 1), None, 'char',
+     "'stop_words'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), None, 'char',
+     "'tokenizer'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), r'\w+', 'word',
+      "'token_pattern'", "'tokenizer'", "is not None"),
+     (None, None, lambda s:s.upper(), (1, 1), r'\w+', lambda s:s.upper(),
+      "'preprocessor'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 2), None, lambda s:s.upper(),
+      "'ngram_range'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 1), r'\w+', 'char',
+      "'token_pattern'", "'analyzer'", "!= 'word'")]
+)
+def test_unused_parameters_warn(Vectorizer, stop_words,
+                                tokenizer, preprocessor,
+                                ngram_range, token_pattern,
+                                analyzer, unused_name, ovrd_name,
+                                ovrd_msg):
+
+    train_data = JUNK_FOOD_DOCS
+    # setting parameter and checking for corresponding warning messages
+    vect = Vectorizer()
+    vect.set_params(stop_words=stop_words, tokenizer=tokenizer,
+                    preprocessor=preprocessor, ngram_range=ngram_range,
+                    token_pattern=token_pattern, analyzer=analyzer)
+    msg = ("The parameter %s will not be used"
+           " since %s %s" % (unused_name, ovrd_name, ovrd_msg)
+           )
+    with pytest.warns(UserWarning, match=msg):
+        vect.fit(train_data)
+
+
+# TODO: Remove in 0.24
+def test_vectorizermixin_is_deprecated():
+    class MyVectorizer(VectorizerMixin):
+        pass
+
+    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
+           "in version 0.24.")
+    with pytest.warns(FutureWarning, match=msg):
+        MyVectorizer()

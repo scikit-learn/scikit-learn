@@ -923,7 +923,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 	// return i,j such that
 	// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 	// j: minimizes the decrease of obj value
-	//    (if quadratic coefficeint <= 0, replace it with tau)
+	//    (if quadratic coefficient <= 0, replace it with tau)
 	//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 	
 	double Gmax = -INF;
@@ -1166,7 +1166,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 	// return i,j such that y_i = y_j and
 	// i: maximizes -y_i * grad(f)_i, i in I_up(\alpha)
 	// j: minimizes the decrease of obj value
-	//    (if quadratic coefficeint <= 0, replace it with tau)
+	//    (if quadratic coefficient <= 0, replace it with tau)
 	//    -y_j*grad(f)_j < -y_i*grad(f)_i, j in I_low(\alpha)
 
 	double Gmaxp = -INF;
@@ -3101,6 +3101,42 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		free(count);
 	}
 
+	if(svm_type == C_SVC ||
+	   svm_type == EPSILON_SVR ||
+	   svm_type == NU_SVR ||
+	   svm_type == ONE_CLASS)
+	{
+		PREFIX(problem) newprob;
+		// filter samples with negative and null weights 
+		remove_zero_weight(&newprob, prob);
+
+		char* msg = NULL;
+		// all samples were removed
+		if(newprob.l == 0)
+			msg =  "Invalid input - all samples have zero or negative weights.";
+		else if(prob->l != newprob.l && 
+		        svm_type == C_SVC)
+		{
+			bool only_one_label = true;
+			int first_label = newprob.y[0];
+			for(int i=1;i<newprob.l;i++)
+			{
+				if(newprob.y[i] != first_label)
+				{
+					only_one_label = false;
+					break;
+				}
+			}
+			if(only_one_label == true)
+				msg = "Invalid input - all samples with positive weights have the same label.";
+		}
+
+		free(newprob.x);
+		free(newprob.y);
+		free(newprob.W);
+		if(msg != NULL)
+			return msg;
+	}
 	return NULL;
 }
 

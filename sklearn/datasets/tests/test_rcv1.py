@@ -9,9 +9,9 @@ import numpy as np
 from functools import partial
 from sklearn.datasets import fetch_rcv1
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import SkipTest
 
 
 def test_fetch_rcv1():
