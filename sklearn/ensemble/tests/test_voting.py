@@ -514,6 +514,10 @@ def test_check_estimators_voting_estimator(estimator):
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
+@pytest.mark.parametrize('est', [VotingClassifier([
+    ('lr', LogisticRegression(random_state=123)),
+    ('rf', RandomForestClassifier(random_state=123))]),
+])
 # TODO: Remove in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "Voter, BaseEstimator",
