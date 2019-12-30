@@ -30,30 +30,29 @@ def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
+    return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
 
-    norms = np.empty(X.shape[0], dtype=X.data.dtype)
-    _csr_row_norms(X.data, X.shape, X.indices, X.indptr, out=norms)
-
-    return norms
-    
 
 def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    shape,
                    np.ndarray[integral, ndim=1, mode="c"] X_indices,
-                   np.ndarray[integral, ndim=1, mode="c"] X_indptr,
-                   floating[::1] out):
+                   np.ndarray[integral, ndim=1, mode="c"] X_indptr):
     cdef:
         unsigned long long n_samples = shape[0]
-        
         unsigned long long i
         integral j
         double sum_
+
+    norms = np.empty(n_samples, dtype=X_data.dtype)
+    cdef floating[::1] norms_view = norms
 
     for i in range(n_samples):
         sum_ = 0.0
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
-        out[i] = sum_
+        norms_view[i] = sum_
+    
+    return norms
 
 
 def csr_mean_variance_axis0(X):

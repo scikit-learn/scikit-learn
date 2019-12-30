@@ -19,14 +19,14 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          language="c++")
 
-    config.add_extension('_hierarchical',
-                         sources=['_hierarchical.pyx'],
+    config.add_extension('_hierarchical_fast',
+                         sources=['_hierarchical_fast.pyx'],
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_k_means',
-                         sources=['_k_means.pyx'],
+    config.add_extension('_k_means_fast',
+                         sources=['_k_means_fast.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

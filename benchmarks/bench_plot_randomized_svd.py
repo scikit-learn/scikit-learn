@@ -77,8 +77,7 @@ import os.path
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import (make_low_rank_matrix,
-                                                make_sparse_uncorrelated)
+from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (fetch_lfw_people,
                               fetch_openml,
                               fetch_20newsgroups_vectorized,
@@ -105,7 +104,7 @@ enable_spectral_norm = False
 # in case the reconstructed (dense) matrix is too large
 MAX_MEMORY = np.int(2e9)
 
-# The following datasets can be dowloaded manually from:
+# The following datasets can be downloaded manually from:
 # CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 # SVHN: http://ufldl.stanford.edu/housenumbers/train_32x32.mat
 CIFAR_FOLDER = "./cifar-10-batches-py/"

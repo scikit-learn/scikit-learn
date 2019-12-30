@@ -6,14 +6,14 @@ from scipy import sparse as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -22,9 +22,9 @@ from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster.k_means_ import _labels_inertia
-from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.cluster._kmeans import _labels_inertia
+from sklearn.cluster._kmeans import _mini_batch_step
+from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
 
@@ -42,8 +42,8 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-@pytest.mark.parametrize("representation", ['dense', 'sparse'])
-@pytest.mark.parametrize("algo", ['full', 'elkan'])
+@pytest.mark.parametrize("representation", ["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(representation, algo, dtype):
     # cheks that kmeans works as intended
@@ -92,23 +92,30 @@ def test_relocated_clusters(array_constr, algo):
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-def test_elkan_results(distribution):
+@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
+def test_elkan_results(distribution, tol):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
     if distribution == 'normal':
-        X = rnd.normal(size=(50, 10))
+        X = rnd.normal(size=(5000, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
 
-    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_full = KMeans(algorithm='full', n_clusters=5,
+                     random_state=0, n_init=1, tol=tol)
     km_elkan = KMeans(algorithm='elkan', n_clusters=5,
-                      random_state=0, n_init=1)
+                      random_state=0, n_init=1, tol=tol)
 
     km_full.fit(X)
     km_elkan.fit(X)
     assert_array_almost_equal(km_elkan.cluster_centers_,
                               km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
+
+    # The number of iterations and inertia should be close but not
+    # necessarily exactly the same because of rounding errors.
+    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
@@ -129,9 +136,8 @@ def test_elkan_results_sparse(distribution):
 
     km_full.fit(X)
     km_elkan.fit(X)
-    assert_array_almost_equal(km_elkan.cluster_centers_,
-                              km_full.cluster_centers_)
-    assert_array_equal(km_elkan.labels_, km_full.labels_)
+    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
+    assert_allclose(km_elkan.labels_, km_full.labels_)
 
 
 def test_labels_assignment_and_inertia():
@@ -754,7 +760,7 @@ def test_k_means_function():
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster.k_means_ import _init_centroids
+    from sklearn.cluster._kmeans import _init_centroids
 
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
@@ -941,7 +947,7 @@ def test_sample_weight_length():
 
 
 def test_check_normalize_sample_weight():
-    from sklearn.cluster.k_means_ import _check_normalize_sample_weight
+    from sklearn.cluster._kmeans import _check_normalize_sample_weight
     sample_weight = None
     checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
     assert _num_samples(X) == _num_samples(checked_sample_weight)
@@ -991,8 +997,8 @@ def test_result_of_kmeans_equal_in_diff_n_jobs():
 
 @pytest.mark.parametrize("precompute_distances", ["auto", False, True])
 def test_precompute_distance_deprecated(precompute_distances):
-    # FIXME: remove in 0.24
-    depr_msg = "'precompute_distances' was deprecated in version 0.22"
+    # FIXME: remove in 0.25
+    depr_msg = "'precompute_distances' was deprecated in version 0.23"
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
