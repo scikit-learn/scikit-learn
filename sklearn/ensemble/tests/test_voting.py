@@ -519,7 +519,7 @@ def test_check_estimators_voting_estimator(estimator):
     ('gnb', GaussianNB())
     ]),
 ])
-def test_voting_verbose(pattern, capsys):
+def test_voting_verbose_vc(pattern, capsys):
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -537,6 +537,35 @@ def test_voting_verbose(pattern, capsys):
     assert not capsys.readouterr().out, 'Got output for verbose=False'
 
     VotingClassifier(estimators=[
+       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+       voting='soft', verbose=True).fit(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=True'
+
+
+@pytest.mark.parametrize('est', [VotingRegressor([
+    ('lr', LogisticRegression(random_state=123)),
+    ('rf', RandomForestClassifier(random_state=123)),
+    ('gnb', GaussianNB())
+    ]),
+])
+def test_voting_verbose_vr(pattern, capsys):
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    VotingRegressor(estimators=[
+       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+       voting='soft').fit(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
+
+    VotingRegressor(estimators=[
+       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+       voting='soft', verbose=False).fit(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
+
+    VotingRegressor(estimators=[
        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
        voting='soft', verbose=True).fit(X, y)
     assert not capsys.readouterr().out, 'Got output for verbose=True'

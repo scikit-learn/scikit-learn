@@ -127,3 +127,12 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+
+Multiple modules
+................
+
+- |API| Added boolean verbose flag to classes.
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  :pr:`15991` by :user:`Sam Bail <spbail>`,
+  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`, and
+  :user:`Reshama Shaikh <reshamas>`.
