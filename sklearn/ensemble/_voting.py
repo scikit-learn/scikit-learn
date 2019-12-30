@@ -27,7 +27,6 @@ from ._base import _parallel_fit_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils import _print_elapsed_time
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
