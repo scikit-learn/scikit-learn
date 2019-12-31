@@ -2,22 +2,19 @@ import numpy as np
 
 import pytest
 
-from numpy.testing import assert_allclose
 from scipy import linalg
 
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
+from sklearn.utils._testing import (assert_array_equal, assert_no_warnings,
                                    assert_warns_message)
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -78,8 +75,8 @@ def test_lda_predict():
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
                            'solver %s' % solver)
         y_log_proba_pred1 = clf.predict_log_proba(X1)
-        assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1,
-                                  8, 'solver %s' % solver)
+        assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
+                        rtol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
@@ -212,10 +209,10 @@ def test_lda_transform():
     # Test LDA transform.
     clf = LinearDiscriminantAnalysis(solver="svd", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
-    assert_equal(X_transformed.shape[1], 1)
+    assert X_transformed.shape[1] == 1
     clf = LinearDiscriminantAnalysis(solver="eigen", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
-    assert_equal(X_transformed.shape[1], 1)
+    assert X_transformed.shape[1] == 1
 
     clf = LinearDiscriminantAnalysis(solver="lsqr", n_components=1)
     clf.fit(X, y)
@@ -236,14 +233,14 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
-    assert_equal(clf_lda_eigen.explained_variance_ratio_.shape, (2,),
-                 "Unexpected length for explained_variance_ratio_")
+    assert clf_lda_eigen.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_")
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
-    assert_equal(clf_lda_svd.explained_variance_ratio_.shape, (2,),
-                 "Unexpected length for explained_variance_ratio_")
+    assert clf_lda_svd.explained_variance_ratio_.shape == (2,), (
+        "Unexpected length for explained_variance_ratio_")
 
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
                               clf_lda_eigen.explained_variance_ratio_)
@@ -296,8 +293,8 @@ def test_lda_scaling():
     for solver in ('svd', 'lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver)
         # should be able to separate the data perfectly
-        assert_equal(clf.fit(x, y).score(x, y), 1.0,
-                     'using covariance: %s' % solver)
+        assert clf.fit(x, y).score(x, y) == 1.0, (
+            'using covariance: %s' % solver)
 
 
 def test_lda_store_covariance():
@@ -335,7 +332,6 @@ def test_lda_store_covariance():
 @pytest.mark.parametrize('n_features', [3, 5])
 @pytest.mark.parametrize('n_classes', [5, 3])
 def test_lda_dimension_warning(n_classes, n_features):
-    # FIXME: Future warning to be removed in 0.23
     rng = check_random_state(0)
     n_samples = 10
     X = rng.randn(n_samples, n_features)
@@ -351,22 +347,14 @@ def test_lda_dimension_warning(n_classes, n_features):
 
     for n_components in [max_components + 1,
                          max(n_features, n_classes - 1) + 1]:
-        # if n_components > min(n_classes - 1, n_features), raise warning
+        # if n_components > min(n_classes - 1, n_features), raise error.
         # We test one unit higher than max_components, and then something
         # larger than both n_features and n_classes - 1 to ensure the test
         # works for any value of n_component
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        msg = ("n_components cannot be larger than min(n_features, "
-               "n_classes - 1). Using min(n_features, "
-               "n_classes - 1) = min(%d, %d - 1) = %d components." %
-               (n_features, n_classes, max_components))
-        assert_warns_message(ChangedBehaviorWarning, msg, lda.fit, X, y)
-        future_msg = ("In version 0.23, setting n_components > min("
-                      "n_features, n_classes - 1) will raise a "
-                      "ValueError. You should set n_components to None"
-                      " (default), or a value smaller or equal to "
-                      "min(n_features, n_classes - 1).")
-        assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
+        msg = "n_components cannot be larger than "
+        with pytest.raises(ValueError, match=msg):
+            lda.fit(X, y)
 
 
 @pytest.mark.parametrize("data_type, expected_type", [
@@ -430,7 +418,7 @@ def test_qda_priors():
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
-    assert_greater(n_pos2, n_pos)
+    assert n_pos2 > n_pos
 
 
 def test_qda_store_covariance():

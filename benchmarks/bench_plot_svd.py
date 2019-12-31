@@ -9,7 +9,7 @@ from collections import defaultdict
 
 from scipy.linalg import svd
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.datasets import make_low_rank_matrix
 
 
 def compute_bench(samples_range, features_range, n_iter=3, rank=50):

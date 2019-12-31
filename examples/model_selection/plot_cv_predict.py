@@ -3,7 +3,8 @@
 Plotting Cross-Validated Predictions
 ====================================
 
-This example shows how to use `cross_val_predict` to visualize prediction
+This example shows how to use
+:func:`~sklearn.model_selection.cross_val_predict` to visualize prediction
 errors.
 
 """
@@ -13,12 +14,11 @@ from sklearn import linear_model
 import matplotlib.pyplot as plt
 
 lr = linear_model.LinearRegression()
-boston = datasets.load_boston()
-y = boston.target
+X, y = datasets.load_boston(return_X_y=True)
 
 # cross_val_predict returns an array of the same size as `y` where each entry
 # is a prediction obtained by cross validation:
-predicted = cross_val_predict(lr, boston.data, y, cv=10)
+predicted = cross_val_predict(lr, X, y, cv=10)
 
 fig, ax = plt.subplots()
 ax.scatter(y, predicted, edgecolors=(0, 0, 0))

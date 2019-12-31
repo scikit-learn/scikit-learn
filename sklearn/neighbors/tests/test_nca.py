@@ -15,10 +15,10 @@ from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_raises, assert_equal,
+from sklearn.utils._testing import (assert_raises,
                                    assert_raise_message, assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
-from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
 
 
@@ -129,7 +129,7 @@ def test_params_validation():
     # TypeError
     assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
     assert_raises(TypeError, NCA(verbose='true').fit, X, y)
-    assert_raises(TypeError, NCA(tol=1).fit, X, y)
+    assert_raises(TypeError, NCA(tol='1').fit, X, y)
     assert_raises(TypeError, NCA(n_components='invalid').fit, X, y)
     assert_raises(TypeError, NCA(warm_start=1).fit, X, y)
 
@@ -509,7 +509,7 @@ def test_expected_transformation_shape():
     cb = transformation_storer.callback
     nca = NeighborhoodComponentsAnalysis(max_iter=5, callback=cb)
     nca.fit(X, y)
-    assert_equal(transformation_storer.transformation.size, X.shape[1]**2)
+    assert transformation_storer.transformation.size == X.shape[1]**2
 
 
 def test_convergence_warning():
@@ -518,3 +518,17 @@ def test_convergence_warning():
     assert_warns_message(ConvergenceWarning,
                          '[{}] NCA did not converge'.format(cls_name),
                          nca.fit, iris_data, iris_target)
+
+
+@pytest.mark.parametrize('param, value', [('n_components', np.int32(3)),
+                                          ('max_iter', np.int32(100)),
+                                          ('tol', np.float32(0.0001))])
+def test_parameters_valid_types(param, value):
+    # check that no error is raised when parameters have numpy integer or
+    # floating types.
+    nca = NeighborhoodComponentsAnalysis(**{param: value})
+
+    X = iris_data
+    y = iris_target
+
+    nca.fit(X, y)

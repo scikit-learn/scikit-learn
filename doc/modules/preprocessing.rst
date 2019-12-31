@@ -51,7 +51,7 @@ operation on a single array-like dataset::
   ...                     [ 0.,  1., -1.]])
   >>> X_scaled = preprocessing.scale(X_train)
 
-  >>> X_scaled                                          # doctest: +ELLIPSIS
+  >>> X_scaled
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -80,15 +80,15 @@ This class is hence suitable for use in the early steps of a
 
   >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler()
 
-  >>> scaler.mean_                                      # doctest: +ELLIPSIS
+  >>> scaler.mean_
   array([1. ..., 0. ..., 0.33...])
 
-  >>> scaler.scale_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_
   array([0.81..., 0.81..., 1.24...])
 
-  >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
+  >>> scaler.transform(X_train)
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -98,7 +98,7 @@ The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
   >>> X_test = [[-1., 1., 0.]]
-  >>> scaler.transform(X_test)                # doctest: +ELLIPSIS
+  >>> scaler.transform(X_test)
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
@@ -143,10 +143,10 @@ applied to be consistent with the transformation performed on the train data::
 It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
-  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
+  >>> min_max_scaler.scale_
   array([0.5       , 0.5       , 0.33...])
 
-  >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
+  >>> min_max_scaler.min_
   array([0.        , 0.5       , 0.33...])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
@@ -169,15 +169,15 @@ Here is how to use the toy data from the previous example with this scaler::
   ...
   >>> max_abs_scaler = preprocessing.MaxAbsScaler()
   >>> X_train_maxabs = max_abs_scaler.fit_transform(X_train)
-  >>> X_train_maxabs                # doctest +NORMALIZE_WHITESPACE^
+  >>> X_train_maxabs
   array([[ 0.5, -1. ,  1. ],
          [ 1. ,  0. ,  0. ],
          [ 0. ,  1. , -0.5]])
   >>> X_test = np.array([[ -3., -1.,  4.]])
   >>> X_test_maxabs = max_abs_scaler.transform(X_test)
-  >>> X_test_maxabs                 # doctest: +NORMALIZE_WHITESPACE
+  >>> X_test_maxabs
   array([[-1.5, -1. ,  2. ]])
-  >>> max_abs_scaler.scale_         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  >>> max_abs_scaler.scale_
   array([2.,  1.,  2.])
 
 
@@ -250,10 +250,10 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`phi`,
+in a feature space defined by function :math:`\phi`,
 a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
-defined by :math:`phi` followed by removal of the mean in that space.
+defined by :math:`\phi` followed by removal of the mean in that space.
 
 .. _preprocessing_transformer:
 
@@ -290,8 +290,7 @@ with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
@@ -304,7 +303,7 @@ transformation applied, those landmarks approach closely the percentiles
 previously defined::
 
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS +SKIP
+  ... # doctest: +SKIP
   array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
 
 This can be confirmed on a independent testing set with similar remarks::
@@ -313,7 +312,7 @@ This can be confirmed on a independent testing set with similar remarks::
   ... # doctest: +SKIP
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS +SKIP
+  ... # doctest: +SKIP
   array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
 
 Mapping to a Gaussian distribution
@@ -333,7 +332,7 @@ The Yeo-Johnson transform is given by:
     x_i^{(\lambda)} =
     \begin{cases}
      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
     -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
@@ -355,11 +354,11 @@ samples drawn from a lognormal distribution to a normal distribution::
 
   >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
-  >>> X_lognormal                                         # doctest: +ELLIPSIS
+  >>> X_lognormal
   array([[1.28..., 1.18..., 0.84...],
          [0.94..., 1.60..., 0.38...],
          [1.35..., 0.21..., 1.09...]])
-  >>> pt.fit_transform(X_lognormal)                   # doctest: +ELLIPSIS
+  >>> pt.fit_transform(X_lognormal)
   array([[ 0.49...,  0.17..., -0.15...],
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
@@ -386,7 +385,7 @@ Using the earlier example with the iris dataset::
   >>> quantile_transformer = preprocessing.QuantileTransformer(
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
-  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  >>> quantile_transformer.quantiles_
   array([[4.3, 2. , 1. , 0.1],
          [4.4, 2.2, 1.1, 0.1],
          [4.4, 2.2, 1.2, 0.1],
@@ -423,7 +422,7 @@ norms::
   ...      [ 0.,  1., -1.]]
   >>> X_normalized = preprocessing.normalize(X, norm='l2')
 
-  >>> X_normalized                                      # doctest: +ELLIPSIS
+  >>> X_normalized
   array([[ 0.40..., -0.40...,  0.81...],
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
@@ -438,19 +437,21 @@ This class is hence suitable for use in the early steps of a
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
-  Normalizer(copy=True, norm='l2')
+  Normalizer()
 
 
 The normalizer instance can then be used on sample vectors as any transformer::
 
-  >>> normalizer.transform(X)                            # doctest: +ELLIPSIS
+  >>> normalizer.transform(X)
   array([[ 0.40..., -0.40...,  0.81...],
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
 
-  >>> normalizer.transform([[-1.,  1., 0.]])             # doctest: +ELLIPSIS
+  >>> normalizer.transform([[-1.,  1., 0.]])
   array([[-0.70...,  0.70...,  0.  ...]])
 
+
+Note: L2 normalization is also known as spatial sign preprocessing.
 
 .. topic:: Sparse input
 
@@ -481,8 +482,8 @@ new feature of integers (0 to n_categories - 1)::
 
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X)  # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    >>> enc.fit(X)
+    OrdinalEncoder()
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
@@ -503,10 +504,8 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-  >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categorical_features=None, categories=None, drop=None,
-         dtype=<... 'numpy.float64'>, handle_unknown='error',
-         n_values=None, sparse=True)
+  >>> enc.fit(X)
+  OneHotEncoder()
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
@@ -529,11 +528,12 @@ dataset::
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None,
-           categories=[...], drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='error',
-           n_values=None, sparse=True)
+    >>> enc.fit(X)
+    OneHotEncoder(categories=[['female', 'male'],
+                              ['from Africa', 'from Asia', 'from Europe',
+                               'from US'],
+                              ['uses Chrome', 'uses Firefox', 'uses IE',
+                               'uses Safari']])
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
@@ -547,10 +547,8 @@ columns for this feature will be all zeros
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None, drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-           n_values=None, sparse=True)
+    >>> enc.fit(X)
+    OneHotEncoder(handle_unknown='ignore')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -666,7 +664,7 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(copy=True, threshold=0.0)
+  Binarizer()
 
   >>> binarizer.transform(X)
   array([[1., 0., 1.],
@@ -715,12 +713,12 @@ Often it's useful to add complexity to the model by considering nonlinear featur
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
-    >>> X                                                 # doctest: +ELLIPSIS
+    >>> X
     array([[0, 1],
            [2, 3],
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
-    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    >>> poly.fit_transform(X)
     array([[ 1.,  0.,  1.,  0.,  0.,  1.],
            [ 1.,  2.,  3.,  4.,  6.,  9.],
            [ 1.,  4.,  5., 16., 20., 25.]])
@@ -730,12 +728,12 @@ The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_
 In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
 
     >>> X = np.arange(9).reshape(3, 3)
-    >>> X                                                 # doctest: +ELLIPSIS
+    >>> X
     array([[0, 1, 2],
            [3, 4, 5],
            [6, 7, 8]])
     >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
-    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    >>> poly.fit_transform(X)
     array([[  1.,   0.,   1.,   2.,   0.,   0.,   2.,   0.],
            [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
            [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
