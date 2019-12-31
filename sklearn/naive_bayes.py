@@ -51,12 +51,6 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         predict_proba and predict_log_proba.
         """
 
-    @abstractmethod
-    def _check_X(self, X):
-        """Validate input X
-        """
-        pass
-
     def predict(self, X):
         """
         Perform classification on an array of test vectors X.
