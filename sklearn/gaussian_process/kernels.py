@@ -40,11 +40,9 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
-<<<<<<< HEAD
-=======
+
 from inspect import signature
 import warnings
->>>>>>> eb3ad2dd5d5244fa384998596a2d6820aa8b16d7
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -674,10 +672,9 @@ class Projection(Kernel):
 
     Typically used in combination with Product, Tensor, Sum, or DirectSum.
     For categorical variables, construct dummy-coded indicator variables,
-    use Projection onto those columns, and use ExchangeableCorrelation,
-    MultiplicativeCorrelation, or UnrestrictiveCorrelation as the kernel.
+    use Projection onto those columns, and use RBF as the kernel.
     The resulting Projection kernel may be used in a product or tensor
-    with other kernels, such aa the projection onto the continuous variables.
+    with other kernels, such as the projection onto the continuous variables.
 
     Parameters
     ----------
