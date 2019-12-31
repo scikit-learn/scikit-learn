@@ -58,6 +58,13 @@ Changelog
   pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
   plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| removed abstract method `_check_X` from :class:`naive_bayes.BaseNB`
+  that could break downstream projects inheriting from this deprecated
+  public base class. :pr:`15996` by :user:`Brigitta Sipőcz <bsipocz>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
