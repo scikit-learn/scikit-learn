@@ -39,6 +39,11 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
+<<<<<<< HEAD
+=======
+from inspect import signature
+import warnings
+>>>>>>> eb3ad2dd5d5244fa384998596a2d6820aa8b16d7
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -46,6 +51,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
+from ..utils.validation import _num_samples
 
 
 def _check_length_scale(X, length_scale):
@@ -173,7 +179,16 @@ class Kernel(metaclass=ABCMeta):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            params[arg] = getattr(self, arg, None)
+            try:
+                value = getattr(self, arg)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
+            params[arg] = value
         return params
 
     def set_params(self, **params):
@@ -358,7 +373,7 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples
             Left argument of the returned kernel k(X, Y)
 
         Returns
@@ -370,6 +385,13 @@ class Kernel(metaclass=ABCMeta):
     @abstractmethod
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
+
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on fixed-length feature
+        vectors or generic objects. Defaults to True for backward
+        compatibility."""
+        return True
 
 
 class NormalizedKernelMixin:
@@ -387,7 +409,7 @@ class NormalizedKernelMixin:
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples
             Left argument of the returned kernel k(X, Y)
 
         Returns
@@ -407,6 +429,19 @@ class StationaryKernelMixin:
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
         return True
+
+
+class GenericKernelMixin:
+    """Mixin for kernels which operate on generic objects such as variable-
+    length sequences, trees, and graphs.
+
+    .. versionadded:: 0.22
+    """
+
+    @property
+    def requires_vector_input(self):
+        """Whether the kernel works only on fixed-length feature vectors."""
+        return False
 
 
 class CompoundKernel(Kernel):
@@ -494,12 +529,15 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -541,6 +579,12 @@ class CompoundKernel(Kernel):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return np.any([kernel.requires_vector_input
+                       for kernel in self.kernels])
+
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
 
@@ -550,8 +594,9 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -904,6 +949,12 @@ class KernelOperator(Kernel):
         """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is stationary. """
+        return (self.k1.requires_vector_input or
+                self.k2.requires_vector_input)
+
 
 class Sum(KernelOperator):
     """Sum-kernel k1 + k2 of two kernels k1 and k2.
@@ -928,12 +979,15 @@ class Sum(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -965,8 +1019,9 @@ class Sum(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -1002,12 +1057,15 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1040,8 +1098,9 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -1154,12 +1213,15 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1193,8 +1255,9 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
@@ -1210,8 +1273,14 @@ class Exponentiation(Kernel):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return self.kernel.requires_vector_input
 
-class ConstantKernel(StationaryKernelMixin, Kernel):
+
+class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
+                     Kernel):
     """Constant kernel.
 
     Can be used as part of a product-kernel where it scales the magnitude of
@@ -1246,12 +1315,15 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1267,21 +1339,20 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is None:
             Y = X
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = np.full((X.shape[0], Y.shape[0]), self.constant_value,
+        K = np.full((_num_samples(X), _num_samples(Y)), self.constant_value,
                     dtype=np.array(self.constant_value).dtype)
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (K, np.full((X.shape[0], X.shape[0], 1),
+                return (K, np.full((_num_samples(X), _num_samples(X), 1),
                                    self.constant_value,
                                    dtype=np.array(self.constant_value).dtype))
             else:
-                return K, np.empty((X.shape[0], X.shape[0], 0))
+                return K, np.empty((_num_samples(X), _num_samples(X), 0))
         else:
             return K
 
@@ -1294,27 +1365,30 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.constant_value,
+        return np.full(_num_samples(X), self.constant_value,
                        dtype=np.array(self.constant_value).dtype)
 
     def __repr__(self):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
-class WhiteKernel(StationaryKernelMixin, Kernel):
+class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
+                  Kernel):
     """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
-    explains the noise-component of the signal. Tuning its parameter
-    corresponds to estimating the noise-level.
+    explains the noise of the signal as independently and identically
+    normally-distributed. The parameter noise_level equals the variance of this
+    noise.
 
     k(x_1, x_2) = noise_level if x_1 == x_2 else 0
 
@@ -1323,11 +1397,10 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     Parameters
     ----------
     noise_level : float, default: 1.0
-        Parameter controlling the noise level
+        Parameter controlling the noise level (variance)
 
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
-
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1343,12 +1416,15 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : sequence of length n_samples_X
             Left argument of the returned kernel k(X, Y)
+            Could either be array-like with shape = (n_samples_X, n_features)
+            or a list of objects.
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : sequence of length n_samples_Y
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead. Y could either be array-like with
+            shape = (n_samples_Y, n_features) or a list of objects.
 
         eval_gradient : bool (optional, default=False)
             Determines whether the gradient with respect to the kernel
@@ -1364,22 +1440,21 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is not None and eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
         if Y is None:
-            K = self.noise_level * np.eye(X.shape[0])
+            K = self.noise_level * np.eye(_num_samples(X))
             if eval_gradient:
                 if not self.hyperparameter_noise_level.fixed:
                     return (K, self.noise_level
-                            * np.eye(X.shape[0])[:, :, np.newaxis])
+                            * np.eye(_num_samples(X))[:, :, np.newaxis])
                 else:
-                    return K, np.empty((X.shape[0], X.shape[0], 0))
+                    return K, np.empty((_num_samples(X), _num_samples(X), 0))
             else:
                 return K
         else:
-            return np.zeros((X.shape[0], Y.shape[0]))
+            return np.zeros((_num_samples(X), _num_samples(Y)))
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1390,15 +1465,16 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : sequence of length n_samples_X
+            Argument to the kernel. Could either be array-like with
+            shape = (n_samples_X, n_features) or a list of objects.
 
         Returns
         -------
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.noise_level,
+        return np.full(_num_samples(X), self.noise_level,
                        dtype=np.array(self.noise_level).dtype)
 
     def __repr__(self):
@@ -1424,7 +1500,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
@@ -1537,7 +1613,7 @@ class Matern(RBF):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
@@ -1609,6 +1685,8 @@ class Matern(RBF):
         elif self.nu == 2.5:
             K = dists * math.sqrt(5)
             K = (1. + K + K ** 2 / 3.0) * np.exp(-K)
+        elif self.nu == np.inf:
+            K = np.exp(-dists ** 2 / 2.0)
         else:  # general case; expensive to evaluate
             K = dists
             K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
@@ -1645,6 +1723,8 @@ class Matern(RBF):
             elif self.nu == 2.5:
                 tmp = np.sqrt(5 * D.sum(-1))[..., np.newaxis]
                 K_gradient = 5.0 / 3.0 * D * (tmp + 1) * np.exp(-tmp)
+            elif self.nu == np.inf:
+                K_gradient = D * K[..., np.newaxis]
             else:
                 # approximate gradient numerically
                 def f(theta):  # helper function
@@ -1740,6 +1820,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        if len(np.atleast_1d(self.length_scale)) > 1:
+            raise AttributeError(
+                "RationalQuadratic kernel only supports isotropic version, "
+                "please use a single scalar for length_scale")
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
