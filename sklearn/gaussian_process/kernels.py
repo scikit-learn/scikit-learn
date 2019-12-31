@@ -29,6 +29,7 @@ optimization.
 
 # Note the use of ProjectionKernel with sets of indicator variables
 # to work with categorical data.
+# (ProjectionKernel is comparable in utility to GPy's active_dims.)
 
 # Extended CompoundKernel to include DirectSum and Tensor (DirectProduct)
 # CompoundKernel was not fully implemented
