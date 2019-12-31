@@ -212,6 +212,26 @@ def check_consistent_length(*arrays):
                          " samples: %r" % [int(l) for l in lengths])
 
 
+def _make_indexable(iterable):
+    """Ensure iterable supports indexing or convert to an indexable variant.
+
+    Convert sparse matrices to csr and other non-indexable iterable to arrays.
+    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+
+    Parameters
+    ----------
+    iterable : {list, dataframe, array, sparse} or None
+        Object to be converted to an indexable iterable.
+    """
+    if sp.issparse(iterable):
+        return iterable.tocsr()
+    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+        return iterable
+    elif iterable is None:
+        return iterable
+    return np.array(iterable)
+
+
 def indexable(*iterables):
     """Make arrays indexable for cross-validation.
 
@@ -224,16 +244,7 @@ def indexable(*iterables):
     *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
-    result = []
-    for X in iterables:
-        if sp.issparse(X):
-            result.append(X.tocsr())
-        elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
-            result.append(X)
-        elif X is None:
-            result.append(X)
-        else:
-            result.append(np.array(X))
+    result = [_make_indexable(X) for X in iterables]
     check_consistent_length(*result)
     return result
 
@@ -1277,3 +1288,41 @@ def _deprecate_positional_args(f):
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
+
+
+def _check_fit_params(X, fit_params, indices=None):
+    """Check and validate the parameters passed during `fit`.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data array.
+
+    fit_params : dict
+        Dictionary containing the parameters passed at fit.
+
+    indices : array-like of shape (n_samples,), default=None
+        Indices to be selected if the parameter has the same size as `X`.
+
+    Returns
+    -------
+    fit_params_validated : dict
+        Validated parameters. We ensure that the values support indexing.
+    """
+    from . import _safe_indexing
+    fit_params_validated = {}
+    for param_key, param_value in fit_params.items():
+        if (not _is_arraylike(param_value) or
+                _num_samples(param_value) != _num_samples(X)):
+            # Non-indexable pass-through (for now for backward-compatibility).
+            # https://github.com/scikit-learn/scikit-learn/issues/15805
+            fit_params_validated[param_key] = param_value
+        else:
+            # Any other fit_params should support indexing
+            # (e.g. for cross-validation).
+            fit_params_validated[param_key] = _make_indexable(param_value)
+            fit_params_validated[param_key] = _safe_indexing(
+                fit_params_validated[param_key], indices
+            )
+
+    return fit_params_validated
