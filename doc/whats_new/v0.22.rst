@@ -56,7 +56,7 @@ Changelog
   
 - |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
   pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
-  plot() call. :pr:`15937` by :user: `Stephen Blystone <blynotes>`.
+  plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
