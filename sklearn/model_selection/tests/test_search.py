@@ -1866,30 +1866,41 @@ def test_scalar_fit_param(SearchCV, param_search):
     assert model.best_estimator_.r_ == 42
 
 
-def _custom_lgbm_metric(y_test, y_pred):
-    # y_pred are probablities which need to be thresholded
-    y_pred = (y_pred > 0.5).astype(int)
-    acc = accuracy_score(y_test, y_pred)
-    # required output of format: (eval_name, eval_result, is_higher_better)
-    return ('accuracy', acc, True)
-
-
-@pytest.mark.parametrize("metric", ['auc', _custom_lgbm_metric])
 @pytest.mark.parametrize(
     "SearchCV, param_search",
-    [(GridSearchCV, {'learning_rate': [0.1, 0.01]}),
-     (RandomizedSearchCV, {'learning_rate': uniform(0.01, 0.1)})]
+    [(GridSearchCV, {'alpha': [0.1, 0.01]}),
+     (RandomizedSearchCV, {'alpha': uniform(0.01, 0.1)})]
 )
-def test_scalar_fit_param_lightgbm(metric, SearchCV, param_search):
-    # check support for scalar values in fit_params in LightGBM
-    # non-regression test for:
+def test_scalar_fit_param_compat(SearchCV, param_search):
+    # check support for scalar values in fit_params, for instance in LightGBM
+    # that do not exactly respect the scikit-learn API contract but that we do
+    # not want to break without an explicit deprecation cycle and API
+    # recommendations for implementing early stopping with a user provided
+    # validation set. non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
-    lgbm = pytest.importorskip("lightgbm")
     X_train, X_valid, y_train, y_valid = train_test_split(
         *make_classification(random_state=42), random_state=42
     )
+
+    class _FitParamClassifier(SGDClassifier):
+
+        def fit(self, X, y, sample_weight=None, tuple_of_arrays=None,
+                scalar_param=None, callable_param=None):
+            super().fit(X, y, sample_weight=sample_weight)
+            assert scalar_param > 0
+            assert callable(callable_param)
+
+            # The tuple of arrays should be preserved as tuple.
+            assert isinstance(tuple_of_arrays, tuple)
+            assert tuple_of_arrays[0].ndim == 2
+            assert tuple_of_arrays[1].ndim == 1
+            return self
+
+    def _fit_param_callable():
+        pass
+
     model = SearchCV(
-        lgbm.LGBMClassifier(n_estimators=5), param_search
+        _FitParamClassifier(), param_search
     )
 
     # NOTE: `fit_params` should be data dependent (e.g. `sample_weight`) which
@@ -1898,9 +1909,8 @@ def test_scalar_fit_param_lightgbm(metric, SearchCV, param_search):
     # now and be careful not to break support for those without following
     # proper deprecation cycle.
     fit_params = {
-        'eval_set': [(X_valid, y_valid)],
-        'eval_metric': metric,
-        'early_stopping_rounds': 5,
-        'verbose': False
+        'tuple_of_arrays': (X_valid, y_valid),
+        'callable_param': _fit_param_callable,
+        'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
