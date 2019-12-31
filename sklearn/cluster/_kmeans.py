@@ -805,22 +805,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    Examples
-    --------
-
-    >>> from sklearn.cluster import KMeans
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0]])
-    >>> kmeans = KMeans(n_clusters=2, random_state=1234).fit(X)
-    >>> kmeans.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
-    >>> kmeans.predict([[0, 0], [12, 3]])
-    array([0, 1], dtype=int32)
-    >>> kmeans.cluster_centers_
-    array([[ 1.,  2.],
-           [10.,  2.]])
-
     See also
     --------
 
