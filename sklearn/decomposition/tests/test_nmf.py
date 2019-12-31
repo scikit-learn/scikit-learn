@@ -4,17 +4,17 @@ import numbers
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
-from sklearn.decomposition import nmf   # For testing internals
+from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -224,10 +224,6 @@ def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    msg = ("The default value of init will change from "
-           "random to None in 0.23 to make it consistent "
-           "with decomposition.NMF.")
-    assert_warns_message(FutureWarning, msg, nnmf, A, A, A, np.int64(1))
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
     assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, 'random')

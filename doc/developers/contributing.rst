@@ -210,7 +210,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest flake8
+       $ pip install cython pytest pytest-cov flake8
 
 5. Install scikit-learn in editable mode::
 
@@ -251,7 +251,7 @@ modifying code and submitting a PR:
    to record your changes in Git, then push the changes to your GitHub
    account with::
 
-       $ git push -u origin my-feature
+       $ git push -u origin my_feature
 
 10. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
@@ -280,6 +280,8 @@ line
     The `Git documentation <https://git-scm.com/documentation>`_ and
     http://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
+
+.. _pr_checklist:
 
 Pull request checklist
 ----------------------
@@ -319,15 +321,15 @@ complies with the following rules before marking a PR as ``[MRG]``. The
      specific to the file
    - `pytest sklearn/linear_model` to test the whole
      :mod:`~sklearn.linear_model` module
-   - `pytest sklearn/doc/linear_model.rst` to make sure the user guide
+   - `pytest doc/modules/linear_model.rst` to make sure the user guide
      examples are correct.
    - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
      estimator checks (specifically for `LogisticRegression`, if that's the
      estimator you changed).
 
    There may be other failing tests, but they will be caught by the CI so
-   you don't need to run the whole test suite locally. You can read more in
-   :ref:`testing_coverage`.
+   you don't need to run the whole test suite locally. For guidelines on how
+   to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
 3. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
@@ -375,7 +377,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    methods available in scikit-learn.
 
 10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snipets. If relevant, please also add
+    the user guide, with small code snippets. If relevant, please also add
     references in the literature, with PDF links when possible.
 
 11. The user guide should also include expected time and space complexity
@@ -435,6 +437,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
+    [lint skip]            Azure pipeline skips linting
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots
@@ -535,9 +538,12 @@ Building the documentation
 First, make sure you have :ref:`properly installed <install_bleeding_edge>`
 the development version.
 
+..
+    packaging is not needed once setuptools starts shipping packaging>=17.0
+
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image packaging
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -629,6 +635,12 @@ Finally, follow the formatting rules below to make it consistently good:
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
 
+    list_param : list of int
+
+    typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
+
+    sample_weight : array-like of shape (n_samples,), default=None
+
 In general have the following in mind:
 
     1. Use Python basic types. (``bool`` instead of ``boolean``)
@@ -639,6 +651,14 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+    5. When specifying the data type of a list, use ``of`` as a delimiter: 
+       ``list of int``.
+    6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+       after defining the shape:
+       ``ndarray of shape (n_samples,), dtype=np.int32``.
+    7. When the default is ``None``, ``None`` only needs to be specified at the
+       end with ``default=None``. Be sure to include in the docstring, what it
+       means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
@@ -686,14 +706,12 @@ package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
-The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'pytest' in a folder will run all the tests of
-the corresponding subpackages.
+Running `pytest` in a folder will run all the tests of the corresponding
+subpackages. For a more detailed `pytest` workflow, please refer to the
+:ref:`pr_checklist`.
 
 We expect code coverage of new features to be at least around 90%.
 
-For guidelines on how to use ``pytest`` efficiently, see the
-:ref:`pytest_tips`.
 
 Writing matplotlib related tests
 --------------------------------
@@ -812,7 +830,8 @@ E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
     def labels_(self):
         return self.classes_
 
-If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
+If a parameter has to be deprecated, a ``FutureWarning`` warning
+must be raised too.
 In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
@@ -820,7 +839,8 @@ In the following example, k is deprecated and renamed to n_clusters::
     def example_function(n_clusters=8, k='deprecated'):
         if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                          "will be removed in 0.15.", DeprecationWarning)
+                          "will be removed in 0.15.",
+                          FutureWarning)
             n_clusters = k
 
 When the change is in a class, we validate and raise warning in ``fit``::
@@ -835,7 +855,8 @@ When the change is in a class, we validate and raise warning in ``fit``::
       def fit(self, X, y):
           if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                            "will be removed in 0.15.", DeprecationWarning)
+                            "will be removed in 0.15.",
+                            FutureWarning)
               self._n_clusters = self.k
           else:
               self._n_clusters = self.n_clusters
@@ -1023,53 +1044,3 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
-
-
-.. _plotting_api:
-
-Plotting API
-============
-
-Scikit-learn defines a simple API for creating visualizations for machine
-learning. The key features of this API is to run calculations once and to have
-the flexibility to adjust the visualizations after the fact. This logic is
-encapsulated into a display object where the computed data is stored and
-the plotting is done in a `plot` method. The display object's `__init__`
-method contains only the data needed to create the visualization. The `plot`
-method takes in parameters that only have to do with visualization, such as a
-matplotlib axes. The `plot` method will store the matplotlib artists as
-attributes allowing for style adjustments through the display object. A
-`plot_*` helper function accepts parameters to do the computation and the
-parameters used for plotting. After the helper function creates the display
-object with the computed values, it calls the display's plot method. Note
-that the `plot` method defines attributes related to matplotlib, such as the
-line artist. This allows for customizations after calling the `plot` method.
-
-For example, the `RocCurveDisplay` defines the following methods and
-attributes:
-
-.. code-block:: python
-
-   class RocCurveDisplay:
-       def __init__(self, fpr, tpr, roc_auc, estimator_name):
-           ...
-           self.fpr = fpr
-           self.tpr = tpr
-           self.roc_auc = roc_auc
-           self.estimator_name = estimator_name
-
-       def plot(self, ax=None, name=None, **kwargs):
-           ...
-           self.line_ = ...
-           self.ax_ = ax
-           self.figure_ = ax.figure_
-
-   def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
-                      drop_intermediate=True, response_method="auto",
-                      name=None, ax=None, **kwargs):
-       # do computation
-       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
-                                estimator.__class__.__name__)
-       return viz.plot(ax=ax, name=name, **kwargs)
-
-Read more in the :ref:`User Guide <visualizations>`.
