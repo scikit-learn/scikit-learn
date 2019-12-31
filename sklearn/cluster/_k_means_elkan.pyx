@@ -234,8 +234,7 @@ shape (n_clusters, n_clusters)
         Distance between old and new centers.
 
     n_jobs : int
-        The number of threads to be used by openmp. If -1, openmp will use as
-        many as possible.
+        The number of threads to be used by openmp.
 
     update_centers : bool
         - If True, the labels and the new centers will be computed, i.e. runs
@@ -451,8 +450,7 @@ shape (n_clusters, n_clusters)
         Distance between old and new centers.
 
     n_jobs : int
-        The number of threads to be used by openmp. If -1, openmp will use as
-        many as possible.
+        The number of threads to be used by openmp.
 
     update_centers : bool
         - If True, the labels and the new centers will be computed, i.e. runs
