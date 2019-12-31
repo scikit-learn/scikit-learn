@@ -66,6 +66,15 @@ Changelog
   return sparse weight matrix.
   :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` accept scalar values provided in
+  `fit_params`. Change in 0.22 was breaking backward compatibility.
+  :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.utils`
 ....................
 
