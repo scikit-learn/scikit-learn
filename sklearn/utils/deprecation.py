@@ -1,6 +1,5 @@
 import warnings
 import functools
-import sys
 
 
 __all__ = ["deprecated"]
@@ -61,13 +60,19 @@ class deprecated:
         if self.extra:
             msg += "; %s" % self.extra
 
-        # FIXME: we should probably reset __new__ for full generality
         init = cls.__init__
+        new = cls.__new__
 
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return init(*args, **kwargs)
+
+        def wrapped_new(*args, **kwargs):
+            warnings.warn(msg, category=FutureWarning)
+            return new(*args, **kwargs)
+
         cls.__init__ = wrapped
+        cls.__new__ = wrapped_new
 
         wrapped.__name__ = '__init__'
         wrapped.__doc__ = self._update_doc(init.__doc__)
