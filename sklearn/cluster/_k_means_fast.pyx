@@ -166,8 +166,8 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
             centers_new[old_cluster_id, k] -= X[far_idx, k] * weight
             centers_new[new_cluster_id, k] = X[far_idx, k] * weight
 
-        weight_in_clusters[old_cluster_id] -= weight
         weight_in_clusters[new_cluster_id] = weight
+        weight_in_clusters[old_cluster_id] -= weight
 
 
 cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
@@ -221,8 +221,8 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
             centers_new[old_cluster_id, X_indices[k]] -= X_data[k] * weight
             centers_new[new_cluster_id, X_indices[k]] = X_data[k] * weight
 
-        weight_in_clusters[old_cluster_id] -= weight
         weight_in_clusters[new_cluster_id] = weight
+        weight_in_clusters[old_cluster_id] -= weight
 
 
 cdef void _average_centers(floating[:, ::1] centers,

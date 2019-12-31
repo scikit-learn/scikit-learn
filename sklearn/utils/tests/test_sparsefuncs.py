@@ -18,8 +18,8 @@ from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
                                             inplace_csr_row_normalize_l2,
                                             csr_row_norms)
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_allclose
 
 
 def test_mean_variance_axis0():
