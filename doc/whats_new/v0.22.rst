@@ -54,6 +54,10 @@ Changelog
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
   
+- |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
+  pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
+  plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
+
 :mod:`sklearn.semi_supervised`
 ..............................
 
