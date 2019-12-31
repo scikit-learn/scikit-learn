@@ -51,6 +51,14 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         predict_proba and predict_log_proba.
         """
 
+    def _check_X(self, X):
+        """To be overridden in subclasses with the actual checks."""
+        # Note that this is not marked @abstractmethod as long as the
+        # deprecated public alias sklearn.naive_bayes.BayesNB exists
+        # (until 0.24) to preserve bacward compat for 3rd party projects
+        # with existing derived classes.
+        return X
+
     def predict(self, X):
         """
         Perform classification on an array of test vectors X.
