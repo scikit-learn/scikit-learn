@@ -15,12 +15,13 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import Bunch
+from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
+                            message_clsname=None, message=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
@@ -33,7 +34,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
                 ) from exc
             raise
     else:
-        estimator.fit(X, y)
+        with _print_elapsed_time(message_clsname, message):
+            estimator.fit(X, y)
     return estimator
 
 

@@ -67,7 +67,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                                                  sample_weight=sample_weight,
                                                  message_clsname='Voting',
                                                  message=self._log_message(
-                                                 names[idx], idx, len(clfs)))
+                                                 names[idx], idx, len(clfs))
+                                                 )
                 for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
@@ -107,10 +108,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    verbose : bool, optional (default=False)
-        If True, the time elapsed while fitting will be printed as it
-        is completed.
-
     weights : array-like, shape (n_classifiers,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
@@ -128,6 +125,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         matrix with shape (n_samples, n_classifiers * n_classes). If
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
+
+    verbose : bool, optional (default=False)
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     Attributes
     ----------
@@ -183,14 +184,14 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-    def __init__(self, estimators, voting='hard', verbose=False, weights=None,
-                 n_jobs=None, flatten_transform=True):
+    def __init__(self, estimators, voting='hard', weights=None,
+                 n_jobs=None, flatten_transform=True, verbose=False):
         super().__init__(estimators=estimators)
         self.voting = voting
-        self.verbose = verbose
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -268,6 +269,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                          weights=self._weights_not_none)
         return avg
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
+
     @property
     def predict_proba(self):
         """Compute probabilities of possible outcomes for samples in X.
@@ -344,10 +350,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    verbose : bool, optional (default=False)
-        If True, the time elapsed while fitting will be printed as it
-        is completed.
-
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
@@ -357,6 +359,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    verbose : bool, optional (default=False)
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     Attributes
     ----------
@@ -388,10 +394,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=None):
+    def __init__(self, estimators, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -453,3 +460,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
+
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
