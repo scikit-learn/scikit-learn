@@ -513,6 +513,7 @@ def test_check_estimators_voting_estimator(estimator):
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
+
 def test_voting_verbose_vc(capsys):
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -539,6 +540,7 @@ def test_voting_verbose_vc(capsys):
        voting='soft', verbose=True).fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
 
+
 def test_voting_verbose_vr(capsys):
     clf1 = LinearRegression()
     clf2 = RandomForestRegressor(random_state=123)
@@ -561,6 +563,7 @@ def test_voting_verbose_vr(capsys):
        ('lr', clf1), ('rf', clf2)],
        verbose=True).fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
 
 # TODO: Remove in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
