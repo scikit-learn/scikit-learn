@@ -266,9 +266,6 @@ def type_of_target(y):
     with warnings.catch_warnings():
         warnings.simplefilter('error', np.VisibleDeprecationWarning)
         if not issparse(y):
-            # calling np.asarray on sparse matrix has unexpected behavior
-            # https://github.com/numpy/numpy/issues/14221
-
             try:
                 y = np.asarray(y)
             except np.VisibleDeprecationWarning:
