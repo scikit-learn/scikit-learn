@@ -6,11 +6,11 @@ import scipy.sparse as sp
 import pytest
 
 import sklearn
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -22,7 +22,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
 from sklearn.base import TransformerMixin
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 import pickle
 
 
@@ -63,6 +63,11 @@ class OverrideTag(NaNTag):
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    def _more_tags(self):
+        return dict()
+
+
+class InheritDiamondOverwriteTag(DiamondOverwriteTag):
     pass
 
 
@@ -293,7 +298,7 @@ def test_score_sample_weight():
 
 def test_clone_pandas_dataframe():
 
-    class DummyEstimator(BaseEstimator, TransformerMixin):
+    class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
@@ -408,7 +413,7 @@ class DontPickleAttributeMixin:
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+class MultiInheritanceEstimator(DontPickleAttributeMixin, BaseEstimator):
     def __init__(self, attribute_pickled=5):
         self.attribute_pickled = attribute_pickled
         self._attribute_not_pickled = None
@@ -475,36 +480,14 @@ def test_tag_inheritance():
     assert nan_tag_est._get_tags()['allow_nan']
     assert not no_nan_tag_est._get_tags()['allow_nan']
 
-    invalid_tags_est = OverrideTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        invalid_tags_est._get_tags()
+    redefine_tags_est = OverrideTag()
+    assert not redefine_tags_est._get_tags()['allow_nan']
 
     diamond_tag_est = DiamondOverwriteTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        diamond_tag_est._get_tags()
+    assert diamond_tag_est._get_tags()['allow_nan']
 
-
-# XXX: Remove in 0.23
-def test_regressormixin_score_multioutput():
-    from sklearn.linear_model import LinearRegression
-    # no warnings when y_type is continuous
-    X = [[1], [2], [3]]
-    y = [1, 2, 3]
-    reg = LinearRegression().fit(X, y)
-    assert_no_warnings(reg.score, X, y)
-    # warn when y_type is continuous-multioutput
-    y = [[1, 2], [2, 3], [3, 4]]
-    reg = LinearRegression().fit(X, y)
-    msg = ("The default value of multioutput (not exposed in "
-           "score method) will change from 'variance_weighted' "
-           "to 'uniform_average' in 0.23 to keep consistent "
-           "with 'metrics.r2_score'. To specify the default "
-           "value manually and avoid the warning, please "
-           "either call 'metrics.r2_score' directly or make a "
-           "custom scorer with 'metrics.make_scorer' (the "
-           "built-in scorer 'r2' uses "
-           "multioutput='uniform_average').")
-    assert_warns_message(FutureWarning, msg, reg.score, X, y)
+    inherit_diamond_tag_est = InheritDiamondOverwriteTag()
+    assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
 def test_warns_on_get_params_non_attribute():

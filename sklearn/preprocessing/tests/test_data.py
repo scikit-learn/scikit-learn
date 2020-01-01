@@ -16,38 +16,38 @@ import pytest
 
 from sklearn.utils import gen_batches
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import _convert_container
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _handle_zeros_in_scale
-from sklearn.preprocessing.data import select_k_best
-from sklearn.preprocessing.data import Binarizer
-from sklearn.preprocessing.data import KernelCenterer
-from sklearn.preprocessing.data import Normalizer
-from sklearn.preprocessing.data import normalize
-from sklearn.preprocessing.data import StandardScaler
-from sklearn.preprocessing.data import scale
-from sklearn.preprocessing.data import MinMaxScaler
-from sklearn.preprocessing.data import minmax_scale
-from sklearn.preprocessing.data import QuantileTransformer
-from sklearn.preprocessing.data import quantile_transform
-from sklearn.preprocessing.data import MaxAbsScaler
-from sklearn.preprocessing.data import maxabs_scale
-from sklearn.preprocessing.data import RobustScaler
-from sklearn.preprocessing.data import robust_scale
-from sklearn.preprocessing.data import add_dummy_feature
-from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.preprocessing.data import PowerTransformer
-from sklearn.preprocessing.data import power_transform
-from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.preprocessing._data import Binarizer
+from sklearn.preprocessing._data import KernelCenterer
+from sklearn.preprocessing._data import Normalizer
+from sklearn.preprocessing._data import normalize
+from sklearn.preprocessing._data import StandardScaler
+from sklearn.preprocessing._data import scale
+from sklearn.preprocessing._data import MinMaxScaler
+from sklearn.preprocessing._data import minmax_scale
+from sklearn.preprocessing._data import QuantileTransformer
+from sklearn.preprocessing._data import quantile_transform
+from sklearn.preprocessing._data import MaxAbsScaler
+from sklearn.preprocessing._data import maxabs_scale
+from sklearn.preprocessing._data import RobustScaler
+from sklearn.preprocessing._data import robust_scale
+from sklearn.preprocessing._data import add_dummy_feature
+from sklearn.preprocessing._data import PolynomialFeatures
+from sklearn.preprocessing._data import PowerTransformer
+from sklearn.preprocessing._data import power_transform
+from sklearn.preprocessing._data import BOUNDS_THRESHOLD
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -1454,7 +1454,6 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
-@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1534,16 +1533,24 @@ def test_quantile_transform_nan():
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
-def test_deprecated_quantile_transform_copy():
-    future_message = ("The default value of `copy` will change from False to "
-                      "True in 0.23 in order to make it more consistent with "
-                      "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing.data` and prevent "
-                      "unexpected side effects by modifying the value of `X` "
-                      "inplace. To avoid inplace modifications of `X`, it is "
-                      "recommended to explicitly set `copy=True`")
-    assert_warns_message(FutureWarning, future_message, quantile_transform,
-                         np.array([[0, 1], [0, 0.5], [1, 0]]))
+@pytest.mark.parametrize("array_type", ['array', 'sparse'])
+def test_quantile_transformer_sorted_quantiles(array_type):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15733
+    # Taken from upstream bug report:
+    # https://github.com/numpy/numpy/issues/14685
+    X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
+    X = 0.1 * X.reshape(-1, 1)
+    X = _convert_container(X, array_type)
+
+    n_quantiles = 100
+    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
+
+    # Check that the estimated quantile threasholds are monotically
+    # increasing:
+    quantiles = qt.quantiles_[:, 0]
+    assert len(quantiles) == 100
+    assert all(np.diff(quantiles) >= 0)
 
 
 def test_robust_scaler_invalid_range():
@@ -2164,7 +2171,6 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
-@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -2576,3 +2582,4 @@ def test_select_k_best():
         [1, 0, 0, 0, 0]
     ])
     assert best_scores.todense().tolist() == expected.tolist()
+

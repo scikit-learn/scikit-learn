@@ -6,22 +6,24 @@
 #          Lars Buitinck
 #          Alexandre Gramfort
 #          Nicolas Tresegnie
+#          Sylvain Marie
 # License: BSD 3 clause
 
+from functools import wraps
 import warnings
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, isclass
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning
+from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
@@ -32,7 +34,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-def _assert_all_finite(X, allow_nan=False):
+def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
@@ -52,7 +54,11 @@ def _assert_all_finite(X, allow_nan=False):
         if (allow_nan and np.isinf(X).any() or
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
-            raise ValueError(msg_err.format(type_err, X.dtype))
+            raise ValueError(
+                    msg_err.format
+                    (type_err,
+                     msg_dtype if msg_dtype is not None else X.dtype)
+            )
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
@@ -206,6 +212,26 @@ def check_consistent_length(*arrays):
                          " samples: %r" % [int(l) for l in lengths])
 
 
+def _make_indexable(iterable):
+    """Ensure iterable supports indexing or convert to an indexable variant.
+
+    Convert sparse matrices to csr and other non-indexable iterable to arrays.
+    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+
+    Parameters
+    ----------
+    iterable : {list, dataframe, array, sparse} or None
+        Object to be converted to an indexable iterable.
+    """
+    if sp.issparse(iterable):
+        return iterable.tocsr()
+    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+        return iterable
+    elif iterable is None:
+        return iterable
+    return np.array(iterable)
+
+
 def indexable(*iterables):
     """Make arrays indexable for cross-validation.
 
@@ -218,16 +244,7 @@ def indexable(*iterables):
     *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
-    result = []
-    for X in iterables:
-        if sp.issparse(X):
-            result.append(X.tocsr())
-        elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
-            result.append(X)
-        elif X is None:
-            result.append(X)
-        else:
-            result.append(np.array(X))
+    result = [_make_indexable(X) for X in iterables]
     check_consistent_length(*result)
     return result
 
@@ -333,7 +350,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=None, estimator=None):
+                ensure_min_features=1, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -408,14 +425,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean or None, optional (default=None)
-        Raise DataConversionWarning if the dtype of the input data structure
-        does not match the requested dtype, causing a memory copy.
-
-        .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
-            removed in 0.23.
-
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -424,14 +433,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
     """
-    # warn_on_dtype deprecation
-    if warn_on_dtype is not None:
-        warnings.warn(
-            "'warn_on_dtype' is deprecated in version 0.21 and will be "
-            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
-            "warning.",
-            DeprecationWarning, stacklevel=2)
-
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -448,7 +449,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        dtypes_orig = np.array(array.dtypes)
+        dtypes_orig = list(array.dtypes)
+        # pandas boolean dtype __array__ interface coerces bools to objects
+        for i, dtype_iter in enumerate(dtypes_orig):
+            if dtype_iter.kind == 'b':
+                dtypes_orig[i] = np.object
+
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+            dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -494,7 +502,17 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.asarray(array, dtype=dtype, order=order)
+                if dtype is not None and np.dtype(dtype).kind in 'iu':
+                    # Conversion float -> int should not contain NaN or
+                    # inf (numpy#14412). We cannot use casting='safe' because
+                    # then conversion float -> int would be disallowed.
+                    array = np.asarray(array, order=order)
+                    if array.dtype.kind == 'f':
+                        _assert_all_finite(array, allow_nan=False,
+                                           msg_dtype=dtype)
+                    array = array.astype(dtype, casting="unsafe", copy=False)
+                else:
+                    array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
@@ -538,6 +556,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
         if force_all_finite:
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -558,23 +577,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                              % (n_features, array.shape, ensure_min_features,
                                 context))
 
-    if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
-        msg = ("Data with input dtype %s was converted to %s%s."
-               % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning, stacklevel=2)
-
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
-
-    if (warn_on_dtype and dtypes_orig is not None and
-            {array.dtype} != set(dtypes_orig)):
-        # if there was at the beginning some other types than the final one
-        # (for instance in a DataFrame that can contain several dtypes) then
-        # some data must have been converted
-        msg = ("Data with input dtype %s were all converted to %s%s."
-               % (', '.join(map(str, sorted(set(dtypes_orig)))), array.dtype,
-                  context))
-        warnings.warn(msg, DataConversionWarning, stacklevel=3)
 
     return array
 
@@ -602,7 +606,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=None, estimator=None):
+              estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -687,14 +691,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean or None, optional (default=None)
-        Raise DataConversionWarning if the dtype of the input data structure
-        does not match the requested dtype, causing a memory copy.
-
-        .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in version 0.21 and will be
-             removed in 0.23.
-
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -716,7 +712,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
                     ensure_2d=ensure_2d, allow_nd=allow_nd,
                     ensure_min_samples=ensure_min_samples,
                     ensure_min_features=ensure_min_features,
-                    warn_on_dtype=warn_on_dtype,
                     estimator=estimator)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
@@ -747,6 +742,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -758,7 +754,9 @@ def column_or_1d(y, warn=False):
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
-    raise ValueError("bad input shape {0}".format(shape))
+    raise ValueError(
+        "y should be a 1d array, "
+        "got an array of shape {} instead.".format(shape))
 
 
 def check_random_state(seed):
@@ -865,37 +863,41 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes='deprecated', msg=None,
-                    all_or_any='deprecated'):
+def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
+    This utility is meant to be used internally by estimators themselves,
+    typically in their own predict / transform methods.
+
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : deprecated, ignored
-        .. deprecated:: 0.22
-           `attributes` is deprecated, is currently ignored and will be removed
-           in 0.23.
+    attributes : str, list or tuple of str, default=None
+        Attribute name(s) given as string or a list/tuple of strings
+        Eg.: ``["coef_", "estimator_", ...], "coef_"``
+
+        If `None`, `estimator` is considered fitted if there exist an
+        attribute that ends with a underscore and does not start with double
+        underscore.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
+        yet. Call 'fit' with appropriate arguments before using this
+        estimator."
 
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : deprecated, ignored
-        .. deprecated:: 0.21
-           `all_or_any` is deprecated, is currently ignored and will be removed
-           in 0.23.
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
 
     Returns
     -------
@@ -906,26 +908,22 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     NotFittedError
         If the attributes are not found.
     """
-    if attributes != 'deprecated':
-        warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", DeprecationWarning)
-    if all_or_any != 'deprecated':
-        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", DeprecationWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+               "appropriate arguments before using this estimator.")
 
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator)
-             if (v.endswith("_") or v.startswith("_"))
-             and not v.startswith("__")]
+    if attributes is not None:
+        if not isinstance(attributes, (list, tuple)):
+            attributes = [attributes]
+        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
+    else:
+        attrs = [v for v in vars(estimator)
+                 if v.endswith("_") and not v.startswith("__")]
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
@@ -1000,8 +998,176 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
+def _check_psd_eigenvalues(lambdas, enable_warnings=False):
+    """Check the eigenvalues of a positive semidefinite (PSD) matrix.
+
+    Checks the provided array of PSD matrix eigenvalues for numerical or
+    conditioning issues and returns a fixed validated version. This method
+    should typically be used if the PSD matrix is user-provided (e.g. a
+    Gram matrix) or computed using a user-provided dissimilarity metric
+    (e.g. kernel function), or if the decomposition process uses approximation
+    methods (randomized SVD, etc.).
+
+    It checks for three things:
+
+    - that there are no significant imaginary parts in eigenvalues (more than
+      1e-5 times the maximum real part). If this check fails, it raises a
+      ``ValueError``. Otherwise all non-significant imaginary parts that may
+      remain are set to zero. This operation is traced with a
+      ``PositiveSpectrumWarning`` when ``enable_warnings=True``.
+
+    - that eigenvalues are not all negative. If this check fails, it raises a
+      ``ValueError``
+
+    - that there are no significant negative eigenvalues with absolute value
+      more than 1e-10 (1e-6) and more than 1e-5 (5e-3) times the largest
+      positive eigenvalue in double (simple) precision. If this check fails,
+      it raises a ``ValueError``. Otherwise all negative eigenvalues that may
+      remain are set to zero. This operation is traced with a
+      ``PositiveSpectrumWarning`` when ``enable_warnings=True``.
+
+    Finally, all the positive eigenvalues that are too small (with a value
+    smaller than the maximum eigenvalue divided by 1e12) are set to zero.
+    This operation is traced with a ``PositiveSpectrumWarning`` when
+    ``enable_warnings=True``.
+
+    Parameters
+    ----------
+    lambdas : array-like of shape (n_eigenvalues,)
+        Array of eigenvalues to check / fix.
+
+    enable_warnings : bool, default=False
+        When this is set to ``True``, a ``PositiveSpectrumWarning`` will be
+        raised when there are imaginary parts, negative eigenvalues, or
+        extremely small non-zero eigenvalues. Otherwise no warning will be
+        raised. In both cases, imaginary parts, negative eigenvalues, and
+        extremely small non-zero eigenvalues will be set to zero.
+
+    Returns
+    -------
+    lambdas_fixed : ndarray of shape (n_eigenvalues,)
+        A fixed validated copy of the array of eigenvalues.
+
+    Examples
+    --------
+    >>> _check_psd_eigenvalues([1, 2])      # nominal case
+    array([1, 2])
+    >>> _check_psd_eigenvalues([5, 5j])     # significant imag part
+    Traceback (most recent call last):
+        ...
+    ValueError: There are significant imaginary parts in eigenvalues (1
+        of the maximum real part). Either the matrix is not PSD, or there was
+        an issue while computing the eigendecomposition of the matrix.
+    >>> _check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
+    array([5., 0.])
+    >>> _check_psd_eigenvalues([-5, -1])    # all negative
+    Traceback (most recent call last):
+        ...
+    ValueError: All eigenvalues are negative (maximum is -1). Either the
+        matrix is not PSD, or there was an issue while computing the
+        eigendecomposition of the matrix.
+    >>> _check_psd_eigenvalues([5, -1])     # significant negative
+    Traceback (most recent call last):
+        ...
+    ValueError: There are significant negative eigenvalues (0.2 of the
+        maximum positive). Either the matrix is not PSD, or there was an issue
+        while computing the eigendecomposition of the matrix.
+    >>> _check_psd_eigenvalues([5, -5e-5])  # insignificant negative
+    array([5., 0.])
+    >>> _check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
+    array([5., 0.])
+
+    """
+
+    lambdas = np.array(lambdas)
+    is_double_precision = lambdas.dtype == np.float64
+
+    # note: the minimum value available is
+    #  - single-precision: np.finfo('float32').eps = 1.2e-07
+    #  - double-precision: np.finfo('float64').eps = 2.2e-16
+
+    # the various thresholds used for validation
+    # we may wish to change the value according to precision.
+    significant_imag_ratio = 1e-5
+    significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
+    significant_neg_value = 1e-10 if is_double_precision else 1e-6
+    small_pos_ratio = 1e-12
+
+    # Check that there are no significant imaginary parts
+    if not np.isreal(lambdas).all():
+        max_imag_abs = np.abs(np.imag(lambdas)).max()
+        max_real_abs = np.abs(np.real(lambdas)).max()
+        if max_imag_abs > significant_imag_ratio * max_real_abs:
+            raise ValueError(
+                "There are significant imaginary parts in eigenvalues (%g "
+                "of the maximum real part). Either the matrix is not PSD, or "
+                "there was an issue while computing the eigendecomposition "
+                "of the matrix."
+                % (max_imag_abs / max_real_abs))
+
+        # warn about imaginary parts being removed
+        if enable_warnings:
+            warnings.warn("There are imaginary parts in eigenvalues (%g "
+                          "of the maximum real part). Either the matrix is not"
+                          " PSD, or there was an issue while computing the "
+                          "eigendecomposition of the matrix. Only the real "
+                          "parts will be kept."
+                          % (max_imag_abs / max_real_abs),
+                          PositiveSpectrumWarning)
+
+    # Remove all imaginary parts (even if zero)
+    lambdas = np.real(lambdas)
+
+    # Check that there are no significant negative eigenvalues
+    max_eig = lambdas.max()
+    if max_eig < 0:
+        raise ValueError("All eigenvalues are negative (maximum is %g). "
+                         "Either the matrix is not PSD, or there was an "
+                         "issue while computing the eigendecomposition of "
+                         "the matrix." % max_eig)
+
+    else:
+        min_eig = lambdas.min()
+        if (min_eig < -significant_neg_ratio * max_eig
+                and min_eig < -significant_neg_value):
+            raise ValueError("There are significant negative eigenvalues (%g"
+                             " of the maximum positive). Either the matrix is "
+                             "not PSD, or there was an issue while computing "
+                             "the eigendecomposition of the matrix."
+                             % (-min_eig / max_eig))
+        elif min_eig < 0:
+            # Remove all negative values and warn about it
+            if enable_warnings:
+                warnings.warn("There are negative eigenvalues (%g of the "
+                              "maximum positive). Either the matrix is not "
+                              "PSD, or there was an issue while computing the"
+                              " eigendecomposition of the matrix. Negative "
+                              "eigenvalues will be replaced with 0."
+                              % (-min_eig / max_eig),
+                              PositiveSpectrumWarning)
+            lambdas[lambdas < 0] = 0
+
+    # Check for conditioning (small positive non-zeros)
+    too_small_lambdas = (0 < lambdas) & (lambdas < small_pos_ratio * max_eig)
+    if too_small_lambdas.any():
+        if enable_warnings:
+            warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
+                          "eigenvalue is more than %g times the smallest. "
+                          "Small eigenvalues will be replaced with 0."
+                          "" % (1 / small_pos_ratio),
+                          PositiveSpectrumWarning)
+        lambdas[too_small_lambdas] = 0
+
+    return lambdas
+
+
 def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
+
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
 
     Parameters
     ----------
@@ -1038,8 +1204,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -1084,3 +1250,79 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return np.allclose(x, y, rtol=rtol, atol=atol)
     raise ValueError("Can only compare two sparse matrices, not a sparse "
                      "matrix and an array")
+
+
+def _deprecate_positional_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
+
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(all_args)
+        if extra_args > 0:
+            # ignore first 'self' argument for instance methods
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            warnings.warn("Pass {} as keyword args. From version 0.24 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
+                          FutureWarning)
+        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        return f(**kwargs)
+    return inner_f
+
+
+def _check_fit_params(X, fit_params, indices=None):
+    """Check and validate the parameters passed during `fit`.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data array.
+
+    fit_params : dict
+        Dictionary containing the parameters passed at fit.
+
+    indices : array-like of shape (n_samples,), default=None
+        Indices to be selected if the parameter has the same size as `X`.
+
+    Returns
+    -------
+    fit_params_validated : dict
+        Validated parameters. We ensure that the values support indexing.
+    """
+    from . import _safe_indexing
+    fit_params_validated = {}
+    for param_key, param_value in fit_params.items():
+        if (not _is_arraylike(param_value) or
+                _num_samples(param_value) != _num_samples(X)):
+            # Non-indexable pass-through (for now for backward-compatibility).
+            # https://github.com/scikit-learn/scikit-learn/issues/15805
+            fit_params_validated[param_key] = param_value
+        else:
+            # Any other fit_params should support indexing
+            # (e.g. for cross-validation).
+            fit_params_validated[param_key] = _make_indexable(param_value)
+            fit_params_validated[param_key] = _safe_indexing(
+                fit_params_validated[param_key], indices
+            )
+
+    return fit_params_validated

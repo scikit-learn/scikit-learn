@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .linear_model.base import LinearClassifierMixin
+from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
@@ -186,7 +186,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_features,)
+    intercept_ : array, shape (n_classes,)
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)
@@ -423,7 +423,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        # FIXME: Future warning to be removed in 0.23
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
                          dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
@@ -455,21 +454,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             self._max_components = max_components
         else:
             if self.n_components > max_components:
-                warnings.warn(
+                raise ValueError(
                     "n_components cannot be larger than min(n_features, "
-                    "n_classes - 1). Using min(n_features, "
-                    "n_classes - 1) = min(%d, %d - 1) = %d components."
-                    % (X.shape[1], len(self.classes_), max_components),
-                    ChangedBehaviorWarning)
-                future_msg = ("In version 0.23, setting n_components > min("
-                              "n_features, n_classes - 1) will raise a "
-                              "ValueError. You should set n_components to None"
-                              " (default), or a value smaller or equal to "
-                              "min(n_features, n_classes - 1).")
-                warnings.warn(future_msg, FutureWarning)
-                self._max_components = max_components
-            else:
-                self._max_components = self.n_components
+                    "n_classes - 1)."
+                )
+            self._max_components = self.n_components
 
         if self.solver == 'svd':
             if self.shrinkage is not None:
@@ -553,7 +542,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
+class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated
@@ -589,13 +578,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    covariance_ : list of array-like, shape = [n_features, n_features]
+    covariance_ : list of array-like of shape (n_features, n_features)
         Covariance matrices of each class.
 
-    means_ : array-like, shape = [n_classes, n_features]
+    means_ : array-like of shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape = [n_classes]
+    priors_ : array-like of shape (n_classes)
         Class priors (sum to 1).
 
     rotations_ : list of arrays
@@ -649,7 +638,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -723,12 +712,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples (test vectors).
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes] or [n_samples,]
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
             In the two-class case, the shape is [n_samples,], giving the
             log likelihood ratio of the positive class.
@@ -746,11 +735,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
         """
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
@@ -761,12 +750,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples/test vectors.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
         values = self._decision_function(X)
@@ -781,12 +770,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples/test vectors.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows
