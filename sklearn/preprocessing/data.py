@@ -3105,7 +3105,7 @@ def select_k_best(scores, k_best, cast_as_indicator=False):
                     best_scores.indptr[i]: best_scores.indptr[i + 1]]
         # only take the k last elements in the sorted indices,
         # and set them to 0
-        row_array[argpartition(row_array, kth=k_best)[:-k_best]] = 0
+        row_array[argpartition(row_array, kth=-k_best)[:-k_best]] = 0
     best_scores.eliminate_zeros()
     if cast_as_indicator:
         best_scores = best_scores.astype(bool).astype(int)

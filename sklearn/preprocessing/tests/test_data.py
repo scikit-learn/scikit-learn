@@ -2500,7 +2500,7 @@ def test_select_k_best():
     expected_best_1 = np.array([
         [0, 0, 0, 1],
         [0, 0, 0, 1],
-        [0, 1, 0, 0]
+        [0, 0, 1, 0]
     ])
     # sparse
     best_1 = select_k_best(sparse.csr_matrix(class_probas), k_best=1, cast_as_indicator=True)
@@ -2515,7 +2515,7 @@ def test_select_k_best():
     expected_best_1_scores = np.array([
         [0, 0, 0, 0.9],
         [0, 0, 0, 0.95],
-        [0, 0.2, 0, 0]
+        [0, 0, 0.2, 0]
     ])
     # sparse
     best_1_scores = select_k_best(sparse.csr_matrix(class_probas), k_best=1, cast_as_indicator=False)
@@ -2556,3 +2556,23 @@ def test_select_k_best():
     best_2_scores = select_k_best(class_probas, k_best=2, cast_as_indicator=False)
     assert not sparse.issparse(best_2_scores)
     assert best_2_scores.tolist() == expected_best_2_scores.tolist()
+
+    scores = np.array([
+        [1, 5, 2, 7, 0],
+        [8, 2, 1, 6, 1]
+    ])
+    # scores output
+    best_scores = select_k_best(sparse.csr_matrix(scores), k_best=1, cast_as_indicator=False)
+    expected = np.array([
+        [0, 0, 0, 7, 0],
+        [8, 0, 0, 0, 0]
+    ])
+    assert best_scores.todense().tolist() == expected.tolist()
+
+    # boolean output
+    best_scores = select_k_best(sparse.csr_matrix(scores), k_best=1, cast_as_indicator=True)
+    expected = np.array([
+        [0, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0]
+    ])
+    assert best_scores.todense().tolist() == expected.tolist()
