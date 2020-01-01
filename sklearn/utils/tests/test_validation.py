@@ -32,6 +32,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
+from sklearn.utils import _safe_indexing
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
@@ -46,6 +47,7 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     FLOAT_DTYPES)
+from sklearn.utils.validation import _check_fit_params
 
 import sklearn
 
@@ -1098,3 +1100,31 @@ def test_deprecate_positional_args_warns_for_class():
     with pytest.warns(FutureWarning,
                       match=r"Pass c=3, d=4 as keyword args"):
         A2(1, 2, 3, 4)
+
+
+@pytest.mark.parametrize("indices", [None, [1, 3]])
+def test_check_fit_params(indices):
+    X = np.random.randn(4, 2)
+    fit_params = {
+        'list': [1, 2, 3, 4],
+        'array': np.array([1, 2, 3, 4]),
+        'sparse-col': sp.csc_matrix([1, 2, 3, 4]).T,
+        'sparse-row': sp.csc_matrix([1, 2, 3, 4]),
+        'scalar-int': 1,
+        'scalar-str': 'xxx',
+        'None': None,
+    }
+    result = _check_fit_params(X, fit_params, indices)
+    indices_ = indices if indices is not None else list(range(X.shape[0]))
+
+    for key in ['sparse-row', 'scalar-int', 'scalar-str', 'None']:
+        assert result[key] is fit_params[key]
+
+    assert result['list'] == _safe_indexing(fit_params['list'], indices_)
+    assert_array_equal(
+        result['array'], _safe_indexing(fit_params['array'], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result['sparse-col'],
+        _safe_indexing(fit_params['sparse-col'], indices_)
+    )
