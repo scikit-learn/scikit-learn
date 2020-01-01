@@ -48,6 +48,7 @@ from sklearn.preprocessing._data import PolynomialFeatures
 from sklearn.preprocessing._data import PowerTransformer
 from sklearn.preprocessing._data import power_transform
 from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+from sklearn.preprocessing._data import select_k_best
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
