@@ -197,7 +197,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = ((2 ** 31) - 1 if self.max_depth is None
+        max_depth = (np.iinfo(np.int32).max if self.max_depth is None
                      else self.max_depth)
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
@@ -570,7 +570,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
-            Normalized total reduction of critera by feature (Gini importance).
+            Normalized total reduction of criteria by feature
+            (Gini importance).
         """
         check_is_fitted(self)
 

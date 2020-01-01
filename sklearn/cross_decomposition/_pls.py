@@ -530,6 +530,8 @@ class PLSRegression(_PLS):
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
+    .. versionadded:: 0.8
+
     Parameters
     ----------
     n_components : int, (default 2)
@@ -667,6 +669,8 @@ class PLSCanonical(_PLS):
     results up to numerical errors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -809,6 +813,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     There are no iterative deflation here.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------

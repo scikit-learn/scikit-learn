@@ -13,7 +13,7 @@ make_conda() {
 version_ge() {
     # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
-    # decending order. If the first argument is the top element of the sort, it
+    # descending order. If the first argument is the top element of the sort, it
     # is greater than or equal to the second argument.
     test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
@@ -92,6 +92,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
+    # do not install dependencies for lightgbm since it requires scikit-learn
+    python -m pip install lightgbm --no-deps
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

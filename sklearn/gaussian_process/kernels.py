@@ -1413,6 +1413,8 @@ class Matern(RBF):
         elif self.nu == 2.5:
             K = dists * math.sqrt(5)
             K = (1. + K + K ** 2 / 3.0) * np.exp(-K)
+        elif self.nu == np.inf:
+            K = np.exp(-dists ** 2 / 2.0)
         else:  # general case; expensive to evaluate
             K = dists
             K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
@@ -1449,6 +1451,8 @@ class Matern(RBF):
             elif self.nu == 2.5:
                 tmp = np.sqrt(5 * D.sum(-1))[..., np.newaxis]
                 K_gradient = 5.0 / 3.0 * D * (tmp + 1) * np.exp(-tmp)
+            elif self.nu == np.inf:
+                K_gradient = D * K[..., np.newaxis]
             else:
                 # approximate gradient numerically
                 def f(theta):  # helper function
