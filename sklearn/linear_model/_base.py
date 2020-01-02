@@ -387,7 +387,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, optional, default False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -395,10 +395,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
         an estimator with ``normalize=False``.
 
-    copy_X : bool, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
         speedup for n_targets > 1 and sufficient large problems.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -407,7 +407,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array of shape (n_features, ) or (n_targets, n_features)
+    coef_ : array-like of shape (n_features, ) or  (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
@@ -416,10 +416,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     rank_ : int
         Rank of matrix `X`. Only available when `X` is dense.
 
-    singular_ : array of shape (min(X, y),)
+    singular_ : array-like of shape (min(X, y),)
         Singular values of `X`. Only available when `X` is dense.
 
-    intercept_ : float or array of shape of (n_targets,)
+    intercept_ : float or array-like of shape (n_targets,)
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
