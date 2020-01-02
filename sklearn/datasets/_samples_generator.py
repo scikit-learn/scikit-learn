@@ -345,7 +345,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     # Validation of the arguments
     if n_classes == 0 and not allow_unlabeled:
         raise ValueError(
-            "Invalid set of arguments passed: "+
+            "Invalid set of arguments passed: " +
             "n_classes = 0 and allow_unlabeled = False"
             )
     if length == 0:

@@ -223,7 +223,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
 
 
 def test_make_multilabel_classification_valid_arguments():
-    msg = ("Invalid set of arguments passed: "+
+    msg = ("Invalid set of arguments passed: " +
            "n_classes = 0 and allow_unlabeled = False")
     with pytest.raises(ValueError, match=msg):
         make_multilabel_classification(allow_unlabeled=False,
