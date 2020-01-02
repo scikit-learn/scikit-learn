@@ -7,7 +7,7 @@
 Version 0.22.1
 ==============
 
-**In Development**
+**January 2 2020**
 
 This is a bug-fix release to primarily resolve some packaging issues in version
 0.22.0. It also includes minor documentation improvements and some bug fixes.
@@ -53,26 +53,10 @@ Changelog
 - |Fix| :func:`metrics.classification_report` does no longer ignore the
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
-  
+
 - |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
   pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
   plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
-
-:mod:`sklearn.naive_bayes`
-..........................
-
-- |Fix| Removed `abstractmethod` decorator for the method `_check_X` in
-  :class:`naive_bayes.BaseNB` that could break downstream projects inheriting
-  from this deprecated public base class. :pr:`15996` by
-  :user:`Brigitta Sipőcz <bsipocz>`.
-
-:mod:`sklearn.semi_supervised`
-..............................
-
-- |Fix| :class:`semi_supervised.LabelPropagation` and
-  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
-  return sparse weight matrix.
-  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -82,6 +66,29 @@ Changelog
   `fit_params`. Change in 0.22 was breaking backward compatibility.
   :pr:`15863` by :user:`Adrin Jalali <adrinjalali>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| Removed `abstractmethod` decorator for the method `_check_X` in
+  :class:`naive_bayes.BaseNB` that could break downstream projects inheriting
+  from this deprecated public base class. :pr:`15996` by
+  :user:`Brigitta Sipőcz <bsipocz>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
+  return sparse weight matrix.
+  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -858,10 +865,6 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-
-- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
-  `quantiles_` attribute to be completely sorted in non-decreasing manner.
-  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
 
 :mod:`sklearn.model_selection`
 ..............................
