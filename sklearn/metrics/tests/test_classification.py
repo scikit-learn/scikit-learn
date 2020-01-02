@@ -155,6 +155,22 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['support']) == int
 
 
+@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_classification_report_zero_division_warning(zero_division):
+    y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
+    with warnings.catch_warnings(record=True) as record:
+        classification_report(
+            y_true, y_pred, zero_division=zero_division, output_dict=True)
+        if zero_division == "warn":
+            assert len(record) > 1
+            for item in record:
+                msg = ("Use `zero_division` parameter to control this "
+                       "behavior.")
+                assert msg in str(item.message)
+        else:
+            assert not record
+
+
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
@@ -525,6 +541,13 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     assert_allclose(cm, expected_results)
     assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_wrong_option():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(ValueError, match='normalize must be one of'):
+        confusion_matrix(y_test, y_pred, normalize=True)
 
 
 def test_confusion_matrix_normalize_single_class():

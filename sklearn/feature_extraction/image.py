@@ -298,6 +298,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     patches = as_strided(arr, shape=shape, strides=strides)
     return patches
 
+
 @deprecated("The function feature_extraction.image.extract_patches has been "
             "deprecated in 0.22 and will be removed in 0.24.")
 def extract_patches(arr, patch_shape=8, extraction_step=1):
@@ -482,6 +483,8 @@ class PatchExtractor(BaseEstimator):
     """Extracts patches from a collection of images
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
+
+    .. versionadded:: 0.9
 
     Parameters
     ----------

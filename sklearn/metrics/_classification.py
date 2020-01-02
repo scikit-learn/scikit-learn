@@ -283,6 +283,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
@@ -1426,7 +1430,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support : int (if average is not None) or array of int, shape =\
+    support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1916,10 +1920,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -2034,7 +2038,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
-            average=average, sample_weight=sample_weight)
+            average=average, sample_weight=sample_weight,
+            zero_division=zero_division)
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:

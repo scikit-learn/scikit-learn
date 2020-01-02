@@ -1636,7 +1636,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def _raw_predict_init(self, X):
-        """Check input and compute raw predictions of the init estimtor."""
+        """Check input and compute raw predictions of the init estimator."""
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if X.shape[1] != self.n_features_:
