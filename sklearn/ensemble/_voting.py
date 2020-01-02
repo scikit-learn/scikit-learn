@@ -360,7 +360,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : bool, optional (default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
