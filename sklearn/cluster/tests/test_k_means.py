@@ -69,23 +69,30 @@ def test_kmeans_results(representation, algo, dtype):
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-def test_elkan_results(distribution):
+@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
+def test_elkan_results(distribution, tol):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
     if distribution == 'normal':
-        X = rnd.normal(size=(50, 10))
+        X = rnd.normal(size=(5000, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
 
-    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_full = KMeans(algorithm='full', n_clusters=5,
+                     random_state=0, n_init=1, tol=tol)
     km_elkan = KMeans(algorithm='elkan', n_clusters=5,
-                      random_state=0, n_init=1)
+                      random_state=0, n_init=1, tol=tol)
 
     km_full.fit(X)
     km_elkan.fit(X)
     assert_array_almost_equal(km_elkan.cluster_centers_,
                               km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
+
+    # The number of iterations and inertia should be close but not
+    # necessarily exactly the same because of rounding errors.
+    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
 def test_labels_assignment_and_inertia():

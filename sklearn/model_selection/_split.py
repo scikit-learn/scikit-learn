@@ -1816,6 +1816,8 @@ class PredefinedSplit(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     test_fold : array-like, shape (n_samples,)
