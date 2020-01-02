@@ -1601,9 +1601,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
 
 def precision_at_k_score(y_true, y_pred, at_k, labels=None, average=None, sample_weight=None):
-    """In a multilabel context, count how many time the ``k_best`` predicted labels (with highest score) are in the set
-    of true labels. Intuitively, precision at k is the ability of the classifier not to incorrectly predict that labels
-    are present whereas they aren't.
+    """Per sample, count how many of the ``k_best`` predicted labels (with highest score) are in the set
+    of true labels.
+    In multilabel context, gives the proportion of valid predictions when one has to make a fixed
+    number k of predictions per sample.
 
     The best value is 1 and the worst value is 0.
 
@@ -1778,9 +1779,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def recall_at_k_score(y_true, y_pred, at_k, labels=None, average=None, sample_weight=None):
-    """In a multiclass or multilabel context, count how many time the true labels are in the set or ``k_best`` predicted
-    labels (with highest score). The recall is intuitively the ability of the classifier to find all the positive
-    samples.
+    """Per sample, count how many true labels are in the set or ``k_best`` predicted labels
+    (with highest score).
+    In multiclass context, the recall is intuitively the ability of the classifier to find the
+    true class when given k tries.
 
     The best value is 1 and the worst value is 0.
 

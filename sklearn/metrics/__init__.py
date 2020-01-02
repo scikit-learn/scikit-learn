@@ -33,6 +33,8 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
+from ._classification import precision_at_k_score
+from ._classification import recall_at_k_score
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score

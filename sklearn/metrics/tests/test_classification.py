@@ -40,6 +40,8 @@ from sklearn.metrics import jaccard_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_at_k_score
+from sklearn.metrics import recall_at_k_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
@@ -2254,3 +2256,53 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+@pytest.mark.parametrize('average', ["micro", "weighted", "sample"])
+def test_recall_at_k_multiclass_single_sample(average):
+    y_true = np.array([[0, 0, 1, 0]])  # 2nd k best prediction is valid
+    y_pred = np.array([[0.2, 0.5, 0.8, 0.9]])
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=1, average=average) == 0.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=2, average=average) == 1.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=3, average=average) == 1.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=4, average=average) == 1.
+
+
+def test_recall_at_k_multiclass():
+    y_true = np.array([
+        [0, 0, 1, 0],  # 2nd k best prediction is valid
+        [0, 0, 0, 1]   # 3rd k best prediction is valid
+    ])
+    y_pred = np.array([
+        [0.2, 0.5, 0.8, 0.9],
+        [0.2, 0.5, 0.8, 0.4]
+    ])
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=1, average='micro') == 0.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=2, average='micro') == 1 / 2.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=3, average='micro') == 2 / 2.
+    assert recall_at_k_score(y_true=y_true, y_pred=y_pred, at_k=4, average='micro') == 2 / 2.
+
+
+@pytest.mark.parametrize('average', ["micro", "weighted", "sample"])
+def test_precision_at_k_multilabel_single_sample(average):
+    y_true = np.array([[0, 1, 1, 0]])
+    y_pred = np.array([[0.2, 0.5, 0.8, 0.9]])
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=1, average=average) == 0 / 1.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=2, average=average) == 1 / 2.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=3, average=average) == 2 / 3.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=4, average=average) == 2 / 4.
+
+
+def test_precision_at_k_multilabel():
+    y_true = np.array([
+        [0, 0, 1, 0],
+        [0, 0, 1, 1]
+    ])
+    y_pred = np.array([
+        [0.2, 0.5, 0.8, 0.9],
+        [0.2, 0.5, 0.8, 0.4]
+    ])
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=1, average='micro') == ((0 / 1.) + (1 / 1.)) / 2.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=2, average='micro') == ((1 / 2.) + (1 / 2.)) / 2.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=3, average='micro') == ((1 / 3.) + (2 / 3.)) / 2.
+    assert precision_at_k_score(y_true=y_true, y_pred=y_pred, at_k=4, average='micro') == ((1 / 4.) + (2 / 4.)) / 2.
