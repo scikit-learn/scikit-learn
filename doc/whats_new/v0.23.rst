@@ -134,5 +134,6 @@ Multiple modules
 - |API| Added boolean verbose flag to classes.
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
   :pr:`15991` by :user:`Sam Bail <spbail>`,
-  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`, and
-  :user:`Reshama Shaikh <reshamas>`.
+  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
+  :user:`Reshama Shaikh <reshamas>`, and
+  :user:`Chiara Marmo <cmarmo>`.
