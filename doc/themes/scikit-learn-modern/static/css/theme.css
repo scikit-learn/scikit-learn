@@ -518,6 +518,16 @@ div.sk-sidebar-toc-wrapper {
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+}
+
+div.sk-sidebar-toc-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 div.sk-sidebar-toc-wrapper::after {
