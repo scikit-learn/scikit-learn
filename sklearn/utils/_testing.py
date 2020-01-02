@@ -53,8 +53,8 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "assert_true",
-           "assert_false", "assert_almost_equal", "assert_array_equal",
+           "assert_raises_regexp",
+           "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
@@ -84,16 +84,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-deprecation_message = "'assert_true' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
-
-deprecation_message = "'assert_false' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -276,8 +266,8 @@ def ignore_warnings(obj=None, category=Warning):
     ...     warnings.warn('buhuhuhu')
 
     >>> def nasty_warn():
-    ...    warnings.warn('buhuhuhu')
-    ...    print(42)
+    ...     warnings.warn('buhuhuhu')
+    ...     print(42)
 
     >>> ignore_warnings(nasty_warn)()
     42
@@ -438,9 +428,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
 
 
 # TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(include_meta_estimators=None,
-                   include_other=None, type_filter=None,
-                   include_dont_test=None):
+def all_estimators(type_filter=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -450,19 +438,6 @@ def all_estimators(include_meta_estimators=None,
 
     Parameters
     ----------
-    include_meta_estimators : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_meta_estimators`` has been deprecated and has no effect in
-           0.21 and will be removed in 0.23.
-
-    include_other : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_other`` has been deprecated and has not effect in 0.21 and
-           will be removed in 0.23.
 
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -471,18 +446,11 @@ def all_estimators(include_meta_estimators=None,
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
 
-    include_dont_test : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_dont_test`` has been deprecated and has no effect in 0.21
-           and will be removed in 0.23.
-
     Returns
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     def is_abstract(c):
         if not(hasattr(c, '__abstractmethods__')):
@@ -491,21 +459,6 @@ def all_estimators(include_meta_estimators=None,
             return False
         return True
 
-    if include_other is not None:
-        warnings.warn("include_other was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_dont_test is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_meta_estimators is not None:
-        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
     all_classes = []
     # get parent folder
     path = sklearn.__path__
@@ -513,7 +466,7 @@ def all_estimators(include_meta_estimators=None,
             path=path, prefix='sklearn.', onerror=lambda x: None):
         if ".tests." in modname or "externals" in modname:
             continue
-        if IS_PYPY and ('_svmlight_format' in modname or
+        if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.

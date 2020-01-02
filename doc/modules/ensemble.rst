@@ -1323,7 +1323,7 @@ computationally expensive.
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.82
+    R2 score: 0.83
 
 .. topic:: References
 

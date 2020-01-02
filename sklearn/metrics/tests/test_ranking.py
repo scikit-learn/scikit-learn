@@ -554,7 +554,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
-    # on the same input (Provost & Domingos, 2001)
+    # on the same input (Provost & Domingos, 2000)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(
@@ -683,7 +683,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative
     # error for any supported string dtype:
     msg = ("y_true takes value in {'a', 'b'} and pos_label is "
-           "not specified: either make y_true take integer "
+           "not specified: either make y_true take "
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):
@@ -695,7 +695,7 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     # The error message is slightly different for bytes-encoded
     # class labels, but otherwise the behavior is the same:
     msg = ("y_true takes value in {b'a', b'b'} and pos_label is "
-           "not specified: either make y_true take integer "
+           "not specified: either make y_true take "
            "value in {0, 1} or {-1, 1} or pass pos_label "
            "explicitly.")
     with pytest.raises(ValueError, match=msg):

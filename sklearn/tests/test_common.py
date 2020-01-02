@@ -78,8 +78,6 @@ def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.startswith("_"):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -181,7 +179,7 @@ def test_import_all_consistency():
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
-        if IS_PYPY and ('_svmlight_format' in modname or
+        if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")

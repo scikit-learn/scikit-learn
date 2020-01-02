@@ -22,8 +22,8 @@ from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster._k_means import _labels_inertia
-from sklearn.cluster._k_means import _mini_batch_step
+from sklearn.cluster._kmeans import _labels_inertia
+from sklearn.cluster._kmeans import _mini_batch_step
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
@@ -69,23 +69,30 @@ def test_kmeans_results(representation, algo, dtype):
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-def test_elkan_results(distribution):
+@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
+def test_elkan_results(distribution, tol):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
     if distribution == 'normal':
-        X = rnd.normal(size=(50, 10))
+        X = rnd.normal(size=(5000, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
 
-    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_full = KMeans(algorithm='full', n_clusters=5,
+                     random_state=0, n_init=1, tol=tol)
     km_elkan = KMeans(algorithm='elkan', n_clusters=5,
-                      random_state=0, n_init=1)
+                      random_state=0, n_init=1, tol=tol)
 
     km_full.fit(X)
     km_elkan.fit(X)
     assert_array_almost_equal(km_elkan.cluster_centers_,
                               km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
+
+    # The number of iterations and inertia should be close but not
+    # necessarily exactly the same because of rounding errors.
+    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
 def test_labels_assignment_and_inertia():
@@ -734,7 +741,7 @@ def test_k_means_function():
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster._k_means import _init_centroids
+    from sklearn.cluster._kmeans import _init_centroids
 
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
@@ -921,7 +928,7 @@ def test_sample_weight_length():
 
 
 def test_check_normalize_sample_weight():
-    from sklearn.cluster._k_means import _check_normalize_sample_weight
+    from sklearn.cluster._kmeans import _check_normalize_sample_weight
     sample_weight = None
     checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
     assert _num_samples(X) == _num_samples(checked_sample_weight)

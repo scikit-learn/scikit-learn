@@ -246,6 +246,7 @@ def setup_package():
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
+                                 'Programming Language :: Python :: 3.8',
                                  ('Programming Language :: Python :: '
                                   'Implementation :: CPython'),
                                  ('Programming Language :: Python :: '
@@ -258,6 +259,7 @@ def setup_package():
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
                         'joblib>={}'.format(JOBLIB_MIN_VERSION)
                     ],
+                    package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
     if len(sys.argv) == 1 or (

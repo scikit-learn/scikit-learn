@@ -476,6 +476,22 @@ def test_make_moons():
                             err_msg="Point is not on expected unit circle")
 
 
+def test_make_moons_unbalanced():
+    X, y = make_moons(n_samples=(7, 5))
+    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, \
+        'Number of samples in a moon is wrong'
+    assert X.shape == (12, 2), "X shape mismatch"
+    assert y.shape == (12,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=(10,))
+
+
 def test_make_circles():
     factor = 0.3
 
@@ -490,6 +506,7 @@ def test_make_circles():
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
             dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor ** 2
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
 
@@ -502,3 +519,20 @@ def test_make_circles():
         make_circles(factor=-0.01)
     with pytest.raises(ValueError):
         make_circles(factor=1.)
+
+
+def test_make_circles_unbalanced():
+    X, y = make_circles(n_samples=(2, 8))
+
+    assert np.sum(y == 0) == 2, 'Number of samples in inner circle is wrong'
+    assert np.sum(y == 1) == 8, 'Number of samples in outer circle is wrong'
+    assert X.shape == (10, 2), "X shape mismatch"
+    assert y.shape == (10,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=(10,))
