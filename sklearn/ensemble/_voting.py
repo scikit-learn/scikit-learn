@@ -126,7 +126,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
 
-    verbose : bool, optional (default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
