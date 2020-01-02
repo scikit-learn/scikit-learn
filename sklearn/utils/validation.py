@@ -946,14 +946,6 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     NotFittedError
         If the attributes are not found.
     """
-    if attributes != 'deprecated':
-        warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", FutureWarning)
-    if all_or_any != 'deprecated':
-        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", FutureWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
