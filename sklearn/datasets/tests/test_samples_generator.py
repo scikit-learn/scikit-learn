@@ -222,6 +222,18 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
+def test_make_multilabel_classification_valid_arguments():
+    msg = ("Invalid set of arguments passed: "+
+           "n_classes = 0 and allow_unlabeled = False")
+    with pytest.raises(ValueError, match=msg):
+        make_multilabel_classification(allow_unlabeled=False,
+                                       n_classes=0)
+
+    msg = "Invalid argument passed: length = 0"
+    with pytest.raises(ValueError, match=msg):
+        make_multilabel_classification(length=0)
+
+
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
