@@ -16,6 +16,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_array_equal
@@ -30,6 +31,7 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import DataConversionWarning
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
 from sklearn.utils import _safe_indexing
