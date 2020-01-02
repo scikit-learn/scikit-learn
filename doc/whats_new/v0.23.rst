@@ -131,7 +131,7 @@ Changelog
 Multiple modules
 ................
 
-- |API| Added boolean verbose flag to classes.
+- |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
   :pr:`15991` by :user:`Sam Bail <spbail>`,
   :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
