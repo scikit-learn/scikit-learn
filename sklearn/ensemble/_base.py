@@ -49,7 +49,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -83,13 +83,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object, default=None
         The base estimator from which the ensemble is built.
 
-    n_estimators : integer
+    n_estimators : int
         The number of estimators in the ensemble.
 
-    estimator_params : list of strings
+    estimator_params : list of str
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
@@ -276,7 +276,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, default=True
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """
