@@ -222,7 +222,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
-pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "params, err_msg",
     [
         ({"n_classes": 0}, "'n_classes' should be an integer"),
