@@ -591,9 +591,12 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     Parameters
     ----------
-    n_samples : int, optional (default=100)
-        The total number of points generated. If odd, the inner circle will
-        have one point more than the outer circle.
+    n_samples : int or two-element tuple, optional (default=100)
+        If int, it is the total number of points generated.
+        For odd numbers, the inner circle will have one point more than the
+        outer circle.
+        If two-element tuple, number of points in outer circle and inner
+        circle.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -621,8 +624,15 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    n_samples_out = n_samples // 2
-    n_samples_in = n_samples - n_samples_out
+    if isinstance(n_samples, numbers.Integral):
+        n_samples_out = n_samples // 2
+        n_samples_in = n_samples - n_samples_out
+    else:
+        try:
+            n_samples_out, n_samples_in = n_samples
+        except ValueError:
+            raise ValueError('`n_samples` can be either an int or '
+                             'a two-element tuple.')
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -654,8 +664,9 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     Parameters
     ----------
-    n_samples : int, optional (default=100)
-        The total number of points generated.
+    n_samples : int or two-element tuple, optional (default=100)
+        If int, the total number of points generated.
+        If two-element tuple, number of points in each of two moons.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -677,8 +688,15 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    n_samples_out = n_samples // 2
-    n_samples_in = n_samples - n_samples_out
+    if isinstance(n_samples, numbers.Integral):
+        n_samples_out = n_samples // 2
+        n_samples_in = n_samples - n_samples_out
+    else:
+        try:
+            n_samples_out, n_samples_in = n_samples
+        except ValueError:
+            raise ValueError('`n_samples` can be either an int or '
+                             'a two-element tuple.')
 
     generator = check_random_state(random_state)
 

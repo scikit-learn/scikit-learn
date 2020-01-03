@@ -97,7 +97,7 @@ class PrecisionRecallDisplay:
 def plot_precision_recall_curve(estimator, X, y,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, **kwargs):
-    """Plot Precision Recall Curve for binary classifers.
+    """Plot Precision Recall Curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
 

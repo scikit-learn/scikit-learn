@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
+from importlib import import_module
 from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ import numbers
 import platform
 import struct
 import timeit
+from pathlib import Path
 
 import warnings
 import numpy as np
@@ -39,29 +41,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-# deprecate the joblib API in sklearn in favor of using directly joblib
-msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
-       "Please import this functionality directly from joblib, which can "
-       "be installed with: pip install joblib.")
-deprecate = deprecated(msg)
-
-delayed = deprecate(_joblib.delayed)
-cpu_count = deprecate(_joblib.cpu_count)
-hash = deprecate(_joblib.hash)
-effective_n_jobs = deprecate(_joblib.effective_n_jobs)
-
-
-# for classes, deprecated will change the object in _joblib module so we need
-# to subclass them.
-@deprecate
-class Memory(_joblib.Memory):
-    pass
-
-
-@deprecate
-class Parallel(_joblib.Parallel):
-    pass
-
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -70,8 +49,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
-           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "register_parallel_backend", "hash", "effective_n_jobs",
+           "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
            ]
 
@@ -1108,9 +1086,7 @@ def check_pandas_support(caller_name):
         ) from e
 
 
-def all_estimators(include_meta_estimators=None,
-                   include_other=None, type_filter=None,
-                   include_dont_test=None):
+def all_estimators(type_filter=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -1120,33 +1096,12 @@ def all_estimators(include_meta_estimators=None,
 
     Parameters
     ----------
-    include_meta_estimators : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_meta_estimators`` has been deprecated and has no effect in
-           0.21 and will be removed in 0.23.
-
-    include_other : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_other`` has been deprecated and has not effect in 0.21 and
-           will be removed in 0.23.
-
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
-
-    include_dont_test : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_dont_test`` has been deprecated and has no effect in 0.21
-           and will be removed in 0.23.
 
     Returns
     -------
@@ -1155,7 +1110,6 @@ def all_estimators(include_meta_estimators=None,
         and ``class`` is the actuall type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
-    import sklearn
     from ._testing import ignore_warnings
     from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                         TransformerMixin, ClusterMixin)
@@ -1167,36 +1121,30 @@ def all_estimators(include_meta_estimators=None,
             return False
         return True
 
-    if include_other is not None:
-        warnings.warn("include_other was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
-
-    if include_dont_test is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
-
-    if include_meta_estimators is not None:
-        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
-
     all_classes = []
-    # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=FutureWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
+    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    root = str(Path(__file__).parent.parent)  # sklearn package
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
+    with ignore_warnings(category=FutureWarning):
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix='sklearn.'):
+            mod_parts = modname.split(".")
+            if (any(part in modules_to_ignore for part in mod_parts)
+                    or '._' in modname):
+                continue
+            module = import_module(modname)
+            classes = inspect.getmembers(module, inspect.isclass)
+            classes = [(name, est_cls) for name, est_cls in classes
+                       if not name.startswith("_")]
+
+            # TODO: Remove when FeatureHasher is implemented in PYPY
+            # Skips FeatureHasher for PYPY
+            if IS_PYPY and 'feature_extraction' in modname:
+                classes = [(name, est_cls) for name, est_cls in classes
+                           if name == "FeatureHasher"]
+
+            all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
