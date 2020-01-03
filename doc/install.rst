@@ -134,7 +134,7 @@ it as ``scikit-learn[alldeps]``.
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
 and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
 examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
+scikit-image >= 0.13, a few examples require pandas >= 0.18.0.
 
 .. warning::
 

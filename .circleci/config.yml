@@ -19,7 +19,7 @@ jobs:
       # - sklearn/_build_utils/__init__.py
       # - advanced installation guide
       - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.12.3
+      - SCIKIT_IMAGE_VERSION: 0.13
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
