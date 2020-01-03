@@ -228,18 +228,17 @@ def test_spectral_embedding_amg_solver_failure():
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
     upper = sparse.triu(X) - sparse.diags(X.diagonal())
     sym_matrix = upper + upper.T
-    embedder = SpectralEmbedding(n_components=10,
-                                 eigen_solver='amg',
-                                 random_state=0,
-                                 affinity='precomputed')
-
-    # Smoke test: underlying solver should not raise numpy.linalg.LinAlgError
-    embedding = embedder.fit_transform(sym_matrix)
+    embedding = spectral_embedding(sym_matrix,
+                                   n_components=10,
+                                   eigen_solver='amg',
+                                   random_state=0)
 
     # Check that the learned embedding is stable w.r.t. random solver init:
     for i in range(3):
-        embedder.set_params(random_state=i + 1)
-        new_embedding = embedder.fit_transform(sym_matrix)
+        new_embedding = spectral_embedding(sym_matrix,
+                                           n_components=10,
+                                           eigen_solver='amg',
+                                           random_state=i + 1)
         assert _check_with_col_sign_flipping(
             embedding, new_embedding, tol=0.05)
 
