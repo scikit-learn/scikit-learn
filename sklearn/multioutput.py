@@ -14,7 +14,6 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
-
 import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel, delayed
@@ -25,7 +24,8 @@ from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.validation import (check_is_fitted, has_fit_parameter,
+                               _check_fit_params)
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
@@ -104,7 +104,6 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                          accept_sparse=True)
 
         if y.ndim == 1:
-
             raise ValueError("y must have at least two dimensions for "
                              "multi-output regression but has only one.")
 
@@ -169,9 +168,12 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        fit_params_validated = _check_fit_params(X, fit_params)
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
-                self.estimator, X, y[:, i], sample_weight, **fit_params)
+                self.estimator, X, y[:, i], sample_weight,
+                **fit_params_validated)
             for i in range(y.shape[1]))
         return self
 
