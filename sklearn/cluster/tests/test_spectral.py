@@ -229,6 +229,7 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             spectral_clustering(graph, n_clusters=2, eigen_solver='amg',
                                 random_state=0)
 
+
 def test_n_components():
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
