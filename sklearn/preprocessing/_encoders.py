@@ -342,7 +342,6 @@ class OneHotEncoder(_BaseEncoder):
 
     def _validate_keywords(self):
 
-
         if self.handle_unknown not in ('error', 'ignore', 'auto'):
             msg = ("handle_unknown should be either 'error', 'ignore', 'auto'"
                    "got {0}.".format(self.handle_unknown))
