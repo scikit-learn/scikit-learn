@@ -342,14 +342,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         Only returned if ``return_distributions=True``.
 
     """
-    # Validation of the arguments
-    if n_classes == 0 and not allow_unlabeled:
+    if n_classes < 1:
         raise ValueError(
-            "Invalid set of arguments passed: " +
-            "n_classes = 0 and allow_unlabeled = False"
+            "'n_classes' should be an integer greater than 0. Got {} instead."
+            .format(n_classes)
             )
-    if length == 0:
-        raise ValueError("Invalid argument passed: length = 0")
+    if length < 1:
+        raise ValueError(
+            "'length' should be an integer greater than 0. Got {} instead."
+            .format(length)
+            )
 
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
