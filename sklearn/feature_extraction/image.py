@@ -33,11 +33,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
     Parameters
     ----------
-    n_x : integer
+    n_x : int
         The size of the grid in the x direction.
-    n_y : integer
+    n_y : int
         The size of the grid in the y direction.
-    n_z : integer, optional
+    n_z : integer, default=1
         The size of the grid in the z direction, defaults to 1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
@@ -138,9 +138,10 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Parameters
     ----------
-    img : ndarray, 2D or 3D
-        2D or 3D image
-    mask : ndarray of booleans, default=None
+    img : ndarray of shape (height, width) or (height, width, channel)
+        2D or 3D image.
+    mask : ndarray of shape (height, width) or \
+            (height, width, channel), dtype=bool, default=None
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
@@ -176,9 +177,9 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         Dimension in x axis
     n_y : int
         Dimension in y axis
-    n_z : int, optional, default 1
+    n_z : int, default=1
         Dimension in z axis
-    mask : ndarray of booleans, default=None
+    mask : ndarray of shape (n_x, n_y, n_z), dtype=bool, default=None
         An optional mask of the image, to consider only part of the
         pixels.
     return_as : np.ndarray or a sparse matrix class, \
@@ -218,7 +219,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         The height of a patch
     p_w : int
         The width of a patch
-    max_patches : int or float default=None
+    max_patches : int or float, default=None
         The maximum number of patches to extract. If max_patches is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
@@ -351,16 +352,16 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Parameters
     ----------
-    image : array, shape = (image_height, image_width) or
+    image : ndarray of shape (image_height, image_width) or \
         (image_height, image_width, n_channels)
         The original image data. For color images, the last dimension specifies
         the channel: a RGB image would have `n_channels=3`.
 
-    patch_size : tuple of ints (patch_height, patch_width)
-        the dimensions of one patch
+    patch_size : tuple of int (patch_height, patch_width)
+        The dimensions of one patch.
 
-    max_patches : integer or float, default=None
-        The maximum number of patches to extract. If max_patches is a float
+    max_patches : int or float, default=None
+        The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
@@ -372,7 +373,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Returns
     -------
-    patches : array, shape = (n_patches, patch_height, patch_width) or
+    patches : array of shape (n_patches, patch_height, patch_width) or \
         (n_patches, patch_height, patch_width, n_channels)
         The collection of patches extracted from the image, where `n_patches`
         is either `max_patches` or the total number of patches that can be
@@ -448,20 +449,20 @@ def reconstruct_from_patches_2d(patches, image_size):
 
     Parameters
     ----------
-    patches : array, shape = (n_patches, patch_height, patch_width) or
+    patches : ndarray of shape (n_patches, patch_height, patch_width) or \
         (n_patches, patch_height, patch_width, n_channels)
         The complete set of patches. If the patches contain colour information,
         channels are indexed along the last dimension: RGB patches would
         have `n_channels=3`.
 
-    image_size : tuple of ints (image_height, image_width) or
+    image_size : tuple of int (image_height, image_width) or \
         (image_height, image_width, n_channels)
-        the size of the image that will be reconstructed
+        The size of the image that will be reconstructed.
 
     Returns
     -------
-    image : array, shape = image_size
-        the reconstructed image
+    image : ndarray of shape image_size
+        The reconstructed image.
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
@@ -490,10 +491,10 @@ class PatchExtractor(BaseEstimator):
 
     Parameters
     ----------
-    patch_size : tuple of ints (patch_height, patch_width)
-        the dimensions of one patch
+    patch_size : tuple of int (patch_height, patch_width)
+        The dimensions of one patch.
 
-    max_patches : integer or float, default=None
+    max_patches : int or float, default=None
         The maximum number of patches per image to extract. If max_patches is a
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
@@ -503,7 +504,6 @@ class PatchExtractor(BaseEstimator):
         `max_patches` is not None. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
-
 
     Examples
     --------
@@ -526,14 +526,14 @@ class PatchExtractor(BaseEstimator):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data.
         """
         return self
@@ -543,7 +543,7 @@ class PatchExtractor(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape = (n_samples, image_height, image_width) or
+        X : ndarray of shape (n_samples, image_height, image_width) or \
             (n_samples, image_height, image_width, n_channels)
             Array of images from which to extract patches. For color images,
             the last dimension specifies the channel: a RGB image would have
@@ -551,7 +551,7 @@ class PatchExtractor(BaseEstimator):
 
         Returns
         -------
-        patches : array, shape = (n_patches, patch_height, patch_width) or
+        patches : array of shape (n_patches, patch_height, patch_width) or \
              (n_patches, patch_height, patch_width, n_channels)
              The collection of patches extracted from the images, where
              `n_patches` is either `n_samples * max_patches` or the total

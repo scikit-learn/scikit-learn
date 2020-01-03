@@ -1201,7 +1201,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X : array, [n_samples, n_features]
+        X : array of shape (n_samples, n_features)
             Document-term matrix.
         """
         # We intentionally don't call the transform method to make
@@ -1259,7 +1259,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X : sparse matrix, [n_samples, n_features]
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         if isinstance(raw_documents, str):
@@ -1284,7 +1284,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X_inv : list of arrays, len = n_samples
+        X_inv : list of arrays of shape (n_samples,)
             List of arrays of terms.
         """
         self._check_vocabulary()
@@ -1394,7 +1394,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    idf_ : array, shape (n_features)
+    idf_ : array of shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
 
@@ -1442,12 +1442,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         self.sublinear_tf = sublinear_tf
 
     def fit(self, X, y=None):
-        """Learn the idf vector (global term weights)
+        """Learn the idf vector (global term weights).
 
         Parameters
         ----------
-        X : sparse matrix, [n_samples, n_features]
-            a matrix of term/token counts
+        X : sparse matrix of shape n_samples, n_features)
+            A matrix of term/token counts.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'))
         if not sp.issparse(X):
@@ -1478,7 +1478,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : sparse matrix, [n_samples, n_features]
+        X : sparse matrix of (n_samples, n_features)
             a matrix of term/token counts
 
         copy : bool, default=True
@@ -1487,7 +1487,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        vectors : sparse matrix, [n_samples, n_features]
+        vectors : sparse matrix of shape (n_samples, n_features)
         """
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
@@ -1542,7 +1542,7 @@ class TfidfVectorizer(CountVectorizer):
 
     Parameters
     ----------
-    input : str {'filename', 'file', 'content'}, default='content'
+    input : {'filename', 'file', 'content'}, default='content'
         If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
@@ -1563,7 +1563,7 @@ class TfidfVectorizer(CountVectorizer):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode', None}, default=None
+    strip_accents : {'ascii', 'unicode'}, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
@@ -1587,7 +1587,7 @@ class TfidfVectorizer(CountVectorizer):
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    analyzer : str, {'word', 'char', 'char_wb'} or callable, default='word'
+    analyzer : {'word', 'char', 'char_wb'} or callable, default='word'
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
@@ -1601,7 +1601,7 @@ class TfidfVectorizer(CountVectorizer):
         first read from the file and then passed to the given callable
         analyzer.
 
-    stop_words : str {'english'}, list, default=None
+    stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
         list is returned. 'english' is currently the only supported string
         value.
@@ -1630,20 +1630,20 @@ class TfidfVectorizer(CountVectorizer):
         only bigrams.
         Only applies if ``analyzer is not callable``.
 
-    max_df : float in range [0.0, 1.0] or int, default=1.0
+    max_df : float or int, default=1.0
         When building the vocabulary ignore terms that have a document
         frequency strictly higher than the given threshold (corpus-specific
         stop words).
-        If float, the parameter represents a proportion of documents, integer
-        absolute counts.
+        If float in range [0.0, 1.0], the parameter represents a proportion of
+        documents, integer absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0] or int, default=1
+    min_df : float or int, default=1
         When building the vocabulary ignore terms that have a document
         frequency strictly lower than the given threshold. This value is also
         called cut-off in the literature.
-        If float, the parameter represents a proportion of documents, integer
-        absolute counts.
+        If float in range of [0.0, 1.0], the parameter represents a proportion
+        of documents, integer absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     max_features : int, default=None
@@ -1662,7 +1662,7 @@ class TfidfVectorizer(CountVectorizer):
         outputs will have only 0/1 values, only that the tf term in tf-idf
         is binary. (Set idf and normalization to False to get 0/1 outputs).
 
-    dtype : type, default=float64
+    dtype : dtype, default=float64
         Type of the matrix returned by fit_transform() or transform().
 
     norm : {'l1', 'l2'}, default='l2'
@@ -1693,7 +1693,7 @@ class TfidfVectorizer(CountVectorizer):
         True if a fixed vocabulary of term to indices mapping
         is provided by the user
 
-    idf_ : array, shape (n_features)
+    idf_ : array of shape (n_features,)
         The inverse document frequency (IDF) vector; only defined
         if ``use_idf`` is True.
 
@@ -1850,7 +1850,7 @@ class TfidfVectorizer(CountVectorizer):
 
         Returns
         -------
-        X : sparse matrix, [n_samples, n_features]
+        X : sparse matrix of (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
         self._check_params()
@@ -1871,7 +1871,7 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
-        copy : bool, default True
+        copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
             operations.
 
@@ -1882,7 +1882,7 @@ class TfidfVectorizer(CountVectorizer):
 
         Returns
         -------
-        X : sparse matrix, [n_samples, n_features]
+        X : sparse matrix of (n_samples, n_features)
             Tf-idf-weighted document-term matrix.
         """
         check_is_fitted(self, msg='The tfidf vector is not fitted')

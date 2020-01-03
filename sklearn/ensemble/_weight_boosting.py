@@ -649,7 +649,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         ------
-        y : generator of ndarray of shape = [n_samples]
+        y : generator of ndarray of shape (n_samples,)
             The predicted classes.
         """
         X = self._validate_data(X)
@@ -677,7 +677,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        score : ndarray of shape = [n_samples, k]
+        score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
@@ -720,7 +720,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         ------
-        score : generator of ndarray of shape = [n_samples, k]
+        score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
@@ -828,7 +828,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         -------
-        p : generator of ndarray of shape = [n_samples]
+        p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
@@ -1147,7 +1147,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Yields
         -------
-        y : generator of ndarray of shape = [n_samples]
+        y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """
         check_is_fitted(self)

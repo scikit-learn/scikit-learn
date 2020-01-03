@@ -53,7 +53,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     n_estimators : int, default=100
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default="auto"
+    max_samples : "auto", int or float, default="auto"
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
@@ -131,8 +131,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator.
 
-    max_samples_ : integer
-        The actual number of samples
+    max_samples_ : int
+        The actual number of samples.
 
     offset_ : float
         Offset used to define the decision function from the raw scores. We
@@ -439,9 +439,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         Parameters
         ----------
         X : array-like or sparse matrix
+            Data matrix.
 
-        subsample_features : bool,
-            whether features should be subsampled
+        subsample_features : bool
+            Whether features should be subsampled.
         """
         n_samples = X.shape[0]
 
@@ -475,13 +476,13 @@ def _average_path_length(n_samples_leaf):
     latter has the same structure as an isolation tree.
     Parameters
     ----------
-    n_samples_leaf : array-like, shape (n_samples,).
+    n_samples_leaf : array-like of shape (n_samples,)
         The number of training samples in each test sample leaf, for
         each estimators.
 
     Returns
     -------
-    average_path_length : array, same shape as n_samples_leaf
+    average_path_length : array of same shape as n_samples_leaf
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)

@@ -47,10 +47,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    dtype : callable, default=np.float64
+    dtype : dtype, default=np.float64
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
-    separator : string, default="="
+    separator : str, default="="
         Separator string used when constructing new features for one-hot
         coding.
     sparse : bool, default=True
@@ -240,13 +240,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Sample matrix.
-        dict_type : callable, optional
+        dict_type : type, default=dict
             Constructor for feature mappings. Must conform to the
             collections.Mapping API.
 
         Returns
         -------
-        D : list of dict_type objects, length = n_samples
+        D : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
         # COO matrix is not subscriptable
@@ -275,7 +275,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : Mapping or iterable over Mappings, length = n_samples
+        X : Mapping or iterable over Mappings of shape (n_samples,)
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
 

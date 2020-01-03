@@ -98,7 +98,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    voting : str, {'hard', 'soft'}, default='hard'
+    voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
         the sums of the predicted probabilities, which is recommended for

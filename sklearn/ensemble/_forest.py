@@ -217,7 +217,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        X_leaves : ndarray of shape = [n_samples, n_estimators]
+        X_leaves : ndarray of shape (n_samples, n_estimators)
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
@@ -244,11 +244,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        indicator : sparse csr array of shape = [n_samples, n_nodes]
-            Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
+        indicator : sparse matrix of shape (n_samples, n_nodes)
+            Return a node indicator matrix where non zero elements indicates
+            that the samples goes through the nodes. The matrix is of CSR
+            format.
 
-        n_nodes_ptr : ndarray of size (n_estimators + 1, )
+        n_nodes_ptr : ndarray of size (n_estimators + 1,)
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
 
@@ -419,7 +420,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        feature_importances_ : ndarray of shape = [n_features]
+        feature_importances_ : ndarray of shape (n_features,)
             The values of this array sum to 1, unless all trees are single node
             trees consisting of only the root node, in which case it will be an
             array of zeros.
@@ -855,7 +856,7 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, default="gini"
+    criterion : {"gini", "entropy"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
@@ -896,7 +897,7 @@ class RandomForestClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string, default="auto"
+    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -976,7 +977,7 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
+    class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
@@ -1051,7 +1052,7 @@ class RandomForestClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1169,7 +1170,7 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, default="mse"
+    criterion : {"mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
@@ -1214,7 +1215,7 @@ class RandomForestRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int or float or string, default="auto"
+    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1451,7 +1452,7 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, default="gini"
+    criterion : {"gini", "entropy"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
@@ -1491,7 +1492,7 @@ class ExtraTreesClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string, default="auto"
+    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1574,7 +1575,7 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
+    class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
@@ -1649,7 +1650,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1756,7 +1757,7 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, default="mse"
+    criterion : {"mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
@@ -1801,7 +1802,7 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string, default="auto"
+    max_features : {"auto", "sqrt", "log2"} int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -2178,7 +2179,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
@@ -2204,7 +2205,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data used to build forests. Use ``dtype=np.float32`` for
             maximum efficiency.
 
@@ -2217,7 +2218,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed : sparse matrix of shape=(n_samples, n_out)
+        X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
         X = check_array(X, accept_sparse=['csc'])
@@ -2239,14 +2240,14 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csr_matrix`` for maximum efficiency.
 
         Returns
         -------
-        X_transformed : sparse matrix of shape=(n_samples, n_out)
+        X_transformed : sparse matrix of shape (n_samples, n_out)
             Transformed dataset.
         """
         check_is_fitted(self)

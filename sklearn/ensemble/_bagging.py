@@ -794,7 +794,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        score : ndarray of shape = [n_samples, k]
+        score : ndarray of shape (n_samples, k)
             The decision function of the input samples. The columns correspond
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
