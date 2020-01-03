@@ -215,6 +215,35 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
+# TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
+# np.random.rand:
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+def test_spectral_embedding_amg_solver_failure():
+    # Non-regression test for amg solver failure (issue #13393 on github)
+    pytest.importorskip('pyamg')
+    seed = 36
+    num_nodes = 1000
+    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    sym_matrix = upper + upper.T
+    embedder = SpectralEmbedding(n_components=10,
+                                 eigen_solver='amg',
+                                 random_state=0,
+                                 affinity='precomputed')
+
+    # Smoke test: underlying solver should not raise numpy.linalg.LinAlgError
+    embedding = embedder.fit_transform(sym_matrix)
+
+    # Check that the learned embedding is stable w.r.t. random solver init:
+    for i in range(3):
+        embedder.set_params(random_state=i + 1)
+        new_embedding = embedder.fit_transform(sym_matrix)
+        assert _check_with_col_sign_flipping(
+            embedding, new_embedding, tol=0.05)
+
+
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "
                             "change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
