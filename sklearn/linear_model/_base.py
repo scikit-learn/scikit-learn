@@ -407,7 +407,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array-like of shape (n_features, ) or (n_targets, n_features)
+    coef_ : array of shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
@@ -416,10 +416,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     rank_ : int
         Rank of matrix `X`. Only available when `X` is dense.
 
-    singular_ : array-like of shape (min(X, y),)
+    singular_ : array of shape (min(X, y),)
         Singular values of `X`. Only available when `X` is dense.
 
-    intercept_ : float or array-like of shape (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
