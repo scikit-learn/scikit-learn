@@ -30,7 +30,7 @@ from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
-from sklearn.dummy import DummyRegressor
+from sklearn.dummy import DummyRegressor, DummyClassifier
 
 
 def test_multi_target_regression():
@@ -570,12 +570,28 @@ class DummyRegressorWithFitParams(DummyRegressor):
         return super().fit(X, y, sample_weight)
 
 
-def test_test_multi_target_regression_with_fit_params():
+def test_multi_target_regression_with_fit_params():
     X, y = datasets.make_regression(n_targets=3)
     should_succeed_param = np.zeros_like(X)
 
     predictor = DummyRegressorWithFitParams()
     predictors = MultiOutputRegressor(predictor)
+    predictors.fit(X, y, should_succeed=should_succeed_param)
+    for estimator_ in predictors.estimators_:
+        assert 'should_succeed' in estimator_._fit_params
+
+
+class DummyClassifierWithFitParams(DummyClassifier):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
+
+
+def test_multi_output_classification_with_fit_param():
+    should_succeed_param = np.zeros_like(X)
+
+    predictor = DummyClassifierWithFitParams()
+    predictors = MultiOutputClassifier(predictor)
     predictors.fit(X, y, should_succeed=should_succeed_param)
     for estimator_ in predictors.estimators_:
         assert 'should_succeed' in estimator_._fit_params
