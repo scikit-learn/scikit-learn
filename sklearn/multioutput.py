@@ -345,7 +345,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, n_jobs=None):
         super().__init__(estimator, n_jobs)
 
-    def fit(self, X, Y, sample_weight=None):
+    def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -358,12 +358,14 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
+        **fit_params : dict of string -> object
+            Parameters passed to the ``super().fit`` method.
 
         Returns
         -------
         self : object
         """
-        super().fit(X, Y, sample_weight)
+        super().fit(X, Y, sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
