@@ -30,6 +30,7 @@ from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
+from sklearn.dummy import DummyRegressor
 
 
 def test_multi_target_regression():
@@ -563,28 +564,18 @@ def test_deprecation():
         A(SGDRegressor(random_state=0, max_iter=5))
 
 
-class GradientBoostingRegressorTestFitParam(GradientBoostingRegressor):
-    def fit(self, X, y, sample_weight=None, monitor=None, **fit_params):
-        self.fit_params = fit_params
-        super().fit(X, y, sample_weight=sample_weight)
+class DummyRegressorWithFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
 
 
 def test_test_multi_target_regression_with_fit_params():
     X, y = datasets.make_regression(n_targets=3)
-    X_train, y_train = X[:50], y[:50]
-    X_test, y_test = X[50:], y[50:]
-    sample_weight = np.random.random((50, ))
+    should_succeed_param = np.zeros_like(X)
 
-    references = np.zeros_like(y_test)
-    for n in range(3):
-        rgr = GradientBoostingRegressorTestFitParam(random_state=0)
-        rgr.fit(X_train, y_train[:, n], sample_weight=sample_weight)
-        references[:, n] = rgr.predict(X_test)
-
-    rgr = GradientBoostingRegressorTestFitParam(random_state=0)
-    rgr = MultiOutputRegressor(rgr)
-    rgr.fit(X_train, y_train, sample_weight=sample_weight, should_succeed=True)
-    y_pred = rgr.predict(X_test)
-    assert_almost_equal(references, y_pred)
-    for estimator_ in rgr.estimators_:
-        assert 'should_succeed' in estimator_.fit_params
+    predictor = DummyRegressorWithFitParams()
+    predictors = MultiOutputRegressor(predictor)
+    predictors.fit(X, y, should_succeed=should_succeed_param)
+    for estimator_ in predictors.estimators_:
+        assert 'should_succeed' in estimator_._fit_params
