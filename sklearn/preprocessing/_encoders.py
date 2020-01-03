@@ -251,7 +251,7 @@ class OneHotEncoder(_BaseEncoder):
         an unknown category will be the most frequent infrequent category.
 
         .. versionadded:: 0.23
-            'auto' was added
+            'auto' was added to automatically handle unknown categories
 
         .. deprecated:: 0.23
             'ignore' is deprecated in favor of 'auto'
