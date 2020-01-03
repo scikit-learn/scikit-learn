@@ -230,6 +230,11 @@ def test_spectral_clustering_with_arpack_amg_solvers():
                                 random_state=0)
 
 
+# TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
+# np.random.rand:
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_clustering_amg_solver_failure():
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip('pyamg')
