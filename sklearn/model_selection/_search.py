@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted
+from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -648,9 +648,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
-        # make sure fit_params are sliceable
-        fit_params_values = indexable(*fit_params.values())
-        fit_params = dict(zip(fit_params.keys(), fit_params_values))
+        fit_params = _check_fit_params(X, fit_params)
 
         n_splits = cv.get_n_splits(X, y, groups)
 
@@ -946,7 +944,7 @@ class GridSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given ``cv_results_``. In that
-        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 
@@ -1276,7 +1274,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given the ``cv_results``. In that
-        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 

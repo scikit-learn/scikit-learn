@@ -52,7 +52,7 @@ class IterativeImputer(_BaseImputer):
         If ``sample_posterior`` is True, the estimator must support
         ``return_std`` in its ``predict`` method.
 
-    missing_values : int, np.nan, optional (default=np.nan)
+    missing_values : int, np.nan, default=np.nan
         The placeholder for the missing values. All occurrences of
         ``missing_values`` will be imputed.
 
@@ -62,7 +62,7 @@ class IterativeImputer(_BaseImputer):
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
         ``True`` if using ``IterativeImputer`` for multiple imputations.
 
-    max_iter : int, optional (default=10)
+    max_iter : int, default=10
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
@@ -70,10 +70,10 @@ class IterativeImputer(_BaseImputer):
         where `X_t` is `X` at iteration `t. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance of the stopping condition.
 
-    n_nearest_features : int, optional (default=None)
+    n_nearest_features : int, default=None
         Number of other features to use to estimate the missing values of
         each feature column. Nearness between features is measured using
         the absolute correlation coefficient between each feature pair (after
@@ -83,12 +83,12 @@ class IterativeImputer(_BaseImputer):
         imputed target feature. Can provide significant speed-up when the
         number of features is huge. If ``None``, all features will be used.
 
-    initial_strategy : str, optional (default="mean")
+    initial_strategy : str, default='mean'
         Which strategy to use to initialize the missing values. Same as the
         ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
-    imputation_order : str, optional (default="ascending")
+    imputation_order : str, default='ascending'
         The order in which the features will be imputed. Possible values:
 
         "ascending"
@@ -102,34 +102,34 @@ class IterativeImputer(_BaseImputer):
         "random"
             A random order for each round.
 
-    skip_complete : boolean, optional (default=False)
+    skip_complete : boolean, default=False
         If ``True`` then features with missing values during ``transform``
         which did not have any missing values during ``fit`` will be imputed
         with the initial imputation method only. Set to ``True`` if you have
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float, optional (default=None)
+    min_value : float, default=None
         Minimum possible imputed value. Default of ``None`` will set minimum
         to negative infinity.
 
-    max_value : float, optional (default=None)
+    max_value : float, default=None
         Maximum possible imputed value. Default of ``None`` will set maximum
         to positive infinity.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
         as functions are evaluated. The higher, the more verbose. Can be 0, 1,
         or 2.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use. Randomizes
         selection of estimator features if n_nearest_features is not None, the
         ``imputation_order`` if ``random``, and the sampling from posterior if
         ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
-    add_indicator : boolean, optional (default=False)
+    add_indicator : boolean, default=False
         If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
@@ -443,7 +443,7 @@ class IterativeImputer(_BaseImputer):
         X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
 
-        tolerance : float, optional (default=1e-6)
+        tolerance : float, default=1e-6
             ``abs_corr_mat`` can have nans, which will be replaced
             with ``tolerance``.
 
