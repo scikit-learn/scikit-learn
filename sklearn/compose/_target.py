@@ -164,15 +164,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Parameters passed to the ``fit`` method of the underlying
             regressor.
 
-
         Returns
         -------
         self : object
-
-        .. versionchanged:: 0.22
-            Fixed a bug which did not pass `**fitparams` to the underlying
-            regressor.
-
         """
         y = check_array(y, accept_sparse=False, force_all_finite=True,
                         ensure_2d=False, dtype='numeric')

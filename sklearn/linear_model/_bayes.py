@@ -392,7 +392,7 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
 
-    .. versionadded:: 0.19
+    .. versionadded:: 0.5
 
     Parameters
     ----------

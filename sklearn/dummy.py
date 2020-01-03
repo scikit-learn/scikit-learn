@@ -97,9 +97,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     array([1, 1, 1, 1])
     >>> dummy_clf.score(X, y)
     0.75
-
-    .. versionadded:: 0.13
-
     """
 
     def __init__(self, strategy="warn", random_state=None,

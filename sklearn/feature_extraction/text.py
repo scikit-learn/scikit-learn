@@ -653,11 +653,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        .. versionadded:: 0.21
-
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+        .. versionchanged:: 0.21
+            Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+            first read from the file and then passed to the given callable
+            analyzer.
 
     n_features : int, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -1020,7 +1019,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
-
     """
 
     def __init__(self, input='content', encoding='utf-8',
@@ -1370,6 +1368,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
+    .. versionadded:: 0.5
+
     Parameters
     ----------
     norm : {'l1', 'l2'}, default='l2'
@@ -1433,9 +1433,6 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
-
-    .. versionadded:: 0.19
-
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
@@ -1603,9 +1600,10 @@ class TfidfVectorizer(CountVectorizer):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
-        first read from the file and then passed to the given callable
-        analyzer.
+        .. versionchanged:: 0.21
+            Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+            first read from the file and then passed to the given callable
+            analyzer.
 
     stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop
