@@ -39,6 +39,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
+
     @property
     def _weights_not_none(self):
         """Get the weights of not `None` estimators."""
@@ -63,11 +68,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, y,
-                                                 sample_weight=sample_weight,
-                                                 message_clsname='Voting',
-                                                 message=self._log_message(
-                                                 names[idx], idx, len(clfs))
+                delayed(_parallel_fit_estimator)(
+                        clone(clf), X, y,
+                        sample_weight=sample_weight,
+                        message_clsname='Voting',
+                        message=self._log_message(names[idx], idx, len(clfs))
                                                  )
                 for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
@@ -269,11 +274,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                          weights=self._weights_not_none)
         return avg
 
-    def _log_message(self, name, idx, total):
-        if not self.verbose:
-            return None
-        return '(%d of %d) Processing %s' % (idx, total, name)
-
     @property
     def predict_proba(self):
         """Compute probabilities of possible outcomes for samples in X.
@@ -460,8 +460,3 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
-
-    def _log_message(self, name, idx, total):
-        if not self.verbose:
-            return None
-        return '(%d of %d) Processing %s' % (idx, total, name)

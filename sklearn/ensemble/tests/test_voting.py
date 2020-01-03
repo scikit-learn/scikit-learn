@@ -514,54 +514,26 @@ def test_check_estimators_voting_estimator(estimator):
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
-def test_voting_verbose_vc(capsys):
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
-    clf3 = GaussianNB()
-    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
-    y = np.array([1, 1, 2, 2])
+@pytest.mark.parametrize(
+    "estimator",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('rf', RandomForestRegressor(random_state=123))],
+        verbose=True),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=123)),
+                     ('rf', RandomForestClassifier(random_state=123))],
+        verbose=True)]
+)
+def test_voting_verbose(estimator, capsys):
 
-    pattern = (r'\[Voting\].*\(0 of 3\) Processing lr, total=.*\n'
-               r'\[Voting\].*\(1 of 3\) Processing rf, total=.*\n'
-               r'\[Voting\].*\(2 of 3\) Processing gnb, total=.*\n$')
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft').fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft', verbose=False).fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingClassifier(estimators=[
-       ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-       voting='soft', verbose=True).fit(X, y)
-    assert re.match(pattern, capsys.readouterr()[0])
-
-
-def test_voting_verbose_vr(capsys):
-    clf1 = LinearRegression()
-    clf2 = RandomForestRegressor(random_state=123)
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 
     pattern = (r'\[Voting\].*\(0 of 2\) Processing lr, total=.*\n'
-               r'\[Voting\].*\(1 of 2\) Processing rf, total=.*\n')
+               r'\[Voting\].*\(1 of 2\) Processing rf, total=.*\n$')
 
-    VotingRegressor(estimators=[
-       ('lr', clf1), ('rf', clf2)]).fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingRegressor(estimators=[
-       ('lr', clf1), ('rf', clf2)],
-       verbose=False).fit(X, y)
-    assert not capsys.readouterr().out, 'Got output for verbose=False'
-
-    VotingRegressor(estimators=[
-       ('lr', clf1), ('rf', clf2)],
-       verbose=True).fit(X, y)
+    estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
 
 
