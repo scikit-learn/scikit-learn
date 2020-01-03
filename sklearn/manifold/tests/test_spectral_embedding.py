@@ -224,7 +224,7 @@ def test_spectral_embedding_amg_solver_failure():
     # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip('pyamg')
     seed = 36
-    num_nodes = 1000
+    num_nodes = 100
     X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
     upper = sparse.triu(X) - sparse.diags(X.diagonal())
     sym_matrix = upper + upper.T
