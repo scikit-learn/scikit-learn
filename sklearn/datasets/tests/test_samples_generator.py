@@ -224,8 +224,10 @@ def test_make_multilabel_classification_return_indicator_sparse():
 
 pytest.mark.parametrize(
     "params, err_msg",
-    [({"n_classes": 0}, "'n_classes' should be an integer"),
-     ({"length": 0}, "'length' should be an integer")]
+    [
+        ({"n_classes": 0}, "'n_classes' should be an integer"),
+        ({"length": 0}, "'length' should be an integer")
+    ]
 )
 def test_make_multilabel_classification_valid_arguments(params, err_msg):
     with pytest.raises(ValueError, match=err_msg):
