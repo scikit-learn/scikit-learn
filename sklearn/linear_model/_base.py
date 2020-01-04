@@ -382,12 +382,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : bool, optional, default True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, optional, default False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -395,10 +395,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
         an estimator with ``normalize=False``.
 
-    copy_X : bool, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This will only provide
         speedup for n_targets > 1 and sufficient large problems.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -419,7 +419,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     singular_ : array of shape (min(X, y),)
         Singular values of `X`. Only available when `X` is dense.
 
-    intercept_ : float or array of shape of (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 

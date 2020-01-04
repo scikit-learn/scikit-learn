@@ -63,6 +63,10 @@ Changelog
   by :user:`Stephanie Andrews <gitsteph>` and
   :user:`Reshama Shaikh <reshamas>`.
 
+- |Fix| :func:`datasets.make_multilabel_classification` now generates
+  `ValueError` for arguments `n_classes < 1` OR `length < 1`.
+  :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
