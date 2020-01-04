@@ -456,7 +456,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 "pandas Sparse Dataframe found."
                 "It will be inflated automatically."
             )
-        except:
+        except AttributeError:
             pass
 
         dtypes_orig = list(array.dtypes)
