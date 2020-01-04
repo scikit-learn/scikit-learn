@@ -215,8 +215,8 @@ def test_linear_regression_pd_sparse_dataframe_warning():
             df[col] = pd.SparseArray(df[col], fill_value=0)
         msg = "pandas Sparse Dataframe found." 
         with pytest.warns(UserWarning, match=msg):
-            l = LinearRegression()
-            l.fit(df[df.columns[0:2]], df[df.columns[3]])
+            reg = LinearRegression()
+            reg.fit(df[df.columns[0:2]], df[df.columns[3]])
     except ImportError:
         raise SkipTest("Pandas not found")
 
