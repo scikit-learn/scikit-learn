@@ -931,6 +931,13 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
+    # sample_weight=None should be equivalent to sample_weight = number
+    sample_weight = 123.
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
     # scaling of sample_weight should have no effect, cf. np.average()
     sample_weight = 2 * np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
