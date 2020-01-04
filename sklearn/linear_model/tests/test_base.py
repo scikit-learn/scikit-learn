@@ -13,6 +13,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import SkipTest
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _preprocess_data
@@ -203,6 +204,21 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_linear_regression_pd_sparse_dataframe_warning():
+    try:
+        import pandas as pd
+        df = pd.DataFrame(np.random.randn(10, 4))
+        df.iloc[:8] = 0
+        for col in df.columns:
+            df[col] = pd.SparseArray(df[col], fill_value=0)
+        msg = "pandas Sparse Dataframe found." 
+        with pytest.warns(UserWarning, match=msg):
+            l = LinearRegression()
+            l.fit(df[df.columns[0:2]], df[df.columns[3]])
+    except ImportError:
+        raise SkipTest("Pandas not found")
 
 
 def test_preprocess_data():
