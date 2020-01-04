@@ -30,7 +30,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    metric : string, or callable
+    metric : str or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -41,7 +41,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
 
-    shrink_threshold : float, optional (default = None)
+    shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
 
     Attributes

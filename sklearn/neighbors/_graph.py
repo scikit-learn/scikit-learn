@@ -52,31 +52,31 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : {'connectivity', 'distance'}, optional
+    mode : {'connectivity', 'distance'}, default=None
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    metric : string, default 'minkowski'
+    metric : str, default='minkowski'
         The distance metric used to calculate the k-Neighbors for each sample
         point. The DistanceMetric class gives a list of available metrics.
         The default distance is 'euclidean' ('minkowski' metric with the p
         param equal to 2.)
 
-    p : int, default 2
+    p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params : dict, optional
+    metric_params : dict, default=None
         additional keyword arguments for the metric function.
 
-    include_self : bool or 'auto', default=False
+    include_self : bool or 'auto', default=None
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If 'auto', then True is used for mode='connectivity' and False
         for mode='distance'.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -130,23 +130,23 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     radius : float
         Radius of neighborhoods.
 
-    mode : {'connectivity', 'distance'}, optional
+    mode : {'connectivity', 'distance'}, default=None
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    metric : string, default 'minkowski'
+    metric : str, default='minkowski'
         The distance metric used to calculate the neighbors within a
         given radius for each sample point. The DistanceMetric class
         gives a list of available metrics. The default distance is
         'euclidean' ('minkowski' metric with the param equal to 2.)
 
-    p : int, default 2
+    p : int, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params : dict, optional
+    metric_params : dict, default=None
         additional keyword arguments for the metric function.
 
     include_self : bool or 'auto', default=False
@@ -154,7 +154,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
         itself. If 'auto', then True is used for mode='connectivity' and False
         for mode='distance'.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -231,7 +231,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or callable, default='minkowski'
+    metric : str or callable, default='minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -370,7 +370,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or callable, default='minkowski'
+    metric : str or callable, default='minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 

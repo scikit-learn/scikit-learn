@@ -272,7 +272,7 @@ X : array-like of shape (n_samples, n_features)
     Note: if X is a C-contiguous array of doubles then data will
     not be copied. Otherwise, an internal copy will be made.
 
-leaf_size : positive integer (default = 40)
+leaf_size : positive int, default=40
     Number of points at which to switch to brute-force. Changing
     leaf_size will not affect the results of a query, but can
     significantly impact the speed of a query and the memory required
@@ -282,7 +282,7 @@ leaf_size : positive integer (default = 40)
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : string or DistanceMetric object
+metric : str or DistanceMetric object
     the distance metric to use for the tree.  Default='minkowski'
     with p=2 (that is, a euclidean metric). See the documentation
     of the DistanceMetric class for a list of available metrics.
