@@ -570,28 +570,21 @@ class DummyRegressorWithFitParams(DummyRegressor):
         return super().fit(X, y, sample_weight)
 
 
-def test_multi_target_regression_with_fit_params():
-    X, y = datasets.make_regression(n_targets=3)
-    should_succeed_param = np.zeros_like(X)
-
-    predictor = DummyRegressorWithFitParams()
-    predictors = MultiOutputRegressor(predictor)
-    predictors.fit(X, y, should_succeed=should_succeed_param)
-    for estimator_ in predictors.estimators_:
-        assert 'should_succeed' in estimator_._fit_params
-
-
 class DummyClassifierWithFitParams(DummyClassifier):
     def fit(self, X, y, sample_weight=None, **fit_params):
         self._fit_params = fit_params
         return super().fit(X, y, sample_weight)
 
 
-def test_multi_output_classification_with_fit_param():
-    should_succeed_param = np.zeros_like(X)
-
-    predictor = DummyClassifierWithFitParams()
-    predictors = MultiOutputClassifier(predictor)
-    predictors.fit(X, y, should_succeed=should_succeed_param)
-    for estimator_ in predictors.estimators_:
-        assert 'should_succeed' in estimator_._fit_params
+@pytest.mark.parametrize(
+    "estimator, dataset",
+    [(MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
+      datasets.make_multilabel_classification()),
+     (MultiOutputRegressor(DummyRegressorWithFitParams()),
+      datasets.make_regression(n_targets=3))])
+def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    X, y = dataset
+    some_param = np.zeros_like(X)
+    estimator.fit(X, y, some_param=some_param)
+    for dummy_estimator in estimator.estimators_:
+        assert 'some_param' in dummy_estimator._fit_params
