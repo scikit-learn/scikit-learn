@@ -1071,8 +1071,8 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 @pytest.mark.parametrize(
     "rs_imputer, rs_estimator, rs_expect",
-    [(None, None, "None"), (401, None, "int"),
-     (np.random.RandomState(seed=402), None, "int"),
+    [(None, None, None), (401, None, 401),
+     (np.random.RandomState(seed=402), None, "RandomState"),
      (None, 403, 403), (404, 405, 405),
      (np.random.RandomState(seed=406), 407, 407),
      (None, "string", "string"), (408, "string", "string"),
@@ -1087,10 +1087,8 @@ def test_iterative_imputer_set_estimator_random_state(
             self.random_state = random_state
 
         def fit(self, X, y):
-            if self.rs_expect == "None":
-                assert self.random_state is None
-            elif self.rs_expect == "int":
-                assert isinstance(self.random_state, int)
+            if self.rs_expect == "RandomState":
+                assert isinstance(self.random_state, np.random.RandomState)
             else:
                 assert self.random_state == self.rs_expect
 
