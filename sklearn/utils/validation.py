@@ -449,6 +449,16 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
+        # throw warning if pandas dataframe is sparse
+        try:
+            array.sparse
+            warnings.warn(
+                "pandas Sparse Dataframe found."
+                "It will be inflated automatically."
+            )
+        except:
+            pass
+
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
