@@ -116,7 +116,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array of shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         The linear transformation learned during fitting.
 
     n_iter_ : int
