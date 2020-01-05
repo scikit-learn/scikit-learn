@@ -40,7 +40,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         If n_neighbors is larger than the number of samples provided,
         all samples will be used.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default=None
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
