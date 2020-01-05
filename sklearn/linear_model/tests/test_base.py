@@ -209,8 +209,8 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 def test_linear_regression_pd_sparse_dataframe_warning():
     try:
         import pandas as pd
-        df = pd.DataFrame(np.random.randn(10, 4))
-        df.iloc[:8] = 0
+        df = pd.DataFrame(np.random.randn(10000, 4))
+        df.iloc[:9998] = 0
         for col in df.columns:
             df[col] = pd.SparseArray(df[col], fill_value=0)
         msg = "pandas Sparse Dataframe found."
