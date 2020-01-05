@@ -74,7 +74,8 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
     def _change_missing_values(self, new_missing_values):
         """Add a new attribute for missing values."""
-        self._missing_values = new_missing_values
+        if not hasattr(self, '_missing_values'):
+            self._missing_values = new_missing_values
 
     def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
