@@ -130,7 +130,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     radius : float
         Radius of neighborhoods.
 
-    mode : {'connectivity', 'distance'}, default=None
+    mode : {'connectivity', 'distance'}, default='connectivity'
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
