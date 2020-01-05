@@ -52,7 +52,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     n_neighbors : int
         Number of neighbors for each sample.
 
-    mode : {'connectivity', 'distance'}, default=None
+    mode : {'connectivity', 'distance'}, default='connectivity'
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
