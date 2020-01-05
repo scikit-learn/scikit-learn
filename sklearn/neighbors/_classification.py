@@ -45,7 +45,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default=None
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
