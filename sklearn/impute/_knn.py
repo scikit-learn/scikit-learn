@@ -180,11 +180,15 @@ class KNNImputer(_BaseImputer):
 
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
-        super()._fit_indicator(X)
 
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+
+        missing_mask = self._mask_fit_X
+        super()._change_missing_values(True)
+        super()._fit_indicator(missing_mask)
+
         return self
 
     def transform(self, X):
