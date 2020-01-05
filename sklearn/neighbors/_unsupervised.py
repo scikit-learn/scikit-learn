@@ -22,7 +22,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default=None
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
