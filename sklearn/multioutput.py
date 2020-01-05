@@ -359,7 +359,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             Only supported if the underlying classifier supports sample
             weights.
         **fit_params : dict of string -> object
-            Parameters passed to the ``super().fit`` method.
+            Parameters passed to the ``estimator.fit`` method of each step.
 
         Returns
         -------
