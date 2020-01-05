@@ -71,7 +71,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     metric_params : dict, default=None
         additional keyword arguments for the metric function.
 
-    include_self : bool or 'auto', default=None
+    include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
         itself. If 'auto', then True is used for mode='connectivity' and False
         for mode='distance'.
