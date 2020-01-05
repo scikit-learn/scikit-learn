@@ -576,6 +576,7 @@ class IterativeImputer(_BaseImputer):
 
         X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
+        self._change_missing_values(True)
         super()._fit_indicator(missing_mask)
         X_indicator = super()._transform_indicator(missing_mask)
 

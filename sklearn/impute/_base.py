@@ -72,12 +72,21 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
 
+    def _change_missing_values(self, new_missing_values):
+        """Add a new attribute for missing values."""
+        self._missing_values = new_missing_values
+
     def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
         if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False
-            )
+            if hasattr(self, '_missing_values'):
+                self.indicator_ = MissingIndicator(
+                    missing_values=self._missing_values, error_on_new=False
+                )
+            else:
+                self.indicator_ = MissingIndicator(
+                    missing_values=self.missing_values, error_on_new=False
+                )
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
@@ -302,6 +311,7 @@ class SimpleImputer(_BaseImputer):
                                                self.missing_values,
                                                fill_value)
 
+        super()._change_missing_values(True)
         super()._fit_indicator(missing_mask)
 
         return self
@@ -629,7 +639,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         self._precomputed = False
         if sparse.issparse(X) or isinstance(X, np.ndarray):
-            if X.dtype == 'bool':
+            if X.dtype == 'bool' and self.missing_values:
                 self._precomputed = True
 
         # Need not validate X again as it would have already been validated
