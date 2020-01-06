@@ -43,7 +43,8 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         Preferred dimensionality of the projected space.
         If None it will be set to ``n_features``.
 
-    init : str or numpy array of shape (n_features_a, n_features_b), default='auto'
+    init : {'auto', 'pca', 'lda', 'identity', 'random'} or ndarray of shape \
+            (n_features_a, n_features_b), default='auto'
         Initialization of the linear transformation. Possible options are
         'auto', 'pca', 'lda', 'identity', 'random', and a numpy array of shape
         (n_features_a, n_features_b).
@@ -176,10 +177,10 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
@@ -244,12 +245,12 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data samples.
 
         Returns
         -------
-        X_embedded: array, shape (n_samples, n_components)
+        X_embedded: ndarray of shape (n_samples, n_components)
             The data samples transformed.
 
         Raises
@@ -268,22 +269,22 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
         -------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The validated training samples.
 
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The validated training labels, encoded to be integers in
             the range(0, n_classes).
 
-        init : string or numpy array of shape (n_features_a, n_features_b)
+        init : str or ndarray of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Raises
@@ -377,18 +378,18 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The training labels.
 
-        init : string or numpy array of shape (n_features_a, n_features_b)
+        init : str or ndarray of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Returns
         -------
-        transformation : array, shape (n_components, n_features)
+        transformation : ndarray of shape (n_components, n_features)
             The initialized linear transformation.
 
         """
@@ -443,7 +444,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transformation : array, shape=(n_components * n_features,)
+        transformation : ndarray of shape (n_components * n_features,)
             The solution computed by the optimizer in this iteration.
         """
         if self.callback is not None:
@@ -456,14 +457,14 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transformation : array, shape (n_components * n_features,)
+        transformation : ndarray of shape (n_components * n_features,)
             The raveled linear transformation on which to compute loss and
             evaluate gradient.
 
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        same_class_mask : array, shape (n_samples, n_samples)
+        same_class_mask : ndarray of shape (n_samples, n_samples)
             A mask where ``mask[i, j] == 1`` if ``X[i]`` and ``X[j]`` belong
             to the same class, and ``0`` otherwise.
 
@@ -472,7 +473,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         loss : float
             The loss computed for the given transformation.
 
-        gradient : array, shape (n_components * n_features,)
+        gradient : ndarray of shape (n_components * n_features,)
             The new (flattened) gradient of the loss.
         """
 

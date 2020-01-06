@@ -37,7 +37,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : str or callable
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -160,14 +160,14 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of int, shape = [n_queries] or [n_queries, n_outputs]
-            Target values
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs), dtype=int
+            Target values.
         """
         X = check_array(X, accept_sparse='csr')
 
@@ -213,7 +213,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    weights : str or callable
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -324,14 +324,15 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of float, shape = [n_queries] or [n_queries, n_outputs]
-            Target values
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs), \
+                dtype=double
+            Target values.
         """
         X = check_array(X, accept_sparse='csr')
 

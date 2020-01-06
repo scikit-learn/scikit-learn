@@ -33,7 +33,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     n_neighbors : int, default=5
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : str or callable, default='uniform'
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -159,13 +159,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of shape [n_queries] or [n_queries, n_outputs]
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
         X = check_array(X, accept_sparse='csr')
@@ -201,13 +201,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        p : array of shape = [n_queries, n_classes], or a list of n_outputs
+        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
@@ -263,7 +263,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
-    weights : str or callable
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -328,7 +328,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
     effective_metric_ : str or callble
@@ -392,12 +392,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
+        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
+                (n_samples, n_features) or (n_samples, n_samples)
+            Training data. If array or matrix, the shape is (n_samples,
+            n_features), or (n_samples, n_samples) if metric='precomputed'.
 
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_output)
+            Target values.
 
         """
 
@@ -453,13 +455,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of shape [n_queries] or [n_queries, n_outputs]
+        y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
 
@@ -495,13 +497,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
+        X : array-like of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        p : array of shape = [n_queries, n_classes], or a list of n_outputs
+        p : ndarray of shape (n_queries, n_classes), or a list of n_outputs
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.

@@ -96,7 +96,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
-        y : array, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers)
         """
         if self.metric == 'precomputed':

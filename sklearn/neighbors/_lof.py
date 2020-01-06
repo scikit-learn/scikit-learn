@@ -124,10 +124,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     Attributes
     ----------
-    negative_outlier_factor_ : numpy array of shape (n_samples,)
+    negative_outlier_factor_ : ndarray of shape (n_samples,)
         The opposite LOF of the training samples. The higher, the more normal.
-        Inliers tend to have a LOF score close to 1 (``negative_outlier_factor_``
-        close to -1), while outliers tend to have a larger LOF score.
+        Inliers tend to have a LOF score close to 1
+        (``negative_outlier_factor_`` close to -1), while outliers tend to have
+        a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
         supposed 'degree of abnormality'.
@@ -182,16 +183,16 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features), default=None
+        X : array-like of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
-        is_inlier : array, shape (n_samples,)
+        is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and 1 for inliers.
         """
 
@@ -213,13 +214,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features), default=None
+        X : array-like of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
         Returns
         -------
-        is_inlier : array, shape (n_samples,)
+        is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and 1 for inliers.
         """
 
@@ -233,12 +234,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
+        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
+                (n_samples, n_features) or (n_samples, n_samples)
+            Training data. If array or matrix, the shape is (n_samples,
+            n_features), or (n_samples, n_samples) if metric='precomputed'.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -290,13 +292,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
         Returns
         -------
-        is_inlier : array, shape (n_samples,)
+        is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         if not self.novelty:
@@ -315,14 +317,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features), default=None
+        X : array-like of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
 
         Returns
         -------
-        is_inlier : array, shape (n_samples,)
+        is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         check_is_fitted(self)
@@ -352,13 +354,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
         Returns
         -------
-        shifted_opposite_lof_scores : array, shape (n_samples,)
+        shifted_opposite_lof_scores : ndarray of shape (n_samples,)
             The shifted opposite of the Local Outlier Factor of each input
             samples. The lower, the more abnormal. Negative scores represent
             outliers, positive scores represent inliers.
@@ -388,13 +390,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
         Returns
         -------
-        shifted_opposite_lof_scores : array, shape (n_samples,)
+        shifted_opposite_lof_scores : ndarray of shape (n_samples,)
             The shifted opposite of the Local Outlier Factor of each input
             samples. The lower, the more abnormal. Negative scores represent
             outliers, positive scores represent inliers.
@@ -419,13 +421,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
         Returns
         -------
-        opposite_lof_scores : array, shape (n_samples,)
+        opposite_lof_scores : ndarray of shape (n_samples,)
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
@@ -455,13 +457,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
         Returns
         -------
-        opposite_lof_scores : array, shape (n_samples,)
+        opposite_lof_scores : ndarray of shape (n_samples,)
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
@@ -487,17 +489,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        distances_X : array, shape (n_queries, self.n_neighbors)
+        distances_X : ndarray of shape (n_queries, self.n_neighbors)
             Distances to the neighbors (in the training samples `self._fit_X`)
             of each query point to compute the LRD.
 
-        neighbors_indices : array, shape (n_queries, self.n_neighbors)
+        neighbors_indices : ndarray of shape (n_queries, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
             self._fit_X.
 
         Returns
         -------
-        local_reachability_density : array, shape (n_queries,)
+        local_reachability_density : ndarray of shape (n_queries,)
             The local reachability density of each sample.
         """
         dist_k = self._distances_fit_X_[neighbors_indices,

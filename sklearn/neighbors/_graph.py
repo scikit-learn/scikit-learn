@@ -84,8 +84,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse graph in CSR format, shape = [n_samples, n_samples]
-        A[i, j] is assigned the weight of edge that connects i to j.
+    A : sparse matrix of shape (n_samples, n_samples)
+        Graph where A[i, j] is assigned the weight of edge that
+        connects i to j. The matrix is of CSR format.
 
     Examples
     --------
@@ -162,8 +163,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse graph in CSR format, shape = [n_samples, n_samples]
-        A[i, j] is assigned the weight of edge that connects i to j.
+    A : sparse matrix of shape (n_samples, n_samples)
+        Graph where A[i, j] is assigned the weight of edge that connects
+        i to j. The matrix is of CSR format.
 
     Examples
     --------
@@ -294,14 +296,15 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples_transform, n_features)
-            Sample data
+            Sample data.
 
         Returns
         -------
-        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
+        Xt : sparse matrix of shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
+            The matrix is of CSR format.
         """
         check_is_fitted(self)
         add_one = self.mode == 'distance'
@@ -323,10 +326,11 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse graph of shape (n_samples, n_samples)
+        Xt : sparse matrix of shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
+            The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
 
@@ -437,10 +441,11 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
+        Xt : sparse matrix of shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
+            The matrix is of CSR format.
         """
         check_is_fitted(self)
         return self.radius_neighbors_graph(X, mode=self.mode,
@@ -461,9 +466,10 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples, n_samples)
+        Xt : sparse matrix of shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
+            The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
