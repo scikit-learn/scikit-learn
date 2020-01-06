@@ -28,8 +28,6 @@ predictions:
 Finally, :ref:`dummy_estimators` are useful to get a baseline
 value of those metrics for random predictions.
 
-.. |neg_mape| replace:: 'neg_mean_absolute_percentage_error'
-
 .. seealso::
 
    For "pairwise" metrics, between *samples* and not estimators or
@@ -93,7 +91,7 @@ Scoring                           Function                                      
 'explained_variance'              :func:`metrics.explained_variance_score`
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-|neg_mape|                        :func:`metrics.mean_absolute_percentage_error`
+'neg_mape'                        :func:`metrics.mean_absolute_percentage_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
