@@ -1585,7 +1585,7 @@ def test_time_series_gap():
     assert_array_equal(test, [8, 9])
 
     # Verify proper error is thrown
-    with pytest.raises(ValueError, "Too many splits.*and gap"):
+    with pytest.raises(ValueError, match="Too many splits.*and gap"):
         TimeSeriesSplit(n_splits=4, gap=2).split(X)
 
 
