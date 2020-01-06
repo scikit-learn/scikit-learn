@@ -1539,8 +1539,8 @@ def test_time_series_test_size():
 
     # Should fail with not enough data points for configuration
     with pytest.raises(ValueError, match="Too many splits.*with test_size"):
-        TimeSeriesSplit(n_splits=5, test_size=2).split(X)
-        print(X.shape)
+        splits = TimeSeriesSplit(n_splits=5, test_size=2).split(X)
+        next(splits)
 
 
 def test_time_series_gap():
@@ -1586,7 +1586,8 @@ def test_time_series_gap():
 
     # Verify proper error is thrown
     with pytest.raises(ValueError, match="Too many splits.*and gap"):
-        TimeSeriesSplit(n_splits=4, gap=2).split(X)
+        splits = TimeSeriesSplit(n_splits=4, gap=2).split(X)
+        next(splits)
 
 
 def test_nested_cv():
