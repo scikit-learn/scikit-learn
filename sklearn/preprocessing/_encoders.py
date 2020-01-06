@@ -240,15 +240,14 @@ class OneHotEncoder(_BaseEncoder):
         will be denoted as None.
 
         When this parameter is set to 'auto' and an unknown category is
-        encountered during transform
+        encountered in transform:
 
         1. If there was no infrequent category during training, the resulting
         one-hot encoded columns for this feature will be be all zeros. In
         the inverse transform, an unknown category will be denoted as None.
-
         2. If there is an infrequent category during training, the unknown
         category will be considered infrequent. In the inverse transform,
-        an unknown category will be the most frequent infrequent category.
+        an unknown category will be the most frequent infrequent category
 
         .. versionadded:: 0.23
             'auto' was added to automatically handle unknown categories
@@ -259,10 +258,9 @@ class OneHotEncoder(_BaseEncoder):
     min_frequency : int or float, default=1
         Specifics the categories to be considered infrequent.
 
-        - If int, categories with a cardinality smaller will be considered
+        1. If int, categories with a cardinality smaller will be considered
         infrequent.
-
-        - If float, categories with a cardinality smaller than this fraction
+        2. If float, categories with a cardinality smaller than this fraction
         of the total number of samples will be considered infrequent.
 
         .. versionadded:: 0.23
@@ -307,10 +305,10 @@ class OneHotEncoder(_BaseEncoder):
     values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
-    >>> enc = OneHotEncoder(handle_unknown='ignore')
+    >>> enc = OneHotEncoder(handle_unknown='auto')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='ignore')
+    OneHotEncoder(handle_unknown='auto')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
