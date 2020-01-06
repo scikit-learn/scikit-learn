@@ -65,6 +65,8 @@ class NamedArray(FeatureNamesMixin, NDArrayOperatorsMixin):
     """
 
     def __init__(self, data, feature_names=None):
+        if hasattr(data, 'columns') and feature_names is None:
+            feature_names = list(data.columns)
         data = check_array(data, ensure_2d=False)
         self._data = data
         self.feature_names = feature_names
