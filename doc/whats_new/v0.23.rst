@@ -79,9 +79,10 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
-- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel
+  when ``nu=np.inf``.
   :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
 
