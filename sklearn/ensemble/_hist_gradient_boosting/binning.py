@@ -16,7 +16,8 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_thresholds(data, max_bins, subsample, random_state):
+def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
+                             random_state):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -25,6 +26,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     ----------
     data : array-like, shape (n_samples, n_features)
         The data to bin.
+    sample_weight : ndarray of shape(n_samples,), or None
+        Sample weights associated with the data.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
@@ -46,9 +49,15 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         n_features``.
     """
     rng = check_random_state(random_state)
-    if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
-        data = data.take(subset, axis=0)
+    sample_size = min(subsample, data.shape[0])
+    if sample_weight is not None:
+        subset = rng.choice(np.arange(data.shape[0]), size=sample_size,
+                            replace=True,
+                            p=sample_weight / sample_weight.sum())
+    else:
+        subset = rng.choice(np.arange(data.shape[0]), size=sample_size,
+                            replace=True)
+    data = data.take(subset, axis=0)
 
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
@@ -136,7 +145,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -146,8 +155,10 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data to bin.
-        y: None
+        y : None
             Ignored.
+        sample_weight : ndarray of shape(n_samples,), or None
+            Sample weights associated with the data.
 
         Returns
         -------
@@ -161,7 +172,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
         self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, subsample=self.subsample,
+            X, sample_weight, max_bins, subsample=self.subsample,
             random_state=self.random_state)
 
         self.n_bins_non_missing_ = np.array(
