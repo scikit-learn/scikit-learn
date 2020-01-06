@@ -15,6 +15,7 @@ with warnings.catch_warnings():
 from ._partial_dependence import plot_partial_dependence  # noqa
 from ._partial_dependence import PartialDependenceDisplay  # noqa
 from ._permutation_importance import permutation_importance  # noqa
+from ._plot.decision_boundary import DecisionBoundaryDisplay  # noqa
 from ._plot.decision_boundary import plot_decision_boundary  # noqa
 
 
@@ -23,5 +24,6 @@ __all__ = [
     'plot_partial_dependence',
     'permutation_importance',
     'PartialDependenceDisplay',
-    'plot_decision_boundary'
+    'plot_decision_boundary',
+    'DecisionBoundaryDisplay'
 ]

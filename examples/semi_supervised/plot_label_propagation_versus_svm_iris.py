@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import svm
 from sklearn.semi_supervised import LabelSpreading
+from sklearn.inspection import plot_decision_boundary
 
 rng = np.random.RandomState(0)
 
@@ -27,9 +28,6 @@ iris = datasets.load_iris()
 
 X = iris.data[:, :2]
 y = iris.target
-
-# step size in the mesh
-h = .02
 
 y_30 = np.copy(y)
 y_30[rng.rand(len(y)) < 0.3] = -1
@@ -42,12 +40,6 @@ ls50 = (LabelSpreading().fit(X, y_50), y_50)
 ls100 = (LabelSpreading().fit(X, y), y)
 rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y)
 
-# create a mesh to plot in
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                     np.arange(y_min, y_max, h))
-
 # title for the plots
 titles = ['Label Spreading 30% data',
           'Label Spreading 50% data',
@@ -59,12 +51,10 @@ color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, x_max]x[y_min, y_max].
-    plt.subplot(2, 2, i + 1)
-    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+    ax = plt.subplot(2, 2, i + 1)
+    plot_decision_boundary(clf, X, cmap=plt.cm.Paired, ax=ax,
+                           response_method='predict')
 
-    # Put the result into a color plot
-    Z = Z.reshape(xx.shape)
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
     plt.axis('off')
 
     # Plot also the training points

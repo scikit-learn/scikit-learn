@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
+from sklearn.inspection import plot_decision_boundary
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -36,22 +37,9 @@ mean = X.mean(axis=0)
 std = X.std(axis=0)
 X = (X - mean) / std
 
-h = .02  # step size in the mesh
-
 clf = SGDClassifier(alpha=0.001, max_iter=100).fit(X, y)
-
-# create a mesh to plot in
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                     np.arange(y_min, y_max, h))
-
-# Plot the decision boundary. For that, we will assign a color to each
-# point in the mesh [x_min, x_max]x[y_min, y_max].
-Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
-# Put the result into a color plot
-Z = Z.reshape(xx.shape)
-cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+ax = plt.gca()
+plot_decision_boundary(clf, X, cmap=plt.cm.Paired, ax=ax)
 plt.axis('tight')
 
 # Plot also the training points

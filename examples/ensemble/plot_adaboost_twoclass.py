@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_gaussian_quantiles
+from sklearn.inspection import plot_decision_boundary
 
 
 # Construct dataset
@@ -54,15 +55,11 @@ class_names = "AB"
 plt.figure(figsize=(10, 5))
 
 # Plot the decision boundaries
-plt.subplot(121)
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
-                     np.arange(y_min, y_max, plot_step))
-
-Z = bdt.predict(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+ax = plt.subplot(121)
+disp = plot_decision_boundary(bdt, X, cmap=plt.cm.Paired,
+                              response_method='predict', ax=ax)
+x_min, x_max = disp.xx0.min(), disp.xx0.max()
+y_min, y_max = disp.xx1.min(), disp.xx1.max()
 plt.axis("tight")
 
 # Plot the training points
