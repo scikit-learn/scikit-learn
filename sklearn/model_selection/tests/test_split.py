@@ -1538,10 +1538,9 @@ def test_time_series_test_size():
     assert_array_equal(test, [8, 9])
 
     # Should fail with not enough data points for configuration
-    assert_raises_regexp(ValueError,
-                         "Too many splits.*with test_size",
-                         next,
-                         TimeSeriesSplit(n_splits=5, test_size=2).split(X))
+    with pytest.raises(ValueError, match="Too many splits.*with test_size"):
+        TimeSeriesSplit(n_splits=5, test_size=2).split(X)
+        print(X.shape)
 
 
 def test_time_series_gap():
@@ -1586,10 +1585,8 @@ def test_time_series_gap():
     assert_array_equal(test, [8, 9])
 
     # Verify proper error is thrown
-    assert_raises_regexp(ValueError,
-                         "Too many splits.*and gap",
-                         next,
-                         TimeSeriesSplit(n_splits=4, gap=2).split(X))
+    with pytest.raises(ValueError, "Too many splits.*and gap"):
+        TimeSeriesSplit(n_splits=4, gap=2).split(X)
 
 
 def test_nested_cv():

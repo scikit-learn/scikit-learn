@@ -760,8 +760,9 @@ class TimeSeriesSplit(_BaseKFold):
         Maximum size for a single training set.
 
     test_size : int, optional
-        Number of samples in each test set. Defaults to
-        ``n_samples / (n_splits + 1)``.
+        Used to limit the size of the test set. Defaults to
+        ``n_samples / (n_splits + 1)``, which is the maximum allowed value
+        with ``gap=0``.
 
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
