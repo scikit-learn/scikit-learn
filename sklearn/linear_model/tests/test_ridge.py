@@ -65,7 +65,7 @@ def _accuracy_callable(y_test, y_pred):
 
 
 def _mean_squared_error_callable(y_test, y_pred):
-    return ((y_test - y_pred) ** 2).sum()
+    return ((y_test - y_pred) ** 2).mean()
 
 
 @pytest.mark.parametrize('solver',
@@ -737,15 +737,33 @@ def _test_ridge_classifiers(filter_):
 @pytest.mark.parametrize("scoring", [None, "accuracy", _accuracy_callable])
 @pytest.mark.parametrize("cv", [None, KFold(5)])
 @pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
-def test_ridgeClassifier_with_scoring(filter_, scoring, cv):
-    # regression test for #14672
+def test_ridge_classifier_with_scoring(filter_, scoring, cv):
+    # non-regression test for #14672
     # check that RidgeClassifierCV works with all sort of scoring and
     # cross-validation
     scoring_ = make_scorer(scoring) if callable(scoring) else scoring
     clf = RidgeClassifierCV(scoring=scoring_, cv=cv)
+    # Smoke test to check that fit/predict does not raise error
+    clf.fit(filter_(X_iris), y_iris).predict(filter_(X_iris))
+
+
+@pytest.mark.parametrize("cv", [None, KFold(5)])
+@pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
+def test_ridge_regression_custom_scoring(filter_, cv):
+    # check that custom scoring is working as expected and that in case of
+    # tie, the alpha with the strongest regularization is picked up
+
+    def _dummy_score(y_test, y_pred):
+        return 0.42
+
+    alphas = np.logspace(-2, 2, num=5)
+    clf = RidgeClassifierCV(
+        alphas=alphas, scoring=make_scorer(_dummy_score), cv=cv
+    )
     clf.fit(filter_(X_iris), y_iris)
-    y_pred = clf.predict(filter_(X_iris))
-    assert np.mean(y_iris == y_pred) >= 0.8
+    assert clf.best_score_ == pytest.approx(0.42)
+    # the largest alpha correspond to the most regularized solution
+    assert clf.alpha_ == pytest.approx(alphas[-1])
 
 
 def _test_tolerance(filter_):
