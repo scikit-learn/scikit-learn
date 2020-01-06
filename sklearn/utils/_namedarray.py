@@ -97,6 +97,7 @@ class NamedArray(FeatureNamesMixin, NDArrayOperatorsMixin):
 class SparseNamedArrayMixin(FeatureNamesMixin):
     def __init__(self, *args, feature_names=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self._data = self
         self.feature_names = feature_names
 
     def __repr__(self):
