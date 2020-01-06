@@ -750,8 +750,8 @@ def test_ridge_classifier_with_scoring(filter_, scoring, cv):
 @pytest.mark.parametrize("cv", [None, KFold(5)])
 @pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
 def test_ridge_regression_custom_scoring(filter_, cv):
-    # check that custom scoring is working as expected and that in case of
-    # tie, the alpha with the strongest regularization is picked up
+    # check that custom scoring is working as expected
+    # check the tie breaking strategy (keep the first alpha tried)
 
     def _dummy_score(y_test, y_pred):
         return 0.42
@@ -762,8 +762,8 @@ def test_ridge_regression_custom_scoring(filter_, cv):
     )
     clf.fit(filter_(X_iris), y_iris)
     assert clf.best_score_ == pytest.approx(0.42)
-    # the largest alpha correspond to the most regularized solution
-    assert clf.alpha_ == pytest.approx(alphas[-1])
+    # In case of tie score, the first alphas will be kept
+    assert clf.alpha_ == pytest.approx(alphas[0])
 
 
 def _test_tolerance(filter_):
