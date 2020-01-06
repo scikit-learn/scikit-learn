@@ -1094,7 +1094,7 @@ def test_iterative_imputer_set_estimator_random_state(
 
         def predict(self, X):
             return np.zeros(X.shape[0])
-    
+
     X = np.ones((10, 3), dtype=float)
     X[[1, 2, 3], 0] = np.nan
     X[[4, 5, 6], 1] = np.nan
