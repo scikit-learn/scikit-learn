@@ -98,24 +98,24 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    voting : str, {'hard', 'soft'} (default='hard')
+    voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : array-like, shape (n_classifiers,), optional (default=`None`)
+    weights : array-like of shape (n_classifiers,), default=`None`
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    flatten_transform : bool, optional (default=True)
+    flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes). If
@@ -133,7 +133,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
-    classes_ : array-like, shape (n_predictions,)
+    classes_ : array-like of shape (n_predictions,)
         The classes labels.
 
     See Also
@@ -189,14 +189,14 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -226,12 +226,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        maj : array-like, shape (n_samples,)
+        maj : array-like of shape (n_samples,)
             Predicted class labels.
         """
         check_is_fitted(self)
@@ -266,12 +266,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        avg : array-like, shape (n_samples, n_classes)
+        avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
         if self.voting == 'hard':
@@ -284,7 +284,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -292,13 +292,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns array-like of shape (n_classifiers, n_samples *
+                returns ndarray of shape (n_classifiers, n_samples *
                 n_classes), being class probabilities calculated by each
                 classifier.
             If `voting='soft' and `flatten_transform=False`:
-                array-like of shape (n_classifiers, n_samples, n_classes)
+                ndarray of shape (n_classifiers, n_samples, n_classes)
             If `voting='hard'`:
-                array-like of shape (n_samples, n_classifiers), being
+                ndarray of shape (n_samples, n_classifiers), being
                 class labels predicted by each classifier.
         """
         check_is_fitted(self)
@@ -336,11 +336,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    weights : array-like, shape (n_regressors,), optional (default=`None`)
+    weights : array-like of shape (n_regressors,), default=`None`
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -386,14 +386,14 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -419,7 +419,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : array of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self)
@@ -436,7 +436,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        predictions: array of shape (n_samples, n_classifiers)
+        predictions: ndarray of shape (n_samples, n_classifiers)
             Values predicted by each regressor.
         """
         check_is_fitted(self)
