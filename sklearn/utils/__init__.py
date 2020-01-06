@@ -54,7 +54,6 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
            "NamedArray", "make_namedarray"
           ]
->>>>>>> upstream/master
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32

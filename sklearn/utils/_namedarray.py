@@ -48,7 +48,7 @@ class FeatureNamesMixin:
 class NamedArray(FeatureNamesMixin, NDArrayOperatorsMixin):
     """A wrapper to a numpy ndarray holding some metadata about the data.
 
-    Instances of this object behave like a numpy array, and loose all metadata
+    Instances of this object behave like a numpy array, and lose all metadata
     information in numerical operations.
 
     Parameters
