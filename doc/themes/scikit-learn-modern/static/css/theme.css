@@ -37,6 +37,7 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   white-space: nowrap;
+  padding: 0.15rem;
 }
 
 nav {
@@ -512,11 +513,21 @@ div.sk-sidebar-toc-logo {
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-  width: 120%;
+  width: 252px;
   overflow-x: hidden;
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+}
+
+div.sk-sidebar-toc-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 div.sk-sidebar-toc-wrapper::after {
@@ -821,6 +832,10 @@ div.body img.align-center {
 div.body img {
     max-width: 100%;
     height: unset!important; /* Needed because sphinx sets the height */
+}
+
+div.body dd > p {
+    hyphens: none;
 }
 
 img.align-center, .figure.align-center, object.align-center {

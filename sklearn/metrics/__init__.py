@@ -24,7 +24,6 @@ from ._classification import f1_score
 from ._classification import fbeta_score
 from ._classification import hamming_loss
 from ._classification import hinge_loss
-from ._classification import jaccard_similarity_score
 from ._classification import jaccard_score
 from ._classification import log_loss
 from ._classification import matthews_corrcoef
@@ -48,7 +47,6 @@ from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabasz_score
-from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
 
@@ -82,6 +80,9 @@ from ._plot.roc_curve import RocCurveDisplay
 from ._plot.precision_recall_curve import plot_precision_recall_curve
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
 
+from ._plot.confusion_matrix import plot_confusion_matrix
+from ._plot.confusion_matrix import ConfusionMatrixDisplay
+
 
 __all__ = [
     'accuracy_score',
@@ -90,13 +91,13 @@ __all__ = [
     'auc',
     'average_precision_score',
     'balanced_accuracy_score',
-    'calinski_harabaz_score',
     'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
     'cluster',
     'cohen_kappa_score',
     'completeness_score',
+    'ConfusionMatrixDisplay',
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
@@ -113,7 +114,6 @@ __all__ = [
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
     'jaccard_score',
-    'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
     'log_loss',
@@ -137,6 +137,7 @@ __all__ = [
     'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',
+    'plot_confusion_matrix',
     'plot_precision_recall_curve',
     'plot_roc_curve',
     'PrecisionRecallDisplay',

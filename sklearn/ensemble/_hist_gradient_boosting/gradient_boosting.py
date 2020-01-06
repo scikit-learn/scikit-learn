@@ -299,6 +299,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
+            if self.do_early_stopping_ and self._use_validation_data:
+                raw_predictions_val = self._raw_predict(X_binned_val)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
@@ -319,6 +321,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             predictors = self._predictors
 
             begin_at_stage = self.n_iter_
+
+        # initialize gradients and hessians (empty arrays).
+        # shape = (n_trees_per_iteration, n_samples).
+        gradients, hessians = self.loss_.init_gradients_and_hessians(
+            n_samples=n_samples,
+            prediction_dim=self.n_trees_per_iteration_
+        )
 
         for iteration in range(begin_at_stage, self.max_iter):
 

@@ -15,7 +15,7 @@ from ..utils.validation import check_array
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
-from ._k_means import k_means
+from ._kmeans import k_means
 
 
 def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,

@@ -4,7 +4,6 @@ from .. import roc_curve
 from .base import _check_classifer_response_method
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
-from ...utils.validation import check_is_fitted
 
 
 class RocCurveDisplay:
@@ -165,26 +164,23 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     >>> plt.show()                                   # doctest: +SKIP
     """
     check_matplotlib_support('plot_roc_curve')
-    check_is_fitted(estimator)
 
     classification_error = ("{} should be a binary classifer".format(
         estimator.__class__.__name__))
-
-    if is_classifier(estimator):
-        if len(estimator.classes_) != 2:
-            raise ValueError(classification_error)
-        pos_label = estimator.classes_[1]
-    else:
+    if not is_classifier(estimator):
         raise ValueError(classification_error)
 
     prediction_method = _check_classifer_response_method(estimator,
                                                          response_method)
-
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:
-        y_pred = y_pred[:, 1]
+        if y_pred.shape[1] != 2:
+            raise ValueError(classification_error)
+        else:
+            y_pred = y_pred[:, 1]
 
+    pos_label = estimator.classes_[1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)

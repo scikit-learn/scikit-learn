@@ -4,41 +4,36 @@ from joblib import Parallel
 from joblib import delayed
 
 from ..metrics import check_scoring
+from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import Bunch
-
-
-def _safe_column_setting(X, col_idx, values):
-    """Set column on X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        X.iloc[:, col_idx] = values
-    else:
-        X[:, col_idx] = values
-
-
-def _safe_column_indexing(X, col_idx):
-    """Return column from X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        return X.iloc[:, col_idx].values
-    else:
-        return X[:, col_idx]
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
-    original_feature = _safe_column_indexing(X, col_idx).copy()
-    temp = original_feature.copy()
+    random_state = check_random_state(random_state)
 
+    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # parallelism. Furthermore, making a copy is also useful when the joblib
+    # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
+    # if X is large it will be automatically be backed by a readonly memory map
+    # (memmap). X.copy() on the other hand is always guaranteed to return a
+    # writable data-structure whose columns can be shuffled inplace.
+    X_permuted = X.copy()
     scores = np.zeros(n_repeats)
+    shuffling_idx = np.arange(X.shape[0])
     for n_round in range(n_repeats):
-        random_state.shuffle(temp)
-        _safe_column_setting(X, col_idx, temp)
-        feature_score = scorer(estimator, X, y)
+        random_state.shuffle(shuffling_idx)
+        if hasattr(X_permuted, "iloc"):
+            col = X_permuted.iloc[shuffling_idx, col_idx]
+            col.index = X_permuted.index
+            X_permuted.iloc[:, col_idx] = col
+        else:
+            X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
+        feature_score = scorer(estimator, X_permuted, y)
         scores[n_round] = feature_score
 
-    _safe_column_setting(X, col_idx, original_feature)
     return scores
 
 
@@ -104,20 +99,22 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
              2001. https://doi.org/10.1023/A:1010933404324
     """
-    if hasattr(X, "iloc"):
-        X = X.copy()  # Dataframe
-    else:
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
-                        copy=True)
+    if not hasattr(X, "iloc"):
+        X = check_array(X, force_all_finite='allow-nan', dtype=None)
 
+    # Precompute random seed from the random state to be used
+    # to get a fresh independent RandomState instance for each
+    # parallel call to _calculate_permutation_scores, irrespective of
+    # the fact that variables are shared or not depending on the active
+    # joblib backend (sequential, thread-based or process-based).
     random_state = check_random_state(random_state)
-    scorer = check_scoring(estimator, scoring=scoring)
+    random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
+    scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = scorer(estimator, X, y)
-    scores = np.zeros((X.shape[1], n_repeats))
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_state, n_repeats, scorer
+        estimator, X, y, col_idx, random_seed, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)

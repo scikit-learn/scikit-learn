@@ -14,6 +14,7 @@ from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
 from ..utils.fixes import pinvh
+from ..utils.validation import _check_sample_weight
 
 
 ###############################################################################
@@ -169,7 +170,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples,n_features)
+        X : ndarray of shape (n_samples, n_features)
             Training data
         y : ndarray of shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
@@ -190,6 +191,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
                              ' Got {!r}.'.format(self.n_iter))
 
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
+
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
