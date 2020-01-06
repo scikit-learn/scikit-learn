@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel, _rescale_data
 from ._sag import sag_solver
-from ..base import RegressorMixin, MultiOutputMixin
+from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -1057,8 +1057,8 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
-class _IdentityEstimator:
-    """Hack to call a scorer when we already have the predictions."""
+class _IdentityRegressor:
+    """Fake regressor which will directly output the prediction."""
 
     def decision_function(self, y_predict):
         return y_predict
@@ -1067,8 +1067,21 @@ class _IdentityEstimator:
         return y_predict
 
 
+class _IdentityClassifier(LinearClassifierMixin):
+    """Fake classifier which will directly output the prediction.
+
+    We inherit from LinearClassifierMixin to get the proper shape for the
+    output `y`.
+    """
+    def __init__(self, classes):
+        self.classes_ = classes
+
+    def decision_function(self, y_predict):
+        return y_predict
+
+
 class _RidgeGCV(LinearModel):
-    """Ridge regression with built-in Generalized Cross-Validation
+    """Ridge regression with built-in Generalized Cross-Validation.
 
     It allows efficient Leave-One-Out cross-validation.
 
@@ -1113,7 +1126,8 @@ class _RidgeGCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
-                 gcv_mode=None, store_cv_values=False):
+                 gcv_mode=None, store_cv_values=False,
+                 is_clf=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1121,6 +1135,7 @@ class _RidgeGCV(LinearModel):
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.is_clf = is_clf
 
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
@@ -1502,10 +1517,19 @@ class _RidgeGCV(LinearModel):
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                alpha_score = scorer(
-                    _IdentityEstimator(), predictions.ravel(), y.ravel())
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
+
+                if self.is_clf:
+                    identity_estimator = _IdentityClassifier(
+                        classes=np.arange(n_y)
+                    )
+                    predictions_, y_ = predictions, y.argmax(axis=1)
+                else:
+                    identity_estimator = _IdentityRegressor()
+                    predictions_, y_ = predictions.ravel(), y.ravel()
+
+                alpha_score = scorer(identity_estimator, predictions_, y_)
 
             if (best_score is None) or (alpha_score > best_score):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
@@ -1576,7 +1600,8 @@ class _BaseRidgeCV(LinearModel):
                                   normalize=self.normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
-                                  store_cv_values=self.store_cv_values)
+                                  store_cv_values=self.store_cv_values,
+                                  is_clf=is_classifier(self))
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
             self.best_score_ = estimator.best_score_
@@ -1588,7 +1613,8 @@ class _BaseRidgeCV(LinearModel):
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+            model = RidgeClassifier if is_classifier(self) else Ridge
+            gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
                                     normalize=self.normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
@@ -1716,7 +1742,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifier : Ridge classifier
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
-    pass
 
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
@@ -1876,7 +1901,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
 
-        _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
+        target = Y if self.cv is None else y
+        _BaseRidgeCV.fit(self, X, target, sample_weight=sample_weight)
         return self
 
     @property
