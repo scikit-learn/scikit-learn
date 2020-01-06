@@ -89,9 +89,12 @@ def test_plot_decision_boundary(pyplot, fitted_clf, data,
     assert disp.xx1.min() == pytest.approx(x1_min)
     assert disp.xx1.max() == pytest.approx(x1_max)
 
+    fig2, ax2 = pyplot.subplots()
     # change plotting method for second plot
-    disp.plot(plot_method='pcolormesh')
+    disp.plot(plot_method='pcolormesh', ax=ax2)
     assert isinstance(disp.surface_, pyplot.matplotlib.collections.QuadMesh)
+    assert disp.ax_ == ax2
+    assert disp.figure_ == fig2
 
 
 @pytest.mark.parametrize(
