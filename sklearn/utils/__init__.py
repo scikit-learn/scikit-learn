@@ -31,6 +31,13 @@ from .validation import (as_float_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric, check_scalar)
 from ._namedarray import NamedArray, make_namedarray
+from ._namedarray import (SparseNamedArrayCSR,
+                          SparseNamedArrayCSC,
+                          SparseNamedArrayBSR,
+                          SparseNamedArrayLIL,
+                          SparseNamedArrayDOK,
+                          SparseNamedArrayDIA,
+                          SparseNamedArrayCOO)
 from .. import get_config
 
 
@@ -52,7 +59,10 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "NamedArray", "make_namedarray"
+           "NamedArray", "make_namedarray", "SparseNamedArrayCSR",
+           "SparseNamedArrayCSC", "SparseNamedArrayBSR",
+           "SparseNamedArrayLIL", "SparseNamedArrayDOK",
+           "SparseNamedArrayDIA", "SparseNamedArrayCOO",
           ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
