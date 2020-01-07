@@ -62,8 +62,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "NamedArray", "make_namedarray", "SparseNamedArrayCSR",
            "SparseNamedArrayCSC", "SparseNamedArrayBSR",
            "SparseNamedArrayLIL", "SparseNamedArrayDOK",
-           "SparseNamedArrayDIA", "SparseNamedArrayCOO",
-          ]
+           "SparseNamedArrayDIA", "SparseNamedArrayCOO"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
