@@ -451,12 +451,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if pandas dataframe is sparse
         try:
-            array.sparse
-            warnings.warn(
-                "pandas Sparse Dataframe found."
-                "It will be inflated automatically."
-            )
-        except AttributeError:
+            from pandas.api.types import is_sparse
+            if array.dtypes.apply(is_sparse).any():
+                warnings.warn(
+                    "pandas Sparse Dataframe found."
+                    "It will be inflated automatically."
+                )
+        except ImportError:
             pass
 
         dtypes_orig = list(array.dtypes)
