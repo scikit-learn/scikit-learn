@@ -1146,21 +1146,15 @@ class CategoricalNB(_BaseDiscreteNB):
                                    sample_weight=sample_weight)
 
     def _check_X(self, X):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X = check_array(X, y, dtype='int', accept_sparse=False,
-        #                 force_all_finite=True)
-        X = check_array(X, accept_sparse=False, force_all_finite=True)
-        X = check_array(X, dtype='int')
+        X = check_array(X, dtype='int', accept_sparse=False,
+                        force_all_finite=True)
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
         return X
 
     def _check_X_y(self, X, y):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X, y = check_array(X, y, dtype='int', accept_sparse=False,
-        #                    force_all_finite=True)
-        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
-        X, y = check_X_y(X, y, dtype='int')
+        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
+                         force_all_finite=True)
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
         return X, y
