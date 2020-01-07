@@ -328,6 +328,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         inlier_mask_best = None
         X_inlier_best = None
         y_inlier_best = None
+        inlier_best_idxs_subset = None
         self.n_skips_no_inliers_ = 0
         self.n_skips_invalid_data_ = 0
         self.n_skips_invalid_model_ = 0
@@ -404,6 +405,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             inlier_mask_best = inlier_mask_subset
             X_inlier_best = X_inlier_subset
             y_inlier_best = y_inlier_subset
+            inlier_best_idxs_subset = inlier_idxs_subset
 
             max_trials = min(
                 max_trials,
@@ -441,7 +443,13 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                               ConvergenceWarning)
 
         # estimate final model using all inliers
-        base_estimator.fit(X_inlier_best, y_inlier_best)
+        if sample_weight is None:
+            base_estimator.fit(X_inlier_best, y_inlier_best)
+        else:
+            base_estimator.fit(
+                X_inlier_best,
+                y_inlier_best,
+                sample_weight=sample_weight[inlier_best_idxs_subset])
 
         self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best

@@ -33,7 +33,6 @@ from sklearn.utils._testing import skip_if_no_parallel
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
-    logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
@@ -1736,13 +1735,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
-
-
-def test_logistic_regression_path_deprecation():
-
-    assert_warns_message(FutureWarning,
-                         "logistic_regression_path was deprecated",
-                         logistic_regression_path, X, Y1)
 
 
 @pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))

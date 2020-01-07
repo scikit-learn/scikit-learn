@@ -44,7 +44,7 @@ plt.show()
 # We train a random forest classifier and create a plot comparing it to the SVC
 # ROC curve. Notice how `svc_disp` uses
 # :func:`~sklearn.metrics.RocCurveDisplay.plot` to plot the SVC ROC curve
-# without recomputing the values of the roc curve itself. Futhermore, we
+# without recomputing the values of the roc curve itself. Furthermore, we
 # pass `alpha=0.8` to the plot functions to adjust the alpha values of the
 # curves.
 rfc = RandomForestClassifier(n_estimators=10, random_state=42)

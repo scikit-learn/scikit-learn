@@ -251,7 +251,7 @@ modifying code and submitting a PR:
    to record your changes in Git, then push the changes to your GitHub
    account with::
 
-       $ git push -u origin my-feature
+       $ git push -u origin my_feature
 
 10. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
@@ -377,7 +377,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    methods available in scikit-learn.
 
 10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snipets. If relevant, please also add
+    the user guide, with small code snippets. If relevant, please also add
     references in the literature, with PDF links when possible.
 
 11. The user guide should also include expected time and space complexity
@@ -437,6 +437,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
+    [lint skip]            Azure pipeline skips linting
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots
