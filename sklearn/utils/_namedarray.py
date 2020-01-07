@@ -105,6 +105,12 @@ class SparseNamedArrayMixin(FeatureNamesMixin):
         res += "\nfeature names: %s" % repr(self._feature_names)
         return res
 
+    def todataframe(self):
+        """Returns a `pandas.DataFrame` with set column names."""
+        import pandas as pd
+        return pd.DataFrame.sparse.from_spmatrix(self,
+                                                 columns=self.feature_names)
+
 
 # We need a class per sparse matrix type, hence the following 7 classes.
 class SparseNamedArrayCSR(SparseNamedArrayMixin, sp.sparse.csr_matrix):
@@ -135,7 +141,7 @@ class SparseNamedArrayCOO(SparseNamedArrayMixin, sp.sparse.coo_matrix):
     pass
 
 
-def make_namedarray(X, feature_names):
+def make_namedarray(X, feature_names=None, force_sparse=None):
     types = {'csr': SparseNamedArrayCSR,
              'csc': SparseNamedArrayCSC,
              'bsr': SparseNamedArrayBSR,
@@ -143,7 +149,16 @@ def make_namedarray(X, feature_names):
              'dok': SparseNamedArrayDOK,
              'dia': SparseNamedArrayDIA,
              'coo': SparseNamedArrayCOO}
+    if hasattr(X, 'columns') and feature_names is None:
+        feature_names = list(X.columns)
+
+    format = None
     if sp.sparse.issparse(X):
-        return types[X.format](X, feature_names=feature_names, copy=False)
+        format = X.format
+    elif force_sparse:
+        format = force_sparse
+
+    if format:
+        return types[format](X, feature_names=feature_names, copy=False)
     else:
         return NamedArray(X, feature_names=feature_names)
