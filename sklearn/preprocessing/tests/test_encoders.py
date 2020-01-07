@@ -697,10 +697,9 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
         enc.transform(X_df4)
 
 
-@pytest.mark.parametrize("is_sparse", [True, False])
 @pytest.mark.parametrize("drop", ["first", None])
 @pytest.mark.parametrize("dtype", [np.float64, np.int8])
-def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop, dtype):
+def test_one_hot_encoder_pd_categories_mixed(drop, dtype):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame(
@@ -713,9 +712,14 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop, dtype):
         columns=['col_str', 'col_int', 'norm_float', 'norm_str'])
 
     ohe = OneHotEncoder(categories="dtypes",
-                        sparse=is_sparse,
                         dtype=dtype,
+                        sparse=False,
                         drop=drop).fit(X_df)
+
+    assert_array_equal(ohe.categories_[0], ['b', 'a'])
+    assert_array_equal(ohe.categories_[1], [3, 1, 2])
+    assert_allclose(ohe.categories_[2], [1.0, 2.0])
+    assert_array_equal(ohe.categories_[3], ['d', 'z'])
 
     expected_trans = np.array([
         [0, 1, 1, 0, 0, 1, 0, 0, 1],
@@ -726,15 +730,36 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop, dtype):
     if drop == 'first':
         expected_trans = expected_trans[:, [1, 3, 4, 6, 8]]
 
-    X_trans = ohe.fit_transform(X_df)
-    assert_array_equal(ohe.categories_[0], ['b', 'a'])
-    assert_array_equal(ohe.categories_[1], [3, 1, 2])
-    assert_allclose(ohe.categories_[2], [1.0, 2.0])
-    assert_array_equal(ohe.categories_[3], ['d', 'z'])
+    X_trans = ohe.transform(X_df)
+    assert_allclose(X_trans, expected_trans)
+    X_inverse = ohe.inverse_transform(expected_trans)
 
-    if is_sparse:
-        X_trans = X_trans.toarray()
+    assert_array_equal(X_inverse, X_df.values)
 
+
+def test_one_hot_encoder_pd_categories_with_more_categories():
+    # pandas category contains more categories than in training
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame(
+        {'col_str': pd.Categorical(['a', 'b', 'b', 'a'],
+                                   categories=['b', 'c', 'a'], ordered=True),
+         'col_int': pd.Categorical([3, 2, 1, 2],
+                                   categories=[3, 1, 2, 4], ordered=True)},
+        columns=['col_str', 'col_int'])
+
+    ohe = OneHotEncoder(categories="dtypes", sparse=False).fit(X_df)
+
+    assert_array_equal(ohe.categories_[0], ['b', 'c', 'a'])
+    assert_array_equal(ohe.categories_[1], [3, 1, 2, 4])
+
+    expected_trans = np.array([
+        [0, 0, 1, 1, 0, 0, 0],
+        [1, 0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0, 1, 0]])
+
+    X_trans = ohe.transform(X_df)
     assert_allclose(X_trans, expected_trans)
     X_inverse = ohe.inverse_transform(expected_trans)
 
