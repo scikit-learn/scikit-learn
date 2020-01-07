@@ -208,10 +208,10 @@ def mean_absolute_percentage_error(y_true, y_pred,
     sample_weight : array-like of shape = (n_samples,), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] or
-                : list of shape (n_outputs,)
+    multioutput : string in ['raw_values', 'uniform_average'] or list.
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
+        If input is list then the shape must be (n_outputs,).
 
         'raw_values' :
             Returns a full set of errors in case of multioutput input.
