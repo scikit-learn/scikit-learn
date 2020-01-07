@@ -1,4 +1,3 @@
-
 .. _governance:
 
 ===========================================
@@ -25,13 +24,13 @@ Contributors
 ------------
 Contributors are community members who contribute in concrete ways to the
 project. Anyone can become a contributor, and contributions can take many forms
-– not only code – as detailed in the `contributors guide <contributing>`_.
+– not only code – as detailed in the :ref:`contributors guide <contributing>`.
 
 Core developers
 ---------------
 Core developers are community members who have shown that they are dedicated to
 the continued development of the project through ongoing engagement with the
-community. They have shown they can be trusted to maintain Scikit-learn with
+community. They have shown they can be trusted to maintain scikit-learn with
 care. Being a core developer allows contributors to more easily carry on
 with their project related activities by giving them direct access to the
 project’s repository and is represented as being an organization member on the
@@ -71,12 +70,12 @@ the core developers which will stay open for a week. TC membership votes are
 subject to a two-third majority of all cast votes as well as a simple majority
 approval of all the current TC members. TC members who do not actively engage
 with the TC duties are expected to resign.
- 
+
 The initial Technical Committee of scikit-learn consists of :user:`Alexandre Gramfort <agramfort>`,
 :user:`Olivier Grisel <ogrisel>`, :user:`Andreas Müller <amueller>`, :user:`Joel Nothman <jnothman>`,
 :user:`Hanmin Qin <qinhanmin2014>`, :user:`Gaël Varoquaux <GaelVaroquaux>`, and
 :user:`Roman Yurchak <rth>`.
- 
+
 Decision Making Process
 =======================
 Decisions about the future of the project are made through discussion with all
@@ -110,11 +109,11 @@ are made according to the following rules:
   consensus), happens on the issue of pull-request page.
 
 * **Changes to the API principles and changes to dependencies or supported
-  versions** happen via a :ref:`slep` and follows the decision-making process outlined above. 
+  versions** happen via a :ref:`slep` and follows the decision-making process outlined above.
 
 * **Changes to the governance model** use the same decision process outlined above.
 
- 
+
 If a veto -1 vote is cast on a lazy consensus, the proposer can appeal to the
 community and core developers and the change can be approved or rejected using
 the decision making procedure outlined above.
@@ -127,5 +126,5 @@ For all votes, a proposal must have been made public and discussed before the
 vote. Such proposal must be a consolidated document, in the form of a
 ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
 issue. A SLEP must be submitted as a pull-request to
-`scikit-learn/enhancement_proposals <https://github.com/scikit-learn/enhancement_proposals/>`_
-using the `SLEP template <https://github.com/scikit-learn/enhancement_proposals/blob/master/slep_template.rst>`_.
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.

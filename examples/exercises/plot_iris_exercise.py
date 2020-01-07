@@ -35,11 +35,11 @@ X_test = X[int(.9 * n_sample):]
 y_test = y[int(.9 * n_sample):]
 
 # fit the model
-for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
+for kernel in ('linear', 'rbf', 'poly'):
     clf = svm.SVC(kernel=kernel, gamma=10)
     clf.fit(X_train, y_train)
 
-    plt.figure(fig_num)
+    plt.figure()
     plt.clf()
     plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired,
                 edgecolor='k', s=20)

@@ -252,6 +252,19 @@ This algorithm is illustrated below.
    :align: center
    :scale: 75%
 
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
+
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for

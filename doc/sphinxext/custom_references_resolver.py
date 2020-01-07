@@ -90,8 +90,6 @@ class CustomReferencesResolver(ReferencesResolver):
                         result = ('%s:%s' % (domain.name, role), res)
                         return self.create_node(result)
 
-        self.warn_missing_reference(refdoc, 'any', target, node, domain)
-
         # no results considered to be <code>
         contnode['classes'] = []
         return contnode

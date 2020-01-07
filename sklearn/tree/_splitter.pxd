@@ -1,4 +1,3 @@
-# cython: language_level=3
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -57,9 +56,6 @@ cdef class Splitter:
 
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
-
-    cdef bint presort                    # Whether to use presorting, only
-                                         # allowed on dense data
 
     cdef const DOUBLE_t[:, ::1] y
     cdef DOUBLE_t* sample_weight
