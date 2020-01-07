@@ -261,8 +261,8 @@ class BayesianGaussianMixture(BaseMixture):
         The precision prior on the mean distribution (Gaussian).
         Controls the extent of where means can be placed.
         Larger values concentrate the cluster means around `mean_prior`.
-        If mean_precision_prior is set to None, mean_precision_prior_ is set to
-        1.
+        If mean_precision_prior is set to None, `mean_precision_prior_` is set
+        to 1.
 
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).

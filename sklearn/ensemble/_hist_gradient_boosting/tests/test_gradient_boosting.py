@@ -413,7 +413,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())

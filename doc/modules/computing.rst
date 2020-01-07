@@ -529,7 +529,7 @@ Joblib-based parallelism
 ........................
 
 When the underlying implementation uses joblib, the number of workers
-(threads or processes) that are spawned in parallel can be controled via the
+(threads or processes) that are spawned in parallel can be controlled via the
 ``n_jobs`` parameter.
 
 .. note::
@@ -666,7 +666,7 @@ Python runtime
 
 :working_memory:
 
-    the optimal size of temporary arrays used by some algoritms.
+    the optimal size of temporary arrays used by some algorithms.
 
 .. _environment_variable:
 
