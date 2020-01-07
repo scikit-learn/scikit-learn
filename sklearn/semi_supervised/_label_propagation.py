@@ -85,13 +85,13 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     gamma : float
         Parameter for rbf kernel
 
-    n_neighbors : integer > 0
+    n_neighbors : int > 0
         Parameter for knn kernel
 
     alpha : float
         Clamping factor
 
-    max_iter : integer
+    max_iter : int
         Change maximum number of iterations allowed
 
     tol : float
