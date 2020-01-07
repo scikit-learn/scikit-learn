@@ -121,6 +121,11 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`preprocessing.OneHotEncoder` and 
+  :class:`preprocessing.OrdinalEncoder` now supports `categories='dtype'`,
+  which enables using pandas categorical dtypes for encoding. :pr:`15396` by
+  `Thomas Fan`_.
+
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
