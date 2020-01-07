@@ -1980,7 +1980,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 Where :math:`\epsilon` is a very small number greater than zero and kept in order to avoid
 the crash when y is zero.
 
-The :func:`mean_absolute_percentage_error` support multioutput.
+The :func:`mean_absolute_percentage_error` function supports multioutput.
 
 Here is a small example of usage of the :func:`mean_absolute_percentage_error`
 function::
