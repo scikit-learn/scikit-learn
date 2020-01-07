@@ -18,7 +18,7 @@ to see developed in scikit-learn. The fact that an item is listed here is in
 no way a promise that it will happen, as resources are limited. Rather, it
 is an indication that help is welcomed on this topic.
 
-Statement of purpose: Scikit-learn in 2018
+Statement of purpose: Scikit-learn in 2020
 ------------------------------------------
 Eleven years after the inception of Scikit-learn, much has changed in the
 world of machine learning. Key changes include:
