@@ -98,7 +98,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Convergence tolerance: threshold to consider the system at steady
         state
 
-   n_jobs : int or None, optional (default=None)
+   n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -157,11 +157,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
 
         Returns
         -------
-        y : array_like, shape = [n_samples]
+        y : ndarray of shape = [n_samples]
             Predictions for input data
         """
         probas = self.predict_proba(X)
@@ -176,11 +176,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
 
         Returns
         -------
-        probabilities : array, shape = [n_samples, n_classes]
+        probabilities : ndarray of shape = [n_samples, n_classes]
             Normalized probability distributions across
             class labels
         """
@@ -210,10 +210,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             A {n_samples by n_samples} size matrix will be created from this
 
-        y : array_like, shape = [n_samples]
+        y : ndarray of shape = [n_samples]
             n_labeled_samples (unlabeled points are marked as -1)
             All unlabeled samples will be transductively assigned labels
 
@@ -315,17 +315,17 @@ class LabelPropagation(BaseLabelPropagation):
     gamma : float
         Parameter for rbf kernel
 
-    n_neighbors : integer > 0
+    n_neighbors : int > 0
         Parameter for knn kernel
 
-    max_iter : integer
+    max_iter : int
         Change maximum number of iterations allowed
 
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -333,16 +333,16 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : array, shape = [n_samples, n_features]
+    X_ : ndarray of shape = [n_samples, n_features]
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : ndarray of shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    label_distributions_ : array, shape = [n_samples, n_classes]
+    label_distributions_ :ndarray of shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    transduction_ : array, shape = [n_samples]
+    transduction_ :ndarray of shape = [n_samples]
         Label assigned to each item via the transduction.
 
     n_iter_ : int
@@ -421,7 +421,7 @@ class LabelSpreading(BaseLabelPropagation):
     gamma : float
       parameter for rbf kernel
 
-    n_neighbors : integer > 0
+    n_neighbors : int > 0
       parameter for knn kernel
 
     alpha : float
@@ -431,14 +431,14 @@ class LabelSpreading(BaseLabelPropagation):
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
-    max_iter : integer
+    max_iter : int
       maximum number of iterations allowed
 
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -446,16 +446,16 @@ class LabelSpreading(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : array, shape = [n_samples, n_features]
+    X_ : ndarray of shape = [n_samples, n_features]
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : ndarray of shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    label_distributions_ : array, shape = [n_samples, n_classes]
+    label_distributions_ : ndarray of shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    transduction_ : array, shape = [n_samples]
+    transduction_ : ndarray of shape = [n_samples]
         Label assigned to each item via the transduction.
 
     n_iter_ : int
