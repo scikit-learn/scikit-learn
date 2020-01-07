@@ -30,6 +30,7 @@ from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
+from sklearn.dummy import DummyRegressor, DummyClassifier
 
 
 def test_multi_target_regression():
@@ -561,3 +562,29 @@ def test_deprecation():
 
     with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
         A(SGDRegressor(random_state=0, max_iter=5))
+
+
+class DummyRegressorWithFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
+
+
+class DummyClassifierWithFitParams(DummyClassifier):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
+
+
+@pytest.mark.parametrize(
+    "estimator, dataset",
+    [(MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
+      datasets.make_multilabel_classification()),
+     (MultiOutputRegressor(DummyRegressorWithFitParams()),
+      datasets.make_regression(n_targets=3))])
+def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    X, y = dataset
+    some_param = np.zeros_like(X)
+    estimator.fit(X, y, some_param=some_param)
+    for dummy_estimator in estimator.estimators_:
+        assert 'some_param' in dummy_estimator._fit_params

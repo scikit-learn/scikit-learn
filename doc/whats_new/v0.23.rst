@@ -110,7 +110,7 @@ Changelog
 - |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` and
   :class:`linear_model.RidgeCV` where the most regularized model will be
   returned in case of tie similarly to :class:`linear_model.LassoCV`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`16029` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
