@@ -322,7 +322,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         information depending on the solver used.
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag' to shuffle the data.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
 
     return_n_iter : bool, default=False
@@ -686,11 +686,11 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
            SAGA solver.
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag' to shuffle the data.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
 
         .. versionadded:: 0.17
-           *random_state* to support Stochastic Average Gradient.
+           `random_state` to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -842,7 +842,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
            SAGA solver.
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag' to shuffle the data.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
 
     Attributes
