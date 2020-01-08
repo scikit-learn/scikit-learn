@@ -659,7 +659,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         runs, even if ``max_features=n_features``. That is the case, if the
         improvement of the criterion is identical for several splits and one
         split has to be selected at random. To obtain a deterministic behaviour
-        during fitting, ``random_state`` has to be fixed.
+        during fitting, ``random_state`` has to be fixed to an integer.
         See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int, default=None
@@ -1038,7 +1038,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         runs, even if ``max_features=n_features``. That is the case, if the
         improvement of the criterion is identical for several splits and one
         split has to be selected at random. To obtain a deterministic behaviour
-        during fitting, ``random_state`` has to be fixed.
+        during fitting, ``random_state`` has to be fixed to an integer.
         See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int, default=None
