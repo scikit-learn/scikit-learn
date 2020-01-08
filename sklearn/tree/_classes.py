@@ -773,10 +773,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
-    See also
-    --------
-    DecisionTreeRegressor
-
     References
     ----------
 
@@ -1126,10 +1122,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    See also
-    --------
-    DecisionTreeClassifier
 
     References
     ----------
