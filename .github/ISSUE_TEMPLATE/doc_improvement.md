@@ -2,7 +2,7 @@
 name: Documentation improvement
 about: Create a report to help us improve the documentation
 title: ''
-labels: Documentation, help wanted, good first issue
+labels: Documentation, help wanted
 assignees: ''
 
 ---
