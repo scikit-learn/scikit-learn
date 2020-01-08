@@ -217,7 +217,7 @@ def test_linear_regression_pd_sparse_dataframe_warning():
             arr[:8] = 0
             arr = pd.SparseArray(arr)
             df[str(col)] = pd.SparseArray(arr, fill_value=0)
-        msg = "pandas Sparse Dataframe found."
+        msg = "pandas Dataframe having sparse columns found."
         with pytest.warns(UserWarning, match=msg):
             reg = LinearRegression()
             reg.fit(df[df.columns[0:2]], df[df.columns[3]])
