@@ -48,7 +48,7 @@ for score in scores:
     print()
 
     clf = GridSearchCV(
-        SVC(), tuned_parameters, cv=5, scoring='%s_macro' % score
+        SVC(), tuned_parameters, scoring='%s_macro' % score
     )
     clf.fit(X_train, y_train)
 

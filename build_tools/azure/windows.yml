@@ -3,15 +3,18 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  dependsOn: []
 
 jobs:
 - job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
+    PYTEST_VERSION: '5.2.1'
     TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
   strategy:
     matrix:

@@ -13,10 +13,10 @@ from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
 

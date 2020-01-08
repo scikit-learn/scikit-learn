@@ -250,10 +250,10 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`phi`,
+in a feature space defined by function :math:`\phi`,
 a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
-defined by :math:`phi` followed by removal of the mean in that space.
+defined by :math:`\phi` followed by removal of the mean in that space.
 
 .. _preprocessing_transformer:
 
@@ -290,8 +290,7 @@ with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
@@ -333,7 +332,7 @@ The Yeo-Johnson transform is given by:
     x_i^{(\lambda)} =
     \begin{cases}
      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
     -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
