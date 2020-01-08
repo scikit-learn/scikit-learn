@@ -189,11 +189,10 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance or None, optional (default None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance, default=None
+        Used when ``svd_solver`` == 'arpack' or 'randomized'. Pass an int
+        for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18.0
 
