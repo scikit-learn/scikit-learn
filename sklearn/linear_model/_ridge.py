@@ -134,7 +134,7 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
 
 def _solve_cholesky(X, y, alpha):
     # w = inv(X^t X + alpha*Id) * X.T y
-    n_samples, n_features = X.shape
+    n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
@@ -275,8 +275,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than
-          'cholesky'.
+          coefficients. More stable for singular matrices than 'cholesky'.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
@@ -301,7 +300,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when`fit_intercept` is
+        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
         .. versionadded:: 0.17
@@ -323,11 +322,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         information depending on the solver used.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
     return_n_iter : bool, default=False
         If True, the method also returns `n_iter`, the actual number of
@@ -488,8 +484,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i, 0,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                init,
-                is_saga=solver == 'saga')
+                init, is_saga=solver == 'saga')
             if return_intercept:
                 coef[i] = coef_[:-1]
                 intercept[i] = coef_[-1]
@@ -659,8 +654,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than
-          'cholesky'.
+          coefficients. More stable for singular matrices than 'cholesky'.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -683,7 +677,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
-        'sparse_cg' supports sparse input when `fit_intercept` is True.
+        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
+        True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -691,14 +686,11 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
            SAGA solver.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
         .. versionadded:: 0.17
-           *random_state* to support Stochastic Average Gradient.
+           `random_state` to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -822,8 +814,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than
-          'cholesky'.
+          coefficients. More stable for singular matrices than 'cholesky'.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -851,11 +842,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
            SAGA solver.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
     Attributes
     ----------
@@ -1137,11 +1125,13 @@ class _RidgeGCV(LinearModel):
         self.store_cv_values = store_cv_values
         self.is_clf = is_clf
 
-    def _decomp_diag(self, v_prime, Q):
+    @staticmethod
+    def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
         return (v_prime * Q ** 2).sum(axis=-1)
 
-    def _diag_dot(self, D, B):
+    @staticmethod
+    def _diag_dot(D, B):
         # compute dot(diag(D), B)
         if len(B.shape) > 1:
             # handle case where B is > 1-d
@@ -1336,7 +1326,7 @@ class _RidgeGCV(LinearModel):
             cov[-1] = 0
             cov[:, -1] = 0
             cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
-        nullspace_dim = max(0, X.shape[1] - X.shape[0])
+        nullspace_dim = max(0, n_features - n_samples)
         eigvals, V = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
         eigvals = eigvals[nullspace_dim:]
@@ -1469,8 +1459,6 @@ class _RidgeGCV(LinearModel):
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        n_samples, n_features = X.shape
-
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
@@ -1488,11 +1476,13 @@ class _RidgeGCV(LinearModel):
                 decompose = self._svd_decompose_design_matrix
                 solve = self._solve_svd_design_matrix
 
+        n_samples = X.shape[0]
+
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
             sqrt_sw = np.sqrt(sample_weight)
         else:
-            sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
+            sqrt_sw = np.ones(n_samples, dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
