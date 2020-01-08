@@ -39,7 +39,8 @@ X = (X - mean) / std
 
 clf = SGDClassifier(alpha=0.001, max_iter=100).fit(X, y)
 ax = plt.gca()
-plot_decision_boundary(clf, X, cmap=plt.cm.Paired, ax=ax)
+plot_decision_boundary(clf, X, cmap=plt.cm.Paired, ax=ax,
+                       response_method='predict')
 plt.axis('tight')
 
 # Plot also the training points
