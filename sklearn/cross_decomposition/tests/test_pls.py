@@ -426,7 +426,6 @@ def test_pls_errors():
                              clf.fit, X, Y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls_scaling():
     # sanity check for scale=True
     n_samples = 1000

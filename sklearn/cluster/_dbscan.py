@@ -156,18 +156,18 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    eps : float, optional
+    eps : float, default=0.5
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
         and distance function.
 
-    min_samples : int, optional
+    min_samples : int, default=5
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
 
-    metric : string, or callable
+    metric : string, or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -179,27 +179,27 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
 
-    metric_params : dict, optional
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
         .. versionadded:: 0.19
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, default=30
         Leaf size passed to BallTree or cKDTree. This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
 
-    p : float, optional
+    p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`

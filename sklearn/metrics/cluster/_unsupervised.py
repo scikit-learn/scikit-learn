@@ -299,13 +299,6 @@ def calinski_harabasz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-@deprecated("Function 'calinski_harabaz_score' has been renamed to "
-            "'calinski_harabasz_score' "
-            "and will be removed in version 0.23.")
-def calinski_harabaz_score(X, labels):
-    return calinski_harabasz_score(X, labels)
-
-
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
 
