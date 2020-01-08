@@ -73,7 +73,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.
@@ -318,7 +318,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.

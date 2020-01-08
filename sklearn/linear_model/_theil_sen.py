@@ -240,7 +240,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     tol : float, optional, default 1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.

@@ -577,7 +577,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -855,7 +855,7 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -1306,7 +1306,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -1478,7 +1478,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -1654,7 +1654,7 @@ class MultiTaskElasticNet(Lasso):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -1838,7 +1838,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -2001,7 +2001,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.
@@ -2175,7 +2175,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
         feature to update. Used when ``selection`` == 'random'.
         Pass an int for reproducible output across multiple function calls.

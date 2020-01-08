@@ -149,7 +149,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         If the loss on a sample is greater than the ``residual_threshold``,
         then this sample is classified as an outlier.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.

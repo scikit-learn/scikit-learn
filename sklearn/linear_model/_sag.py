@@ -151,7 +151,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     verbose : integer, optional
         The verbosity level.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Used when shuffling the data. Pass an int for reproducible output
         across multiple function calls.
         See :term:`Glossary <random_state>`.
