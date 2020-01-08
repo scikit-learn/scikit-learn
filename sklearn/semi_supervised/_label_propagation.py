@@ -289,9 +289,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
             self.n_iter_ += 1
 
-        l_bool_zeros = np.sum(self.label_distributions_, axis=1) == 0
-        self.label_distributions_[l_bool_zeros, :] = 1
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+        normalizer = np.array([[1] if x[0] == 0 else x for x in normalizer])
         self.label_distributions_ /= normalizer
 
         # set the transduction item
