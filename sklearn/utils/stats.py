@@ -1,15 +1,6 @@
 import numpy as np
-from scipy.stats import rankdata as scipy_rankdata
 
-from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.deprecation import deprecated
-
-
-# Remove in sklearn 0.21
-@deprecated("sklearn.utils.stats.rankdata was deprecated in version 0.19 and "
-            "will be removed in 0.21. Use scipy.stats.rankdata instead.")
-def rankdata(*args, **kwargs):
-    return scipy_rankdata(*args, **kwargs)
+from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):

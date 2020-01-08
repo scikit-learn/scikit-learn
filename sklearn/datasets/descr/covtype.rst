@@ -8,7 +8,7 @@ collected for the task of predicting each patch's cover type,
 i.e. the dominant species of tree.
 There are seven covertypes, making this a multiclass classification problem.
 Each sample has 54 features, described on the
-`dataset's homepage <http://archive.ics.uci.edu/ml/datasets/Covertype>`__.
+`dataset's homepage <https://archive.ics.uci.edu/ml/datasets/Covertype>`__.
 Some of the features are boolean indicators,
 while others are discrete or continuous measurements.
 
