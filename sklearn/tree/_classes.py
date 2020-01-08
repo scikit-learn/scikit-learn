@@ -650,7 +650,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -1029,7 +1029,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance, default=None
         Controls the randomness of the estimator. The features are always
         randomly permuted at each split, even if ``splitter`` is set to
         ``"best"``. When ``max_features < n_features``, the algorithm will
@@ -1317,7 +1317,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
@@ -1545,7 +1545,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int, RandomState, default=None
+    random_state : int, RandomState instance, default=None
         Used to pick randomly the `max_features` used at each split.
         See :term:`Glossary <random_state>` for details.
 
