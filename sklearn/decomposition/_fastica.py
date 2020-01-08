@@ -202,7 +202,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
         across multiple function calls.
@@ -341,7 +341,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
         across multiple function calls.

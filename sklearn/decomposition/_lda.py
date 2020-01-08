@@ -222,7 +222,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     verbose : int, optional (default=0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
