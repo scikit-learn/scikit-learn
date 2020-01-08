@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-** If your issue is a usage question, submit it here instead:**
+**If your issue is a usage question, submit it here instead:**
 - **StackOverflow with the scikit-learn tag: https://stackoverflow.com/questions/tagged/scikit-learn**
 - **Mailing List: https://mail.python.org/mailman/listinfo/scikit-learn**
 - **Gitter: https://gitter.im/scikit-learn/scikit-learn**

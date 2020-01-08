@@ -9,7 +9,7 @@ assignees: ''
 
 #### Describe the issue linked to the documentation
 
-Tell us about the confusion introduce in the documentation.
+Tell us about the confusion introduced in the documentation.
 
 #### Suggest a potential alternative/fix
 

@@ -1,13 +1,13 @@
 ---
 name: Feature request
-about: Suggest an new algorithm, enhancement to an existing algorithm, etc.
+about: Suggest a new algorithm, enhancement to an existing algorithm, etc.
 title: ''
 labels: enhancement
 assignees: ''
 
 ---
 
-<--
+<!--
 If you want to propose a new algorithm, please refer first to the scikit-learn
 inclusion criterion:
 https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms
@@ -15,7 +15,7 @@ https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new
 
 #### Is your feature request related to a problem? Please describe
 
-#### Describe the solution you'd like
+#### Describe your proposed solution
 
 #### Describe alternatives you've considered
 
