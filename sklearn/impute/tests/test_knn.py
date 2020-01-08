@@ -6,7 +6,7 @@ from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils._mask import _get_mask
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 
 def _missing_mean(X, missing_value):

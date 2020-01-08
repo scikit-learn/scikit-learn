@@ -163,7 +163,7 @@ class _BaseScorer:
         """
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
-                          category=DeprecationWarning,
+                          category=FutureWarning,
                           stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)
@@ -247,7 +247,7 @@ class _ProbaScorer(_BaseScorer):
         if y_type == "binary":
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
-            else:
+            elif y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
                                  ' but need classifier with two'
                                  ' classes for {} scoring'.format(
@@ -645,14 +645,14 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                  multi_class='ovo')
-roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                           multi_class='ovo',
                                           average='weighted')
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                  multi_class='ovr')
-roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                           multi_class='ovr',
                                           average='weighted')
 

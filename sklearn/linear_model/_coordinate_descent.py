@@ -43,26 +43,26 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     y : ndarray, shape (n_samples,)
         Target values
 
-    Xy : array-like, optional
+    Xy : array-like, default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
-    l1_ratio : float
+    l1_ratio : float, default=1.0
         The elastic net mixing parameter, with ``0 < l1_ratio <= 1``.
         For ``l1_ratio = 0`` the penalty is an L2 penalty. (currently not
         supported) ``For l1_ratio = 1`` it is an L1 penalty. For
         ``0 < l1_ratio <1``, the penalty is a combination of L1 and L2.
 
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    fit_intercept : boolean, default True
+    fit_intercept : boolean, default=True
         Whether to fit an intercept or not
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -70,7 +70,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, optional, default=True
         If ``True``, X will be copied; else, it may be overwritten.
     """
     if l1_ratio == 0:
@@ -267,7 +267,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    """Compute elastic net path with coordinate descent
+    """
+    Compute elastic net path with coordinate descent.
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -299,22 +300,22 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         can be sparse.
 
     y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
-        Target values
+        Target values.
 
     l1_ratio : float, optional
-        float between 0 and 1 passed to elastic net (scaling between
-        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
+        Number between 0 and 1 passed to elastic net (scaling between
+        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso.
 
     eps : float
         Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, optional
         List of alphas where to compute the models.
-        If None alphas are set automatically
+        If None alphas are set automatically.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -325,17 +326,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     coef_init : array, shape (n_features, ) | None
         The initial values of the coefficients.
 
-    verbose : bool or integer
+    verbose : bool or int
         Amount of verbosity.
 
     return_n_iter : bool
-        whether to return the number of iterations or not.
+        Whether to return the number of iterations or not.
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
@@ -346,7 +347,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         assuming there are handled by the caller when check_input=False.
 
     **params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+        Keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -365,18 +366,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         reach the specified tolerance for each alpha.
         (Is returned when ``return_n_iter`` is set to True).
 
-    Notes
-    -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
-
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     MultiTaskElasticNetCV
     ElasticNet
     ElasticNetCV
+
+    Notes
+    -----
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
     """
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
@@ -957,13 +958,13 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     alphas : array-like, optional
         Array of float that is used for cross-validation. If not
-        provided, computed using 'path'
+        provided, computed using 'path'.
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
-        < l1_ratio < 1``, the penalty is a combination of L1 and L2
+        < l1_ratio < 1``, the penalty is a combination of L1 and L2.
 
     X_order : {'F', 'C', or None}, optional
         The order of the arrays expected by the path function to
@@ -1933,6 +1934,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
+    .. versionadded:: 0.15
+
     Parameters
     ----------
     l1_ratio : float or array of floats
@@ -2118,6 +2121,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     i.e. the sum of norm of each row.
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
+
+    .. versionadded:: 0.15
 
     Parameters
     ----------

@@ -97,7 +97,7 @@ cdef class _QuadTree:
             return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
-        """Build a tree from an arary of points X."""
+        """Build a tree from an array of points X."""
         cdef:
             int i
             DTYPE_t[3] pt
@@ -466,7 +466,7 @@ cdef class _QuadTree:
         return idx
 
     def get_cell(self, point):
-        """return the id of the cell containing the query point or raise 
+        """return the id of the cell containing the query point or raise
         ValueError if the point is not in the tree
         """
         cdef DTYPE_t[3] query_pt
@@ -484,7 +484,7 @@ cdef class _QuadTree:
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
                        ) nogil except -1:
         """guts of get_cell.
-        
+
         Return the id of the cell containing the query point or raise ValueError
         if the point is not in the tree"""
         cdef:

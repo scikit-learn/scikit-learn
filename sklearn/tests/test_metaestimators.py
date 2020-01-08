@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
