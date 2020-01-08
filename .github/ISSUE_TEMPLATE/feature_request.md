@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an new algorithm, enhancement to an existing algorithm, etc.
-title: "[ENH]"
+title: ''
 labels: enhancement
 assignees: ''
 
