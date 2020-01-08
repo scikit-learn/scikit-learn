@@ -19,8 +19,6 @@ from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
-MAX_RAND_SEED = np.iinfo(np.int32).max
-
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
@@ -51,7 +49,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -71,7 +69,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == 'random_state' or key.endswith('__random_state'):
-            to_set[key] = random_state.randint(MAX_RAND_SEED)
+            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)
@@ -85,13 +83,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object, default=None
         The base estimator from which the ensemble is built.
 
-    n_estimators : integer
+    n_estimators : int
         The number of estimators in the ensemble.
 
-    estimator_params : list of strings
+    estimator_params : list of str
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
@@ -278,7 +276,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, default=True
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """

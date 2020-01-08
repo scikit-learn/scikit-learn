@@ -172,7 +172,7 @@ struct problem * csr_set_problem (char *X, int double_precision_X,
 }
 
 
-/* Create a paramater struct with and return it */
+/* Create a parameter struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
                                 char *weight, int max_iter, unsigned seed, 
