@@ -530,7 +530,7 @@ def test_voting_verbose(estimator, capsys):
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 
-    pattern = (r'\[Voting\].*\(0 of 2\) Processing lr, total=.*\n'
+    pattern = (r'\[Voting\].*\(1 of 2\) Processing lr, total=.*\n'
                r'\[Voting\].*\(1 of 2\) Processing rf, total=.*\n$')
 
     estimator.fit(X, y)
