@@ -67,6 +67,16 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.ensemble`
+.................................
+
+- |API| Added boolean `verbose` flag to classes:
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  :pr:`15991` by :user:`Sam Bail <spbail>`,
+  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
+  :user:`Reshama Shaikh <reshamas>`, and
+  :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
