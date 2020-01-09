@@ -1215,11 +1215,11 @@ class CategoricalNB(_BaseDiscreteNB):
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             indices = X[:, i]
-            num_categories = self.feature_log_prob_[i].shape[1]
-            if np.max(indices) >= num_categories:
+            try:
+                jll += self.feature_log_prob_[i][:, indices].T
+            except IndexError:
                 raise ValueError("A category unseen during training is present"
                                  " in feature %d" % i)
-            jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
 
