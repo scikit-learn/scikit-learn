@@ -5,6 +5,8 @@
 
 import pytest
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -209,7 +211,7 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 def test_linear_regression_pd_sparse_dataframe_warning():
     try:
         import pandas as pd
-        if pd.__version__ < '0.24.0':
+        if LooseVersion(pd.__version__) < '0.24.0':
             return
         df = pd.DataFrame()
         for col in range(4):
