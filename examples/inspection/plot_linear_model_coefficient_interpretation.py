@@ -235,10 +235,10 @@ plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# We should then scale the coefficients by the standard deviation and we
-# will be able to better compare them: indeed, the greater the
-# variance of a feature, the larger the impact of the corresponding coefficent
-# on the output, all else being equal.
+# We should then multiply the coefficients by the standard deviation and we
+# will be able to better compare them: in that way, we emphasize that the
+# greater the variance of a feature, the larger the impact of the corresponding
+# coefficent on the output, all else being equal.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_ *
