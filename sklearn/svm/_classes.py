@@ -561,7 +561,7 @@ class SVC(BaseSVC):
     support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : array-like of shape (n_class), dtype=int32 
+    n_support_ : array-like of shape (n_class), dtype=int32
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
