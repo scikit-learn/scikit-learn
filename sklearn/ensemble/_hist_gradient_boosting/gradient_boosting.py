@@ -788,7 +788,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, scoring=None, validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-7, verbose=0,
-                 random_state=None):
+                 random_state=None, n_jobs=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -797,7 +797,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             warm_start=warm_start, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            random_state=random_state, n_jobs=n_jobs)
 
     def predict(self, X):
         """Predict values for X.
@@ -971,7 +971,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, warm_start=False,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-7, verbose=0, random_state=None):
+                 tol=1e-7, verbose=0, random_state=None, n_jobs=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -980,7 +980,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             warm_start=warm_start, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state)
+            random_state=random_state, n_jobs=n_jobs)
 
     def predict(self, X):
         """Predict classes for X.
