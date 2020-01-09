@@ -123,7 +123,7 @@ class SimpleImputer(_BaseImputer):
     .. versionadded:: 0.20
        `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
        estimator which is now removed.
-    
+
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
