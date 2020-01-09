@@ -16,6 +16,11 @@ from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
 
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
+
 @pytest.fixture(scope="module")
 def n_classes():
     return 5
@@ -195,7 +200,7 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[0, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
     assert_allclose(disp.text_[1, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
 
-    # oof-diagonal text is white
+    # off-diagonal text is white
     assert_allclose(disp.text_[0, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
     assert_allclose(disp.text_[1, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
 
@@ -204,9 +209,23 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[0, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
     assert_allclose(disp.text_[1, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
 
-    # oof-diagonal text is black
+    # off-diagonal text is black
     assert_allclose(disp.text_[0, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
     assert_allclose(disp.text_[1, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+    # Regression test for #15920
+    cm = np.array([[19, 34], [32, 58]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
+
+    disp.plot(cmap=pyplot.cm.Blues)
+    min_color = pyplot.cm.Blues(0)
+    max_color = pyplot.cm.Blues(255)
+    assert_allclose(disp.text_[0, 0].get_color(), max_color)
+    assert_allclose(disp.text_[0, 1].get_color(), max_color)
+    assert_allclose(disp.text_[1, 0].get_color(), max_color)
+    assert_allclose(disp.text_[1, 1].get_color(), min_color)
+
+
 
 
 @pytest.mark.parametrize(
@@ -226,3 +245,22 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
+
+
+@pytest.mark.parametrize("values_format", ['e', 'n'])
+def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
+                                      fitted_clf, values_format):
+    # Make sure plot text is formatted with 'values_format'.
+    X, y = data
+    cm = confusion_matrix(y, y_pred)
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 include_values=True,
+                                 values_format=values_format)
+
+    assert disp.text_.shape == (n_classes, n_classes)
+
+    expected_text = np.array([format(v, values_format)
+                              for v in cm.ravel()])
+    text_text = np.array([
+        t.get_text() for t in disp.text_.ravel()])
+    assert_array_equal(expected_text, text_text)

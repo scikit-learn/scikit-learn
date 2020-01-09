@@ -283,6 +283,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
@@ -599,80 +603,6 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
-
-
-def jaccard_similarity_score(y_true, y_pred, normalize=True,
-                             sample_weight=None):
-    """Jaccard similarity coefficient score
-
-    .. deprecated:: 0.21
-        This is deprecated to be removed in 0.23, since its handling of
-        binary and multiclass inputs was broken. `jaccard_score` has an API
-        that is consistent with precision_score, f_score, etc.
-
-    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
-
-    Parameters
-    ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
-
-    y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
-
-    normalize : bool, optional (default=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
-    Returns
-    -------
-    score : float
-        If ``normalize == True``, return the average Jaccard similarity
-        coefficient, else it returns the sum of the Jaccard similarity
-        coefficient over the sample set.
-
-        The best performance is 1 with ``normalize == True`` and the number
-        of samples with ``normalize == False``.
-
-    See also
-    --------
-    accuracy_score, hamming_loss, zero_one_loss
-
-    Notes
-    -----
-    In binary and multiclass classification, this function is equivalent
-    to the ``accuracy_score``. It differs in the multilabel classification
-    problem.
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Jaccard index
-           <https://en.wikipedia.org/wiki/Jaccard_index>`_
-    """
-    warnings.warn('jaccard_similarity_score has been deprecated and replaced '
-                  'with jaccard_score. It will be removed in version 0.23. '
-                  'This implementation has surprising behavior for binary '
-                  'and multiclass classification tasks.',
-                  FutureWarning)
-
-    # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    if y_type.startswith('multilabel'):
-        with np.errstate(divide='ignore', invalid='ignore'):
-            # oddly, we may get an "invalid" rather than a "divide" error here
-            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
-            score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 1.0
-    else:
-        score = y_true == y_pred
-
-    return _weighted_sum(score, sample_weight, normalize)
 
 
 def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
@@ -1426,7 +1356,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support : int (if average is not None) or array of int, shape =\
+    support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1916,10 +1846,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -2034,7 +1964,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
-            average=average, sample_weight=sample_weight)
+            average=average, sample_weight=sample_weight,
+            zero_division=zero_division)
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
@@ -2060,7 +1991,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
+def hamming_loss(y_true, y_pred, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -2074,17 +2005,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
-
-    labels : array, shape = [n_labels], optional (default='deprecated')
-        Integer array of labels. If not provided, labels will be inferred
-        from y_true and y_pred.
-
-        .. versionadded:: 0.18
-        .. deprecated:: 0.21
-           This parameter ``labels`` is deprecated in version 0.21 and will
-           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
-           for the number of labels when y_true is binary label indicators,
-           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2144,12 +2064,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
-
-    if labels is not None:
-        warnings.warn("The labels parameter is unused. It was"
-                      " deprecated in version 0.21 and"
-                      " will be removed in version 0.23",
-                      FutureWarning)
 
     if sample_weight is None:
         weight_average = 1.

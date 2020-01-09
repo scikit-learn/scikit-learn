@@ -623,7 +623,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         else:
             # define a list of numbered indices for a numpy array
             feature_names = [str(i) for i in range(n_features)]
-    elif isinstance(feature_names, np.ndarray):
+    elif hasattr(feature_names, "tolist"):
+        # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
@@ -654,10 +655,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     features = tmp_features
 
-    if isinstance(ax, list):
-        if len(ax) != len(features):
-            raise ValueError("Expected len(ax) == len(features), "
-                             "got len(ax) = {}".format(len(ax)))
+    # Early exit if the axes does not have the correct number of axes
+    if ax is not None and not isinstance(ax, plt.Axes):
+        axes = np.asarray(ax, dtype=object)
+        if axes.size != len(features):
+            raise ValueError("Expected ax to have {} axes, got {}".format(
+                             len(features), axes.size))
 
     for i in chain.from_iterable(features):
         if i >= len(feature_names):
@@ -885,16 +888,16 @@ class PartialDependenceDisplay:
                 axes_ravel[i] = self.figure_.add_subplot(spec)
 
         else:  # array-like
-            ax = check_array(ax, dtype=object, ensure_2d=False)
+            ax = np.asarray(ax, dtype=object)
+            if ax.size != n_features:
+                raise ValueError("Expected ax to have {} axes, got {}"
+                                 .format(n_features, ax.size))
 
             if ax.ndim == 2:
                 n_cols = ax.shape[1]
             else:
                 n_cols = None
 
-            if ax.ndim == 1 and ax.shape[0] != n_features:
-                raise ValueError("Expected len(ax) == len(features), "
-                                 "got len(ax) = {}".format(len(ax)))
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
@@ -933,8 +936,11 @@ class PartialDependenceDisplay:
             ylim = axi.get_ylim()
             axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
                        color='k')
-            axi.set_xlabel(self.feature_names[fx[0]])
             axi.set_ylim(ylim)
+
+            # Set xlabel if it is not already set
+            if not axi.get_xlabel():
+                axi.set_xlabel(self.feature_names[fx[0]])
 
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:
