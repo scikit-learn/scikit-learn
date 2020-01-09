@@ -111,7 +111,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
