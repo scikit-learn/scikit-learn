@@ -211,7 +211,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        self : LinearSVC
+        self : object
             An instance of the estimator.
         """
         # FIXME Remove l1/l2 support in 0.23 ----------------------------------
@@ -403,7 +403,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         Returns
         -------
-        self : LinearSVR
+        self : object
             An instance of the estimator.
         """
         # FIXME Remove l1/l2 support in 0.23 ----------------------------------
@@ -555,13 +555,13 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV,)
+    support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
+    support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : array-like of shape (n_class,), dtype=int32
+    n_support_ : ndarray of shape (n_class,), dtype=int32
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
@@ -584,7 +584,7 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     probA_ : ndarray of shape (n_class * (n_class-1) / 2)
@@ -761,13 +761,13 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV,)
+    support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
+    support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : array-like of shape (n_class), dtype=int32
+    n_support_ : ndarray of shape (n_class), dtype=int32
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
@@ -787,7 +787,7 @@ class NuSVC(BaseSVC):
     intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
     fit_status_ : int
@@ -931,10 +931,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV,)
+    support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
+    support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : ndarray of shape (1, n_SV)
@@ -1060,10 +1060,10 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV,)
+    support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
+    support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : ndarray of shape (1, n_SV)
@@ -1181,10 +1181,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV,)
+    support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
+    support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : ndarray of shape (1, n_SV)
@@ -1249,7 +1249,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
         Returns
         -------
-        self : OneClassSVM
+        self : object
 
         Notes
         -----
@@ -1273,7 +1273,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
         Returns
         -------
-        dec : array-like of shape (n_samples,)
+        dec : ndarray of shape (n_samples,)
             Returns the decision function of the samples.
         """
         dec = self._decision_function(X).ravel()
@@ -1289,7 +1289,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
         Returns
         -------
-        score_samples : array-like of shape (n_samples,)
+        score_samples : ndarray of shape (n_samples,)
             Returns the (unshifted) scoring function of the samples.
         """
         return self.decision_function(X) + self.offset_

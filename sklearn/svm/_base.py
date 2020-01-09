@@ -310,7 +310,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        y_pred : array-like of shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -543,7 +543,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Returns
         -------
-        X : array-like of shape (n_samples, n_classes * (n_classes-1) / 2)
+        X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
@@ -579,7 +579,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Returns
         -------
-        y_pred : array-like of shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             Class labels for samples in X.
         """
         check_is_fitted(self)
@@ -622,7 +622,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes)
+        T : ndarray of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -662,7 +662,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Returns
         -------
-        T : array-like of shape (n_samples, n_classes)
+        T : ndarray of shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
