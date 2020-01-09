@@ -6,6 +6,8 @@ from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
+from joblib.parallel import effective_n_jobs
+
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_X_y, check_random_state, check_array, resample
@@ -84,9 +86,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # if n_threads is None, we limit the number of threads to avoid
         # oversubscription
-        n_thread_openmp = 16 if self.n_threads is None else self.n_threads
+        MAX_N_THREADS_OPENMP = min(effective_n_jobs(n_jobs=-1), 16)
+        n_threads_openmp = (MAX_N_THREADS_OPENMP
+                            if self.n_threads is None else self.n_threads)
         self._n_threads_openmp = _openmp_effective_n_threads(
-            n_threads=n_thread_openmp
+            n_threads=n_threads_openmp
         )
 
     def fit(self, X, y):

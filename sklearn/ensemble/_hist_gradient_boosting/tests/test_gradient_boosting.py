@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from joblib.parallel import cpu_count
+from joblib.parallel import effective_n_jobs
 from numpy.testing import assert_allclose
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
@@ -456,7 +456,9 @@ def test_string_target_early_stopping(scoring):
 )
 @pytest.mark.parametrize(
     "n_threads, expected_n_threads",
-    [(None, 16), (1, 1), (-1, cpu_count())]
+    [(None, effective_n_jobs(n_jobs=-1)),
+     (1, 1),
+     (-1, effective_n_jobs(n_jobs=-1))]
 )
 def test_gradient_boosting_n_threads(X, y, HistGradientBoosting, n_threads,
                                      expected_n_threads):
