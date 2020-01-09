@@ -74,7 +74,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : {dict, 'balanced'}, default=None
+    class_weight : dict or 'balanced', default=None
         Set the parameter C of class i to ``class_weight[i]*C`` for
         SVC. If not given, all classes are supposed to have
         weight one.
@@ -87,7 +87,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState, default=None
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data for the dual coordinate descent (if ``dual=True``). When
         ``dual=False`` the underlying implementation of :class:`LinearSVC`
@@ -110,7 +110,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         ``coef_`` is a readonly property derived from ``raw_coef_`` that
         follows the internal memory layout of liblinear.
 
-    intercept_ : ndarray of shape (1] if n_classes == 2 else (n_classes)
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
     classes_ : ndarray of shape (n_classes,)
@@ -310,7 +310,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int or RandomState, default=None
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -505,7 +505,7 @@ class SVC(BaseSVC):
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
 
-    class_weight : {dict, 'balanced'}, default=None
+    class_weight : dict or 'balanced', default=None
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one.
@@ -546,7 +546,7 @@ class SVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState, default=None
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the
         seed used by the random number generator; If RandomState instance,
@@ -555,13 +555,13 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
+    support_ : array-like of shape (n_SV,)
         Indices of support vectors.
 
     support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : array-like of shape (n_class), dtype=int32
+    n_support_ : array-like of shape (n_class,), dtype=int32
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
@@ -752,7 +752,7 @@ class NuSVC(BaseSVC):
 
         .. versionadded:: 0.22
 
-    random_state : int or RandomState, default=None
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator used when shuffling
         the data for probability estimates. If int, random_state is the seed
         used by the random number generator; If RandomState instance,
@@ -761,7 +761,7 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
+    support_ : array-like of shape (n_SV,)
         Indices of support vectors.
 
     support_vectors_ : array-like of shape (n_SV, n_features)
@@ -931,7 +931,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
+    support_ : array-like of shape (n_SV,)
         Indices of support vectors.
 
     support_vectors_ : array-like of shape (n_SV, n_features)
@@ -950,7 +950,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    intercept_ : ndarray of shape (1)
+    intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
     Examples
@@ -1060,7 +1060,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
+    support_ : array-like of shape (n_SV,)
         Indices of support vectors.
 
     support_vectors_ : array-like of shape (n_SV, n_features)
@@ -1076,7 +1076,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : ndarray of shape (1)
+    intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
     Examples
@@ -1181,7 +1181,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
+    support_ : array-like of shape (n_SV,)
         Indices of support vectors.
 
     support_vectors_ : array-like of shape (n_SV, n_features)
@@ -1240,7 +1240,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
 
-        sample_weight : array-like of shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
@@ -1269,6 +1269,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
@@ -1284,6 +1285,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
@@ -1299,9 +1301,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------

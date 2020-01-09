@@ -119,7 +119,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like of shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
@@ -572,9 +572,10 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -654,9 +655,10 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
@@ -825,7 +827,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         In order to avoid this, one should increase the intercept_scaling.
         such that the feature vector becomes [x, intercept_scaling].
 
-    class_weight : {dict, 'balanced'}, default=None
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -850,7 +852,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int or RandomState, default=None
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -866,7 +868,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : {'logistic_regression', 'hinge', 'squared_hinge',
+    loss : {'logistic_regression', 'hinge', 'squared_hinge', \
             'epsilon_insensitive', 'squared_epsilon_insensitive}, \
             default='logistic_regression'
         The loss function used to fit the model.
@@ -876,7 +878,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight : array-like of shape, default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights assigned to each sample.
 
     Returns

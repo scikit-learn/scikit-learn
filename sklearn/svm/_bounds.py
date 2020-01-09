@@ -25,8 +25,8 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    y : array-like of shape (n_samples)
-        Target vector relative to X
+    y : array-like of shape (n_samples,)
+        Target vector relative to X.
 
     loss : {'squared_hinge', 'log'}, default='squared_hinge'
         Specifies the loss function.
