@@ -286,7 +286,6 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
 
 def _to_object_array(sequence):
-    """ casts a sequence to an array of objects"""
     aro = np.empty(len(sequence), dtype=object)
     aro[:] = sequence
     return aro
