@@ -268,12 +268,10 @@ def test_large_variance_y():
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 
-
     GP predictions are verified against predictions that were made
     using GPy which, here, is treated as the 'gold standard'. Note that we
     only investigate the RBF kernel here, as that is what was used in the
     GPy implementation.
-
 
     The following code can be used to recreate the GPy data:
 
@@ -281,7 +279,7 @@ def test_large_variance_y():
     import GPy
 
     kernel_gpy = GPy.kern.RBF(input_dim=1, lengthscale=1.)
-    gpy = GPy.models.GPRegression(X, np.vstack(y), kernel_gpy)
+    gpy = GPy.models.GPRegression(X, np.vstack(y_large), kernel_gpy)
     gpy.optimize()
     y_pred_gpy, y_var_gpy = gpy.predict(X2)
     y_pred_std_gpy = np.sqrt(y_var_gpy)
