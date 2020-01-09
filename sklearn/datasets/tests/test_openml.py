@@ -180,6 +180,9 @@ def _monkey_patch_webbased_functions(context,
                 return {'Content-Encoding': 'gzip'}
             return {}
 
+        def __iter__(self):
+            return iter(self.data)
+
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
                 + suffix + path_suffix)
