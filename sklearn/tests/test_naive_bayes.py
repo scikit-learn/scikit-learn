@@ -5,7 +5,7 @@ import numpy as np
 import scipy.sparse
 import pytest
 
-from sklearn.datasets import load_digits, load_iris, make_classification
+from sklearn.datasets import load_digits, load_iris
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -696,11 +696,10 @@ def test_categoricalnb():
 
 
 def test_unseen_categories_at_predict():
-    X, y = make_classification(n_features=10, n_classes=3, n_samples=1000,
-                               random_state=42, n_redundant=0, n_informative=6)
-    X = np.abs(X.astype(np.int))
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
-                                                        random_state=42)
+    X_train = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y_train = np.array([1, 1, 2, 2])
+    X_test = np.array([[2, 0]])
+
     clf = CategoricalNB()
     clf.fit(X_train, y_train)
 
