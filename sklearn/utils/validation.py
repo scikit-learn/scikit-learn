@@ -452,7 +452,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if pandas dataframe is sparse
-        with supress(ImportError):
+        with suppress(ImportError):
             from pandas.api.types import is_sparse
             if array.dtypes.apply(is_sparse).any():
                 warnings.warn(
