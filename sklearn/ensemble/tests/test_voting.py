@@ -35,35 +35,19 @@ X, y = iris.data[:, 1:3], iris.target
 X_r, y_r = datasets.load_boston(return_X_y=True)
 
 
-def test_estimator_init():
-    eclf = VotingClassifier(estimators=[])
-    msg = ("Invalid 'estimators' attribute, 'estimators' should be"
-           " a list of (string, estimator) tuples.")
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
-
-    clf = LogisticRegression(random_state=1)
-
-    eclf = VotingClassifier(estimators=[('lr', clf)], voting='error')
-    msg = ('Voting must be \'soft\' or \'hard\'; got (voting=\'error\')')
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
-
-    eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
-    msg = ('Number of `estimators` and weights must be equal'
-           '; got 2 weights, 1 estimators')
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
-
-    eclf = VotingClassifier(estimators=[('lr', clf), ('lr', clf)],
-                            weights=[1, 2])
-    msg = "Names provided are not unique: ['lr', 'lr']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
-
-    eclf = VotingClassifier(estimators=[('lr__', clf)])
-    msg = "Estimator names must not contain __: got ['lr__']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
-
-    eclf = VotingClassifier(estimators=[('estimators', clf)])
-    msg = "Estimator names conflict with constructor arguments: ['estimators']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [({'estimators': []},
+      "Invalid 'estimators' attribute, 'estimators' should be a list of"),
+     ({'estimators': [('lr', LogisticRegression())], 'voting': 'error'},
+      r"Voting must be 'soft' or 'hard'; got \(voting='error'\)"),
+     ({'estimators': [('lr', LogisticRegression())], 'weights': [1, 2]},
+      "Number of `estimators` and weights must be equal")]
+)
+def test_voting_classifier_estimator_init(params, err_msg):
+    ensemble = VotingClassifier(**params)
+    with pytest.raises(ValueError, match=err_msg):
+        ensemble.fit(X, y)
 
 
 def test_predictproba_hardvoting():
@@ -355,38 +339,22 @@ def test_sample_weight_kwargs():
     eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
 
-def test_set_params():
-    """set_params should be able to set estimators"""
+def test_voting_classifier_set_params():
+    # check equivalence in the output when setting underlying estimators
     clf1 = LogisticRegression(random_state=123, C=1.0)
     clf2 = RandomForestClassifier(random_state=123, max_depth=None)
     clf3 = GaussianNB()
-    eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
-                             weights=[1, 2])
-    assert 'lr' in eclf1.named_estimators
-    assert eclf1.named_estimators.lr is eclf1.estimators[0][1]
-    assert eclf1.named_estimators.lr is eclf1.named_estimators['lr']
-    eclf1.fit(X, y)
-    assert 'lr' in eclf1.named_estimators_
-    assert eclf1.named_estimators_.lr is eclf1.estimators_[0]
-    assert eclf1.named_estimators_.lr is eclf1.named_estimators_['lr']
 
+    eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
+                             weights=[1, 2]).fit(X, y)
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)
-    assert not hasattr(eclf2, 'nb')
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     assert eclf2.estimators[0][1].get_params() == clf1.get_params()
     assert eclf2.estimators[1][1].get_params() == clf2.get_params()
-
-    eclf1.set_params(lr__C=10.0)
-    eclf2.set_params(nb__max_depth=5)
-
-    assert eclf1.estimators[0][1].get_params()['C'] == 10.0
-    assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
-    assert (eclf1.get_params()["lr__C"] ==
-                 eclf1.get_params()["lr"].get_params()['C'])
 
 
 # TODO: Remove parametrization in 0.24 when None is removed in Voting*
@@ -560,21 +528,3 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
            "Use the string 'drop' instead.")
     with pytest.warns(FutureWarning, match=msg):
         est.fit(X, y)
-
-
-# TODO: Remove drop parametrize in 0.24 when None is removed in Voting*
-@pytest.mark.parametrize(
-    "Voter, BaseEstimator",
-    [(VotingClassifier, DecisionTreeClassifier),
-     (VotingRegressor, DecisionTreeRegressor)]
-)
-@pytest.mark.parametrize("drop", [None, 'drop'])
-def test_correct_named_estimator_with_drop(Voter, BaseEstimator, drop):
-    est = Voter(estimators=[('lr', drop),
-                            ('tree', BaseEstimator(random_state=0))])
-
-    with pytest.warns(None) as rec:
-        est.fit(X, y)
-    assert rec if drop is None else not rec
-
-    assert est.named_estimators_['lr'] == drop

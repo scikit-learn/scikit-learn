@@ -32,7 +32,8 @@ from sklearn.utils._testing import (
     assert_raises_regex,
     TempMemmap,
     create_memmap_backed_data,
-    _delete_folder)
+    _delete_folder,
+    _convert_container)
 
 from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
@@ -674,3 +675,20 @@ def test_deprecated_helpers(callable, args):
            '0.24. Please use "assert" instead')
     with pytest.warns(FutureWarning, match=msg):
         callable(*args)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, container_type",
+    [('list', list),
+     ('tuple', tuple),
+     ('array', np.ndarray),
+     ('sparse', sparse.csr_matrix),
+     ('dataframe', pytest.importorskip('pandas').DataFrame),
+     ('series', pytest.importorskip('pandas').Series),
+     ('index', pytest.importorskip('pandas').Index),
+     ('slice', slice)]
+)
+def test_convert_container(constructor_name, container_type):
+    container = [0, 1]
+    assert isinstance(_convert_container(container, constructor_name),
+                      container_type)

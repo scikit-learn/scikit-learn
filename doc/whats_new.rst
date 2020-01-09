@@ -12,6 +12,7 @@ on libraries.io to be notified when new versions are released.
 .. toctree::
     :maxdepth: 1
 
+    Version 0.23 <whats_new/v0.23.rst>
     Version 0.22 <whats_new/v0.22.rst>
     Version 0.21 <whats_new/v0.21.rst>
     Version 0.20 <whats_new/v0.20.rst>

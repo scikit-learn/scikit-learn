@@ -222,7 +222,7 @@ def test_label_encoder_negative_ints():
 def test_label_encoder_str_bad_shape(dtype):
     le = LabelEncoder()
     le.fit(np.array(["apple", "orange"], dtype=dtype))
-    msg = "bad input shape"
+    msg = "should be a 1d array"
     with pytest.raises(ValueError, match=msg):
         le.transform("apple")
 
@@ -245,7 +245,7 @@ def test_label_encoder_errors():
         le.inverse_transform([-2, -3, -4])
 
     # Fail on inverse_transform("")
-    msg = "bad input shape ()"
+    msg = r"should be a 1d array.+shape \(\)"
     with pytest.raises(ValueError, match=msg):
         le.inverse_transform("")
 

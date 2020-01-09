@@ -775,7 +775,7 @@ core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 While the parameter ``min_samples`` primarily controls how tolerant the
-algorithm is towards noise (on noisy and large data sets it may be desiable
+algorithm is towards noise (on noisy and large data sets it may be desirable
 to increase this parameter), the parameter ``eps`` is *crucial to choose
 appropriately* for the data set and distance function and usually cannot be
 left at the default value. It controls the local neighborhood of the points.
@@ -1686,6 +1686,7 @@ Drawbacks
 
 Calinski-Harabasz Index
 -----------------------
+
 
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
