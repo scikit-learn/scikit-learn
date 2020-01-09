@@ -650,7 +650,10 @@ def test_radius_neighbors_boundary_handling():
 
 
 def test_radius_neighbors_returns_array_of_objects():
-    """regression for issue #16036
+    # check that we can pass precomputed distances to
+    # NearestNeighbors.radius_neighbors()
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16036
     """
     X = csr_matrix(np.ones((4, 4)))
     X.setdiag([0, 0, 0, 0])
