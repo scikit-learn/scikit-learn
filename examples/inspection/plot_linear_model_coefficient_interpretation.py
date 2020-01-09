@@ -136,7 +136,7 @@ preprocessor = make_column_transformer(
 ##############################################################################
 # To describe the dataset as a linear model we choose to use a ridge regressor
 # and to model the logarithm of the WAGE.
-# We sample the complexity parameter space between 1.e-10 and 1.e10.
+# We sample the regularization parameter space between 1.e-10 and 1.e10.
 
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import RidgeCV
