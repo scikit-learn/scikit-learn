@@ -43,7 +43,8 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..base import is_regressor
+from ..base import is_regressor, _PropsRequest
+from ..utils.validation import _validate_required_params
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -121,7 +122,7 @@ class _MultimetricScorer:
         return False
 
 
-class _BaseScorer:
+class _BaseScorer(_PropsRequest):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -138,7 +139,7 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -165,8 +166,14 @@ class _BaseScorer:
             warnings.warn(self._deprecation_msg,
                           category=FutureWarning,
                           stacklevel=2)
+
+        if sample_weight is not None:
+            kwargs.update({'sample_weight': sample_weight})
+        required_params = self._get_props_request_mapping('score').keys()
+        _validate_required_params(required_params, kwargs.keys())
+
         return self._score(partial(_cached_call, None), estimator, X, y_true,
-                           sample_weight=sample_weight)
+                           **kwargs)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -529,7 +536,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+                needs_threshold=False, request_props=None, **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -569,6 +576,10 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
+        
+    request_props : list of strings, or dict of {str: str}, default=None
+        A list of required properties, or a mapping of the form
+        ``{required_parameter: provided_parameter}``, or None.
 
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
@@ -609,7 +620,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, kwargs).set_props_request(request_props)
 
 
 # Standard regression scores

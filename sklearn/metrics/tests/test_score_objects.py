@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import os
 import numbers
+import copy
 from unittest.mock import Mock
 from functools import partial
 
@@ -493,6 +494,7 @@ def test_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
+        scorer = copy.deepcopy(scorer)
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:
@@ -500,8 +502,10 @@ def test_scorer_sample_weight():
         if name in REQUIRE_POSITIVE_Y_SCORERS:
             target = _require_positive_y(target)
         try:
+            scorer.set_props_request({'score': 'sample_weight'})
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
+            scorer.set_props_request(None)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             assert weighted != unweighted, (

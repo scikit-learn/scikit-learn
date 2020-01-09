@@ -1326,3 +1326,12 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
+
+
+def _validate_required_params(required_params, given_params):
+    required_params = set(required_params)
+    given_params = set(given_params)
+    if required_params != given_params:
+        raise ValueError("Requested properties are: {}, but {} "
+                         "provided".format(list(required_params),
+                                           list(given_params)))

@@ -69,7 +69,15 @@ def clone(estimator, safe=True):
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
+
     new_object = klass(**new_object_params)
+    try:
+        new_object.set_props_request(estimator.get_props_request())
+    except AttributeError:
+        pass
+    except RuntimeError:
+        pass
+
     params_set = new_object.get_params(deep=False)
 
     # quick sanity check of the parameters of the clone
@@ -133,7 +141,105 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class BaseEstimator:
+class _PropsRequest:
+    def get_props_request(self):
+        """Get requested data properties.
+
+        Returns
+        -------
+        props : dict of list of strings, or dict of dict of {str: str}, or None
+            The key to the top level dict is the method for which the prop is
+            used. Under each key, there is a dict list of required properties,
+            or a dict of mapping of the form
+            ``{method_parameter: provided_parameter}``, or None.
+        """
+        try:
+            return self._props_request
+        except AttributeError:
+            return None
+
+    def set_props_request(self, props):
+        """Set required data properties.
+
+        Parameters
+        ----------
+        props : dict of list of strings, or dict of dict of {str: str}, or None
+            The key to the top level dict is the method for which the prop is
+            used. Under each key, there is a dict list of required properties,
+            or a dict of mapping of the form
+            ``{method_parameter: provided_parameter}``.
+            ``None`` empties the required props.
+
+        Returns
+        -------
+        self : estimator
+            returns self.
+        """
+        if props is None:
+            try:
+                del self._props_request
+            except AttributeError:
+                pass
+            return self
+
+        if not isinstance(props, dict):
+            raise ValueError("`props` should be a dictionary")
+
+        for method, value in props.items():
+            if isinstance(value, str):
+                props[method] = [value]
+
+        if not hasattr(self, '_props_request'):
+            self._props_request = {}
+
+        for method, m_props in props.items():
+            if method not in self._props_request:
+                self._props_request[method] = []
+
+            if isinstance(m_props, dict):
+                if isinstance(self._props_request[method], list):
+                    self._props_request[method] = \
+                        {x: x for x in self._props_request[method]}
+                self._props_request[method].update(props)
+            elif isinstance(m_props, list):
+                if isinstance(self._props_request[method], dict):
+                    self._props_request[method].update({x: x for x in m_props})
+                else:
+                    self._props_request[method].extend(m_props)
+                    self._props_request[method] = \
+                        list(set(self._props_request[method]))
+        return self
+
+    def _get_props_request_mapping(self, method):
+        try:
+            props = self.get_props_request()
+            m_props = props.get(method, {})
+            if isinstance(m_props, dict):
+                return m_props
+            return {x: x for x in m_props}
+        except AttributeError:
+            return {}
+
+    def _get_expected_method_props(self, method):
+        try:
+            props = self.get_props_request()
+            m_props = props.get(method, {})
+            return list(set(m_props.values()))
+        except AttributeError:
+            return []
+
+    def _get_expected_props(self):
+        res = []
+        props = self.get_props_request()
+        try:
+            for method in props.keys():
+                res.extend(self._get_expected_method_props(method))
+        except AttributeError:
+            pass
+        return res
+
+
+class BaseEstimator(_PropsRequest):
     """Base class for all estimators in scikit-learn
 
     Notes

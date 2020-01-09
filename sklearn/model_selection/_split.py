@@ -21,11 +21,12 @@ import numpy as np
 
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
-from ..utils.validation import _num_samples, column_or_1d
+from ..utils.validation import (_num_samples, column_or_1d,
+                                _validate_required_params)
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import comb
-from ..base import _pprint
+from ..base import _pprint, _PropsRequest
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -45,7 +46,7 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
-class BaseCrossValidator(metaclass=ABCMeta):
+class BaseCrossValidator(_PropsRequest, metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
@@ -496,6 +497,9 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
+
+    _props_request = ['groups']
+
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
 
@@ -876,6 +880,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     """
 
+    _props_request = ['groups']
+
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
@@ -998,6 +1004,8 @@ class LeavePGroupsOut(BaseCrossValidator):
     --------
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
+
+    _props_request = ['groups']
 
     def __init__(self, n_groups):
         self.n_groups = n_groups
@@ -1512,6 +1520,8 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
+
+    _props_request = ['groups']
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
                  random_state=None):
