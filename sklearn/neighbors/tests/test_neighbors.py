@@ -649,6 +649,24 @@ def test_radius_neighbors_boundary_handling():
         assert_array_equal(results[0], [0, 1])
 
 
+def test_radius_neighbors_returns_array_of_objects():
+    """regression for issue #16036
+    """
+    X = csr_matrix(np.ones((4, 4)))
+    X.setdiag([0, 0, 0, 0])
+
+    nbrs = neighbors.NearestNeighbors(radius=0.5, algorithm='auto',
+                                      leaf_size=30, metric='precomputed',
+                                      metric_params=None, p=2,
+                                      n_jobs=None).fit(X)
+    results = nbrs.radius_neighbors(X, return_distance=False)
+
+    expected = np.empty(X.shape[0], dtype=object)
+    expected[:] = [np.array([0]), np.array([1]), np.array([2]),
+                   np.array([3])]
+    assert_array_equal(results, expected)
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)

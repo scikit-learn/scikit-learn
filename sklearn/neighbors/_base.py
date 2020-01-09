@@ -276,13 +276,20 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
-        neigh_dist = np.array(np.split(data, indptr[1:-1]), dtype=object)
-    neigh_ind = np.array(np.split(indices, indptr[1:-1]), dtype=object)
+        neigh_dist = _array_of_objects(np.split(data, indptr[1:-1]))
+    neigh_ind = _array_of_objects(np.split(indices, indptr[1:-1]))
 
     if return_distance:
         return neigh_dist, neigh_ind
     else:
         return neigh_ind
+
+
+def _array_of_objects(sequence):
+    """ casts a sequence to an array of objects"""
+    aro = np.empty(len(sequence), dtype=object)
+    aro[:] = sequence
+    return aro
 
 
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
