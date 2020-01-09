@@ -26,28 +26,28 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2' (default='l2')
+    penalty : str, 'l1' or 'l2' default='l2'
         Specifies the norm used in the penalization. The 'l2'
         penalty is the standard used in SVC. The 'l1' leads to ``coef_``
         vectors that are sparse.
 
-    loss : str, 'hinge' or 'squared_hinge' (default='squared_hinge')
+    loss : str, 'hinge' or 'squared_hinge', default='squared_hinge'
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
 
-    dual : bool, (default=True)
+    dual : bool, default=True
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Tolerance for stopping criteria.
 
-    C : float, optional (default=1.0)
+    C : float, default=1.0
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
 
-    multi_class : str, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : str, 'ovr' or 'crammer_singer',default='ovr'
         Determines the multi-class strategy if `y` contains more than
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
@@ -58,12 +58,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
         will be ignored.
 
-    fit_intercept : bool, optional (default=True)
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, optional (default=1)
+    intercept_scaling : float, default=1
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -74,7 +74,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : {dict, 'balanced'}, optional
+    class_weight : {dict, 'balanced'}, default=1
         Set the parameter C of class i to ``class_weight[i]*C`` for
         SVC. If not given, all classes are supposed to have
         weight one.
@@ -82,12 +82,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data for the dual coordinate descent (if ``dual=True``). When
         ``dual=False`` the underlying implementation of :class:`LinearSVC`
@@ -97,7 +97,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         None, the random number generator is the RandomState instance used by
         `np.random`.
 
-    max_iter : int, (default=1000)
+    max_iter : int, default=1000
         The maximum number of iterations to be run.
 
     Attributes
