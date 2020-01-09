@@ -214,6 +214,7 @@ class TreeGrower:
         self.total_apply_split_time = 0.  # time spent splitting nodes
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
+        self.n_threads = n_threads
 
     def _validate_parameters(self, X_binned, max_leaf_nodes, max_depth,
                              min_samples_leaf, min_gain_to_split,
