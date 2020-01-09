@@ -73,7 +73,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                         sample_weight=sample_weight,
                         message_clsname='Voting',
                         message=self._log_message(names[idx], idx, len(clfs))
-                                                 )
+                )
                 for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
