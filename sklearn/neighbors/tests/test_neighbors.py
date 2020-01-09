@@ -665,7 +665,7 @@ def test_radius_neighbors_returns_array_of_objects():
                         np.array([0])]
     expected_ind = np.empty(X.shape[0], dtype=object)
     expected_ind[:] = [np.array([0]), np.array([1]), np.array([2]),
-                   np.array([3])]
+                       np.array([3])]
 
     assert_array_equal(neigh_dist, expected_dist)
     assert_array_equal(neigh_ind, expected_ind)
