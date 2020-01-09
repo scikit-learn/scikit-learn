@@ -277,7 +277,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
     if return_distance:
         neigh_dist = _to_object_array(np.split(data, indptr[1:-1]))
-    neigh_ind = _array_of_objects(np.split(indices, indptr[1:-1]))
+    neigh_ind = _to_object_array(np.split(indices, indptr[1:-1]))
 
     if return_distance:
         return neigh_dist, neigh_ind
