@@ -100,11 +100,12 @@ cdef update_labels_distances_inplace(
                 if dist < d_c:
                     d_c = dist
                     c_x = j
-            else:
-                lower_bounds[sample, j] = center_half_distances[c_x, j]
+        # zero values are usually due to pruned values
+        for j in range(1, n_clusters):
+            if lower_bounds[sample, j] == 0 and j != c_x:
+                lower_bounds[sample, j] = 2 * center_half_distances[c_x, j] - d_c
         labels[sample] = c_x
         upper_bounds[sample] = d_c
-
 
 def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
                   np.ndarray[floating, ndim=1, mode='c'] sample_weight,
@@ -198,9 +199,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
         cd = np.asarray(center_half_distances)
         distance_next_center = np.partition(cd, kth=1, axis=0)[1]
 
-        # TODO: Should be False - but will cause unit tests to fail because
-        # "full" makes an extra iteration that is not necessary...
-        changed = True
+        changed = False
         for point_index in range(n_samples):
             upper_bound = upper_bounds[point_index]
             bound_tight = False
@@ -246,7 +245,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
             labels[point_index] = label
             upper_bounds[point_index] = upper_bound
 
-        # Hard convergence (TODO: disabled above!)
+        # Hard convergence
         if not changed:
             if verbose:
                 print("Converged in iteration %d because no reassignments were made."

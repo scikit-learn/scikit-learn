@@ -57,7 +57,8 @@ def test_kmeans_results(representation, algo, dtype):
     expected_labels = [0, 0, 1, 1]
     expected_inertia = 0.1875
     expected_centers = np.array([[0.125, 0], [0.875, 1]], dtype=dtype)
-    expected_n_iter = 2
+    # Elkan now frequently takes 1 less iteration because of hard convergence
+    expected_n_iter = 2 if algo != "elkan" else 1
 
     kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
     kmeans.fit(X, sample_weight=sample_weight)
@@ -91,7 +92,8 @@ def test_elkan_results(distribution, tol):
 
     # The number of iterations and inertia should be close but not
     # necessarily exactly the same because of rounding errors.
-    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    # Elkan now frequently takes 1 less iteration because of hard convergence
+    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=1.01)
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
