@@ -431,7 +431,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                                               n_clusters, distances)
 
         if verbose:
-            print("Iteration %2d, inertia %.3f" % (i, inertia))
+            print("Iteration %2d, inertia %.3f" % (i + 1, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -443,7 +443,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
             if verbose:
                 print("Converged at iteration %d: "
                       "center shift %e within tolerance %e"
-                      % (i, center_shift_total, tol))
+                      % (i + 1, center_shift_total, tol))
             break
 
     if center_shift_total > 0:

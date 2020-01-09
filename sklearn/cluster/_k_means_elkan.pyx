@@ -3,6 +3,7 @@
 # cython: wraparound=False
 #
 # Author: Andreas Mueller
+# Author: Erich Schubert
 #
 # Licence: BSD 3 clause
 
@@ -99,6 +100,8 @@ cdef update_labels_distances_inplace(
                 if dist < d_c:
                     d_c = dist
                     c_x = j
+            else:
+                lower_bounds[sample, j] = center_half_distances[c_x, j]
         labels[sample] = c_x
         upper_bounds[sample] = d_c
 
@@ -147,6 +150,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
     cdef Py_ssize_t n_features = X_.shape[1]
     cdef Py_ssize_t point_index
     cdef int center_index, label
+    cdef bint changed, bound_tight
     cdef floating upper_bound, distance
     cdef floating[:, :] center_half_distances = euclidean_distances(centers_) / 2.
     cdef floating[:, :] lower_bounds = np.zeros((n_samples, n_clusters), dtype=dtype)
@@ -160,25 +164,46 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
     update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                     labels, lower_bounds, upper_bounds,
                                     n_samples, n_features, n_clusters)
-    cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
     cdef np.ndarray[floating, ndim=2, mode='c'] new_centers
 
     if max_iter <= 0:
         raise ValueError('Number of iterations should be a positive number'
-        ', got %d instead' % max_iter)
+                ', got %d instead' % max_iter)
 
+    if verbose:
+        print('Iteration %2d, upper bound for inertia %.3f'
+                % (0, np.sum(np.square(upper_bounds) * sample_weight)))
+    # In the last iteration, we will only assign points, not update centers!
     for iteration in range(max_iter):
-        if verbose:
-            print("start iteration")
+        # compute new centers
+        new_centers = _centers_dense(X_, sample_weight, labels_,
+                                     n_clusters, upper_bounds_)
 
-        cd =  np.asarray(center_half_distances)
+        # compute distance each center moved
+        sq_center_shift = np.sum((centers_ - new_centers) ** 2, axis=1)
+        center_shift = np.sqrt(sq_center_shift)
+
+        # update bounds accordingly
+        lower_bounds = np.maximum(lower_bounds - center_shift, 0)
+        upper_bounds = upper_bounds + center_shift[labels_]
+
+        # reassign centers
+        centers_ = new_centers
+        centers_p = <floating*>new_centers.data
+
+        # update between-center distances
+        center_half_distances = euclidean_distances(centers_) / 2.
+
+        # Reassign points
+        cd = np.asarray(center_half_distances)
         distance_next_center = np.partition(cd, kth=1, axis=0)[1]
 
-        if verbose:
-            print("done sorting")
-
+        # TODO: Should be False - but will cause unit tests to fail because
+        # "full" makes an extra iteration that is not necessary...
+        changed = True
         for point_index in range(n_samples):
             upper_bound = upper_bounds[point_index]
+            bound_tight = False
             label = labels[point_index]
 
             # This means that the next likely center is far away from the
@@ -200,10 +225,10 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
 
                     # Recompute the upper bound by calculating the actual distance
                     # between the sample and label.
-                    if not bounds_tight[point_index]:
+                    if not bound_tight:
                         upper_bound = euclidean_dist(x_p, centers_p + label * n_features, n_features)
                         lower_bounds[point_index, label] = upper_bound
-                        bounds_tight[point_index] = 1
+                        bound_tight = True
 
                     # If the condition still holds, then compute the actual distance between
                     # the sample and center_index. If this is still lesser than the previous
@@ -215,46 +240,31 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
                         if distance < upper_bound:
                             label = center_index
                             upper_bound = distance
+                            bound_tight = True
+                            changed = True
 
             labels[point_index] = label
             upper_bounds[point_index] = upper_bound
 
-        if verbose:
-            print("end inner loop")
-
-        # compute new centers
-        new_centers = _centers_dense(X_, sample_weight, labels_,
-                                     n_clusters, upper_bounds_)
-        bounds_tight[:] = 0
-
-        # compute distance each center moved
-        center_shift = np.sqrt(np.sum((centers_ - new_centers) ** 2, axis=1))
-
-        # update bounds accordingly
-        lower_bounds = np.maximum(lower_bounds - center_shift, 0)
-        upper_bounds = upper_bounds + center_shift[labels_]
-
-        # reassign centers
-        centers_ = new_centers
-        centers_p = <floating*>new_centers.data
-
-        # update between-center distances
-        center_half_distances = euclidean_distances(centers_) / 2.
-        if verbose:
-            print('Iteration %i, inertia %s'
-                    % (iteration, np.sum((X_ - centers_[labels]) ** 2 *
-                                         sample_weight[:,np.newaxis])))
-        center_shift_total = np.sum(center_shift ** 2)
+        # Hard convergence (TODO: disabled above!)
+        if not changed:
+            if verbose:
+                print("Converged in iteration %d because no reassignments were made."
+                      % (iteration + 1))
+            center_shift_total = 0
+            break
+        # Soft convergence (below reassignment, for more consistent output)
+        center_shift_total = np.sum(sq_center_shift)
         if center_shift_total <= tol:
             if verbose:
-                print("center shift %e within tolerance %e"
-                      % (center_shift_total, tol))
+                print("Converged at iteration %d: "
+                      "center shift %e within tolerance %e"
+                      % (iteration + 1, center_shift_total, tol))
             break
 
-    # We need this to make sure that the labels give the same output as
-    # predict(X)
-    if center_shift_total > 0:
-        update_labels_distances_inplace(X_p, centers_p, center_half_distances,
-                                        labels, lower_bounds, upper_bounds,
-                                        n_samples, n_features, n_clusters)
+        if verbose:
+            print('Iteration %2d, upper bound for inertia %.3f'
+                    % (iteration + 1, np.sum(np.square(upper_bounds) *
+                                         sample_weight)))
+
     return centers_, labels_, iteration + 1
