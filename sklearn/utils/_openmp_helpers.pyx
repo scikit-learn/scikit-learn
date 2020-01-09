@@ -6,7 +6,7 @@ IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
 
 def _openmp_parallelism_enabled():
     """Determines whether scikit-learn has been built with OpenMP
-    
+
     It allows to retrieve at runtime the information gathered at compile time.
     """
     # SKLEARN_OPENMP_PARALLELISM_ENABLED is resolved at compile time during
@@ -22,7 +22,7 @@ cpdef _openmp_effective_n_threads(n_threads=None):
       - if the ``OMP_NUM_THREADS`` environment variable is set, return
         ``openmp.omp_get_max_threads()``
       - otherwise, return the minimum between ``openmp.omp_get_max_threads()``
-        and the number of cpus, taking cgroups quotas into account. Cgroups 
+        and the number of cpus, taking cgroups quotas into account. Cgroups
         quotas can typically be set by tools such as Docker.
       The result of ``omp_get_max_threads`` can be influenced by environment
       variable ``OMP_NUM_THREADS`` or at runtime by ``omp_set_num_threads``.
@@ -58,5 +58,3 @@ cpdef _openmp_effective_n_threads(n_threads=None):
     ELSE:
         # OpenMP disabled at build-time => sequential mode
         return 1
-
-    

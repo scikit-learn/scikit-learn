@@ -15,8 +15,6 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
-IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-    from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
 
@@ -173,7 +171,7 @@ cdef class Splitter:
         self.right_indices_buffer = np.empty_like(self.partition)
 
     def split_indices(Splitter self, split_info, unsigned int [::1]
-                      sample_indices):
+                      sample_indices, int n_threads):
         """Split samples into left and right arrays.
 
         The split is performed according to the best possible split
@@ -191,6 +189,8 @@ cdef class Splitter:
             on self.partition, and it is modified inplace by placing the
             indices of the left child at the beginning, and the indices of
             the right child at the end.
+        n_threads : int
+            The number of threads to be used by OpenMP.
 
         Returns
         -------
@@ -255,11 +255,6 @@ cdef class Splitter:
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
-
-            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-                int n_threads = omp_get_max_threads()
-            ELSE:
-                int n_threads = 1
 
             int [:] sizes = np.full(n_threads, n_samples // n_threads,
                                     dtype=np.int32)

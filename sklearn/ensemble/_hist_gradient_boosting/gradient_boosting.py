@@ -9,6 +9,7 @@ from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_X_y, check_random_state, check_array, resample
+from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils.validation import check_is_fitted
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
@@ -29,7 +30,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  warm_start, scoring, validation_fraction, n_iter_no_change,
-                 tol, verbose, random_state):
+                 tol, verbose, random_state, n_jobs):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -45,6 +46,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def _validate_parameters(self):
         """Validate parameters passed to __init__.
@@ -79,6 +81,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not (2 <= self.max_bins <= 255):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
+
+        # if n_jobs is None, we limit the number of threads to avoid
+        # oversubscription
+        max_n_thread_openmp = 16 if self.n_jobs is None else self.n_jobs
+        self._n_threads_openmp = _openmp_effective_n_threads(
+            n_threads=max_n_thread_openmp
+        )
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -309,7 +318,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
-                    shrinkage=self.learning_rate)
+                    shrinkage=self.learning_rate,
+                    n_threads=self._n_threads_openmp)
                 grower.grow()
 
                 acc_apply_split_time += grower.total_apply_split_time

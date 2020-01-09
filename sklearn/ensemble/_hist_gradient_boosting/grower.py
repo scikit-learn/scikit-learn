@@ -162,12 +162,14 @@ class TreeGrower:
     shrinkage : float, optional (default=1)
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
+    n_threads : int, default=1
+        The number of threads used by OpenMP.
     """
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
                  l2_regularization=0., min_hessian_to_split=1e-3,
-                 shrinkage=1.):
+                 shrinkage=1., n_threads=1):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -317,7 +319,8 @@ class TreeGrower:
         (sample_indices_left,
          sample_indices_right,
          right_child_pos) = self.splitter.split_indices(node.split_info,
-                                                        node.sample_indices)
+                                                        node.sample_indices,
+                                                        self.n_threads)
         self.total_apply_split_time += time() - tic
 
         depth = node.depth + 1

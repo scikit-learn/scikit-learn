@@ -116,7 +116,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     si_parent = splitter.find_node_split(n_samples, hists_parent,
                                          sum_gradients, sum_hessians)
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
-        si_parent, sample_indices)
+        si_parent, sample_indices, n_threads=1)
 
     hists_left = builder.compute_histograms_brute(sample_indices_left)
     hists_right = builder.compute_histograms_brute(sample_indices_right)
@@ -223,7 +223,7 @@ def test_split_indices():
     assert si_root.bin_idx == 3
 
     samples_left, samples_right, position_right = splitter.split_indices(
-        si_root, splitter.partition)
+        si_root, splitter.partition, n_threads=1)
     assert set(samples_left) == set([0, 1, 3, 4, 5, 6, 8])
     assert set(samples_right) == set([2, 7, 9])
 
@@ -422,7 +422,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     # This also make sure missing values are properly assigned to the correct
     # child in split_indices()
     samples_left, samples_right, _ = splitter.split_indices(
-        split_info, splitter.partition)
+        split_info, splitter.partition, n_threads=1)
 
     if not expected_split_on_nan:
         # When we don't split on nans, the split should always be the same.
