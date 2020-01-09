@@ -288,7 +288,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 def _to_object_array(sequence):
     out = np.empty(len(sequence), dtype=object)
     out[:] = sequence
-    return aro
+    return out
 
 
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
