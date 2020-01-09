@@ -36,7 +36,7 @@ def _random_choice_csc(n_samples, classes, class_probability=None,
         Optional (default=None). Class distribution of each column. If None the
         uniform distribution is assumed.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Controls the randomness of the sampled classes.
         See :term:`Glossary <random_state>`.
 
