@@ -30,7 +30,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  warm_start, scoring, validation_fraction, n_iter_no_change,
-                 tol, verbose, random_state, n_jobs):
+                 tol, verbose, random_state, n_threads):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -46,7 +46,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
-        self.n_jobs = n_jobs
+        self.n_threads = n_threads
 
     def _validate_parameters(self):
         """Validate parameters passed to __init__.
@@ -82,11 +82,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
 
-        # if n_jobs is None, we limit the number of threads to avoid
+        # if n_threads is None, we limit the number of threads to avoid
         # oversubscription
-        max_n_thread_openmp = 16 if self.n_jobs is None else self.n_jobs
+        n_thread_openmp = 16 if self.n_threads is None else self.n_threads
         self._n_threads_openmp = _openmp_effective_n_threads(
-            n_threads=max_n_thread_openmp
+            n_threads=n_thread_openmp
         )
 
     def fit(self, X, y):
@@ -748,6 +748,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
+    n_threads : int, default=None
+        The number of OpenMP threads used when finding the best splits.
+        By default (`None`), we limit the number of OpenMP threads to 16.
+        `-1` means using a number of threads equal to the total number of
+        processors.
 
     Attributes
     ----------
@@ -788,7 +793,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, scoring=None, validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-7, verbose=0,
-                 random_state=None, n_jobs=None):
+                 random_state=None, n_threads=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -797,7 +802,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             warm_start=warm_start, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state, n_jobs=n_jobs)
+            random_state=random_state, n_threads=n_threads)
 
     def predict(self, X):
         """Predict values for X.
@@ -930,6 +935,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
+    n_threads : int, default=None
+        The number of OpenMP threads used when finding the best splits.
+        By default (`None`), we limit the number of OpenMP threads to 16.
+        `-1` means using a number of threads equal to the total number of
+        processors.
 
     Attributes
     ----------
@@ -971,7 +981,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, warm_start=False,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-7, verbose=0, random_state=None, n_jobs=None):
+                 tol=1e-7, verbose=0, random_state=None, n_threads=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
@@ -980,7 +990,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             warm_start=warm_start, scoring=scoring,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
-            random_state=random_state, n_jobs=n_jobs)
+            random_state=random_state, n_threads=n_threads)
 
     def predict(self, X):
         """Predict classes for X.
