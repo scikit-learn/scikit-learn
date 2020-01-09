@@ -656,15 +656,19 @@ def test_radius_neighbors_returns_array_of_objects():
     X.setdiag([0, 0, 0, 0])
 
     nbrs = neighbors.NearestNeighbors(radius=0.5, algorithm='auto',
-                                      leaf_size=30, metric='precomputed',
-                                      metric_params=None, p=2,
-                                      n_jobs=None).fit(X)
-    results = nbrs.radius_neighbors(X, return_distance=False)
+                                      leaf_size=30,
+                                      metric='precomputed').fit(X)
+    neigh_dist, neigh_ind = nbrs.radius_neighbors(X, return_distance=True)
 
-    expected = np.empty(X.shape[0], dtype=object)
-    expected[:] = [np.array([0]), np.array([1]), np.array([2]),
+    expected_dist = np.empty(X.shape[0], dtype=object)
+    expected_dist[:] = [np.array([0]), np.array([0]), np.array([0]),
+                        np.array([0])]
+    expected_ind = np.empty(X.shape[0], dtype=object)
+    expected_ind[:] = [np.array([0]), np.array([1]), np.array([2]),
                    np.array([3])]
-    assert_array_equal(results, expected)
+
+    assert_array_equal(neigh_dist, expected_dist)
+    assert_array_equal(neigh_ind, expected_ind)
 
 
 def test_RadiusNeighborsClassifier_multioutput():
