@@ -531,7 +531,7 @@ def test_voting_verbose(estimator, capsys):
     y = np.array([1, 1, 2, 2])
 
     pattern = (r'\[Voting\].*\(1 of 2\) Processing lr, total=.*\n'
-               r'\[Voting\].*\(1 of 2\) Processing rf, total=.*\n$')
+               r'\[Voting\].*\(2 of 2\) Processing rf, total=.*\n$')
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
