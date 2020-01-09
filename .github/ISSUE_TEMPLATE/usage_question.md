@@ -13,5 +13,6 @@ assignees: ''
 - **Gitter: https://gitter.im/scikit-learn/scikit-learn**
 - **For more information, see User Questions: http://scikit-learn.org/stable/support.html#user-question**
 
-We are going to automatically close this issue if this is not link to a bug or
-an enhancement.
+The issue tracker is used only to report issues and feature requests. For
+questions, please use either of the above platforms. Most question issues are
+closed without an answer on this issue tracker. Thanks for your understanding.
