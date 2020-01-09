@@ -351,8 +351,6 @@ METRICS_WITH_LABELS = {
     "roc_curve",
     "precision_recall_curve",
 
-    "hamming_loss",
-
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
 
