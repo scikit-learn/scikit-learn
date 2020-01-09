@@ -209,22 +209,20 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():
-    try:
-        import pandas as pd
-        if LooseVersion(pd.__version__) < '0.24.0':
-            return
-        df = pd.DataFrame()
-        for col in range(4):
-            arr = np.random.randn(10)
-            arr[:8] = 0
-            arr = pd.SparseArray(arr)
-            df[str(col)] = pd.SparseArray(arr, fill_value=0)
-        msg = "pandas Dataframe having sparse columns found."
-        with pytest.warns(UserWarning, match=msg):
-            reg = LinearRegression()
-            reg.fit(df[df.columns[0:2]], df[df.columns[3]])
-    except ImportError:
-        raise SkipTest("Pandas not found")
+    
+    pd = pytest.importorskip('pandas')
+    # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
+    if LooseVersion(pd.__version__) < '0.24.0':
+        return
+    df = pd.DataFrame()
+    for col in range(4):
+        arr = np.random.randn(10)
+        arr[:8] = 0
+        df[str(col)] = pd.arrays.SparseArray(arr, fill_value=0)
+    msg = "pandas Dataframe having sparse columns found."
+    with pytest.warns(UserWarning, match=msg):
+        reg = LinearRegression()
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
 
 def test_preprocess_data():

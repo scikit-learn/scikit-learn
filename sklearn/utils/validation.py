@@ -21,6 +21,8 @@ from inspect import signature, isclass, Parameter
 from numpy.core.numeric import ComplexWarning
 import joblib
 
+from contextlib import suppress
+
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
@@ -450,15 +452,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if pandas dataframe is sparse
-        try:
+        with supress(ImportError):
             from pandas.api.types import is_sparse
             if array.dtypes.apply(is_sparse).any():
                 warnings.warn(
                     "pandas Dataframe having sparse columns found."
                     "It will be inflated automatically."
                 )
-        except ImportError:
-            pass
 
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
