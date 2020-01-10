@@ -12,13 +12,14 @@ from scipy.special import expit
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
@@ -32,7 +33,8 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_min
-from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.datasets import make_low_rank_matrix
 
 
 def test_density():
@@ -646,5 +648,82 @@ def test_stable_cumsum():
 def test_safe_min():
     msg = ("safe_min is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         safe_min(np.ones(10))
+
+
+@pytest.mark.parametrize("A_array_constr", [np.array, sparse.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("B_array_constr", [np.array, sparse.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_safe_sparse_dot_2d(A_array_constr, B_array_constr):
+    rng = np.random.RandomState(0)
+
+    A = rng.random_sample((30, 10))
+    B = rng.random_sample((10, 20))
+    expected = np.dot(A, B)
+
+    A = A_array_constr(A)
+    B = B_array_constr(B)
+    actual = safe_sparse_dot(A, B, dense_output=True)
+
+    assert_allclose(actual, expected)
+
+
+def test_safe_sparse_dot_nd():
+    rng = np.random.RandomState(0)
+
+    # dense ND / sparse
+    A = rng.random_sample((2, 3, 4, 5, 6))
+    B = rng.random_sample((6, 7))
+    expected = np.dot(A, B)
+    B = sparse.csr_matrix(B)
+    actual = safe_sparse_dot(A, B)
+    assert_allclose(actual, expected)
+
+    # sparse / dense ND
+    A = rng.random_sample((2, 3))
+    B = rng.random_sample((4, 5, 3, 6))
+    expected = np.dot(A, B)
+    A = sparse.csr_matrix(A)
+    actual = safe_sparse_dot(A, B)
+    assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize("A_array_constr", [np.array, sparse.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_safe_sparse_dot_2d_1d(A_array_constr):
+    rng = np.random.RandomState(0)
+
+    B = rng.random_sample((10))
+
+    # 2D @ 1D
+    A = rng.random_sample((30, 10))
+    expected = np.dot(A, B)
+    A = A_array_constr(A)
+    actual = safe_sparse_dot(A, B)
+    assert_allclose(actual, expected)
+
+    # 1D @ 2D
+    A = rng.random_sample((10, 30))
+    expected = np.dot(B, A)
+    A = A_array_constr(A)
+    actual = safe_sparse_dot(B, A)
+    assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize("dense_output", [True, False])
+def test_safe_sparse_dot_dense_output(dense_output):
+    rng = np.random.RandomState(0)
+
+    A = sparse.random(30, 10, density=0.1, random_state=rng)
+    B = sparse.random(10, 20, density=0.1, random_state=rng)
+
+    expected = A.dot(B)
+    actual = safe_sparse_dot(A, B, dense_output=dense_output)
+
+    assert sparse.issparse(actual) == (not dense_output)
+
+    if dense_output:
+        expected = expected.toarray()
+    assert_allclose_dense_sparse(actual, expected)

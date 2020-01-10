@@ -62,7 +62,7 @@ Making a release
 2. On the branch for releasing, update the version number in
    sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
    when ready to release.
-   On master, increment the verson in the same place (when branching for
+   On master, increment the version in the same place (when branching for
    release).
 
 3. Create the tag and push it::
@@ -109,7 +109,8 @@ Making a release
        $ twine upload dist/*
 
 7. For major/minor (not bug-fix release), update the symlink for ``stable``
-   in https://github.com/scikit-learn/scikit-learn.github.io::
+   and the ``latestStable`` variable in
+   https://github.com/scikit-learn/scikit-learn.github.io::
 
        $ cd /tmp
        $ git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
@@ -118,6 +119,7 @@ Making a release
        $ git checkout master
        $ rm stable
        $ ln -s 0.999 stable
+       $ sed -i "s/latestStable = '.*/latestStable = '0.999';" versionwarning.js
        $ git commit -m "Update stable to point to 0.999" stable
        $ git push origin master
 
