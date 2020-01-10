@@ -941,8 +941,6 @@ class RadiusNeighborsMixin:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
                 neigh_dist_list = sum(neigh_dist_chunks, [])
                 neigh_ind_list = sum(neigh_ind_chunks, [])
-                # See https://github.com/numpy/numpy/issues/5456
-                # to understand why this is initialized this way.
                 neigh_dist = _to_object_array(neigh_dist_list)
                 neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
