@@ -1917,11 +1917,11 @@ class SVDD(OutlierMixin, BaseLibSVM):
     --------
     >>> from sklearn.svm import SVDD
     >>> X = [[0], [0.44], [0.45], [0.46], [1]]
-    >>> clf = OneClassSVM(gamma='auto').fit(X)
+    >>> clf = SVDD(gamma='auto').fit(X)
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)  # doctest: +ELLIPSIS
-    array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
+    array([0.5298..., 0.8047..., 0.8056..., 0.8061..., 0.4832...])
 
     References
     ----------
