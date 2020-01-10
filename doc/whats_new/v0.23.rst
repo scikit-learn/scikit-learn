@@ -23,7 +23,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- models come here
+- :class:`linear_model.RidgeClassifierCV` and :class:`linear_model.RidgeCV`
+  in case of tie |Fix|
 
 Details are listed in the changelog below.
 
@@ -88,9 +89,10 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
-- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel
+  when ``nu=np.inf``.
   :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -114,6 +116,11 @@ Changelog
   specific scoring strategy. Before the internal estimator outputs score
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
+
+- |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` and
+  :class:`linear_model.RidgeCV` where the most regularized model will be
+  returned in case of tie similarly to :class:`linear_model.LassoCV`.
+  :pr:`16029` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................

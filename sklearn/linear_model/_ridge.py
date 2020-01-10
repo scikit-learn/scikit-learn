@@ -1497,7 +1497,10 @@ class _RidgeGCV(LinearModel):
 
         best_coef, best_score, best_alpha = None, None, None
 
-        for i, alpha in enumerate(self.alphas):
+        # sort alphas in descending order to keep the model the most
+        # regularized in case of tie
+        sorted_alphas = np.sort(self.alphas)[::-1]
+        for i, alpha in enumerate(sorted_alphas):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
@@ -1601,7 +1604,10 @@ class _BaseRidgeCV(LinearModel):
             if self.store_cv_values:
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
-            parameters = {'alpha': self.alphas}
+            # sort alphas in descending order to keep the model the most
+            # regularized in case of tie
+            sorted_alphas = np.sort(self.alphas)[::-1]
+            parameters = {'alpha': sorted_alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(model(fit_intercept=self.fit_intercept,

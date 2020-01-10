@@ -749,21 +749,31 @@ def test_ridge_classifier_with_scoring(filter_, scoring, cv):
 
 @pytest.mark.parametrize("cv", [None, KFold(5)])
 @pytest.mark.parametrize("filter_", [DENSE_FILTER, SPARSE_FILTER])
-def test_ridge_regression_custom_scoring(filter_, cv):
+@pytest.mark.parametrize(
+    "Ridge, X, y",
+    [(RidgeCV, X_diabetes, y_diabetes),
+     (RidgeClassifierCV, X_iris, y_iris)]
+)
+def test_ridge_regression_custom_scoring(Ridge, X, y, filter_, cv):
     # check that custom scoring is working as expected
-    # check the tie breaking strategy (keep the first alpha tried)
+    # check the tie breaking strategy: keep the largest alpha corresponding to
+    # the most regularized model
 
     def _dummy_score(y_test, y_pred):
         return 0.42
 
+    rng = np.random.RandomState(42)
     alphas = np.logspace(-2, 2, num=5)
-    clf = RidgeClassifierCV(
+    rng.shuffle(alphas)
+    assert alphas.argmax() != 0
+
+    clf = Ridge(
         alphas=alphas, scoring=make_scorer(_dummy_score), cv=cv
     )
     clf.fit(filter_(X_iris), y_iris)
     assert clf.best_score_ == pytest.approx(0.42)
     # In case of tie score, the first alphas will be kept
-    assert clf.alpha_ == pytest.approx(alphas[0])
+    assert clf.alpha_ == pytest.approx(alphas.max())
 
 
 def _test_tolerance(filter_):
