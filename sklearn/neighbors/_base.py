@@ -24,7 +24,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
-from ..utils import to_object_array
+from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
