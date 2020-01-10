@@ -948,15 +948,12 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(neigh_ind_chunks, [])
                 # See https://github.com/numpy/numpy/issues/5456
                 # to understand why this is initialized this way.
-                neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
-                neigh_dist[:] = neigh_dist_list
-                neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
-                neigh_ind[:] = neigh_ind_list
+                neigh_dist = _to_object_array(neigh_dist_list)
+                neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
                 neigh_ind_list = sum(chunked_results, [])
-                results = np.empty(len(neigh_ind_list), dtype='object')
-                results[:] = neigh_ind_list
+                results = _to_object_array(neigh_ind_list)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
