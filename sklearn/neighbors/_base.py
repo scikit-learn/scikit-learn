@@ -24,6 +24,7 @@ from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
+from ..utils import to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -276,31 +277,13 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
-        neigh_dist = _to_object_array(np.split(data, indptr[1:-1]))
-    neigh_ind = _to_object_array(np.split(indices, indptr[1:-1]))
+        neigh_dist = to_object_array(np.split(data, indptr[1:-1]))
+    neigh_ind = to_object_array(np.split(indices, indptr[1:-1]))
 
     if return_distance:
         return neigh_dist, neigh_ind
     else:
         return neigh_ind
-
-
-def _to_object_array(sequence):
-    """Convert sequence to a 1-D NumPy array of object dtype.
-    
-    Parameters
-    ----------
-    sequence : array-like of shape (n_elements,)
-        The sequence to be converted
-        
-    Returns
-    -------
-    out : ndarray of shape (n_elements,), dtype=object
-        The converted sequence into a 1-D NumPy array of object dtype.
-    """
-    out = np.empty(len(sequence), dtype=object)
-    out[:] = sequence
-    return out
 
 
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
@@ -960,12 +943,12 @@ class RadiusNeighborsMixin:
                 neigh_ind_list = sum(neigh_ind_chunks, [])
                 # See https://github.com/numpy/numpy/issues/5456
                 # to understand why this is initialized this way.
-                neigh_dist = _to_object_array(neigh_dist_list)
-                neigh_ind = _to_object_array(neigh_ind_list)
+                neigh_dist = to_object_array(neigh_dist_list)
+                neigh_ind = to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
                 neigh_ind_list = sum(chunked_results, [])
-                results = _to_object_array(neigh_ind_list)
+                results = to_object_array(neigh_ind_list)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):

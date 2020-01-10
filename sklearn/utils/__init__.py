@@ -819,6 +819,33 @@ def tosequence(x):
         return list(x)
 
 
+def to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted
+
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import to_object_array
+    >>> to_object_array([np.array([0]), np.array([1])])
+    array([array([0]), array([1])], dtype=object)
+    >>> to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    """
+    out = np.empty(len(sequence), dtype=object)
+    out[:] = sequence
+    return out
+
+
 def indices_to_mask(indices, mask_length):
     """Convert list of indices to boolean mask.
 

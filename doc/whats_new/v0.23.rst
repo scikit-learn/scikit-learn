@@ -121,9 +121,9 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fixed bug in function _radius_neighbors_from_graph(), module 
-  neighbours._base.py. The fix ensures _radius_neighbors_from_graph()
-  will always return a numpy.array of objects.
+- |Fix| fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
   :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
   :user:`Alex Shacked <alexshacked>`.
 
