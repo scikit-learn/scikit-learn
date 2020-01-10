@@ -232,7 +232,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix whose i-th row and j-th column entry corresponds to the number
+        Confusion matrix whose i-th row and j-th column entry indicates the number
         of samples with true labels in i-th class and the prediced labels in j-th class.
 
     References
