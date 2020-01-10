@@ -1328,10 +1328,27 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
-def _validate_required_params(required_params, given_params):
-    required_params = set(required_params)
-    given_params = set(given_params)
-    if required_params != given_params:
+def _validate_required_props(obj, given_props, method):
+    try:
+        required_props = obj._get_expected_method_props(method)
+    except AttributeError:
+        required_props = []
+    required_props = set(required_props)
+    given_props = set(given_props.keys())
+    if required_props != given_props:
         raise ValueError("Requested properties are: {}, but {} "
-                         "provided".format(list(required_params),
-                                           list(given_params)))
+                         "provided".format(list(required_props),
+                                           list(given_props)))
+
+
+def _check_method_props(obj, props, method, validate=True):
+    props = {key: value for key, value in props.items() if value is not None}
+    if validate:
+        _validate_required_props(obj, props, method)
+    try:
+        required_props = obj._get_props_request_mapping(method)
+    except AttributeError:
+        required_props = {}
+    res = {key: props[value] for key, value
+           in required_props.items()}
+    return res

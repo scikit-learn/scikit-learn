@@ -33,7 +33,8 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted, _check_fit_params
+from ..utils.validation import (indexable, check_is_fitted, _check_fit_params,
+                                _check_method_props)
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -600,6 +601,28 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
+    def set_props_request(self, props):
+        """Raises an error, props_request should be set at the step level.
+        """
+        raise RuntimeError("Property requests should be set at the step "
+                           "level and not at the pipeline level.")
+
+    def get_props_request(self):
+        scorers, _ = _check_multimetric_scoring(
+            self.estimator, scoring=self.scoring)
+        objs = [self.estimator, self.cv]
+        objs.extend(scorers.values())
+        props = self._get_props_from_objs(objs)
+        if 'fit' not in props:
+            props['fit'] = []
+        if 'split' in props:
+            props['fit'].extend(props['split'])
+        if 'score' in props:
+            props['fit'].extend(props['score'])
+
+        props['fit'] = list(set(props['fit']))
+        return props
+
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -622,6 +645,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+        if groups is not None:
+            fit_params.update({'groups': groups})
+        fit_params = _check_method_props(self, fit_params, 'fit')
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 

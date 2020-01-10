@@ -156,7 +156,7 @@ class _PropsRequest:
         try:
             return self._props_request
         except AttributeError:
-            return None
+            return {}
 
     def set_props_request(self, props):
         """Set required data properties.
@@ -200,7 +200,7 @@ class _PropsRequest:
                 if isinstance(self._props_request[method], list):
                     self._props_request[method] = \
                         {x: x for x in self._props_request[method]}
-                self._props_request[method].update(props)
+                self._props_request[method].update(m_props)
             elif isinstance(m_props, list):
                 if isinstance(self._props_request[method], dict):
                     self._props_request[method].update({x: x for x in m_props})
@@ -222,9 +222,8 @@ class _PropsRequest:
 
     def _get_expected_method_props(self, method):
         try:
-            props = self.get_props_request()
-            m_props = props.get(method, {})
-            return list(set(m_props.values()))
+            props = self._get_props_request_mapping(method)
+            return list(set(props.keys()))
         except AttributeError:
             return []
 
@@ -237,6 +236,23 @@ class _PropsRequest:
         except AttributeError:
             pass
         return res
+
+    def _get_props_from_objs(self, objs):
+        props_request = {}
+        for obj in objs:
+            try:
+                step_props = obj.get_props_request()
+                for method in step_props:
+                    m_props = obj._get_props_request_mapping(method).values()
+                    if method not in props_request:
+                        props_request[method] = []
+                    props_request[method].extend(m_props)
+                    props_request[method] = list(set(props_request[method]))
+            except AttributeError:
+                warnings.warn("{} doesn't implement "
+                              "prop_request API".format(obj), UserWarning)
+                pass
+        return props_request
 
 
 class BaseEstimator(_PropsRequest):

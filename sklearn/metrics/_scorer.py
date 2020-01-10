@@ -44,7 +44,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor, _PropsRequest
-from ..utils.validation import _validate_required_params
+from ..utils.validation import _check_method_props
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -169,8 +169,7 @@ class _BaseScorer(_PropsRequest):
 
         if sample_weight is not None:
             kwargs.update({'sample_weight': sample_weight})
-        required_params = self._get_props_request_mapping('score').keys()
-        _validate_required_params(required_params, kwargs.keys())
+        kwargs = _check_method_props(self, kwargs, 'score')
 
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            **kwargs)
