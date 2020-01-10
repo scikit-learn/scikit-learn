@@ -529,7 +529,7 @@ class MDS(BaseEstimator):
                            euclidean_distances(y, squared=True)]])
         else:
             raise ValueError("Incorrect data_type specified")
-        
+
         def _oos_objective(dissimilarities_xy, dissimilarities_yy, x, y):
             """Constrained MSE between squaredmetric dissimilarity matrix and
             outer product of concatenated data.
@@ -539,7 +539,7 @@ class MDS(BaseEstimator):
             yy_norm = np.sum((dissimilarities_yy - np.dot(y, y.T))**2)
 
             return 2 * cross_norm + yy_norm
-        
+
         # Tau relates distance squared dissimilarity matrix to inner product.
         # Dissimilarity of self.X with itself already calculated
         # w ensures we maintain centroid wrt original dataset
@@ -552,5 +552,5 @@ class MDS(BaseEstimator):
         # Optimal solution
         init = init or np.ones((n_y, x.shape[1]))
         y_hat = minimize(_obj, x0=init, method='BFGS').x
-        
+
         return y_hat.reshape(-1, x.shape[1])
