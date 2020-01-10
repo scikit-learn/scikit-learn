@@ -702,7 +702,7 @@ Changelog
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
-  :pr:`12789` and :pr:`15274` by
+  :pr:`12789` and :pr:`15274` by 
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 
@@ -791,15 +791,9 @@ Changelog
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
-
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has `predict_proba`
   as property and can be checked with `hasattr`.
   :issue:`15488` :pr:`15490` by :user:`Rebekah Kim <rebekahkim>`
-
-- |Fix| :func:`multioutput.ClassifierChain.decision_function` and
-  :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
-  ``n_outputs`` arrays of shape `(n_samples, n_classes)`. :pr:`14654` by
-  :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.naive_bayes`
 ...............................
@@ -849,7 +843,6 @@ Changelog
   :class:`neural_network.MLPClassifier` to give control over
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
->>>>>>> master
 
 :mod:`sklearn.pipeline`
 .......................

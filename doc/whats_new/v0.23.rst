@@ -80,7 +80,7 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -117,6 +117,14 @@ Changelog
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
   :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+
+  :mod:`sklearn.multioutput`
+  ..............................
+
+- |Fix| :func:`multioutput.ClassifierChain.decision_function` and
+  :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
+  ``n_outputs`` arrays of shape `(n_samples, n_classes)`. :pr:`14654` by
+  :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.preprocessing`
 ............................
