@@ -434,7 +434,7 @@ def test_multilabel_binarizer_same_length_sequence():
 
 
 def test_multilabel_binarizer_non_integer_labels():
-    tuple_classes = to_object_array([(1,), (2,), (3,)])
+    tuple_classes = _to_object_array([(1,), (2,), (3,)])
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
         ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),
