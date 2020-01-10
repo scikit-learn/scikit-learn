@@ -2,11 +2,11 @@ import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
                                    assert_warns)
 from sklearn.datasets import load_linnerud
-from sklearn.cross_decomposition import _pls_ as pls_
+from sklearn.cross_decomposition import _pls as pls_
 from sklearn.cross_decomposition import CCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
@@ -426,7 +426,6 @@ def test_pls_errors():
                              clf.fit, X, Y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls_scaling():
     # sanity check for scale=True
     n_samples = 1000

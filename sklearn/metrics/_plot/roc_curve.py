@@ -1,7 +1,9 @@
 from .. import auc
 from .. import roc_curve
 
+from .base import _check_classifer_response_method
 from ...utils import check_matplotlib_support
+from ...base import is_classifier
 
 
 class RocCurveDisplay:
@@ -101,7 +103,7 @@ class RocCurveDisplay:
         return self
 
 
-def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
+def plot_roc_curve(estimator, X, y, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.
@@ -120,11 +122,6 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     y : array-like of shape (n_samples,)
         Target values.
-
-    pos_label : int or str, default=None
-        The label of the positive class.
-        When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
-        `pos_label` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -168,30 +165,22 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    if response_method not in ("predict_proba", "decision_function", "auto"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function' or 'auto'")
+    classification_error = ("{} should be a binary classifer".format(
+        estimator.__class__.__name__))
+    if not is_classifier(estimator):
+        raise ValueError(classification_error)
 
-    if response_method != "auto":
-        prediction_method = getattr(estimator, response_method, None)
-        if prediction_method is None:
-            raise ValueError(
-                "response method {} is not defined".format(response_method))
-    else:
-        predict_proba = getattr(estimator, 'predict_proba', None)
-        decision_function = getattr(estimator, 'decision_function', None)
-        prediction_method = predict_proba or decision_function
-
-        if prediction_method is None:
-            raise ValueError('response methods not defined')
-
+    prediction_method = _check_classifer_response_method(estimator,
+                                                         response_method)
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:
-        if y_pred.shape[1] > 2:
-            raise ValueError("Estimator should solve a "
-                             "binary classification problem")
-        y_pred = y_pred[:, 1]
+        if y_pred.shape[1] != 2:
+            raise ValueError(classification_error)
+        else:
+            y_pred = y_pred[:, 1]
+
+    pos_label = estimator.classes_[1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)

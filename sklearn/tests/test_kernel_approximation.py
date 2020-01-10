@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler

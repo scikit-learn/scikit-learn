@@ -9,9 +9,9 @@ import pytest
 
 from scipy import sparse
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift

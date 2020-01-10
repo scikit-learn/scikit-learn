@@ -8,7 +8,7 @@ from sklearn.neighbors._kd_tree import (KDTree, NeighborsHeap,
                                         nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 DIMENSION = 3
 

@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+@pytest.mark.filterwarnings(
+  "ignore::FutureWarning")
 def test_hungarian():
     from sklearn.utils.linear_assignment_ import _hungarian
     matrices = [

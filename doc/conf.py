@@ -16,6 +16,7 @@ import sys
 import os
 import warnings
 import re
+from packaging.version import parse
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -50,6 +51,7 @@ numpydoc_class_members_toctree = False
 if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
     imgmath_image_format = 'svg'
+    mathjax_path = ''
 else:
     extensions.append('sphinx.ext.mathjax')
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
@@ -85,7 +87,8 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 #
 # The short X.Y version.
 import sklearn
-version = sklearn.__version__
+version = parse(sklearn.__version__).base_version
+version = ".".join(version.split(".")[:2])
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 
@@ -198,6 +201,8 @@ html_use_index = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'scikit-learndoc'
 
+# If true, the reST sources are included in the HTML build as _sources/name.
+html_copy_source = True
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -243,17 +248,16 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
-if 'dev' in version:
+v = parse(release)
+if v.release is None:
+    raise ValueError(
+        'Ill-formed version: {!r}. Version should follow '
+        'PEP440'.format(version))
+
+if v.is_devrelease:
     binder_branch = 'master'
 else:
-    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
-    if match is None:
-        raise ValueError(
-            'Ill-formed version: {!r}. Expected either '
-            "a version containing 'dev' "
-            'or a version like X.Y or X.Y.Z.'.format(version))
-
-    major, minor = match.groups()
+    major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
 
 
@@ -302,7 +306,9 @@ sphinx_gallery_conf = {
         'branch': binder_branch,
         'dependencies': './binder/requirements.txt',
         'use_jupyter_lab': True
-    }
+    },
+    # avoid generating too many cross links
+    'inspect_global_variables': False,
 }
 
 
@@ -333,6 +339,27 @@ def make_carousel_thumbs(app, exception):
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
+def filter_search_index(app, exception):
+    if exception is not None:
+        return
+
+    # searchindex only exist when generating html
+    if app.builder.name != 'html':
+        return
+
+    print('Removing methods from search index')
+
+    searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
+    with open(searchindex_path, 'r') as f:
+        searchindex_text = f.read()
+
+    searchindex_text = re.sub(r'{__init__.+?}', '{}', searchindex_text)
+    searchindex_text = re.sub(r'{__call__.+?}', '{}', searchindex_text)
+
+    with open(searchindex_path, 'w') as f:
+        f.write(searchindex_text)
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -342,6 +369,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 def setup(app):
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
+    app.connect('build-finished', filter_search_index)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github

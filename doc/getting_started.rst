@@ -56,7 +56,7 @@ new data. You don't need to re-train the estimator::
 Transformers and pre-processors
 -------------------------------
 
-Machine learning worflows are often composed of different parts. A typical
+Machine learning workflows are often composed of different parts. A typical
 pipeline consists of a pre-processing step that transforms or imputes the
 data, and a final predictor that predicts target values.
 
@@ -77,7 +77,7 @@ Sometimes, you want to apply different transformations to different features:
 the :ref:`ColumnTransformer<column_transformer>` is designed for these
 use-cases.
 
-Pipelines: chaining pre-preocessors and estimators
+Pipelines: chaining pre-processors and estimators
 --------------------------------------------------
 
 Transformers and estimators (predictors) can be combined together into a

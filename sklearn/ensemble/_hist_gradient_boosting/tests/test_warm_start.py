@@ -93,14 +93,15 @@ def test_warm_start_max_depth(GradientBoosting, X, y):
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
-def test_warm_start_early_stopping(GradientBoosting, X, y):
+@pytest.mark.parametrize('scoring', (None, 'loss'))
+def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
     # Make sure that early stopping occurs after a small number of iterations
     # when fitting a second time with warm starting.
 
     n_iter_no_change = 5
     gb = GradientBoosting(
         n_iter_no_change=n_iter_no_change, max_iter=10000,
-        random_state=42, warm_start=True, tol=1e-3
+        random_state=42, warm_start=True, tol=1e-3, scoring=scoring,
     )
     gb.fit(X, y)
     n_iter_first_fit = gb.n_iter_

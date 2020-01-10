@@ -5,8 +5,8 @@ import sys
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_less
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_less
 
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)

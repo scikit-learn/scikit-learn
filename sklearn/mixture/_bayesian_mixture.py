@@ -140,14 +140,14 @@ class BayesianGaussianMixture(BaseMixture):
 
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
-        Controls the extend to where means can be placed. Larger
-        values concentrate the means of each clusters around `mean_prior`.
+        Controls the extent of where means can be placed. Larger
+        values concentrate the cluster means around `mean_prior`.
         The value of the parameter must be greater than 0.
-        If it is None, it's set to 1.
+        If it is None, it is set to 1.
 
     mean_prior : array-like, shape (n_features,), optional
         The prior on the mean distribution (Gaussian).
-        If it is None, it's set to the mean of X.
+        If it is None, it is set to the mean of X.
 
     degrees_of_freedom_prior : float | None, optional.
         The prior of the number of degrees of freedom on the covariance
@@ -257,11 +257,12 @@ class BayesianGaussianMixture(BaseMixture):
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet).
 
-    mean_precision_prior : float
+    mean_precision_prior_ : float
         The precision prior on the mean distribution (Gaussian).
-        Controls the extend to where means can be placed.
-        Larger values concentrate the means of each clusters around
-        `mean_prior`.
+        Controls the extent of where means can be placed.
+        Larger values concentrate the cluster means around `mean_prior`.
+        If mean_precision_prior is set to None, `mean_precision_prior_` is set
+        to 1.
 
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).

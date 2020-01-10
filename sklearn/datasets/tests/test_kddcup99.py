@@ -7,7 +7,7 @@ scikit-learn data folder.
 
 from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from functools import partial
 
 
