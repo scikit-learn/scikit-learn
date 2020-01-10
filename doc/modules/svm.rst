@@ -831,17 +831,17 @@ where :math:`+1` indicates an inliner and :math:`-1` an outlier.
 
 The parameter :math:`\nu\in(0,1]` determines the fraction of outliers
 in the training dataset. More technically :math:`\nu` is:
-  * an upper bound on the fraction of the training points lying outside
-    the estimated region;
 
-  * a lower bound on the fraction of support vectors.
+  - an upper bound on the fraction of the training points lying outside
+    the estimated region;
+  - a lower bound on the fraction of support vectors.
 
 .. topic:: References:
 
-  * `Estimating the support of a high-dimensional distribution
-    <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
-    Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
-    doi:10.1162/089976601750264965
+ * `Estimating the support of a high-dimensional distribution
+   <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
+   Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+   doi:10.1162/089976601750264965
 
 
 .. _svm_svdd:
@@ -945,14 +945,14 @@ for a particular family of kernels (see :ref:`outlier_detection_ocsvm_vs_svdd`).
 
 .. topic:: References:
 
-  * `Support vector data description
-    <http://dx.doi.org/10.1023/B:MACH.0000008084.60811.49>`_
-    Tax, and Duin. Machine learning, 54(1) (2004), pp.45-66.
+ * `Support vector data description
+   <http://dx.doi.org/10.1023/B:MACH.0000008084.60811.49>`_
+   Tax, and Duin. Machine learning, 54(1) (2004), pp.45-66.
 
-  * `A revisit to support vector data description (SVDD).
-    <http://w.csie.org/~cjlin/papers/svdd.pdf>`_ Chang, Lee,
-    and Lin. Technical Report (2013), Dept. of Computer Science,
-    National Taiwan University.
+ * `A revisit to support vector data description (SVDD).
+   <http://w.csie.org/~cjlin/papers/svdd.pdf>`_ Chang, Lee,
+   and Lin. Technical Report (2013), Dept. of Computer Science,
+   National Taiwan University.
 
 
 .. _svm_implementation_details:
