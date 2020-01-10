@@ -478,20 +478,16 @@ if metric=’precomputed’.
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
     # This implementation is O(n lg n) theoretically.
-
-    Heap = []
-    for ordering_idx in range(X.shape[0]):
-        Heap.append((np.inf, ordering_idx))
-
-    heapq.heapify(Heap)
+    heap = [(np.inf, ordering_idx) for ordering_idx in range(X.shape[0])]
+    heapq.heapify(heap)
     processed = np.zeros(X.shape[0], dtype=bool)
     ordering = np.zeros(X.shape[0], dtype=int)
     for ordering_idx in range(X.shape[0]):
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
-        (val, point) = heapq.heappop(Heap)
+        val, point = heapq.heappop(heap)
         while processed[point]:
-            (val, point) = heapq.heappop(Heap)
+            val, point = heapq.heappop(heap)
 
         processed[point] = True
         ordering[ordering_idx] = point
@@ -502,7 +498,7 @@ if metric=’precomputed’.
                             point_index=point,
                             processed=processed, X=X, nbrs=nbrs,
                             metric=metric, metric_params=metric_params,
-                            p=p, max_eps=max_eps, Heap=Heap)
+                            p=p, max_eps=max_eps, heap=heap)
     if np.all(np.isinf(reachability_)):
         warnings.warn("All reachability values are inf. Set a larger"
                       " max_eps or all data will be considered outliers.",
@@ -512,7 +508,7 @@ if metric=’precomputed’.
 
 def _set_reach_dist(core_distances_, reachability_, predecessor_,
                     point_index, processed, X, nbrs, metric, metric_params,
-                    p, max_eps, Heap):
+                    p, max_eps, heap):
     P = X[point_index:point_index + 1]
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
@@ -542,7 +538,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
     rdists = np.maximum(dists, core_distances_[point_index])
     improved = np.where(rdists < np.take(reachability_, unproc))
     for idx in improved[0]:
-        heapq.heappush(Heap, (rdists[idx], unproc[idx]))
+        heapq.heappush(heap, (rdists[idx], unproc[idx]))
 
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
