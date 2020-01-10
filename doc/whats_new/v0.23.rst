@@ -67,6 +67,14 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, now
+   currently exclusively chooses the components that explains the variance
+   greater than `n_components`. :pr:`15669` by
+   :user:`Krishna Chaitanya <krishnachaitanya9>`
+
 :mod:`sklearn.feature_extraction`
 .................................
 
