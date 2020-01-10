@@ -72,7 +72,8 @@ def clone(estimator, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object.set_props_request(estimator.get_props_request())
+        new_object.set_props_request(None).set_props_request(
+            estimator.get_props_request())
     except AttributeError:
         pass
     except RuntimeError:
