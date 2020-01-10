@@ -122,11 +122,12 @@ def test_MDS_transform_precomputed():
     data_new = np.array([[.5, .5]])
     
     # Squared distances with additional center point
-    sim_oos = euclidean_distances(np.concatenate([data_true, data_new]), squared=True)
+    sim_oos = euclidean_distances(np.concatenate([data_true, data_new]),
+                                  squared=True)
 
     data_new_embed = clf.transform(np.sqrt(sim_oos), data_type='dissimilarity')
-    sim_embed = euclidean_distances(np.concatenate([data_embed, data_new_embed]),
-                                    squared=True)
+    data_embed_all = np.concatenate([data_embed, data_new_embed])
+    sim_embed = euclidean_distances(data_embed_all, squared=True)
 
     assert_array_almost_equal(sim_oos[:, -1:], sim_embed[:, -1:], decimal=1)
     assert_array_almost_equal(sim_oos[-1:, :], sim_embed[-1:, :], decimal=1)

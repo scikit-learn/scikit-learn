@@ -295,9 +295,9 @@ def _tau(w, A):
     n = A.shape[0]
     e = np.ones(n)[:, np.newaxis]
     P1 = np.eye(n) - np.dot(e, w.T)/np.dot(e.T, w)
-    P2 = np.eye(n) - np.dot(w, e.T)/np.dot(e.T ,w)
-    
+    P2 = np.eye(n) - np.dot(w, e.T)/np.dot(e.T, w)
     return -0.5 * np.matmul(np.matmul(P1, A), P2)
+
 
 class MDS(BaseEstimator):
     """Multidimensional scaling
@@ -501,10 +501,8 @@ class MDS(BaseEstimator):
         Systems December 2003 Pages 177-184
         """
         y = check_array(y)
-
         n_x = self.dissimilarity_matrix_.shape[0]
-        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x
-        
+        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x        
         if self.dissimilarity == 'precomputed':
             # No in-sample data was given, we use self.embedding_ to
             # approximate data set from which to extend
@@ -534,27 +532,26 @@ class MDS(BaseEstimator):
             raise ValueError("Incorrect data_type specified")
         
         def _oos_objective(dissimilarities_xy, dissimilarities_yy, x, y):
-            """
-            Constrained MSE between squaredmetric dissimilarity matrix and
+            """Constrained MSE between squaredmetric dissimilarity matrix and
             outer product of concatenated data.
             """
             y = y.reshape(-1, x.shape[1])
             cross_norm = np.sum((dissimilarities_xy - np.dot(x, y.T))**2)
             yy_norm = np.sum((dissimilarities_yy - np.dot(y, y.T))**2)
+            
             return 2 * cross_norm + yy_norm
-
+        
         # Tau relates distance squared dissimilarity matrix to inner product.
         # Dissimilarity of self.X with itself already calculated
         # w ensures we maintain centroid wrt original dataset
         w = np.concatenate([np.ones(n_x), np.zeros(n_y)])[:, np.newaxis]
         B = _tau(w, A)
-        
         dissimilarities_xy = B[:n_x, -n_y:]
         dissimilarities_yy = B[-n_y:, -n_y:]
-        _obj = partial(_oos_objective, dissimilarities_xy, dissimilarities_yy, x)
-
+        _obj = partial(_oos_objective, dissimilarities_xy,
+                       dissimilarities_yy, x)
         # Optimal solution
         init = init or np.ones((n_y, x.shape[1]))
         y_hat = minimize(_obj, x0=init, method='BFGS').x
-
+        
         return y_hat.reshape(-1, x.shape[1])
