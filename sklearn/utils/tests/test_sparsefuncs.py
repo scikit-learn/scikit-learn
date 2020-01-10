@@ -17,8 +17,8 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
                                             inplace_csr_row_normalize_l2)
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_allclose
 
 
 def test_mean_variance_axis0():

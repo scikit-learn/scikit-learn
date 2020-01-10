@@ -1,15 +1,14 @@
-import pickle
 import itertools
 
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
-                                         simultaneous_sort, kernel_norm,
-                                         nodeheap_sort, DTYPE, ITYPE)
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors._ball_tree import (BallTree, NeighborsHeap,
+                                          simultaneous_sort, kernel_norm,
+                                          nodeheap_sort, DTYPE, ITYPE)
+from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 rng = np.random.RandomState(10)
 V_mahalanobis = rng.rand(3, 3)
@@ -43,27 +42,6 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     ind = np.argsort(D, axis=1)[:, :k]
     dist = D[np.arange(Y.shape[0])[:, None], ind]
     return dist, ind
-
-
-@pytest.mark.parametrize('metric', METRICS)
-@pytest.mark.parametrize('k', (1, 3, 5))
-@pytest.mark.parametrize('dualtree', (True, False))
-@pytest.mark.parametrize('breadth_first', (True, False))
-def test_ball_tree_query(metric, k, dualtree, breadth_first):
-    rng = check_random_state(0)
-    X = rng.random_sample((40, DIMENSION))
-    Y = rng.random_sample((10, DIMENSION))
-
-    kwargs = METRICS[metric]
-
-    bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
-    dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
-                           breadth_first=breadth_first)
-    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
-
-    # don't check indices here: if there are any duplicate distances,
-    # the indices may not match.  Distances should not have this problem.
-    assert_array_almost_equal(dist1, dist2)
 
 
 @pytest.mark.parametrize('metric',
@@ -201,37 +179,6 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
         check_two_point(r, dualtree)
 
 
-def test_ball_tree_pickle():
-    rng = check_random_state(0)
-    X = rng.random_sample((10, 3))
-
-    bt1 = BallTree(X, leaf_size=1)
-    # Test if BallTree with callable metric is picklable
-    bt1_pyfunc = BallTree(X, metric=dist_func, leaf_size=1, p=2)
-
-    ind1, dist1 = bt1.query(X)
-    ind1_pyfunc, dist1_pyfunc = bt1_pyfunc.query(X)
-
-    def check_pickle_protocol(protocol):
-        s = pickle.dumps(bt1, protocol=protocol)
-        bt2 = pickle.loads(s)
-
-        s_pyfunc = pickle.dumps(bt1_pyfunc, protocol=protocol)
-        bt2_pyfunc = pickle.loads(s_pyfunc)
-
-        ind2, dist2 = bt2.query(X)
-        ind2_pyfunc, dist2_pyfunc = bt2_pyfunc.query(X)
-
-        assert_array_almost_equal(ind1, ind2)
-        assert_array_almost_equal(dist1, dist2)
-
-        assert_array_almost_equal(ind1_pyfunc, ind2_pyfunc)
-        assert_array_almost_equal(dist1_pyfunc, dist2_pyfunc)
-
-        assert isinstance(bt2, BallTree)
-
-    for protocol in (0, 1, 2):
-        check_pickle_protocol(protocol)
 
 
 def test_neighbors_heap(n_pts=5, n_nbrs=10):

@@ -1,5 +1,13 @@
 ﻿.. _roadmap:
 
+.. |ss| raw:: html
+
+   <strike>
+
+.. |se| raw:: html
+
+   </strike>
+
 Roadmap
 =======
 
@@ -54,40 +62,44 @@ Architectural / general goals
 -----------------------------
 The list is numbered not as an indication of the order of priority, but to
 make referring to specific points easier. Please add new entries only at the
-bottom.
+bottom. Note that the crossed out entries are already done, and we try to keep
+the document up to date as we work on these issues.
 
-#. Everything in Scikit-learn should conform to our API contract
 
-   * `Pipeline <pipeline.Pipeline>` and `FeatureUnion` modify their input
-     parameters in fit. Fixing this requires making sure we have a good
-     grasp of their use cases to make sure all current functionality is
-     maintained. :issue:`8157` :issue:`7382`
-
-#. Improved handling of Pandas DataFrames and SparseDataFrames
+#. Improved handling of Pandas DataFrames
 
    * document current handling
    * column reordering issue :issue:`7242`
    * avoiding unnecessary conversion to ndarray :issue:`12147`
    * returning DataFrames from transformers :issue:`5523`
-   * getting DataFrames from dataset loaders :issue:`10733`, :issue:`13902`
+   * getting DataFrames from dataset loaders :issue:`10733`,
+     |ss| :issue:`13902` |se|
    * Sparse currently not considered :issue:`12800`
 
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
-     features :issue:`4899`
-   * In dataset loaders :issue:`13902`
+     features :issue:`12866` and :issue:`15550`.
+   * |ss| In dataset loaders :issue:`13902` |se|
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
      encoding supervised by correlation with target variable) :issue:`5853`,
      :issue:`11805`
+   * Handling mixtures of categorical and continuous variables
 
 #. Improved handling of missing data
 
-   * Making sure meta-estimators are lenient towards missing data
-   * Non-trivial imputers :issue:`11977`, :issue:`12852`
-   * Learners directly handling missing data :issue:`13911`
+   * Making sure meta-estimators are lenient towards missing data,
+     :issue:`15319`
+   * Non-trivial imputers |ss| :issue:`11977`, :issue:`12852` |se|
+   * Learners directly handling missing data |ss| :issue:`13911` |se|
    * An amputation sample generator to make parts of a dataset go missing
-   * Handling mixtures of categorical and continuous variables
+     :issue:`6284`
+
+#. More didactic documentation
+
+   * More and more options have been added to scikit-learn. As a result, the
+     documentation is crowded which makes it hard for beginners to get the big
+     picture. Some work could be done in prioritizing the information.
 
 #. Passing around information that is not (X, y): Sample properties
 
@@ -114,7 +126,7 @@ bottom.
 
    * More flexible estimator checks that do not select by estimator name
      :issue:`6599` :issue:`6715`
-   * Example of how to develop a meta-estimator
+   * Example of how to develop an estimator or a meta-estimator, :issue:`14582`
    * More self-sufficient running of scikit-learn-contrib or a similar resource
 
 #. Support resampling and sample reduction
@@ -124,12 +136,13 @@ bottom.
 
 #. Better interfaces for interactive development
 
-   * __repr__ and HTML visualisations of estimators :issue:`6323`
+   * |ss| __repr__ |se| and HTML visualisations of estimators
+     |ss| :issue:`6323` |se| and :pr:`14180`.
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
 
-   * alternative feature importances implementations, :issue:`13146`
+   * |ss| alternative feature importances implementations, :issue:`13146` |se|
    * better ways to handle validation sets when fitting
    * better ways to find thresholds / create decision rules :issue:`8614`
 
@@ -138,31 +151,29 @@ bottom.
    * Grid search and cross validation are not applicable to most clustering
      tasks. Stability-based selection is more relevant.
 
-#. Improved tracking of fitting
-
-   * Verbose is not very friendly and should use a standard logging library
-     :issue:`6929`
-   * Callbacks or a similar system would facilitate logging and early stopping
-
-#. Distributed parallelism
-
-   * Joblib can now plug onto several backends, some of them can distribute the
-     computation across computers
-   * However, we want to stay high level in scikit-learn
-
-#. A way forward for more out of core
-
-   * Dask enables easy out-of-core computation. While the dask model probably
-     cannot be adaptable to all machine-learning algorithms, most machine
-     learning is on smaller data than ETL, hence we can maybe adapt to very
-     large scale while supporting only a fraction of the patterns.
-
 #. Better support for manual and automatic pipeline building
 
    * Easier way to construct complex pipelines and valid search spaces
      :issue:`7608` :issue:`5082` :issue:`8243`
    * provide search ranges for common estimators??
    * cf. `searchgrid <https://searchgrid.readthedocs.io/en/latest/>`_
+
+#. Improved tracking of fitting
+
+   * Verbose is not very friendly and should use a standard logging library
+     :issue:`6929`, :issue:`78`
+   * Callbacks or a similar system would facilitate logging and early stopping
+
+#. Distributed parallelism
+
+   * Accept data which complies with ``__array_function__``
+
+#. A way forward for more out of core
+
+   * Dask enables easy out-of-core computation. While the Dask model probably
+     cannot be adaptable to all machine-learning algorithms, most machine
+     learning is on smaller data than ETL, hence we can maybe adapt to very
+     large scale while supporting only a fraction of the patterns.
 
 #. Support for working with pre-trained models
 
@@ -198,6 +209,15 @@ bottom.
        recover the previous predictive performance: if this is not the case
        there is probably a bug in scikit-learn that needs to be reported.
 
+#. Everything in Scikit-learn should probably conform to our API contract.
+   We are still in the process of making decisions on some of these related
+   issues.
+
+   * `Pipeline <pipeline.Pipeline>` and `FeatureUnion` modify their input
+     parameters in fit. Fixing this requires making sure we have a good
+     grasp of their use cases to make sure all current functionality is
+     maintained. :issue:`8157` :issue:`7382`
+
 #. (Optional) Improve scikit-learn common tests suite to make sure that (at
    least for frequently used) models have stable predictions across-versions
    (to be discussed);
@@ -210,30 +230,26 @@ bottom.
      model and good practices for re-training on fresh data without causing
      catastrophic predictive performance regressions.
 
-#. More didactic documentation
-
-   * More and more options have been added to scikit-learn. As a result, the
-     documentation is crowded which makes it hard for beginners to get the big
-     picture. Some work could be done in prioritizing the information.
 
 Subpackage-specific goals
 -------------------------
+
+:mod:`sklearn.ensemble`
+
+* |ss| a stacking implementation, :issue:`11047` |se|
 
 :mod:`sklearn.cluster`
 
 * kmeans variants for non-Euclidean distances, if we can show these have
   benefits beyond hierarchical clustering.
 
-:mod:`sklearn.ensemble`
-
-* a stacking implementation
-
 :mod:`sklearn.model_selection`
 
-* multi-metric scoring is slow :issue:`9326`
+* |ss| multi-metric scoring is slow :issue:`9326` |se|
 * perhaps we want to be able to get back more than multiple metrics
 * the handling of random states in CV splitters is a poor design and
-  contradicts the validation of similar parameters in estimators.
+  contradicts the validation of similar parameters in estimators,
+  :issue:`15177`
 * exploit warm-starting and path algorithms so the benefits of `EstimatorCV`
   objects can be accessed via `GridSearchCV` and used in Pipelines.
   :issue:`1626`
@@ -245,9 +261,9 @@ Subpackage-specific goals
 
 :mod:`sklearn.neighbors`
 
-* Ability to substitute a custom/approximate/precomputed nearest neighbors
+* |ss| Ability to substitute a custom/approximate/precomputed nearest neighbors
   implementation for ours in all/most contexts that nearest neighbors are used
-  for learning. :issue:`10463`
+  for learning. :issue:`10463` |se|
 
 :mod:`sklearn.pipeline`
 
