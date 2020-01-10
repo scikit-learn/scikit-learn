@@ -819,7 +819,7 @@ def tosequence(x):
         return list(x)
 
 
-def to_object_array(sequence):
+def _to_object_array(sequence):
     """Convert sequence to a 1-D NumPy array of object dtype.
 
     Parameters
