@@ -515,6 +515,7 @@ Solver_MCSVM_CS::~Solver_MCSVM_CS()
 {
 	delete[] B;
 	delete[] G;
+	delete[] C;
 }
 
 int compare_double(const void *a, const void *b)
