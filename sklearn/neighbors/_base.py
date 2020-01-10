@@ -286,6 +286,18 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
 
 def _to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+    
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted
+        
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+    """
     out = np.empty(len(sequence), dtype=object)
     out[:] = sequence
     return out
