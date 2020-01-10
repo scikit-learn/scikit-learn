@@ -835,10 +835,10 @@ def _to_object_array(sequence):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.utils import to_object_array
-    >>> to_object_array([np.array([0]), np.array([1])])
+    >>> from sklearn.utils import _to_object_array
+    >>> _to_object_array([np.array([0]), np.array([1])])
     array([array([0]), array([1])], dtype=object)
-    >>> to_object_array([np.array([0]), np.array([1, 2])])
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
     array([array([0]), array([1, 2])], dtype=object)
     """
     out = np.empty(len(sequence), dtype=object)
