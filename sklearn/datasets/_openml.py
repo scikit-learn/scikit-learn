@@ -453,6 +453,10 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
+
+    # Note that if the data is dense, no reading is done until the data
+    # generator is iterated.
+
     url = _DATA_FILE.format(file_id)
 
     @_retry_with_clean_cache(url, data_home)
@@ -467,7 +471,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
                                 for line in response),
                                encode_nominal=encode_nominal,
                                return_type=return_type)
-        return arff_file
+        return response, arff_file
 
     return _arff_load()
 
@@ -733,8 +737,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         shape = None
 
     # obtain the data
-    arff = _download_data_arff(data_description['file_id'], return_sparse,
-                               data_home, encode_nominal=not as_frame)
+    fp, arff = _download_data_arff(data_description['file_id'], return_sparse,
+                                   data_home, encode_nominal=not as_frame)
 
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
@@ -784,6 +788,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             y = y.reshape((-1,))
         elif y.shape[1] == 0:
             y = None
+
+    fp.close()  # explicitly close HTTP connection after parsing
 
     if return_X_y:
         return X, y
