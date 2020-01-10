@@ -696,7 +696,7 @@ def test_categoricalnb():
 
 
 def test_unseen_categories_at_predict():
-    X_train = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    X_train = np.array([[0, 0], [0, 1], [0, 0], [3, 1]])
     y_train = np.array([1, 1, 2, 2])
     X_test = np.array([[2, 0]])
 
