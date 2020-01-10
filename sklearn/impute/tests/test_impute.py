@@ -1070,27 +1070,30 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 
 
 @pytest.mark.parametrize(
-    "rs_imputer, rs_estimator, rs_expect",
-    [(None, None, None), (401, None, 401),
+    "rs_imputer, rs_estimator, expect_in_fit",
+    [(None, None, None),
+     (401, None, 401),
      (np.random.RandomState(seed=402), None, "RandomState"),
-     (None, 403, 403), (404, 405, 405),
+     (None, 403, 403),
+     (404, 405, 405),
      (np.random.RandomState(seed=406), 407, 407),
-     (None, "string", "string"), (408, "string", "string"),
+     (None, "string", "string"),
+     (408, "string", "string"),
      (np.random.RandomState(seed=409), "string", "string")]
 )
 def test_iterative_imputer_set_estimator_random_state(
-    rs_imputer, rs_estimator, rs_expect
+    rs_imputer, rs_estimator, expect_in_fit
 ):
     class ZeroPredictor(BaseEstimator):
-        def __init__(self, random_state=None, rs_expect="None"):
-            self.rs_expect = rs_expect
+        def __init__(self, random_state=None, expect_in_fit=None):
+            self.expect_in_fit = expect_in_fit
             self.random_state = random_state
 
         def fit(self, X, y):
-            if self.rs_expect == "RandomState":
+            if self.expect_in_fit == "RandomState":
                 assert isinstance(self.random_state, np.random.RandomState)
             else:
-                assert self.random_state == self.rs_expect
+                assert self.random_state == self.expect_in_fit
 
         def predict(self, X):
             return np.zeros(X.shape[0])
@@ -1098,7 +1101,7 @@ def test_iterative_imputer_set_estimator_random_state(
     X = np.ones((10, 3), dtype=float)
     X[[1, 2, 3], 0] = np.nan
     X[[4, 5, 6], 1] = np.nan
-    estimator = ZeroPredictor(random_state=rs_estimator, rs_expect=rs_expect)
+    estimator = ZeroPredictor(rs_estimator, expect_in_fit)
     imputer = IterativeImputer(estimator=estimator, random_state=rs_imputer)
     imputer.fit_transform(X)
 
