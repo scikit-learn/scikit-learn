@@ -89,14 +89,14 @@ def test_MDS_transform_sample():
     data = np.array([[0., 0.],
                      [1., 0.],
                      [0., 1.]])
-    
+
     n_components = 2
     clf = mds.MDS(n_components, max_iter=10000, n_init=1)
+    
     data_embedded = clf.fit_transform(np.sqrt(data))
-
     data_new = np.array([[.5, .5]])
     data_embedded_new = clf.transform(data_new)
-    
+
     diss_true = euclidean_distances(np.concatenate([data, data_new]))
     diss_embed = euclidean_distances(np.concatenate([data_embedded,
                                                      data_embedded_new]))
@@ -114,7 +114,7 @@ def test_MDS_transform_precomputed():
     
     clf = mds.MDS(2, max_iter=100000, dissimilarity='precomputed')
     data_embed = clf.fit_transform(np.sqrt(sim))
-
+    
     data_true = np.array([[0., 0.],
                           [0., 1.],
                           [1., 1.],
@@ -128,6 +128,6 @@ def test_MDS_transform_precomputed():
     data_new_embed = clf.transform(np.sqrt(sim_oos), data_type='dissimilarity')
     data_embed_all = np.concatenate([data_embed, data_new_embed])
     sim_embed = euclidean_distances(data_embed_all, squared=True)
-
+    
     assert_array_almost_equal(sim_oos[:, -1:], sim_embed[:, -1:], decimal=1)
     assert_array_almost_equal(sim_oos[-1:, :], sim_embed[-1:, :], decimal=1)

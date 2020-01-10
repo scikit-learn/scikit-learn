@@ -465,9 +465,8 @@ class MDS(BaseEstimator):
         return self.embedding_
 
     def transform(self, y, init=None, data_type='sample'):
-        """
-        Fit data y from prefitted model, return embedded coordinates,
-        using the 
+        """Return embedded coordinates for new data or dissimilarity
+        matrix y based on previous fit.
 
         Parameters
         ----------
@@ -502,7 +501,7 @@ class MDS(BaseEstimator):
         """
         y = check_array(y)
         n_x = self.dissimilarity_matrix_.shape[0]
-        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x        
+        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x
         if self.dissimilarity == 'precomputed':
             # No in-sample data was given, we use self.embedding_ to
             # approximate data set from which to extend
@@ -511,7 +510,7 @@ class MDS(BaseEstimator):
             except AttributeError:
                 raise AttributeError("MDS model must be fit on "
                                      "in-sample data before transform() "
-                                     "call")                
+                                     "call")
         else:
             # In-sample data exists in self.X, use it to compute
             # metric dissimilarity matrix
@@ -519,8 +518,8 @@ class MDS(BaseEstimator):
                 x = self.X
             except AttributeError:
                 raise AttributeError("MDS model must be fit on in-sample data "
-                                         "before transform() call")
-            
+                                     "before transform() call")
+
         if data_type == "dissimilarity":
             A = check_symmetric(y**2)
         elif data_type == "sample":
@@ -538,7 +537,7 @@ class MDS(BaseEstimator):
             y = y.reshape(-1, x.shape[1])
             cross_norm = np.sum((dissimilarities_xy - np.dot(x, y.T))**2)
             yy_norm = np.sum((dissimilarities_yy - np.dot(y, y.T))**2)
-            
+
             return 2 * cross_norm + yy_norm
         
         # Tau relates distance squared dissimilarity matrix to inner product.
