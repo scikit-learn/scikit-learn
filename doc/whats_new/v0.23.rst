@@ -89,7 +89,7 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
+  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
   
 :mod:`sklearn.linear_model`
 ...........................
@@ -126,7 +126,7 @@ Changelog
 
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
-  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+  :pr:`15918` by :user:`Luca Kubin <lkubin>`.
 
 :mod:`sklearn.preprocessing`
 ............................
