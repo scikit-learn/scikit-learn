@@ -6,19 +6,18 @@ from scipy import sparse
 from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
-from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
-from sklearn.manifold.spectral_embedding_ import _graph_is_connected
-from sklearn.manifold.spectral_embedding_ import _graph_connected_component
+from sklearn.manifold import SpectralEmbedding
+from sklearn.manifold._spectral_embedding import _graph_is_connected
+from sklearn.manifold._spectral_embedding import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 
 # non centered, sparse centers to check the
@@ -182,6 +181,10 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     assert _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
+# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip('pyamg')
@@ -212,28 +215,32 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
-def test_spectral_embedding_amg_solver_failure(seed=36):
-    # Test spectral embedding with amg solver failure, see issue #13393
+# TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
+# np.random.rand:
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
+def test_spectral_embedding_amg_solver_failure():
+    # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip('pyamg')
+    seed = 36
+    num_nodes = 100
+    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    sym_matrix = upper + upper.T
+    embedding = spectral_embedding(sym_matrix,
+                                   n_components=10,
+                                   eigen_solver='amg',
+                                   random_state=0)
 
-    # The generated graph below is NOT fully connected if n_neighbors=3
-    n_samples = 200
-    n_clusters = 3
-    n_features = 3
-    centers = np.eye(n_clusters, n_features)
-    S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
-                                cluster_std=1., random_state=42)
-
-    se_amg0 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
-                                eigen_solver="amg", n_neighbors=3,
-                                random_state=np.random.RandomState(seed))
-    embed_amg0 = se_amg0.fit_transform(S)
-
-    for i in range(10):
-        se_amg0.set_params(random_state=np.random.RandomState(seed + 1))
-        embed_amg1 = se_amg0.fit_transform(S)
-
-        assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
+    # Check that the learned embedding is stable w.r.t. random solver init:
+    for i in range(3):
+        new_embedding = spectral_embedding(sym_matrix,
+                                           n_components=10,
+                                           eigen_solver='amg',
+                                           random_state=i + 1)
+        assert _check_with_col_sign_flipping(
+            embedding, new_embedding, tol=0.05)
 
 
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "

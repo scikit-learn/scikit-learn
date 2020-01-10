@@ -6,11 +6,11 @@ import scipy.sparse as sp
 import pytest
 
 import sklearn
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -22,7 +22,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
 from sklearn.base import TransformerMixin
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 import pickle
 
 
@@ -488,29 +488,6 @@ def test_tag_inheritance():
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
-
-
-# XXX: Remove in 0.23
-def test_regressormixin_score_multioutput():
-    from sklearn.linear_model import LinearRegression
-    # no warnings when y_type is continuous
-    X = [[1], [2], [3]]
-    y = [1, 2, 3]
-    reg = LinearRegression().fit(X, y)
-    assert_no_warnings(reg.score, X, y)
-    # warn when y_type is continuous-multioutput
-    y = [[1, 2], [2, 3], [3, 4]]
-    reg = LinearRegression().fit(X, y)
-    msg = ("The default value of multioutput (not exposed in "
-           "score method) will change from 'variance_weighted' "
-           "to 'uniform_average' in 0.23 to keep consistent "
-           "with 'metrics.r2_score'. To specify the default "
-           "value manually and avoid the warning, please "
-           "either call 'metrics.r2_score' directly or make a "
-           "custom scorer with 'metrics.make_scorer' (the "
-           "built-in scorer 'r2' uses "
-           "multioutput='uniform_average').")
-    assert_warns_message(FutureWarning, msg, reg.score, X, y)
 
 
 def test_warns_on_get_params_non_attribute():

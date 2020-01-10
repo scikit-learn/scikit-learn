@@ -85,10 +85,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -191,13 +191,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
             raw_predictions += self._baseline_prediction
 
-            # initialize gradients and hessians (empty arrays).
-            # shape = (n_trees_per_iteration, n_samples).
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_
-            )
-
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
             self._predictors = predictors = []
@@ -270,22 +263,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
+            if self.do_early_stopping_ and self._use_validation_data:
+                raw_predictions_val = self._raw_predict(X_binned_val)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
                 X_binned_small_train, y_small_train = self._get_small_trainset(
                     X_binned_train, y_train, self._random_seed)
 
-            # Initialize the gradients and hessians
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_
-            )
-
             # Get the predictors from the previous fit
             predictors = self._predictors
 
             begin_at_stage = self.n_iter_
+
+        # initialize gradients and hessians (empty arrays).
+        # shape = (n_trees_per_iteration, n_samples).
+        gradients, hessians = self.loss_.init_gradients_and_hessians(
+            n_samples=n_samples,
+            prediction_dim=self.n_trees_per_iteration_
+        )
 
         for iteration in range(begin_at_stage, self.max_iter):
 
@@ -557,7 +553,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
         Returns
@@ -672,6 +668,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
+    .. versionadded:: 0.21
+
     Parameters
     ----------
     loss : {'least_squares', 'least_absolute_deviation'}, \
@@ -749,13 +747,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -850,6 +848,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
+    .. versionadded:: 0.21
+
     Parameters
     ----------
     loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
@@ -930,13 +930,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
         classification.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if

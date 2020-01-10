@@ -453,7 +453,7 @@ this can be achieved with::
         return self.classes_[np.argmax(D, axis=1)]
 
 In linear models, coefficients are stored in an array called ``coef_``, and the
-independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
@@ -601,7 +601,7 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpy.readthedocs.io/en/latest/format.html>`_ in all your docstrings.
+  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
 
 
 A good example of code that we like can be found `here

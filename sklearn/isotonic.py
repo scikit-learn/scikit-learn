@@ -25,10 +25,10 @@ def check_increasing(x, y):
 
     Parameters
     ----------
-    x : array-like, shape=(n_samples,)
+    x : array-like of shape (n_samples,)
             Training data.
 
-    y : array-like, shape=(n_samples,)
+    y : array-like of shape (n_samples,)
         Training target.
 
     Returns
@@ -155,6 +155,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
     Read more in the :ref:`User Guide <isotonic>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -304,13 +306,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples,)
+        X : array-like of shape (n_samples,)
             Training data.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Training target.
 
-        sample_weight : array-like, shape=(n_samples,), optional, default: None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights. If set to None, all weights will be set to 1 (equal
             weights).
 
@@ -324,10 +326,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        check_params = dict(accept_sparse=False, ensure_2d=False,
-                            dtype=[np.float64, np.float32])
-        X = check_array(X, **check_params)
-        y = check_array(y, **check_params)
+        check_params = dict(accept_sparse=False, ensure_2d=False)
+        X = check_array(X, dtype=[np.float64, np.float32], **check_params)
+        y = check_array(y, dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
 
         # Transform y by running the isotonic regression algorithm and
@@ -349,7 +350,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,)
             Data to transform.
 
         Returns
@@ -389,7 +390,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,)
             Data to transform.
 
         Returns

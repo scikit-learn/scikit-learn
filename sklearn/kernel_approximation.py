@@ -345,7 +345,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
@@ -436,6 +436,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
     using a subset of the data as basis.
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -537,7 +539,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_feature)
+        X : array-like of shape (n_samples, n_features)
             Training data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -579,7 +581,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to transform.
 
         Returns
