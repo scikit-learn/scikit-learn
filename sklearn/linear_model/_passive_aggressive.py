@@ -73,12 +73,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to shuffle the training data, when ``shuffle`` is set to
+        ``True``. Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -319,12 +318,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to shuffle the training data, when ``shuffle`` is set to
+        ``True``. Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as

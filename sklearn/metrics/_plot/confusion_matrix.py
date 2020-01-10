@@ -195,4 +195,5 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=display_labels)
     return disp.plot(include_values=include_values,
-                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation)
+                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
+                     values_format=values_format)
