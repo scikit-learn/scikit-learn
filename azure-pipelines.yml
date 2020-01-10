@@ -67,6 +67,7 @@ jobs:
         PYTEST_VERSION: '5.2'
         PILLOW_VERSION: '4.0.0'
         MATPLOTLIB_VERSION: '1.5.1'
+        SCIKIT_IMAGE_VERSION: '*'
         # later version of joblib are not packaged in conda for Python 3.5
         JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'

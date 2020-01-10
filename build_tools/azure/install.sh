@@ -37,6 +37,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
+    if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL scikit-image=$SCIKIT_IMAGE_VERSION"
+    fi
+
     if [[ -n "$MATPLOTLIB_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
@@ -91,7 +95,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install -U pip
     python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
-    python -m pip install pandas matplotlib pyamg
+    python -m pip install pandas matplotlib pyamg scikit-image
     # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps
 fi
