@@ -118,8 +118,8 @@ Changelog
   when `y=None`.
   :pr: `15918` by :user: `Luca Kubin <lkubin>`.
 
-  :mod:`sklearn.multioutput`
-  ..............................
+:mod:`sklearn.multioutput`
+..............................
 
 - |Fix| :func:`multioutput.ClassifierChain.decision_function` and
   :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
