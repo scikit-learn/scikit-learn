@@ -9,6 +9,8 @@ import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
 import warnings
+from functools import partial
+from scipy.optimize import minimize
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
@@ -273,6 +275,30 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     else:
         return best_pos, best_stress
 
+def _tau(w, A):
+    """Tau transform of Trosset & Priebe.
+
+    Transform relating metric squared dissimilarity matrix to
+    centered weighted inner product generating the metric.
+
+    See "The Out-of-Sample Problem for Classical Multidimensional Scaling"
+         Trosset, M., Priebe, C. Computational Statistics and Data Analysis
+         52 (2008)
+
+    Parameters
+    ----------
+    w : array, shape (n_samples,) weight vector
+
+    A : array, shape(n_samples, n_samples) metric dissimilarity matrix
+    
+
+    """
+    n = A.shape[0]
+    e = np.ones(n)[:, np.newaxis]
+    P1 = np.eye(n) - np.dot(e,w.T)/np.dot(e.T,w)
+    P2 = np.eye(n) - np.dot(w,e.T)/np.dot(e.T,w)
+    
+    return -0.5 * np.matmul(np.matmul(P1, A), P2)
 
 class MDS(BaseEstimator):
     """Multidimensional scaling
@@ -424,6 +450,7 @@ class MDS(BaseEstimator):
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
+            self.X = X
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
@@ -437,3 +464,100 @@ class MDS(BaseEstimator):
             return_n_iter=True)
 
         return self.embedding_
+
+    def transform(self, y, init=None, data_type='sample'):
+        """
+        Fit data y from prefitted model, return embedded coordinates,
+        using the 
+
+        Parameters
+        ----------
+        y : array, shape (n_samples, n_features) or (n_samples, n_samples)
+            If dissimilarity=='precomuted', then the input should be
+            the dissimilarity matrix.
+
+        init : ndarray, shape (n_samples,), optional, default: None
+            Starting configuration of the embedding to initialize the SMACOF
+            algorithm. By default, the algorithm is initialized with a randomly
+            chosen array.
+
+        data_type : str, type of data input, 'sample' or 'dissimilarity'. Even
+            though self.dissimilarity = 'precomputed', an out of sample fit
+            could be based on additional data or extended dissimilarity matrix.
+            For ease of input, if data_input = 'sample', only the new new data
+            beyond self.X is input, while for data_input = 'dissimilarity', the
+            extended dissimilarity matrix is input, which should contain
+            self.dissimilarity_matrix_ as a submatrix.
+
+        Notes
+        -----
+        "The Out-of-Sample Problem for Classical Multidimensional Scaling"
+        Trosset, M., Priebe, C. Computational Statistics and Data Analysis
+        52 (2008)
+
+        "Out-of-Sample Extensions for LLE, Isomap, MDS, Eigenmaps, and
+        Spectral Clustering" Bengio Y., Paiement J.-F., Vincent P.,
+        Delalleau O., Le Roux N., Ouimet M. Prceedings of the 16th
+        Internaitional Conference on Neural Information Processing
+        Systems December 2003 Pages 177-184
+        """
+
+        y = check_array(y)
+
+        n_x = self.dissimilarity_matrix_.shape[0]
+        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x
+        
+
+        if self.dissimilarity == 'precomputed':
+                # No in-sample data was given, we use self.embedding_ to
+                # approximate data set from which to extend
+                try:
+                    x = self.embedding_
+                except AttributeError:
+                    raise AttributeError("MDS model must be fit on in-sample data "
+                                         "before transform() call")                
+        else:
+                # In-sample data exists in self.X, use it to compute
+                # metric dissimilarity matrix
+                try:
+                    x = self.X
+                except AttributeError:
+                    raise AttributeError("MDS model must be fit on in-sample data "
+                                         "before transform() call")
+            
+        if data_type == "dissimilarity":
+            A = check_symmetric(y**2)
+        elif data_type == "sample":
+            A = np.block([[euclidean_distances(x, squared=True),
+                           euclidean_distances(x, y, squared=True)],
+                          [euclidean_distances(x, y, squared=True).T,
+                           euclidean_distances(y, squared=True)]])
+        else:
+            raise ValueError("Incorrect data_type specified")
+        
+        def _oos_objective(dissimilarities_xy, dissimilarities_yy, x, y):
+            """
+            Constrained MSE between squaredmetric dissimilarity matrix and
+            outer product of concatenated data.
+            """
+            y = y.reshape(-1, x.shape[1])
+            cross_norm = np.sum((dissimilarities_xy - np.dot(x,y.T))**2)
+            yy_norm = np.sum((dissimilarities_yy - np.dot(y,y.T))**2)
+            return 2 * cross_norm + yy_norm
+
+        # Tau relates distance squared dissimilarity matrix to inner product.
+        # Dissimilarity of self.X with itself already calculated
+        # w ensures we maintain centroid wrt original dataset
+        w = np.concatenate([np.ones(n_x), np.zeros(n_y)])[:, np.newaxis]                    
+        B = _tau(w, A)
+        
+        dissimilarities_xy = B[:n_x,-n_y:]
+        dissimilarities_yy = B[-n_y:,-n_y:]
+        _obj = partial(_oos_objective, dissimilarities_xy, dissimilarities_yy, x)
+
+        # Optimal solution
+        init = init or np.ones((n_y, x.shape[1]))
+        y_hat = minimize(_obj, x0=init, method='BFGS').x
+
+        return y_hat.reshape(-1, x.shape[1])
+        
