@@ -948,7 +948,7 @@ class RadiusNeighborsMixin:
                 results = neigh_dist, neigh_ind
             else:
                 neigh_ind_list = sum(chunked_results, [])
-                results = to_object_array(neigh_ind_list)
+                results = _to_object_array(neigh_ind_list)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
