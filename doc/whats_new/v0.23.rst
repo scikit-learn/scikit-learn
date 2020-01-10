@@ -124,7 +124,7 @@ Changelog
 - |Fix| Fixed bug in function _radius_neighbors_from_graph(), module 
   neighbours._base.py. The fix ensures _radius_neighbors_from_graph()
   will always return a numpy.array of objects.
-  :pr:`16076` by :user: `Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.preprocessing`
