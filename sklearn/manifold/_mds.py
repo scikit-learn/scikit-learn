@@ -15,6 +15,7 @@ from scipy.optimize import minimize
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
+from ..utils.validation import check_is_fitted
 from ..isotonic import IsotonicRegression
 
 
@@ -282,9 +283,10 @@ def _tau(w, A):
     Transform relating metric squared dissimilarity matrix to
     centered weighted inner product generating the metric.
 
-    See "The Out-of-Sample Problem for Classical Multidimensional Scaling"
-         Trosset, M., Priebe, C. Computational Statistics and Data Analysis
-         52 (2008)
+    See :"On Certain Linear Mappings Between Inner-Product and
+          Squared-Distance Matrices" Critchley F. Techinical Report 1238
+          Departement d'Informatique et Recherche Operationelle,
+          Universite de Montreal, Montreal, Quebec, Canada July 2003
 
     Parameters
     ----------
@@ -293,7 +295,7 @@ def _tau(w, A):
     A : array, shape(n_samples, n_samples) metric dissimilarity matrix
     """
     n = A.shape[0]
-    e = np.ones(n)[:, np.newaxis]
+    e = np.ones((n,1))
     P1 = np.eye(n) - np.dot(e, w.T)/np.dot(e.T, w)
     P2 = np.eye(n) - np.dot(w, e.T)/np.dot(e.T, w)
     return -0.5 * np.matmul(np.matmul(P1, A), P2)
@@ -397,6 +399,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.X = None
 
     @property
     def _pairwise(self):
@@ -449,7 +452,7 @@ class MDS(BaseEstimator):
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
-            self.X = X
+            self.X_fit_ = X
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
@@ -480,7 +483,7 @@ class MDS(BaseEstimator):
             chosen array.
 
         data_type : str, type of data input, 'sample' or 'dissimilarity'. Even
-            though self.dissimilarity = 'precomputed', an out of sample fit
+            though self.dissimilarity_ = 'precomputed', an out of sample fit
             could be based on additional data or extended dissimilarity matrix.
             For ease of input, if data_input = 'sample', only the new new data
             beyond self.X is input, while for data_input = 'dissimilarity', the
@@ -499,34 +502,26 @@ class MDS(BaseEstimator):
         Internaitional Conference on Neural Information Processing
         Systems December 2003 Pages 177-184
         """
+
+        check_is_fitted(self)
+        
         y = check_array(y)
+        
         n_x = self.dissimilarity_matrix_.shape[0]
         n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x
-        if self.dissimilarity == 'precomputed':
-            # No in-sample data was given, we use self.embedding_ to
-            # approximate data set from which to extend
-            try:
-                x = self.embedding_
-            except AttributeError:
-                raise AttributeError("MDS model must be fit on "
-                                     "in-sample data before transform() "
-                                     "call")
-        else:
-            # In-sample data exists in self.X, use it to compute
-            # metric dissimilarity matrix
-            try:
-                x = self.X
-            except AttributeError:
-                raise AttributeError("MDS model must be fit on in-sample data "
-                                     "before transform() call")
 
         if data_type == "dissimilarity":
             A = check_symmetric(y**2)
         elif data_type == "sample":
-            A = np.block([[euclidean_distances(x, squared=True),
-                           euclidean_distances(x, y, squared=True)],
-                          [euclidean_distances(x, y, squared=True).T,
-                           euclidean_distances(y, squared=True)]])
+            if self.dissimilarity == 'precomputed':
+                raise ValueError("Cannot provide data sample with "
+                                 "dissimilarity precomputed")
+            else:
+                x = self.X_fit_
+                A = np.block([[euclidean_distances(x, squared=True),
+                               euclidean_distances(x, y, squared=True)],
+                              [euclidean_distances(x, y, squared=True).T,
+                               euclidean_distances(y, squared=True)]])
         else:
             raise ValueError("Incorrect data_type specified")
 
@@ -548,9 +543,11 @@ class MDS(BaseEstimator):
         dissimilarities_xy = B[:n_x, -n_y:]
         dissimilarities_yy = B[-n_y:, -n_y:]
         _obj = partial(_oos_objective, dissimilarities_xy,
-                       dissimilarities_yy, x)
-        # Optimal solution
-        init = init or np.ones((n_y, x.shape[1]))
+                       dissimilarities_yy, self.embedding_)
+        
+        # Optimize MSE
+        if init is None:
+            init = np.ones((n_y, self.n_components))
         y_hat = minimize(_obj, x0=init, method='BFGS').x
 
-        return y_hat.reshape(-1, x.shape[1])
+        return y_hat.reshape(-1, self.n_components)

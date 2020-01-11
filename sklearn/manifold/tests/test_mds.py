@@ -106,6 +106,12 @@ def test_MDS_transform_sample():
 
 
 def test_MDS_transform_precomputed():
+    data_true = np.array([[0., 0.],
+                          [0., 1.],
+                          [1., 1.],
+                          [1., 0.]])
+    data_new = np.array([[.5, .5]])
+
     # Squared distance matrix for points on unit square in R^2
     sim = np.array([[0., 1., 2., 1.],
                     [1., 0., 1., 2.],
@@ -115,17 +121,13 @@ def test_MDS_transform_precomputed():
     clf = mds.MDS(2, max_iter=100000, dissimilarity='precomputed')
     data_embed = clf.fit_transform(np.sqrt(sim))
 
-    data_true = np.array([[0., 0.],
-                          [0., 1.],
-                          [1., 1.],
-                          [1., 0.]])
-    data_new = np.array([[.5, .5]])
-
     # Squared distances with additional center point
     sim_oos = euclidean_distances(np.concatenate([data_true, data_new]),
                                   squared=True)
 
     data_new_embed = clf.transform(np.sqrt(sim_oos), data_type='dissimilarity')
+    sim_oos_embed = euclidean_distances(data_new_embed, squared=True)
+    
     data_embed_all = np.concatenate([data_embed, data_new_embed])
     sim_embed = euclidean_distances(data_embed_all, squared=True)
 
