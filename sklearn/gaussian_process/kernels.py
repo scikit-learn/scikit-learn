@@ -39,6 +39,7 @@ optimization.
 
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
+from functools import reduce
 import math
 
 from inspect import signature
