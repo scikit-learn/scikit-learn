@@ -44,6 +44,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn`
+......................
+
+- |Fix| A correctly formatted error message is shown in :class:`CategoricalNB`
+  when the number of features in the input differ between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
+
 :mod:`sklearn.cluster`
 ......................
 
