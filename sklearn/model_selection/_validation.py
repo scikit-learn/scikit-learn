@@ -23,7 +23,6 @@ from joblib import Parallel, delayed
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
-from ..utils.validation import _check_fit_params
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -490,7 +489,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     train_scores = {}
     if parameters is not None:
@@ -830,7 +830,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_fit_params(X, fit_params, train)
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -940,6 +941,16 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
+def _index_param_value(X, v, indices):
+    """Private helper function for parameter value indexing."""
+    if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
+        # pass through: skip indexing
+        return v
+    if sp.issparse(v):
+        v = v.tocsr()
+    return _safe_indexing(v, indices)
+
+
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
@@ -1003,10 +1014,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -1172,11 +1184,11 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int, RandomState instance or None, default=None
-        Used when ``shuffle`` is True.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` is True.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

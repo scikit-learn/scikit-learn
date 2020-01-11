@@ -15,13 +15,12 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import Bunch, _print_elapsed_time
+from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
-                            message_clsname=None, message=None):
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
@@ -34,8 +33,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
                 ) from exc
             raise
     else:
-        with _print_elapsed_time(message_clsname, message):
-            estimator.fit(X, y)
+        estimator.fit(X, y)
     return estimator
 
 
@@ -51,7 +49,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -85,13 +83,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, default=None
+    base_estimator : object, optional (default=None)
         The base estimator from which the ensemble is built.
 
-    n_estimators : int
+    n_estimators : integer
         The number of estimators in the ensemble.
 
-    estimator_params : list of str
+    estimator_params : list of strings
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
@@ -278,7 +276,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
         Parameters
         ----------
-        deep : bool, default=True
+        deep : bool
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """

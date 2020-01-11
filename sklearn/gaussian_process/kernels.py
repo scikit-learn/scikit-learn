@@ -26,11 +26,11 @@ optimization.
 # Added support for all kernels in the "kernel cookbook"
 # https://www.cs.toronto.edu/~duvenaud/cookbook/
 # [except the low-rank projection (to be added soon)]
-#
+
 # Note the use of ProjectionKernel with sets of indicator variables
 # to work with categorical data.
 # (ProjectionKernel is comparable in utility to GPy's active_dims.)
-#
+
 # Extended CompoundKernel to include DirectSum and Tensor (DirectProduct)
 # CompoundKernel was not fully implemented
 # fixed a bug in set_param referencing undefined .k1
@@ -666,7 +666,7 @@ class DirectSum(CompoundKernel):
 
 
 class Projection(Kernel):
-    """Project coordinates onto a subset of the columns before constructing the kernel.
+    """Coordinate Projection onto a subset of the columns.
 
     .. versionadded:: ??
 

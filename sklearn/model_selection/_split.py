@@ -378,14 +378,13 @@ class KFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
-        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, default=None
-        Only used when ``shuffle`` is True. This should be left
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -585,14 +584,13 @@ class StratifiedKFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle each class's samples before splitting into batches.
-        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, default=None
-        Only used when ``shuffle`` is True. This should be left
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1090,10 +1088,11 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1194,9 +1193,11 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1246,10 +1247,9 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : None, int or RandomState, default=None
+        Random state to be used to generate random state for each
+        repetition.
 
     Examples
     --------
@@ -1387,10 +1387,11 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1488,10 +1489,11 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1600,10 +1602,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -2043,10 +2046,11 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     shuffle : boolean, optional (default=True)
         Whether or not to shuffle the data before splitting. If shuffle=False
