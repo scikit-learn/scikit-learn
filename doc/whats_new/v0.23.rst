@@ -44,13 +44,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn`
-......................
-
-- |Fix| A correctly formatted error message is shown in :class:`CategoricalNB`
-  when the number of features in the input differ between `predict` and `fit`.
-  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -100,6 +93,14 @@ Changelog
   in fit failed warning messages in addition to previously emitted
   type and details.
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
+
+:mod:`sklearn.naive_bayes`
+.............................
+
+- |Fix| A correctly formatted error message is shown in
+  :class:`naive_bayes.CategoricalNB` when the number of features in the input
+  differs between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
 :mod:`sklearn.preprocessing`
 ............................
