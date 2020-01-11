@@ -34,6 +34,8 @@ class IterativeImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
+    .. versionadded:: 0.21
+
     .. note::
 
       This estimator is still **experimental** for now: the predictions
