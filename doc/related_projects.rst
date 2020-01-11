@@ -50,6 +50,12 @@ enhance the functionality of scikit-learn's estimators.
   includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
   cross-validated parameter search using any of these strategies.
 
+- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
+  A Python Framework for Hyperparameter Tuning and Clean Machine Learning. Let
+  your pipeline steps have hyperparameter spaces. Enable data checkpoints to
+  cut duplicate calculations. Serialize your models for production. Go from
+  research to production environment and deploy easily.
+
 **Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
