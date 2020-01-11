@@ -573,7 +573,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
             self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
-                max_iter=self.max_iter, tol=self.tol, solver=self.solver,
+                max_iter=self.max_iter, tol=self.tol, solver='sag',
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True, check_input=False)
             # add the offset which was subtracted by _preprocess_data

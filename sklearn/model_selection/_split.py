@@ -378,6 +378,7 @@ class KFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance or None, optional, default=None
         If int, random_state is the seed used by the random number generator;
@@ -584,6 +585,7 @@ class StratifiedKFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle each class's samples before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance or None, optional, default=None
         If int, random_state is the seed used by the random number generator;
