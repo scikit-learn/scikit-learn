@@ -1084,6 +1084,9 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
 def test_iterative_imputer_set_estimator_random_state(
     rs_imputer, rs_estimator, expect_in_fit
 ):
+    # Check that the estimator's random_state is set to the imputer's
+    # random_state if a value is passed to the imputer's but not to
+    # the estimator's random_state
     class ZeroPredictor(BaseEstimator):
         def __init__(self, random_state=None, expect_in_fit=None):
             self.expect_in_fit = expect_in_fit
