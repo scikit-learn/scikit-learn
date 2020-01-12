@@ -12,8 +12,14 @@ jobs:
     - bash: conda create --name flake8_env --yes flake8
       displayName: Install flake8
     - bash: |
-        source activate flake8_env
-        ./build_tools/circle/linting.sh
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+          # skip linting
+          echo "Skipping linting"
+          exit 0
+        else
+          source activate flake8_env
+          ./build_tools/circle/linting.sh
+        fi
       displayName: Run linting
 
 
@@ -65,10 +71,9 @@ jobs:
         JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
-      # It runs tests requiring pandas and PyAMG.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        # FIXME: pinned until SciPy wheels are available for Pyhon 3.8
         PYTHON_VERSION: '3.8'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'

@@ -5,6 +5,7 @@ import os
 
 from tempfile import NamedTemporaryFile
 from itertools import product
+from operator import itemgetter
 
 import pytest
 from pytest import importorskip
@@ -14,7 +15,6 @@ import scipy.sparse as sp
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
@@ -32,6 +32,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
+from sklearn.utils import _safe_indexing
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
@@ -46,11 +47,11 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     FLOAT_DTYPES)
+from sklearn.utils.validation import _check_fit_params
 
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import TempMemmap
@@ -412,54 +413,17 @@ def test_check_array_dtype_stability():
 
 def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    X_float64 = np.asarray(X_int_list, dtype=np.float64)
     X_float32 = np.asarray(X_int_list, dtype=np.float32)
     X_int64 = np.asarray(X_int_list, dtype=np.int64)
-    X_csr_float64 = sp.csr_matrix(X_float64)
     X_csr_float32 = sp.csr_matrix(X_float32)
     X_csc_float32 = sp.csc_matrix(X_float32)
     X_csc_int32 = sp.csc_matrix(X_int64, dtype=np.int32)
-    y = [0, 0, 1]
     integer_data = [X_int64, X_csc_int32]
-    float64_data = [X_float64, X_csr_float64]
     float32_data = [X_float32, X_csr_float32, X_csc_float32]
     for X in integer_data:
         X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
                                        accept_sparse=True)
         assert X_checked.dtype == np.float64
-
-        X_checked = assert_warns(DataConversionWarning, check_array, X,
-                                 dtype=np.float64,
-                                 accept_sparse=True, warn_on_dtype=True)
-        assert X_checked.dtype == np.float64
-
-        # Check that the warning message includes the name of the Estimator
-        X_checked = assert_warns_message(DataConversionWarning,
-                                         'SomeEstimator',
-                                         check_array, X,
-                                         dtype=[np.float64, np.float32],
-                                         accept_sparse=True,
-                                         warn_on_dtype=True,
-                                         estimator='SomeEstimator')
-        assert X_checked.dtype == np.float64
-
-        X_checked, y_checked = assert_warns_message(
-            DataConversionWarning, 'KNeighborsClassifier',
-            check_X_y, X, y, dtype=np.float64, accept_sparse=True,
-            warn_on_dtype=True, estimator=KNeighborsClassifier())
-
-        assert X_checked.dtype == np.float64
-
-    for X in float64_data:
-        with pytest.warns(None) as record:
-            warnings.simplefilter("ignore", FutureWarning)  # 0.23
-            X_checked = check_array(X, dtype=np.float64,
-                                    accept_sparse=True, warn_on_dtype=True)
-            assert X_checked.dtype == np.float64
-            X_checked = check_array(X, dtype=np.float64,
-                                    accept_sparse=True, warn_on_dtype=False)
-            assert X_checked.dtype == np.float64
-        assert len(record) == 0
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
@@ -482,17 +446,6 @@ def test_check_array_dtype_warning():
     assert X_checked.dtype == np.float32
     assert X_checked is not X_csc_float32
     assert X_checked.format == 'csr'
-
-
-def test_check_array_warn_on_dtype_deprecation():
-    X = np.asarray([[0.0], [1.0]])
-    Y = np.asarray([[2.0], [3.0]])
-    with pytest.warns(FutureWarning,
-                      match="'warn_on_dtype' is deprecated"):
-        check_array(X, warn_on_dtype=True)
-    with pytest.warns(FutureWarning,
-                      match="'warn_on_dtype' is deprecated"):
-        check_X_y(X, Y, warn_on_dtype=True)
 
 
 def test_check_array_accept_sparse_type_exception():
@@ -725,15 +678,51 @@ def test_check_is_fitted():
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
 
-    # to be removed in 0.23
-    assert_warns_message(
-        FutureWarning,
-        "Passing attributes to check_is_fitted is deprecated",
-        check_is_fitted, ard, ['coef_'])
-    assert_warns_message(
-        FutureWarning,
-        "Passing all_or_any to check_is_fitted is deprecated",
-        check_is_fitted, ard, all_or_any=any)
+
+def test_check_is_fitted_attributes():
+    class MyEstimator():
+        def fit(self, X, y):
+            return self
+
+    msg = "not fitted"
+    est = MyEstimator()
+
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.a_ = "a"
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.b_ = "b"
+    check_is_fitted(est, attributes=["a_", "b_"])
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+
+@pytest.mark.parametrize("wrap",
+                         [itemgetter(0), list, tuple],
+                         ids=["single", "list", "tuple"])
+def test_check_is_fitted_with_attributes(wrap):
+    ard = ARDRegression()
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_"]))
+
+    ard.fit(*make_blobs())
+
+    # Does not raise
+    check_is_fitted(ard, wrap(["coef_"]))
+
+    # Raises when using attribute that is not defined
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_bad_"]))
 
 
 def test_check_consistent_length():
@@ -786,44 +775,6 @@ def test_check_array_series():
     s = pd.Series(['a', 'b', 'c']).astype('category')
     res = check_array(s, dtype=None, ensure_2d=False)
     assert_array_equal(res, np.array(['a', 'b', 'c'], dtype=object))
-
-
-def test_check_dataframe_warns_on_dtype():
-    # Check that warn_on_dtype also works for DataFrames.
-    # https://github.com/scikit-learn/scikit-learn/issues/10948
-    pd = importorskip("pandas")
-
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], dtype=object)
-    assert_warns_message(DataConversionWarning,
-                         "Data with input dtype object were all converted to "
-                         "float64.",
-                         check_array, df, dtype=np.float64, warn_on_dtype=True)
-    assert_warns(DataConversionWarning, check_array, df,
-                 dtype='numeric', warn_on_dtype=True)
-    with pytest.warns(None) as record:
-        warnings.simplefilter("ignore", FutureWarning)  # 0.23
-        check_array(df, dtype='object', warn_on_dtype=True)
-    assert len(record) == 0
-
-    # Also check that it raises a warning for mixed dtypes in a DataFrame.
-    df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
-    assert_warns(DataConversionWarning, check_array, df_mixed,
-                 dtype=np.float64, warn_on_dtype=True)
-    assert_warns(DataConversionWarning, check_array, df_mixed,
-                 dtype='numeric', warn_on_dtype=True)
-    assert_warns(DataConversionWarning, check_array, df_mixed,
-                 dtype=object, warn_on_dtype=True)
-
-    # Even with numerical dtypes, a conversion can be made because dtypes are
-    # uniformized throughout the array.
-    df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
-    assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
-                 dtype='numeric', warn_on_dtype=True)
-    with pytest.warns(None) as record:
-        warnings.simplefilter("ignore", FutureWarning)  # 0.23
-        check_array(df_mixed_numeric.astype(int),
-                    dtype='numeric', warn_on_dtype=True)
-    assert len(record) == 0
 
 
 def test_check_dataframe_mixed_float_dtypes():
@@ -1149,3 +1100,31 @@ def test_deprecate_positional_args_warns_for_class():
     with pytest.warns(FutureWarning,
                       match=r"Pass c=3, d=4 as keyword args"):
         A2(1, 2, 3, 4)
+
+
+@pytest.mark.parametrize("indices", [None, [1, 3]])
+def test_check_fit_params(indices):
+    X = np.random.randn(4, 2)
+    fit_params = {
+        'list': [1, 2, 3, 4],
+        'array': np.array([1, 2, 3, 4]),
+        'sparse-col': sp.csc_matrix([1, 2, 3, 4]).T,
+        'sparse-row': sp.csc_matrix([1, 2, 3, 4]),
+        'scalar-int': 1,
+        'scalar-str': 'xxx',
+        'None': None,
+    }
+    result = _check_fit_params(X, fit_params, indices)
+    indices_ = indices if indices is not None else list(range(X.shape[0]))
+
+    for key in ['sparse-row', 'scalar-int', 'scalar-str', 'None']:
+        assert result[key] is fit_params[key]
+
+    assert result['list'] == _safe_indexing(fit_params['list'], indices_)
+    assert_array_equal(
+        result['array'], _safe_indexing(fit_params['array'], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result['sparse-col'],
+        _safe_indexing(fit_params['sparse-col'], indices_)
+    )

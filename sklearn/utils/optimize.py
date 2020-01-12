@@ -239,7 +239,7 @@ def _check_optimize_result(solver, result, max_iter=None,
                 "Increase the number of iterations (max_iter) "
                 "or scale the data as shown in:\n"
                 "    https://scikit-learn.org/stable/modules/"
-                "preprocessing.html."
+                "preprocessing.html"
             ).format(solver, result.status, result.message.decode("latin1"))
             if extra_warning_msg is not None:
                 warning_msg += "\n" + extra_warning_msg

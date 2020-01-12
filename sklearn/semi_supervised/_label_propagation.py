@@ -195,7 +195,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 for weight_matrix in weight_matrices])
         else:
             weight_matrices = weight_matrices.T
-            probabilities = np.dot(weight_matrices, self.label_distributions_)
+            probabilities = safe_sparse_dot(
+                    weight_matrices, self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -289,6 +290,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             self.n_iter_ += 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+        normalizer[normalizer == 0] = 1
         self.label_distributions_ /= normalizer
 
         # set the transduction item
