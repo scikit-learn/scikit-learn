@@ -215,7 +215,7 @@ def test_ard_accuracy_on_easy_problem():
     abs_coef_error = np.abs(1 - regressor.coef_[1])
     # Expect an accuracy of better than 1E-4 in most cases -
     # Failure-case produces 0.16!
-    assert abs_coef_error < 0.01
+    assert abs_coef_error < 0.02
 
 
 def test_return_std():
