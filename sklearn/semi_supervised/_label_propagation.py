@@ -157,11 +157,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        y : ndarray of shape = [n_samples]
+        y : ndarray of shape = (n_samples)
             Predictions for input data
         """
         probas = self.predict_proba(X)
@@ -176,11 +176,11 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        probabilities : ndarray of shape = [n_samples, n_classes]
+        probabilities : ndarray of shape = (n_samples, n_classes)
             Normalized probability distributions across
             class labels
         """
@@ -210,10 +210,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             A {n_samples by n_samples} size matrix will be created from this
 
-        y : ndarray of shape = [n_samples]
+        y : array-like of shape = (n_samples)
             n_labeled_samples (unlabeled points are marked as -1)
             All unlabeled samples will be transductively assigned labels
 
@@ -333,16 +333,16 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape = [n_samples, n_features]
+    X_ : array-like of shape = (n_samples, n_features)
         Input array.
 
-    classes_ : ndarray of shape = [n_classes]
+    classes_ : array-like of shape = (n_classes)
         The distinct labels used in classifying instances.
 
-    label_distributions_ :ndarray of shape = [n_samples, n_classes]
+    label_distributions_ :array-like of shape = (n_samples, n_classes)
         Categorical distribution for each item.
 
-    transduction_ :ndarray of shape = [n_samples]
+    transduction_ :array-like of shape = (n_samples)
         Label assigned to each item via the transduction.
 
     n_iter_ : int
@@ -446,16 +446,16 @@ class LabelSpreading(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : ndarray of shape = [n_samples, n_features]
+    X_ : array-like of shape = (n_samples, n_features)
         Input array.
 
-    classes_ : ndarray of shape = [n_classes]
+    classes_ : array-like of shape = (n_classes)
         The distinct labels used in classifying instances.
 
-    label_distributions_ : ndarray of shape = [n_samples, n_classes]
+    label_distributions_ : array-like of shape = (n_samples, n_classes)
         Categorical distribution for each item.
 
-    transduction_ : ndarray of shape = [n_samples]
+    transduction_ : array-like of shape = (n_samples)
         Label assigned to each item via the transduction.
 
     n_iter_ : int
