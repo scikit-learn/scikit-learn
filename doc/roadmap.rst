@@ -20,7 +20,7 @@ is an indication that help is welcomed on this topic.
 
 Statement of purpose: Scikit-learn in 2020
 ------------------------------------------
-Eleven years after the inception of Scikit-learn, much has changed in the
+More than ten years after the inception of Scikit-learn, much has changed in the
 world of machine learning. Key changes include:
 
 * Computational tools: The exploitation of GPUs, distributed programming
