@@ -128,6 +128,14 @@ Changelog
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
 
+:mod:`sklearn.naive_bayes`
+.............................
+
+- |Fix| A correctly formatted error message is shown in
+  :class:`naive_bayes.CategoricalNB` when the number of features in the input
+  differs between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
