@@ -295,7 +295,7 @@ def _tau(w, A):
     A : array, shape(n_samples, n_samples) metric dissimilarity matrix
     """
     n = A.shape[0]
-    e = np.ones((n,1))
+    e = np.ones((n, 1))
     P1 = np.eye(n) - np.dot(e, w.T)/np.dot(e.T, w)
     P2 = np.eye(n) - np.dot(w, e.T)/np.dot(e.T, w)
     return -0.5 * np.matmul(np.matmul(P1, A), P2)
