@@ -157,9 +157,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         tags = self._get_tags()
         type_y = type_of_target(y)
-        flag = 'multioutput' in type_y
+        multioutput = 'multioutput' in type_y
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True), multi_output=flag)
+                         force_all_finite=not tags.get('allow_nan', True), 
+                         multi_output=multioutput)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
