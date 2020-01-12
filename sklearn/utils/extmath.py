@@ -708,94 +708,88 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
 
 
 def _incremental_weighted_mean_and_var(X, sample_weight,
-                                       last_weighted_mean,
-                                       last_weighted_variance,
+                                       last_mean,
+                                       last_variance,
                                        last_weight_sum):
     """Calculate weighted mean and variance batch update
 
-        last_weighted_mean and last_weighted_variance are statistics
-        computed at the last step by the function. Both must be
-        initialized to 0.0. In case no scaling is required
-        last_weighted_variance can be None. The weighted_mean is
-        always required and returned because necessary for the
-        calculation of the weighted_variance. last_weight sum is
-        the sum of weights encountered until now.
+    last_mean and last_variance are statistics computed at the last step
+    by the function. Both must be initialized to 0.0. In case no scaling
+    is required last_variance can be None. The mean is always required and
+    returned because necessary for the calculation of the variance.
+    last_weight sum is the sum of weights encountered until now.
 
-        Derived from the paper "Incremental calculation of
-        weighted mean and variance",
-        by Tony Finch.
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Data to use for statistics update
 
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Data to use for statistics update
+    sample_weight : array-like of shape (n_samples,)
 
-        sample_weight : array-like, shape (n_samples,)
+    last_mean : array-like of shape: (n_features,)
 
-        last_weighted_mean : array-like, shape: (n_features,)
+    last_variance : array-like of shape: (n_features,)
 
-        last_weighted_variance : array-like, shape: (n_features,)
+    last_weight_sum : array-like of shape (n_features,)
 
-        last_weight_sum : array-like, shape (n_features,)
+    Returns
+    -------
+    updated_mean : array of shape (n_features,)
 
-        Returns
-        -------
-        updated_weighted_mean : array, shape (n_features,)
+    updated_variance : array of shape (n_features,)
+        If None, only mean is computed
 
-        updated_weighted_variance : array, shape (n_features,)
-            If None, only weighted_mean is computed
+    updated_weight_sum : array of shape (n_features,)
 
-        updated_weight_sum : array, shape (n_features,)
+    Notes
+    -----
+    NaNs in X are ignored.
 
-        Notes
-        -----
-        NaNs in X are ignored.
+    References
+    ----------
+    Tony Finch
+    "Incremental calculation of weighted mean and variance"
+    University of Cambridge Computing Service, February 2009
 
-        References
-        ----------
-        Tony Finch
-        "Incremental calculation of weighted mean and variance"
-        University of Cambridge Computing Service, February 2009
-
-        """
+    """
     # last = stats until now
     # new = the current increment
     # updated = the aggregated stats
 
-    M = np.isnan(X)
-    sample_weight_T = np.transpose(np.reshape(sample_weight, (-1, 1)))
-    new_weight_sum = _safe_accumulator_op(np.dot, sample_weight_T, ~M).ravel()
+    nan_mask = np.isnan(X)
+    sample_weight_T = np.reshape(sample_weight, (1, -1))
+    new_weight_sum = \
+        _safe_accumulator_op(np.dot, sample_weight_T, ~nan_mask).ravel()
     total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
 
-    X_0 = np.where(np.isnan(X), 0, X)
-    new_weighted_mean = \
+    X_0 = np.where(nan_mask, 0, X)
+    new_mean = \
         _safe_accumulator_op(np.average, X_0, weights=sample_weight, axis=0)
-    new_weighted_mean *= total_weight_sum / new_weight_sum
+    new_mean *= total_weight_sum / new_weight_sum
     updated_weight_sum = last_weight_sum + new_weight_sum
-    updated_weighted_mean = (
-            (last_weight_sum * last_weighted_mean +
-             new_weight_sum * new_weighted_mean) / updated_weight_sum)
+    updated_mean = (
+            (last_weight_sum * last_mean + new_weight_sum * new_mean)
+            / updated_weight_sum)
 
-    if last_weighted_variance is None:
-        updated_weighted_variance = None
+    if last_variance is None:
+        updated_variance = None
     else:
-        X_0 = np.where(np.isnan(X), 0, (X-new_weighted_mean)**2)
-        new_weighted_variance = \
+        X_0 = np.where(nan_mask, 0, (X-new_mean)**2)
+        new_variance =\
             _safe_accumulator_op(
                 np.average, X_0, weights=sample_weight, axis=0)
-        new_weighted_variance *= total_weight_sum / new_weight_sum
+        new_variance *= total_weight_sum / new_weight_sum
         new_element = (
                 new_weight_sum *
-                (new_weighted_variance +
-                 (new_weighted_mean - updated_weighted_mean) ** 2))
+                (new_variance +
+                 (new_mean - updated_mean) ** 2))
         last_element = (
                 last_weight_sum *
-                (last_weighted_variance +
-                 (last_weighted_mean - updated_weighted_mean) ** 2))
-        updated_weighted_variance = (
-            new_element + last_element) / updated_weight_sum
+                (last_variance +
+                 (last_mean - updated_mean) ** 2))
+        updated_variance = (new_element + last_element) / updated_weight_sum
 
-    return updated_weighted_mean, updated_weighted_variance, updated_weight_sum
+    return updated_mean, updated_variance, updated_weight_sum
 
 
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
