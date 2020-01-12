@@ -13,6 +13,7 @@ from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
+from ..utils.multiclass import type_of_target
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -155,8 +156,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # self.scores_ will not be calculated when calling _fit through fit
 
         tags = self._get_tags()
+        type_y = type_of_target(y)
+        
+        multioutput = 'multioutput' in type_y
+           
+            
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True))
+                         force_all_finite=not tags.get('allow_nan', True), multi_output=multioutput)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
