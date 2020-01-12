@@ -467,13 +467,13 @@ class MDS(BaseEstimator):
 
         return self.embedding_
 
-    def transform(self, y, init=None, data_type='sample'):
+    def transform(self, X, init=None, data_type='sample'):
         """Return embedded coordinates for new data or dissimilarity
         matrix y based on previous fit.
 
         Parameters
         ----------
-        y : array, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If dissimilarity=='precomuted', then the input should be
             the dissimilarity matrix.
 
@@ -504,14 +504,14 @@ class MDS(BaseEstimator):
         """
 
         check_is_fitted(self)
-        
-        y = check_array(y)
-        
-        n_x = self.dissimilarity_matrix_.shape[0]
-        n_y = y.shape[0] if data_type == 'sample' else y.shape[0] - n_x
+
+        X = check_array(X)
+
+        n_x_fit = self.dissimilarity_matrix_.shape[0]
+        n_X = X.shape[0] if data_type == 'sample' else X.shape[0] - n_x_fit
 
         if data_type == "dissimilarity":
-            A = check_symmetric(y**2)
+            A = check_symmetric(X**2)
         elif data_type == "sample":
             if self.dissimilarity == 'precomputed':
                 raise ValueError("Cannot provide data sample with "
@@ -519,9 +519,9 @@ class MDS(BaseEstimator):
             else:
                 x = self.X_fit_
                 A = np.block([[euclidean_distances(x, squared=True),
-                               euclidean_distances(x, y, squared=True)],
-                              [euclidean_distances(x, y, squared=True).T,
-                               euclidean_distances(y, squared=True)]])
+                               euclidean_distances(x, X, squared=True)],
+                              [euclidean_distances(x, X, squared=True).T,
+                               euclidean_distances(X, squared=True)]])
         else:
             raise ValueError("Incorrect data_type specified")
 
@@ -535,19 +535,15 @@ class MDS(BaseEstimator):
 
             return 2 * cross_norm + yy_norm
 
-        # Tau relates distance squared dissimilarity matrix to inner product.
-        # Dissimilarity of self.X with itself already calculated
-        # w ensures we maintain centroid wrt original dataset
-        w = np.concatenate([np.ones(n_x), np.zeros(n_y)])[:, np.newaxis]
+        w = np.concatenate([np.ones(n_x_fit), np.zeros(n_X)])[:, np.newaxis]
         B = _tau(w, A)
-        dissimilarities_xy = B[:n_x, -n_y:]
-        dissimilarities_yy = B[-n_y:, -n_y:]
+        dissimilarities_xy = B[:n_x_fit, -n_X:]
+        dissimilarities_yy = B[-n_X:, -n_X:]
         _obj = partial(_oos_objective, dissimilarities_xy,
                        dissimilarities_yy, self.embedding_)
-        
-        # Optimize MSE
-        if init is None:
-            init = np.ones((n_y, self.n_components))
-        y_hat = minimize(_obj, x0=init, method='BFGS').x
 
-        return y_hat.reshape(-1, self.n_components)
+        if init is None:
+            init = np.ones((n_X, self.n_components))
+        X_hat = minimize(_obj, x0=init, method='BFGS').x
+
+        return X_hat.reshape(-1, self.n_components)

@@ -127,7 +127,7 @@ def test_MDS_transform_precomputed():
 
     data_new_embed = clf.transform(np.sqrt(sim_oos), data_type='dissimilarity')
     sim_oos_embed = euclidean_distances(data_new_embed, squared=True)
-    
+
     data_embed_all = np.concatenate([data_embed, data_new_embed])
     sim_embed = euclidean_distances(data_embed_all, squared=True)
 
