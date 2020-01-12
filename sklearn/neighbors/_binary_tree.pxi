@@ -272,7 +272,7 @@ X : array-like of shape (n_samples, n_features)
     Note: if X is a C-contiguous array of doubles then data will
     not be copied. Otherwise, an internal copy will be made.
 
-leaf_size : positive integer (default = 40)
+leaf_size : positive int, default=40
     Number of points at which to switch to brute-force. Changing
     leaf_size will not affect the results of a query, but can
     significantly impact the speed of a query and the memory required
@@ -282,7 +282,7 @@ leaf_size : positive integer (default = 40)
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : string or DistanceMetric object
+metric : str or DistanceMetric object
     the distance metric to use for the tree.  Default='minkowski'
     with p=2 (that is, a euclidean metric). See the documentation
     of the DistanceMetric class for a list of available metrics.
@@ -509,15 +509,15 @@ def kernel_norm(h, d, kernel, return_log=False):
     Parameters
     ----------
     h : float
-        the bandwidth of the kernel
+        The bandwidth of the kernel.
     d : int
-        the dimension of the space in which the kernel norm is computed
-    kernel : string
+        The dimension of the space in which the kernel norm is computed.
+    kernel : str
         The kernel identifier.  Must be one of
         ['gaussian'|'tophat'|'epanechnikov'|
          'exponential'|'linear'|'cosine']
-    return_log : boolean
-        if True, return the log of the kernel norm.  Otherwise, return the
+    return_log : bool, default=False
+        If True, return the log of the kernel norm.  Otherwise, return the
         kernel norm.
     Returns
     -------
@@ -1281,20 +1281,20 @@ cdef class BinaryTree:
         ----------
         X : array-like of shape (n_samples, n_features)
             An array of points to query
-        k : integer  (default = 1)
+        k : int, default=1
             The number of nearest neighbors to return
-        return_distance : boolean (default = True)
+        return_distance : bool, default=True
             if True, return a tuple (d, i) of distances and indices
             if False, return array i
-        dualtree : boolean (default = False)
+        dualtree : bool, default=False
             if True, use the dual tree formalism for the query: a tree is
             built for the query points, and the pair of trees is used to
             efficiently search this space.  This can lead to better
             performance as the number of points grows large.
-        breadth_first : boolean (default = False)
+        breadth_first : bool, default=False
             if True, then query the nodes in a breadth-first manner.
             Otherwise, query the nodes in a depth-first manner.
-        sort_results : boolean (default = True)
+        sort_results : bool, default=True
             if True, then distances and indices of each point are sorted
             on return, so that the first column contains the closest points.
             Otherwise, neighbors are returned in an arbitrary order.
@@ -1304,13 +1304,13 @@ cdef class BinaryTree:
         i    : if return_distance == False
         (d,i) : if return_distance == True
 
-        d : array of doubles - shape: x.shape[:-1] + (k,)
-            each entry gives the list of distances to the
-            neighbors of the corresponding point
+        d : ndarray of shape X.shape[:-1] + k, dtype=double
+            Each entry gives the list of distances to the neighbors of the
+            corresponding point.
 
-        i : array of integers - shape: x.shape[:-1] + (k,)
-            each entry gives the list of indices of
-            neighbors of the corresponding point
+        i : ndarray of shape X.shape[:-1] + k, dtype=int
+            Each entry gives the list of indices of neighbors of the
+            corresponding point.
         """
         # XXX: we should allow X to be a pre-built tree.
         X = check_array(X, dtype=DTYPE, order='C')
@@ -1394,19 +1394,19 @@ cdef class BinaryTree:
         r : distance within which neighbors are returned
             r can be a single value, or an array of values of shape
             x.shape[:-1] if different radii are desired for each point.
-        return_distance : boolean (default = False)
+        return_distance : bool, default=False
             if True,  return distances to neighbors of each point
             if False, return only neighbors
             Note that unlike the query() method, setting return_distance=True
             here adds to the computation time.  Not all distances need to be
             calculated explicitly for return_distance=False.  Results are
             not sorted by default: see ``sort_results`` keyword.
-        count_only : boolean (default = False)
+        count_only : bool, default=False
             if True,  return only the count of points within distance r
             if False, return the indices of all points within distance r
             If return_distance==True, setting count_only=True will
             result in an error.
-        sort_results : boolean (default = False)
+        sort_results : bool, default=False
             if True, the distances and indices will be sorted before being
             returned.  If False, the results will not be sorted.  If
             return_distance == False, setting sort_results = True will
@@ -1418,19 +1418,19 @@ cdef class BinaryTree:
         ind         : if count_only == False and return_distance == False
         (ind, dist) : if count_only == False and return_distance == True
 
-        count : array of integers, shape = X.shape[:-1]
-            each entry gives the number of neighbors within
-            a distance r of the corresponding point.
+        count : ndarray of shape X.shape[:-1], dtype=int
+            Each entry gives the number of neighbors within a distance r of the
+            corresponding point.
 
-        ind : array of objects, shape = X.shape[:-1]
-            each element is a numpy integer array listing the indices of
+        ind : ndarray of shape X.shape[:-1], dtype=object
+            Each element is a numpy integer array listing the indices of
             neighbors of the corresponding point.  Note that unlike
             the results of a k-neighbors query, the returned neighbors
             are not sorted by distance by default.
 
-        dist : array of objects, shape = X.shape[:-1]
-            each element is a numpy double array
-            listing the distances corresponding to indices in i.
+        dist : ndarray of shape X.shape[:-1], dtype=object
+            Each element is a numpy double array listing the distances
+            corresponding to indices in i.
         """
         if count_only and return_distance:
             raise ValueError("count_only and return_distance "
@@ -1591,7 +1591,7 @@ cdef class BinaryTree:
             of training data.
         h : float
             the bandwidth of the kernel
-        kernel : string
+        kernel : str, default="gaussian"
             specify the kernel to use.  Options are
             - 'gaussian'
             - 'tophat'
@@ -1600,23 +1600,23 @@ cdef class BinaryTree:
             - 'linear'
             - 'cosine'
             Default is kernel = 'gaussian'
-        atol, rtol : float (default = 0)
+        atol, rtol : float, default=0, 1e-8
             Specify the desired relative and absolute tolerance of the result.
             If the true result is K_true, then the returned result K_ret
             satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
             The default is zero (i.e. machine precision) for both.
-        breadth_first : boolean (default = False)
-            if True, use a breadth-first search.  If False (default) use a
+        breadth_first : bool, default=False
+            If True, use a breadth-first search.  If False (default) use a
             depth-first search.  Breadth-first is generally faster for
             compact kernels and/or high tolerances.
-        return_log : boolean (default = False)
-            return the logarithm of the result.  This can be more accurate
+        return_log : bool, default=False
+            Return the logarithm of the result.  This can be more accurate
             than returning the result itself for narrow kernels.
 
         Returns
         -------
-        density : ndarray
-            The array of (log)-density evaluations, shape = X.shape[:-1]
+        density : ndarray of shape X.shape[:-1]
+            The array of (log)-density evaluations
         """
         cdef DTYPE_t h_c = h
         cdef DTYPE_t log_atol = log(atol)
@@ -1722,10 +1722,10 @@ cdef class BinaryTree:
         X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data.
-        r : array_like
+        r : array-like
             A one-dimensional array of distances
-        dualtree : boolean (default = False)
-            If true, use a dualtree algorithm.  Otherwise, use a single-tree
+        dualtree : bool, default=False
+            If True, use a dualtree algorithm.  Otherwise, use a single-tree
             algorithm.  Dual tree algorithms can have better scaling for
             large N.
 

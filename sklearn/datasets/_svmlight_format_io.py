@@ -453,8 +453,10 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
 
     Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != yval.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
-                         " %r and %r instead." % (Xval.shape[0], yval.shape[0]))
+        raise ValueError(
+            "X.shape[0] and y.shape[0] should be the same, got"
+            " %r and %r instead." % (Xval.shape[0], yval.shape[0])
+        )
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
     # so sort them here, but first make sure we don't modify the user's X.

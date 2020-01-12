@@ -62,7 +62,7 @@ Making a release
 2. On the branch for releasing, update the version number in
    sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
    when ready to release.
-   On master, increment the verson in the same place (when branching for
+   On master, increment the version in the same place (when branching for
    release).
 
 3. Create the tag and push it::

@@ -106,8 +106,7 @@ followed, each branch is weighted by the fraction of training samples that
 entered that branch. Finally, the partial dependence is given by a weighted
 average of all visited leaves. Note that with the ``'recursion'`` method,
 ``X`` is only used to generate the grid, not to compute the averaged
-predictions. The averaged predictions will always be computed on the data with
-which the trees were trained.
+predictions.
 
 .. rubric:: Footnotes
 
