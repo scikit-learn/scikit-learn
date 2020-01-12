@@ -16,10 +16,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     Parameters
     ----------
-    store_precision : boolean, optional (default=True)
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered : boolean, optional (default=False)
+    assume_centered : bool, default=False
         If True, the support of robust location and covariance estimates
         is computed, and a covariance estimate is recomputed from it,
         without centering the data.
@@ -28,16 +28,16 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float in (0., 1.), optional (default=None)
+    support_fraction : float in (0, 1), default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
         be used within the algorithm: `[n_sample + n_features + 1] / 2`.
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : float in (0, 0.5), default=0.1
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
@@ -46,17 +46,17 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : array-like of shape (n_features,)
         Estimated robust location
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : array-like of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    support_ : array-like, shape (n_samples,)
+    support_ : array-like of shape (n_samples,)
         A mask of the observations that have been used to compute the
         robust estimates of location and shape.
 

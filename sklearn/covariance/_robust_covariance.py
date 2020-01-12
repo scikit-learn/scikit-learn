@@ -524,10 +524,10 @@ class MinCovDet(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered : bool
+    assume_centered : bool, default=False
         If True, the support of the robust location and the covariance
         estimates is computed, and a covariance estimate is recomputed from
         it, without centering the data.
@@ -536,13 +536,13 @@ class MinCovDet(EmpiricalCovariance):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float, 0 < support_fraction < 1
+    support_fraction : float in (0, 1), default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
         [n_sample + n_features + 1] / 2
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -550,32 +550,32 @@ class MinCovDet(EmpiricalCovariance):
 
     Attributes
     ----------
-    raw_location_ : array-like, shape (n_features,)
+    raw_location_ : array-like of shape (n_features,)
         The raw robust estimated location before correction and re-weighting.
 
-    raw_covariance_ : array-like, shape (n_features, n_features)
+    raw_covariance_ : array-like of shape (n_features, n_features)
         The raw robust estimated covariance before correction and re-weighting.
 
-    raw_support_ : array-like, shape (n_samples,)
+    raw_support_ : array-like of shape (n_samples,)
         A mask of the observations that have been used to compute
         the raw robust estimates of location and shape, before correction
         and re-weighting.
 
-    location_ : array-like, shape (n_features,)
+    location_ : array-like of shape (n_features,)
         Estimated robust location
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : array-like of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    support_ : array-like, shape (n_samples,)
+    support_ : array-like of shape (n_samples,)
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
-    dist_ : array-like, shape (n_samples,)
+    dist_ : array-like of shape (n_samples,)
         Mahalanobis distances of the training set (on which :meth:`fit` is
         called) observations.
 

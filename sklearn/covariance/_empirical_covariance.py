@@ -52,10 +52,10 @@ def empirical_covariance(X, assume_centered=False):
 
     Parameters
     ----------
-    X : ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : boolean
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -63,7 +63,7 @@ def empirical_covariance(X, assume_centered=False):
 
     Returns
     -------
-    covariance : 2D ndarray, shape (n_features, n_features)
+    covariance : ndarray of shape (n_features, n_features)
         Empirical covariance (Maximum Likelihood Estimator).
 
     """
@@ -92,10 +92,10 @@ class EmpiricalCovariance(BaseEstimator):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : bool, default=True
         Specifies if the estimated precision is stored.
 
-    assume_centered : bool
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -103,13 +103,13 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : array-like of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : 2D ndarray, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : 2D ndarray, shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 

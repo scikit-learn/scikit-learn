@@ -29,10 +29,10 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Parameters
     ----------
-    emp_cov : array-like, shape (n_features, n_features)
+    emp_cov : array-like of shape (n_features, n_features)
         Covariance matrix to be shrunk
 
-    shrinkage : float, 0 <= shrinkage <= 1
+    shrinkage : float in [0,1], default=0.1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -67,28 +67,28 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Parameters
     ----------
-    store_precision : boolean, default True
+    store_precision : bool, default=True
         Specify if the estimated precision is stored
 
-    assume_centered : boolean, default False
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data will be centered before computation.
 
-    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
+    shrinkage : float in [0, 1], default=0.1 
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : array-like of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : array-like of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
@@ -262,10 +262,10 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : boolean, default=False
+    assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
@@ -277,7 +277,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     Returns
     -------
-    shrunk_cov : array-like, shape (n_features, n_features)
+    shrunk_cov : array-like of shape (n_features, n_features)
         Shrunk covariance.
 
     shrinkage : float
@@ -347,17 +347,17 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : array-like of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : array-like of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage_ : float, 0 <= shrinkage <= 1
+    shrinkage_ : float in [0,1]
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -440,10 +440,10 @@ def oas(X, assume_centered=False):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data from which to compute the covariance estimate.
 
-    assume_centered : boolean
+    assume_centered : bool, default=False
       If True, data will not be centered before computation.
       Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
@@ -451,7 +451,7 @@ def oas(X, assume_centered=False):
 
     Returns
     -------
-    shrunk_cov : array-like, shape (n_features, n_features)
+    shrunk_cov : array-like of shape (n_features, n_features)
         Shrunk covariance.
 
     shrinkage : float
@@ -528,14 +528,14 @@ class OAS(EmpiricalCovariance):
 
     Attributes
     ----------
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Estimated covariance matrix.
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : array-like of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage_ : float, 0 <= shrinkage <= 1
+    shrinkage_ : float in [0, 1] 
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
 
