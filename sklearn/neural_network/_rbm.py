@@ -38,25 +38,25 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional
+    n_components : int, default=256
         Number of binary hidden units.
 
-    learning_rate : float, optional
+    learning_rate : float, default=0.1
         The learning rate for weight updates. It is *highly* recommended
         to tune this hyper-parameter. Reasonable values are in the
         10**[0., -3.] range.
 
-    batch_size : int, optional
+    batch_size : int, default=10
         Number of examples per minibatch.
 
-    n_iter : int, optional
+    n_iter : int, default=10
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : int, optional
+    verbose : int, default=0
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or RandomState, optional
+    random_state : integer or RandomState, default=None
         A random number generator instance to define the state of the
         random permutations generator. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
@@ -113,12 +113,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
         -------
-        h : array, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Latent representations of the data.
         """
         check_is_fitted(self)
@@ -131,12 +131,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
         p = safe_sparse_dot(v, self.components_.T)
@@ -148,7 +148,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to sample from.
 
         rng : RandomState
@@ -156,7 +156,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
@@ -167,7 +167,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer to sample from.
 
         rng : RandomState
@@ -175,7 +175,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
         """
         p = np.dot(h, self.components_)
@@ -188,12 +188,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        free_energy : array-like, shape (n_samples,)
+        free_energy : ndarray of shape (n_samples,)
             The value of the free energy.
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
@@ -205,12 +205,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to start from.
 
         Returns
         -------
-        v_new : array-like, shape (n_samples, n_features)
+        v_new : ndarray of shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
         check_is_fitted(self)
@@ -227,7 +227,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Training data.
 
         Returns
@@ -263,7 +263,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v_pos : array-like, shape (n_samples, n_features)
+        v_pos : ndarray of shape (n_samples, n_features)
             The data to use for training.
 
         rng : RandomState
@@ -290,12 +290,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Values of the visible layer. Must be all-boolean (not checked).
 
         Returns
         -------
-        pseudo_likelihood : array-like, shape (n_samples,)
+        pseudo_likelihood : ndarray of shape (n_samples,)
             Value of the pseudo-likelihood (proxy for likelihood).
 
         Notes
@@ -328,7 +328,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         Returns

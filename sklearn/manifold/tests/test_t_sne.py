@@ -8,19 +8,19 @@ import pytest
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors import kneighbors_graph
 from sklearn.exceptions import EfficiencyWarning
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils import check_random_state
-from sklearn.manifold.t_sne import _joint_probabilities
-from sklearn.manifold.t_sne import _joint_probabilities_nn
-from sklearn.manifold.t_sne import _kl_divergence
-from sklearn.manifold.t_sne import _kl_divergence_bh
-from sklearn.manifold.t_sne import _gradient_descent
-from sklearn.manifold.t_sne import trustworthiness
-from sklearn.manifold.t_sne import TSNE
+from sklearn.manifold._t_sne import _joint_probabilities
+from sklearn.manifold._t_sne import _joint_probabilities_nn
+from sklearn.manifold._t_sne import _kl_divergence
+from sklearn.manifold._t_sne import _kl_divergence_bh
+from sklearn.manifold._t_sne import _gradient_descent
+from sklearn.manifold._t_sne import trustworthiness
+from sklearn.manifold import TSNE
 from sklearn.manifold import _barnes_hut_tsne
 from sklearn.manifold._utils import _binary_search_perplexity
 from sklearn.datasets import make_blobs
@@ -265,9 +265,9 @@ def test_optimization_minimizes_kl_divergence():
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_fit_csr_matrix(method):
     # X can be a sparse matrix.
-    random_state = check_random_state(0)
-    X = random_state.randn(50, 2)
-    X[(np.random.randint(0, 50, 25), np.random.randint(0, 2, 25))] = 0.0
+    rng = check_random_state(0)
+    X = rng.randn(50, 2)
+    X[(rng.randint(0, 50, 25), rng.randint(0, 2, 25))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 random_state=0, method=method, n_iter=750)
@@ -825,8 +825,39 @@ def test_bh_match_exact():
         n_iter[method] = tsne.n_iter_
 
     assert n_iter['exact'] == n_iter['barnes_hut']
-    assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
-                              decimal=3)
+    assert_allclose(X_embeddeds['exact'], X_embeddeds['barnes_hut'], rtol=1e-4)
+
+
+def test_gradient_bh_multithread_match_sequential():
+    # check that the bh gradient with different num_threads gives the same
+    # results
+
+    n_features = 10
+    n_samples = 30
+    n_components = 2
+    degrees_of_freedom = 1
+
+    angle = 3
+    perplexity = 5
+
+    random_state = check_random_state(0)
+    data = random_state.randn(n_samples, n_features).astype(np.float32)
+    params = random_state.randn(n_samples, n_components)
+
+    n_neighbors = n_samples - 1
+    distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
+        n_neighbors=n_neighbors, mode='distance')
+    P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
+    kl_sequential, grad_sequential = _kl_divergence_bh(
+        params, P_bh, degrees_of_freedom, n_samples, n_components,
+        angle=angle, skip_num_points=0, verbose=0, num_threads=1)
+    for num_threads in [2, 4]:
+        kl_multithread, grad_multithread = _kl_divergence_bh(
+            params, P_bh, degrees_of_freedom, n_samples, n_components,
+            angle=angle, skip_num_points=0, verbose=0, num_threads=num_threads)
+
+        assert_allclose(kl_multithread, kl_sequential, rtol=1e-6)
+        assert_allclose(grad_multithread, grad_multithread)
 
 
 def test_tsne_with_different_distance_metrics():
@@ -845,3 +876,17 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0, n_iter=300).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_n_jobs(method):
+    """Make sure that the n_jobs parameter doesn't impact the output"""
+    random_state = check_random_state(0)
+    n_features = 10
+    X = random_state.randn(30, n_features)
+    X_tr_ref = TSNE(n_components=2, method=method, perplexity=30.0,
+                    angle=0, n_jobs=1, random_state=0).fit_transform(X)
+    X_tr = TSNE(n_components=2, method=method, perplexity=30.0,
+                angle=0, n_jobs=2, random_state=0).fit_transform(X)
+
+    assert_allclose(X_tr_ref, X_tr)

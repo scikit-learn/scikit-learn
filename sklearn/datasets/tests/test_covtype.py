@@ -4,7 +4,7 @@ Skipped if covtype is not already downloaded to data_home.
 """
 
 from sklearn.datasets import fetch_covtype
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 

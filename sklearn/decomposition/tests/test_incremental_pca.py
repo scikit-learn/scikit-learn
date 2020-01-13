@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA

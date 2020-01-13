@@ -3,12 +3,12 @@ import scipy as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.decomposition.pca import _assess_dimension_
-from sklearn.decomposition.pca import _infer_dimension_
+from sklearn.decomposition._pca import _assess_dimension_
+from sklearn.decomposition._pca import _infer_dimension_
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']
@@ -532,7 +532,10 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
+    # the rtol is set such that the test passes on all platforms tested on
+    # conda-forge: PR#15775
+    # see: https://github.com/conda-forge/scikit-learn-feedstock/pull/113
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):

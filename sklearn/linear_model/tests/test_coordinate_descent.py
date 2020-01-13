@@ -9,18 +9,18 @@ from copy import deepcopy
 
 from sklearn.datasets import load_boston
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import TempMemmap
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
+from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
@@ -229,7 +229,6 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
         decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -883,8 +882,18 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
             calls += 1
             assert self.precompute == inner_precompute
 
-    monkeypatch.setattr("sklearn.linear_model.coordinate_descent.Lasso",
+    monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso",
                         LassoMock)
     clf = LassoCV(precompute=precompute)
     clf.fit(X, y)
     assert calls > 0
+
+
+def test_multi_task_lasso_cv_dtype():
+    n_samples, n_features = 10, 3
+    rng = np.random.RandomState(42)
+    X = rng.binomial(1, .5, size=(n_samples, n_features))
+    X = X.astype(int)  # make it explicit that X is int
+    y = X[:, [0, 0]].copy()
+    est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
+    assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
