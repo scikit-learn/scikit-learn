@@ -575,7 +575,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
-        
+
     request_props : list of strings, or dict of {str: str}, default=None
         A list of required properties, or a mapping of the form
         ``{required_parameter: provided_parameter}``, or None.

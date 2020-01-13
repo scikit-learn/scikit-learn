@@ -1,15 +1,10 @@
 import numpy as np
 import pytest
 
-from sklearn.model_selection import GroupKFold, cross_validate
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import _validate_required_props
-from sklearn.svm import SVC
 from sklearn.datasets import make_classification
 
 
@@ -23,7 +18,7 @@ class MyEst(ClassifierMixin, BaseEstimator):
             self._get_props_request_mapping('fit').keys()
         return self
 
-        
+
 class MyTrs(TransformerMixin, BaseEstimator):
     def __init__(self):
         self._props_request = {'fit': ['sample_weight']}
