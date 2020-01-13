@@ -39,6 +39,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
+
     @property
     def _weights_not_none(self):
         """Get the weights of not `None` estimators."""
@@ -63,9 +68,14 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf not in (None, 'drop')
+                delayed(_parallel_fit_estimator)(
+                        clone(clf), X, y,
+                        sample_weight=sample_weight,
+                        message_clsname='Voting',
+                        message=self._log_message(names[idx],
+                                                  idx + 1, len(clfs))
+                )
+                for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
         self.named_estimators_ = Bunch()
@@ -122,6 +132,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
 
+    verbose : bool, default=False
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -176,13 +190,14 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
-                 flatten_transform=True):
+    def __init__(self, estimators, voting='hard', weights=None,
+                 n_jobs=None, flatten_transform=True, verbose=False):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -346,6 +361,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    verbose : bool, default=False
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
+
     Attributes
     ----------
     estimators_ : list of regressors
@@ -376,10 +395,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=None):
+    def __init__(self, estimators, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.

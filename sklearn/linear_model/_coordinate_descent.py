@@ -577,13 +577,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -857,13 +855,11 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1310,13 +1306,11 @@ class LassoCV(RegressorMixin, LinearModelCV):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1484,13 +1478,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1662,13 +1654,11 @@ class MultiTaskElasticNet(Lasso):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -1848,13 +1838,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -2013,13 +2001,11 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
@@ -2189,13 +2175,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'
+        feature to update. Used when ``selection`` == 'random'.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
