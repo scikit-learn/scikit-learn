@@ -10,13 +10,13 @@ final distributions. Creating the first RC involves creating the release branch
 detected during the release process are a good example) should be done as a PR
 to the master branch, if it's possible, or done through a PR to the release
 branch, for the other maintainers to review before the release. Note that all
-development for the minor releases and the major release of for instance 0.99,
-happens under the branch called ``0.99.X``, where ``X`` is a literal, and
-independent of minor bug fix releases. Each release candidate, major, or minor
-release is a tag under the same branch. This is further explained under :ref:
-`preparing-a-release-pr`. We follow the `PEP101
-<https://www.python.org/dev/peps/pep-0101/>`_ to indicate release candidates,
-post, and minor releases.
+development for the minor releases and the major release of for instance 0.99
+happens (through some PRs merged into that branch) under the branch called
+``0.99.X``, where ``X`` is a literal, and independent of minor bug fix
+releases. Each release candidate, major, or minor release is a tag under the
+same branch. This is further explained under :ref: `preparing-a-release-pr`. We
+follow the `PEP101 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate
+release candidates, post, and minor releases.
 
 Before a release
 ----------------
@@ -67,9 +67,7 @@ is updated live, it should ideally match the version available to users. Having
 all the changes for a release in one PR minimizes the gap between the time when
 the website points to a release, and the release being available to users.
 
-Most development of the release, and its documentation, should happen in master
-to avoid asynchrony. First, create a branch, **on your own fork** (to release
-e.g. `0.999.3`)::
+First, create a branch, **on your own fork** (to release e.g. `0.999.3`)::
 
     $ # assuming master and upstream/master are the same
     $ git checkout -b release-0.999.3 master
