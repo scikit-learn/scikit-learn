@@ -519,7 +519,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     # to slice the X and y.
                     sample_idx = shuffle(sample_idx,
                                          random_state=self._random_state)
-                
+
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     if self.shuffle:
