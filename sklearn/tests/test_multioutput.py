@@ -588,3 +588,16 @@ def test_multioutput_estimator_with_fit_params(estimator, dataset):
     estimator.fit(X, y, some_param=some_param)
     for dummy_estimator in estimator.estimators_:
         assert 'some_param' in dummy_estimator._fit_params
+
+
+def test_regressor_chain_w_fit_params():
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(n_targets=3)
+    weight = rng.random((y.shape[0], ))
+
+    model = RegressorChain(SGDRegressor())
+
+    # Fitting with params
+    fit_param = {'sample_weight': weight}
+
+    model.fit(X, y, **fit_param)
