@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest a new algorithm, enhancement to an existing algorithm, etc.
 title: ''
-labels: enhancement
+labels: Enhancement
 assignees: ''
 
 ---
