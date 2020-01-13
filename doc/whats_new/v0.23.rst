@@ -67,6 +67,16 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.ensemble`
+.................................
+
+- |API| Added boolean `verbose` flag to classes:
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  :pr:`15991` by :user:`Sam Bail <spbail>`,
+  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
+  :user:`Reshama Shaikh <reshamas>`, and
+  :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -79,7 +89,7 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
+  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
   
 :mod:`sklearn.linear_model`
 ...........................
@@ -116,7 +126,15 @@ Changelog
 
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
-  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+  :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+
+:mod:`sklearn.naive_bayes`
+.............................
+
+- |Fix| A correctly formatted error message is shown in
+  :class:`naive_bayes.CategoricalNB` when the number of features in the input
+  differs between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
 :mod:`sklearn.preprocessing`
 ............................
