@@ -473,7 +473,7 @@ class _BaseDiscreteNB(_BaseNB):
         return check_array(X, accept_sparse='csr')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse='csr')
+        return self._validate_X_y(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -607,7 +607,7 @@ class _BaseDiscreteNB(_BaseNB):
         -------
         self : object
         """
-        X, y = self._validate_X_y(X, y)
+        X, y = self._check_X_y(X, y)
         _, n_features = X.shape
         self.n_features_ = n_features
 
@@ -1154,8 +1154,8 @@ class CategoricalNB(_BaseDiscreteNB):
         return X
 
     def _check_X_y(self, X, y):
-        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
-                         force_all_finite=True)
+        X, y = self._validate_X_y(X, y, dtype='int', accept_sparse=False,
+                                  force_all_finite=True)
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
         return X, y

@@ -272,7 +272,6 @@ class SimpleImputer(_BaseImputer):
         -------
         self : SimpleImputer
         """
-        X = self._validate_input(X)
         X = self._validate_input(X, in_fit=True)
         super()._fit_indicator(X)
 
