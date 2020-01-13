@@ -517,7 +517,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     # Only shuffle the sample indices instead of X and y to
                     # reduce the memory footprint. These indices will be used
                     # to slice the X and y.
-                    sample_idx = shuffle(sample_idx, random_state=self._random_state)
+                    sample_idx = shuffle(sample_idx,
+                                         random_state=self._random_state)
+                
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     if self.shuffle:
