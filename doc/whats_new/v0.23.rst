@@ -121,7 +121,7 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
   :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
