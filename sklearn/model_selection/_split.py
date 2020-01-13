@@ -135,10 +135,10 @@ class LeaveOneOut(BaseCrossValidator):
     >>> print(loo)
     LeaveOneOut()
     >>> for train_index, test_index in loo.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
     TRAIN: [0] TEST: [1]
@@ -222,9 +222,9 @@ class LeavePOut(BaseCrossValidator):
     >>> print(lpo)
     LeavePOut(p=2)
     >>> for train_index, test_index in lpo.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [1 2] TEST: [0 3]
@@ -293,7 +293,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                 'Setting a random_state has no effect since shuffle is '
                 'False. This will raise an error in 0.24. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                DeprecationWarning
+                FutureWarning
             )
 
         self.n_splits = n_splits
@@ -378,13 +378,14 @@ class KFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``shuffle`` is True. This should be left
+    random_state : int, RandomState instance or None, default=None
+        Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -398,9 +399,9 @@ class KFold(_BaseKFold):
     >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
     TRAIN: [0 1] TEST: [2 3]
 
@@ -584,13 +585,14 @@ class StratifiedKFold(_BaseKFold):
 
     shuffle : boolean, optional
         Whether to shuffle each class's samples before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``shuffle`` is True. This should be left
+    random_state : int, RandomState instance or None, default=None
+        Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -604,9 +606,9 @@ class StratifiedKFold(_BaseKFold):
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 2] TEST: [1 3]
 
@@ -769,9 +771,9 @@ class TimeSeriesSplit(_BaseKFold):
     >>> print(tscv)
     TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [0] TEST: [1]
     TRAIN: [0 1] TEST: [2]
     TRAIN: [0 1 2] TEST: [3]
@@ -861,10 +863,10 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> print(logo)
     LeaveOneGroupOut()
     >>> for train_index, test_index in logo.split(X, y, groups):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
@@ -980,10 +982,10 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
     >>> for train_index, test_index in lpgo.split(X, y, groups):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
@@ -1088,11 +1090,10 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1193,11 +1194,9 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1247,9 +1246,10 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : None, int or RandomState, default=None
-        Random state to be used to generate random state for each
-        repetition.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1387,11 +1387,10 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1405,7 +1404,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> print(rs)
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
     TRAIN: [1 3 0 4] TEST: [5 2]
     TRAIN: [4 0 2 5] TEST: [1 3]
     TRAIN: [1 2 4 0] TEST: [3 5]
@@ -1414,7 +1413,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> rs = ShuffleSplit(n_splits=5, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
     TRAIN: [1 3 0] TEST: [5 2]
     TRAIN: [4 0 2] TEST: [1 3]
     TRAIN: [1 2 4] TEST: [3 5]
@@ -1489,11 +1488,10 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1508,7 +1506,7 @@ class GroupShuffleSplit(ShuffleSplit):
     >>> gss.get_n_splits()
     2
     >>> for train_idx, test_idx in gss.split(X, y, groups):
-    ...    print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
@@ -1602,11 +1600,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1620,9 +1617,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [5 2 3] TEST: [4 1 0]
     TRAIN: [5 1 4] TEST: [0 2 3]
     TRAIN: [5 0 2] TEST: [4 3 1]
@@ -1713,7 +1710,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -1816,6 +1813,8 @@ class PredefinedSplit(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     test_fold : array-like, shape (n_samples,)
@@ -1837,9 +1836,9 @@ class PredefinedSplit(BaseCrossValidator):
     >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
     >>> for train_index, test_index in ps.split():
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 2 3] TEST: [0]
     TRAIN: [0 2] TEST: [1 3]
     """
@@ -2044,11 +2043,10 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     shuffle : boolean, optional (default=True)
         Whether or not to shuffle the data before splitting. If shuffle=False
@@ -2168,13 +2166,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", FutureWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, 'cvargs'):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            if len(w) and w[0].category == FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

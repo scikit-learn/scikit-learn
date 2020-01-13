@@ -8,8 +8,8 @@ import pytest
 import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster._spectral import discretize
@@ -18,7 +18,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -191,6 +191,10 @@ def test_discretize(n_samples):
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
+# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py

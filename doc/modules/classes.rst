@@ -152,6 +152,7 @@ details.
    :template: function.rst
 
    compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
@@ -1081,12 +1082,16 @@ See the :ref:`visualizations` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.plot_confusion_matrix
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   metrics.ConfusionMatrixDisplay
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
 
@@ -1585,10 +1590,7 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.testing.assert_in
-   utils.testing.assert_not_in
-   utils.testing.assert_raise_message
-   utils.testing.all_estimators
+   utils.all_estimators
 
 Utilities from joblib:
 
@@ -1603,30 +1605,11 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.24
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
    utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence

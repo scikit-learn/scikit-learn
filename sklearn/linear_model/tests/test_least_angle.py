@@ -7,15 +7,16 @@ import pytest
 from scipy import linalg
 
 from sklearn.model_selection import train_test_split
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues, LassoLarsIC
+from sklearn.linear_model._least_angle import _lars_path_residues
+from sklearn.linear_model import LassoLarsIC, lars_path
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -730,3 +731,9 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     y = X[:, 2]
     lasso_lars.fit(X, y, copy_X=copy_X)
     assert copy_X == np.array_equal(X, X_copy)
+
+
+def test_X_none_gram_not_none():
+    with pytest.raises(ValueError,
+                       match="X cannot be None if Gram is not None"):
+        lars_path(X=None, y=[1], Gram='not None')

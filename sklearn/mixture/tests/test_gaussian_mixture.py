@@ -11,7 +11,7 @@ import numpy as np
 from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
-from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.datasets import make_spd_matrix
 from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
@@ -25,13 +25,13 @@ from sklearn.mixture._gaussian_mixture import (
     )
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -559,7 +559,7 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_raise_message(NotFittedError,
                              "This GaussianMixture instance is not fitted "
                              "yet. Call 'fit' with appropriate arguments "
-                             "before using this method.", g.predict, X)
+                             "before using this estimator.", g.predict, X)
 
         g.fit(X)
         Y_pred = g.predict(X)
@@ -858,7 +858,7 @@ def test_score():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm1.score, X)
+                         "before using this estimator.", gmm1.score, X)
 
     # Check score value
     with warnings.catch_warnings():
@@ -888,7 +888,7 @@ def test_score_samples():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm.score_samples, X)
+                         "before using this estimator.", gmm.score_samples, X)
 
     gmm_score_samples = gmm.fit(X).score_samples(X)
     assert gmm_score_samples.shape[0] == rand_data.n_samples
