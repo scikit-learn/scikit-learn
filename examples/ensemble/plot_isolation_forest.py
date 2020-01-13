@@ -35,16 +35,20 @@ X = 0.3 * rng.randn(100, 2)
 X_train = np.r_[X + 2, X - 2]
 # Generate some regular novel observations
 X = 0.3 * rng.randn(20, 2)
-X_test = np.r_[X + 2, X - 2]
+X_normal = np.r_[X + 2, X - 2]
 # Generate some abnormal novel observations
 X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+X_test = np.vstack((X_normal, X_outliers))
 
 # fit the model
 clf = IsolationForest(max_samples=100, random_state=rng)
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
-y_pred_outliers = clf.predict(X_outliers)
+
+# divide X_test as normal and abnormal based on model prediction
+X_test_normal = X_test[y_pred_test > 0]
+X_test_abnormal = X_test[y_pred_test <= 0]
 
 # plot the line, the samples, and the nearest vectors to the plane
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
@@ -56,10 +60,12 @@ plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
 b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white',
                  s=20, edgecolor='k')
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='green',
+b2 = plt.scatter(X_test_normal[:, 0], X_test_normal[:, 1], c='green',
                  s=20, edgecolor='k')
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
+c = plt.scatter(X_test_abnormal[:, 0], X_test_abnormal[:, 1], c='red',
                 s=20, edgecolor='k')
+
+
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
