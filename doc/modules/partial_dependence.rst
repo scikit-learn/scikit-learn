@@ -118,7 +118,7 @@ above.
 Computation methods
 ^^^^^^^^^^^^^^^^^^^
 
-There are two main methods to approximates the integral above, namely the
+There are two main methods to approximate the integral above, namely the
 'brute' and 'recursion' methods. The `method` parameter controls which one
 is used.
 
