@@ -504,7 +504,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             y_val = None
 
         n_samples = X.shape[0]
-        idx = np.arange(n_samples, dtype=int)
+        sample_idx = np.arange(n_samples, dtype=int)
 
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -514,13 +514,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         try:
             for it in range(self.max_iter):
                 if self.shuffle:
-                    idx = shuffle(idx, random_state=self._random_state)
+                    # Only shuffle the sample indices instead of X and y to
+                    # reduce the memory footprint. These indices will be used
+                    # to slice the X and y.
+                    sample_idx = shuffle(sample_idx, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    # only use integer indexing when it is needed
                     if self.shuffle:
-                        X_batch = _safe_indexing(X, idx[batch_slice])
-                        y_batch = y[idx[batch_slice]]
+                        X_batch = _safe_indexing(X, sample_idx[batch_slice])
+                        y_batch = y[sample_idx[batch_slice]]
                     else:
                         X_batch = X[batch_slice]
                         y_batch = y[batch_slice]
