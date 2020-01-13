@@ -53,9 +53,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : int, RandomState instance
-        The generator used to initialize the centers. Use an int to make the
-        randomness deterministic.
+    random_state : RandomState instance
+        The generator used to initialize the centers.
         See :term:`Glossary <random_state>`.
 
     n_local_trials : integer, optional
@@ -239,7 +238,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     tol : float, optional
         The relative increment in the results before declaring convergence.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -378,7 +377,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -581,7 +580,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     init : {'k-means++', 'random' or ndarray or callable} optional
         Method for initialization
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -1148,7 +1147,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization and to
         pick new clusters amongst observations with uniform probability. Use
         an int to make the randomness deterministic.

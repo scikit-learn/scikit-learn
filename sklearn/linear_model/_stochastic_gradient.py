@@ -809,11 +809,9 @@ class SGDClassifier(BaseSGDClassifier):
         for more details.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Used for shuffling the data, when ``shuffle`` is set to ``True``.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     learning_rate : str, default='optimal'
         The learning rate schedule:
@@ -1417,11 +1415,9 @@ class SGDRegressor(BaseSGDRegressor):
         and the correct label are ignored if they are less than this threshold.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Used for shuffling the data, when ``shuffle`` is set to ``True``.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     learning_rate : string, default='invscaling'
         The learning rate schedule:

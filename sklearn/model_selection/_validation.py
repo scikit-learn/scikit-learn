@@ -1003,11 +1003,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional (default=0)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : integer, optional
         The verbosity level.
@@ -1173,11 +1172,11 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` is True.
+    random_state : int, RandomState instance or None, default=None
+        Used when ``shuffle`` is True.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
