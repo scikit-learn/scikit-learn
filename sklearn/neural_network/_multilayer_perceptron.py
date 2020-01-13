@@ -21,6 +21,7 @@ from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
+from ..utils import _safe_indexing
 from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
@@ -503,6 +504,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             y_val = None
 
         n_samples = X.shape[0]
+        sample_idx = np.arange(n_samples, dtype=int)
 
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -512,12 +514,24 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         try:
             for it in range(self.max_iter):
                 if self.shuffle:
-                    X, y = shuffle(X, y, random_state=self._random_state)
+                    # Only shuffle the sample indices instead of X and y to
+                    # reduce the memory footprint. These indices will be used
+                    # to slice the X and y.
+                    sample_idx = shuffle(sample_idx,
+                                         random_state=self._random_state)
+
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    activations[0] = X[batch_slice]
+                    if self.shuffle:
+                        X_batch = _safe_indexing(X, sample_idx[batch_slice])
+                        y_batch = y[sample_idx[batch_slice]]
+                    else:
+                        X_batch = X[batch_slice]
+                        y_batch = y[batch_slice]
+
+                    activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X[batch_slice], y[batch_slice], activations, deltas,
+                        X_batch, y_batch, activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
@@ -664,7 +678,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
@@ -928,7 +942,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
@@ -1336,7 +1350,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
                          multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
