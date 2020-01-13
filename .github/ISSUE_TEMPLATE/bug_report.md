@@ -8,14 +8,17 @@ assignees: ''
 ---
 
 #### Describe the bug
+<!--
 A clear and concise description of what the bug is.
+-->
 
 #### Steps/Code to Reproduce
+<!--
 Please add a minimal example that we can reproduce the error by running the
 code. Be as succint as possible, do not depend on external data. In short, we
 are going to copy-paste your code and we expect to get the same
 result as you.
-<!--
+
 Example:
 ```python
 from sklearn.feature_extraction.text import CountVectorizer

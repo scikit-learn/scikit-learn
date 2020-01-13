@@ -15,7 +15,6 @@ https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new
 
 #### Describe the workflow you want to enable
 
-
 #### Describe your proposed solution
 
 #### Describe alternatives you've considered, if relevant
