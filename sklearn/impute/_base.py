@@ -411,12 +411,8 @@ class SimpleImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-<<<<<<< HEAD
         X = self._validate_input(X, in_fit=False)
-=======
-        X = self._validate_input(X)
         X_indicator = super()._transform_indicator(X)
->>>>>>> 19479d7af1711f1bb403eca1c02eebf212999091
 
         statistics = self.statistics_
 
