@@ -46,13 +46,13 @@ class LossFunction(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
 
@@ -62,10 +62,10 @@ class LossFunction(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
@@ -81,18 +81,18 @@ class LossFunction(metaclass=ABCMeta):
         ----------
         tree : tree.Tree
             The tree object.
-        X : 2d array, shape (n, m)
+        X : ndarray of shape (n_samples, n_features)
             The data array.
-        y : 1d array, shape (n,)
+        y : ndarray of shape (n_samples,)
             The target labels.
-        residual : 1d array, shape (n,)
+        residual : ndarray of shape (n_samples,)
             The residuals (usually the negative gradient).
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
-        sample_weight : 1d array, shape (n,)
+        sample_weight : ndarray of shape (n_samples,)
             The weight of each sample.
-        sample_mask : 1d array, shape (n,)
+        sample_mask : ndarray of shape (n_samples,)
             The sample mask to be used.
         learning_rate : float, default=0.1
             Learning rate shrinks the contribution of each tree by
@@ -129,14 +129,14 @@ class LossFunction(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : 2d array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The data array.
-        estimator : estimator instance
+        estimator : object
             The estimator to use to compute the predictions.
 
         Returns
         -------
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The initial raw predictions. K is equal to 1 for binary
             classification and regression, and equal to the number of classes
             for multiclass classification. ``raw_predictions`` is casted
@@ -164,7 +164,7 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        estimator : estimator instance
+        estimator : object
             The init estimator to check.
         """
         if not (hasattr(estimator, 'fit') and hasattr(estimator, 'predict')):
@@ -196,13 +196,13 @@ class LeastSquaresError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves).
+        raw_predictions : ndarray of shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         if sample_weight is None:
@@ -216,10 +216,10 @@ class LeastSquaresError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : 1d array, shape (n_samples,)
+        raw_predictions : ndarray of shape (n_samples,)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
@@ -236,18 +236,18 @@ class LeastSquaresError(RegressionLossFunction):
         ----------
         tree : tree.Tree
             The tree object.
-        X : 2d array, shape (n, m)
+        X : ndarray of shape (n_samples, n_features)
             The data array.
-        y : 1d array, shape (n,)
+        y : ndarray of shape (n_samples,)
             The target labels.
-        residual : 1d array, shape (n,)
+        residual : ndarray of shape (n_samples,)
             The residuals (usually the negative gradient).
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
-        sample_weight : 1d array, shape (n,)
+        sample_weight : ndarray of shape (n,)
             The weight of each sample.
-        sample_mask : 1d array, shape (n,)
+        sample_mask : ndarray of shape (n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
             Learning rate shrinks the contribution of each tree by
@@ -279,13 +279,13 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves).
+        raw_predictions : ndarray of shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves).
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         if sample_weight is None:
@@ -301,10 +301,10 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
@@ -327,11 +327,6 @@ class HuberLossFunction(RegressionLossFunction):
 
     M-Regression proposed in Friedman 2001.
 
-    References
-    ----------
-    J. Friedman, Greedy Function Approximation: A Gradient Boosting
-    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
-
     Parameters
     ----------
     n_classes : int
@@ -339,6 +334,11 @@ class HuberLossFunction(RegressionLossFunction):
 
     alpha : float, default=0.9
         Percentile at which to extract score.
+
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
 
     def __init__(self, n_classes, alpha=0.9):
@@ -354,14 +354,14 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -394,14 +394,14 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -443,7 +443,7 @@ class QuantileLossFunction(RegressionLossFunction):
     n_classes : int
         Number of classes.
 
-    alpha : float, optional (default = 0.9)
+    alpha : float, default = 0.9
         The percentile.
     """
     def __init__(self, n_classes, alpha=0.9):
@@ -459,14 +459,14 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -488,11 +488,11 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : ndarray of shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         alpha = self.alpha
@@ -519,13 +519,13 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
         Returns
         -------
-        probas : 2d array, shape (n_samples, K)
+        probas : ndarray of shape (n_samples, K)
             The predicted probabilities.
         """
 
@@ -535,13 +535,13 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
         Returns
         -------
-        encoded_predictions : 2d array, shape (n_samples, K)
+        encoded_predictions : ndarray of shape (n_samples, K)
             The predicted encoded labels.
         """
 
@@ -550,7 +550,7 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        estimator : estimator instance
+        estimator : object
             The init estimator to check.
         """
         if not (hasattr(estimator, 'fit') and
@@ -589,14 +589,14 @@ class BinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array , shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         # logaddexp(0, v) == log(1.0 + exp(v))
@@ -614,11 +614,11 @@ class BinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : ndarray of shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         return y - expit(raw_predictions.ravel())
@@ -696,14 +696,14 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         # create one-hot label encoding
@@ -724,14 +724,14 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : ndarray of shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        k : int, optional default=0
+        k : int, default=0
             The index of the class.
         """
         return y - np.nan_to_num(np.exp(raw_predictions[:, k] -
@@ -779,14 +779,14 @@ class ExponentialLoss(ClassificationLossFunction):
 
     Same loss as AdaBoost.
 
-    References
-    ----------
-    Greg Ridgeway, Generalized Boosted Models: A guide to the gbm package, 2007
-
     Parameters
     ----------
     n_classes : int
         Number of classes.
+
+    References
+    ----------
+    Greg Ridgeway, Generalized Boosted Models: A guide to the gbm package, 2007
     """
     def __init__(self, n_classes):
         if n_classes != 2:
@@ -803,14 +803,14 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : 1d array, shape (n_samples,), optional
+        sample_weight : ndarray of shape (n_samples,), default=None
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -825,10 +825,10 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : 1d array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             True labels.
 
-        raw_predictions : 2d array, shape (n_samples, K)
+        raw_predictions : ndarray of shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """

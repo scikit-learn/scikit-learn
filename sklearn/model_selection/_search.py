@@ -204,13 +204,12 @@ class ParameterSampler:
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -944,7 +943,7 @@ class GridSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given ``cv_results_``. In that
-        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 
@@ -1274,7 +1273,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given the ``cv_results``. In that
-        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        case, the ``best_estimator_`` and ``best_params_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 
@@ -1296,13 +1295,12 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int, RandomState instance or None, optional, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
