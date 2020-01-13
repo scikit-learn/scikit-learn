@@ -449,7 +449,7 @@ def test_column_transformer_error_msg_1D():
                          col_trans.fit_transform, X_array)
 
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
-    for func in [col_trans.fit, col_trans.fit_transform]:
+    for func in [col_trans.fit, col_trans.fit_transform, col_trans.transform]:
         assert_raise_message(ValueError, "specific message", func, X_array)
 
 
@@ -516,14 +516,14 @@ def test_column_transformer_invalid_transformer():
 
     class NoTrans(BaseEstimator):
         def fit(self, X, y=None):
-            return self
+            return self  # pragma: no cover
 
         def predict(self, X):
-            return X
+            return X  # pragma: no cover
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError, "All estimators should implement fit",
+    assert_raise_message(TypeError, "All estimators should implement fit and transform",
                          ct.fit, X_array)
 
 
