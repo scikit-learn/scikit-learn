@@ -70,7 +70,7 @@ class TransRaise(BaseEstimator):
         raise ValueError("specific message")
 
     def transform(self, X, y=None):
-        raise ValueError("specific message")
+        pass  # pragma: no cover
 
 
 def test_column_transformer():
@@ -449,7 +449,7 @@ def test_column_transformer_error_msg_1D():
                          col_trans.fit_transform, X_array)
 
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
-    for func in [col_trans.fit, col_trans.fit_transform, col_trans.transform]:
+    for func in [col_trans.fit, col_trans.fit_transform]:
         assert_raise_message(ValueError, "specific message", func, X_array)
 
 
@@ -523,7 +523,8 @@ def test_column_transformer_invalid_transformer():
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError, "All estimators should implement fit and transform",
+    assert_raise_message(TypeError,
+                         "All estimators should implement fit and transform",
                          ct.fit, X_array)
 
 
