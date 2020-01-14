@@ -535,7 +535,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -776,7 +776,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_X_y(X, y)
+        X, y = self._validate_data(X, y)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))

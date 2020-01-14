@@ -155,7 +155,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # self.scores_ will not be calculated when calling _fit through fit
 
         tags = self._get_tags()
-        X, y = self._validate_X_y(
+        X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get('allow_nan', True)
@@ -492,9 +492,9 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
-        X, y = self._validate_X_y(X, y, accept_sparse="csr",
-                                  ensure_min_features=2,
-                                  force_all_finite=False)
+        X, y = self._validate_data(X, y, accept_sparse="csr",
+                                   ensure_min_features=2,
+                                   force_all_finite=False)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))

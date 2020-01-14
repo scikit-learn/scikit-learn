@@ -467,7 +467,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
-    def _check_non_neg_array(self, X, check_n_features, whom):
+    def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
 
         check X format and make sure no negative value in X.
@@ -477,8 +477,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         X :  array-like or sparse matrix
 
         """
-        X = self._validate_X(X, check_n_features=check_n_features,
-                             accept_sparse='csr')
+        X = self._validate_data(X, reset=reset_n_features,
+                                accept_sparse='csr')
         check_non_negative(X, whom)
         return X
 
@@ -498,13 +498,13 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         self._check_params()
         first_time = not hasattr(self, 'components_')
+
         # deactivating check for now (specific tests about error message would
         # break)
-        # TODO: uncomment when addressing check_n_features in
-        # predict/transform/etc.
-        # check_n_features = not in_fit
-        check_n_features = False
-        X = self._check_non_neg_array(X, check_n_features,
+        # TODO: uncomment when addressing reset in predict/transform/etc.
+        # reset = first_time
+        reset_n_features = True
+        X = self._check_non_neg_array(X, reset_n_features,
                                       "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
@@ -548,7 +548,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X, check_n_features=False,
+        X = self._check_non_neg_array(X, reset_n_features=True,
                                       whom="LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
@@ -619,7 +619,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(
-            X, check_n_features=False,
+            X, reset_n_features=True,
             whom="LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
@@ -744,7 +744,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, check_n_features=False,
+        X = self._check_non_neg_array(X, reset_n_features=True,
                                       whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
@@ -775,7 +775,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._check_non_neg_array(
-            X, check_n_features=False,
+            X, reset_n_features=True,
             whom="LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:

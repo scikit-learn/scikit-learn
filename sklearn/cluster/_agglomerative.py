@@ -805,7 +805,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         -------
         self
         """
-        X = self._validate_X(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
@@ -1051,8 +1051,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = self._validate_X(X, accept_sparse=['csr', 'csc', 'coo'],
-                             ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                ensure_min_features=2, estimator=self)
         n_features_in_ = self.n_features_in_
         AgglomerativeClustering.fit(self, X.T, **params)
         # Need to restore n_features_in_ attribute that was overridden in

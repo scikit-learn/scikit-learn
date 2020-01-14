@@ -427,8 +427,8 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         # This validates twice but there is not clean way to avoid validation
         # in fastica(). Please see issue 14897.
-        self._validate_X(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                         ensure_min_samples=2).T
+        self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                            ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
 

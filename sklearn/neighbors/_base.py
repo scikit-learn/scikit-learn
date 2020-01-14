@@ -397,7 +397,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X = _check_precomputed(X)
             self.n_features_in_ = X.shape[1]
         else:
-            X = self._validate_X(X, accept_sparse='csr')
+            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:

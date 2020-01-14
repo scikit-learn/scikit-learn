@@ -137,7 +137,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = self._validate_X(X, dtype='numeric')
+        X = self._validate_data(X, dtype='numeric')
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:

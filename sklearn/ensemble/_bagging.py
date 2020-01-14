@@ -278,7 +278,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_X_y(
+        X, y = self._validate_data(
             X, y, accept_sparse=['csr', 'csc'], dtype=None,
             force_all_finite=False, multi_output=True
         )

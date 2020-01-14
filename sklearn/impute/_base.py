@@ -235,11 +235,10 @@ class SimpleImputer(_BaseImputer):
             force_all_finite = "allow-nan"
 
         try:
-            check_n_features = not in_fit
-            X = self._validate_X(X, check_n_features=check_n_features,
-                                 accept_sparse='csc', dtype=dtype,
-                                 force_all_finite=force_all_finite,
-                                 copy=self.copy)
+            X = self._validate_data(X, reset=in_fit,
+                                    accept_sparse='csc', dtype=dtype,
+                                    force_all_finite=force_all_finite,
+                                    copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
                 new_ve = ValueError("Cannot use {} strategy with non-numeric "
@@ -595,10 +594,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        check_n_features = not in_fit
-        X = self._validate_X(X, check_n_features=check_n_features,
-                             accept_sparse=('csc', 'csr'), dtype=None,
-                             force_all_finite=force_all_finite)
+        X = self._validate_data(X, reset=in_fit,
+                                accept_sparse=('csc', 'csr'), dtype=None,
+                                force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
             raise ValueError("MissingIndicator does not support data with "

@@ -356,7 +356,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         self
 
         """
-        X = self._validate_X(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
 

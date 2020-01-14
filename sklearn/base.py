@@ -337,33 +337,37 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
-    def _validate_n_features(self, X, check_n_features):
-        if check_n_features:
+    def _validate_n_features(self, X, reset):
+        n_features = X.shape[1]
+
+        if reset:
+            self.n_features_in_ = n_features
+        else:
             if not hasattr(self, 'n_features_in_'):
                 raise RuntimeError(
-                    "check_n_features is True but there is no n_features_in_ "
+                    "reset parameter is False but there is no n_features_in_ "
                     "attribute."
                 )
-            if X.shape[1] != self.n_features_in_:
+            if n_features != self.n_features_in_:
                 raise ValueError(
                     'X has {} features, but this {} is expecting {} features '
-                    'as input.'.format(X.shape[1], self.__class__.__name__,
+                    'as input.'.format(n_features, self.__class__.__name__,
                                        self.n_features_in_)
                 )
+
+    def _validate_data(self, X, y=None, reset=True, **check_params):
+        if y is None:
+            X = check_array(X, **check_params)
+            out = X
         else:
-            self.n_features_in_ = X.shape[1]
+            X, y = check_X_y(X, y, **check_params)
+            out = X, y
 
-    def _validate_X(self, X, check_n_features=False, **check_array_params):
-        X = check_array(X, **check_array_params)
-        if check_array_params.get('ensure_2d', True):
-            self._validate_n_features(X, check_n_features)
-        return X
+        if check_params.get('ensure_2d', True):
+            self._validate_n_features(X, reset=reset)
 
-    def _validate_X_y(self, X, y, check_n_features=False, **check_X_y_params):
-        X, y = check_X_y(X, y, **check_X_y_params)
-        if check_X_y_params.get('ensure_2d', True):
-            self._validate_n_features(X, check_n_features)
-        return X, y
+        return out
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""

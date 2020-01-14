@@ -307,7 +307,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = self._validate_X(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
 
         if not self.eps > 0.0:
             raise ValueError("eps must be positive.")

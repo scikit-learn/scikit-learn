@@ -165,7 +165,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_X(X)
+        X = self._validate_data(X)
 
         _check_normalize_components(
             self.normalize_components, self.__class__.__name__
@@ -363,7 +363,7 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_X(X)
+        X = self._validate_data(X)
 
         _check_normalize_components(
             self.normalize_components, self.__class__.__name__

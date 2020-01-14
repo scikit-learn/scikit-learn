@@ -459,7 +459,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         return self._fit(X)
 
     def _fit(self, X):
-        X = self._validate_X(X, accept_sparse='csr', copy=self.copy)
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
