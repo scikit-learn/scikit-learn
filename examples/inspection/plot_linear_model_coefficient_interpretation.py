@@ -3,6 +3,10 @@
 Interpretation of coefficients in linear models
 ===============================================
 
+.. contents::
+   :local:
+   :depth: 1
+
 Linear models describe situations in which the target value is expected to be
 a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
@@ -33,11 +37,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #############################################################################
-# Determinants of Wages from the 1985 Current Population Survey
-# -------------------------------------------------------------
-#
 # The dataset
-# ...........
+# -----------
 #
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to True will retrieve the data
@@ -93,12 +94,15 @@ sns.pairplot(train_dataset, diag_kind='kde')
 # long tail and we could take its logarithm
 # to simplify our problem and approximate a normal distribution.
 # The WAGE is increasing when EDUCATION is increasing.
+# It should be noted that the dependence between WAGE and EDUCATION
+# represented here is a marginal dependence, i.e., it describe the behavior
+# of a specific variable without fixing the others.
 # Also, the EXPERIENCE and AGE are linearly correlated.
 #
 # .. _the-pipeline:
 #
 # The pipeline
-# ............
+# ------------
 #
 # To design our machine-learning pipeline, we manually
 # check the type of data that we are dealing with:
@@ -153,7 +157,7 @@ model = make_pipeline(
 
 ##############################################################################
 # Processing the dataset
-# ......................
+# ----------------------
 #
 # First, we fit the model and we verify which value of :math:`\alpha` has been
 # selected.
@@ -199,7 +203,7 @@ plt.ylim([0, 27])
 # importance of cross checking the results.
 #
 # Interpreting coefficients
-# .........................
+# -------------------------
 #
 # First of all, we can plot the values of the coefficients of the regressor we
 # have fitted.
@@ -256,7 +260,7 @@ plt.subplots_adjust(left=.3)
 # other features remain constant.
 #
 # Checking the variability of the coefficients
-# ............................................
+# --------------------------------------------
 #
 # We can check the coefficient variability through cross-validation.
 # If coefficients vary in a significant way changing the input dataset
@@ -327,7 +331,7 @@ plt.subplots_adjust(left=.3)
 # remain important for all predictors trained during cross-validation.
 #
 # Preprocessing numerical variables
-# .................................
+# ---------------------------------
 #
 # As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
