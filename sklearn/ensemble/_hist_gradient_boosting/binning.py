@@ -49,15 +49,19 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
         n_features``.
     """
     rng = check_random_state(random_state)
-    sample_size = min(subsample, data.shape[0])
+    if subsample:
+        sample_size = min(subsample, data.shape[0])
+    else:
+        sample_size = data.shape[0]
     if sample_weight is not None:
         subset = rng.choice(data.shape[0], size=sample_size,
                             replace=True,
                             p=sample_weight / sample_weight.sum())
+        data = data.take(subset, axis=0)
     elif subsample is not None and data.shape[0] > subsample:
         subset = rng.choice(data.shape[0], size=sample_size,
                             replace=True)
-    data = data.take(subset, axis=0)
+        data = data.take(subset, axis=0)
 
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
