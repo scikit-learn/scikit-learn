@@ -456,8 +456,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             from pandas.api.types import is_sparse
             if array.dtypes.apply(is_sparse).any():
                 warnings.warn(
-                    "pandas Dataframe having sparse columns found."
-                    "It will be inflated automatically."
+                    "pandas.DataFrame having sparse columns found."
+                    "It will be densified automatically."
                 )
 
         dtypes_orig = list(array.dtypes)
