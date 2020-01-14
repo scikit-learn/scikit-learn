@@ -117,6 +117,115 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
+
+class GeneralNB(_BaseNB):
+    """General Naive Bayes (GeneralNB)
+
+    Parameters
+    ----------
+    distributions : list of tuples
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
+
+    Attributes
+    ----------
+    class_prior_ : array, shape (n_classes,)
+        probability of each class.
+    class_count_ : array, shape (n_classes,)
+        number of training samples observed in each class.
+    fits_ : list of objects
+        list of objects that inherit from BaseNB
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1.5, 2.3, 0, 1],
+                      [2.7, 3.8, 1, 0],
+                      [1.7, 0.1, 1, 0]])
+    >>> y = np.array([1, 0, 0])
+    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
+    >>> clf = GeneralNB([
+            (GaussianNB(), [0, 1]),
+            (BernoulliNB(), [2, 3])
+        ])
+    >>> clf.fit(X, y)
+    GeneralNB(distributions=[
+        (GaussianNB(priors=None, var_smoothing=1e-09), [0, 1]),
+        (BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None,
+            fit_prior=True), [2, 3])]
+    )
+    >>> print(clf.predict([[1.5, 2.3, 0, 1]]))
+    [1]
+    >>> print(clf.score([[2.7, 3.8, 1, 0]]))
+    [1]
+    """
+
+    def __init__(self, distributions):
+        self.distributions_ = distributions
+        self.class_prior = []
+        self.fits = []
+
+    def __repr__(self):
+        return f"{str(self.__class__.__name__)}(distributions={self.distributions_})"
+
+    def fit(self, X, y):
+        """Fit Gaussian Naive Bayes according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape (n_samples,)
+            Target values.
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+        """
+        self.distributions_ = self._check_distributions(self.distributions_)
+
+        # FIXME aggregate all classes and all priors?
+        self.classes_ = np.unique(y)
+
+        inits = [(nb, features) for (nb, features) in self.distributions_]
+
+        self.fits = [(nb.fit(X[:, features], y), features)
+                     for (nb, features) in inits]
+
+        return self
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of the samples X"""
+        log_priors = [nb.class_log_prior_
+                      if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
+                      for nb, _ in self.fits]
+
+        
+        print(nb._joint_log_likelihood(X[:, self.fits[0][1]])
+        jll = [nb._joint_log_likelihood(X[:, features])
+               for (nb, features) in self.fits]
+
+        jll = np.hstack([jll])
+        jll = jll - log_priors[0]
+        jll = jll.sum(axis=0) + log_priors[0]
+
+        return jll
+
+    def _check_X(self, X):
+        # TODO
+        return X
+
+    def _check_distributions(self, distr):
+        # TODO
+        # Check duplicate naive bayes algorithms
+        # Check duplicate rows
+        return distr
+
+
+
 class GaussianNB(_BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
