@@ -76,9 +76,9 @@ class ShrunkCovariance(EmpiricalCovariance):
         zero.
         If False, data will be centered before computation.
 
-    shrinkage : float in [0, 1], default=0.1 
+    shrinkage : float, default=0.1 
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Attributes
     ----------
@@ -357,9 +357,9 @@ class LedoitWolf(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage_ : float in [0,1]
+    shrinkage_ : float
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Examples
     --------

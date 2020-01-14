@@ -28,14 +28,15 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float in (0, 1), default=None
+    support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
         be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        Range is (0, 1). 
 
-    contamination : float in (0, 0.5), default=0.1
+    contamination : float, default=0.1
         The amount of contamination of the data set, i.e. the proportion
-        of outliers in the data set.
+        of outliers in the data set. Range is (0, 0.5).
 
     random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling

@@ -89,9 +89,10 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     emp_cov : 2D ndarray of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
-    alpha : float in (0, inf]
+    alpha : float
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
+        Range is (0, inf].
 
     cov_init : array of shape (n_features, n_features), default=None
         The initial guess for the covariance.
@@ -101,15 +102,15 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : float in (0, inf], default=1e-4
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf].
 
-    enet_tol : float in (0, inf], default=1e-4
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
     max_iter : int, default=100
         The maximum number of iterations.
@@ -122,10 +123,10 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         If return_costs is True, the objective function and dual gap
         at each iteration are returned.
 
-    eps : float, default=`np.finfo(np.float64).eps`
+    eps : float, default=eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. Default is `np.finfo(np.float64).eps`.
 
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
@@ -285,24 +286,25 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Parameters
     ----------
-    alpha : float in (0, inf], default=0.01
+    alpha : float, default=0.01
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
+        Range is (0, inf]. 
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : float in (0, inf], default=1e-4
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf].
 
-    enet_tol : float in (0, inf], default=1e-4
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
     max_iter : int, default=100
         The maximum number of iterations.
@@ -500,15 +502,15 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Parameters
     ----------
-    alphas : int or list of floats in (0, inf], default=4
+    alphas : int or list of floats, default=4
         If an integer is given, it fixes the number of points on the
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
-        more details.
+        more details. Range is (0, inf] when floats given.
 
-    n_refinements : int in (0, inf], default=4
+    n_refinements : int, default=4
         The number of times the grid is refined. Not used if explicit
-        values of alphas are passed.
+        values of alphas are passed. Range is [1, inf).
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -527,15 +529,15 @@ class GraphicalLassoCV(GraphicalLasso):
         .. versionchanged:: 0.20
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    tol : float in (0, inf], default=1e-4
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf]. 
 
-    enet_tol : float in (0, inf], default=1e-4
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
     max_iter : int, default=100
         Maximum number of iterations.

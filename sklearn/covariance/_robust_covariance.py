@@ -536,11 +536,12 @@ class MinCovDet(EmpiricalCovariance):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float in (0, 1), default=None
+    support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is None, which implies that the minimum
         value of support_fraction will be used within the algorithm:
         [n_sample + n_features + 1] / 2
+        Range is (0, 1).
 
     random_state : int or RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
