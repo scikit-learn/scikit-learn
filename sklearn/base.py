@@ -338,6 +338,18 @@ class BaseEstimator:
         return collected_tags
 
     def _validate_n_features(self, X, reset):
+        """Set the n_features_in_ attribute, or check against it.
+
+        Parameters
+        ----------
+
+        X : ndarray or sparse matrix
+            The input samples
+        reset : bool
+            If True, the n_features_in_ attribute is set to X.shape[1]. Else,
+            the attribute must already exist and the function checks that it is
+            equal to X.shape[1].
+        """
         n_features = X.shape[1]
 
         if reset:
@@ -356,6 +368,28 @@ class BaseEstimator:
                 )
 
     def _validate_data(self, X, y=None, reset=True, **check_params):
+        """Validate input data and set or check the n_features_in_ attribute.
+
+        Parameters
+        ----------
+
+        X : array-like
+            The input samples.
+        y : array-like or None, default=None
+            The targets. If None, check_array is called on X and check_X_y is
+            called otherwise.
+        reset : bool, default=True
+            Whether to reset the n_features_in_ attribute. See
+            _validate_n_features().
+        **check_params : kwargs
+            Parameters passed to check_array() or check_X_y().
+
+        Returns
+        -------
+        out : {ndarray, sparse matrix} or tuple of these
+            The validated input. A tuple is returned if y is not None.
+        """
+
         if y is None:
             X = check_array(X, **check_params)
             out = X
