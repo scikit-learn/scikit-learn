@@ -32,7 +32,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
         be used within the algorithm: `[n_sample + n_features + 1] / 2`.
-        Range is (0, 1). 
+        Range is (0, 1).
 
     contamination : float, default=0.1
         The amount of contamination of the data set, i.e. the proportion

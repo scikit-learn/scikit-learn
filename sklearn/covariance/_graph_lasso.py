@@ -289,7 +289,7 @@ class GraphicalLasso(EmpiricalCovariance):
     alpha : float, default=0.01
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
-        Range is (0, inf]. 
+        Range is (0, inf].
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -531,7 +531,7 @@ class GraphicalLassoCV(GraphicalLasso):
 
     tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped. Range is (0, inf]. 
+        this value, iterations are stopped. Range is (0, inf].
 
     enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
