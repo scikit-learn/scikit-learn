@@ -493,8 +493,12 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2,
-                         force_all_finite=False)
+        tags = self._get_tags()
+        type_y = type_of_target(y)
+        multioutput = 'multioutput' in type_y
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
+                         force_all_finite=not tags.get('allow_nan', True),
+                         multi_output=multioutput)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
