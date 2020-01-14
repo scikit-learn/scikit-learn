@@ -131,7 +131,7 @@ approximates the above integral by computing an average over the data `X`:
 
 where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
 :math:`X_C`. For each value of :math:`x_S`, this method requires a full pass
-over the dataset `X` and can be quite slow.
+over the dataset `X` which is computationally intensive.
 
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported by some tree-based estimators. It is computed as follows. For a
