@@ -238,12 +238,12 @@ plt.subplots_adjust(left=.3)
 # We should then multiply the coefficients by the standard deviation and we
 # will be able to better compare them: in that way, we emphasize that the
 # greater the variance of a feature, the larger the impact of the corresponding
-# coefficent on the output, all else being equal.
+# coefficient on the output, all else being equal.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_ *
     X_train_preprocessed.std(axis=0),
-    columns=['Coefficients'], index=feature_names
+    columns=['Coefficient importance'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.axvline(x=0, color='.5')
@@ -251,12 +251,12 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The plot above tells us that an increase of the AGE will induce a decrease
-# of the WAGE when all other features remain constant, for instance at a
-# constant EXPERIENCE. An increase of the EXPERIENCE will induce an increase
-# of the WAGE when all other features remain constant.
+# of the WAGE when all other features remain constant. On the contrary, an
+# increase of the EXPERIENCE will induce an increase of the WAGE when all
+# other features remain constant.
 #
-# Checking the coefficient variability
-# ....................................
+# Checking the variability of the coefficients
+# ............................................
 #
 # We can check the coefficient variability through cross-validation.
 # If coefficients vary in a significant way changing the input dataset
@@ -292,6 +292,7 @@ plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
 plt.grid(True)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
@@ -423,6 +424,7 @@ plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
 plt.grid(True)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
 
 ##############################################################################
 # Even if the model is still not able to provide a good description of the
