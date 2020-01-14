@@ -31,11 +31,12 @@ from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils._testing import (assert_almost_equal,
-                                   assert_warns_message, assert_raise_message,
-                                   clean_warning_registry,
-                                   assert_no_warnings,
-                                   fails_if_pypy, assert_allclose_dense_sparse,
-                                   skip_if_32bit)
+                                    assert_warns_message, assert_raise_message,
+                                    clean_warning_registry,
+                                    assert_no_warnings,
+                                    fails_if_pypy,
+                                    assert_allclose_dense_sparse,
+                                    skip_if_32bit)
 from collections import defaultdict
 from functools import partial
 import pickle
