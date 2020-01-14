@@ -512,7 +512,7 @@ boolean mask array or callable
             self._feature_names_in = None
         X = _check_X(X)
         # set n_features_in_ attribute
-        self._validate_n_features(X)
+        self._validate_n_features(X, reset=True)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
