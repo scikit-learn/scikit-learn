@@ -681,7 +681,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to inertia to declare convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     precompute_distances : 'auto' or bool, default='auto'
         Precompute distances (faster but takes more memory).
