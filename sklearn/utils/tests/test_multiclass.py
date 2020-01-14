@@ -3,6 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 import pytest
+from distutils.version import LooseVersion
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -291,7 +292,12 @@ def test_type_of_target():
 def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
-    y = pd.SparseArray([1, np.nan, np.nan, 1, np.nan])
+    if LooseVersion(pd.__version__) >= '0.25':
+        pd_sparse_array = pd.arrays.SparseArray
+    else:
+        pd_sparse_array = pd.SparseArray
+
+    y = pd_sparse_array([1, np.nan, np.nan, 1, np.nan])
     msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
     with pytest.raises(ValueError, match=msg):
         type_of_target(y)

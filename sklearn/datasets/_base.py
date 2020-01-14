@@ -154,7 +154,7 @@ def load_files(container_path, description=None, categories=None,
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
 
-    random_state : int, RandomState instance or None (default=0)
+    random_state : int, RandomState instance or None, default=0
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -919,31 +919,3 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
-
-
-def _refresh_cache(files, compress):
-    # TODO: REMOVE in v0.23
-    import joblib
-    msg = "sklearn.externals.joblib is deprecated in 0.21"
-    with warnings.catch_warnings(record=True) as warns:
-        data = tuple([joblib.load(f) for f in files])
-
-    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
-
-    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
-    for w in other_warns:
-        warnings.warn(message=w.message, category=w.category)
-
-    if refresh_needed:
-        try:
-            for value, path in zip(data, files):
-                joblib.dump(value, path, compress=compress)
-        except IOError:
-            message = ("This dataset will stop being loadable in scikit-learn "
-                       "version 0.23 because it references a deprecated "
-                       "import path. Consider removing the following files "
-                       "and allowing it to be cached anew:\n%s"
-                       % ("\n".join(files)))
-            warnings.warn(message=message, category=FutureWarning)
-
-    return data[0] if len(data) == 1 else data
