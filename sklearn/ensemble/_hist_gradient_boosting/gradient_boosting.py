@@ -6,7 +6,6 @@ from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
-from joblib.parallel import effective_n_jobs
 
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
