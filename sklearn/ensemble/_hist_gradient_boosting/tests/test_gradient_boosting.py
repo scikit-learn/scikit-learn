@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from joblib.parallel import effective_n_jobs
 from numpy.testing import assert_allclose
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler

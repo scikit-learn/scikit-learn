@@ -9,8 +9,6 @@ approximately the same number of samples.
 
 import numpy as np
 
-from joblib import effective_n_jobs
-
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
