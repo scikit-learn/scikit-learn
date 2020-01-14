@@ -73,6 +73,8 @@ cdef class HistogramBuilder:
         loss w.r.t the predictions, evaluated at iteration i - 1.
     hessians_are_constant : bool
         Whether hessians are constant.
+    n_threads : int
+        The number of OpenMP used to compute the histogram in parallel.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -83,11 +85,13 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
         unsigned char hessians_are_constant
+        int n_threads
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
                  unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
-                 unsigned char hessians_are_constant):
+                 unsigned char hessians_are_constant,
+                 int n_threads):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -100,6 +104,7 @@ cdef class HistogramBuilder:
         self.ordered_gradients = gradients.copy()
         self.ordered_hessians = hessians.copy()
         self.hessians_are_constant = hessians_are_constant
+        self.n_threads = n_threads
 
     def compute_histograms_brute(
             HistogramBuilder self,
@@ -143,14 +148,17 @@ cdef class HistogramBuilder:
             # cache hit.
             if sample_indices.shape[0] != gradients.shape[0]:
                 if hessians_are_constant:
-                    for i in prange(n_samples, schedule='static'):
+                    for i in prange(n_samples, schedule='static',
+                                    num_threads=self.n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                 else:
-                    for i in prange(n_samples, schedule='static'):
+                    for i in prange(n_samples, schedule='static',
+                                    num_threads=self.n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
-            for feature_idx in prange(n_features, schedule='static'):
+            for feature_idx in prange(n_features, schedule='static',
+                                      num_threads=self.n_threads):
                 # Compute histogram of each feature
                 self._compute_histogram_brute_single_feature(
                     feature_idx, sample_indices, histograms)
@@ -230,7 +238,8 @@ cdef class HistogramBuilder:
                 dtype=HISTOGRAM_DTYPE
             )
 
-        for feature_idx in prange(n_features, schedule='static', nogil=True):
+        for feature_idx in prange(n_features, schedule='static', nogil=True,
+                                  num_threads=self.n_threads):
             # Compute histogram of each feature
             _subtract_histograms(feature_idx,
                                  self.n_bins,

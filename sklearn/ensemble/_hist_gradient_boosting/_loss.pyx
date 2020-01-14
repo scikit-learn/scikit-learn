@@ -19,28 +19,32 @@ from .common cimport G_H_DTYPE_C
 def _update_gradients_least_squares(
         G_H_DTYPE_C [::1] gradients,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN
-        const Y_DTYPE_C [::1] raw_predictions):  # IN
+        const Y_DTYPE_C [::1] raw_predictions,  # IN
+        const int n_threads):  # IN
 
     cdef:
         int n_samples
         int i
 
     n_samples = raw_predictions.shape[0]
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads):
         gradients[i] = raw_predictions[i] - y_true[i]
 
 
 def _update_gradients_least_absolute_deviation(
         G_H_DTYPE_C [::1] gradients,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN
-        const Y_DTYPE_C [::1] raw_predictions):  # IN
+        const Y_DTYPE_C [::1] raw_predictions,  # IN
+        const int n_threads):  # IN
 
     cdef:
         int n_samples
         int i
 
     n_samples = raw_predictions.shape[0]
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads):
         # gradient = sign(raw_predicition - y_pred)
         gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
 
@@ -49,14 +53,16 @@ def _update_gradients_hessians_binary_crossentropy(
         G_H_DTYPE_C [::1] gradients,  # OUT
         G_H_DTYPE_C [::1] hessians,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN
-        const Y_DTYPE_C [::1] raw_predictions):  # IN
+        const Y_DTYPE_C [::1] raw_predictions,  # IN
+        const int n_threads):  # IN
     cdef:
         int n_samples
         Y_DTYPE_C p_i  # proba that ith sample belongs to positive class
         int i
 
     n_samples = raw_predictions.shape[0]
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads):
         p_i = _cexpit(raw_predictions[i])
         gradients[i] = p_i - y_true[i]
         hessians[i] = p_i * (1. - p_i)
@@ -66,7 +72,8 @@ def _update_gradients_hessians_categorical_crossentropy(
         G_H_DTYPE_C [:, ::1] gradients,  # OUT
         G_H_DTYPE_C [:, ::1] hessians,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN
-        const Y_DTYPE_C [:, ::1] raw_predictions):  # IN
+        const Y_DTYPE_C [:, ::1] raw_predictions,  # IN
+        const int n_threads):  # IN
     cdef:
         int prediction_dim = raw_predictions.shape[0]
         int n_samples = raw_predictions.shape[1]
@@ -77,7 +84,8 @@ def _update_gradients_hessians_categorical_crossentropy(
         Y_DTYPE_C [:, ::1] p = np.empty(shape=(n_samples, prediction_dim))
         Y_DTYPE_C p_i_k
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(n_samples, schedule='static', nogil=True,
+                    num_threads=n_threads):
         # first compute softmaxes of sample i for each class
         for k in range(prediction_dim):
             p[i, k] = raw_predictions[k, i]  # prepare softmax

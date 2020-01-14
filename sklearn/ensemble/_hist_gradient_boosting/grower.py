@@ -163,7 +163,7 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     n_threads : int, default=1
-        The number of threads used by OpenMP.
+        The number of OpenMP threads.
     """
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
@@ -174,6 +174,7 @@ class TreeGrower:
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
                                   l2_regularization, min_hessian_to_split)
+        self.n_threads = n_threads
 
         if n_bins_non_missing is None:
             n_bins_non_missing = n_bins - 1
@@ -192,7 +193,9 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant)
+            X_binned, n_bins, gradients, hessians, hessians_are_constant,
+            self.n_threads
+        )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned, n_bins_non_missing, missing_values_bin_idx,
@@ -214,7 +217,6 @@ class TreeGrower:
         self.total_apply_split_time = 0.  # time spent splitting nodes
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
-        self.n_threads = n_threads
 
     def _validate_parameters(self, X_binned, max_leaf_nodes, max_depth,
                              min_samples_leaf, min_gain_to_split,
@@ -320,8 +322,7 @@ class TreeGrower:
         (sample_indices_left,
          sample_indices_right,
          right_child_pos) = self.splitter.split_indices(node.split_info,
-                                                        node.sample_indices,
-                                                        self.n_threads)
+                                                        node.sample_indices)
         self.total_apply_split_time += time() - tic
 
         depth = node.depth + 1

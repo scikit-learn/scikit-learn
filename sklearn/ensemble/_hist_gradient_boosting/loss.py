@@ -36,6 +36,9 @@ class BaseLoss(ABC):
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     need_update_leaves_values = False
 
+    def __init__(self, n_threads):
+        self.n_threads = n_threads
+
     def init_gradients_and_hessians(self, n_samples, prediction_dim):
         """Return initial gradients and hessians.
 
@@ -150,7 +153,9 @@ class LeastSquares(BaseLoss):
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
-        _update_gradients_least_squares(gradients, y_true, raw_predictions)
+        _update_gradients_least_squares(
+            gradients, y_true, raw_predictions, self.n_threads
+        )
 
 
 class LeastAbsoluteDeviation(BaseLoss):
@@ -192,8 +197,9 @@ class LeastAbsoluteDeviation(BaseLoss):
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
-        _update_gradients_least_absolute_deviation(gradients, y_true,
-                                                   raw_predictions)
+        _update_gradients_least_absolute_deviation(
+            gradients, y_true, raw_predictions, self.n_threads
+        )
 
     def update_leaves_values(self, grower, y_true, raw_predictions):
         # Update the values predicted by the tree with
@@ -254,7 +260,8 @@ class BinaryCrossEntropy(BaseLoss):
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
         _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
+            gradients, hessians, y_true, raw_predictions, self.n_threads
+        )
 
     def predict_proba(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -299,7 +306,8 @@ class CategoricalCrossEntropy(BaseLoss):
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
                                       raw_predictions):
         _update_gradients_hessians_categorical_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
+            gradients, hessians, y_true, raw_predictions, self.n_threads
+        )
 
     def predict_proba(self, raw_predictions):
         # TODO: This could be done in parallel

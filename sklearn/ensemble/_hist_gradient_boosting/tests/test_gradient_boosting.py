@@ -447,22 +447,3 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "X, y, HistGradientBoosting",
-    [(X_classification, y_classification, HistGradientBoostingClassifier),
-     (X_regression, y_regression, HistGradientBoostingRegressor)]
-)
-@pytest.mark.parametrize(
-    "n_threads, expected_n_threads",
-    [(None, effective_n_jobs(n_jobs=-1)),
-     (1, 1),
-     (-1, effective_n_jobs(n_jobs=-1))]
-)
-def test_gradient_boosting_n_threads(X, y, HistGradientBoosting, n_threads,
-                                     expected_n_threads):
-    # check the dedicated number of OpenMP threads used
-    gbdt = HistGradientBoosting(n_threads=n_threads)
-    gbdt.fit(X, y)
-    assert gbdt._n_threads_openmp == expected_n_threads

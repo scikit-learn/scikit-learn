@@ -11,6 +11,11 @@ from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 
+@pytest.fixture
+def n_threads():
+    return 2
+
+
 def get_derivatives_helper(loss):
     """Return get_gradients() and get_hessians() functions for a given loss.
     """
@@ -57,12 +62,12 @@ def get_derivatives_helper(loss):
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Newton internally uses float64 != Y_DTYPE')
-def test_derivatives(loss, x0, y_true):
+def test_derivatives(loss, x0, y_true, n_threads):
     # Check that gradients are zero when the loss is minimized on 1D array
     # using Halley's method with the first and second order derivatives
     # computed by the Loss instance.
 
-    loss = _LOSSES[loss]()
+    loss = _LOSSES[loss](n_threads)
     y_true = np.array([y_true], dtype=Y_DTYPE)
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
@@ -90,7 +95,8 @@ def test_derivatives(loss, x0, y_true):
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
-def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
+def test_numerical_gradients(loss, n_classes, prediction_dim, n_threads,
+                             seed=0):
     # Make sure gradients and hessians computed in the loss are correct, by
     # comparing with their approximations computed with finite central
     # differences.
@@ -105,7 +111,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     raw_predictions = rng.normal(
         size=(prediction_dim, n_samples)
     ).astype(Y_DTYPE)
-    loss = _LOSSES[loss]()
+    loss = _LOSSES[loss](n_threads)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     # only take gradients and hessians of first tree / class.
@@ -136,10 +142,10 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     assert_allclose(numerical_hessians, hessians, rtol=1e-4, atol=1e-7)
 
 
-def test_baseline_least_squares():
+def test_baseline_least_squares(n_threads):
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_squares']()
+    loss = _LOSSES['least_squares'](n_threads)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -150,10 +156,10 @@ def test_baseline_least_squares():
                        baseline_prediction)
 
 
-def test_baseline_least_absolute_deviation():
+def test_baseline_least_absolute_deviation(n_threads):
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_absolute_deviation']()
+    loss = _LOSSES['least_absolute_deviation'](n_threads)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -164,10 +170,10 @@ def test_baseline_least_absolute_deviation():
     assert baseline_prediction == pytest.approx(np.median(y_train))
 
 
-def test_baseline_binary_crossentropy():
+def test_baseline_binary_crossentropy(n_threads):
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['binary_crossentropy']()
+    loss = _LOSSES['binary_crossentropy'](n_threads)
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, 1)
@@ -188,11 +194,11 @@ def test_baseline_binary_crossentropy():
     assert np.allclose(baseline_prediction, np.log(p / (1 - p)))
 
 
-def test_baseline_categorical_crossentropy():
+def test_baseline_categorical_crossentropy(n_threads):
     rng = np.random.RandomState(0)
 
     prediction_dim = 4
-    loss = _LOSSES['categorical_crossentropy']()
+    loss = _LOSSES['categorical_crossentropy'](n_threads)
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train,

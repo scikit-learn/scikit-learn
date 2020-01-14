@@ -19,7 +19,8 @@ from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const unsigned char missing_values_bin_idx,
-                 X_BINNED_DTYPE_C [::1, :] binned):
+                 X_BINNED_DTYPE_C [::1, :] binned,
+                 int n_threads):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -31,6 +32,8 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         used to separate the bins.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
+    n_threads : int
+        The number of OpenMP threads to parallelize the mapping.
     """
     cdef:
         int feature_idx
@@ -39,13 +42,15 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         _map_num_col_to_bins(data[:, feature_idx],
                              binning_thresholds[feature_idx],
                              missing_values_bin_idx,
-                             binned[:, feature_idx])
+                             binned[:, feature_idx],
+                             n_threads)
 
 
 cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                const X_DTYPE_C [:] binning_thresholds,
                                const unsigned char missing_values_bin_idx,
-                               X_BINNED_DTYPE_C [:] binned):
+                               X_BINNED_DTYPE_C [:] binned,
+                               const int n_threads):
     """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
@@ -53,7 +58,8 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
         int right
         int middle
 
-    for i in prange(data.shape[0], schedule='static', nogil=True):
+    for i in prange(data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
 
         if isnan(data[i]):
             binned[i] = missing_values_bin_idx

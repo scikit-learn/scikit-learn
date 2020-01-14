@@ -84,15 +84,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
 
-        # if n_threads is None, we limit the number of threads to avoid
-        # oversubscription
-        MAX_N_THREADS_OPENMP = min(effective_n_jobs(n_jobs=-1), 16)
-        n_threads_openmp = (MAX_N_THREADS_OPENMP
-                            if self.n_threads is None else self.n_threads)
-        self._n_threads_openmp = _openmp_effective_n_threads(
-            n_threads=n_threads_openmp
-        )
-
     def fit(self, X, y):
         """Fit the gradient boosting model.
 
@@ -108,6 +99,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         -------
         self : object
         """
+        # if n_threads is None, we limit the number of threads to avoid
+        # oversubscription
+        n_threads_openmp = _openmp_effective_n_threads(
+            n_threads=min(effective_n_jobs(n_jobs=-1), 16)
+        )
+
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
         acc_apply_split_time = 0.  # time spent splitting nodes
@@ -139,7 +136,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
-        self.loss_ = self._get_loss()
+        self.loss_ = self._get_loss(n_threads=n_threads_openmp)
 
         self.do_early_stopping_ = (self.n_iter_no_change is not None and
                                    self.n_iter_no_change > 0)
@@ -173,7 +170,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins,
-                                      random_state=self._random_seed)
+                                      random_state=self._random_seed,
+                                      n_jobs=n_threads_openmp)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, is_training_data=False)
@@ -323,7 +321,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
-                    n_threads=self._n_threads_openmp)
+                    n_threads=n_threads_openmp)
                 grower.grow()
 
                 acc_apply_split_time += grower.total_apply_split_time
@@ -342,7 +340,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[k, :], grower)
+                _update_raw_predictions(
+                    raw_predictions[k, :], grower, n_threads_openmp
+                )
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -752,11 +752,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
-    n_threads : int, default=None
-        The number of OpenMP threads used when finding the best splits.
-        By default (`None`), we limit the number of OpenMP threads to 16.
-        `-1` means using a number of threads equal to the total number of
-        processors.
 
     Attributes
     ----------
@@ -831,8 +826,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         y = y.astype(Y_DTYPE, copy=False)
         return y
 
-    def _get_loss(self):
-        return _LOSSES[self.loss]()
+    def _get_loss(self, n_threads):
+        return _LOSSES[self.loss](n_threads)
 
 
 class HistGradientBoostingClassifier(BaseHistGradientBoosting,
@@ -939,11 +934,6 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
-    n_threads : int, default=None
-        The number of OpenMP threads used when finding the best splits.
-        By default (`None`), we limit the number of OpenMP threads to 16.
-        `-1` means using a number of threads equal to the total number of
-        processors.
 
     Attributes
     ----------
@@ -1065,7 +1055,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self):
+    def _get_loss(self, n_threads):
         if (self.loss == 'categorical_crossentropy' and
                 self.n_trees_per_iteration_ == 1):
             raise ValueError("'categorical_crossentropy' is not suitable for "
@@ -1074,8 +1064,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
-                return _LOSSES['binary_crossentropy']()
+                return _LOSSES['binary_crossentropy'](n_threads)
             else:
-                return _LOSSES['categorical_crossentropy']()
+                return _LOSSES['categorical_crossentropy'](n_threads)
 
-        return _LOSSES[self.loss]()
+        return _LOSSES[self.loss](n_threads)

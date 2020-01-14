@@ -117,6 +117,8 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    n_threads : int, default=1
+        The number of threads to be used by OpenMP.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -129,6 +131,7 @@ cdef class Splitter:
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
         Y_DTYPE_C min_gain_to_split
+        int n_threads
 
         unsigned int [::1] partition
         unsigned int [::1] left_indices_buffer
@@ -143,7 +146,8 @@ cdef class Splitter:
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
-                 unsigned char hessians_are_constant=False):
+                 unsigned char hessians_are_constant=False,
+                 int n_threads=1):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -170,8 +174,10 @@ cdef class Splitter:
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
 
+        self.n_threads = n_threads
+
     def split_indices(Splitter self, split_info, unsigned int [::1]
-                      sample_indices, int n_threads):
+                      sample_indices):
         """Split samples into left and right arrays.
 
         The split is performed according to the best possible split
@@ -189,8 +195,6 @@ cdef class Splitter:
             on self.partition, and it is modified inplace by placing the
             indices of the left child at the beginning, and the indices of
             the right child at the end.
-        n_threads : int
-            The number of threads to be used by OpenMP.
 
         Returns
         -------
@@ -255,7 +259,7 @@ cdef class Splitter:
                 self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
-
+            int n_threads = self.n_threads
             int [:] sizes = np.full(n_threads, n_samples // n_threads,
                                     dtype=np.int32)
             int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)

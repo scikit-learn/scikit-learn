@@ -98,7 +98,7 @@ def test_map_to_bins(max_bins):
                                               random_state=0)
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned, n_threads=1)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
