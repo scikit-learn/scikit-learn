@@ -918,8 +918,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        self._validate_X_y(X, y, accept_sparse=_accept_sparse,
-                           multi_output=True, y_numeric=False)
+        X, y = self._validate_X_y(X, y, accept_sparse=_accept_sparse,
+                                  multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1879,8 +1879,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        self._validate_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                           multi_output=True, y_numeric=False)
+        X, y = self._validate_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                  multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
