@@ -1295,7 +1295,7 @@ def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     data = ['this is text, not file or filename']
     warn_msg = 'Since v0.21, vectorizer'
     with pytest.raises((FileNotFoundError, AttributeError)):
-            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+        Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
 
 
 @pytest.mark.parametrize(
