@@ -132,18 +132,15 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
-    n_jobs : int, default=None
-        The number of jobs to run in parallel. :meth:`transform` map data to
-        bin by parallelizing each feature. ``None`` means 1 unless in a
-        :obj:`joblib.parallel_backend` context. ``-1`` means using all
-        processors. See :term:`Glossary <n_jobs>` for more details.
+    n_threads : int, default=1
+       The number of OpenMP threads.
     """
     def __init__(self, n_bins=256, subsample=int(2e5), random_state=None,
-                 n_jobs=None):
+                 n_threads=1):
         self.n_bins = n_bins
         self.subsample = subsample
         self.random_state = random_state
-        self.n_jobs = n_jobs
+        self.n_threads = n_threads
 
     def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
@@ -196,7 +193,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X_binned : array-like, shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        n_jobs = effective_n_jobs(n_jobs=self.n_jobs)
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
@@ -207,5 +203,5 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
         _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
-                     binned, n_jobs)
+                     binned, self.n_threads)
         return binned

@@ -171,7 +171,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins,
                                       random_state=self._random_seed,
-                                      n_jobs=n_threads_openmp)
+                                      n_threads=n_threads_openmp)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, is_training_data=False)
