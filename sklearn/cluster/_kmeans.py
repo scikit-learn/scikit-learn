@@ -442,9 +442,9 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
-                center_half_distances, distance_next_center, upper_bounds,
-                lower_bounds, labels, center_shift, n_jobs,
-                update_centers=False)
+                   center_half_distances, distance_next_center, upper_bounds,
+                   lower_bounds, labels, center_shift, n_jobs,
+                   update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -564,8 +564,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step so that predicted labels match cluster centers
         lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-                weight_in_clusters, labels, center_shift, n_jobs,
-                update_centers=False)
+                   weight_in_clusters, labels, center_shift, n_jobs,
+                   update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
