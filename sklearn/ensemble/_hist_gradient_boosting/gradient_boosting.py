@@ -101,9 +101,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         # if n_threads is None, we limit the number of threads to avoid
         # oversubscription
-        n_threads_openmp = _openmp_effective_n_threads(
-            n_threads=min(effective_n_jobs(n_jobs=-1), 16)
-        )
+        MAX_N_THREADS = 16
+        n_threads_openmp = min(_openmp_effective_n_threads(-1), MAX_N_THREADS)
 
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
