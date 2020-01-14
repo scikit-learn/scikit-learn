@@ -156,11 +156,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # self.scores_ will not be calculated when calling _fit through fit
 
         tags = self._get_tags()
-        type_y = type_of_target(y)
-        multioutput = 'multioutput' in type_y
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
                          force_all_finite=not tags.get('allow_nan', True),
-                         multi_output=multioutput)
+                         multi_output=True)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -494,11 +492,9 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
         tags = self._get_tags()
-        type_y = type_of_target(y)
-        multioutput = 'multioutput' in type_y
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
                          force_all_finite=not tags.get('allow_nan', True),
-                         multi_output=multioutput)
+                         multi_output=True)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
