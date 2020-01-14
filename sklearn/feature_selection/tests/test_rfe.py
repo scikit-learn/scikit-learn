@@ -396,11 +396,11 @@ def test_rfe_allow_nan_inf_in_x(cv):
     rfe.fit(X, y)
     rfe.transform(X)
 
+    
 def test_multioutput():
-  X = np.array([[1,2,3],[2,3,4],[3,4,5]])
+  X = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
   # create y with more than 1 column
-  y = np.array([[1,1],[1,0],[1,0]])
-  clf = RandomForestClassifier(n_estimators=5
-                                ,max_depth=2)
+  y = np.array([[1, 1], [1, 0], [1, 0]])
+  clf = RandomForestClassifier(n_estimators=5)
   rfe_test = RFE(clf)
   rfe_test.fit(X,y)
