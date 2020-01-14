@@ -187,7 +187,7 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] center_shift,
                                      int n_jobs,
                                      bint update_centers=True):
-    """Single iteration of K-means elkan algorithm with dense input.
+    """Single iteration of K-means Elkan algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
@@ -403,7 +403,7 @@ cpdef void _elkan_iter_chunked_sparse(X,
                                       floating[::1] center_shift,
                                       int n_jobs,
                                       bint update_centers=True):
-    """Single iteration of K-means elkan algorithm with sparse input.
+    """Single iteration of K-means Elkan algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
