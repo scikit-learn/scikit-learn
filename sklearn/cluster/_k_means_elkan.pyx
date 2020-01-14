@@ -185,7 +185,7 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[:, ::1] lower_bounds,
                                      int[::1] labels,
                                      floating[::1] center_shift,
-                                     int n_jobs,
+                                     int n_threads,
                                      bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with dense input.
 
@@ -233,7 +233,7 @@ shape (n_clusters, n_clusters)
     center_shift : {float32, float64} array-like, shape (n_clusters,)
         Distance between old and new centers.
 
-    n_jobs : int
+    n_threads : int
         The number of threads to be used by openmp.
 
     update_centers : bool
@@ -268,7 +268,7 @@ shape (n_clusters, n_clusters)
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    with nogil, parallel(num_threads=n_jobs):
+    with nogil, parallel(num_threads=n_threads):
         # thread local buffers
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
@@ -402,7 +402,7 @@ cpdef void _elkan_iter_chunked_sparse(X,
                                       floating[:, ::1] lower_bounds,
                                       int[::1] labels,
                                       floating[::1] center_shift,
-                                      int n_jobs,
+                                      int n_threads,
                                       bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with sparse input.
 
@@ -450,7 +450,7 @@ shape (n_clusters, n_clusters)
     center_shift : {float32, float64} array-like, shape (n_clusters,)
         Distance between old and new centers.
 
-    n_jobs : int
+    n_threads : int
         The number of threads to be used by openmp.
 
     update_centers : bool
@@ -491,7 +491,7 @@ shape (n_clusters, n_clusters)
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    with nogil, parallel(num_threads=n_jobs):
+    with nogil, parallel(num_threads=n_threads):
         # thread local buffers
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
