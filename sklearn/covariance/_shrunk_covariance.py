@@ -32,9 +32,9 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     emp_cov : array-like of shape (n_features, n_features)
         Covariance matrix to be shrunk
 
-    shrinkage : float in [0,1], default=0.1
+    shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
+        of the shrunk estimate. Range is [0, 1].
 
     Returns
     -------
