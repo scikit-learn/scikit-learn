@@ -299,29 +299,29 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
         the base estimator is ``DecisionTreeClassifier(max_depth=1)``.
 
-    n_estimators : int, optional (default=50)
+    n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, optional (default=1.)
+    learning_rate : float, default=1.
         Learning rate shrinks the contribution of each classifier by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
-    algorithm : {'SAMME', 'SAMME.R'}, optional (default='SAMME.R')
+    algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
         If 'SAMME.R' then use the SAMME.R real boosting algorithm.
         ``base_estimator`` must support calculation of class probabilities.
         If 'SAMME' then use the SAMME discrete boosting algorithm.
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -649,7 +649,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         ------
-        y : generator of array, shape = [n_samples]
+        y : generator of ndarray of shape (n_samples,)
             The predicted classes.
         """
         X = self._validate_data(X)
@@ -677,7 +677,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        score : array, shape = [n_samples, k]
+        score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
@@ -720,7 +720,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         ------
-        score : generator of array, shape = [n_samples, k]
+        score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
@@ -793,7 +793,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes)
+        p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
@@ -828,7 +828,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Yields
         -------
-        p : generator of array, shape = [n_samples]
+        p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
@@ -854,7 +854,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes)
+        p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
@@ -879,25 +879,25 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         If ``None``, then the base estimator is
         ``DecisionTreeRegressor(max_depth=3)``.
 
-    n_estimators : integer, optional (default=50)
+    n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, optional (default=1.)
+    learning_rate : float, default=1.
         Learning rate shrinks the contribution of each regressor by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
-    loss : {'linear', 'square', 'exponential'}, optional (default='linear')
+    loss : {'linear', 'square', 'exponential'}, default='linear'
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -1147,7 +1147,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Yields
         -------
-        y : generator of array, shape = [n_samples]
+        y : generator of ndarray of shape (n_samples,)
             The predicted regression values.
         """
         check_is_fitted(self)
