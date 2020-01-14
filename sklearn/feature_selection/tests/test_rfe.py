@@ -396,7 +396,7 @@ def test_rfe_allow_nan_inf_in_x(cv):
     rfe.fit(X, y)
     rfe.transform(X)
 
-    
+
 def test_multioutput():
     X = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
     # create y with more than 1 column
