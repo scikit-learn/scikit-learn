@@ -838,16 +838,16 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         Parameters
         ----------
-        grid : ndarray, shape (n_samples, n_target_features)
+        grid : ndarray of shape (n_samples, n_target_features)
             The grid points on which the partial dependence should be
             evaluated.
-        target_features : ndarray, shape (n_target_features)
+        target_features : ndarray of shape (n_target_features)
             The set of target features for which the partial dependence
             should be evaluated.
 
         Returns
         -------
-        averaged_predictions : ndarray, shape \
+        averaged_predictions : ndarray of shape \
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """

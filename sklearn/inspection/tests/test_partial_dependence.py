@@ -216,16 +216,19 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
-def test_recursion_decision_tree_vs_forest_and_gbdt():
+@pytest.mark.parametrize('seed', range(1))
+def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     # Make sure that the recursion method gives the same results on a
     # DecisionTreeRegressor and a GradientBoostingRegressor or a
     # RandomForestRegressor with 1 tree and equivalent parameters.
 
+    rng = np.random.RandomState(seed)
+
     # Purely random dataset to avoid correlated features
-    n_samples = 100
+    n_samples = 1000
     n_features = 5
-    X = np.random.RandomState(0).randn(n_samples, n_features)
-    y = np.random.RandomState(0).randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples) * 10
 
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
     # into account with the recursion method, for technical reasons. We set
@@ -235,13 +238,16 @@ def test_recursion_decision_tree_vs_forest_and_gbdt():
     # set max_depth not too high to avoid splits with same gain but different
     # features
     max_depth = 5
+
+    tree_seed = 0
     forest = RandomForestRegressor(n_estimators=1, max_features=None,
                                    bootstrap=False, max_depth=max_depth,
-                                   random_state=0)
+                                   random_state=tree_seed)
     # The forest will use ensemble.base._set_random_states to set the
     # random_state of the tree sub-estimator. We simulate this here to have
     # equivalent estimators.
-    equiv_random_state = check_random_state(0).randint(MAX_RAND_SEED)
+    equiv_random_state = check_random_state(tree_seed).randint(MAX_RAND_SEED)
+    # print(check_random_state(equiv_random_state).get_state())
     gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
                                      criterion='mse', max_depth=max_depth,
                                      random_state=equiv_random_state)
@@ -258,11 +264,12 @@ def test_recursion_decision_tree_vs_forest_and_gbdt():
         assert_is_subtree(tree.tree_, forest[0].tree_)
     except AssertionError:
         # For some reason the trees aren't exactly equal on 32bits, so the PDs
-        # cannot be equal either.
-        assert _IS_32BIT
+        # cannot be equal either. See
+        # https://github.com/scikit-learn/scikit-learn/issues/8853
+        assert _IS_32BIT, "this should only fail on 32 bit platforms"
         return
 
-    grid = np.random.RandomState(0).randn(50).reshape(-1, 1)
+    grid = rng.randn(50).reshape(-1, 1)
     for f in range(n_features):
         features = np.array([f], dtype=np.int32)
 
