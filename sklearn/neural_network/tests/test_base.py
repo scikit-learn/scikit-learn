@@ -14,7 +14,7 @@ def test_binary_log_loss_1_prob_finite():
     assert np.isfinite(loss)
 
 
-@pytest.mark.parametrize("y_true, y_prob",[
+@pytest.mark.parametrize("y_true, y_prob", [
     (np.array([[1, 0, 0], [0, 1, 0]]),
      np.array([[0., 1., 0.], [0.9, 0.05, 0.05]])),
     (np.array([[0, 0, 1]]).T,
