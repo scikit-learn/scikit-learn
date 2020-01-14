@@ -337,7 +337,7 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
-    def _validate_n_features(self, X, reset):
+    def _check_n_features(self, X, reset):
         """Set the n_features_in_ attribute, or check against it.
 
         Parameters
@@ -380,7 +380,7 @@ class BaseEstimator:
             called otherwise.
         reset : bool, default=True
             Whether to reset the n_features_in_ attribute. See
-            _validate_n_features().
+            _check_n_features().
         **check_params : kwargs
             Parameters passed to check_array() or check_X_y().
 
@@ -398,7 +398,7 @@ class BaseEstimator:
             out = X, y
 
         if check_params.get('ensure_2d', True):
-            self._validate_n_features(X, reset=reset)
+            self._check_n_features(X, reset=reset)
 
         return out
 
