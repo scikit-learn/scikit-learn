@@ -2856,7 +2856,7 @@ def check_n_features_in(name, estimator_orig):
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
-    X = pairwise_estimator_convert_X(X, estimator)
+    X = _pairwise_estimator_convert_X(X, estimator)
     if is_regressor(estimator_orig):
         y = rng.normal(size=n_samples)
     else:
