@@ -89,7 +89,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
