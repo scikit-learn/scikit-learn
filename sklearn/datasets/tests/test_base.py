@@ -24,7 +24,6 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
-from sklearn.datasets._base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals._pilutil import pillow_installed
@@ -277,55 +276,3 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
-
-
-def test_refresh_cache(monkeypatch):
-    # uses pytests monkeypatch fixture
-    # https://docs.pytest.org/en/latest/monkeypatch.html
-
-    def _load_warn(*args, **kwargs):
-        # raise the warning from "externals.joblib.__init__.py"
-        # this is raised when a file persisted by the old joblib is loaded now
-        msg = ("sklearn.externals.joblib is deprecated in 0.21 and will be "
-               "removed in 0.23. Please import this functionality directly "
-               "from joblib, which can be installed with: pip install joblib. "
-               "If this warning is raised when loading pickled models, you "
-               "may need to re-serialize those models with scikit-learn "
-               "0.21+.")
-        warnings.warn(msg, FutureWarning)
-        return 0
-
-    def _load_warn_unrelated(*args, **kwargs):
-        warnings.warn("unrelated warning", FutureWarning)
-        return 0
-
-    def _dump_safe(*args, **kwargs):
-        pass
-
-    def _dump_raise(*args, **kwargs):
-        # this happens if the file is read-only and joblib.dump fails to write
-        # on it.
-        raise IOError()
-
-    # test if the dataset spesific warning is raised if load raises the joblib
-    # warning, and dump fails to dump with new joblib
-    monkeypatch.setattr(joblib, "load", _load_warn)
-    monkeypatch.setattr(joblib, "dump", _dump_raise)
-    msg = "This dataset will stop being loadable in scikit-learn"
-    with pytest.warns(FutureWarning, match=msg):
-        _refresh_cache('test', 0)
-
-    # make sure no warning is raised if load raises the warning, but dump
-    # manages to dump the new data
-    monkeypatch.setattr(joblib, "load", _load_warn)
-    monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(None) as warns:
-        _refresh_cache('test', 0)
-    assert len(warns) == 0
-
-    # test if an unrelated warning is still passed through and not suppressed
-    # by _refresh_cache
-    monkeypatch.setattr(joblib, "load", _load_warn_unrelated)
-    monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(FutureWarning, match="unrelated warning"):
-        _refresh_cache('test', 0)
