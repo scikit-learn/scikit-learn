@@ -75,7 +75,8 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         - If True, the labels and the new centers will be computed, i.e. runs
           the E-step and the M-step of the algorithm.
         - If False, only the labels will be computed, i.e runs the E-step of
-          the algorithm.
+          the algorithm. This is useful especially when calling predict on a
+          fitted model.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -253,8 +254,11 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         The number of threads to be used by openmp.
 
     update_centers : bool
-        - If True, the labels and the new centers will be computed.
-        - If False, only the labels will be computed.
+        - If True, the labels and the new centers will be computed, i.e. runs
+          the E-step and the M-step of the algorithm.
+        - If False, only the labels will be computed, i.e runs the E-step of
+          the algorithm. This is useful especially when calling predict on a
+          fitted model.
     """
     cdef:
         int n_samples = X.shape[0]

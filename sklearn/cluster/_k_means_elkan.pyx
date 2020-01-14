@@ -240,7 +240,8 @@ shape (n_clusters, n_clusters)
         - If True, the labels and the new centers will be computed, i.e. runs
           the E-step and the M-step of the algorithm.
         - If False, only the labels will be computed, i.e runs the E-step of
-          the algorithm.
+          the algorithm. This is useful especially when calling predict on a
+          fitted model.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -456,7 +457,8 @@ shape (n_clusters, n_clusters)
         - If True, the labels and the new centers will be computed, i.e. runs
           the E-step and the M-step of the algorithm.
         - If False, only the labels will be computed, i.e runs the E-step of
-          the algorithm.
+          the algorithm. This is useful especially when calling predict on a
+          fitted model.
     """
     cdef:
         int n_samples = X.shape[0]
