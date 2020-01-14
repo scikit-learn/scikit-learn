@@ -55,7 +55,7 @@ def _test_features_list(data_id):
     sparse = data_description['format'].lower() == 'sparse_arff'
     if sparse is True:
         raise ValueError('This test is not intended for sparse data, to keep '
-                         'code relatively simple')
+                         'code relatively simple')  # pragma: no cover
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
     data_downloaded = np.array(list(data_arff['data']), dtype='O')
@@ -102,6 +102,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
         assert data_by_id.target_names == target_column
+    # TODO Use expected_data_dtype here?
     assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
@@ -118,11 +119,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if compare_default_target:
         # check whether the data by id and data by id target are equal
         data_by_id_default = fetch_openml(data_id=data_id, cache=False)
-        if data_by_id.data.dtype == np.float64:
-            np.testing.assert_allclose(data_by_id.data,
-                                       data_by_id_default.data)
-        else:
-            assert np.array_equal(data_by_id.data, data_by_id_default.data)
+        np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.target,
                                        data_by_id_default.target)
