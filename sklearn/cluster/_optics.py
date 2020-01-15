@@ -144,7 +144,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-    
+
     heap : {'simple_heap','updateable_heap'}
         Name of heap to be used.
 
@@ -212,7 +212,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
-                 algorithm='auto', leaf_size=30, n_jobs=None, heap='simple_heap'):
+                 algorithm='auto', leaf_size=30, n_jobs=None,
+                 heap='simple_heap'):
         self.max_eps = max_eps
         self.min_samples = min_samples
         self.min_cluster_size = min_cluster_size
@@ -426,7 +427,7 @@ if metric=’precomputed’.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-    
+
     name_of_heap : {'simple_heap','updateable_heap'}
         Name of heap to be used.
 
@@ -486,7 +487,7 @@ if metric=’precomputed’.
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
     # This implementation is O(n lg n) theoretically.
-    
+
     heap = None
     if name_of_heap == 'simple_heap':
         heap = SimpleIntValueHeap(X.shape[0])
@@ -498,7 +499,7 @@ if metric=’precomputed’.
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
         val, point = heap.pop()
-        
+
         processed[point] = True
         ordering[ordering_idx] = point
         if core_distances_[point] != np.inf:

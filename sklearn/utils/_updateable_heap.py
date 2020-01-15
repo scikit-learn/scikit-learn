@@ -1,15 +1,16 @@
 """
-Binary heap implementation for storing pairs (integer, value) 
+Binary heap implementation for storing pairs (integer, value)
 and allows decreasing value for given integer.
 """
 import numpy as np
 
+
 class UpdateableBinaryHeap(object):
     def __init__(self, n):
-       self.data = [(np.inf, ordering_idx) for ordering_idx in range(n)]
-       self.tab = [ordering_idx for ordering_idx in range(n)]
-       self.processed = np.zeros(n, dtype=bool)
-    
+        self.data = [(np.inf, ordering_idx) for ordering_idx in range(n)]
+        self.tab = [ordering_idx for ordering_idx in range(n)]
+        self.processed = np.zeros(n, dtype=bool)
+
     def _siftup(self, pos):
         endpos = len(self.data)
         startpos = pos
@@ -34,8 +35,8 @@ class UpdateableBinaryHeap(object):
 
     def _siftdown(self, startpos, pos):
         newitem = self.data[pos]
-        # Follow the path to the root, moving parents down until finding a place
-        # newitem fits.
+        # Follow the path to the root, moving parents down until finding
+        # a place newitem fits.
         while pos > startpos:
             parentpos = (pos - 1) >> 1
             parent = self.data[parentpos]
@@ -47,10 +48,12 @@ class UpdateableBinaryHeap(object):
             break
         self.data[pos] = newitem
         self.tab[newitem[1]] = pos
-                
+
     def heappop(self):
-        """Pop the smallest item off the heap, maintaining the heap invariant."""
-        lastelt = self.data.pop()    # raises appropriate IndexError if heap is empty
+        """Pop the smallest item off the heap, maintaining
+            the heap invariant."""
+        lastelt = self.data.pop()
+        # raises appropriate IndexError if heap is empty
         if self.data:
             returnitem = self.data[0]
             self.data[0] = lastelt
@@ -62,11 +65,8 @@ class UpdateableBinaryHeap(object):
     def pop(self):
         val, point = self.heappop()
         return val, point
-    
+
     def update(self, idx, value):
         val = (value, idx)
         self.data[self.tab[idx]] = val
-        self._siftdown(0,self.tab[idx])
-
-
-
+        self._siftdown(0, self.tab[idx])

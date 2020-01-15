@@ -428,6 +428,7 @@ def test_precomputed_dists():
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
 
+
 def test_precomputed_dists_with_heap():
     redX = X[::2]
     dists = pairwise_distances(redX, metric='euclidean')

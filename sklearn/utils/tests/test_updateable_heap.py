@@ -14,11 +14,10 @@ def test_heap():
     heap = UpdateableBinaryHeap(n)
     for i in range(n):
         heap.update(i, sorted_values[i])
-    
+
     for i in range(n):
         v = heap.pop()
         res.append(v)
-    
+
     for i in range(n):
         assert (res[i] == (sorted_values[i], i))
-
