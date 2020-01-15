@@ -427,3 +427,14 @@ def test_precomputed_dists():
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
+
+def test_precomputed_dists_with_heap():
+    redX = X[::2]
+    dists = pairwise_distances(redX, metric='euclidean')
+    clust1 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='precomputed', heap='updateable_heap').fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='euclidean', heap='updateable_heap').fit(redX)
+
+    assert_allclose(clust1.reachability_, clust2.reachability_)
+    assert_array_equal(clust1.labels_, clust2.labels_)

@@ -19,6 +19,8 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from sklearn.utils._simple_heap import SimpleIntValueHeap
+from sklearn.utils._updateable_heap import UpdateableBinaryHeap
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
@@ -37,8 +39,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     This implementation deviates from the original OPTICS by first performing
     k-nearest-neighborhood searches on all points to identify core sizes, then
     computing only the distances to unprocessed points when constructing the
-    cluster order. Note that we do not employ a heap to manage the expansion
-    candidates, so the time complexity will be O(n^2).
+    cluster order. Note that we employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n lg n).
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -142,6 +144,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+    
+    heap : {'simple_heap','updateable_heap'}
+        Name of heap to be used.
 
     Attributes
     ----------
@@ -207,7 +212,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
-                 algorithm='auto', leaf_size=30, n_jobs=None):
+                 algorithm='auto', leaf_size=30, n_jobs=None, heap='simple_heap'):
         self.max_eps = max_eps
         self.min_samples = min_samples
         self.min_cluster_size = min_cluster_size
@@ -221,6 +226,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.xi = xi
         self.predecessor_correction = predecessor_correction
         self.n_jobs = n_jobs
+        self.heap = heap
 
     def fit(self, X, y=None):
         """Perform OPTICS clustering.
@@ -256,7 +262,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
              X=X, min_samples=self.min_samples, algorithm=self.algorithm,
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
-             max_eps=self.max_eps)
+             max_eps=self.max_eps, name_of_heap=self.heap)
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
@@ -340,7 +346,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
 
 def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
-                         algorithm, leaf_size, n_jobs):
+                         algorithm, leaf_size, n_jobs, name_of_heap):
     """Computes the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
@@ -420,6 +426,9 @@ if metric=’precomputed’.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+    
+    name_of_heap : {'simple_heap','updateable_heap'}
+        Name of heap to be used.
 
     Returns
     -------
@@ -476,16 +485,20 @@ if metric=’precomputed’.
 
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
-    # Note that this implementation is O(n^2) theoretically, but
-    # supposedly with very low constant factors.
+    # This implementation is O(n lg n) theoretically.
+    
+    heap = None
+    if name_of_heap == 'simple_heap':
+        heap = SimpleIntValueHeap(X.shape[0])
+    else:
+        heap = UpdateableBinaryHeap(X.shape[0])
     processed = np.zeros(X.shape[0], dtype=bool)
     ordering = np.zeros(X.shape[0], dtype=int)
     for ordering_idx in range(X.shape[0]):
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
-        index = np.where(processed == 0)[0]
-        point = index[np.argmin(reachability_[index])]
-
+        val, point = heap.pop()
+        
         processed[point] = True
         ordering[ordering_idx] = point
         if core_distances_[point] != np.inf:
@@ -495,7 +508,7 @@ if metric=’precomputed’.
                             point_index=point,
                             processed=processed, X=X, nbrs=nbrs,
                             metric=metric, metric_params=metric_params,
-                            p=p, max_eps=max_eps)
+                            p=p, max_eps=max_eps, heap=heap)
     if np.all(np.isinf(reachability_)):
         warnings.warn("All reachability values are inf. Set a larger"
                       " max_eps or all data will be considered outliers.",
@@ -505,7 +518,7 @@ if metric=’precomputed’.
 
 def _set_reach_dist(core_distances_, reachability_, predecessor_,
                     point_index, processed, X, nbrs, metric, metric_params,
-                    p, max_eps):
+                    p, max_eps, heap):
     P = X[point_index:point_index + 1]
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
@@ -534,6 +547,9 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
 
     rdists = np.maximum(dists, core_distances_[point_index])
     improved = np.where(rdists < np.take(reachability_, unproc))
+    for idx in improved[0]:
+        heap.update(unproc[idx], rdists[idx])
+
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
 
