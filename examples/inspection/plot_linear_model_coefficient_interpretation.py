@@ -244,7 +244,7 @@ plt.subplots_adjust(left=.3)
 ###############################################################################
 # For the reasons explained above, multiplying the coefficients by the
 # standard deviation of the related feature would improve our understanding on
-# feature importance on the model. 
+# feature importance on the model.
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
