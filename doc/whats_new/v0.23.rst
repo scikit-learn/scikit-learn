@@ -136,6 +136,15 @@ Changelog
   differs between `predict` and `fit`.
   :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
+:mod:`sklearn.neighbors`
+..............................
+
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :user:`Alex Shacked <alexshacked>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
