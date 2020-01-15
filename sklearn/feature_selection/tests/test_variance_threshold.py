@@ -32,16 +32,16 @@ def test_variance_threshold():
         assert (len(data), 1) == X.shape
 
 
-def test_zero_variance_floating_point_error():
+@pytest.mark.parametrize('data', ([[-0.13725701]] * 10, ))
+@pytest.mark.skipif(np.var(data) == 0,
+                    reason=('This test is not valid for this platform, '
+                            'as it relies on numerical instabilities.'))
+def test_zero_variance_floating_point_error(data):
     # Test that VarianceThreshold(0.0).fit eliminates features that have
     # the same value in every sample, even when floating point errors
     # cause np.var not to be 0 for the feature.
     # See #13691
 
-    data = [[-0.13725701]] * 10
-    if np.var(data) == 0:
-        pytest.skip('This test is not valid for this platform, as it relies '
-                    'on numerical instabilities.')
     for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
         msg = "No feature in X meets the variance threshold 0.00000"
         with pytest.raises(ValueError, match=msg):

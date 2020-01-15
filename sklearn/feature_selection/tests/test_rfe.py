@@ -30,30 +30,26 @@ class MockClassifier:
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert len(X) == len(Y)
+    def fit(self, X, y):
+        assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
     def predict(self, T):
-        return T.shape[0]
+        return T.shape[0]  # pragma: no cover
 
     predict_proba = predict
     decision_function = predict
     transform = predict
 
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
+    def score(self, X=None, y=None):
+        return 0.
 
     def get_params(self, deep=True):
         return {'foo_param': self.foo_param}
 
     def set_params(self, **params):
-        return self
+        return self  # pragma: no cover
 
     def _get_tags(self):
         return {}
