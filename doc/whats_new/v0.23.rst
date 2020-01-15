@@ -136,6 +136,13 @@ Changelog
   differs between `predict` and `fit`.
   :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Increases the numerical stability of the logistic loss function in
+  :class:`neural_network.MLPClassifier` by clipping the probabilities.
+  :pr:`16117` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
