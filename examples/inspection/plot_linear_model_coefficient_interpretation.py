@@ -13,10 +13,11 @@ section for a description of a set of linear model methods available in
 scikit-learn).
 Coefficients in multiple linear models represent the relationship between the
 given feature (`X[i]`) and the target (`y`) assuming that all the other
-features remain constant.
+features remain constant (`conditional dependence
+<https://en.wikipedia.org/wiki/Conditional_dependence>`_).
 This is not the same thing than plotting `X[i]` versus `y` and fitting a linear
 relationship: in that case all possible values of the other features are
-added to the estimation.
+added to the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
@@ -195,12 +196,11 @@ plt.ylim([0, 27])
 ##############################################################################
 # The model learnt is far from being a good model making accurate predictions:
 # the R squared score is very low.
-# As interpretation tools characterize model rather than the generative process
-# of the data itself, it needs to be emphasized that interpretations are
-# correct if the model is correct as well.
-# In this case, we are more interested in providing a methodology than in
-# having a good description of the data: a bad example could illustrate the
-# importance of cross checking the results.
+# In the following section, we will interpret the coefficients of the model.
+# While we do so, we should keep in mind that any conclusion we way draw will
+# be about
+# the model that we build, rather than about the true (real-world) generative
+# process of the data.
 #
 # Interpreting coefficients
 # -------------------------
@@ -227,7 +227,10 @@ plt.subplots_adjust(left=.3)
 # features have different natural scales and hence value ranges
 # because of their different unit of measure.
 # For instance, the AGE coefficient is expressed in $/hours/living years
-# while the EDUCATION is expressed in $/hours/years of education.
+# while the EDUCATION one is expressed in $/hours/years of education.
+# Looking at the coefficient plot to extrapolate feature importance could be
+# misleading as some of them vary on a small scale (as UNION or SEX that are
+# either 0 or 1), while feature like AGE varies a lot more, several decades.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
@@ -239,9 +242,11 @@ plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# We should then multiply the coefficients by the standard deviation and we
-# will be able to better compare them: in that way, we emphasize that the
-# greater the variance of a feature, the larger the impact of the corresponding
+# For the reasons explained above, multiplying the coefficients by the
+# standard deviation of the related feature would improve our understanding on
+# feature importance on the model. 
+# In that way, we emphasize that the
+# greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
 
 coefs = pd.DataFrame(
@@ -254,7 +259,9 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The plot above tells us that an increase of the AGE will induce a decrease
+# The plot above tells us about dependencies between a specific feature and
+# the target when all other features remain constant, i.e., conditional
+# dependencies. An increase of the AGE will induce a decrease
 # of the WAGE when all other features remain constant. On the contrary, an
 # increase of the EXPERIENCE will induce an increase of the WAGE when all
 # other features remain constant.
