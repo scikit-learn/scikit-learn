@@ -222,11 +222,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     verbose : int, optional (default=0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
