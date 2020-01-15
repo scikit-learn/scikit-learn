@@ -821,6 +821,7 @@ def tosequence(x):
 
 def _to_object_array(sequence):
     """Convert sequence to a 1-D NumPy array of object dtype.
+
     numpy.array constructor has a similar use but it's output
     is ambiguous. It can be 1-D NumPy array of object dtype if
     the input is a ragged array, but if the input is a list of
