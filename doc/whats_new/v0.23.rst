@@ -145,6 +145,13 @@ Changelog
   :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
   :user:`Alex Shacked <alexshacked>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Increases the numerical stability of the logistic loss function in
+  :class:`neural_network.MLPClassifier` by clipping the probabilities.
+  :pr:`16117` by `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
