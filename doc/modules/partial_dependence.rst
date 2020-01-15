@@ -119,25 +119,25 @@ Computation methods
 ^^^^^^^^^^^^^^^^^^^
 
 There are two main methods to approximate the integral above, namely the
-'brute' and 'recursion' methods. The `method` parameter controls which one
-is used.
+'brute' and 'recursion' methods. The `method` parameter controls which method
+to use.
 
 The 'brute' method is a generic method that works with any estimator. It
-approximate the above integral by computing an average over the data `X`:
+approximates the above integral by computing an average over the data `X`:
 
 .. math::
 
     pd_{X_S}(x_S) \approx \frac{1}{n_\text{samples}} \sum_{i=1}^n f(x_S, x_C^{(i)}),
 
-where :math:`x_C^{(i)}` is the value of the ith sample for the features in
+where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
 :math:`X_C`. For each value of :math:`x_S`, this method requires a full pass
-over the datset `X` and can be quite slow.
+over the dataset `X` which is computationally intensive.
 
-The 'recursion' method is faster than the 'brute' method but it is only
+The 'recursion' method is faster than the 'brute' method, but it is only
 supported by some tree-based estimators. It is computed as follows. For a
 given point :math:`x_S`, a weighted tree traversal is performed: if a split
 node involves a 'target' feature, the corresponding left or right branch is
-followed, otherwise both branches are followed, each branch being weighted
+followed; otherwise both branches are followed, each branch being weighted
 by the fraction of training samples that entered that branch. Finally, the
 partial dependence is given by a weighted average of all the visited leaves
 values.
@@ -155,25 +155,13 @@ support it, and 'brute' is used for the rest.
 .. note::
 
     While both methods should be close in general, they might differ in some
-    specific settings. The 'brute' methods assumes the existence of the
+    specific settings. The 'brute' method assumes the existence of the
     data points :math:`(x_S, x_C^{(i)})`. When the features are correlated,
-    such artificial samples may have a very low probability mass. The
-    methods will likely disagree regarding the value of the partial partial
-    dependence, because they will treat these unlikely samples differently.
-    Remember however that the primary assumption for interpreting PDPs is
-    that the features should be independent.
-
-    There is another case where the methods may disagree on their output
-    which is specific to the
-    :class:`~sklearn.ensemble.GradientBoostingClassifier` and
-    :class:`~sklearn.ensemble.GradientBoostingRegressor`: for technical
-    reasons, the 'recursion' method will not account for the `init`
-    predictor of the boosting process. In practice this will produce the
-    same values as 'brute' up to a constant offset in the target response,
-    provided that ``init`` is a constant estimator (which is the default).
-    However, if ``init`` is not a constant estimator, the partial dependence
-    values are incorrect for 'recursion' because the offset will be
-    sample-dependent.
+    such artificial samples may have a very low probability mass. The 'brute'
+    and 'recursion' methods will likely disagree regarding the value of the
+    partial dependence, because they will treat these unlikely
+    samples differently. Remember, however, that the primary assumption for
+    interpreting PDPs is that the features should be independent.
 
 .. rubric:: Footnotes
 
