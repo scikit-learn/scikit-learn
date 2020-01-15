@@ -58,16 +58,14 @@ def alpha_max(emp_cov):
 
     Parameters
     ----------
-    emp_cov : 2D array, (n_features, n_features)
-        The sample covariance matrix
+    emp_cov : ndarray of shape (n_features, n_features)
+        The sample covariance matrix.
 
     Notes
     -----
-
     This results from the bound for the all the Lasso that are solved
     in GraphicalLasso: each time, the row of cov corresponds to Xy. As the
     bound for alpha is given by `max(abs(Xy))`, the result follows.
-
     """
     A = np.copy(emp_cov)
     A.flat[::A.shape[0] + 1] = 0
@@ -86,7 +84,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     Parameters
     ----------
-    emp_cov : 2D ndarray of shape (n_features, n_features)
+    emp_cov : ndarray of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
     alpha : float
@@ -158,7 +156,6 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
-
     """
     _, n_features = emp_cov.shape
     if alpha == 0:
@@ -321,13 +318,13 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : array-like of shape (n_features,)
+    location_ : ndarray of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : array-like of shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : array-like of shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
     n_iter_ : int
@@ -374,9 +371,15 @@ class GraphicalLasso(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data from which to compute the covariance estimate
-        y : (ignored)
+
+        y : Ignored
+            Not used, present for API consistence purpose.
+
+        Returns
+        -------
+        self : object
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
@@ -404,49 +407,53 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Parameters
     ----------
-    X : 2D ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data from which to compute the covariance estimate.
 
-    alphas : list of positive floats
+    alphas : array-like of shape (n_alphas,)
         The list of regularization parameters, decreasing order.
 
-    cov_init : 2D array (n_features, n_features), optional
+    cov_init : array of shape (n_features, n_features), default=None
         The initial guess for the covariance.
 
-    X_test : 2D array, shape (n_test_samples, n_features), optional
+    X_test : array of shape (n_test_samples, n_features), default=None
         Optional test matrix to measure generalisation error.
 
-    mode : {'cd', 'lars'}
+    mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : positive float, optional
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. The tolerance must be a positive
+        number.
 
-    enet_tol : positive float, optional
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. The tolerance must be a positive number.
 
-    max_iter : integer, optional
-        The maximum number of iterations.
+    max_iter : int, default=100
+        The maximum number of iterations. This parameter should be a strictly
+        positive integer.
 
-    verbose : integer, optional
+    verbose : int or bool, default=False
         The higher the verbosity flag, the more information is printed
         during the fitting.
 
     Returns
     -------
-    covariances_ : List of 2D ndarray, shape (n_features, n_features)
+    covariances_ : list of shape (n_alphas,) of ndarray of shape \
+            (n_features, n_features)
         The estimated covariance matrices.
 
-    precisions_ : List of 2D ndarray, shape (n_features, n_features)
+    precisions_ : list of shape (n_alphas,) of ndarray of shape \
+            (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    scores_ : List of float
+    scores_ : list of shape (n_alphas,), dtype=float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
@@ -502,7 +509,7 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Parameters
     ----------
-    alphas : int or list of floats, default=4
+    alphas : int or array-like of shape (n_alphas,), dtype=float, default=4
         If an integer is given, it fixes the number of points on the
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
@@ -566,7 +573,7 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Attributes
     ----------
-    location_ : array-like of shape (n_features,)
+    location_ : ndarray of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
     covariance_ : ndarray of shape (n_features, n_features)
@@ -578,7 +585,7 @@ class GraphicalLassoCV(GraphicalLasso):
     alpha_ : float
         Penalization parameter selected.
 
-    cv_alphas_ : list of floats
+    cv_alphas_ : list of shape (n_alphas,), dtype=float
         All penalization parameters explored.
 
     grid_scores_ : ndarray of shape (n_alphas, n_folds)
@@ -641,9 +648,15 @@ class GraphicalLassoCV(GraphicalLasso):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data from which to compute the covariance estimate
-        y : (ignored)
+
+        y : Ignored
+            Not used, present for API consistence purpose.
+
+        Returns
+        -------
+        self : object
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, estimator=self)
