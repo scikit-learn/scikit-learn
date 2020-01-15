@@ -11,7 +11,7 @@ from sklearn.utils._testing import skip_if_32bit
 
 @pytest.fixture
 def n_threads():
-    return 2
+    return 1
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])

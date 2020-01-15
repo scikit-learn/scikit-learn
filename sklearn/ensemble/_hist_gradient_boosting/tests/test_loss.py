@@ -13,7 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 @pytest.fixture
 def n_threads():
-    return 2
+    return 1
 
 
 def get_derivatives_helper(loss):

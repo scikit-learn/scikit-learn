@@ -98,10 +98,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         -------
         self : object
         """
-        # if n_threads is None, we limit the number of threads to avoid
-        # oversubscription
+        # NOTE: limit the number of threads to 16. Greater number of threads
+        # induce degraded performance. More discussion regarding the optimal
+        # number of threads can be found here:
+        # https://github.com/scikit-learn/scikit-learn/issues/16016
+        # https://github.com/scikit-learn/scikit-learn/issues/14306
         MAX_N_THREADS = 16
-        n_threads_openmp = min(_openmp_effective_n_threads(-1), MAX_N_THREADS)
+        n_threads_openmp = min(
+            _openmp_effective_n_threads(n_threads=None), MAX_N_THREADS
+        )
 
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
