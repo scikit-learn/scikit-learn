@@ -45,8 +45,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     min_samples : int > 1 or float between 0 and 1 (default=5)
-        The number of samples (or total weight) in a neighborhood for a point 
-        to be considered as a core point. 
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point.
         Also, up and down steep regions can't have more then
         ``min_samples`` consecutive non-steep points. Expressed as an absolute
         number or a fraction of the number of samples (rounded to be at least
@@ -214,7 +214,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
-                 algorithm='auto', leaf_size=30, n_jobs=None, 
+                 algorithm='auto', leaf_size=30, n_jobs=None,
                  sample_weight=None):
         self.max_eps = max_eps
         self.min_samples = min_samples
@@ -311,7 +311,8 @@ def _validate_size(size, n_samples, param_name):
 
 
 # OPTICS helper functions
-def _compute_core_distances_(X, neighbors, min_samples, working_memory, sample_weight, max_eps):
+def _compute_core_distances_(X, neighbors, min_samples, working_memory,
+                             sample_weight, max_eps):
     """Compute the k-th nearest neighbor of each sample
 
     Equivalent to neighbors.kneighbors(X, self.min_samples)[0][:, -1]
@@ -351,8 +352,8 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory, sample_w
 
     if sample_weight is None:
         chunk_n_rows = get_chunk_n_rows(row_bytes=16 * min_samples,
-                                    max_n_rows=n_samples,
-                                    working_memory=working_memory)
+                                        max_n_rows=n_samples,
+                                        working_memory=working_memory)
         slices = gen_batches(n_samples, chunk_n_rows)
         for sl in slices:
             core_distances[sl] = neighbors.kneighbors(
@@ -365,19 +366,19 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory, sample_w
             neighborhood = neighbors.radius_neighbors(P, radius=max_eps)
             distances = neighborhood[0][0]
             indices = neighborhood[1][0]
-            sorted_distances = [(distances[i],indices[i]) 
-                                for i in range(len(indices))]
-            sort(sorted_distances)
+            sorted_distances = sorted([(distances[i], indices[i])
+                                       for i in range(len(indices))])
             total_sum = 0
-            for sample in dist:
+            for sample in sorted_distances:
                 dist, ind = sample
                 total_sum += sample_weight[ind]
                 if total_sum >= min_samples:
                     core_distances[P] = dist
                     break
 
+
 def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
-                         algorithm, leaf_size, n_jobs,sample_weight):
+                         algorithm, leaf_size, n_jobs, sample_weight):
     """Computes the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
@@ -390,8 +391,8 @@ if metric=’precomputed’.
         metric='precomputed'
 
     min_samples : int > 1 or float between 0 and 1
-        The number of samples (or total weight) in a neighborhood for a point 
-        to be considered as a core point. 
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point.
         Expressed as an absolute number or a fraction of the
         number of samples (rounded to be at least 2).
 
