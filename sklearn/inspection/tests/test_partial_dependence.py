@@ -39,7 +39,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import _IS_32BIT
 from sklearn.utils.validation import check_random_state
-from sklearn.ensemble._base import MAX_RAND_SEED
 from sklearn.tree.tests.test_tree import assert_is_subtree
 
 
@@ -246,8 +245,8 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     # The forest will use ensemble.base._set_random_states to set the
     # random_state of the tree sub-estimator. We simulate this here to have
     # equivalent estimators.
-    equiv_random_state = check_random_state(tree_seed).randint(MAX_RAND_SEED)
-    # print(check_random_state(equiv_random_state).get_state())
+    equiv_random_state = check_random_state(tree_seed).randint(
+        np.iinfo(np.int32).max)
     gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
                                      criterion='mse', max_depth=max_depth,
                                      random_state=equiv_random_state)
