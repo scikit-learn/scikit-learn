@@ -257,7 +257,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
     gbdt.fit(X, y)
     tree.fit(X, y)
 
-    # sanity check
+    # sanity check: if the trees aren't the same, the PD values won't be equal
     try:
         assert_is_subtree(tree.tree_, gbdt[0, 0].tree_)
         assert_is_subtree(tree.tree_, forest[0].tree_)

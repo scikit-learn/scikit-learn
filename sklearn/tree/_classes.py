@@ -1253,8 +1253,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Returns
         -------
-        averaged_predictions : ndarray of shape \
-                (n_trees_per_iteration, n_samples)
+        averaged_predictions : ndarray of shape (n_samples,)
             The value of the partial dependence function on each grid point.
         """
         grid = np.asarray(grid, dtype=DTYPE, order='C')
