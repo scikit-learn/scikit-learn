@@ -24,6 +24,8 @@ from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
@@ -799,8 +801,7 @@ def test_float_precision(Estimator, is_sparse):
         X_new[dtype] = estimator.transform(X_test)
         centers[dtype] = estimator.cluster_centers_
         # ensure the extracted row is a 2d array
-        assert (estimator.predict(X_test[:1]) ==
-                     estimator.labels_[0])
+        assert (estimator.predict(X_test[:1]) == estimator.labels_[0])
         if hasattr(estimator, 'partial_fit'):
             estimator.partial_fit(X_test[0:3])
             # dtype of cluster centers has to stay the same after
@@ -1026,3 +1027,40 @@ def test_error_wrong_algorithm():
     with pytest.raises(ValueError,
                        match="Algorithm must be 'auto', 'full' or 'elkan'"):
         kmeans.fit(X)
+
+
+@pytest.mark.parametrize("representation", ["dense", "sparse"])
+def test_relocate_empty_clusters(representation):
+    # test for the _relocate_empty_clusters_dense helper
+
+    # Synthetic dataset with 3 obvious clusters of different sizes
+    X = np.array(
+        [-10., -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
+    if representation == "sparse":
+        X = sp.csr_matrix(X)
+    sample_weight = np.full(10, 1.)
+
+    # centers all initialized to the first point of X
+    centers_old = np.array([-10., -10, -10]).reshape(-1, 1)
+
+    # With this initialization, all points will be assigned to the first center
+    # At this point centers_new is the weighted sum of the points it contains,
+    # if it's not empty, otherwise it the same as before.
+    centers_new = np.array([-16.5, -10, -10]).reshape(-1, 1)
+    weight_in_clusters = np.array([10., 0, 0])
+    labels = np.zeros(10, dtype=np.int32)
+
+    if representation == "dense":
+        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
+                                       centers_new, weight_in_clusters, labels)
+    else:
+        _relocate_empty_clusters_sparse(X.data, X.indices, X.indptr,
+                                        sample_weight, centers_old,
+                                        centers_new, weight_in_clusters,
+                                        labels)
+
+    # The relocation scheme will take the 2 points farthest from the center and
+    # assign them to the 2 empty clusters, i.e. points at 10 and at 9.9. The
+    # first center will be updated to contain the other 8 points.
+    assert_array_equal(weight_in_clusters, [8, 1, 1])
+    assert_allclose(centers_new, [[-36], [10], [9.5]])
