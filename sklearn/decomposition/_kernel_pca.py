@@ -258,7 +258,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             random_state = check_random_state(self.random_state)
             # initialize with [-1,1] as in ARPACK
             v0 = random_state.uniform(-1, 1, K.shape[0])
-            # todo consistency: pca uses `svds`+flip, this uses `eigsh`. why?
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
