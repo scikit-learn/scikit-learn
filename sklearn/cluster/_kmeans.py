@@ -274,7 +274,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient, on well structured data, by
-        using the triangle inequality. "auto" chooses "elkan".
+        using the triangle inequality. For now "auto" chooses "elkan" but it
+        might change in the future for a better heuristic.
 
     return_n_iter : bool, optional
         Whether or not to return the number of iterations.

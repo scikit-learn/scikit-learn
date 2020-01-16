@@ -66,7 +66,7 @@ shape (n_clusters, n_clusters)
         center. It is modified in place.
 
     upper_bounds : {float32, float64} ndarray, shape(n_samples,)
-        The distance of each sample from its closest cluster center.  This is
+        The distance of each sample from its closest cluster center. This is
         modified in place by the function.
     """
     cdef:
