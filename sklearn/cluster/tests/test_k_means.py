@@ -19,6 +19,7 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
@@ -1064,3 +1065,32 @@ def test_relocate_empty_clusters(representation):
     # first center will be updated to contain the other 8 points.
     assert_array_equal(weight_in_clusters, [8, 1, 1])
     assert_allclose(centers_new, [[-36], [10], [9.5]])
+
+
+@pytest.mark.parametrize("array_constr",
+                         [np.array, sp.csr_matrix],
+                         ids=['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
+def test_k_means_1_iteration(array_constr, algo):
+    # check k_means results for a single iteration (EME) vs pure python implem.
+    X = np.random.random_sample((100, 5))
+    init_centers = X[:5]
+    X = array_constr(X)
+
+    def py_kmeans(X, init):
+        new_centers = init.copy()
+        labels = pairwise_distances_argmin(X, init)
+        for label in range(init.shape[0]):
+            new_centers[label] = X[labels == label].mean(axis=0)
+        labels = pairwise_distances_argmin(X, new_centers)
+        return labels, new_centers
+
+    py_labels, py_centers = py_kmeans(X, init_centers)
+
+    cy_kmeans = KMeans(n_clusters=5, n_init=1, init=init_centers,
+                       algorithm=algo, max_iter=1, n_jobs=1).fit(X)
+    cy_labels = cy_kmeans.labels_
+    cy_centers = cy_kmeans.cluster_centers_
+
+    assert_array_equal(py_labels, cy_labels)
+    assert_allclose(py_centers, cy_centers)
