@@ -153,6 +153,9 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
 
 cdef void _update_chunk_dense(floating *X,
+                              # expecting C alinged 2D array. XXX: Can be
+                              # replaced by const memoryview when cython min
+                              # version is >= 0.3
                               floating[::1] sample_weight,
                               floating[::1] x_squared_norms,
                               floating[:, ::1] centers_old,

@@ -320,6 +320,9 @@ shape (n_clusters, n_clusters)
 
 
 cdef void _update_chunk_dense(floating *X,
+                              # expecting C alinged 2D array. XXX: Can be
+                              # replaced by const memoryview when cython min
+                              # version is >= 0.3
                               floating[::1] sample_weight,
                               floating[:, ::1] centers_old,
                               floating[:, ::1] center_half_distances,
