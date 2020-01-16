@@ -23,7 +23,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- models come here
+- Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -157,6 +160,21 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed a convergence issue in ``libsvm`` and ``liblinear`` on Windows
+  platforms impacting all related classifiers and regressors. The random number
+  generator used to randomly select coordinates in the coordinate descent
+  algorithm was C ``rand()``, that is only able to generate numbers up to
+  ``32767`` on windows platform. It was replaced with C++11 ``mt19937``, a
+  Mersenne Twister that correctly generates 31bits/63bits random numbers on all
+  platforms. In addition, the crude "modulo" postprocessor used to get a random
+  number in a bounded interval was replaced by the tweaked Lemire method as
+  suggested by `this blog post
+<http://www.pcg-random.org/posts/bounded-rands.html>`
+  :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.tree`
 ...................
