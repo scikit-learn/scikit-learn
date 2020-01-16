@@ -114,6 +114,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``eigen_solver`` == 'arpack' or 'randomized'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18
 

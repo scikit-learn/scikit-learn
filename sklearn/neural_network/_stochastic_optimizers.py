@@ -16,7 +16,7 @@ class BaseOptimizer:
         The concatenated list containing coefs_ and intercepts_ in MLP model.
         Used for initializing velocities and updating params
 
-    learning_rate_init : float, optional, default 0.1
+    learning_rate_init : float, default=0.1
         The initial learning rate used. It controls the step-size in updating
         the weights
 
@@ -80,11 +80,11 @@ class SGDOptimizer(BaseOptimizer):
         The concatenated list containing coefs_ and intercepts_ in MLP model.
         Used for initializing velocities and updating params
 
-    learning_rate_init : float, optional, default 0.1
+    learning_rate_init : float, default=0.1
         The initial learning rate used. It controls the step-size in updating
         the weights
 
-    lr_schedule : {'constant', 'adaptive', 'invscaling'}, default 'constant'
+    lr_schedule : {'constant', 'adaptive', 'invscaling'}, default='constant'
         Learning rate schedule for weight updates.
 
         -'constant', is a constant learning rate given by
@@ -100,10 +100,10 @@ class SGDOptimizer(BaseOptimizer):
          tol, or fail to increase validation score by tol if 'early_stopping'
          is on, the current learning rate is divided by 5.
 
-    momentum : float, optional, default 0.9
+    momentum : float, default=0.9
         Value of momentum used, must be larger than or equal to 0
 
-    nesterov : bool, optional, default True
+    nesterov : bool, default=True
         Whether to use nesterov's momentum or not. Use nesterov's if True
 
     Attributes
@@ -192,19 +192,19 @@ class AdamOptimizer(BaseOptimizer):
         The concatenated list containing coefs_ and intercepts_ in MLP model.
         Used for initializing velocities and updating params
 
-    learning_rate_init : float, optional, default 0.1
+    learning_rate_init : float, default=0.1
         The initial learning rate used. It controls the step-size in updating
         the weights
 
-    beta_1 : float, optional, default 0.9
+    beta_1 : float, default=0.9
         Exponential decay rate for estimates of first moment vector, should be
         in [0, 1)
 
-    beta_2 : float, optional, default 0.999
+    beta_2 : float, default=0.999
         Exponential decay rate for estimates of second moment vector, should be
         in [0, 1)
 
-    epsilon : float, optional, default 1e-8
+    epsilon : float, default=1e-8
         Value for numerical stability
 
     Attributes

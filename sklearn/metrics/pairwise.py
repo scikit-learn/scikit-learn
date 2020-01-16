@@ -406,6 +406,8 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     distances -= np.dot(XX, missing_Y.T)
     distances -= np.dot(missing_X, YY.T)
 
+    np.clip(distances, 0, None, out=distances)
+
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
