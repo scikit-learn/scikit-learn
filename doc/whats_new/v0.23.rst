@@ -23,7 +23,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- models come here
+- :class:`decomposition.KernelPCA` |Feature|, |Enhancement|
 
 Details are listed in the changelog below.
 
@@ -67,6 +67,19 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  drastically accelerates computation when the number of samples gets much
+  larger than the desired number of components.
+  For example with 10000 samples, a fairly accurate kPCA model using 100
+  principal components can be trained more than 10 times faster with
+  `eigen_solver='randomized'` than with the default `eigen_solver='full'`
+  solver.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`
+
 :mod:`sklearn.ensemble`
 .................................
 
@@ -90,7 +103,7 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -114,6 +127,13 @@ Changelog
   specific scoring strategy. Before the internal estimator outputs score
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| :class:`manifold.Isomap` can now use the new
+  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
+  get faster results.
 
 :mod:`sklearn.model_selection`
 ..............................

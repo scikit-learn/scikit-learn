@@ -2,50 +2,6 @@
 
 .. currentmodule:: sklearn
 
-.. _changes_0_23:
-
-Version 0.23
-============
-
-**TODO Date**
-
-TODO script
-
-Changed models
---------------
-
-The following estimators and functions, when fit with the same data and
-parameters, may produce different models from the previous version. This often
-occurs due to changes in the modelling logic (bug fixes or enhancements), or in
-random sampling procedures.
-
-- :class:`decomposition.KernelPCA` |Feature|, |Enhancement|
-
-
-Changelog
----------
-
-:mod:`sklearn.decomposition`
-............................
-
-- |Enhancement| added a new approximate solver (randomized SVD, available with
-  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
-  drastically accelerates computation when the number of samples gets much
-  larger than the desired number of components.
-  For example with 10000 samples, a fairly accurate kPCA model using 100
-  principal components can be trained more than 10 times faster with
-  `eigen_solver='randomized'` than with the default `eigen_solver='full'`
-  solver.
-  :pr:`12069` by :user:`Sylvain Marié <smarie>`
-
-:mod:`sklearn.manifold`
-.......................
-
-- |Feature| :class:`manifold.Isomap` can now use the new
-  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
-  get faster results.
-
-
 .. _changes_0_22_1:
 
 Version 0.22.1
