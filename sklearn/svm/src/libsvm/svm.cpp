@@ -50,8 +50,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    Modified 2019:
 
-   - Fixed random number generator on windows targets - Sylvain Marie
-     See https://github.com/scikit-learn/scikit-learn/pull/13511
+   - Improved random number generator by using a mersenne twister + tweaked
+     lemire postprocessor. This fixed a convergence issue on windows targets.
+     Sylvain Marie,
+     see <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
  */
 

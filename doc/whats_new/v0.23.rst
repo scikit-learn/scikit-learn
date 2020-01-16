@@ -164,14 +164,17 @@ Changelog
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed a convergence issue in ``libsvm`` and ``liblinear`` on Windows
-  platforms impacting all related classifiers and regressors. The random number
-  generator used to randomly select coordinates in the coordinate descent
-  algorithm was C ``rand()``, that is only able to generate numbers up to
-  ``32767`` on windows platform. It was replaced with C++11 ``mt19937``, a
-  Mersenne Twister that correctly generates 31bits/63bits random numbers on all
-  platforms. In addition, the crude "modulo" postprocessor used to get a random
-  number in a bounded interval was replaced by the tweaked Lemire method as
+- |Fix| |Efficiency| Improved ``libsvm`` and ``liblinear`` random number
+  generators used to randomly select coordinates in the coordinate descent
+  algorithms. Platform-dependent C ``rand()`` was used, which is only able to
+  generate numbers up to ``32767`` on windows platform (see this `blog
+  post <https://codeforces.com/blog/entry/61587>`) and also has poor
+  randomization power as suggested by `this presentation
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`.
+  It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
+  generates 31bits/63bits random numbers on all platforms. In addition, the
+  crude "modulo" postprocessor used to get a random number in a bounded
+  interval was replaced by the tweaked Lemire method as
   suggested by `this blog post
 <http://www.pcg-random.org/posts/bounded-rands.html>`
   :pr:`13511` by :user:`Sylvain Marié <smarie>`.
