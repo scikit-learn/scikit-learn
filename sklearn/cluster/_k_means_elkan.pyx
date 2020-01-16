@@ -217,10 +217,10 @@ shape (n_clusters, n_clusters)
         Half pairwise distances between centers.
 
     distance_next_center : {float32, float64} array-like, shape (n_clusters,)
-        Distance between each center it's closest center.
+        Distance between each center its closest center.
 
     upper_bounds : {float32, float64} array-like, shape (n_samples,)
-        Upper bound for the distance between each sample and it's center,
+        Upper bound for the distance between each sample and its center,
         updated inplace.
 
     lower_bounds : {float32, float64} array-like, shape (n_samples, n_clusters)
@@ -365,7 +365,7 @@ cdef void _update_chunk_dense(floating *X,
                     and (upper_bound > center_half_distances[label, j])):
 
                     # Recompute upper bound by calculating the actual distance
-                    # between the sample and it's current assigned center.
+                    # between the sample and its current assigned center.
                     if not bounds_tight:
                         upper_bound = _euclidean_dense_dense(
                             X + i * n_features, &centers_old[label, 0], n_features, False)
@@ -437,10 +437,10 @@ shape (n_clusters, n_clusters)
         Half pairwise distances between centers.
 
     distance_next_center : {float32, float64} array-like, shape (n_clusters,)
-        Distance between each center it's closest center.
+        Distance between each center its closest center.
 
     upper_bounds : {float32, float64} array-like, shape (n_samples,)
-        Upper bound for the distance between each sample and it's center,
+        Upper bound for the distance between each sample and its center,
         updated inplace.
 
     lower_bounds : {float32, float64} array-like, shape (n_samples, n_clusters)
@@ -597,7 +597,7 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                     and (upper_bound > center_half_distances[label, j])):
 
                     # Recompute upper bound by calculating the actual distance
-                    # between the sample and it's current assigned center.
+                    # between the sample and its current assigned center.
                     if not bounds_tight:
                         upper_bound = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] -s],
