@@ -24,7 +24,7 @@ from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _check_fit_params
-from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.validation import _num_samples
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -1117,8 +1117,8 @@ def learning_curve(estimator, X, y, groups=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    train_sizes : array-like, shape (n_ticks,), dtype float or int,
-                  default=np.linspace(0.1, 1.0, 5)
+    train_sizes : array-like, shape (n_ticks,), dtype float or int, \
+            default=np.linspace(0.1, 1.0, 5)
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
