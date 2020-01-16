@@ -78,7 +78,7 @@ It's clear how the kernel shape affects the smoothness of the resulting
 distribution.  The scikit-learn kernel density estimator can be used as
 follows:
 
-   >>> from sklearn.neighbors.kde import KernelDensity
+   >>> from sklearn.neighbors import KernelDensity
    >>> import numpy as np
    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)
@@ -93,7 +93,7 @@ Given this kernel form, the density estimate at a point :math:`y` within
 a group of points :math:`x_i; i=1\cdots N` is given by:
 
 .. math::
-    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
+    \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very

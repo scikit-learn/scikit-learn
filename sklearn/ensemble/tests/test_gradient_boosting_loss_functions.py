@@ -5,7 +5,7 @@ Testing for the gradient boosting loss functions and initial estimators.
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
-from numpy.testing import assert_equal
+import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
@@ -26,7 +26,7 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert_equal(bd(np.array([0.0]), np.array([0.0])),
+    assert (bd(np.array([0.0]), np.array([0.0])) ==
                  bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
@@ -92,12 +92,12 @@ def test_sample_weight_init_estimators():
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         out = loss.get_init_raw_predictions(X, init_est)
-        assert_equal(out.shape, (y.shape[0], 1))
+        assert out.shape == (y.shape[0], 1)
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
         sw_out = loss.get_init_raw_predictions(X, sw_init_est)
-        assert_equal(sw_out.shape, (y.shape[0], 1))
+        assert sw_out.shape == (y.shape[0], 1)
 
         # check if predictions match
         assert_allclose(out, sw_out, rtol=1e-2)
@@ -273,3 +273,24 @@ def test_init_raw_predictions_values():
         for k in range(n_classes):
             p = (y == k).mean()
         assert_almost_equal(raw_predictions[:, k], np.log(p))
+
+
+@pytest.mark.parametrize('seed', range(5))
+def test_lad_equals_quantile_50(seed):
+    # Make sure quantile loss with alpha = .5 is equivalent to LAD
+    lad = LeastAbsoluteError(n_classes=1)
+    ql = QuantileLossFunction(n_classes=1, alpha=0.5)
+
+    n_samples = 50
+    rng = np.random.RandomState(seed)
+    raw_predictions = rng.normal(size=(n_samples))
+    y_true = rng.normal(size=(n_samples))
+
+    lad_loss = lad(y_true, raw_predictions)
+    ql_loss = ql(y_true, raw_predictions)
+    assert_almost_equal(lad_loss, 2 * ql_loss)
+
+    weights = np.linspace(0, 1, n_samples) ** 2
+    lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
+    ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
+    assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)

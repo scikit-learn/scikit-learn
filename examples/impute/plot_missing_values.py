@@ -8,6 +8,9 @@ value using the basic :class:`sklearn.impute.SimpleImputer`.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
+With ``KNNImputer``, missing values can be imputed using the weighted
+or unweighted mean of the desired number of nearest neighbors.
+
 Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 round-robin linear regression, treating every variable as an output in
 turn. The version implemented assumes Gaussian (output) variables. If your
@@ -23,17 +26,20 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 
+# To use the experimental IterativeImputer, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
-from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
+from sklearn.impute import (
+    SimpleImputer, KNNImputer, IterativeImputer, MissingIndicator)
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
 N_SPLITS = 5
-REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
+REGRESSOR = RandomForestRegressor(random_state=0)
 
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
@@ -79,10 +85,15 @@ def get_results(dataset):
     imputer = SimpleImputer(missing_values=0, strategy="mean")
     mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
+    # Estimate the score after kNN-imputation of the missing values
+    imputer = KNNImputer(missing_values=0)
+    knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
+
     # Estimate the score after iterative imputation of the missing values
     imputer = IterativeImputer(missing_values=0,
                                random_state=0,
-                               n_nearest_features=5)
+                               n_nearest_features=5,
+                               sample_posterior=True)
     iterative_impute_scores = get_scores_for_imputer(imputer,
                                                      X_missing,
                                                      y_missing)
@@ -90,6 +101,7 @@ def get_results(dataset):
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
+            (knn_impute_scores.mean(), knn_impute_scores.std()),
             (iterative_impute_scores.mean(), iterative_impute_scores.std()))
 
 
@@ -107,8 +119,9 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'Multivariate Imputation']
-colors = ['r', 'g', 'b', 'orange']
+            'KNN Imputation',
+            'Iterative Imputation']
+colors = ['r', 'g', 'b', 'orange', 'black']
 
 # plot diabetes results
 plt.figure(figsize=(12, 6))

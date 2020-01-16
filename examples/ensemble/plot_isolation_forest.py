@@ -40,8 +40,7 @@ X_test = np.r_[X + 2, X - 2]
 X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
 
 # fit the model
-clf = IsolationForest(behaviour='new', max_samples=100,
-                      random_state=rng, contamination='auto')
+clf = IsolationForest(max_samples=100, random_state=rng)
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)

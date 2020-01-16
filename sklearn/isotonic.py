@@ -25,10 +25,10 @@ def check_increasing(x, y):
 
     Parameters
     ----------
-    x : array-like, shape=(n_samples,)
+    x : array-like of shape (n_samples,)
             Training data.
 
-    y : array-like, shape=(n_samples,)
+    y : array-like of shape (n_samples,)
         Training target.
 
     Returns
@@ -137,7 +137,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     return y[order]
 
 
-class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
+class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """Isotonic regression model.
 
     The isotonic regression optimization problem is defined by::
@@ -155,6 +155,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
     Read more in the :ref:`User Guide <isotonic>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -209,6 +211,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Correctness of Kruskal's algorithms for monotone regression with ties
     Leeuw, Psychometrica, 1977
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.isotonic import IsotonicRegression
+    >>> X, y = make_regression(n_samples=10, n_features=1, random_state=41)
+    >>> iso_reg = IsotonicRegression().fit(X.flatten(), y)
+    >>> iso_reg.predict([.1, .2])
+    array([1.8628..., 3.7256...])
     """
     def __init__(self, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
@@ -295,13 +306,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples,)
+        X : array-like of shape (n_samples,)
             Training data.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Training target.
 
-        sample_weight : array-like, shape=(n_samples,), optional, default: None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights. If set to None, all weights will be set to 1 (equal
             weights).
 
@@ -312,13 +323,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        X is stored for future use, as `transform` needs X to interpolate
+        X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
-        check_params = dict(accept_sparse=False, ensure_2d=False,
-                            dtype=[np.float64, np.float32])
-        X = check_array(X, **check_params)
-        y = check_array(y, **check_params)
+        check_params = dict(accept_sparse=False, ensure_2d=False)
+        X = check_array(X, dtype=[np.float64, np.float32], **check_params)
+        y = check_array(y, dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
 
         # Transform y by running the isotonic regression algorithm and
@@ -340,7 +350,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,)
             Data to transform.
 
         Returns
@@ -380,7 +390,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Parameters
         ----------
-        T : array-like, shape=(n_samples,)
+        T : array-like of shape (n_samples,)
             Data to transform.
 
         Returns
