@@ -2,19 +2,23 @@
 Test the ColumnTransformer.
 """
 import re
+import pickle
 
 import warnings
 import numpy as np
 from scipy import sparse
 import pytest
 
+from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
-from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.compose import (
+    ColumnTransformer, make_column_transformer, make_column_selector
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
@@ -1180,3 +1184,85 @@ def test_column_transformer_mask_indexing(array_type):
     )
     X_trans = column_transformer.fit_transform(X)
     assert X_trans.shape == (3, 2)
+
+
+@pytest.mark.parametrize('cols, pattern, include, exclude', [
+    (['col_int', 'col_float'], None, np.number, None),
+    (['col_int', 'col_float'], None, None, object),
+    (['col_int', 'col_float'], None, [np.int, np.float], None),
+    (['col_str'], None, [np.object], None),
+    (['col_str'], None, np.object, None),
+    (['col_float'], None, float, None),
+    (['col_float'], 'at$', [np.number], None),
+    (['col_int'], None, [np.int], None),
+    (['col_int'], '^col_int', [np.number], None),
+    (['col_float', 'col_str'], 'float|str', None, None),
+    (['col_str'], '^col_s', None, [np.int]),
+    ([], 'str$', np.float, None),
+    (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
+])
+def test_make_column_selector_with_select_dtypes(cols, pattern, include,
+                                                 exclude):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_str': ["one", "two", "three"],
+    }, columns=['col_int', 'col_float', 'col_str'])
+
+    selector = make_column_selector(
+            dtype_include=include, dtype_exclude=exclude, pattern=pattern)
+
+    assert_array_equal(selector(X_df), cols)
+
+
+def test_column_transformer_with_make_column_selector():
+    # Functional test for column transformer + column selector
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame({
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_cat': ["one", "two", "one"],
+        'col_str': ["low", "middle", "high"]
+    }, columns=['col_int', 'col_float', 'col_cat', 'col_str'])
+    X_df['col_str'] = X_df['col_str'].astype('category')
+
+    cat_selector = make_column_selector(dtype_include=['category', object])
+    num_selector = make_column_selector(dtype_include=np.number)
+
+    ohe = OneHotEncoder()
+    scaler = StandardScaler()
+
+    ct_selector = make_column_transformer((ohe, cat_selector),
+                                          (scaler, num_selector))
+    ct_direct = make_column_transformer((ohe, ['col_cat', 'col_str']),
+                                        (scaler, ['col_float', 'col_int']))
+
+    X_selector = ct_selector.fit_transform(X_df)
+    X_direct = ct_direct.fit_transform(X_df)
+
+    assert_allclose(X_selector, X_direct)
+
+
+def test_make_column_selector_error():
+    selector = make_column_selector(dtype_include=np.number)
+    X = np.array([[0.1, 0.2]])
+    msg = ("make_column_selector can only be applied to pandas dataframes")
+    with pytest.raises(ValueError, match=msg):
+        selector(X)
+
+
+def test_make_column_selector_pickle():
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_str': ["one", "two", "three"],
+    }, columns=['col_int', 'col_float', 'col_str'])
+
+    selector = make_column_selector(dtype_include=[object])
+    selector_picked = pickle.loads(pickle.dumps(selector))
+
+    assert_array_equal(selector(X_df), selector_picked(X_df))
