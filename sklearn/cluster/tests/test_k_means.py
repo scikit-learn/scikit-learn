@@ -1088,7 +1088,7 @@ def test_k_means_1_iteration(array_constr, algo):
     py_labels, py_centers = py_kmeans(X, init_centers)
 
     cy_kmeans = KMeans(n_clusters=5, n_init=1, init=init_centers,
-                       algorithm=algo, max_iter=1, n_jobs=1).fit(X)
+                       algorithm=algo, max_iter=1).fit(X)
     cy_labels = cy_kmeans.labels_
     cy_centers = cy_kmeans.cluster_centers_
 
