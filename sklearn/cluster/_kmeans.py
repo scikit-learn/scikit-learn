@@ -797,7 +797,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient, on well structured data, by
-        using the triangle inequality. "auto" chooses "elkan".
+        using the triangle inequality. For now "auto" chooses "elkan" but it
+        might change in the future for a better heuristic.
 
     Attributes
     ----------
