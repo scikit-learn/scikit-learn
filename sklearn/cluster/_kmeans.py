@@ -243,7 +243,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm to run.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         Verbosity mode.
 
     tol : float, default=1e-4
@@ -254,7 +254,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : boolean, default=True
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
         the data first. If copy_x is True (default), then the original data is
         not modified. If False, the original data is modified, and put back
@@ -344,7 +344,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         Verbosity mode
 
     x_squared_norms : array-like or None, default=None
@@ -488,7 +488,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         Verbosity mode
 
     x_squared_norms : array-like or None, default=None
@@ -751,7 +751,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to inertia to declare convergence
+        Relative tolerance with regards to inertia to declare convergence.
 
     precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
@@ -776,7 +776,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : boolean, default=True
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
         the data first. If copy_x is True (default), then the original data is
         not modified. If False, the original data is modified, and put back
