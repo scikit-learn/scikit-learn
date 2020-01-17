@@ -159,6 +159,8 @@ def _validate_center_shape(X, n_centers, centers):
 
 def _tolerance(X, tol):
     """Return a tolerance which is independent of the dataset"""
+    if tol == 0:
+        return 0
     if sp.issparse(X):
         variances = mean_variance_axis(X, axis=0)[1]
     else:
