@@ -42,7 +42,7 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
                          (((A[:, column_idx] +
                             B[:, column_idx]) ** 2).mean() <= tol ** 2))
         if not sign:
-            return False
+            return False  # pragma: no cover
     return True
 
 

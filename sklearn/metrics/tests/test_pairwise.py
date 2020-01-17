@@ -266,7 +266,7 @@ def test_pairwise_parallel(func, metric, kwds, array_constr, dtype):
                 func(X, metric=metric, n_jobs=2, **kwds)
             return
         else:
-            raise
+            raise  # pragma: no cover
     S2 = func(X, metric=metric, n_jobs=2, **kwds)
     assert_allclose(S, S2)
 

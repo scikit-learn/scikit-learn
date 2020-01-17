@@ -250,6 +250,7 @@ def test_kernel_clone_after_set_params(kernel):
                                                    isotropic_kernels):
         length_scale = params['length_scale']
         if np.iterable(length_scale):
+            # XXX unreached code as of v0.22
             params['length_scale'] = length_scale[0]
             params['length_scale_bounds'] = bounds
         else:
@@ -361,13 +362,13 @@ def test_warns_on_get_params_non_attribute():
             pass
 
         def __call__(self, X, Y=None, eval_gradient=False):
-            return X
+            return X  # pragma: no cover
 
         def diag(self, X):
-            return np.ones(X.shape[0])
+            return np.ones(X.shape[0])  # pragma: no cover
 
         def is_stationary(self):
-            return False
+            return False  # pragma: no cover
 
     est = MyKernel()
     with pytest.warns(FutureWarning, match='AttributeError'):

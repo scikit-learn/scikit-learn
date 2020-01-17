@@ -177,6 +177,7 @@ def test_imputation_mean_median():
             X[:, j] = np.hstack((v, z, p))
 
             if 0 == test_missing_values:
+                # XXX unreached code as of v0.22
                 X_true[:, j] = np.hstack((v,
                                           np.repeat(
                                               true_statistics[j],
