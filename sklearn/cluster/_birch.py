@@ -582,7 +582,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
         with sklearn.config_context(working_memory=1):
-            return self.subcluster_labels_[pairwise_distances_argmin(X, self.subcluster_centers_)]
+            return self.subcluster_labels_[
+                pairwise_distances_argmin(X, self.subcluster_centers_)]
 
     def transform(self, X):
         """
