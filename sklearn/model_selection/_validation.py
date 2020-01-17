@@ -50,19 +50,20 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like
+    X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+            default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : str, callable, list/tuple, dict or None, default=None
+    scoring : str, callable, list/tuple, or dict, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -96,7 +97,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -272,19 +273,20 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like
+    X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+            default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : str, callable or None, default=None
+    scoring : str ot callable, default=None
         A str (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)`` which should return only
@@ -314,7 +316,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -403,10 +405,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape at least 2D
+    X : array-like of shape (n_samples, n_features)
         The data to fit.
 
-    y : array-like
+    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -420,10 +422,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The callable object / fn should have signature
         ``scorer(estimator, X, y)``.
 
-    train : array-like, shape (n_train_samples,)
+    train : array-like of shape (n_train_samples,)
         Indices of training samples.
 
-    test : array-like, shape (n_test_samples,)
+    test : array-like of shape (n_test_samples,)
         Indices of test samples.
 
     verbose : int
@@ -450,7 +452,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_n_test_samples : bool, default=False
         Whether to return the ``n_test_samples``
 
-    return_times : bool, optional, default=False
+    return_times : bool, default=False
         Whether to return the fit/score times.
 
     return_estimator : bool, default=False
@@ -632,14 +634,15 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
     estimator : estimator object implementing 'fit' and 'predict'
         The object to use to fit the data.
 
-    X : array-like
+    X : array-like of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like, default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+            default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
@@ -663,7 +666,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -798,17 +801,17 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     estimator : estimator object implementing 'fit' and 'predict'
         The object to use to fit the data.
 
-    X : array-like of shape at least 2D
+    X : array-like of shape (n_samples, n_features)
         The data to fit.
 
-    y : array-like
+    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
         The target variable to try to predict in the case of
         supervised learning.
 
-    train : array-like, shape (n_train_samples,)
+    train : array-like of shape (n_train_samples,)
         Indices of training samples.
 
-    test : array-like, shape (n_test_samples,)
+    test : array-like of shape (n_test_samples,)
         Indices of test samples.
 
     verbose : int
@@ -955,11 +958,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like
+    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Labels to constrain permutation within groups, i.e. ``y`` values
         are permuted among samples with the same group identifier.
         When not specified, ``y`` values are permuted among all samples.
@@ -969,7 +972,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
 
-    scoring : str, callable or None, default=None
+    scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -997,7 +1000,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     n_permutations : int, default=100
         Number of times to permute ``y``.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1017,7 +1020,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     score : float
         The true score without permuting targets.
 
-    permutation_scores : array, shape (n_permutations,)
+    permutation_scores : array of shape (n_permutations,)
         The scores obtained for each permutations.
 
     pvalue : float
@@ -1104,20 +1107,20 @@ def learning_curve(estimator, X, y, groups=None,
     estimator : object type that implements the "fit" and "predict" methods
         An object of that type which is cloned for each validation.
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples,) or (n_samples, n_features)
+    y : array-like of shape (n_samples,) or (n_samples, n_features)
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of  shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    train_sizes : array-like, shape (n_ticks,), dtype float or int, \
+    train_sizes : array-like of shape (n_ticks,), dtype float or int, \
             default=np.linspace(0.1, 1.0, 5)
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
@@ -1146,7 +1149,7 @@ def learning_curve(estimator, X, y, groups=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    scoring : str, callable or None, default=None
+    scoring : str or callable, default=None
         A str (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -1155,7 +1158,7 @@ def learning_curve(estimator, X, y, groups=None,
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1173,7 +1176,7 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -1190,22 +1193,22 @@ def learning_curve(estimator, X, y, groups=None,
 
     Returns
     -------
-    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
+    train_sizes_abs : array of shape (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
 
-    train_scores : array, shape (n_ticks, n_cv_folds)
+    train_scores : array of shape (n_ticks, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape (n_ticks, n_cv_folds)
+    test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
 
-    fit_times : array, shape (n_ticks, n_cv_folds)
+    fit_times : array of shape (n_ticks, n_cv_folds)
         Times spent for fitting in seconds. Only present if ``return_times``
         is True.
 
-    score_times : array, shape (n_ticks, n_cv_folds)
+    score_times : array of shape (n_ticks, n_cv_folds)
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
@@ -1282,7 +1285,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Parameters
     ----------
-    train_sizes : array-like, shape (n_ticks,), dtype float or int
+    train_sizes : array-like of shape (n_ticks,), dtype float or int
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
         fraction of 'n_max_training_samples', i.e. it has to be within (0, 1].
@@ -1292,7 +1295,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Returns
     -------
-    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
+    train_sizes_abs : array of shape (n_unique_ticks,), dtype int
         Numbers of training examples that will be used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -1385,21 +1388,21 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     estimator : object type that implements the "fit" and "predict" methods
         An object of that type which is cloned for each validation.
 
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples) or (n_samples, n_features)
+    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
     param_name : str
         Name of the parameter that will be varied.
 
-    param_range : array-like, shape (n_values,)
+    param_range : array-like of shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    groups : array-like, with shape (n_samples,), default=None
+    groups : array-like of shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
@@ -1423,12 +1426,12 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    scoring : str, callable or None, default=None
+    scoring : str or callable, default=None
         A str (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1450,10 +1453,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     Returns
     -------
-    train_scores : array, shape (n_ticks, n_cv_folds)
+    train_scores : array of shape (n_ticks, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape (n_ticks, n_cv_folds)
+    test_scores : array of shape (n_ticks, n_cv_folds)
         Scores on test set.
 
     Notes
