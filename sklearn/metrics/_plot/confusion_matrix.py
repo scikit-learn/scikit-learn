@@ -61,7 +61,7 @@ class ConfusionMatrixDisplay:
 
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
-            the format specification is 'd' or '.2g', whichever is shorter. 
+            the format specification is 'd' or '.2g' whichever is shorter.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -73,7 +73,6 @@ class ConfusionMatrixDisplay:
         """
         check_matplotlib_support("ConfusionMatrixDisplay.plot")
         import matplotlib.pyplot as plt
-        from math import log10
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -89,17 +88,17 @@ class ConfusionMatrixDisplay:
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
-            if values_format is None:
-                values_format = lambda x: 'd' if (x == 0 or log10(x) < 7) else '.2g'
 
             # print text with appropriate color depending on background
             thresh = (cm.max() + cm.min()) / 2.0
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
-                self.text_[i, j] = ax.text(j, i,
-                                           format(cm[i, j], values_format(cm[i, j])),
-                                           ha="center", va="center",
-                                           color=color)
+                if values_format is None:
+                    values_format = 'd' if (cm[i, j] <= 1e7) else '.2g'
+                self.text_[i, j] = ax.text(
+                    j, i, format(cm[i, j], values_format),
+                    ha="center", va="center",
+                    color=color)
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
@@ -165,7 +164,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
-        the format specification is 'd' or '.2g', whichever is shorter. 
+        the format specification is 'd' or '.2g' whichever is shorter.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
