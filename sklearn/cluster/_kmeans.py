@@ -211,14 +211,14 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
+        'random': choose n_clusters observations (rows) at random from data for
         the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
@@ -247,7 +247,9 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Verbosity mode.
 
     tol : float, default=1e-4
-        The relative increment in the results before declaring convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
@@ -339,14 +341,14 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
+        'random': choose n_clusters observations (rows) at random from data for
         the initial centroids.
 
-        If an ndarray is passed, it should be of shape (k, p) and gives
-        the initial centers.
+        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     verbose : bool, default=False
         Verbosity mode
@@ -360,7 +362,9 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
-        The relative increment in the results before declaring convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     n_jobs : int, default=None
         The number of OpenMP threads to use for the computation. Parallelism is
@@ -483,14 +487,14 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
+        'random': choose n_clusters observations (rows) at random from data for
         the initial centroids.
 
-        If an ndarray is passed, it should be of shape (k, p) and gives
-        the initial centers.
+        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     verbose : bool, default=False
         Verbosity mode
@@ -504,7 +508,9 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
-        The relative increment in the results before declaring convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     n_jobs : int, default=None
         The number of OpenMP threads to use for the computation. Parallelism is
@@ -736,14 +742,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
+        'random': choose n_clusters observations (rows) at random from data for
         the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-        If a callable is passed, it should take arguments X, k and
-        and a random state and return an initialization.
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -755,7 +761,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to inertia to declare convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
