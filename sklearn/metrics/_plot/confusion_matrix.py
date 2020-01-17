@@ -84,13 +84,13 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-        if (values_format is None and cm.dtype.kind == "f"):
-            values_format = '.2g'
 
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
+        if (values_format is None and cm.dtype.kind == "f"):
+            values_format = '.2g'
 
             # print text with appropriate color depending on background
             thresh = (cm.max() + cm.min()) / 2.0
