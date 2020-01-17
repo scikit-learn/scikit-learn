@@ -8,14 +8,11 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.utils._testing import skip_if_32bit
 
-
-@pytest.fixture
-def n_threads():
-    return 1
+N_THREADS = 1
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])
-def test_histogram_split(n_bins, n_threads):
+def test_histogram_split(n_bins):
     rng = np.random.RandomState(42)
     feature_idx = 0
     l2_regularization = 0
@@ -44,7 +41,7 @@ def test_histogram_split(n_bins, n_threads):
                                        all_gradients,
                                        all_hessians,
                                        hessians_are_constant,
-                                       n_threads)
+                                       N_THREADS)
             n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                           dtype=np.uint32)
             has_missing_values = np.array([False] * X_binned.shape[1],
@@ -75,7 +72,7 @@ def test_histogram_split(n_bins, n_threads):
 
 @skip_if_32bit
 @pytest.mark.parametrize('constant_hessian', [True, False])
-def test_gradient_and_hessian_sanity(constant_hessian, n_threads):
+def test_gradient_and_hessian_sanity(constant_hessian):
     # This test checks that the values of gradients and hessians are
     # consistent in different places:
     # - in split_info: si.sum_gradient_left + si.sum_gradient_right must be
@@ -109,7 +106,7 @@ def test_gradient_and_hessian_sanity(constant_hessian, n_threads):
 
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian,
-                               n_threads)
+                               N_THREADS)
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -176,7 +173,7 @@ def test_gradient_and_hessian_sanity(constant_hessian, n_threads):
         assert np.allclose(hessians, expected_hessian)
 
 
-def test_split_indices(n_threads):
+def test_split_indices():
     # Check that split_indices returns the correct splits and that
     # splitter.partition is consistent with what is returned.
     rng = np.random.RandomState(421)
@@ -210,7 +207,7 @@ def test_split_indices(n_threads):
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant,
-                               n_threads)
+                               N_THREADS)
     n_bins_non_missing = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -244,7 +241,7 @@ def test_split_indices(n_threads):
     assert samples_right.shape[0] == si_root.n_samples_right
 
 
-def test_min_gain_to_split(n_threads):
+def test_min_gain_to_split():
     # Try to split a pure node (all gradients are equal, same for hessians)
     # with min_gain_to_split = 0 and make sure that the node is not split (best
     # possible gain = -1). Note: before the strict inequality comparison, this
@@ -268,7 +265,7 @@ def test_min_gain_to_split(n_threads):
 
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant,
-                               n_threads)
+                               N_THREADS)
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -377,7 +374,7 @@ def test_min_gain_to_split(n_threads):
 def test_splitting_missing_values(X_binned, all_gradients,
                                   has_missing_values, n_bins_non_missing,
                                   expected_split_on_nan, expected_bin_idx,
-                                  expected_go_to_left, n_threads):
+                                  expected_go_to_left):
     # Make sure missing values are properly supported.
     # we build an artificial example with gradients such that the best split
     # is on bin_idx=3, when there are no missing values.
@@ -407,7 +404,7 @@ def test_splitting_missing_values(X_binned, all_gradients,
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant,
-                               n_threads)
+                               N_THREADS)
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
     missing_values_bin_idx = n_bins - 1
