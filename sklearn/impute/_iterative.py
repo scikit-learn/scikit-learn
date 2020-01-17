@@ -576,8 +576,7 @@ class IterativeImputer(_BaseImputer):
 
         X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
-        self._change_missing_values(True)
-        super()._fit_indicator(missing_mask)
+        super()._fit_indicator(missing_mask, True)
         X_indicator = super()._transform_indicator(missing_mask)
 
         if self.max_iter == 0 or np.all(mask_missing_values):
