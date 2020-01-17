@@ -770,4 +770,3 @@ def test_X_none_gram_not_none():
     with pytest.raises(ValueError,
                        match="X cannot be None if Gram is not None"):
         lars_path(X=None, y=[1], Gram='not None')
-
