@@ -73,6 +73,7 @@ class ConfusionMatrixDisplay:
         """
         check_matplotlib_support("ConfusionMatrixDisplay.plot")
         import matplotlib.pyplot as plt
+        from math import log10
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -94,7 +95,9 @@ class ConfusionMatrixDisplay:
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
                 if values_format is None:
-                    values_format = 'd' if (cm[i, j] <= 1e7) else '.2g'
+                    values_format = 'd' if (
+                        cm[i, j] == 0 or log10(cm[i, j]) < 7
+                        ) else '.2g'
                 self.text_[i, j] = ax.text(
                     j, i, format(cm[i, j], values_format),
                     ha="center", va="center",
