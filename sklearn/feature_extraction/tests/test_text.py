@@ -1099,6 +1099,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
     assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
     assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    vec.fit(["some text", "some other text"])
     assert_raise_message(ValueError, message, vec.transform, "hello world!")
 
 

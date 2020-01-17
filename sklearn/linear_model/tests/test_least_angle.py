@@ -15,7 +15,8 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues, LassoLarsIC
+from sklearn.linear_model._least_angle import _lars_path_residues
+from sklearn.linear_model import LassoLarsIC, lars_path
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -763,3 +764,10 @@ def test_lars_with_jitter(y_list, expected_y):
 
     assert not np.array_equal(w_jitter, w_nojitter)
     assert_array_almost_equal(w_jitter, expected_output, decimal=2)
+
+
+def test_X_none_gram_not_none():
+    with pytest.raises(ValueError,
+                       match="X cannot be None if Gram is not None"):
+        lars_path(X=None, y=[1], Gram='not None')
+

@@ -13,7 +13,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from traceback import format_exception_only
+from traceback import format_exc
 from contextlib import suppress
 
 import numpy as np
@@ -23,6 +23,7 @@ from joblib import Parallel, delayed
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
+from ..utils.validation import _check_fit_params
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
@@ -489,8 +490,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = {k: _index_param_value(X, v, train)
-                  for k, v in fit_params.items()}
+    fit_params = _check_fit_params(X, fit_params, train)
 
     train_scores = {}
     if parameters is not None:
@@ -532,7 +532,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, format_exception_only(type(e), e)[0]),
+                          (error_score, format_exc()),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
@@ -734,7 +734,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
     encode = method in ['decision_function', 'predict_proba',
-                        'predict_log_proba']
+                        'predict_log_proba'] and y is not None
     if encode:
         y = np.asarray(y)
         if y.ndim == 1:
@@ -830,8 +830,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = {k: _index_param_value(X, v, train)
-                  for k, v in fit_params.items()}
+    fit_params = _check_fit_params(X, fit_params, train)
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -842,7 +841,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+
+    encode = method in ['decision_function', 'predict_proba',
+                        'predict_log_proba'] and y is not None
+
+    if encode:
         if isinstance(predictions, list):
             predictions = [_enforce_prediction_order(
                 estimator.classes_[i_label], predictions[i_label],
@@ -937,16 +940,6 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-def _index_param_value(X, v, indices):
-    """Private helper function for parameter value indexing."""
-    if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
-        # pass through: skip indexing
-        return v
-    if sp.issparse(v):
-        v = v.tocsr()
-    return _safe_indexing(v, indices)
-
-
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
@@ -1010,11 +1003,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional (default=0)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : integer, optional
         The verbosity level.
@@ -1180,11 +1172,11 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` is True.
+    random_state : int, RandomState instance or None, default=None
+        Used when ``shuffle`` is True.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

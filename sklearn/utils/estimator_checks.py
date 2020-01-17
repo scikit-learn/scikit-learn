@@ -479,9 +479,6 @@ def _set_checking_parameters(estimator):
         # K-Means
         estimator.set_params(n_init=2)
 
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 2
-
     if name == 'TruncatedSVD':
         # TruncatedSVD doesn't run with n_components = n_features
         # This is ugly :-/
