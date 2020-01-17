@@ -73,6 +73,7 @@ class ConfusionMatrixDisplay:
         """
         check_matplotlib_support("ConfusionMatrixDisplay.plot")
         import matplotlib.pyplot as plt
+        from math import log10
 
         if ax is None:
             fig, ax = plt.subplots()
