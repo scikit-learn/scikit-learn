@@ -12,6 +12,7 @@
 import itertools
 from functools import partial
 import warnings
+import gc
 
 import numpy as np
 from scipy.spatial import distance
@@ -1600,6 +1601,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)
             _check_chunk_size(D_chunk, chunk_size)
+        gc.collect()
         yield D_chunk
 
 
