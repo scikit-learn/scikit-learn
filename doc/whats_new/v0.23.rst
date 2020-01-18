@@ -67,6 +67,10 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :func:`datasets.fetch_20newsgroups` now filters empty samples generated
+  by `remove` option by setting `clear_empty=True`.
+  :pr:`15985` by :user:`Hugo Abonizio <hugoabonizio>`.
+
 :mod:`sklearn.ensemble`
 .................................
 
