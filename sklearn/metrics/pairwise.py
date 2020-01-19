@@ -12,7 +12,6 @@
 import itertools
 from functools import partial
 import warnings
-import gc
 
 import numpy as np
 from scipy.spatial import distance
