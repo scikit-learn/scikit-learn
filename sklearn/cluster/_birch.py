@@ -9,8 +9,8 @@ import sklearn
 from scipy import sparse
 from math import sqrt
 
+import sklearn.metrics.pairwise
 from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import pairwise_distances_argmin
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -581,9 +581,9 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
-        with sklearn.config_context(working_memory=1):
+        with sklearn.config_context(working_memory=16):
             return self.subcluster_labels_[
-                pairwise_distances_argmin(X,
+                sklearn.metrics.pairwise.pairwise_distances_argmin(X,
                                           self.subcluster_centers_)
             ]
 
