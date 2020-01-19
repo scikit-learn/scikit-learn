@@ -29,12 +29,19 @@ as well.
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from distutils.version import LooseVersion
 from scipy.stats import norm
 from sklearn.neighbors import KernelDensity
 
+# `normed` is being deprecated in favor of `density` in histograms
+if LooseVersion(matplotlib.__version__) >= '2.1':
+    density_param = {'density': True}
+else:
+    density_param = {'normed': True}
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Plot the progression of histograms to kernels
 np.random.seed(1)
 N = 20
@@ -47,11 +54,11 @@ fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
 fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
 # histogram 1
-ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', normed=True)
+ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', **density_param)
 ax[0, 0].text(-3.5, 0.31, "Histogram")
 
 # histogram 2
-ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
+ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', **density_param)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE
@@ -77,7 +84,7 @@ for axi in ax[:, 0]:
 for axi in ax[1, :]:
     axi.set_xlabel('x')
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Plot all available kernels
 X_plot = np.linspace(-6, 6, 1000)[:, None]
 X_src = np.zeros((1, 1))
@@ -112,7 +119,7 @@ for i, kernel in enumerate(['gaussian', 'tophat', 'epanechnikov',
 
 ax[0, 1].set_title('Available Kernels')
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Plot a 1D density example
 N = 100
 np.random.seed(1)
@@ -127,12 +134,15 @@ true_dens = (0.3 * norm(0, 1).pdf(X_plot[:, 0])
 fig, ax = plt.subplots()
 ax.fill(X_plot[:, 0], true_dens, fc='black', alpha=0.2,
         label='input distribution')
+colors = ['navy', 'cornflowerblue', 'darkorange']
+kernels = ['gaussian', 'tophat', 'epanechnikov']
+lw = 2
 
-for kernel in ['gaussian', 'tophat', 'epanechnikov']:
+for color, kernel in zip(colors, kernels):
     kde = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X)
     log_dens = kde.score_samples(X_plot)
-    ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
-            label="kernel = '{0}'".format(kernel))
+    ax.plot(X_plot[:, 0], np.exp(log_dens), color=color, lw=lw,
+            linestyle='-', label="kernel = '{0}'".format(kernel))
 
 ax.text(6, 0.38, "N={0} points".format(N))
 
