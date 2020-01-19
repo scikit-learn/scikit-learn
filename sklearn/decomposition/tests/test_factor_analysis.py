@@ -8,13 +8,13 @@ import numpy as np
 import pytest
 
 from sklearn.utils._testing import assert_warns
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
 from sklearn.utils._testing import ignore_warnings
-from sklearn.decomposition.factor_analysis import _ortho_rotation
+from sklearn.decomposition._factor_analysis import _ortho_rotation
 
 
 # Ignore warnings from switching to more power iterations in randomized_svd
