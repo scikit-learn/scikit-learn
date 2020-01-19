@@ -119,7 +119,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class GeneralNB(_BaseNB):
-    """General Naive Bayes (GeneralNB)
+    """General Naive Bayes
 
     Parameters
     ----------
@@ -139,30 +139,28 @@ class GeneralNB(_BaseNB):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.array([[1.5, 2.3, 0, 1],
-                      [2.7, 3.8, 1, 0],
-                      [1.7, 0.1, 1, 0]])
+    >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
+                      [2.7, 3.8, 2.3, 1, 0],
+                      [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
     >>> clf = GeneralNB([
-            (GaussianNB(), [0, 1]),
-            (BernoulliNB(), [2, 3])
+            (GaussianNB(), [0, 1, 2]),
+            (BernoulliNB(), [3, 4])
         ])
     >>> clf.fit(X, y)
     GeneralNB(distributions=[
-        (GaussianNB(priors=None, var_smoothing=1e-09), [0, 1]),
-        (BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None,
-            fit_prior=True), [2, 3])]
-    )
-    >>> print(clf.predict([[1.5, 2.3, 0, 1]]))
+        (GaussianNB(priors=None, var_smoothing=1e-09), [0, 1, 2]),
+        (BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, 
+            fit_prior=True), [3, 4])])
+    >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
-    >>> print(clf.score([[2.7, 3.8, 1, 0]]))
+    >>> print(clf.score([[2.7, 3.8, 1, 0]],[1]))
     [1]
     """
 
     def __init__(self, distributions):
         self.distributions_ = distributions
-        self.class_prior = []
         self.fits = []
 
     def __repr__(self):
@@ -180,6 +178,8 @@ class GeneralNB(_BaseNB):
             Target values.
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
+        fits : list of (NB, feature) tuples
+            List of fitted NBs
 
         Returns
         -------
@@ -190,32 +190,41 @@ class GeneralNB(_BaseNB):
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb, features) for (nb, features) in self.distributions_]
+        inits = [(nb,features) for (nb,features) in self.distributions_]
 
-        self.fits = [(nb.fit(X[:, features], y), features)
-                     for (nb, features) in inits]
+        self.fits = [(nb.fit(X[:,features],y), features)
+                     for (nb,features) in inits]
 
         return self
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
+
+        X = np.array(X)
+
+        # For now assume all class log priors are the same for all the NB's
+        # So we'll take the first one.
         log_priors = [nb.class_log_prior_
                       if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-                      for nb, _ in self.fits]
+                      for (nb, _) in self.fits]
+        log_prior = log_priors[0]
 
-        
-        print(nb._joint_log_likelihood(X[:, self.fits[0][1]])
-        jll = [nb._joint_log_likelihood(X[:, features])
+        jlls = [nb._joint_log_likelihood(X[:, features])
                for (nb, features) in self.fits]
 
-        jll = np.hstack([jll])
-        jll = jll - log_priors[0]
-        jll = jll.sum(axis=0) + log_priors[0]
+        # jlls has the shape (distribution, sample, class)
+        jlls = np.hstack([jlls])
+
+        # Remove the class log prior from all the distributions
+        # but add it back after the summation
+        jlls = jlls - log_prior
+        jll = jlls.sum(axis=0) + log_prior
 
         return jll
 
     def _check_X(self, X):
-        # TODO
+        # Check for this and
+        # Check for every distribution
         return X
 
     def _check_distributions(self, distr):
