@@ -177,11 +177,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         n_components = self.n_components
-        if self.rotation is not None:
-            rot_components = (n_components if n_components is not None
-                              else n_features)
-            n_components = n_features
-        elif n_components is None:
+        if n_components is None:
             n_components = n_features
 
         self.mean_ = np.mean(X, axis=0)
@@ -383,6 +379,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         else:
             raise ValueError("'method' must be in %s, not %s"
                              % (implemented, method))
+
 
 def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
     """Return rotated components."""

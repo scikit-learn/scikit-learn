@@ -95,7 +95,7 @@ def test_factor_analysis():
     for method in (None, "varimax", 'quartimax'):
         fa_var = FactorAnalysis(n_components=n_components,
                                 rotation=method)
-        results[method] = result = fa_var.fit_transform(X)
+        results[method] = fa_var.fit_transform(X)
         projections[method] = fa_var.get_covariance()
     for rot1, rot2 in combinations([None, 'varimax', 'quartimax'], 2):
         assert not np.allclose(results[rot1], results[rot2])
