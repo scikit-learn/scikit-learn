@@ -278,7 +278,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
 
 def _tau(w, A):
-    """Tau transform of Trosset & Priebe.
+    """Double centering transformation.
 
     Transform relating metric squared dissimilarity matrix to
     centered weighted inner product generating the metric.
@@ -387,6 +387,7 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
+
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
@@ -399,7 +400,6 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.X = None
 
     @property
     def _pairwise(self):
@@ -469,25 +469,28 @@ class MDS(BaseEstimator):
 
     def transform(self, X, init=None, data_type='sample'):
         """Return embedded coordinates for new data or dissimilarity
-        matrix y based on previous fit.
+        matrix X based on prefitted model.
 
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If dissimilarity=='precomuted', then the input should be
-            the dissimilarity matrix.
+            for input as new data sample or dissimilarty matrix.
+            If dissimilarity == 'precomuted' then X must be a dissimilarty
+            matrix (containing self.dissimilarity_matrix_ as a submatrix)
+            and data_type='dissimilarity', as we cannto compute the necessary
+            extended dissimilarity matrix without the original data sample.
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
-            algorithm. By default, the algorithm is initialized with a randomly
-            chosen array.
+            algorithm. By default, the algorithm is initialized with a matrix
+            of ones of shape (X.shape[0], self.n_components)
 
         data_type : str, type of data input, 'sample' or 'dissimilarity'. Even
             though self.dissimilarity_ = 'precomputed', an out of sample fit
             could be based on additional data or extended dissimilarity matrix.
             For ease of input, if data_input = 'sample', only the new new data
             beyond self.X is input, while for data_input = 'dissimilarity', the
-            extended dissimilarity matrix is input, which should contain
+            extended dissimilarity matrix_ is input, which should contain
             self.dissimilarity_matrix_ as a submatrix.
 
         Notes
@@ -518,10 +521,12 @@ class MDS(BaseEstimator):
                                  "dissimilarity precomputed")
             else:
                 x = self.X_fit_
-                A = np.block([[euclidean_distances(x, squared=True),
-                               euclidean_distances(x, X, squared=True)],
-                              [euclidean_distances(x, X, squared=True).T,
-                               euclidean_distances(X, squared=True)]])
+                xX_dist = euclidean_distances(x, X, squared=True)
+                XX_dist = euclidean_distances(X, X, squared=True)
+                A = np.block([[self.dissimilarity_matrix_**2,
+                               xX_dist],
+                              [xX_dist.T,
+                               XX_dist]])
         else:
             raise ValueError("Incorrect data_type specified")
 
@@ -530,10 +535,10 @@ class MDS(BaseEstimator):
             outer product of concatenated data.
             """
             y = y.reshape(-1, x.shape[1])
-            cross_norm = np.sum((dissimilarities_xy - np.dot(x, y.T))**2)
+            xy_norm = np.sum((dissimilarities_xy - np.dot(x, y.T))**2)
             yy_norm = np.sum((dissimilarities_yy - np.dot(y, y.T))**2)
 
-            return 2 * cross_norm + yy_norm
+            return xy_norm + yy_norm
 
         w = np.concatenate([np.ones(n_x_fit), np.zeros(n_X)])[:, np.newaxis]
         B = _tau(w, A)

@@ -85,6 +85,21 @@ def test_tau():
                               decimal=3)
 
 
+def test_tau_restriction():
+    sim = np.array([[-0.05423067,  0.03647686,  0.01775381,  0.3335165],
+                    [-0.01447033,  0.00349478,  0.01097555, -0.14864747],
+                    [0.06870101, -0.03997165, -0.02872936, -0.18486903],
+                    [-0.03937655, -0.07086947,  0.11024602,  0.22718871]])
+
+    w = np.concatenate([np.ones(sim.shape[0] - 1), np.zeros(1)])[:, np.newaxis]
+    B_proj = mds._tau(w, sim)
+
+    w_sub = w[:3]
+    sim_sub = sim[:3, :3]
+    B_sub = mds._tau(w_sub, sim_sub)
+    assert_array_almost_equal(B_sub, B_proj[:3, :3])
+
+
 def test_MDS_transform_sample():
     data = np.array([[0., 0.],
                      [1., 0.],
