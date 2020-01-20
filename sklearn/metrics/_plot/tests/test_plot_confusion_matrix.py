@@ -100,7 +100,7 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
-                               normalize,  include_values):
+                               normalize, include_values):
     X, y = data
     ax = pyplot.gca()
     cmap = 'plasma'
@@ -260,8 +260,12 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     assert disp.text_.shape == (n_classes, n_classes)
 
     if values_format is None:
-        test_func = lambda x: 'd' if (x == 0 or np.log10(x) < 7) else '.2g'
-        expected_text = np.array([format(v, test_func(v))
+        def test_function(x):
+            if (x == 0 or np.log10(x) < 7):
+                return 'd'
+            else:
+                return '.2g'
+        expected_text = np.array([format(v, test_function)
                                  for v in cm.ravel()])
         text_text = np.array([
             t.get_text() for t in disp.text_.ravel()])
