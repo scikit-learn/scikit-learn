@@ -99,9 +99,8 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
 
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("include_values", [True, False])
-@pytest.mark.parametrize("values_format", ['d', '.2g', None, 'n'])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
-                               normalize, values_format, include_values):
+                               normalize,  include_values):
     X, y = data
     ax = pyplot.gca()
     cmap = 'plasma'
@@ -248,7 +247,7 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
     assert disp.text_.shape == (n_classes, n_classes)
 
 
-@pytest.mark.parametrize("values_format", ['e', 'n'])
+@pytest.mark.parametrize("values_format", [None, 'e', 'd', '.2g'])
 def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
                                       fitted_clf, values_format):
     # Make sure plot text is formatted with 'values_format'.
@@ -260,8 +259,16 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
 
     assert disp.text_.shape == (n_classes, n_classes)
 
-    expected_text = np.array([format(v, values_format)
-                              for v in cm.ravel()])
-    text_text = np.array([
-        t.get_text() for t in disp.text_.ravel()])
-    assert_array_equal(expected_text, text_text)
+    if values_format is None:
+        test_func = lambda x: 'd' if (x == 0 or np.log10(x) < 7) else '.2g'
+        expected_text = np.array([format(v, test_func(v))
+                                 for v in cm.ravel()])
+        text_text = np.array([
+            t.get_text() for t in disp.text_.ravel()])
+        assert_array_equal(expected_text, text_text)
+    else:
+        expected_text = np.array([format(v, values_format)
+                                 for v in cm.ravel()])
+        text_text = np.array([
+            t.get_text() for t in disp.text_.ravel()])
+        assert_array_equal(expected_text, text_text)
