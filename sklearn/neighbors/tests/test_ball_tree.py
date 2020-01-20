@@ -33,10 +33,6 @@ BOOLEAN_METRICS = ['matching', 'jaccard', 'dice', 'kulsinski',
                    'sokalsneath']
 
 
-def dist_func(x1, x2, p):
-    return np.sum((x1 - x2) ** p) ** (1. / p)
-
-
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
     D = DistanceMetric.get_metric(metric, **kwargs).pairwise(Y, X)
     ind = np.argsort(D, axis=1)[:, :k]
@@ -102,6 +98,7 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
         assert_array_almost_equal(d, dist)
 
 
+# XXX Duplicated in test_ball_tree, test_kd_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel)
@@ -119,7 +116,7 @@ def compute_kernel_slow(Y, X, kernel, h):
     elif kernel == 'cosine':
         return norm * (np.cos(0.5 * np.pi * d / h) * (d < h)).sum(-1)
     else:
-        raise ValueError('kernel not recognized')
+        raise ValueError('kernel not recognized')  # pragma: no cover
 
 
 @pytest.mark.parametrize("kernel", ['gaussian', 'tophat', 'epanechnikov',
