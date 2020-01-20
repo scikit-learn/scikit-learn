@@ -30,7 +30,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Parameters
     ----------
-    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features), or \
             array of shape (n_samples, n_samples)
         A feature array, or array of distances between samples if
         ``metric='precomputed'``.
@@ -60,7 +60,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
         .. versionadded:: 0.19
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+    algorithm : input: {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
@@ -71,11 +71,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         to store the tree. The optimal value depends
         on the nature of the problem.
 
-    p : float, default=2.0
+    p : float, default=2
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    sample_weight : array, shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Weight of each sample, such that a sample with a weight of at least
         ``min_samples`` is by itself a core sample; a sample with negative
         weight may inhibit its eps-neighbor from being core.
@@ -89,10 +89,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Returns
     -------
-    core_samples : array [n_core_samples]
+    core_samples : array-like [n_core_samples]
         Indices of core samples.
 
-    labels : array [n_samples]
+    labels : array-like [n_samples]
         Cluster labels for each point.  Noisy samples are given the label -1.
 
     See also
@@ -184,7 +184,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.19
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+    algorithm : input: {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
@@ -207,13 +207,13 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    core_sample_indices_ : array, shape = [n_core_samples]
+    core_sample_indices_ : array-like of shape (n_core_samples,)
         Indices of core samples.
 
-    components_ : array, shape = [n_core_samples, n_features]
+    components_ : array-like of shape (n_core_samples, n_features)
         Copy of each core sample found by training.
 
-    labels_ : array, shape = [n_samples]
+    labels_ : array-like of shape (n_samples)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
@@ -287,13 +287,13 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix``.
 
-        sample_weight : array, shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample, such that a sample with a weight of at least
             ``min_samples`` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
@@ -366,13 +366,13 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix``.
 
-        sample_weight : array, shape (n_samples,), default=None
+        sample_weight : array of shape (n_samples,), default=None
             Weight of each sample, such that a sample with a weight of at least
             ``min_samples`` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
@@ -383,7 +383,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels. Noisy samples are given the label -1.
         """
         self.fit(X, sample_weight=sample_weight)
