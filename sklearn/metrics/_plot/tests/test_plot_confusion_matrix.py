@@ -21,6 +21,7 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
 
+
 @pytest.fixture(scope="module")
 def n_classes():
     return 5
@@ -226,8 +227,6 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
-
-
 @pytest.mark.parametrize(
     "clf", [LogisticRegression(),
             make_pipeline(StandardScaler(), LogisticRegression()),
@@ -260,16 +259,25 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     assert disp.text_.shape == (n_classes, n_classes)
 
     if values_format is None:
+        cm = confusion_matrix([1, 1]*5000000, [0, 0]*5000000)
+        disp.confusion_matrix = np.array([
+                                [0, 0],
+                                [10000000, 0]], dtype=int)
+
         def test_function(x):
             if (x == 0 or np.log10(x) < 7):
                 return 'd'
             else:
                 return '.2g'
+
         expected_text = np.array([format(v, test_function(v))
                                  for v in cm.ravel()])
+
         text_text = np.array([
             t.get_text() for t in disp.text_.ravel()])
+
         assert_array_equal(expected_text, text_text)
+
     else:
         expected_text = np.array([format(v, values_format)
                                  for v in cm.ravel()])
