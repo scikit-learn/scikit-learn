@@ -276,6 +276,21 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         if np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
+    def norm(cm):
+        with np.errstate(all='ignore'):
+            if normalize == 'true':
+                cm = cm / cm.sum(axis=1, keepdims=True)
+            elif normalize == 'pred':
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            elif normalize == 'all':
+                cm = cm / cm.sum()
+            cm = np.nan_to_num(cm)
+        return cm
+
     if sample_weight is not None:
         sample_weight = np.asarray(sample_weight)
         check_consistent_length(y_true, y_pred, sample_weight)
@@ -293,15 +308,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
                           weights=sample_weight,
                           minlength=4).reshape(2, 2)
         if sample_weight is None or sample_weight.dtype.kind in 'iub':
-            return out.astype(np.int64)
-        return out
+            out = out.astype(np.int64)
+        return norm(out)
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-
-    if normalize not in ['true', 'pred', 'all', None]:
-        raise ValueError("normalize must be one of {'true', 'pred', "
-                         "'all', None}")
 
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
@@ -326,16 +337,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
-    with np.errstate(all='ignore'):
-        if normalize == 'true':
-            cm = cm / cm.sum(axis=1, keepdims=True)
-        elif normalize == 'pred':
-            cm = cm / cm.sum(axis=0, keepdims=True)
-        elif normalize == 'all':
-            cm = cm / cm.sum()
-        cm = np.nan_to_num(cm)
-
-    return cm
+    return norm(cm)
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
