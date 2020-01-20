@@ -331,7 +331,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
-    
+
     if update_centers:
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,

@@ -272,7 +272,7 @@ shape (n_clusters, n_clusters)
         # thread local buffers
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
-        
+
         for chunk_idx in prange(n_chunks):
             start = chunk_idx * n_samples_chunk
             if chunk_idx == n_chunks - 1 and n_samples_rem > 0:
@@ -292,7 +292,7 @@ shape (n_clusters, n_clusters)
                 centers_new_chunk,
                 weight_in_clusters_chunk,
                 update_centers)
-            
+
         # reduction from local buffers. The gil is necessary for that to avoid
         # race conditions.
         if update_centers:
@@ -521,7 +521,7 @@ shape (n_clusters, n_clusters)
                 centers_new_chunk,
                 weight_in_clusters_chunk,
                 update_centers)
-        
+
         # reduction from local buffers. The gil is necessary for that to avoid
         # race conditions.
         if update_centers:
@@ -530,7 +530,6 @@ shape (n_clusters, n_clusters)
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
-
 
     if update_centers:
         _relocate_empty_clusters_sparse(
