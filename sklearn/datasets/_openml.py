@@ -44,11 +44,11 @@ def _retry_with_clean_cache(openml_path, data_home):
     """
     def decorator(f):
         @wraps(f)
-        def wrapper():
+        def wrapper(*args, **kw):
             if data_home is None:
-                return f()
+                return f(*args, **kw)
             try:
-                return f()
+                return f(*args, **kw)
             except HTTPError:
                 raise
             except Exception:
@@ -56,7 +56,7 @@ def _retry_with_clean_cache(openml_path, data_home):
                 local_path = _get_local_path(openml_path, data_home)
                 if os.path.exists(local_path):
                     os.unlink(local_path)
-                return f()
+                return f(*args, **kw)
         return wrapper
     return decorator
 
@@ -448,32 +448,101 @@ def _get_num_samples(data_qualities):
     return int(float(qualities.get('NumberOfInstances', default_n_samples)))
 
 
-def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
-    # Accesses an ARFF file on the OpenML server. Documentation:
+def _download_data_to_bunch(url, sparse, data_home, *,
+                            as_frame, features_list, data_columns,
+                            target_columns, shape):
+    """Download OpenML ARFF and convert to Bunch of data
+    """
+    # NB: this function is long in order to handle retry for any failure
+    #     during the streaming parse of the ARFF.
+
+    # Prepare which columns and data types should be returned for the X and y
+    features_dict = {feature['name']: feature for feature in features_list}
+
+    # XXX: col_slice_y should be all nominal or all numeric
+    _verify_target_data_type(features_dict, target_columns)
+
+    col_slice_y = [int(features_dict[col_name]['index'])
+                   for col_name in target_columns]
+
+    col_slice_x = [int(features_dict[col_name]['index'])
+                   for col_name in data_columns]
+    for col_idx in col_slice_y:
+        feat = features_list[col_idx]
+        nr_missing = int(feat['number_of_missing_values'])
+        if nr_missing > 0:
+            raise ValueError('Target column {} has {} missing values. '
+                             'Missing values are not supported for target '
+                             'columns. '.format(feat['name'], nr_missing))
+
+    # Access an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
-    # encode_nominal argument is to ensure unit testing, do not alter in
-    # production!
 
-    # Note that if the data is dense, no reading is done until the data
-    # generator is iterated.
+    if sparse is True:
+        return_type = _arff.COO
+    else:
+        return_type = _arff.DENSE_GEN
 
-    url = _DATA_FILE.format(file_id)
+    response = _open_openml_url(url, data_home)
 
-    @_retry_with_clean_cache(url, data_home)
-    def _arff_load():
-        response = _open_openml_url(url, data_home)
-        if sparse is True:
-            return_type = _arff.COO
+    with closing(response):
+        # Note that if the data is dense, no reading is done until the data
+        # generator is iterated.
+        arff = _arff.load((line.decode('utf-8')
+                           for line in response),
+                          return_type=return_type,
+                          encode_nominal=not as_frame)
+
+        frame = nominal_attributes = None
+        if as_frame:
+            columns = data_columns + target_columns
+            frame = _convert_arff_data_dataframe(arff, columns, features_dict)
+            X = frame[data_columns]
+            if len(target_columns) >= 2:
+                y = frame[target_columns]
+            elif len(target_columns) == 1:
+                y = frame[target_columns[0]]
+            else:
+                y = None
         else:
-            return_type = _arff.DENSE_GEN
+            X, y = _convert_arff_data(arff['data'], col_slice_x,
+                                      col_slice_y, shape)
 
-        arff_file = _arff.load((line.decode('utf-8')
-                                for line in response),
-                               encode_nominal=encode_nominal,
-                               return_type=return_type)
-        return response, arff_file
+            # nominal attributes is a dict mapping from the attribute name to
+            # the possible values. Includes also the target column (which will
+            # be popped off below, before it will be packed in the Bunch
+            # object)
+            nominal_attributes = {k: v for k, v in arff['attributes']
+                                  if isinstance(v, list) and
+                                  k in data_columns + target_columns}
+            is_classification = {col_name in nominal_attributes
+                                 for col_name in target_columns}
+            if not is_classification:
+                # No target
+                pass
+            elif all(is_classification):
+                y = np.hstack([
+                    np.take(
+                        np.asarray(nominal_attributes.pop(col_name),
+                                   dtype='O'),
+                        y[:, i:i + 1].astype(int, copy=False))
+                    for i, col_name in enumerate(target_columns)
+                ])
+            elif any(is_classification):
+                raise ValueError('Mix of nominal and non-nominal targets is '
+                                 'not currently supported')
 
-    return _arff_load()
+            # reshape y back to 1-D array, if there is only 1 target column;
+            # back to None if there are not target columns
+            if y.shape[1] == 1:
+                y = y.reshape((-1,))
+            elif y.shape[1] == 0:
+                y = None
+
+    return Bunch(data=X, target=y, frame=frame,
+                 categories=nominal_attributes,
+                 feature_names=data_columns,
+                 target_names=target_columns)
 
 
 def _verify_target_data_type(features_dict, target_columns):
@@ -708,25 +777,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_columns = _valid_data_column_names(features_list,
                                             target_columns)
 
-    # prepare which columns and data types should be returned for the X and y
-    features_dict = {feature['name']: feature for feature in features_list}
-
-    # XXX: col_slice_y should be all nominal or all numeric
-    _verify_target_data_type(features_dict, target_columns)
-
-    col_slice_y = [int(features_dict[col_name]['index'])
-                   for col_name in target_columns]
-
-    col_slice_x = [int(features_dict[col_name]['index'])
-                   for col_name in data_columns]
-    for col_idx in col_slice_y:
-        feat = features_list[col_idx]
-        nr_missing = int(feat['number_of_missing_values'])
-        if nr_missing > 0:
-            raise ValueError('Target column {} has {} missing values. '
-                             'Missing values are not supported for target '
-                             'columns. '.format(feat['name'], nr_missing))
-
     # determine arff encoding to return
     if not return_sparse:
         # The shape must include the ignored features to keep the right indexes
@@ -737,68 +787,20 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         shape = None
 
     # obtain the data
-    fp, arff = _download_data_arff(data_description['file_id'], return_sparse,
-                                   data_home, encode_nominal=not as_frame)
+    url = _DATA_FILE.format(data_description['file_id'])
+    download = _retry_with_clean_cache(url, data_home)(_download_data_to_bunch)
+    bunch = download(url, return_sparse, data_home, as_frame=as_frame,
+                     features_list=features_list, shape=shape,
+                     target_columns=target_columns, data_columns=data_columns)
+
+    if return_X_y:
+        return bunch.data, bunch.target
 
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
-    nominal_attributes = None
-    frame = None
-    if as_frame:
-        columns = data_columns + target_columns
-        frame = _convert_arff_data_dataframe(arff, columns, features_dict)
-        X = frame[data_columns]
-        if len(target_columns) >= 2:
-            y = frame[target_columns]
-        elif len(target_columns) == 1:
-            y = frame[target_columns[0]]
-        else:
-            y = None
-    else:
-        # nominal attributes is a dict mapping from the attribute name to the
-        # possible values. Includes also the target column (which will be
-        # popped off below, before it will be packed in the Bunch object)
-        nominal_attributes = {k: v for k, v in arff['attributes']
-                              if isinstance(v, list) and
-                              k in data_columns + target_columns}
-
-        X, y = _convert_arff_data(arff['data'], col_slice_x,
-                                  col_slice_y, shape)
-
-        is_classification = {col_name in nominal_attributes
-                             for col_name in target_columns}
-        if not is_classification:
-            # No target
-            pass
-        elif all(is_classification):
-            y = np.hstack([
-                np.take(
-                    np.asarray(nominal_attributes.pop(col_name), dtype='O'),
-                    y[:, i:i + 1].astype(int, copy=False))
-                for i, col_name in enumerate(target_columns)
-            ])
-        elif any(is_classification):
-            raise ValueError('Mix of nominal and non-nominal targets is not '
-                             'currently supported')
-
-        # reshape y back to 1-D array, if there is only 1 target column; back
-        # to None if there are not target columns
-        if y.shape[1] == 1:
-            y = y.reshape((-1,))
-        elif y.shape[1] == 0:
-            y = None
-
-    fp.close()  # explicitly close HTTP connection after parsing
-
-    if return_X_y:
-        return X, y
-
-    bunch = Bunch(
-        data=X, target=y, frame=frame, feature_names=data_columns,
-        target_names=target_columns,
+    bunch.update(
         DESCR=description, details=data_description,
-        categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
