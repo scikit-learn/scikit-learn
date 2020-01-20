@@ -99,8 +99,9 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
 
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("include_values", [True, False])
+@pytest.mark.parametrize("values_format", ['d', '.2g', None, 'n'])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
-                               normalize, include_values):
+                               normalize, values_format, include_values):
     X, y = data
     ax = pyplot.gca()
     cmap = 'plasma'
