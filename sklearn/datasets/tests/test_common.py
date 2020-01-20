@@ -30,5 +30,8 @@ def check_as_frame(bunch, fetch_func_partial):
     assert isinstance(frame_bunch.frame, pd.DataFrame)
     assert isinstance(frame_bunch.data, pd.DataFrame)
     assert frame_bunch.data.shape == bunch.data.shape
-    assert isinstance(frame_bunch.target, pd.DataFrame)
+    if frame_bunch.target.ndim > 1:
+        assert isinstance(frame_bunch.target, pd.DataFrame)
+    else:
+        assert isinstance(frame_bunch.target, pd.Series)
     assert frame_bunch.target.shape[0] == bunch.target.shape[0]

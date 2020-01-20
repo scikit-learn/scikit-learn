@@ -76,6 +76,8 @@ def _convert_data_dataframe(caller_name, data, target,
     combined_df = pd.concat([data_df, target_df], axis=1)
     X = combined_df[feature_names]
     y = combined_df[target_names]
+    if y.shape[1] == 1:
+        y = y.iloc[:, 0]
     return combined_df, X, y
 
 
