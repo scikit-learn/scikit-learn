@@ -265,44 +265,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
-    # XXX Remove this method in 0.23
-    def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
-
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the regression
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
-
-        Notes
-        -----
-        R^2 is calculated by weighting all the targets equally using
-        `multioutput='uniform_average'`.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Test samples.
-
-        y : array-like, shape (n_samples) or (n_samples, n_outputs)
-            True values for X.
-
-        sample_weight : array-like, shape [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            R^2 of self.predict(X) wrt. y.
-        """
-        # XXX remove in 0.19 when r2_score default for multioutput changes
-        from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight,
-                        multioutput='uniform_average')
-
 
 class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """Multi target classification
