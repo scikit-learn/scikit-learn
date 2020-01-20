@@ -51,7 +51,7 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
         norms_view[i] = sum_
-    
+
     return norms
 
 
