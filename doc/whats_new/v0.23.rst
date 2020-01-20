@@ -176,7 +176,7 @@ Changelog
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as
   suggested by `this blog post
-<http://www.pcg-random.org/posts/bounded-rands.html>`
+  <http://www.pcg-random.org/posts/bounded-rands.html>`
   :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.tree`
