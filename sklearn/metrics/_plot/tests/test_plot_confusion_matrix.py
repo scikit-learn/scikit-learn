@@ -265,7 +265,7 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
                 return 'd'
             else:
                 return '.2g'
-        expected_text = np.array([format(v, test_function)
+        expected_text = np.array([format(v, test_function(v))
                                  for v in cm.ravel()])
         text_text = np.array([
             t.get_text() for t in disp.text_.ravel()])
