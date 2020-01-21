@@ -76,8 +76,12 @@ non-parametric approach based on isotonic regression (:mod:`sklearn.isotonic`).
 Probability calibration should be done on new data not used for model fitting.
 The class :class:`CalibratedClassifierCV` uses a cross-validation generator and
 estimates for each split the model parameter on the train samples and the
-calibration of the test samples. The probabilities predicted for the
-folds are then averaged. Already fitted classifiers can be calibrated by
+calibration of the test samples, when the parameter `ensemble` is set to True (default).
+The probabilities predicted for the folds are then averaged.
+If the parameter `ensemble` is set to False, then the estimator is fit on the whole train
+data, and the cross-validation generator is used to get predictions
+(using :func:`cross_val_predict`) on which to determine calibration parameters.
+Already fitted classifiers can be calibrated by
 :class:`CalibratedClassifierCV` via the parameter cv="prefit". In this case,
 the user has to take care manually that data for model fitting and calibration
 are disjoint.

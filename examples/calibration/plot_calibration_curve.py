@@ -71,11 +71,17 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 
 def plot_calibration_curve(est, name, fig_index):
     """Plot calibration curve for est w/o and with calibration. """
-    # Calibrated with isotonic calibration
-    isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
+    # Calibrated with isotonic calibration, ensemble estimator
+    isotonic_ensemble = CalibratedClassifierCV(est, cv=5, method='isotonic', ensemble=True)
 
-    # Calibrated with sigmoid calibration
-    sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
+    # Calibrated with sigmoid calibration, ensemble estimator
+    sigmoid_ensemble = CalibratedClassifierCV(est, cv=5, method='sigmoid', ensemble=True)
+
+    # Calibrated with isotonic calibration, single estimator
+    isotonic_single = CalibratedClassifierCV(est, cv=5, method='isotonic', ensemble=False)
+
+    # Calibrated with sigmoid calibration, single estimator
+    sigmoid_single = CalibratedClassifierCV(est, cv=5, method='sigmoid', ensemble=False)
 
     # Logistic regression with no calibration as baseline
     lr = LogisticRegression(C=1.)
@@ -87,8 +93,10 @@ def plot_calibration_curve(est, name, fig_index):
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
     for clf, name in [(lr, 'Logistic'),
                       (est, name),
-                      (isotonic, name + ' + Isotonic'),
-                      (sigmoid, name + ' + Sigmoid')]:
+                      (isotonic_ensemble, name + ' + Isotonic Ensemble'),
+                      (sigmoid_ensemble, name + ' + Sigmoid Ensemble'),
+                      (isotonic_single, name + ' + Isotonic Single'),
+                      (sigmoid_single, name + ' + Sigmoid Single')]:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         if hasattr(clf, "predict_proba"):

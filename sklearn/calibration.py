@@ -9,28 +9,24 @@
 
 import warnings
 from inspect import signature
-
 from math import log
-import numpy as np
 
+import numpy as np
+from scipy.optimize import fmin_bfgs
 from scipy.special import expit
 from scipy.special import xlogy
-from scipy.optimize import fmin_bfgs
-from .preprocessing import LabelEncoder
-
-from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
-                   MetaEstimatorMixin)
+from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .model_selection import check_cv
+from .model_selection import check_cv, cross_val_predict
+
+from .preprocessing import LabelEncoder
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     """Probability calibration with isotonic regression or sigmoid.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -80,15 +76,29 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
+    ensemble : bool, optional
+        When ``cv`` is not "prefit", it determines how the final estimator
+        is fit.
+        If ``ensemble`` is True (default), an estimator (clone of
+        base_estimator) is fit and calibrated on each fold. The final
+        estimator is an ensemble that averages the predictions of all such
+        estimators.
+        When ``ensemble`` is False, the base_estimator is fit on the whole
+        ``X``, ``y`` data, and the cross validation generator is used to
+        get predictions (using :func:`cross_val_predict`) on which to
+        determine calibration parameters.
 
     Attributes
     ----------
     classes_ : array, shape (n_classes)
         The class labels.
 
-    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
+    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit"
+        or ensemble == False)
         The list of calibrated classifiers, one for each crossvalidation fold,
         which has been fitted on all but the validation fold and calibrated
         on the validation fold.
@@ -107,10 +117,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
+
+    def __init__(self, base_estimator=None, method='sigmoid', cv=None, ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -123,7 +135,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -173,31 +185,58 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
-                sample_weight = check_array(sample_weight, ensure_2d=False)
                 base_estimator_sample_weight = None
             else:
                 if sample_weight is not None:
-                    sample_weight = _check_sample_weight(sample_weight, X)
+                    sample_weight = check_array(sample_weight, ensure_2d=False)
+                    check_consistent_length(y, sample_weight)
                 base_estimator_sample_weight = sample_weight
-            for train, test in cv.split(X, y):
+            if self.ensemble:
+                for train, test in cv.split(X, y):
+                    this_estimator = clone(base_estimator)
+                    if base_estimator_sample_weight is not None:
+                        this_estimator.fit(
+                            X[train], y[train],
+                            sample_weight=base_estimator_sample_weight[train])
+                    else:
+                        this_estimator.fit(X[train], y[train])
+
+                    calibrated_classifier = _CalibratedClassifier(
+                        this_estimator, method=self.method,
+                        classes=self.classes_)
+                    if sample_weight is not None:
+                        calibrated_classifier.fit(X[test], y[test],
+                                                  sample_weight[test])
+                    else:
+                        calibrated_classifier.fit(X[test], y[test])
+                    self.calibrated_classifiers_.append(calibrated_classifier)
+            else:
+                if hasattr(base_estimator, "decision_function"):
+                    base_estimator_method = "decision_function"
+                elif hasattr(base_estimator, "predict_proba"):
+                    base_estimator_method = "predict_proba"
+                else:
+                    raise RuntimeError('classifier has no decision_function or '
+                                       'predict_proba method.')
+                predictions = cross_val_predict(base_estimator, X, y, cv=cv, method=base_estimator_method)
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
-                    this_estimator.fit(
-                        X[train], y[train],
-                        sample_weight=base_estimator_sample_weight[train])
+                    this_estimator.fit(X, y, sample_weight=base_estimator_sample_weight)
                 else:
-                    this_estimator.fit(X[train], y[train])
-
-                calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method,
-                    classes=self.classes_)
-                if sample_weight is not None:
-                    calibrated_classifier.fit(X[test], y[test],
-                                              sample_weight[test])
+                    this_estimator.fit(X, y)
+                calibrated_classifier = _CalibratedClassifier(this_estimator, method=self.method, classes=self.classes_,
+                                                              predictions_in_X=True)
+                if hasattr(this_estimator, "decision_function"):
+                    if predictions.ndim == 1:
+                        predictions = predictions[:, np.newaxis]
+                elif hasattr(this_estimator, "predict_proba"):
+                    if len(self.classes_) == 2:
+                        predictions = predictions[:, 1:]
+                if sample_weight is None:
+                    calibrated_classifier.fit(predictions, y)
                 else:
-                    calibrated_classifier.fit(X[test], y[test])
+                    calibrated_classifier.fit(predictions, y, sample_weight)
                 self.calibrated_classifiers_.append(calibrated_classifier)
-
         return self
 
     def predict_proba(self, X):
@@ -216,7 +255,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples, n_classes)
             The predicted probas.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
@@ -244,7 +283,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
@@ -273,6 +312,11 @@ class _CalibratedClassifier:
             if None, then classes is extracted from the given target values
             in fit().
 
+    predictions_in_X : bool, optional
+            When False (default), ``X`` are the element to be classified, and
+            predictions are determined applying the ``base_estimator`` to ``X``.
+            When True, ``X`` already contains predictions.
+
     See also
     --------
     CalibratedClassifierCV
@@ -291,10 +335,12 @@ class _CalibratedClassifier:
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid', classes=None):
+
+    def __init__(self, base_estimator, method='sigmoid', classes=None, predictions_in_X=False):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
+        self.predictions_in_X_ = predictions_in_X
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -310,7 +356,7 @@ class _CalibratedClassifier:
             raise RuntimeError('classifier has no decision_function or '
                                'predict_proba method.')
 
-        idx_pos_class = self.label_encoder_.\
+        idx_pos_class = self.label_encoder_. \
             transform(self.base_estimator.classes_)
 
         return df, idx_pos_class
@@ -326,7 +372,7 @@ class _CalibratedClassifier:
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -344,7 +390,11 @@ class _CalibratedClassifier:
         self.classes_ = self.label_encoder_.classes_
         Y = label_binarize(y, self.classes_)
 
-        df, idx_pos_class = self._preproc(X)
+        if not self.predictions_in_X_:
+            df, idx_pos_class = self._preproc(X)
+        else:
+            df = X
+            idx_pos_class = self.label_encoder_.transform(self.base_estimator.classes_)
         self.calibrators_ = []
 
         for k, this_df in zip(idx_pos_class, df.T):
@@ -413,7 +463,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y : ndarray, shape (n_samples,)
         The targets.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : array-like, shape = [n_samples] or None
         Sample weights. If None, then samples are equally weighted.
 
     Returns
@@ -452,8 +502,9 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def grad(AB):
         # gradient of the objective function
-        P = expit(-(AB[0] * F + AB[1]))
-        TEP_minus_T1P = T - P
+        E = np.exp(AB[0] * F + AB[1])
+        P = 1. / (1. + E)
+        TEP_minus_T1P = P * (T * E - T1)
         if sample_weight is not None:
             TEP_minus_T1P *= sample_weight
         dA = np.dot(TEP_minus_T1P, F)
@@ -465,7 +516,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     return AB_[0], AB_[1]
 
 
-class _SigmoidCalibration(RegressorMixin, BaseEstimator):
+class _SigmoidCalibration(BaseEstimator, RegressorMixin):
     """Sigmoid regression model.
 
     Attributes
@@ -476,6 +527,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     b_ : float
         The intercept.
     """
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
@@ -487,7 +539,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         y : array-like, shape (n_samples,)
             Training target.
 
-        sample_weight : array-like of shape (n_samples,), default=None
+        sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
