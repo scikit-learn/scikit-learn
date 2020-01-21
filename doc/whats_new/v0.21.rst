@@ -784,7 +784,7 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
-- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and
+- |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and 
   therefore several estimators with ``metric='euclidean'``, suffered from
   numerical precision issues with ``float32`` features. Precision has been
   increased at the cost of a small drop of performance. :pr:`13554` by
