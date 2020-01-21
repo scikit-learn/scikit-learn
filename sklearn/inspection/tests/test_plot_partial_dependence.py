@@ -335,23 +335,6 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
         plot_partial_dependence(estimator, X, **params)
 
 
-@pytest.mark.parametrize("params, err_msg", [
-    ({'target': 4, 'features': [0]},
-     'target not in est.classes_, got 4'),
-    ({'target': None, 'features': [0]},
-     'target must be specified for multi-class'),
-    ({'target': 1, 'features': [4.5]},
-     'Each entry in features must be either an int,'),
-])
-def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
-    iris = load_iris()
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    clf.fit(iris.data, iris.target)
-
-    with pytest.raises(ValueError, match=err_msg):
-        plot_partial_dependence(clf, iris.data, **params)
-
-
 def test_plot_partial_dependence_fig_deprecated(pyplot):
     # Make sure fig object is correctly used if not None
     X, y = make_regression(n_samples=50, random_state=0)

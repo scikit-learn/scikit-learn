@@ -1,10 +1,12 @@
 import pytest
 
 from sklearn.datasets import load_boston
+from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.inspection import (
-    plot_individual_conditional_expectation, plot_partial_dependence)
+from sklearn.inspection import plot_individual_conditional_expectation
+from sklearn.inspection import plot_partial_dependence
 from sklearn.linear_model import LinearRegression
 
 
@@ -134,3 +136,20 @@ def test_plot_pdp_ice_dataframe(pyplot, clf_boston, boston):
         clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
         feature_names=df.columns.tolist()
     )
+
+
+@pytest.mark.parametrize("params, err_msg", [
+    ({'target': 4, 'features': [0]},
+     'target not in est.classes_, got 4'),
+    ({'target': None, 'features': [0]},
+     'target must be specified for multi-class'),
+])
+def test_plot_pdp_ice_multiclass_error(pyplot, params, err_msg):
+    iris = load_iris()
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    clf.fit(iris.data, iris.target)
+
+    with pytest.raises(ValueError, match=err_msg):
+        plot_partial_dependence(clf, iris.data, **params)
+    with pytest.raises(ValueError, match=err_msg):
+        plot_individual_conditional_expectation(clf, iris.data, **params)
