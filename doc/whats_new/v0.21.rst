@@ -787,7 +787,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| The function :func:`metrics.pairwise.euclidean_distances`, and 
   therefore several estimators with ``metric='euclidean'``, suffered from 
   numerical precision issues with ``float32`` features. Precision has been 
-  increased at the cost of a small drop of performance. :pr:`13554` by
+  increased at the cost of a small drop of performance. :pr:`13554` by 
   :user:`Celelibi` and :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
