@@ -7,7 +7,6 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
-from sklearn.inspection._ice import _grid_from_X
 from sklearn.inspection._partial_dependence import (
     _partial_dependence_brute,
     _partial_dependence_recursion
@@ -34,7 +33,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 
 
