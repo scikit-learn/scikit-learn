@@ -294,7 +294,7 @@ class AdaGradOptimizer(BaseOptimizer):
         Timestep
 
     g2 : list, length = len(params)
-        Sum of the squares of the gradients w.r.t. θi up to time step t
+        Sum of the squares of the gradients up to time step t
 
     References
     ----------
@@ -326,4 +326,69 @@ class AdaGradOptimizer(BaseOptimizer):
         self.g2 = [g + grad ** 2 for g, grad in zip(self.g2, grads)]
         updates = [-self.learning_rate * grad / (g + self.epsilon) ** 0.5
                    for g, grad in zip(self.g2, grads)]
+        return updates
+
+
+class RMSPropOptimizer(BaseOptimizer):
+    """Stochastic gradient descent optimizer with RMSProp
+
+    Parameters
+    ----------
+    params : list, length = len(coefs_) + len(intercepts_)
+        The concatenated list containing coefs_ and intercepts_ in MLP model.
+        Used for initializing velocities and updating params
+
+    learning_rate_init : float, default=0.1
+        The initial learning rate used. It controls the step-size in updating
+        the weights
+
+    momentum : float, default=0.9
+        Value of momentum used, must be larger than or equal to 0
+
+    epsilon : float, default=1e-8
+        Value for numerical stability
+
+    Attributes
+    ----------
+    learning_rate : float
+        The current learning rate
+
+    t : int
+        Timestep
+
+    g2 : list, length = len(params)
+        Squares of the gradients up to time step t
+
+    References
+    ----------
+    https://ruder.io/optimizing-gradient-descent/index.html#adagrad
+    """
+
+    def __init__(self, params, learning_rate_init=0.1, momentum=0.9, epsilon=1e-8):
+        super().__init__(params, learning_rate_init)
+
+        self.momentum = momentum
+        self.epsilon = epsilon
+        self.t = 0
+        self.g2 = [np.zeros_like(param) for param in params]
+
+    def _get_updates(self, grads):
+        """Get the values used to update params with given gradients
+
+        Parameters
+        ----------
+        grads : list, length = len(coefs_) + len(intercepts_)
+            Containing gradients with respect to coefs_ and intercepts_ in MLP
+            model. So length should be aligned with params
+
+        Returns
+        -------
+        updates : list, length = len(grads)
+            The values to add to params
+        """
+        self.t += 1
+        self.g2 = [self.momentum*g2 + (1-self.momentum) * grad **
+                   2 for g2, grad in zip(self.g2, grads)]
+        updates = [-self.learning_rate * grad / (g2 + self.epsilon) ** 0.5
+                   for g2, grad in zip(self.g2, grads)]
         return updates
