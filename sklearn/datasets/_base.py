@@ -288,8 +288,8 @@ def load_wine(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -402,8 +402,8 @@ def load_iris(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -514,8 +514,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -638,8 +638,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -649,8 +649,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         Dictionary-like object, with attributes:
 
         data : {ndarray, DataFrame} of shape (1797, 64)
-            The flattened data matrix. If `as_frame=True`, `data` will be a pandas
-            DataFrame.
+            The flattened data matrix. If `as_frame=True`, `data` will be
+            a pandas DataFrame.
         target: {ndarray, Series} of shape (1797,)
             The classifcation target. If `as_frame=True`, `target` will be
             a pandas Series.
@@ -750,8 +750,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -842,8 +842,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
@@ -941,8 +941,8 @@ def load_boston(return_X_y=False, as_frame=False):
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
-        or Series as described above.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described above.
 
         .. versionadded:: 0.23
 
