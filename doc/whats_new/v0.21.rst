@@ -109,7 +109,7 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
   a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
 
 - |Fix| Fixed an issue with :func:`plot_tree` where it displayed
