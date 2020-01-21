@@ -67,6 +67,16 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.ensemble`
+.................................
+
+- |API| Added boolean `verbose` flag to classes:
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  :pr:`15991` by :user:`Sam Bail <spbail>`,
+  :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
+  :user:`Reshama Shaikh <reshamas>`, and
+  :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -78,12 +88,12 @@ Changelog
 :mod:`sklearn.gaussian_process`
 ...............................
 
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
+
 - |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
   caused predicted standard deviations to only be between 0 and 1. :pr:`15782`
   by :user:`plgreenLIRU`.
-
-- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -120,7 +130,31 @@ Changelog
 
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
-  :pr: `15918` by :user: `Luca Kubin <lkubin>`.
+  :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+
+:mod:`sklearn.naive_bayes`
+.............................
+
+- |Fix| A correctly formatted error message is shown in
+  :class:`naive_bayes.CategoricalNB` when the number of features in the input
+  differs between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
+
+:mod:`sklearn.neighbors`
+..............................
+
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :user:`Alex Shacked <alexshacked>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Increases the numerical stability of the logistic loss function in
+  :class:`neural_network.MLPClassifier` by clipping the probabilities.
+  :pr:`16117` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................

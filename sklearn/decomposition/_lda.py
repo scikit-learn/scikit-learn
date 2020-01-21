@@ -193,7 +193,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     evaluate_every : int, optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
-        set it to 0 or negative number to not evalute perplexity in
+        set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
@@ -222,11 +222,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     verbose : int, optional (default=0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------

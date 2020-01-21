@@ -28,6 +28,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -637,20 +638,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-    def check_warning(*args, **kw):
-        return assert_warns_message(
-            FutureWarning, "deprecated in version 0.20.1",
-            *args, **kw)
-
-    # Ensure that the joblib API is deprecated in sklearn.util
-    from sklearn.utils import Parallel, Memory, delayed
-    from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory, str(tmpdir))
-    check_warning(hash, 1)
-    check_warning(Parallel)
-    check_warning(cpu_count)
-    check_warning(effective_n_jobs, 1)
-    check_warning(delayed, dummy_func)
 
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
@@ -658,19 +645,16 @@ def test_deprecation_joblib_api(tmpdir):
     assert_no_warnings(parallel_backend, 'loky', None)
     assert_no_warnings(register_parallel_backend, 'failing', None)
 
-    # Ensure that the deprecation have no side effect in sklearn.utils._joblib
-    from sklearn.utils._joblib import Parallel, Memory, delayed
-    from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
-    from sklearn.utils._joblib import parallel_backend
-    from sklearn.utils._joblib import register_parallel_backend
-    assert_no_warnings(Memory, str(tmpdir))
-    assert_no_warnings(hash, 1)
-    assert_no_warnings(Parallel)
-    assert_no_warnings(cpu_count)
-    assert_no_warnings(effective_n_jobs, 1)
-    assert_no_warnings(delayed, dummy_func)
-    assert_no_warnings(parallel_backend, 'loky', None)
-    assert_no_warnings(register_parallel_backend, 'failing', None)
-
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1

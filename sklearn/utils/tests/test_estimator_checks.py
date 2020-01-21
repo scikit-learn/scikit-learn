@@ -34,6 +34,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils import all_estimators
 
 
 class CorrectNotFittedError(ValueError):
@@ -570,6 +571,14 @@ def test_check_class_weight_balanced_linear_classifier():
                         check_class_weight_balanced_linear_classifier,
                         'estimator_name',
                         BadBalancedWeightsClassifier)
+
+
+def test_all_estimators_all_public():
+    # all_estimator should not fail when pytest is not installed and return
+    # only public estimators
+    estimators = all_estimators()
+    for est in estimators:
+        assert not est.__class__.__name__.startswith("_")
 
 
 if __name__ == '__main__':
