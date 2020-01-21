@@ -72,16 +72,20 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 def plot_calibration_curve(est, name, fig_index):
     """Plot calibration curve for est w/o and with calibration. """
     # Calibrated with isotonic calibration, ensemble estimator
-    isotonic_ensemble = CalibratedClassifierCV(est, cv=5, method='isotonic', ensemble=True)
+    isotonic_ensemble = CalibratedClassifierCV(est, cv=5, method='isotonic',
+                                               ensemble=True)
 
     # Calibrated with sigmoid calibration, ensemble estimator
-    sigmoid_ensemble = CalibratedClassifierCV(est, cv=5, method='sigmoid', ensemble=True)
+    sigmoid_ensemble = CalibratedClassifierCV(est, cv=5, method='sigmoid',
+                                              ensemble=True)
 
     # Calibrated with isotonic calibration, single estimator
-    isotonic_single = CalibratedClassifierCV(est, cv=5, method='isotonic', ensemble=False)
+    isotonic_single = CalibratedClassifierCV(est, cv=5, method='isotonic',
+                                             ensemble=False)
 
     # Calibrated with sigmoid calibration, single estimator
-    sigmoid_single = CalibratedClassifierCV(est, cv=5, method='sigmoid', ensemble=False)
+    sigmoid_single = CalibratedClassifierCV(est, cv=5, method='sigmoid',
+                                            ensemble=False)
 
     # Logistic regression with no calibration as baseline
     lr = LogisticRegression(C=1.)
