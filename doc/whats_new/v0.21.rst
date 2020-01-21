@@ -129,7 +129,7 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
   stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
