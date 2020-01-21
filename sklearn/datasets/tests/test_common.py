@@ -26,7 +26,7 @@ def check_return_X_y(bunch, fetch_func_partial):
 def check_as_frame(bunch, fetch_func_partial):
     pd = pytest.importorskip('pandas')
     frame_bunch = fetch_func_partial(as_frame=True)
-    assert hasattr(frame_bunch, 'frame') is True
+    assert hasattr(frame_bunch, 'frame')
     assert isinstance(frame_bunch.frame, pd.DataFrame)
     assert isinstance(frame_bunch.data, pd.DataFrame)
     assert frame_bunch.data.shape == bunch.data.shape
