@@ -107,7 +107,8 @@ class SGDOptimizer(BaseOptimizer):
         Whether to use nesterov's momentum or not. Use nesterov's if True
 
     power_t : float, default=0.5
-        Power of time step 't' in inverse scaling. See `lr_schedule` for more details.
+        Power of time step 't' in inverse scaling. See `lr_schedule` for
+        more details.
 
     Attributes
     ----------
