@@ -223,8 +223,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                                                 method=base_estimator_method)
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
-                    this_estimator.fit(X, y, sample_weight=
-                                       base_estimator_sample_weight)
+                    this_estimator.\
+                        fit(X, y, sample_weight=base_estimator_sample_weight)
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = \
