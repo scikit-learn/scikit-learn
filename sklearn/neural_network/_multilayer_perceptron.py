@@ -16,7 +16,7 @@ import scipy.optimize
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer, AdaGradOptimizer
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -31,7 +31,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 
 
-_STOCHASTIC_SOLVERS = ['sgd', 'adam']
+_STOCHASTIC_SOLVERS = ['sgd', 'adam', 'adagrad']
 
 
 def _pack(coefs_, intercepts_):
@@ -486,6 +486,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 self._optimizer = AdamOptimizer(
                     params, self.learning_rate_init, self.beta_1, self.beta_2,
                     self.epsilon)
+            elif self.solver == 'adagrad':
+                self._optimizer = AdaGradOptimizer(
+                    params, self.learning_rate_init, self.epsilon)
 
         # early_stopping in partial_fit doesn't make sense
         early_stopping = self.early_stopping and not incremental
