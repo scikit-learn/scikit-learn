@@ -1585,7 +1585,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     if PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None) \
             is euclidean_distances and n_jobs is None \
-            and not Y is None:
+            and Y is not None:
         kwds['Y_norm_squared'] = \
             row_norms(Y, squared=True)[np.newaxis, :]
 
