@@ -16,7 +16,8 @@ import scipy.optimize
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
-from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer, AdaGradOptimizer, RMSPropOptimizer
+from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ._stochastic_optimizers import AdaGradOptimizer, RMSPropOptimizer
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -491,7 +492,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     params, self.learning_rate_init, self.epsilon)
             elif self.solver == 'rmsprop':
                 self._optimizer = RMSPropOptimizer(
-                    params, self.learning_rate_init, self.momentum, self.epsilon)
+                    params, self.learning_rate_init, self.momentum, 
+                    self.epsilon)
 
         # early_stopping in partial_fit doesn't make sense
         early_stopping = self.early_stopping and not incremental

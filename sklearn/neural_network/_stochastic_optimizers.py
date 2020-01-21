@@ -361,7 +361,8 @@ class RMSPropOptimizer(BaseOptimizer):
     https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
     """
 
-    def __init__(self, params, learning_rate_init=0.1, momentum=0.9, epsilon=1e-8):
+    def __init__(self, params, learning_rate_init=0.1, momentum=0.9,
+                 epsilon=1e-8):
         super().__init__(params, learning_rate_init)
 
         self.momentum = momentum
