@@ -860,7 +860,7 @@ Support for Python 3.4 and below has been officially dropped.
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
   the estimator object.
   :pr:`12222` by :user:`Rebekah Kim <rebekahkim>`
-
+  
 :mod:`sklearn.neighbors`
 ........................
 
