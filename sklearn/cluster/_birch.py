@@ -580,8 +580,11 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
+        kwargs = {'Y_norm_squared': self._subcluster_norms}
         return self.subcluster_labels_[
-                pairwise_distances_argmin(X, self.subcluster_centers_)
+                pairwise_distances_argmin(X,
+                                          self.subcluster_centers_,
+                                          metric_kwargs = kwargs)
             ]
 
     def transform(self, X):
