@@ -135,7 +135,7 @@ def load_files(container_path, description=None, categories=None,
         If None (default), load all the categories. If not None, list of
         category names to load (other categories ignored).
 
-    load_content : boolean, optional (default=True)
+    load_content : bool, optional (default=True)
         Whether to load or not the content of the different files. If true a
         'data' attribute containing the text information is present in the data
         structure returned. If not, a filenames attribute gives the path to the
@@ -280,7 +280,7 @@ def load_wine(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -298,7 +298,7 @@ def load_wine(return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (178, 13)
+        data : {ndarray, dataframe} of shape (178, 13)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (178,)
@@ -392,7 +392,7 @@ def load_iris(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
@@ -412,7 +412,7 @@ def load_iris(return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (150, 4)
+        data : {ndarray, dataframe} of shape (150, 4)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (150,)
@@ -504,7 +504,7 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -524,7 +524,7 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (569, 30)
+        data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (569,)
@@ -628,7 +628,7 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
     n_class : integer, between 0 and 10, optional (default=10)
         The number of classes to return.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -648,7 +648,7 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (1797, 64)
+        data : {ndarray, dataframe} of shape (1797, 64)
             The flattened data matrix. If `as_frame=True`, `data` will be
             a pandas DataFrame.
         target: {ndarray, Series} of shape (1797,)
@@ -740,7 +740,7 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -760,7 +760,7 @@ def load_diabetes(return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (442, 10)
+        data : {ndarray, dataframe} of shape (442, 10)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (442,)
@@ -832,7 +832,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -852,10 +852,10 @@ def load_linnerud(return_X_y=False, as_frame=False):
     data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (20, 3)
+        data : {ndarray, dataframe} of shape (20, 3)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, DataFrame} of shape (20, 3)
+        target: {ndarray, dataframe} of shape (20, 3)
             The regression targets. If `as_frame=True`, `target` will be
             a pandas DataFrame.
         feature_names: list
@@ -931,7 +931,7 @@ def load_boston(return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -951,10 +951,10 @@ def load_boston(return_X_y=False, as_frame=False):
      data : Bunch
         Dictionary-like object, with attributes:
 
-        data : {ndarray, DataFrame} of shape (506, 13)
+        data : {ndarray, dataframe} of shape (506, 13)
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
-        target: {ndarray, DataFrame} of shape (506,)
+        target: {ndarray, dataframe} of shape (506,)
             The regression target. If `as_frame=True`, `target` will be
             a pandas DataFrame.
         feature_names: list
