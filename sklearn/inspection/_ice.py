@@ -506,8 +506,8 @@ def plot_individual_conditional_expectation(estimator, X, features,
                                             response_method='auto', n_cols=3,
                                             grid_resolution=100,
                                             percentiles=(0.05, 0.95),
-                                            n_jobs=None, verbose=0, line_kw=None,
-                                            ax=None):
+                                            n_jobs=None, verbose=0,
+                                            line_kw=None, ax=None):
     """Individual Conditional Expectation (ICE) plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``

@@ -120,7 +120,7 @@ def test_output_shape(Estimator, data, grid_resolution, features):
 
     est.fit(X, y)
     pdp, axes = individual_conditional_expectation(est, X=X, features=features,
-                                            grid_resolution=grid_resolution)
+                                                   grid_resolution=grid_resolution)
 
     expected_ice_shape = (n_targets, n_instances,
                           *[grid_resolution for _ in range(len(features))])
