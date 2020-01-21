@@ -96,8 +96,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
         Whether the target values y are normalized, the mean and variance of
         the target values are set equal to 0 and 1 respectively. This is
         recommended for cases where zero-mean, unit-variance priors are used.
-        Note that, in the following, the normalisation is reversed before the
-        GP predictions are reported.
+        Note that, in this implementation, the normalisation is reversed
+        before the GP predictions are reported.
+
+        .. versionchanged:: 0.23
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the

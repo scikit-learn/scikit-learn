@@ -50,3 +50,11 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
+:mod: `sklearn.gaussian_process`
+................................
+
+- |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that 
+  caused predicted standard deviations to only be between 0 and 1. :pr:`15782`
+  by :user:`plgreenLIRU`.  
+ 
