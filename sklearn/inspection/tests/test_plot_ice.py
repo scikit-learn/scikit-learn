@@ -16,7 +16,7 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data, {'features': [1, {}]},
       'Each entry in features must be either an int ')]
 )
-def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
+def test_plot_ice_error(pyplot, data, params, err_msg):
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
