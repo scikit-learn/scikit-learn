@@ -492,7 +492,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     params, self.learning_rate_init, self.epsilon)
             elif self.solver == 'rmsprop':
                 self._optimizer = RMSPropOptimizer(
-                    params, self.learning_rate_init, self.momentum, 
+                    params, self.learning_rate_init, self.momentum,
                     self.epsilon)
 
         # early_stopping in partial_fit doesn't make sense
