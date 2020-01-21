@@ -320,9 +320,9 @@ class AdaGradOptimizer(BaseOptimizer):
             The values to add to params
         """
         self.t += 1
-        self.g2 = [g + grad ** 2 for g, grad in zip(self.g2, grads)]
-        updates = [-self.learning_rate * grad / (g + self.epsilon) ** 0.5
-                   for g, grad in zip(self.g2, grads)]
+        self.g2 = [g2 + grad ** 2 for g2, grad in zip(self.g2, grads)]
+        updates = [-self.learning_rate * grad / (g2 + self.epsilon) ** 0.5
+                   for g2, grad in zip(self.g2, grads)]
         return updates
 
 
@@ -354,7 +354,7 @@ class RMSPropOptimizer(BaseOptimizer):
         Timestep
 
     g2 : list, length = len(params)
-        Squares of the gradients up to time step t
+        Sum of the squares of the gradients up to time step t
 
     References
     ----------
