@@ -468,17 +468,16 @@ Estimator Tags
 
     The estimator tags are experimental and the API is subject to change.
 
-Scikit-learn introduced estimator tags in version 0.21.  These are annotations
+Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
-sparse matrix support, supported output types and supported methods.  The
-estimator tags are a dictionary returned by the method ``_get_tags()``.  These
-tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
-decide what tests to run and what input data is appropriate. Tags can depend on
-estimator parameters or even system architecture and can in general only be
-determined at runtime.
-
-The default value of all tags except for ``X_types`` and ``requires_fit`` is
-``False``. These are defined in the ``BaseEstimator`` class.
+sparse matrix support, supported output types and supported methods. The
+estimator tags are a dictionary returned by the method ``_get_tags()``. These
+tags are used by the common tests and the
+:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
+tests to run and what input data is appropriate. Tags can depend on estimator
+parameters or even system architecture and can in general only be determined at
+runtime. The default values for the estimator tags are defined in the
+``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -492,17 +491,20 @@ requires_positive_y (default=``False``)
     whether the estimator requires a positive y (only applicable for regression).
 
 no_validation (default=``False``)
-    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
+    whether the estimator skips input-validation. This is only meant for
+    stateless and dummy transformers!
 
 multioutput - unused for now (default=``False``)
-    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+    whether a regressor supports multi-target outputs or a classifier supports
+    multi-class multi-output.
 
 multilabel (default=``False``)
     whether the estimator supports multilabel output
 
 stateless (default=``False``)
-    whether the estimator needs access to data for fitting. Even though
-    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+    whether the estimator needs access to data for fitting. Even though an
+    estimator is stateless, it might still need a call to ``fit`` for
+    initialization.
 
 requires_fit (default=``True``)
     whether the estimator requires to be fitted before calling one of
