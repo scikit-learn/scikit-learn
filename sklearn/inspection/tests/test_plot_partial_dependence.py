@@ -315,47 +315,17 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
-def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
-    pd = pytest.importorskip('pandas')
-    df = pd.DataFrame(boston.data, columns=boston.feature_names)
-
-    grid_resolution = 25
-
-    plot_partial_dependence(
-        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
-        feature_names=df.columns.tolist()
-    )
-
-
 dummy_classification_data = make_classification(random_state=0)
 
 
 @pytest.mark.parametrize(
     "data, params, err_msg",
-    [(multioutput_regression_data, {"target": None, 'features': [0]},
-      "target must be specified for multi-output"),
-     (multioutput_regression_data, {"target": -1, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (multioutput_regression_data, {"target": 100, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (dummy_classification_data,
-     {'features': ['foobar'], 'feature_names': None},
-     'Feature foobar not in feature_names'),
-     (dummy_classification_data,
-     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
-      'Feature foobar not in feature_names'),
-     (dummy_classification_data, {'features': [(1, 2, 3)]},
+    [(dummy_classification_data, {'features': [(1, 2, 3)]},
       'Each entry in features must be either an int, '),
      (dummy_classification_data, {'features': [1, {}]},
       'Each entry in features must be either an int, '),
      (dummy_classification_data, {'features': [tuple()]},
-      'Each entry in features must be either an int, '),
-     (dummy_classification_data,
-      {'features': [123], 'feature_names': ['blahblah']},
-      'All entries of features must be less than '),
-     (dummy_classification_data,
-      {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
-      'feature_names should not contain duplicates')]
+      'Each entry in features must be either an int, ')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
