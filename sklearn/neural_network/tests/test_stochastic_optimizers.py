@@ -2,7 +2,9 @@ import numpy as np
 
 from sklearn.neural_network._stochastic_optimizers import (BaseOptimizer,
                                                            SGDOptimizer,
-                                                           AdamOptimizer)
+                                                           AdamOptimizer,
+                                                           AdaGradOptimizer,
+                                                           RMSPropOptimizer)
 from sklearn.utils._testing import assert_array_equal
 
 
@@ -106,3 +108,51 @@ def test_adam_optimizer():
             optimizer.update_params(grads)
             for exp, param in zip(expected, optimizer.params):
                 assert_array_equal(exp, param)
+
+
+def test_adagrad_optimizer():
+    params = [np.zeros(shape) for shape in shapes]
+    lr = 0.1
+    epsilon = 1e-8
+
+    optimizer = AdaGradOptimizer(params, lr, epsilon)
+    g2 = [np.random.random(shape) for shape in shapes]
+    t = 10
+    optimizer.g2 = g2
+    optimizer.t = t - 1
+    grads = [np.random.random(shape) for shape in shapes]
+
+    g2 = [g + grad ** 2 for g, grad in zip(g2, grads)]
+    updates = [-lr * grad / (g + epsilon) ** 0.5
+               for g, grad in zip(g2, grads)]
+    expected = [param + update
+                for param, update in zip(params, updates)]
+
+    optimizer.update_params(grads)
+    for exp, param in zip(expected, optimizer.params):
+        assert_array_equal(exp, param)
+
+
+def test_rmsprop_optimizer():
+    params = [np.zeros(shape) for shape in shapes]
+    lr = 0.1
+    epsilon = 1e-8
+
+    for momentum in np.arange(0.5, 0.9, 0.1):
+        optimizer = RMSPropOptimizer(params, lr, momentum, epsilon)
+        g2 = [np.random.random(shape) for shape in shapes]
+        t = 10
+        optimizer.g2 = g2
+        optimizer.t = t - 1
+        grads = [np.random.random(shape) for shape in shapes]
+
+        g2 = [momentum*g + (1-momentum) * grad ** 2
+              for g, grad in zip(g2, grads)]
+        updates = [-lr * grad / (g + epsilon) ** 0.5
+                   for g, grad in zip(g2, grads)]
+        expected = [param + update
+                    for param, update in zip(params, updates)]
+
+        optimizer.update_params(grads)
+        for exp, param in zip(expected, optimizer.params):
+            assert_array_equal(exp, param)

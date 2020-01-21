@@ -107,7 +107,8 @@ class SGDOptimizer(BaseOptimizer):
         Whether to use nesterov's momentum or not. Use nesterov's if True
 
     power_t : float, default=0.5
-        Power of time step 't' in inverse scaling
+        Power of time step 't' in inverse scaling. See `lr_schedule` for
+        more details.
 
     Attributes
     ----------
@@ -361,7 +362,7 @@ class RMSPropOptimizer(BaseOptimizer):
 
     References
     ----------
-    https://ruder.io/optimizing-gradient-descent/index.html#adagrad
+    https://ruder.io/optimizing-gradient-descent/index.html#rmsprop
     """
 
     def __init__(self, params, learning_rate_init=0.1, momentum=0.9, epsilon=1e-8):
