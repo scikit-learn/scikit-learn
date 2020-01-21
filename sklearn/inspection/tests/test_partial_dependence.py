@@ -7,8 +7,8 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
+from sklearn.inspection._ice import _grid_from_X
 from sklearn.inspection._partial_dependence import (
-    _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
 )
