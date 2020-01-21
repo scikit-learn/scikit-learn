@@ -1078,7 +1078,7 @@ Baibak, daten-kieker, Denis Kataev, Didi Bar-Zev, Dillon Gardner, Dmitry Mottl,
 Dmitry Vukolov, Dougal J. Sutherland, Dowon, drewmjohnston, Dror Atariah,
 Edward J Brown, Ekaterina Krivich, Elizabeth Sander, Emmanuel Arias, Eric
 Chang, Eric Larson, Erich Schubert, esvhd, Falak, Feda Curic, Federico Caselli,
-Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc,
+Frank Hoang, Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, 
 Gabriele Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
 Guillaume Fournier, Guillaume Lemaitre, Gustavo De Mari Pereira, Hanmin Qin,
 haroldfox, hhu-luqi, Hunter McGushion, Ian Sanders, JackLangerman, Jacopo
