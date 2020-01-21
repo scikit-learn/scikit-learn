@@ -26,7 +26,8 @@ random sampling procedures.
 - Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
-  :class:`svm.SVC`, :class:`svm.SVR`. |Fix|
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`.
+  |Efficiency| |Fix|
 
 Details are listed in the changelog below.
 
@@ -176,7 +177,12 @@ Changelog
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as
   suggested by `this blog post
-  <http://www.pcg-random.org/posts/bounded-rands.html>`
+  <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
+  is affected.
   :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.tree`
