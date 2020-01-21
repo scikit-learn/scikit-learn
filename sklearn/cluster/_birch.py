@@ -584,7 +584,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         return self.subcluster_labels_[
                 pairwise_distances_argmin(X,
                                           self.subcluster_centers_,
-                                          metric_kwargs = kwargs)
+                                          metric_kwargs=kwargs)
             ]
 
     def transform(self, X):
