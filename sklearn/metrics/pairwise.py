@@ -1588,7 +1588,6 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
             X_chunk = X  # enable optimised paths for X is Y
         else:
             X_chunk = X[sl]
-
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
         if ((X is Y or Y is None)
