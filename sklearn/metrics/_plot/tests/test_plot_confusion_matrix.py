@@ -284,10 +284,6 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
         assert_array_equal(expected_text, text_text)
 
     else:
-        cm = confusion_matrix(y, y_pred)
-        disp = plot_confusion_matrix(fitted_clf, X, y,
-                                     include_values=True,
-                                     values_format=values_format)
         expected_text = np.array([format(v, values_format)
                                  for v in cm.ravel()])
         text_text = np.array([
