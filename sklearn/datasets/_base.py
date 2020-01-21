@@ -284,28 +284,39 @@ def load_wine(return_X_y=False, as_frame=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are: 'data', the
-        data to learn, 'target', the classification labels, 'target_names', the
-        meaning of the labels, 'feature_names', the meaning of the features,
-        and 'DESCR', the full description of the dataset.
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (178, 13)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (178,)
+            The classifcation target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: {DataFrame} of shape (178, 14)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
     standard format from:
@@ -387,32 +398,43 @@ def load_iris(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, 'DESCR', the full description of
-        the dataset, 'filename', the physical location of
-        iris csv dataset (added in version `0.20`).
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (150, 4)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (150,)
+            The classifcation target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: {DataFrame} of shape (150, 5)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        filename: str
+            The path to the location of the data.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     Notes
     -----
@@ -488,32 +510,43 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the full description of
-        the dataset, 'filename', the physical location of
-        breast cancer csv dataset (added in version `0.20`).
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (569, 30)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (569,)
+            The classifcation target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: {DataFrame} of shape (569, 31)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        filename: str
+            The path to the location of the data.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
@@ -601,31 +634,43 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'images', the images corresponding
-        to each sample, 'target', the classification labels for each
-        sample, 'target_names', the meaning of the labels, and 'DESCR',
-        the full description of the dataset.
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (1797, 64)
+            The flattened data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (1797,)
+            The classifcation target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: {DataFrame} of shape (1797, 65)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        images: {ndarray} of shape (1797, 8, 8)
+            The raw image data.
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
     https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
@@ -674,6 +719,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     return Bunch(data=flat_data,
                  target=target,
+                 frame=frame,
+                 feature_names=feature_names,
                  target_names=np.arange(10),
                  images=images,
                  DESCR=descr)
@@ -699,31 +746,43 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression target for each
-        sample, 'data_filename', the physical location
-        of diabetes data csv dataset, and 'target_filename', the physical
-        location of diabetes targets csv datataset (added in version `0.20`).
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (442, 10)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (442,)
+            The regression target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        frame: {DataFrame} of shape (442, 11)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        data_filename: str
+            The path to the location of the data.
+        target_filename: str
+            The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
     """
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
@@ -779,34 +838,45 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are: 'data' and
-        'target', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'target' corresponding to the physiological
-        measurements, as well as 'feature_names' and 'target_names'.
-        In addition, you will also have access to 'data_filename',
-        the physical location of linnerud data csv dataset, and
-        'target_filename', the physical location of
-        linnerud targets csv datataset (added in version `0.20`).
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (20, 3)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, DataFrame} of shape (20, 3)
+            The regression targets. If `as_frame=True`, `target` will be
+            a pandas DataFrame.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of the target columns.
+        frame: {DataFrame} of shape (20, 6)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        data_filename: str
+            The path to the location of the data.
+        target_filename: str
+            The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
     """
     base_dir = join(dirname(__file__), 'data/')
     data_filename = join(base_dir, 'linnerud_exercise.csv')
@@ -840,6 +910,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
     return Bunch(data=data_exercise,
                  feature_names=header_exercise,
                  target=data_physiological,
+                 target_names=header_physiological,
                  frame=frame,
                  DESCR=descr,
                  data_filename=data_filename,
@@ -866,31 +937,43 @@ def load_boston(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : boolean, default=False
+    as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target_columns.
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas DataFrames
+        or Series as described above.
 
         .. versionadded:: 0.23
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression targets,
-        'DESCR', the full description of the dataset,
-        and 'filename', the physical location of boston
-        csv dataset (added in version `0.20`).
+     data : Bunch
+        Dictionary-like object, with attributes:
+
+        data : {ndarray, DataFrame} of shape (506, 13)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, DataFrame} of shape (506,)
+            The regression target. If `as_frame=True`, `target` will be
+            a pandas DataFrame.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The name of the target column.
+        frame: {DataFrame} of shape (506, 14)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        filename: str
+            The path to the location of the data.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     Notes
     -----
@@ -942,6 +1025,7 @@ def load_boston(return_X_y=False, as_frame=False):
                  frame=frame,
                  # last column is target value
                  feature_names=feature_names[:-1],
+                 target_names=target_columns,
                  DESCR=descr_text,
                  filename=data_file_name)
 
