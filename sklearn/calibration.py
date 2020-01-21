@@ -118,7 +118,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
 
-    def __init__(self, base_estimator=None, method='sigmoid', cv=None, ensemble=True):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=None,
+                 ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -216,16 +217,20 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 elif hasattr(base_estimator, "predict_proba"):
                     base_estimator_method = "predict_proba"
                 else:
-                    raise RuntimeError('classifier has no decision_function or '
-                                       'predict_proba method.')
-                predictions = cross_val_predict(base_estimator, X, y, cv=cv, method=base_estimator_method)
+                    raise RuntimeError('classifier has no decision_function '
+                                       'or predict_proba method.')
+                predictions = cross_val_predict(base_estimator, X, y, cv=cv,
+                                                method=base_estimator_method)
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
-                    this_estimator.fit(X, y, sample_weight=base_estimator_sample_weight)
+                    this_estimator.fit(X, y, sample_weight=
+                                       base_estimator_sample_weight)
                 else:
                     this_estimator.fit(X, y)
-                calibrated_classifier = _CalibratedClassifier(this_estimator, method=self.method, classes=self.classes_,
-                                                              predictions_in_X=True)
+                calibrated_classifier = \
+                    _CalibratedClassifier(this_estimator, method=self.method,
+                                          classes=self.classes_,
+                                          predictions_in_X=True)
                 if hasattr(this_estimator, "decision_function"):
                     if predictions.ndim == 1:
                         predictions = predictions[:, np.newaxis]
@@ -314,7 +319,8 @@ class _CalibratedClassifier:
 
     predictions_in_X : bool, optional
             When False (default), ``X`` are the element to be classified, and
-            predictions are determined applying the ``base_estimator`` to ``X``.
+            predictions are determined applying the ``base_estimator`` to
+            ``X``.
             When True, ``X`` already contains predictions.
 
     See also
@@ -336,7 +342,8 @@ class _CalibratedClassifier:
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
 
-    def __init__(self, base_estimator, method='sigmoid', classes=None, predictions_in_X=False):
+    def __init__(self, base_estimator, method='sigmoid', classes=None,
+                 predictions_in_X=False):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
@@ -394,7 +401,8 @@ class _CalibratedClassifier:
             df, idx_pos_class = self._preproc(X)
         else:
             df = X
-            idx_pos_class = self.label_encoder_.transform(self.base_estimator.classes_)
+            idx_pos_class = \
+                self.label_encoder_.transform(self.base_estimator.classes_)
         self.calibrators_ = []
 
         for k, this_df in zip(idx_pos_class, df.T):

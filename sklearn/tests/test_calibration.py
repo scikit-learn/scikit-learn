@@ -9,9 +9,9 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -53,7 +53,8 @@ def test_calibration():
                                           (sparse.csr_matrix(X_train),
                                            sparse.csr_matrix(X_test))]:
             for method in ['isotonic', 'sigmoid']:
-                pc_clf = CalibratedClassifierCV(clf, method=method, cv=2, ensemble=ensemble)
+                pc_clf = CalibratedClassifierCV(clf, method=method, cv=2,
+                                                ensemble=ensemble)
                 # Note that this fit overwrites the fit on the entire training
                 # set
                 pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
@@ -61,17 +62,20 @@ def test_calibration():
 
                 # Check that brier score has improved after calibration
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss(y_test, prob_pos_pc_clf))
+                        brier_score_loss(y_test, prob_pos_pc_clf))
 
                 # Check invariance against relabeling [0, 1] -> [1, 2]
                 pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
-                prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
+                prob_pos_pc_clf_relabeled = pc_clf.predict_proba(
+                    this_X_test)[:, 1]
                 assert_array_almost_equal(prob_pos_pc_clf,
                                           prob_pos_pc_clf_relabeled)
 
                 # Check invariance against relabeling [0, 1] -> [-1, 1]
-                pc_clf.fit(this_X_train, 2 * y_train - 1, sample_weight=sw_train)
-                prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
+                pc_clf.fit(this_X_train, 2 * y_train - 1,
+                           sample_weight=sw_train)
+                prob_pos_pc_clf_relabeled = pc_clf.predict_proba(
+                    this_X_test)[:, 1]
                 assert_array_almost_equal(prob_pos_pc_clf,
                                           prob_pos_pc_clf_relabeled)
 
@@ -87,19 +91,22 @@ def test_calibration():
                     # Isotonic calibration is not invariant against relabeling
                     # but should improve in both cases
                     assert (brier_score_loss(y_test, prob_pos_clf) >
-                                   brier_score_loss((y_test + 1) % 2,
-                                                    prob_pos_pc_clf_relabeled))
+                            brier_score_loss((y_test + 1) % 2,
+                            prob_pos_pc_clf_relabeled))
 
             # Check failure cases:
             # only "isotonic" and "sigmoid" should be accepted as methods
-            clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
+            clf_invalid_method = CalibratedClassifierCV(clf, method="foo",
+                                                        ensemble=ensemble)
             assert_raises(ValueError, clf_invalid_method.fit, X_train, y_train)
 
             # base-estimators should provide either decision_function or
             # predict_proba (most regressors, for instance, should fail)
             clf_base_regressor = \
-                CalibratedClassifierCV(RandomForestRegressor(), method="sigmoid", ensemble=ensemble)
-            assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
+                CalibratedClassifierCV(RandomForestRegressor(),
+                                       method="sigmoid", ensemble=ensemble)
+            assert_raises(RuntimeError, clf_base_regressor.fit, X_train,
+                          y_train)
 
 
 def test_sample_weight():
@@ -115,12 +122,14 @@ def test_sample_weight():
     for ensemble in (True, False):
         for method in ['sigmoid', 'isotonic']:
             base_estimator = LinearSVC(random_state=42)
-            calibrated_clf = CalibratedClassifierCV(base_estimator, method=method, ensemble=ensemble)
+            calibrated_clf = CalibratedClassifierCV(base_estimator,
+                                                    method=method,
+                                                    ensemble=ensemble)
             calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
             probs_with_sw = calibrated_clf.predict_proba(X_test)
 
-            # As the weights are used for the calibration, they should still yield
-            # a different predictions
+            # As the weights are used for the calibration, they should still
+            # yield a different predictions
             calibrated_clf.fit(X_train, y_train)
             probs_without_sw = calibrated_clf.predict_proba(X_test)
 
@@ -147,10 +156,12 @@ def test_calibration_multiclass():
     clf.fit(X_train, y_train)
     for ensemble in (True, False):
         for method in ['isotonic', 'sigmoid']:
-            cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+            cal_clf = CalibratedClassifierCV(clf, method=method, cv=5,
+                                             ensemble=ensemble)
             cal_clf.fit(X_train, y_train)
             probas = cal_clf.predict_proba(X_test)
-            assert_array_almost_equal(np.sum(probas, axis=1), np.ones(len(X_test)))
+            assert_array_almost_equal(np.sum(probas, axis=1),
+                                      np.ones(len(X_test)))
 
             # Check that log-loss of calibrated classifier is smaller than
             # log-loss of naively turned OvR decision function to probabilities
@@ -178,7 +189,8 @@ def test_calibration_multiclass():
 
     for ensemble in (True, False):
         for method in ['isotonic', 'sigmoid']:
-            cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+            cal_clf = CalibratedClassifierCV(clf, method=method, cv=5,
+                                             ensemble=ensemble)
             cal_clf.fit(X_train, y_train)
             cal_clf_probs = cal_clf.predict_proba(X_test)
             cal_loss = log_loss(y_test, cal_clf_probs)
@@ -223,7 +235,7 @@ def test_calibration_prefit():
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss(y_test, prob_pos_pc_clf))
+                        brier_score_loss(y_test, prob_pos_pc_clf))
 
 
 def test_sigmoid_calibration():
@@ -289,7 +301,8 @@ def test_calibration_nan_imputer():
         [('imputer', SimpleImputer()),
          ('rf', RandomForestClassifier(n_estimators=1))])
     for ensemble in (True, False):
-        clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic', ensemble=ensemble)
+        clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic',
+                                       ensemble=ensemble)
         clf_c.fit(X, y)
         clf_c.predict(X)
 
@@ -302,7 +315,8 @@ def test_calibration_prob_sum():
                                n_classes=num_classes)
     clf = LinearSVC(C=1.0)
     for ensemble in (True, False):
-        clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble)
+        clf_prob = CalibratedClassifierCV(clf, method="sigmoid",
+                                          cv=LeaveOneOut(), ensemble=ensemble)
         clf_prob.fit(X, y)
 
         probs = clf_prob.predict_proba(X)
@@ -317,7 +331,8 @@ def test_calibration_less_classes():
     X = np.random.randn(10, 5)
     y = np.arange(10)
     clf = LinearSVC(C=1.0)
-    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut(), ensemble=True)
+    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut(),
+                                     ensemble=True)
     cal_clf.fit(X, y)
 
     for i, calibrated_classifier in \
@@ -328,13 +343,14 @@ def test_calibration_less_classes():
                                  proba[:, i + 1:]]))
 
     # When ensemble=False it should return uniform probabilities
-    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut(), ensemble=False)
+    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut(),
+                                     ensemble=False)
     cal_clf.fit(X, y)
 
     for i, calibrated_classifier in \
             enumerate(cal_clf.calibrated_classifiers_):
         proba = calibrated_classifier.predict_proba(X)
-        assert np.all(proba == proba[0,0])
+        assert np.all(proba == proba[0, 0])
         assert np.all(np.hstack([proba[:, :i],
                                  proba[:, i + 1:]]))
 
@@ -358,6 +374,7 @@ def test_calibration_accepts_ndarray(X):
             return X.reshape(X.shape[0], -1).sum(axis=1)
 
     for ensemble in (True, False):
-        calibrated_clf = CalibratedClassifierCV(MockTensorClassifier(), ensemble=ensemble)
+        calibrated_clf = CalibratedClassifierCV(MockTensorClassifier(),
+                                                ensemble=ensemble)
         # we should be able to fit this classifier with no error
         calibrated_clf.fit(X, y)
