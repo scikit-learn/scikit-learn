@@ -1583,16 +1583,17 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     params = _precompute_metric_params(X, Y, metric=metric, **kwds)
     kwds.update(**params)
 
+    if PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None) \
+            is euclidean_distances and n_jobs is None \
+            and not Y is None:
+        kwds['Y_norm_squared'] = \
+            row_norms(Y, squared=True)[np.newaxis, :]
+
     for sl in slices:
         if sl.start == 0 and sl.stop == n_samples_X:
             X_chunk = X  # enable optimised paths for X is Y
         else:
             X_chunk = X[sl]
-
-        if PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None) \
-                is euclidean_distances and n_jobs is None:
-            kwds['Y_norm_squared'] = \
-                row_norms(Y, squared=True)[np.newaxis, :]
 
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
