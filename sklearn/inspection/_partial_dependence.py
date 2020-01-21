@@ -13,7 +13,7 @@ from ..base import is_classifier, is_regressor
 from ..utils import check_matplotlib_support  # noqa
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ._ice import (
+from ._base import (
     _get_predictions, _validate_pdp_ice_parameters, _grid_from_X,
     _plot_pdp_ice)
 

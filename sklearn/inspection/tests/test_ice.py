@@ -9,7 +9,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.inspection import individual_conditional_expectation
-from sklearn.inspection._ice import _grid_from_X
+from sklearn.inspection._base import _grid_from_X
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
