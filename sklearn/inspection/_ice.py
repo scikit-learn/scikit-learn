@@ -26,8 +26,8 @@ __all__ = ['individual_conditional_expectation',
            'IndividualConditionalExpectationDisplay']
 
 
-def _ice_brute(estimator, grid, features, X, response_method):
-    predictions = _get_predictions(estimator, grid, features, X,
+def _ice_brute(estimator, grid, features_indices, X, response_method):
+    predictions = _get_predictions(estimator, grid, features_indices, X,
                                    response_method)
     instances = X.shape[0]
 

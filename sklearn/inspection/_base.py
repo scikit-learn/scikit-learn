@@ -91,7 +91,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     return cartesian(values), values
 
 
-def _get_predictions(est, grid, features, X, response_method):
+def _get_predictions(est, grid, features_indices, X, response_method):
     predictions = []
 
     # define the prediction_method (predict, predict_proba, decision_function).
@@ -120,7 +120,7 @@ def _get_predictions(est, grid, features, X, response_method):
 
     for new_values in grid:
         X_eval = X.copy()
-        for i, variable in enumerate(features):
+        for i, variable in enumerate(features_indices):
             if hasattr(X_eval, 'iloc'):
                 X_eval.iloc[:, variable] = new_values[i]
             else:
