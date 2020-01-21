@@ -5,8 +5,32 @@ Testing for the ICE module.
 import numpy as np
 import pytest
 
+from sklearn.datasets import make_classification, make_regression
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.inspection import individual_conditional_expectation
 from sklearn.inspection._ice import _grid_from_X
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import MultiTaskLasso
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils._testing import assert_array_equal
+
+# toy sample
+X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+y = [-1, -1, -1, 1, 1, 1]
+
+
+# (X, y), n_targets  <-- as expected in the output of partial_dep()
+binary_classification_data = (make_classification(n_samples=50,
+                                                  random_state=0), 1)
+multiclass_classification_data = (make_classification(n_samples=50,
+                                                      n_classes=3,
+                                                      n_clusters_per_class=1,
+                                                      random_state=0), 3)
+regression_data = (make_regression(n_samples=50, random_state=0), 1)
+multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
+                                               random_state=0), 2)
 
 
 def test_grid_from_X():
@@ -63,3 +87,45 @@ def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
         _grid_from_X(
             X, grid_resolution=grid_resolution, percentiles=percentiles
         )
+
+
+@pytest.mark.parametrize('Estimator, data', [
+    (GradientBoostingClassifier, binary_classification_data),
+    (GradientBoostingClassifier, multiclass_classification_data),
+    (GradientBoostingRegressor, regression_data),
+    (DecisionTreeRegressor, regression_data),
+    (LinearRegression, regression_data),
+    (LinearRegression, multioutput_regression_data),
+    (LogisticRegression, binary_classification_data),
+    (LogisticRegression, multiclass_classification_data),
+    (MultiTaskLasso, multioutput_regression_data),
+    ])
+@pytest.mark.parametrize('grid_resolution', (5, 10))
+@pytest.mark.parametrize('features', ([1], [1, 2]))
+def test_output_shape(Estimator, data, grid_resolution, features):
+    # Check that individual_conditional_expectation has consistent output
+    # shape for different kinds of estimators:
+    # - classifiers with binary and multiclass settings
+    # - regressors
+    # - multi-task regressors
+
+    est = Estimator()
+
+    # n_target corresponds to the number of classes (1 for binary classif) or
+    # the number of tasks / outputs in multi task settings. It's equal to 1 for
+    # classical regression_data. n_instances corresponds to the number of
+    # training samples in X
+    (X, y), n_targets = data
+    n_instances = X.shape[0]
+
+    est.fit(X, y)
+    pdp, axes = individual_conditional_expectation(est, X=X, features=features,
+                                            grid_resolution=grid_resolution)
+
+    expected_ice_shape = (n_targets, n_instances,
+                          *[grid_resolution for _ in range(len(features))])
+    expected_axes_shape = (len(features), grid_resolution)
+
+    assert pdp.shape == expected_ice_shape
+    assert axes is not None
+    assert np.asarray(axes).shape == expected_axes_shape
