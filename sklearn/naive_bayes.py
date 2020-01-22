@@ -1205,7 +1205,7 @@ class CategoricalNB(_BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
-                             .format(self.n_features_, X.shape[1]))
+                             % (self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             indices = X[:, i]

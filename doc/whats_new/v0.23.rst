@@ -54,6 +54,12 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
+- |Enhancement| Added ``return_centers`` parameter  in  
+  :func:`datasets.make_blobs`, which can be used to return
+  centers for each cluster.
+  :pr:`15709` by :user:`<shivamgargsya>` and
+  :user:`Venkatachalam N <venkyyuvy>`.
+
 - |Enhancement| Functions :func:`datasets.make_circles` and
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
@@ -134,6 +140,30 @@ Changelog
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+
+:mod:`sklearn.naive_bayes`
+.............................
+
+- |Fix| A correctly formatted error message is shown in
+  :class:`naive_bayes.CategoricalNB` when the number of features in the input
+  differs between `predict` and `fit`.
+  :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
+
+:mod:`sklearn.neighbors`
+..............................
+
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+  array instead of a 1-D array containing NumPy arrays. This bug
+  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :user:`Alex Shacked <alexshacked>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Increases the numerical stability of the logistic loss function in
+  :class:`neural_network.MLPClassifier` by clipping the probabilities.
+  :pr:`16117` by `Thomas Fan`_.
 
 :mod:`sklearn.preprocessing`
 ............................
