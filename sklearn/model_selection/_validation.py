@@ -53,7 +53,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
             default=None
         The target variable to try to predict in the case of
         supervised learning.
@@ -276,7 +276,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
             default=None
         The target variable to try to predict in the case of
         supervised learning.
@@ -286,7 +286,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : str ot callable, default=None
+    scoring : str or callable, default=None
         A str (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)`` which should return only
@@ -408,7 +408,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X : array-like of shape (n_samples, n_features)
         The data to fit.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -637,7 +637,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features), \
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
             default=None
         The target variable to try to predict in the case of
         supervised learning.
@@ -804,7 +804,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     X : array-like of shape (n_samples, n_features)
         The data to fit.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -958,7 +958,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -1007,10 +1007,9 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         for more details.
 
     random_state : int, RandomState instance or None, default=0
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         The verbosity level.
@@ -1111,7 +1110,7 @@ def learning_curve(estimator, X, y, groups=None,
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features)
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
@@ -1120,8 +1119,7 @@ def learning_curve(estimator, X, y, groups=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    train_sizes : array-like of shape (n_ticks,), dtype float or int, \
-            default=np.linspace(0.1, 1.0, 5)
+    train_sizes : array-like of shape (n_ticks,), default=np.linspace(0.1, 1.0, 5)
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
@@ -1177,10 +1175,10 @@ def learning_curve(estimator, X, y, groups=None,
         based on``train_sizes``.
 
     random_state : int or RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` is True.
+        Used when ``shuffle`` is True.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1193,7 +1191,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     Returns
     -------
-    train_sizes_abs : array of shape (n_unique_ticks,), dtype int
+    train_sizes_abs : array of shape (n_unique_ticks,)
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -1285,7 +1283,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Parameters
     ----------
-    train_sizes : array-like of shape (n_ticks,), dtype float or int
+    train_sizes : array-like of shape (n_ticks,)
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
         fraction of 'n_max_training_samples', i.e. it has to be within (0, 1].
@@ -1295,7 +1293,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Returns
     -------
-    train_sizes_abs : array of shape (n_unique_ticks,), dtype int
+    train_sizes_abs : array of shape (n_unique_ticks,)
         Numbers of training examples that will be used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -1392,7 +1390,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_features) or None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
