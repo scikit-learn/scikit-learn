@@ -1119,7 +1119,8 @@ def learning_curve(estimator, X, y, groups=None,
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    train_sizes : array-like of shape (n_ticks,), default=np.linspace(0.1, 1.0, 5)
+    train_sizes : array-like of shape (n_ticks,), \
+            default=np.linspace(0.1, 1.0, 5)
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
