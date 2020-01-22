@@ -155,5 +155,3 @@ plt.show()
 # of exceptions  where the house price increase when between the ages 15-25.
 # Similar exceptions can be observed for average number of rooms (bottom
 # right).
-
-
