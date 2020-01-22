@@ -24,9 +24,11 @@ approximately 80% actually belong to the positive class.
 Calibration curves
 ------------------
 
-The following plot compares
-how well the probabilistic predictions of different classifiers are calibrated,
-using :func:`calibration_curve`:
+The following plot compares how well the probabilistic predictions of
+different classifiers are calibrated, using :func:`calibration_curve`.
+The x axis represents the average predicted probability in each bin. The
+y axis is the *fraction of positives*, i.e. the proportion of samples whose
+class is the positive class (in each bin).
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
@@ -85,7 +87,7 @@ Calibrating a classifier consists in fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
 :term:`predict` or :term:`predict_proba`) to a calibrated probability in [0,
 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
-the calibrator tries to predict :math:`p(y_i = 1 / f_i)`.
+the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
 
 The samples that are used to train the calibrator should not be used to
 train the target classifier.
@@ -100,7 +102,7 @@ the classifier and the regressor. For each of the k `(trainset, testset)`
 couple, a classifier is trained on the trainset, and its predictions on the
 testset are used to fit a regressor. We end up with k
 `(classifier, regressor)` couples where each regressor maps the output of
-its corresponding classifier into [0, 1]. Each couple is exposed as the
+its corresponding classifier into [0, 1]. Each couple is exposed in the
 `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
@@ -111,15 +113,17 @@ that has the highest probability.
 
 The regressor that is used for calibration depends on the `method`
 parameter. 'sigmoid' corresponds to a parametric approach based on Platt's
-logistic model, i.e. :math:`p(y_i = 1 / f_i) = \sigma(A f_i + B)` where
-:math:`\sigma` is the logistic function, and A and B are real numbers to be
-determined when fitting the regressor via maximum likelihood. 'isotonic'
-will instead fit a non-parametric isotonic regressor, which outputs a
-step-wise non-decreasing function (see :mod:`sklearn.isotonic`).
+logistic model, i.e. :math:`p(y_i = 1 | f_i)` is modeled as :math:`\sigma(A
+f_i + B)` where :math:`\sigma` is the logistic function, and A and B are
+real numbers to be determined when fitting the regressor via maximum
+likelihood. 'isotonic' will instead fit a non-parametric isotonic regressor,
+which outputs a step-wise non-decreasing function (see
+:mod:`sklearn.isotonic`).
 
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
-this case, it is up to the user make sure that the data for model fitting
-and calibration are disjoint.
+this case, the data is only used to fit the regressor. It is up to the user
+make sure that the data used for fitting the classifier is disjoint from the
+data used for fitting the regressor.
 
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how well a
 classifier is calibrated.
