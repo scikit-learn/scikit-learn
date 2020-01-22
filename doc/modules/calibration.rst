@@ -81,13 +81,19 @@ Calibrating a classifier
 
 .. currentmodule:: sklearn.calibration
 
-The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
-
 Calibrating a classifier consists in fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
 :term:`predict` or :term:`predict_proba`) to a calibrated probability in [0,
-1]. The samples that are used to train the calibrator should not be used to
+1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
+the calibrator tries to predict :math:`p(y_i = 1 / f_i)`.
+
+The samples that are used to train the calibrator should not be used to
 train the target classifier.
+
+Usage
+-----
+
+The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to fit both
 the classifier and the regressor. For each of the k `(trainset, testset)`
@@ -95,8 +101,9 @@ couple, a classifier is trained on the trainset, and its predictions on the
 testset are used to fit a regressor. We end up with k
 `(classifier, regressor)` couples where each regressor maps the output of
 its corresponding classifier into [0, 1]. Each couple is exposed as the
-`calibrated_classifiers_` attribute.
-The output of :term:`predict_proba` for the main
+`calibrated_classifiers_` attribute, where each entry is a calibrated
+classifier with a :term:`predict_proba` method that outputs calibrated
+probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the
 predicted probabilities of the `k` estimators in the
 `calibrated_classifiers_` list. The output of :term:`predict` is the class
@@ -104,8 +111,11 @@ that has the highest probability.
 
 The regressor that is used for calibration depends on the `method`
 parameter. 'sigmoid' corresponds to a parametric approach based on Platt's
-logistic model, and 'isotonic' will instead fit a non-parametric isotonic
-regressor (:mod:`sklearn.isotonic`).
+logistic model, i.e. :math:`p(y_i = 1 / f_i) = \sigma(A f_i + B)` where
+:math:`\sigma` is the logistic function, and A and B are real numbers to be
+determined when fitting the regressor via maximum likelihood. 'isotonic'
+will instead fit a non-parametric isotonic regressor, which outputs a
+step-wise non-decreasing function (see :mod:`sklearn.isotonic`).
 
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
 this case, it is up to the user make sure that the data for model fitting
