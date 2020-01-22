@@ -70,10 +70,9 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, now
-   currently exclusively chooses the components that explains the variance
-   greater than `n_components`. :pr:`15669` by
-   :user:`Krishna Chaitanya <krishnachaitanya9>`
+- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
+   exclusively choose the components that explain the variance greater than
+   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
 :mod:`sklearn.ensemble`
 .......................
