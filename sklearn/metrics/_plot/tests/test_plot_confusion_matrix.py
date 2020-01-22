@@ -285,8 +285,6 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
                                     [10000000, 0]], dtype=int)
     disp2.plot()
 
-    assert disp2.text_.shape == (n_classes, n_classes)
-
     expected_text = np.array([format(v, test_function_format(v))
                               for v in cm2.ravel()])
     text_text = np.array([
