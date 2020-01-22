@@ -148,7 +148,7 @@ def strip_newsgroup_footer(text):
 
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
-                       remove=(),
+                       remove=(), clear_empty=False,
                        download_if_missing=True, return_X_y=False):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
@@ -201,6 +201,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
         'headers' follows an exact standard; the other filters are not always
         correct.
+
+    clear_empty : bool, optional, False by default
+        Whether or not to remove the empty samples resulting from `remove`
+        option, which can remove the entire text if the sample is composed
+        only by metadata.
+
+        .. versionadded:: 0.23
 
     download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
@@ -277,12 +284,22 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     data.DESCR = fdescr
 
-    if 'headers' in remove:
-        data.data = [strip_newsgroup_header(text) for text in data.data]
-    if 'footers' in remove:
-        data.data = [strip_newsgroup_footer(text) for text in data.data]
-    if 'quotes' in remove:
-        data.data = [strip_newsgroup_quoting(text) for text in data.data]
+    strip_funcs = {
+        "headers": strip_newsgroup_header,
+        "footers": strip_newsgroup_footer,
+        "quotes": strip_newsgroup_quoting,
+    }
+
+    for strip_type in remove:
+        tmp_target = []
+        tmp_data = []
+        for (label, text) in zip(data.target, data.data):
+            stripped_text = strip_funcs[strip_type](text)
+            if stripped_text or not clear_empty:
+                tmp_target.append(label)
+                tmp_data.append(stripped_text)
+        data.target = np.array(tmp_target)
+        data.data = tmp_data
 
     if categories is not None:
         labels = [(data.target_names.index(cat), cat) for cat in categories]
