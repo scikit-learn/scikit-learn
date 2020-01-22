@@ -96,12 +96,10 @@ class ConfusionMatrixDisplay:
                 fmt = values_format
 
                 if values_format is None:
-                    if cm.dtype.kind == "f":
+                    if cm.dtype.kind == "f" or cm[i, j] >= 1e7:
                         fmt = '.2g'
-                    elif cm[i, j] < 1e7:
-                        fmt = 'd'
                     else:
-                        fmt = '.2g'
+                        fmt = 'd'
 
                 self.text_[i, j] = ax.text(
                     j, i, format(cm[i, j], fmt),
