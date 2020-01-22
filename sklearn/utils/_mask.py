@@ -7,15 +7,15 @@ from .fixes import _object_dtype_isnan
 
 def _get_mask(X, value_to_mask, reconstruct_sparse=False):
     """Compute the boolean mask X == missing_values."""
-    X_ = X.copy()
-    if reconstruct_sparse:
-        # if sparse.issparse(X):
+    if sparse.issparse(X):
         X_ = X.data
+    else:
+        X_ = X
 
     if is_scalar_nan(value_to_mask):
         if X_.dtype.kind == "f":
             Xt = np.isnan(X_)
-        elif X.dtype.kind in ("i", "u"):
+        elif X_.dtype.kind in ("i", "u"):
             # can't have NaNs in integer array.
             Xt = np.zeros(X_.shape, dtype=bool)
         else:
@@ -34,7 +34,7 @@ def _get_mask(X, value_to_mask, reconstruct_sparse=False):
                               if X.format == 'csr'
                               else sparse.csc_matrix)
         re_sparse = sparse_constructor(
-            (Xt, X.indices.copy(), X.indptr.copy()),
+            (Xt, X.indices, X.indptr),
             shape=X.shape, dtype=bool)
 
         return Xt, re_sparse

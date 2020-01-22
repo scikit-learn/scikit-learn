@@ -72,15 +72,15 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
 
-    def _fit_indicator(self, X, missing_values=None):
+    def _fit_indicator(self, X, mask=None):
         """Fit a MissingIndicator."""
         if self.add_indicator:
             # if any new missing_values is not passed,
             # then set the missing_values to default
-            if not missing_values:
-                missing_values = self.missing_values
+            if mask == None:
+                mask = self.missing_values
             self.indicator_ = MissingIndicator(
-                missing_values=missing_values, error_on_new=False)
+                missing_values=mask, error_on_new=False)
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
@@ -440,6 +440,8 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
+                # mask --> masked matrix of X.data
+                # missing_mask --> reconstructed sparse matrix of mask of X_.data
                 mask = _get_mask(X.data, self.missing_values)
                 _, missing_mask = _get_mask(X_, self.missing_values, True)
                 indexes = np.repeat(
