@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted, _check_fit_params
+from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -204,12 +204,13 @@ class ParameterSampler:
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -647,7 +648,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        # make sure fit_params are sliceable
+        fit_params_values = indexable(*fit_params.values())
+        fit_params = dict(zip(fit_params.keys(), fit_params_values))
 
         n_splits = cv.get_n_splits(X, y, groups)
 
@@ -943,7 +946,7 @@ class GridSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given ``cv_results_``. In that
-        case, the ``best_estimator_`` and ``best_params_`` will be set
+        case, the ``best_estimator_`` and ``best_parameters_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 
@@ -1273,7 +1276,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
         returns the selected ``best_index_`` given the ``cv_results``. In that
-        case, the ``best_estimator_`` and ``best_params_`` will be set
+        case, the ``best_estimator_`` and ``best_parameters_`` will be set
         according to the returned ``best_index_`` while the ``best_score_``
         attribute will not be available.
 
@@ -1295,12 +1298,13 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.

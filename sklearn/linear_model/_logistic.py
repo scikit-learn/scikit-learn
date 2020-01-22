@@ -585,8 +585,12 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. See :term:`Glossary <random_state>` for details.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
@@ -918,8 +922,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. See :term:`Glossary <random_state>` for details.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        'liblinear'.
 
     max_squared_sum : float, default=None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -1090,8 +1098,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *class_weight='balanced'*
 
     random_state : int, RandomState instance, default=None
-        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
-        data. See :term:`Glossary <random_state>` for details.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1343,6 +1355,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                          accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
+        n_samples, n_features = X.shape
 
         multi_class = _check_multi_class(self.multi_class, solver,
                                          len(self.classes_))
@@ -1418,7 +1431,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
-        n_features = X.shape[1]
         if multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
         else:
@@ -1644,9 +1656,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance, default=None
-        Used when `solver='sag'`, 'saga' or 'liblinear' to shuffle the data.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
         Note that this only applies to the solver and not the cross-validation
-        generator. See :term:`Glossary <random_state>` for details.
+        generator.
 
     l1_ratios : list of float, default=None
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.

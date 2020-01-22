@@ -157,18 +157,6 @@ def test_convergence_warning():
     assert_no_warnings(mdl.fit, X, y)
 
 
-def test_label_propagation_non_zero_normalizer():
-    # check that we don't divide by zero in case of null normalizer
-    # non-regression test for
-    # https://github.com/scikit-learn/scikit-learn/pull/15946
-    X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
-    y = np.array([0, 1, -1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='knn',
-                                           max_iter=100,
-                                           n_neighbors=1)
-    assert_no_warnings(mdl.fit, X, y)
-
-
 def test_predict_sparse_callable_kernel():
     # This is a non-regression test for #15866
 

@@ -605,7 +605,7 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
+  <https://numpy.readthedocs.io/en/latest/format.html>`_ in all your docstrings.
 
 
 A good example of code that we like can be found `here
