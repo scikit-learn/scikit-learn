@@ -159,43 +159,35 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         if self.cv == "prefit":
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method)
-            if sample_weight is not None:
-                calibrated_classifier.fit(X, y, sample_weight)
-            else:
-                calibrated_classifier.fit(X, y)
+            calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
-            estimator_name = type(base_estimator).__name__
-            if (sample_weight is not None
-                    and "sample_weight" not in fit_parameters):
-                warnings.warn("%s does not support sample_weight. Samples"
-                              " weights are only used for the calibration"
-                              " itself." % estimator_name)
-                sample_weight = check_array(sample_weight, ensure_2d=False)
-                base_estimator_sample_weight = None
-            else:
-                if sample_weight is not None:
-                    sample_weight = _check_sample_weight(sample_weight, X)
-                base_estimator_sample_weight = sample_weight
+            base_estimator_supports_sw = "sample_weight" in fit_parameters
+
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(sample_weight, X)
+
+                if not base_estimator_supports_sw:
+                    estimator_name = type(base_estimator).__name__
+                    warnings.warn("Since %s does not support sample_weights, "
+                                  "sample weights will only be used for the "
+                                  "calibration itself." % estimator_name)
+
             for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
-                if base_estimator_sample_weight is not None:
-                    this_estimator.fit(
-                        X[train], y[train],
-                        sample_weight=base_estimator_sample_weight[train])
+
+                if sample_weight is not None and base_estimator_supports_sw:
+                    this_estimator.fit(X[train], y[train],
+                                       sample_weight=sample_weight[train])
                 else:
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method,
-                    classes=self.classes_)
-                if sample_weight is not None:
-                    calibrated_classifier.fit(X[test], y[test],
-                                              sample_weight[test])
-                else:
-                    calibrated_classifier.fit(X[test], y[test])
+                    this_estimator, method=self.method, classes=self.classes_)
+                sw = None if sample_weight is None else sample_weight[test]
+                calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         return self
