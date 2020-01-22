@@ -92,28 +92,21 @@ class ConfusionMatrixDisplay:
             thresh = (cm.max() + cm.min()) / 2.0
 
             for i, j in product(range(n_classes), range(n_classes)):
-
                 color = cmap_max if cm[i, j] < thresh else cmap_min
+                fmt = values_format
 
                 if values_format is None:
                     if cm.dtype.kind == "f":
-                        values_format = '.2g'
+                        fmt = '.2g'
                     elif cm[i, j] < 1e7:
-                        values_format = 'd'
+                        fmt = 'd'
                     else:
-                        values_format = '.2g'
+                        fmt = '.2g'
 
-                    self.text_[i, j] = ax.text(
-                        j, i, format(cm[i, j], values_format),
-                        ha="center", va="center",
-                        color=color)
-                    values_format = None
-
-                else:
-                    self.text_[i, j] = ax.text(
-                        j, i, format(cm[i, j], values_format),
-                        ha="center", va="center",
-                        color=color)
+                self.text_[i, j] = ax.text(
+                    j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color=color)
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
