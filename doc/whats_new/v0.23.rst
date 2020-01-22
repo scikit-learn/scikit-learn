@@ -73,8 +73,15 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
+   exclusively choose the components that explain the variance greater than
+   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+
 :mod:`sklearn.ensemble`
-.................................
+.......................
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
