@@ -235,7 +235,7 @@ def _plot_pdp_ice(estimator, X, features, calc_method, display_class,
                   feature_names=None, target=None, response_method='auto',
                   n_cols=3, grid_resolution=100, percentiles=(0.05, 0.95),
                   method='auto', n_jobs=None, verbose=0, fig=None,
-                  line_kw=None, contour_kw=None, ax=None):
+                  line_kw=None, contour_kw=None, ax=None, **kwargs):
 
     check_matplotlib_support('_plot_pdp_ice')  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -317,7 +317,7 @@ def _plot_pdp_ice(estimator, X, features, calc_method, display_class,
         delayed(calc_method)(estimator, X, fxs,
                              response_method=response_method, method=method,
                              grid_resolution=grid_resolution,
-                             percentiles=percentiles)
+                             percentiles=percentiles, **kwargs)
         for fxs in features)
 
     # For multioutput regression, we can only check the validity of target

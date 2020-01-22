@@ -53,7 +53,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 
 def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto'):
+                       method='auto', **kwargs):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
