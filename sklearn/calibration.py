@@ -194,7 +194,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 for train, test in cv.split(X, y):
                     this_estimator = clone(base_estimator)
 
-                    if sample_weight is not None and base_estimator_supports_sw:
+                    if sample_weight is not None and \
+                            base_estimator_supports_sw:
                         this_estimator.fit(X[train], y[train],
                                            sample_weight=sample_weight[train])
                     else:
@@ -204,7 +205,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                         this_estimator, method=self.method,
                         classes=self.classes_)
                     sw = None if sample_weight is None else sample_weight[test]
-                    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
+                    calibrated_classifier.fit(X[test], y[test],
+                                              sample_weight=sw)
                     self.calibrated_classifiers_.append(calibrated_classifier)
             else:
                 if hasattr(base_estimator, "decision_function"):
