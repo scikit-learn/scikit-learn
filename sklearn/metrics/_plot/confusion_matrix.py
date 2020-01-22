@@ -83,7 +83,6 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
 
         if include_values:
@@ -94,18 +93,27 @@ class ConfusionMatrixDisplay:
 
             for i, j in product(range(n_classes), range(n_classes)):
 
-                if values_format is None and cm.dtype.kind == "f":
-                    values_format = '.2g'
-                if cm[i, j] == 0 or np.log10(cm[i, j]) < 7:
-                    values_format = 'd'
-                else:
-                    values_format = '.2g'
-
                 color = cmap_max if cm[i, j] < thresh else cmap_min
-                self.text_[i, j] = ax.text(
-                    j, i, format(cm[i, j], values_format),
-                    ha="center", va="center",
-                    color=color)
+
+                if values_format is None:
+                    if cm.dtype.kind == "f":
+                        values_format = '.2g'
+                    elif cm[i, j] < 1e7:
+                        values_format = 'd'
+                    else:
+                        values_format = '.2g'
+
+                    self.text_[i, j] = ax.text(
+                        j, i, format(cm[i, j], values_format),
+                        ha="center", va="center",
+                        color=color)
+                    values_format = None
+
+                else:
+                    self.text_[i, j] = ax.text(
+                        j, i, format(cm[i, j], values_format),
+                        ha="center", va="center",
+                        color=color)
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
