@@ -114,10 +114,10 @@ that has the highest probability.
 The regressor that is used for calibration depends on the `method`
 parameter. `'sigmoid'` corresponds to a parametric approach based on Platt's
 logistic model, i.e. :math:`p(y_i = 1 | f_i)` is modeled as :math:`\sigma(A
-f_i + B)` where :math:`\sigma` is the logistic function, and :math:`A` and :math:`B` are
-real numbers to be determined when fitting the regressor via maximum
-likelihood. `'isotonic'` will instead fit a non-parametric isotonic regressor,
-which outputs a step-wise non-decreasing function (see
+f_i + B)` where :math:`\sigma` is the logistic function, and :math:`A` and
+:math:`B` are real numbers to be determined when fitting the regressor via
+maximum likelihood. `'isotonic'` will instead fit a non-parametric isotonic
+regressor, which outputs a step-wise non-decreasing function (see
 :mod:`sklearn.isotonic`).
 
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
@@ -125,8 +125,8 @@ this case, the data is only used to fit the regressor. It is up to the user
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
-The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how well a
-classifier is calibrated.
+The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
+well a classifier is calibrated.
 
 .. topic:: Examples:
 
@@ -137,14 +137,14 @@ classifier is calibrated.
 
 .. topic:: References:
 
-    * Obtaining calibrated probability estimates from decision trees
-      and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] Obtaining calibrated probability estimates from decision trees
+           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
 
-    * Transforming Classifier Scores into Accurate Multiclass
-      Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] Transforming Classifier Scores into Accurate Multiclass
+           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
 
-    * Probabilistic Outputs for Support Vector Machines and Comparisons to
-      Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons
+           to Regularized Likelihood Methods, J. Platt, (1999)
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
