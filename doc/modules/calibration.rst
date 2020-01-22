@@ -99,8 +99,8 @@ The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to fit both
 the classifier and the regressor. For each of the k `(trainset, testset)`
-couple, a classifier is trained on the trainset, and its predictions on the
-testset are used to fit a regressor. We end up with k
+couple, a classifier is trained on the train set, and its predictions on the
+test set are used to fit a regressor. We end up with k
 `(classifier, regressor)` couples where each regressor maps the output of
 its corresponding classifier into [0, 1]. Each couple is exposed in the
 `calibrated_classifiers_` attribute, where each entry is a calibrated
@@ -112,11 +112,11 @@ predicted probabilities of the `k` estimators in the
 that has the highest probability.
 
 The regressor that is used for calibration depends on the `method`
-parameter. 'sigmoid' corresponds to a parametric approach based on Platt's
+parameter. `'sigmoid'` corresponds to a parametric approach based on Platt's
 logistic model, i.e. :math:`p(y_i = 1 | f_i)` is modeled as :math:`\sigma(A
-f_i + B)` where :math:`\sigma` is the logistic function, and A and B are
+f_i + B)` where :math:`\sigma` is the logistic function, and :math:`A` and :math:`B` are
 real numbers to be determined when fitting the regressor via maximum
-likelihood. 'isotonic' will instead fit a non-parametric isotonic regressor,
+likelihood. `'isotonic'` will instead fit a non-parametric isotonic regressor,
 which outputs a step-wise non-decreasing function (see
 :mod:`sklearn.isotonic`).
 
