@@ -54,6 +54,12 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
+- |Enhancement| Added ``return_centers`` parameter  in  
+  :func:`datasets.make_blobs`, which can be used to return
+  centers for each cluster.
+  :pr:`15709` by :user:`<shivamgargsya>` and
+  :user:`Venkatachalam N <venkyyuvy>`.
+
 - |Enhancement| Functions :func:`datasets.make_circles` and
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
