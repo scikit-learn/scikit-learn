@@ -92,7 +92,8 @@ Changelog
   :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
 
 - |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
-  caused predicted standard deviations to only be between 0 and 1. :pr:`15782`
+  caused predicted standard deviations to only be between 0 and 1 when
+  WhiteKernel is not used. :pr:`15782`
   by :user:`plgreenLIRU`.
 
 :mod:`sklearn.linear_model`
@@ -143,10 +144,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
