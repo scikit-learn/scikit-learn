@@ -40,6 +40,14 @@ Both kinds of calibration can fix this issue and yield nearly identical
 results. This shows that sigmoid calibration can deal with situations where
 the calibration curve of the base classifier is sigmoid (e.g., for LinearSVC)
 but not where it is transposed-sigmoid (e.g., Gaussian naive Bayes).
+
+The third figure compares the two implementations of the cross-validation
+procedure. One that fits and calibrates an estimator on each fold. The final
+estimator is an ensemble that averages the predicted probabilities of all such
+estimators. In the other implementaton the cross validation generator is used
+to compute predictions, and the union of these predictions is used for training
+the sigmoid or isotonic model. In this case a single estimator is fit on the
+whole data.
 """
 print(__doc__)
 
@@ -69,38 +77,15 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
                                                     random_state=42)
 
 
-def plot_calibration_curve(est, name, fig_index):
+def plot_calibration_curve(estimators, fig_index):
     """Plot calibration curve for est w/o and with calibration. """
-    # Calibrated with isotonic calibration, ensemble estimator
-    isotonic_ensemble = CalibratedClassifierCV(est, cv=5, method='isotonic',
-                                               ensemble=True)
-
-    # Calibrated with sigmoid calibration, ensemble estimator
-    sigmoid_ensemble = CalibratedClassifierCV(est, cv=5, method='sigmoid',
-                                              ensemble=True)
-
-    # Calibrated with isotonic calibration, single estimator
-    isotonic_single = CalibratedClassifierCV(est, cv=5, method='isotonic',
-                                             ensemble=False)
-
-    # Calibrated with sigmoid calibration, single estimator
-    sigmoid_single = CalibratedClassifierCV(est, cv=5, method='sigmoid',
-                                            ensemble=False)
-
-    # Logistic regression with no calibration as baseline
-    lr = LogisticRegression(C=1.)
 
     fig = plt.figure(fig_index, figsize=(10, 10))
     ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((3, 1), (2, 0))
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-    for clf, name in [(lr, 'Logistic'),
-                      (est, name),
-                      (isotonic_ensemble, name + ' + Isotonic Ensemble'),
-                      (sigmoid_ensemble, name + ' + Sigmoid Ensemble'),
-                      (isotonic_single, name + ' + Isotonic Single'),
-                      (sigmoid_single, name + ' + Sigmoid Single')]:
+    for clf, name in estimators:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         if hasattr(clf, "predict_proba"):
@@ -137,10 +122,40 @@ def plot_calibration_curve(est, name, fig_index):
 
     plt.tight_layout()
 
+
 # Plot calibration curve for Gaussian Naive Bayes
-plot_calibration_curve(GaussianNB(), "Naive Bayes", 1)
+# Uncalibrated Logistic as baseline
+base_estimator = GaussianNB()
+estimators = [(base_estimator, "Naive Bayes"),
+              (LogisticRegression(C=1.), "Logistic"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='isotonic'),
+               "Naive Bayes + Isotonic"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='sigmoid'),
+               "Naive Bayes + Sigmoid")]
+
+plot_calibration_curve(estimators, 1)
 
 # Plot calibration curve for Linear SVC
-plot_calibration_curve(LinearSVC(max_iter=10000), "SVC", 2)
+# Uncalibrated Logistic as baseline
+base_estimator = LinearSVC(max_iter=10000)
+estimators = [(base_estimator, "SVC"),
+              (LogisticRegression(C=1.), "Logistic"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='isotonic'),
+               "SVC + Isotonic"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='sigmoid'),
+               "SVC + Sigmoid")]
+plot_calibration_curve(estimators, 2)
+
+# Plot calibration curve for CalibratedClassifierCV using an ensemble of
+# calibrated estimators (default) vs the method using a single estimator fit
+# on the whole train data and calibrated via cross validation
+base_estimator = LinearSVC(max_iter=10000)
+estimators = [(base_estimator, "SVC"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='sigmoid'),
+               "SVC + Sigmoid-Ensemble"),
+              (CalibratedClassifierCV(base_estimator, cv=5, method='sigmoid',
+                                      ensemble=False),
+               "SVC + Sigmoid-Single")]
+plot_calibration_curve(estimators, 3)
 
 plt.show()
