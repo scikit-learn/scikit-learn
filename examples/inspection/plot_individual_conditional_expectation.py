@@ -93,9 +93,10 @@ X_train_sample = X_train.sample(50, random_state=0)
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 
 print('Computing ICE plots...')
-plot_individual_conditional_expectation(est, X_train_sample, features, n_jobs=3,
-                                        grid_resolution=20, centre=False,
-                                        line_kw={'linewidth': 0.5}, n_cols=2)
+plot_individual_conditional_expectation(est, X_train_sample, features,
+                                        n_jobs=3, grid_resolution=20,
+                                        centre=False, n_cols=2,
+                                        line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features')
 fig.subplots_adjust(hspace=0.3)
@@ -113,9 +114,10 @@ fig.subplots_adjust(hspace=0.3)
 # Let's now compute the ICE plots with ``centre`` parameter set to True:
 
 print('Computing centered ICE plots...')
-plot_individual_conditional_expectation(est, X_train_sample, features, n_jobs=3,
-                                        grid_resolution=20, centre=True,
-                                        line_kw={'linewidth': 0.5}, n_cols=2)
+plot_individual_conditional_expectation(est, X_train_sample, features,
+                                        n_jobs=3, grid_resolution=20,
+                                        centre=True, n_cols=2,
+                                        line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('Centered ICE of house value on non-location features')
 fig.subplots_adjust(hspace=0.3)
@@ -148,8 +150,8 @@ plt.show()
 # From the PD plot, we can see that the median house price increases with the
 # median income (top left) and that the median house price drops when the
 # average occupants per household increases (top right). However, from ICE
-# plots we can see that there are some exceptions, where the house price remain
-# constant with median income and average occupants.
+# plots we can see that there are some exceptions, where the house price
+# remain constant with median income and average occupants.
 # On the other hand, while the house age (bottom left) does not have a strong
 # influence on the median house price on average, there seems to be a number
 # of exceptions  where the house price increase when between the ages 15-25.
