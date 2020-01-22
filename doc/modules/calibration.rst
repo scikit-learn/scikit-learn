@@ -125,6 +125,13 @@ this case, the data is only used to fit the regressor. It is up to the user
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
+:class:`CalibratedClassifierCV` can calibrate probabilities in a multiclass
+setting if the base estimator supports multiclass predictions. The
+classifier is calibrated first for each class separately in a one-vs-rest
+fashion. When predicting probabilities, the calibrated probabilities for
+each class are predicted separately. As those probabilities do not
+necessarily sum to one, a postprocessing is performed to normalize them.
+
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
 well a classifier is calibrated.
 
