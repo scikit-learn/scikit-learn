@@ -94,7 +94,7 @@ class ConfusionMatrixDisplay:
             # print text with appropriate color depending on background
             thresh = (cm.max() + cm.min()) / 2.0
 
-            if (values_format is None):
+            if values_format is None:
                 for i, j in product(range(n_classes), range(n_classes)):
 
                     if (cm[i, j] == 0 or np.log10(cm[i, j]) < 7):
