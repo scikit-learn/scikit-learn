@@ -701,9 +701,9 @@ Classification
 ^^^^^^^^^^^^^^
 
 Gradient boosting for classification is very similar to the regression case.
-However, the sum of the trees :math:`F_M(x_i) = \sum_{m=1}^M h_m(x_i)` is
-not homogeneous to a prediction: it cannot be a class, since the trees
-predict continuous values.
+However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
+homogeneous to a prediction: it cannot be a class, since the trees predict
+continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
 loss-dependent. For the deviance (or log-loss), the probability that
@@ -869,6 +869,10 @@ accessed via the ``feature_importances_`` property::
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_
     array([0.10..., 0.10..., 0.11..., ...
+
+Note that this computation of feature importance is based on entropy, and it
+is distinct from :func:`sklearn.inspection.permutation_importance` which is
+based on permutation of the features.
 
 .. topic:: Examples:
 
