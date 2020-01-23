@@ -32,7 +32,7 @@ def _update_raw_predictions(
         const unsigned int [::1] partition = grower.splitter.partition
         list leaves
 
-    leaves = grower.finalized_leaves
+    leaves = list(grower.finalized_leaves)
     starts = np.array([leaf.partition_start for leaf in leaves],
                       dtype=np.uint32)
     stops = np.array([leaf.partition_stop for leaf in leaves],
