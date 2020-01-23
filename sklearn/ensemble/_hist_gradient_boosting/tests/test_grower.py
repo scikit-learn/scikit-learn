@@ -287,7 +287,7 @@ def test_max_depth_max_leaf_nodes():
     # Non regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/16179
     # there was a bug when the max_depth and the max_leaf_nodes criteria were
-    # met at the same time.
+    # met at the same time, which would lead to the last tree having 256 leaves
     X, y = make_classification(n_samples=10000, random_state=42)
     est = HistGradientBoostingClassifier(
         max_depth=15, max_leaf_nodes=100, max_iter=10).fit(X, y)
