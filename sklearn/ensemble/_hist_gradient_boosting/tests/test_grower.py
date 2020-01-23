@@ -7,6 +7,9 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.datasets import make_classification
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):
@@ -278,6 +281,18 @@ def test_max_depth(max_depth):
 
     depth = max(leaf.depth for leaf in grower.finalized_leaves)
     assert depth == max_depth
+
+
+def test_max_depth_max_leaf_nodes():
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16179
+    # there was a bug when the max_depth and the max_leaf_nodes criteria were
+    # met at the same time.
+    X, y = make_classification(n_samples=10000, random_state=42)
+    est = HistGradientBoostingClassifier(
+        max_depth=15, max_leaf_nodes=100, max_iter=10).fit(X, y)
+    last_tree = est._predictors[-1][0]
+    assert last_tree.get_n_leaf_nodes() == 100
 
 
 def test_input_validation():
