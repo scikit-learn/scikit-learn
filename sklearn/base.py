@@ -34,7 +34,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
-    'mutable_params': None,
+    'immutable_params': None,
 }
 
 
@@ -45,9 +45,9 @@ def clone(estimator, safe=True, deepcopy=True):
     copying attached data. It yields a new estimator with the same parameters
     that has not been fit on any data.
 
-    In case an estimator declared some parameters to be mutable (via the
-    `'mutable_params'` tag), these paremeters will not be deep copied but only
-    reassigned.
+    In case an estimator declared some parameters to be immutable (via the
+    `'immutable_params'` tag), these paremeters will not be deep copied but
+    only reassigned.
 
     Parameters
     ----------
@@ -77,7 +77,10 @@ def clone(estimator, safe=True, deepcopy=True):
                             "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
-    mutable_params = estimator._get_tags().get('mutable_params', None)
+    if hasattr(estimator, "_get_tags"):
+        mutable_params = estimator._get_tags().get('mutable_params', None)
+    else:
+        mutable_params = None
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         if mutable_params is not None and name in mutable_params:
