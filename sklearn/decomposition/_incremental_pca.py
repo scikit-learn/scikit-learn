@@ -270,7 +270,7 @@ class IncrementalPCA(_BasePCA):
             self.mean_ = .0
             self.var_ = .0
 
-        # Update stats - they are 0 if this is the first step
+        # Update stats - they are 0 if this is the fisrt step
         col_mean, col_var, n_total_samples = \
             _incremental_mean_and_var(
                 X, last_mean=self.mean_, last_variance=self.var_,
@@ -286,8 +286,8 @@ class IncrementalPCA(_BasePCA):
             X -= col_batch_mean
             # Build matrix of combined previous basis and new data
             mean_correction = \
-                np.sqrt((self.n_samples_seen_ * n_samples) /
-                        n_total_samples) * (self.mean_ - col_batch_mean)
+                np.sqrt((float(self.n_samples_seen_) * float(n_samples)) /
+                        float(n_total_samples)) * (self.mean_ - col_batch_mean)
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
