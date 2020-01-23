@@ -328,6 +328,14 @@ scikit-learn seeks to achieve.
 You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
 
+Note that scikit-learn currently implements a simple multilayer perceptron
+in `sklearn.neural_network`. We will only accept bug fixes for this module.
+If you want to implement more complex deep learning models, please turn to
+popular deep learning frameworks such as
+`tensorflow <https://www.tensorflow.org/>`_,
+`keras <https://keras.io/>`_
+and `pytorch <https://pytorch.org/>`_.
+
 Why is my pull request not getting any attention?
 -------------------------------------------------
 

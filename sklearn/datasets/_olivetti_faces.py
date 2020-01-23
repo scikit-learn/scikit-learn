@@ -24,7 +24,6 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
-from ._base import _refresh_cache
 from ..utils import check_random_state, Bunch
 
 # The original data can be found at:
@@ -110,9 +109,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = _refresh_cache([filepath], 6)
-        # TODO: Revert to the following line in v0.23
-        # faces = joblib.load(filepath)
+        faces = joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
