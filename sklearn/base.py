@@ -71,7 +71,6 @@ def clone(estimator, safe=True, deepcopy=True):
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
-        # handle objects that are not estimators
         if not safe:
             return copy.deepcopy(estimator)
         else:
@@ -80,12 +79,11 @@ def clone(estimator, safe=True, deepcopy=True):
                             "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
 
-    # handle scikit-learn estimator
     klass = estimator.__class__
+    new_object_params = estimator.get_params(deep=False)
     immutable_params = getattr(
         estimator, "_get_tags", lambda: _DEFAULT_TAGS["immutable_params"]
     )()["immutable_params"]
-    new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
         if immutable_params is not None and name in immutable_params:
             new_object_params[name] = clone(param, safe=False, deepcopy=False)
@@ -100,8 +98,8 @@ def clone(estimator, safe=True, deepcopy=True):
         param2 = params_set[name]
         if param1 is not param2:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'either does not set or modifies parameter %s'
-                               % (estimator, name))
+                               'either does not set or modifies parameter %s' %
+                               (estimator, name))
     return new_object
 
 
