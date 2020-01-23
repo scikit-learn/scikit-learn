@@ -232,7 +232,7 @@ def test_clone_immutable_params():
     )
     immutable_params_name = estimator._get_tags()["immutable_params"]
 
-    # not copy should be done for the declared immutable params
+    # no copy should be done for the declared immutable params
     for param in immutable_params_name:
         assert getattr(estimator, param) is getattr(estimator_2, param)
     # otherwise we should take a copy or deep copy
