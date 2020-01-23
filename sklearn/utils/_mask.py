@@ -10,7 +10,7 @@ def _fit_mask(X, value_to_mask):
             Xt = np.isnan(X)
         elif X.dtype.kind in ("i", "u"):
             # can't have NaNs in integer array.
-            Xt = np.zeros(X_.shape, dtype=bool)
+            Xt = np.zeros(X.shape, dtype=bool)
         else:
             # np.isnan does not work on object dtypes.
             Xt = _object_dtype_isnan(X)
@@ -30,8 +30,7 @@ def _get_mask(X, value_to_mask, reconstruct_sparse=False):
     # if we need not reconstruct sparse or X is dense we can directly
     # convert to mask
     else:
-        Xt = _fit_mask(X, value_to_mask)
-        return Xt
+        return _fit_mask(X, value_to_mask)
 
     # following code will execute only when we need to reconstruct sparse
     sparse_constructor = (sparse.csr_matrix

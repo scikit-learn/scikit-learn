@@ -447,7 +447,8 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                mask = _get_mask(X.data, self.missing_values)
+                if not isinstance(valid_statistics_indexes, slice):
+                    mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=np.int),
                     np.diff(X.indptr))[mask]
