@@ -447,6 +447,8 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
+                # if invalid statistics are eliminated recompute mask
+                # else use the mask compued before eliminating invalid mask
                 if not isinstance(valid_statistics_indexes, slice):
                     mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
@@ -456,7 +458,7 @@ class SimpleImputer(_BaseImputer):
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
         else:
-            # mask computed before before eliminating invalid mask can be used
+            # mask computed before eliminating invalid mask can be used
             missing_mask = mask
             mask = mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask, axis=0)
