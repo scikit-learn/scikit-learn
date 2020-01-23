@@ -64,16 +64,16 @@ def clone(estimator, safe=True, deepcopy=True):
         Whether or not to trigger a deep copy of object which are not
         estimator.
     """
+    if not safe and not deepcopy:
+        return estimator
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
-        if not safe and not deepcopy:
-            return estimator
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         # handle objects that are not estimators
         if not safe:
-            return copy.deepcopy(estimator) if deepcopy else estimator
+            return copy.deepcopy(estimator)
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
@@ -81,8 +81,6 @@ def clone(estimator, safe=True, deepcopy=True):
                             % (repr(estimator), type(estimator)))
 
     # handle scikit-learn estimator
-    if not safe and not deepcopy:
-        return estimator
     klass = estimator.__class__
     immutable_params = getattr(
         estimator, "_get_tags", lambda: _DEFAULT_TAGS["immutable_params"]
