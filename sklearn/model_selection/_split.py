@@ -413,7 +413,7 @@ class KFold(_BaseKFold):
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``Glossary <random_state>``
+    split. You can make the results identical by setting `random state`
     to an integer.
 
     See also
@@ -728,7 +728,7 @@ class StratifiedKFold(_BaseKFold):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``Glossary <random_state>``
+        split. You can make the results identical by setting `random state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -1224,7 +1224,7 @@ class RepeatedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``Glossary <random_state>``
+    split. You can make the results identical by setting `random state`
     to an integer.
 
     See also
@@ -1280,7 +1280,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``Glossary <random_state>``
+    split. You can make the results identical by setting `random state`
     to an integer.
 
     See also
@@ -1330,7 +1330,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``Glossary <random_state>``
+        split. You can make the results identical by setting `random state`
         to an integer.
         """
         X, y, groups = indexable(X, y, groups)
@@ -1572,7 +1572,7 @@ class GroupShuffleSplit(ShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``Glossary <random_state>``
+        split. You can make the results identical by setting `random state`
         to an integer.
         """
         return super().split(X, y, groups)
@@ -1740,7 +1740,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``Glossary <random_state>``
+        split. You can make the results identical by setting `random state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
