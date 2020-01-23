@@ -68,13 +68,13 @@ def test_gen_batches():
 
     assert_raises_regex(
         ValueError,
-        "gen_batches got batch_size=0, must be a positive integer",
+        "gen_batches got batch_size=0, must be positive",
         next,
         zero_batch_size
     )
     assert_raises_regex(
-        ValueError,
-        "gen_batches got batch_size=0.5, must be a positive integer",
+        TypeError,
+        "gen_batches got batch_size=0.5, must be an integer",
         next,
         float_batch_size
     )
