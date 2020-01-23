@@ -78,12 +78,14 @@ def clone(estimator, safe=True, deepcopy=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     if hasattr(estimator, "_get_tags"):
-        mutable_params = estimator._get_tags().get('mutable_params', None)
+        immutable_params = estimator._get_tags().get(
+            "immutable_params", _DEFAULT_TAGS["immutable_params"]
+        )
     else:
-        mutable_params = None
+        immutable_params = _DEFAULT_TAGS["immutable_params"]
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
-        if mutable_params is not None and name in mutable_params:
+        if immutable_params is not None and name in immutable_params:
             new_object_params[name] = clone(param, safe=False, deepcopy=False)
         else:
             new_object_params[name] = clone(param, safe=False, deepcopy=True)
