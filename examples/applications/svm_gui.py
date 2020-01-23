@@ -27,7 +27,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 try:
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 except ImportError:
-    from matplotlib.backends.backend_tkagg import (NavigationToolbar2TkAgg as NavigationToolbar2Tk)
+    from matplotlib.backends.backend_tkagg import (
+        NavigationToolbar2TkAgg as NavigationToolbar2Tk
+    )
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
