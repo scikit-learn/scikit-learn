@@ -408,12 +408,19 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
 
         X = self._validate_input(X)
-        X_ = X.copy()
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
+
+        # compute mask and missing_mask before eliminating invalid features
+        if sparse.issparse(X):
+            mask, missing_mask = _get_mask(X,
+                                    self.missing_values,
+                                    reconstruct_sparse=True)
+        else:
+            mask = _get_mask(X, self.missing_values)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -443,7 +450,6 @@ class SimpleImputer(_BaseImputer):
                 # mask --> masked matrix of X.data
                 # missing_mask --> reconstructed sparse matrix of mask of X_.data
                 mask = _get_mask(X.data, self.missing_values)
-                _, missing_mask = _get_mask(X_, self.missing_values, True)
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=np.int),
                     np.diff(X.indptr))[mask]
@@ -451,8 +457,8 @@ class SimpleImputer(_BaseImputer):
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
         else:
-            missing_mask = _get_mask(X_, self.missing_values)
-            mask = missing_mask[:, valid_statistics_indexes]
+            missing_mask = mask
+            mask = mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
