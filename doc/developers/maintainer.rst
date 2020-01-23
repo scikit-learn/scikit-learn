@@ -214,7 +214,8 @@ Making a release
        $ rm stable
        $ ln -s 0.999 stable
        $ sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
-       $ git commit -am "Update stable to point to 0.999"
+       $ git add stable/ versionwarning.js
+       $ git commit -m "Update stable to point to 0.999"
        $ git push origin master
 
 The following GitHub checklist might be helpful in a release PR::
