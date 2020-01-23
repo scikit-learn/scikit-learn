@@ -147,10 +147,10 @@ class View:
         ax.set_xlim((x_min, x_max))
         ax.set_ylim((y_min, y_max))
         canvas = FigureCanvasTkAgg(f, master=root)
-        try :
-        	canvas.show()
-        except AttributeError :	
-        	canvas.draw()
+        try:
+            canvas.show()
+        except AttributeError:	
+            canvas.draw()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
