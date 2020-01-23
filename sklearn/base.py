@@ -67,6 +67,8 @@ def clone(estimator, safe=True, deepcopy=True):
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
+        if not safe and not deepcopy:
+            return estimator
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
@@ -77,6 +79,8 @@ def clone(estimator, safe=True, deepcopy=True):
                             "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
+    if not safe and not deepcopy:
+        return estimator
     if hasattr(estimator, "_get_tags"):
         immutable_params = estimator._get_tags().get(
             "immutable_params", _DEFAULT_TAGS["immutable_params"]
@@ -98,8 +102,8 @@ def clone(estimator, safe=True, deepcopy=True):
         param2 = params_set[name]
         if param1 is not param2:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'either does not set or modifies parameter %s' %
-                               (estimator, name))
+                               'either does not set or modifies parameter %s'
+                               % (estimator, name))
     return new_object
 
 
