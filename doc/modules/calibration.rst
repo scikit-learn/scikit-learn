@@ -52,7 +52,7 @@ case in this dataset which contains 2 redundant features.
 :class:`RandomForestClassifier` shows the opposite behavior: the histograms
 show peaks at approximately 0.2 and 0.9 probability, while probabilities
 close to 0 or 1 are very rare. An explanation for this is given by
-Niculescu-Mizil and Caruana [4]_: "Methods such as bagging and random
+Niculescu-Mizil and Caruana [1]_: "Methods such as bagging and random
 forests that average predictions from a base set of models can have
 difficulty making predictions near 0 and 1 because variance in the
 underlying base models will bias predictions that should be near zero or one
@@ -66,7 +66,7 @@ prediction of the bagged ensemble away from 0. We observe this effect most
 strongly with random forests because the base-level trees trained with
 random forests have relatively high variance due to feature subsetting." As
 a result, the calibration curve also referred to as the reliability diagram
-(Wilks 1995 [5]_) shows a characteristic sigmoid shape, indicating that the
+(Wilks 1995 [2]_) shows a characteristic sigmoid shape, indicating that the
 classifier could trust its "intuition" more and return probabilities closer
 to 0 or 1 typically.
 
@@ -74,7 +74,7 @@ to 0 or 1 typically.
 
 Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
 sigmoid curve as the RandomForestClassifier, which is typical for
-maximum-margin methods (compare Niculescu-Mizil and Caruana [4]_), which
+maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_), which
 focus on hard samples that are close to the decision boundary (the support
 vectors).
 
@@ -113,12 +113,12 @@ that has the highest probability.
 
 The regressor that is used for calibration depends on the `method`
 parameter. `'sigmoid'` corresponds to a parametric approach based on Platt's
-logistic model, i.e. :math:`p(y_i = 1 | f_i)` is modeled as :math:`\sigma(A
-f_i + B)` where :math:`\sigma` is the logistic function, and :math:`A` and
-:math:`B` are real numbers to be determined when fitting the regressor via
-maximum likelihood. `'isotonic'` will instead fit a non-parametric isotonic
-regressor, which outputs a step-wise non-decreasing function (see
-:mod:`sklearn.isotonic`).
+logistic model [3]_, i.e. :math:`p(y_i = 1 | f_i)` is modeled as
+:math:`\sigma(A f_i + B)` where :math:`\sigma` is the logistic function, and
+:math:`A` and :math:`B` are real numbers to be determined when fitting the
+regressor via maximum likelihood. `'isotonic'` will instead fit a
+non-parametric isotonic regressor, which outputs a step-wise non-decreasing
+function (see :mod:`sklearn.isotonic`).
 
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
 this case, the data is only used to fit the regressor. It is up to the user
@@ -126,11 +126,11 @@ make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` can calibrate probabilities in a multiclass
-setting if the base estimator supports multiclass predictions. The
-classifier is calibrated first for each class separately in a one-vs-rest
-fashion. When predicting probabilities, the calibrated probabilities for
-each class are predicted separately. As those probabilities do not
-necessarily sum to one, a postprocessing is performed to normalize them.
+setting if the base estimator supports multiclass predictions. The classifier
+is calibrated first for each class separately in a one-vs-rest fashion [4]_.
+When predicting probabilities, the calibrated probabilities for each class
+are predicted separately. As those probabilities do not necessarily sum to
+one, a postprocessing is performed to normalize them.
 
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
 well a classifier is calibrated.
@@ -144,18 +144,15 @@ well a classifier is calibrated.
 
 .. topic:: References:
 
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] Predicting Good Probabilities with Supervised Learning,
+           A. Niculescu-Mizil & R. Caruana, ICML 2005
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] On the combination of forecast probabilities for
+           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
+           Wilks, D. S., 1990a
 
     .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons
            to Regularized Likelihood Methods, J. Platt, (1999)
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
-
-    .. [5] On the combination of forecast probabilities for
-           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
-           Wilks, D. S., 1990a
+    .. [4] Transforming Classifier Scores into Accurate Multiclass
+           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
