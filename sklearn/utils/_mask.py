@@ -21,7 +21,6 @@ def _fit_mask(X, value_to_mask):
 
     return Xt
 
-
 def _get_mask(X, value_to_mask, reconstruct_sparse=False):
     """Compute the boolean mask X == missing_values."""
     # We get entire sparse matrix when reconstruct is True
