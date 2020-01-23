@@ -77,7 +77,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if self.add_indicator:
             # if any new missing_values is not passed,
             # then set the missing_values to default
-            if mask == None:
+            if mask is None:
                 mask = self.missing_values
             self.indicator_ = MissingIndicator(
                 missing_values=mask, error_on_new=False)
@@ -416,9 +416,7 @@ class SimpleImputer(_BaseImputer):
 
         # compute mask and missing_mask before eliminating invalid features
         if sparse.issparse(X):
-            mask, missing_mask = _get_mask(X,
-                                    self.missing_values,
-                                    reconstruct_sparse=True)
+            mask, missing_mask = _get_mask(X, self.missing_values, reconstruct_sparse=True)
         else:
             mask = _get_mask(X, self.missing_values)
 
