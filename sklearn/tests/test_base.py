@@ -195,6 +195,11 @@ def test_clone_estimator_types():
 
     assert clf.empty is clf2.empty
 
+def test_clone_class_rather_than_instance():
+    # Check that clone raises expected error message when cloning class rather than instance
+    clf_class = MyEstimator
+    with pytest.raises(TypeError): 
+        clone(clf_class)
 
 def test_repr():
     # Smoke test the repr of the base estimator.
