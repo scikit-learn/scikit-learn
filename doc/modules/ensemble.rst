@@ -1103,7 +1103,7 @@ based on the ascending sort order. E.g., in the following scenario
 the class label 1 will be assigned to the sample.
 
 Usage
-.....
+-----
 
 The following example shows how to fit the majority rule classifier::
 
@@ -1220,7 +1220,7 @@ hyperparameters of the individual estimators::
    >>> grid = grid.fit(iris.data, iris.target)
 
 Usage
-.....
+-----
 
 In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
