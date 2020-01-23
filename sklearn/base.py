@@ -82,8 +82,7 @@ def clone(estimator, safe=True, deepcopy=True):
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     immutable_params = getattr(
-        estimator, "_get_tags", lambda: _DEFAULT_TAGS["immutable_params"]
-    )()["immutable_params"]
+        estimator, "_get_tags", lambda: _DEFAULT_TAGS)()["immutable_params"]
     for name, param in new_object_params.items():
         if immutable_params is not None and name in immutable_params:
             new_object_params[name] = clone(param, safe=False, deepcopy=False)
