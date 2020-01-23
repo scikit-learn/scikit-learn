@@ -69,8 +69,8 @@ def clone(estimator, safe=True):
         if not safe:
             return copy.deepcopy(estimator)
         else:
-            raise TypeError("Cannot clone object '%s' "
-                            "it is a class rather than instance of a class "
+            raise TypeError("Cannot clone object '%s': "
+                            "it is a class rather than an instance."
                             % (repr(estimator)))
 
     klass = estimator.__class__
