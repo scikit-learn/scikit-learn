@@ -416,7 +416,8 @@ class SimpleImputer(_BaseImputer):
 
         # compute mask and missing_mask before eliminating invalid features
         if sparse.issparse(X):
-            mask, missing_mask = _get_mask(X, self.missing_values, reconstruct_sparse=True)
+            mask, missing_mask = _get_mask(X, self.missing_values,
+                                            reconstruct_sparse=True)
         else:
             mask = _get_mask(X, self.missing_values)
 
