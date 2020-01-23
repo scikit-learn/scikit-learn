@@ -149,7 +149,7 @@ class View:
         canvas = FigureCanvasTkAgg(f, master=root)
         try:
             canvas.show()
-        except AttributeError:	
+        except AttributeError:
             canvas.draw()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
