@@ -33,25 +33,36 @@ _DEFAULT_TAGS = {
     '_skip_test': False,
     'multioutput_only': False,
     'binary_only': False,
-    'requires_fit': True}
+    'requires_fit': True,
+    'mutable_params': None,
+}
 
 
-def clone(estimator, safe=True):
+def clone(estimator, safe=True, deepcopy=True):
     """Constructs a new estimator with the same parameters.
 
-    Clone does a deep copy of the model in an estimator
-    without actually copying attached data. It yields a new estimator
-    with the same parameters that has not been fit on any data.
+    Clone does a deep copy of the model in an estimator without actually
+    copying attached data. It yields a new estimator with the same parameters
+    that has not been fit on any data.
+
+    In case an estimator declared some parameters to be mutable (via the
+    `'mutable_params'` tag), these paremeters will not be deep copied but only
+    reassigned.
 
     Parameters
     ----------
-    estimator : estimator object, or list, tuple or set of objects
-        The estimator or group of estimators to be cloned
+    estimator : {list, tuple, set, frozenset} of estimator object or \
+            estimator object
+        The estimator or group of estimators to be cloned.
 
-    safe : boolean, optional
-        If safe is false, clone will fall back to a deep copy on objects
-        that are not estimators.
+    safe : bool, default=True
+        If `safe` is `False`, objects that are not estimators will be either
+        deep copied if `deepcopy=True` or just be passed by assignment if
+        `deepcopy=False`.
 
+    deepcopy : bool, default=True
+        Whether or not to trigger a deep copy of object which are not
+        estimator.
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
@@ -59,16 +70,20 @@ def clone(estimator, safe=True):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
-            return copy.deepcopy(estimator)
+            return copy.deepcopy(estimator) if deepcopy else estimator
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
                             "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
+    mutable_params = estimator._get_tags().get('mutable_params', None)
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
-        new_object_params[name] = clone(param, safe=False)
+        if mutable_params is not None and name in mutable_params:
+            new_object_params[name] = clone(param, safe=False, deepcopy=False)
+        else:
+            new_object_params[name] = clone(param, safe=False, deepcopy=True)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
 
