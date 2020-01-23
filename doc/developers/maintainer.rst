@@ -173,7 +173,7 @@ Making a release
 
     $ git tag -a 0.999
 
-    $ git push git@github.com:scikit-learn/scikit-learn.git --tags
+    $ git push git@github.com:scikit-learn/scikit-learn.git 0.999
 
 5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
    release tag at:
