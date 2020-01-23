@@ -1,7 +1,7 @@
 """Helpers for OpenMP support during the build."""
 
 # This code is adapted for a large part from the astropy openmp helpers, which
-# can be found at: https://github.com/astropy/astropy-helpers/blob/master/astropy_helpers/openmp_helpers.py  # noqa
+# can be found at: https://github.com/astropy/extension-helpers/blob/master/extension_helpers/_openmp_helpers.py  # noqa
 
 
 import os
@@ -40,6 +40,8 @@ def get_openmp_flag(compiler):
         # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib
         #                          -L/usr/local/opt/libomp/lib -lomp"
         return []
+    elif sys.platform == "linux" and "icc" in compiler:
+        return ['-qopenmp']
     # Default flag for GCC and clang:
     return ['-fopenmp']
 
