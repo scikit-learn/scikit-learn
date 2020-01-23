@@ -689,8 +689,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than 1. If None, there is no maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf. Must be strictly greater
-        than 1. Depth isn't constrained by default.
+        nodes to go from the root to the deepest leaf. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value

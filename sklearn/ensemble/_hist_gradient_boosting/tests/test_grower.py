@@ -257,7 +257,7 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         assert len(grower.finalized_leaves) == 1
 
 
-@pytest.mark.parametrize('max_depth', [2, 3])
+@pytest.mark.parametrize('max_depth', [1, 2, 3])
 def test_max_depth(max_depth):
     # Make sure max_depth parameter works as expected
     rng = np.random.RandomState(seed=0)
