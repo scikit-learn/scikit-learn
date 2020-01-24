@@ -1498,8 +1498,7 @@ class GroupShuffleSplit(ShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls the randomness of the training and testing indices produced
-        in ShuffleSplit.
+        Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple
         function calls.
         See term:`Glossary <random_state>`.
