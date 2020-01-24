@@ -249,7 +249,7 @@ class _CFSubcluster:
 
     Parameters
     ----------
-    linear_sum : ndarray, shape (n_features,), optional
+    linear_sum : ndarray of shape (n_features,), default=None
         Sample. This is kept optional to allow initialization of empty
         subclusters.
 
