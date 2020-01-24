@@ -12,8 +12,10 @@ from ..metrics.pairwise import pairwise_distances_argmin
 from .mean_shift_ import estimate_bandwidth
 from ..gaussian_process.kernels import RBF
 
+# These are multiples of the bandwidth
 CONVERGENCE_THRESHOLD = 1e-7
-MERGE_THRESHOLD = 1e-1
+MERGE_THRESHOLD = 1.
+# burn in b/c there is no guarantee that the first iterations will be the largest
 BURN_IN = 100
 
 # separate function for each seed's iterative loop
@@ -36,7 +38,6 @@ def _mean_shift_single(x, train_X, nbrs, kernel, bandwidth, max_iter):
             break  # Depending on kernel type and bandwidth this may occur
         old_x = x  # save the old point
         x = np.average(points_within, weights=weights, axis=0)
-        # If converged or at max_iter, adds the cluster..
         distance_traveled = np.squeeze(scipy.spatial.distance.cdist(
             [x],[old_x], metric=nbrs.metric, **(nbrs.metric_params or {})))
         if (    (completed_iterations >= BURN_IN)
@@ -83,7 +84,7 @@ class MeanShiftv2(ClusterMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    max_iter : int, default=300
+    max_iter : int, default=800
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
@@ -110,8 +111,6 @@ class MeanShiftv2(ClusterMixin, BaseEstimator):
     -----
 
     Scalability:
-
-    
 
     When using a Ball Tree to look up members of each kernel (the default), 
     the complexity will tend towards O(T*n*log(n)) in lower dimensions, 
@@ -176,16 +175,10 @@ class MeanShiftv2(ClusterMixin, BaseEstimator):
         check_is_fitted(self)
 
         # execute iterations on all points in parallel
-        #TODO this could be sped up a bit, since NearestNeighbors does parallel ops
+        #TODO this could be sped up a bit by doing stuff in batches, I think
         all_res = Parallel(n_jobs=self.n_jobs)(
             delayed(_mean_shift_single)
             (x, self.train_X, self.nbrs, self.kernel, self.bandwidth, self.max_iter) for x in X)
-
-        #import matplotlib.pyplot as plt
-        #resres = np.stack(all_res, axis=0)
-        #plt.scatter(X[:,0], X[:,1])
-        #plt.scatter(resres[:,0], resres[:,1], c='r')
-        #plt.show()
 
         # POST PROCESSING: remove near duplicate points
         # If the distance to an already-known center is "small", assign that cluster
@@ -207,4 +200,4 @@ class MeanShiftv2(ClusterMixin, BaseEstimator):
             else: # a previously known cluster
                 labels.append(closest_center)
         
-        return labels
+        return np.array(labels)
