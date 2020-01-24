@@ -5,6 +5,8 @@ from sklearn.base import ClassifierMixin
 from sklearn.inspection import plot_decision_boundary
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.inspection._plot.decision_boundary import (
+    _check_boundary_response_method)
 
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
@@ -23,6 +25,40 @@ def data():
 @pytest.fixture(scope="module")
 def fitted_clf(data):
     return LogisticRegression().fit(*data)
+
+
+def test_check_boundary_response_method_auto():
+    class A:
+        def decision_function(self):
+            pass
+
+    a_inst = A()
+    method = _check_boundary_response_method(a_inst, 'auto')
+    assert method == a_inst.decision_function
+
+    class B:
+        def predict_proba(self):
+            pass
+    b_inst = B()
+    method = _check_boundary_response_method(b_inst, 'auto')
+    assert method == b_inst.predict_proba
+
+    class C:
+        def predict_proba(self):
+            pass
+
+        def decision_function(self):
+            pass
+    c_inst = C()
+    method = _check_boundary_response_method(c_inst, 'auto')
+    assert method == c_inst.decision_function
+
+    class D:
+        def predict(self):
+            pass
+    d_inst = D()
+    method = _check_boundary_response_method(d_inst, 'auto')
+    assert method == d_inst.predict
 
 
 @pytest.mark.parametrize("response_method",
@@ -103,8 +139,8 @@ def test_plot_decision_boundary(pyplot, fitted_clf, data,
                        "MyClassifier"),
      ("decision_function", "response method decision_function is not defined "
                            "in MyClassifier"),
-     ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
+     ("auto", "response method decision_function, predict_proba, or predict "
+              "is not defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function', 'predict', or 'auto'")])
 def test_error_bad_response(pyplot, response_method, msg):

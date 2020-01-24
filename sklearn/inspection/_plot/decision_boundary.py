@@ -11,10 +11,10 @@ def _check_boundary_response_method(estimator, response_method):
         Estimator to check
 
     response_method: {'auto', 'predict_proba', 'decision_function', 'predict'}
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next.
+        Specifies whether to use :term:`predict_proba`,
+        :term:`decision_function`, :term:`predict` as the target response.
+        If set to 'auto', the response method is tried in the following order:
+        :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
 
     Returns
     -------
@@ -33,13 +33,15 @@ def _check_boundary_response_method(estimator, response_method):
             raise ValueError(error_msg.format(response_method,
                                               estimator.__class__.__name__))
         return getattr(estimator, response_method)
-    elif hasattr(estimator, 'predict_proba'):
-        return getattr(estimator, 'predict_proba')
     elif hasattr(estimator, 'decision_function'):
         return getattr(estimator, 'decision_function')
+    elif hasattr(estimator, 'predict_proba'):
+        return getattr(estimator, 'predict_proba')
+    elif hasattr(estimator, 'predict'):
+        return getattr(estimator, 'predict')
 
     raise ValueError(error_msg.format(
-        "decision_function or predict_proba",
+        "decision_function, predict_proba, or predict",
         estimator.__class__.__name__))
 
 
@@ -143,10 +145,10 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
 
     response_method : {'auto', 'predict_proba', 'decision_function', \
             'predict'}, defaul='auto'
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. If set to 'auto',
-        :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next.
+        Specifies whether to use :term:`predict_proba`,
+        :term:`decision_function`, :term:`predict` as the target response.
+        If set to 'auto', the response method is tried in the following order:
+        :term:`predict_proba`, :term:`decision_function`, :term:`predict`.
 
     ax : Matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is
