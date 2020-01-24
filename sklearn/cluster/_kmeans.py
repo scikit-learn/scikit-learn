@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from threadpoolctl import threadpool_limits
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -28,7 +29,6 @@ from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..externals._threadpoolctl import threadpool_limits
 from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
