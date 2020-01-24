@@ -63,14 +63,6 @@ permissions given to maintainers, which includes:
 
 **Preparing a release PR**
 
-Since any commits to an existing branch (e.g. 0.999.X) will automatically
-update the web site documentation, it is best to develop a release with a pull
-request in which 0.999.X is the base. It also allows you to keep track of any
-tasks towards release with a TO DO list. Since the documentation for the branch
-is updated live, it should ideally match the version available to users. Having
-all the changes for a release in one PR minimizes the gap between the time when
-the website points to a release, and the release being available to users.
-
 First, create a branch, **on your own fork** (to release e.g. `0.999.3`)::
 
     $ # assuming master and upstream/master are the same
