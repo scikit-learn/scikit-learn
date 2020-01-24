@@ -65,10 +65,11 @@ def clone(estimator, safe=True):
                 raise TypeError("You should provide an instance of " +
                                 "scikit-learn estimator instead of a class.")
             else:
-                raise TypeError("Cannot clone object '%s': "
-                                "it is a class rather than an instance."
-                                % (repr(estimator)))
-
+                raise  TypeError("Cannot clone object '%s' (type %s): "
+                            "it does not seem to be a scikit-learn estimator "
+                            "as it does not implement a 'get_params' methods."
+                            % (repr(estimator), type(estimator)))
+                            
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
