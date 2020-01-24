@@ -22,7 +22,9 @@ print(__doc__)
 
 import matplotlib
 matplotlib.use('TkAgg')
-
+""" NavigationToolbar2TkAgg was deprecated starting from
+    matplotlib 2.2
+"""
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 try:
     from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
@@ -149,10 +151,13 @@ class View:
         ax.set_xlim((x_min, x_max))
         ax.set_ylim((y_min, y_max))
         canvas = FigureCanvasTkAgg(f, master=root)
+        """ Show() is for older version of matplotlib (1.*)?
+            got replaced by draw in recent versions.
+        """
         try:
-            canvas.show()
-        except AttributeError:
             canvas.draw()
+        except AttributeError:
+            canvas.show()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
