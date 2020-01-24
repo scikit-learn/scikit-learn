@@ -62,7 +62,8 @@ def clone(estimator, safe=True):
             return copy.deepcopy(estimator)
         else:
             if issubclass(estimator, BaseEstimator):
-                raise TypeError("You should provide an instance of scikit-learn estimator instead of a class.")
+                raise TypeError("You should provide an instance of " +
+                                "scikit-learn estimator instead of a class.")
             else:
                 raise TypeError("Cannot clone object '%s': "
                                 "it is a class rather than an instance."
