@@ -270,24 +270,44 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
                                           fitted_clf, values_format):
 
     def test_function_format(x):
-        if (x == 0 or np.log10(x) < 7):
-            return 'd'
-        else:
+        if isinstance(x, float) or x >= 1e7:
             return '.2g'
+        else:
+            return 'd'
 
     X, y = data
-    cm2 = confusion_matrix([1, 1]*5000000, [0, 0]*5000000)
-    disp2 = plot_confusion_matrix(fitted_clf, X, y,
-                                  include_values=True,
-                                  values_format=values_format)
-    disp2.confusion_matrix = np.array([
-                                    [0, 0],
-                                    [10000000, 0]], dtype=int)
-    disp2.plot()
+
+    cm = np.array([[10000000, 0],
+                   [29, 123123]])
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 include_values=True,
+                                 values_format=values_format)
+    disp.confusion_matrix = np.array([[10000000, 0],
+                                      [29, 123123]])
+    # Plot the values to see if it works
+    disp.plot()
 
     expected_text = np.array([format(v, test_function_format(v))
-                              for v in cm2.ravel()])
+                              for v in cm.ravel()])
     text_text = np.array([
-        t.get_text() for t in disp2.text_.ravel()])
+        t.get_text() for t in disp.text_.ravel()])
+
+    assert_array_equal(expected_text, text_text)
+
+    # Testing values with mixed float and int (array will only show float)
+    cm = np.array([[0.1, 1],
+                   [1000, 1000000]])
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 include_values=True,
+                                 values_format=values_format)
+    disp.confusion_matrix = np.array([[0.1, 1],
+                                      [1000, 1000000]])
+    # Plot the values to see if it works
+    disp.plot()
+
+    expected_text = np.array([format(v, test_function_format(v))
+                              for v in cm.ravel()])
+    text_text = np.array([
+        t.get_text() for t in disp.text_.ravel()])
 
     assert_array_equal(expected_text, text_text)
