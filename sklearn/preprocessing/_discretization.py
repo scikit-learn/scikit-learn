@@ -260,7 +260,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES[1])
         n_features = self.n_bins_.shape[0]
         if Xt.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
@@ -305,7 +305,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if 'onehot' in self.encode:
             Xt = self._encoder.inverse_transform(Xt)
 
-        Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES)
+        Xinv = check_array(Xt, copy=True, dtype=FLOAT_DTYPES[1])
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
