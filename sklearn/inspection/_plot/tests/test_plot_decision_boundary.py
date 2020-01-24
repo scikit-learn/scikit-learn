@@ -68,7 +68,7 @@ def test_multiclass_error(pyplot, response_method):
     X = X[:, [0, 1]]
     lr = LogisticRegression().fit(X, y)
 
-    msg = ("multiclass classifers are only supported when "
+    msg = ("multiclass classifiers are only supported when "
            "response_method='predict'")
     with pytest.raises(ValueError, match=msg):
         plot_decision_boundary(lr, X, response_method=response_method)

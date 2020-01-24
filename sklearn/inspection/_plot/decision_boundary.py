@@ -57,10 +57,10 @@ class DecisionBoundaryDisplay:
     Parameters
     ----------
     xx0 : ndarray of shape (grid_resolution, grid_resolution)
-        First output of meshgrid.
+        First output of :func:`meshgrid <numpy.meshgrid>`.
 
     xx1 : ndarray of shape (grid_resolution, grid_resolution)
-        Second output of meshgrid.
+        Second output of :func:`meshgrid <numpy.meshgrid>`.
 
     response : ndarray of shape (grid_resolution, grid_resolution)
         Values of the response function.
@@ -89,7 +89,11 @@ class DecisionBoundaryDisplay:
         Parameters
         ----------
         plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
-            Plotting method to call when plotting the response.
+            Plotting method to call when plotting the response. Please refer
+            to the following matplotlib documentation for details:
+            :func:`contourf <matplotlib.pyplot.contourf>`,
+            :func:`contour <matplotlib.pyplot.contour>`,
+            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -120,10 +124,11 @@ class DecisionBoundaryDisplay:
 
 
 def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
-                           plot_method='contourf',
-                           response_method='auto',
+                           plot_method='contourf', response_method='auto',
                            ax=None, **kwargs):
     """Plot Decision Boundary.
+
+    Please see examples below for usage.
 
     Parameters
     ----------
@@ -141,7 +146,11 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
         response function.
 
     plot_method : {'contourf', 'contour', 'pcolormesh'}, default='contourf'
-        Plotting method to call when plotting the response.
+        Plotting method to call when plotting the response. Please refer
+        to the following matplotlib documentation for details:
+        :func:`contourf <matplotlib.pyplot.contourf>`,
+        :func:`contour <matplotlib.pyplot.contour>`,
+        :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
 
     response_method : {'auto', 'predict_proba', 'decision_function', \
             'predict'}, defaul='auto'
@@ -186,7 +195,7 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
 
     if response.ndim != 1:
         if response.shape[1] != 2:
-            raise ValueError("multiclass classifers are only supported when "
+            raise ValueError("multiclass classifiers are only supported when "
                              "response_method='predict'")
         response = response[:, 1]
 
