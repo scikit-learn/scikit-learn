@@ -206,7 +206,7 @@ class TreeGrower:
         self.min_gain_to_split = min_gain_to_split
         self.shrinkage = shrinkage
         self.splittable_nodes = []
-        self.finalized_leaves = set()
+        self.finalized_leaves = []
         self.total_find_split_time = 0.  # time spent finding the best splits
         self.total_compute_hist_time = 0.  # time spent computing histograms
         self.total_apply_split_time = 0.  # time spent splitting nodes
@@ -354,15 +354,16 @@ class TreeGrower:
 
         self.n_nodes += 2
 
-        if self.max_depth is not None and depth == self.max_depth:
-            self._finalize_leaf(left_child_node)
-            self._finalize_leaf(right_child_node)
-
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
             self._finalize_leaf(left_child_node)
             self._finalize_leaf(right_child_node)
             self._finalize_splittable_nodes()
+            return left_child_node, right_child_node
+
+        if self.max_depth is not None and depth == self.max_depth:
+            self._finalize_leaf(left_child_node)
+            self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
         if left_child_node.n_samples < self.min_samples_leaf * 2:
@@ -421,7 +422,7 @@ class TreeGrower:
         """
         node.value = -self.shrinkage * node.sum_gradients / (
             node.sum_hessians + self.splitter.l2_regularization + EPS)
-        self.finalized_leaves.add(node)
+        self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):
         """Transform all splittable nodes into leaves.
