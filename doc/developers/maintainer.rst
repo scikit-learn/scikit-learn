@@ -39,6 +39,9 @@ Before a release
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
 
+4. Make sure the deprecations, FIXME and TODOs tagged for the release have
+   been taken care of.
+
 Permissions
 ...........
 
