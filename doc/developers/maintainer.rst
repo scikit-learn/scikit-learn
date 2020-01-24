@@ -8,14 +8,7 @@ Releasing
 This section is about preparing a major release, incrementing the minor
 version, or a bug fix release incrementing the patch version. Our convention is
 that we release one or more release candidates (0.RRrcN) before releasing the
-final distributions. Creating the first RC involves creating the release branch
-(0.99.X for instance) directly on the main repo. This is considered the
-*feature freeze*. The rest of the changes (e.g. required to fix some of the
-issues detected during the release process) should be done as a PR to the
-master branch, if it's possible, or done through a PR to the release branch,
-for the other maintainers to review before the release. Each release
-candidate, major, or minor release is a tag under the same branch. This is
-further explained under :ref:`preparing_a_release_pr`. We follow the `PEP101
+final distributions. We follow the `PEP101
 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate release candidates,
 post, and minor releases.
 
@@ -61,29 +54,15 @@ permissions given to maintainers, which includes:
 
 .. _preparing_a_release_pr:
 
-**Preparing a release PR**
+Preparing a release PR
+......................
 
-First, create a branch, **on your own fork** (to release e.g. `0.999.3`)::
-
-    $ # assuming master and upstream/master are the same
-    $ git checkout -b release-0.999.3 master
-
-Note that pushing the (empty) branch **to the main repo** will automatically
-upload its documentation, which currently corresponds to that of master, so
-it's not an accurate representation of what the release will actually be.
-
-Then create a PR **to the `scikit-learn/0.999.X` branch and not `master`** with
-all the desired changes::
-
-	$ git rebase -i upstream/0.999.2
-
-The rest of the process is to merge the PR, create a tag and publish the
-wheels. Ideally, this should be done quickly in order to minimize the gap
-between the time when the website points to a release, and the release being
-available to users.
-
-It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
-understand what's included.
+Releasing the first RC of e.g. version `0.99` involves creating the release
+branch `0.99.X` directly on the main repo, where `X` really is the letter X,
+**not a placeholder**. This is considered the *feature freeze*. The
+development for the major and minor releases of 0.99 should
+**also** happen under `0.99.X`. Each release (rc, major, or minor) is a tag
+under that branch.
 
 In terms of including changes, the first RC ideally counts as a *feature
 freeze*. Each coming release candidate and the final release afterwards will
@@ -94,24 +73,33 @@ The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded.
 
-Then pick the commits for release and resolve any issues, and create a pull
-request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
-Additional commits can be cherry-picked into the ``release-0.999.3`` branch
-while preparing the release.
+First, create a branch, **on your own fork** (to release e.g. `0.999.3`)::
+
+    $ # assuming master and upstream/master are the same
+    $ git checkout -b release-0.999.3 master
+
+Then, create a PR **to the** `scikit-learn/0.999.X` **branch** (not to
+master!) with all the desired changes::
+
+	$ git rebase -i upstream/0.999.2
+
+It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
+understand what's included.
 
 Making a release
 ................
 
-0. Create a branch, and note that this is done only once for a major release,
-   and minor releases happen on the same branch::
+0. Create the release branch on the main repo, if it does not exist. This is
+   done only once, as the major and minor releases happen on the same branch::
 
      $ git checkout -b 0.99.X
 
-   Again, note that the `X` is a literal there and `99` is replaced by the
-   release number. The branches are called ``0.19.X``, ``0.20.X``, ...
+   Again, `X` is literal here, and `99` is replaced by the release number.
+   The branches are called ``0.19.X``, ``0.20.X``, etc.
 
 1. Update docs. Note that this is for the final release, not necessarily for
-   the RC releases.
+   the RC releases. These changes should be made in master and cherry-picked
+   into the release branch, only before the final release.
 
    - Edit the doc/whats_new.rst file to add release title and commit
      statistics. You can retrieve commit statistics with::
@@ -123,13 +111,10 @@ Making a release
    - Edit the doc/templates/index.html to change the 'News' entry of the front
      page.
 
-   - Note that these changes should be made in master and cherry-picked into
-     the release branch, only before the final release.
-
 2. On the branch for releasing, update the version number in
-   sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
-   when ready to release. On master, increment the version in the same place
-   (when branching for release). This means while we're in the release
+   `sklearn/__init__.py`, the ``__version__`` variable by removing ``dev*``
+   only when ready to release. On master, increment the version in the same
+   place (when branching for release). This means while we're in the release
    candidate period, the latest stable is two versions behind the master
    branch, instead of one.
 
