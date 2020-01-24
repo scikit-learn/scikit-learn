@@ -42,7 +42,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     ----------
     base_estimator : instance BaseEstimator
         The classifier whose output decision function needs to be
-        calibrated.
+        calibrated to offer more accurate ``predict_proba`` (or ``decision_function``) outputs.
 
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
