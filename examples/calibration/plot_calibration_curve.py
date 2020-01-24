@@ -46,7 +46,7 @@ procedure. One that fits and calibrates an estimator on each fold. The final
 estimator is an ensemble that averages the predicted probabilities of all such
 estimators. In the other implementaton the cross validation generator is used
 to compute predictions, and the union of these predictions is used for training
-the sigmoid or isotonic model. In this case a single estimator is fit on the
+the sigmoid or isotonic model. In this case a single classifier is fit on the
 whole data.
 """
 print(__doc__)
