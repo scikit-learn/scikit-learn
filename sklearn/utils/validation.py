@@ -461,7 +461,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
-            dtype = np.float64
+            dtype = np.float32
+            #since float64 consumes a lot of memory
         else:
             dtype = None
 
@@ -473,6 +474,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             # dtype conversion required. Let's select the first element of the
             # list of accepted types.
             dtype = dtype[0]
+            #what dtypes are allowed
 
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
