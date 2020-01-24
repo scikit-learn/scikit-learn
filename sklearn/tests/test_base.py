@@ -199,10 +199,9 @@ def test_clone_estimator_types():
 def test_clone_class_rather_than_instance():
     # Check that clone raises expected error message when
     # cloning class rather than instance
-    clf_class = MyEstimator
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
-        clone(clf_class)
+        clone(MyEstimator)
 
 
 def test_repr():
