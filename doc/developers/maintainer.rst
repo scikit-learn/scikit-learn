@@ -6,17 +6,14 @@ version, or a bug fix release incrementing the patch version. Our convention is
 that we release one or more release candidates (0.RRrcN) before releasing the
 final distributions. Creating the first RC involves creating the release branch
 (0.99.X for instance) directly on the main repo. This is considered the
-*feature freeze*. The rest of the changes (required to fix some of the issues
-detected during the release process are a good example) should be done as a PR
-to the master branch, if it's possible, or done through a PR to the release
-branch, for the other maintainers to review before the release. Note that all
-development for the minor releases and the major release of for instance 0.99
-happens (through some PRs merged into that branch) under the branch called
-``0.99.X``, where ``X`` is a literal, and independent of minor bug fix
-releases. Each release candidate, major, or minor release is a tag under the
-same branch. This is further explained under :ref: `preparing-a-release-pr`. We
-follow the `PEP101 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate
-release candidates, post, and minor releases.
+*feature freeze*. The rest of the changes (e.g. required to fix some of the
+issues detected during the release process) should be done as a PR to the
+master branch, if it's possible, or done through a PR to the release branch,
+for the other maintainers to review before the release. Each release
+candidate, major, or minor release is a tag under the same branch. This is
+further explained under :ref:`preparing-a-release-pr`. We follow the `PEP101
+<https://www.python.org/dev/peps/pep-0101/>`_ to indicate release candidates,
+post, and minor releases.
 
 Before a release
 ----------------
