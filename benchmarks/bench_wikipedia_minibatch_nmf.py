@@ -28,12 +28,13 @@ import matplotlib.pyplot as plt
 
 from scipy import sparse
 
+from urllib.request import urlopen
 from joblib import Memory
 from sklearn.decomposition import NMF
 
-n_samples = range(1000, 1001000, 100000)
-batch_size = 10000
-n_components = range(10, 100, 10)
+n_samples = range(1000, 1001, 1)
+batch_size = 100
+n_components = range(7, 10, 1)
 
 # #############################################################################
 # Where to download the data, if not already on disk
@@ -59,7 +60,7 @@ for url, filename in resources:
 # #############################################################################
 # Loading the redirect files
 
-memory = Memory(cachedir=".")
+memory = Memory(location=".")
 
 
 def index(redirects, index_map, k):
@@ -161,10 +162,10 @@ print(X.shape)
 
 fig = plt.figure()
 
-ax1 = plt.subplot(221, ylabel = "time")
-ax2 = plt.subplot(222, xlabel = "n_samples", ylabel = "time", sharex = ax1)
-ax3 = plt.subplot(223, sharex = ax1, sharey = ax1)
-ax3 = plt.subplot(224, xlabel = "n_samples", sharex = ax1, sharey = ax1)
+ax1 = plt.subplot(221)#, ylabel = "time")
+ax2 = plt.subplot(222)#, xlabel = "n_samples", ylabel = "time", sharex = ax1)
+ax3 = plt.subplot(223)#, sharex = ax1, sharey = ax1)
+ax4 = plt.subplot(224)#, xlabel = "n_samples", sharex = ax1, sharey = ax1)
 
 
 for j in range(len(n_components)):
@@ -220,13 +221,14 @@ for j in range(len(n_components)):
     timesmbKL[i] = time() - t0
     print("done in %0.3fs." % (timesmbKL[i]))
 
-  str1 = "Components " + str(n_components[j]) 
+  str1 = str(n_components[j]) + " Components"  
   ax1.plot(n_samples, timesFr)
   ax2.plot(n_samples, timesKL)
   ax3.plot(n_samples, timesmbFr, label = str1 )
+  ax4.plot(n_samples, timesmbKL)
 
-ax3.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+ax4.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 
 plt.subplots_adjust(wspace=0, hspace=0)
-#plt.show()
-fig.savefig('plot.png')
+plt.show()
+#fig.savefig('plot.png')
