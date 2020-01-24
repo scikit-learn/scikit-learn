@@ -71,7 +71,7 @@ class NoTrans(NoFit):
 
 class NoInvTransf(NoTrans):
     def transform(self, X):
-        return X
+        return X  # pragma: no cover
 
 
 class Transf(NoInvTransf):
@@ -79,7 +79,7 @@ class Transf(NoInvTransf):
         return X
 
     def inverse_transform(self, X):
-        return X
+        return X  # pragma: no cover
 
 
 class TransfFitParams(Transf):

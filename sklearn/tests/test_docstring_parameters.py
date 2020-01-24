@@ -11,7 +11,6 @@ from inspect import signature
 
 import sklearn
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
@@ -60,11 +59,10 @@ def test_docstring_parameters():
     # Test module docstring formatting
 
     # Skip test if numpydoc is not found
-    try:
-        import numpydoc  # noqa
-    except ImportError:
-        raise SkipTest("numpydoc is required to test the docstrings")
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
+    # XXX unreached code as of v0.22
     from numpydoc import docscrape
 
     incorrect = []
@@ -142,7 +140,7 @@ def test_tabs():
 
         if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
-            continue
+            continue  # pragma: no cover
 
         # because we don't import
         mod = importlib.import_module(modname)
@@ -158,5 +156,5 @@ def test_tabs():
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
-                                    'or add it to theignore list'
+                                    'or add it to the ignore list'
                                     % modname)

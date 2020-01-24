@@ -23,7 +23,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin, BiclusterMixin
+from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
@@ -57,7 +57,7 @@ def test_parameters_default_constructible(name, Estimator):
 
 
 def _sample_func(x, y=1):
-    pass
+    pass  # pragma: no cover
 
 
 @pytest.mark.parametrize("val, expected", [
@@ -131,7 +131,8 @@ def test_configure():
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
     if not os.path.exists(setup_filename):
-        return
+        pytest.skip('setup.py not available')
+    # XXX unreached code as of v0.22
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
@@ -181,13 +182,11 @@ def test_import_all_consistency():
             continue
         if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
-            continue
+            continue  # pragma: no cover
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
-            if getattr(package, name, None) is None:
-                raise AttributeError(
-                    "Module '{0}' has no attribute '{1}'".format(
-                        modname, name))
+            assert hasattr(package, name),\
+                "Module '{0}' has no attribute '{1}'".format(modname, name)
 
 
 def test_root_import_all_completeness():
