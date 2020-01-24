@@ -56,6 +56,7 @@ else:
     NUMPY_MIN_VERSION = '1.11.0'
 
 JOBLIB_MIN_VERSION = '0.11'
+THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -259,6 +260,7 @@ def setup_package():
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
                         'joblib>={}'.format(JOBLIB_MIN_VERSION)
+                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
                     ],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
