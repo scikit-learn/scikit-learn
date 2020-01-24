@@ -270,7 +270,7 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
                                           fitted_clf, values_format):
 
     def test_function_format(x):
-        if isinstance(x, float) or x >= 1e7:
+        if (isinstance(x, float) or x >= 1e7):
             return '.2g'
         else:
             return 'd'
