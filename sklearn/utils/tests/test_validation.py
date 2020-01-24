@@ -295,6 +295,7 @@ def test_check_array():
             X_checked = check_array(X, dtype=dtype,
                                     accept_sparse=accept_sparse, copy=copy)
         if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            # XXX unreached code as of v0.22
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]
@@ -610,7 +611,7 @@ def test_has_fit_parameter():
     class TestClassWithDeprecatedFitMethod:
         @deprecated("Deprecated for the purpose of testing has_fit_parameter")
         def fit(self, X, y, sample_weight=None):
-            pass
+            pass  # pragma: no cover
 
     assert has_fit_parameter(TestClassWithDeprecatedFitMethod,
                              "sample_weight"), \
@@ -658,7 +659,7 @@ def test_check_is_fitted():
     try:
         assert_raises(NotFittedError, check_is_fitted, ard)
         assert_raises(NotFittedError, check_is_fitted, svr)
-    except ValueError:
+    except ValueError:  # pragma: no cover
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
@@ -682,7 +683,7 @@ def test_check_is_fitted():
 def test_check_is_fitted_attributes():
     class MyEstimator():
         def fit(self, X, y):
-            return self
+            return self  # pragma: no cover
 
     msg = "not fitted"
     est = MyEstimator()
@@ -800,7 +801,7 @@ def test_check_dataframe_mixed_float_dtypes():
 
 class DummyMemory:
     def cache(self, func):
-        return func
+        return func  # pragma: no cover
 
 
 class WrongDummyMemory:

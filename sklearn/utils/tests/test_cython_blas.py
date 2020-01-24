@@ -17,10 +17,12 @@ from sklearn.utils._cython_blas import _gemm_memview
 from sklearn.utils._cython_blas import RowMajor, ColMajor
 from sklearn.utils._cython_blas import Trans, NoTrans
 
-cython = pytest.importorskip("cython")
+
+def _numpy_to_cython():
+    cython = pytest.importorskip("cython")
+    return {np.float32: cython.float, np.float64: cython.double}
 
 
-NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}
 RTOL = {np.float32: 1e-6, np.float64: 1e-12}
 ORDER = {RowMajor: 'C', ColMajor: 'F'}
 
@@ -31,7 +33,7 @@ def _no_op(x):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_dot(dtype):
-    dot = _dot_memview[NUMPY_TO_CYTHON[dtype]]
+    dot = _dot_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -45,7 +47,7 @@ def test_dot(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_asum(dtype):
-    asum = _asum_memview[NUMPY_TO_CYTHON[dtype]]
+    asum = _asum_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -58,7 +60,7 @@ def test_asum(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_axpy(dtype):
-    axpy = _axpy_memview[NUMPY_TO_CYTHON[dtype]]
+    axpy = _axpy_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -73,7 +75,7 @@ def test_axpy(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_nrm2(dtype):
-    nrm2 = _nrm2_memview[NUMPY_TO_CYTHON[dtype]]
+    nrm2 = _nrm2_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -86,7 +88,7 @@ def test_nrm2(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_copy(dtype):
-    copy = _copy_memview[NUMPY_TO_CYTHON[dtype]]
+    copy = _copy_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -100,7 +102,7 @@ def test_copy(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_scal(dtype):
-    scal = _scal_memview[NUMPY_TO_CYTHON[dtype]]
+    scal = _scal_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -114,7 +116,7 @@ def test_scal(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_rotg(dtype):
-    rotg = _rotg_memview[NUMPY_TO_CYTHON[dtype]]
+    rotg = _rotg_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     a = dtype(rng.randn())
@@ -124,7 +126,7 @@ def test_rotg(dtype):
     def expected_rotg(a, b):
         roe = a if abs(a) > abs(b) else b
         if a == 0 and b == 0:
-            c, s, r, z = (1, 0, 0, 0)
+            c, s, r, z = (1, 0, 0, 0)  # pragma: no cover
         else:
             r = np.sqrt(a**2 + b**2) * (1 if roe >= 0 else -1)
             c, s = a/r, b/r
@@ -139,7 +141,7 @@ def test_rotg(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_rot(dtype):
-    rot = _rot_memview[NUMPY_TO_CYTHON[dtype]]
+    rot = _rot_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -163,7 +165,7 @@ def test_rot(dtype):
 @pytest.mark.parametrize("order", [RowMajor, ColMajor],
                          ids=["RowMajor", "ColMajor"])
 def test_gemv(dtype, opA, transA, order):
-    gemv = _gemv_memview[NUMPY_TO_CYTHON[dtype]]
+    gemv = _gemv_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((20, 10)).astype(dtype, copy=False)),
@@ -182,7 +184,7 @@ def test_gemv(dtype, opA, transA, order):
 @pytest.mark.parametrize("order", [RowMajor, ColMajor],
                          ids=["RowMajor", "ColMajor"])
 def test_ger(dtype, order):
-    ger = _ger_memview[NUMPY_TO_CYTHON[dtype]]
+    ger = _ger_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
@@ -207,7 +209,7 @@ def test_ger(dtype, order):
 @pytest.mark.parametrize("order", [RowMajor, ColMajor],
                          ids=["RowMajor", "ColMajor"])
 def test_gemm(dtype, opA, transA, opB, transB, order):
-    gemm = _gemm_memview[NUMPY_TO_CYTHON[dtype]]
+    gemm = _gemm_memview[_numpy_to_cython()[dtype]]
 
     rng = np.random.RandomState(0)
     A = np.asarray(opA(rng.random_sample((30, 10)).astype(dtype, copy=False)),

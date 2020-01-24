@@ -10,9 +10,9 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
-                                   ignore_warnings,
-                                   assert_warns, assert_raises,
-                                   SkipTest)
+                                    ignore_warnings,
+                                    assert_warns, assert_raises,
+                                    SkipTest)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -166,15 +166,15 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
-    def fit(self, X, y):
+    def fit(self, X, y):  # pragma: no cover
         X, y = check_X_y(X, y)
         self.coef_ = np.ones(X.shape[1])
         return self
 
     def predict(self, X):
         check_is_fitted(self)
-        X = check_array(X)
-        return np.ones(X.shape[0])
+        X = check_array(X)  # pragma: no cover
+        return np.ones(X.shape[0])  # pragma: no cover
 
 
 class NoSampleWeightPandasSeriesType(BaseEstimator):
@@ -258,9 +258,8 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
                     raise ValueError(
                         "Estimator doesn't support 64-bit indices")
             elif X.getformat() in ["csc", "csr"]:
-                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
-                    raise ValueError(
-                        "Estimator doesn't support 64-bit indices")
+                assert "int64" not in (X.indices.dtype, X.indptr.dtype),\
+                    "Estimator doesn't support 64-bit indices"
 
         return self
 
@@ -542,7 +541,7 @@ def test_check_estimator_required_parameters_skip():
         _required_parameters = ["special_parameter"]
 
         def __init__(self, special_parameter):
-            self.special_parameter = special_parameter
+            self.special_parameter = special_parameter  # pragma: no cover
 
     assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
                                   r"which requires parameters "
@@ -550,7 +549,7 @@ def test_check_estimator_required_parameters_skip():
                                   check_estimator, MyEstimator)
 
 
-def run_tests_without_pytest():
+def run_tests_without_pytest():  # pragma: no cover
     """Runs the tests in this file without using pytest.
     """
     main_module = sys.modules['__main__']
@@ -581,7 +580,7 @@ def test_all_estimators_all_public():
         assert not est.__class__.__name__.startswith("_")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()

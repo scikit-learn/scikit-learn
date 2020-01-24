@@ -35,7 +35,6 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container)
 
-from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
@@ -231,12 +230,12 @@ def test_ignore_warning():
     with pytest.raises(ValueError, match=match):
         silence_warnings_func = ignore_warnings(warning_class)(
             _warning_function)
-        silence_warnings_func()
+        silence_warnings_func()  # pragma: no cover
 
     with pytest.raises(ValueError, match=match):
         @ignore_warnings(warning_class)
         def test():
-            pass
+            pass  # pragma: no cover
 
 
 class TestWarns(unittest.TestCase):
@@ -266,19 +265,19 @@ class TestWarns(unittest.TestCase):
             try:
                 # Should raise an AssertionError
                 assert_warns(UserWarning, f)
-                failed = True
+                failed = True  # pragma: no cover
             except AssertionError:
                 pass
         finally:
             sys.modules['warnings'].filters = filters
 
-        if failed:
+        if failed:  # pragma: no cover
             raise AssertionError("wrong warning caught by assert_warn")
 
 
 # Tests for docstrings:
 
-def f_ok(a, b):
+def f_ok(a, b):  # pragma: no cover
     """Function f
 
     Parameters
@@ -297,7 +296,7 @@ def f_ok(a, b):
     return c
 
 
-def f_bad_sections(a, b):
+def f_bad_sections(a, b):  # pragma: no cover
     """Function f
 
     Parameters
@@ -316,7 +315,7 @@ def f_bad_sections(a, b):
     return c
 
 
-def f_bad_order(b, a):
+def f_bad_order(b, a):  # pragma: no cover
     """Function f
 
     Parameters
@@ -335,7 +334,7 @@ def f_bad_order(b, a):
     return c
 
 
-def f_too_many_param_docstring(a, b):
+def f_too_many_param_docstring(a, b):  # pragma: no cover
     """Function f
 
     Parameters
@@ -356,7 +355,7 @@ def f_too_many_param_docstring(a, b):
     return d
 
 
-def f_missing(a, b):
+def f_missing(a, b):  # pragma: no cover
     """Function f
 
     Parameters
@@ -373,7 +372,7 @@ def f_missing(a, b):
     return c
 
 
-def f_check_param_definition(a, b, c, d, e):
+def f_check_param_definition(a, b, c, d, e):  # pragma: no cover
     """Function f
 
     Parameters
@@ -394,7 +393,7 @@ def f_check_param_definition(a, b, c, d, e):
 
 class Klass:
     def f_missing(self, X, y):
-        pass
+        pass  # pragma: no cover
 
     def f_bad_sections(self, X, y):
         """Function f
@@ -411,10 +410,10 @@ class Klass:
         c : list
             Parameter c
         """
-        pass
+        pass  # pragma: no cover
 
 
-class MockEst:
+class MockEst:  # pragma: no cover
     def __init__(self):
         """MockEstimator"""
     def fit(self, X, y):
@@ -430,7 +429,7 @@ class MockEst:
         return 1.
 
 
-class MockMetaEstimator:
+class MockMetaEstimator:  # pragma: no cover
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 
@@ -480,11 +479,8 @@ class MockMetaEstimator:
 
 
 def test_check_docstring_parameters():
-    try:
-        import numpydoc  # noqa
-    except ImportError:
-        raise SkipTest(
-            "numpydoc is required to test the docstrings")
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []

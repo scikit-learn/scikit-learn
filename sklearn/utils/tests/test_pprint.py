@@ -38,7 +38,7 @@ class LogisticRegression(BaseEstimator):
         self.l1_ratio = l1_ratio
 
     def fit(self, X, y):
-        return self
+        return self  # pragma: no cover
 
 
 class StandardScaler(TransformerMixin, BaseEstimator):
@@ -48,7 +48,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def transform(self, X, copy=None):
-        return self
+        return self  # pragma: no cover
 
 
 class RFE(BaseEstimator):
@@ -371,6 +371,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                    'function chi2 at some_address>', repr_)
     assert repr_ == expected
 
+
 def test_n_max_elements_to_show():
 
     n_max_elements_to_show = 30
@@ -397,7 +398,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
                             27: 27, 28: 28, 29: 29})"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(vectorizer) == expected
+    assert pp.pformat(vectorizer) == expected
 
     # Now with ellipsis
     vocabulary = {i: i for i in range(n_max_elements_to_show + 1)}
@@ -417,7 +418,7 @@ CountVectorizer(analyzer='word', binary=False, decode_error='strict',
                             27: 27, 28: 28, 29: 29, ...})"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(vectorizer) == expected
+    assert pp.pformat(vectorizer) == expected
 
     # Also test with lists
     param_grid = {'C': list(range(n_max_elements_to_show))}
@@ -437,7 +438,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(gs) == expected
+    assert pp.pformat(gs) == expected
 
     # Now with ellipsis
     param_grid = {'C': list(range(n_max_elements_to_show + 1))}
@@ -457,7 +458,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
              scoring=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
-    assert  pp.pformat(gs) == expected
+    assert pp.pformat(gs) == expected
 
 
 def test_bruteforce_ellipsis():
@@ -532,6 +533,7 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
                    warm_start=False)"""
     expected = expected[1:]  # remove first \n
     assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 2)
+
 
 def test_builtin_prettyprinter():
     # non regression test than ensures we can still use the builtin
