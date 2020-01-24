@@ -32,7 +32,7 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import ChangedBehaviorWarning, NotFittedError
+from ..exceptions import NotFittedError
 
 
 __all__ = ['HashingVectorizer',
@@ -390,28 +390,6 @@ class _VectorizerMixin:
             self._stop_words_id = id(self.stop_words)
             return 'error'
 
-    def _validate_custom_analyzer(self):
-        # This is to check if the given custom analyzer expects file or a
-        # filename instead of data.
-        # Behavior changed in v0.21, function could be removed in v0.23
-        import tempfile
-        with tempfile.NamedTemporaryFile() as f:
-            fname = f.name
-        # now we're sure fname doesn't exist
-
-        msg = ("Since v0.21, vectorizers pass the data to the custom analyzer "
-               "and not the file names or the file objects. This warning "
-               "will be removed in v0.23.")
-        try:
-            self.analyzer(fname)
-        except FileNotFoundError:
-            warnings.warn(msg, ChangedBehaviorWarning)
-        except AttributeError as e:
-            if str(e) == "'str' object has no attribute 'read'":
-                warnings.warn(msg, ChangedBehaviorWarning)
-        except Exception:
-            pass
-
     def build_analyzer(self):
         """Return a callable that handles preprocessing, tokenization
         and n-grams generation.
@@ -424,8 +402,6 @@ class _VectorizerMixin:
         """
 
         if callable(self.analyzer):
-            if self.input in ['file', 'filename']:
-                self._validate_custom_analyzer()
             return partial(
                 _analyze, analyzer=self.analyzer, decoder=self.decode
             )
