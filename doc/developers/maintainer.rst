@@ -1,6 +1,10 @@
 Maintainer / core-developer information
 ========================================
 
+
+Releasing
+---------
+
 This section is about preparing a major release, incrementing the minor
 version, or a bug fix release incrementing the patch version. Our convention is
 that we release one or more release candidates (0.RRrcN) before releasing the
@@ -11,12 +15,12 @@ issues detected during the release process) should be done as a PR to the
 master branch, if it's possible, or done through a PR to the release branch,
 for the other maintainers to review before the release. Each release
 candidate, major, or minor release is a tag under the same branch. This is
-further explained under :ref:`preparing-a-release-pr`. We follow the `PEP101
+further explained under :ref:`preparing_a_release_pr`. We follow the `PEP101
 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate release candidates,
 post, and minor releases.
 
 Before a release
-----------------
+................
 
 1. Update authors table::
 
@@ -42,8 +46,7 @@ Before a release
 4. Make sure the deprecations, FIXME and TODOs tagged for the release have
    been taken care of.
 
-Permissions
-...........
+**Permissions**
 
 The release manager requires a set of permissions on top of the usual
 permissions given to maintainers, which includes:
@@ -56,10 +59,9 @@ permissions given to maintainers, which includes:
 - *maintainer* on ``https://github.com/MacPython/scikit-learn-wheels``
 
 
-.. _preparing-a-release-pr:
+.. _preparing_a_release_pr:
 
-Preparing a release PR
-......................
+**Preparing a release PR**
 
 Since any commits to an existing branch (e.g. 0.999.X) will automatically
 update the web site documentation, it is best to develop a release with a pull
@@ -106,7 +108,7 @@ Additional commits can be cherry-picked into the ``release-0.999.3`` branch
 while preparing the release.
 
 Making a release
-----------------
+................
 
 0. Create a branch, and note that this is done only once for a major release,
    and minor releases happen on the same branch::
