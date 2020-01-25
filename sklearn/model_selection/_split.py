@@ -376,7 +376,7 @@ class KFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : bool, default=None
+    shuffle : bool, default=False
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
@@ -583,7 +583,7 @@ class StratifiedKFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : bool, default=None
+    shuffle : bool, default=False
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
