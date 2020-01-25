@@ -430,7 +430,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
+        y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -609,7 +609,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
+        y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -918,7 +918,7 @@ class GridSearchCV(BaseSearchCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -1247,7 +1247,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
         - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
