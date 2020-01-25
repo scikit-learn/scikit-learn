@@ -684,11 +684,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the codebook.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random choice for initializing the codebook.
+        Use an int to use the randomness deterministic.
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.

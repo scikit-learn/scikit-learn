@@ -546,13 +546,10 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+    random_state : int, RandomState instance, default=None
+        Determines random generator for chain orders.
+        Pass an int for being more deterministic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -706,13 +703,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+    random_state : int, RandomState instance, default=None
+        Determines random generator for chain orders.
+        Pass an int for being more deterministc.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------

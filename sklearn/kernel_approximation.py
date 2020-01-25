@@ -38,11 +38,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random generator of number.
+        Pass an int for making it determenistic.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -140,11 +139,10 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random generator of number.
+        Pass an int for making it determenistic.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -467,11 +465,10 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random generator of number.
+        Pass an int for making it determenistic.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
