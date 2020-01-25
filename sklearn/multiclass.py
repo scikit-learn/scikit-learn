@@ -702,6 +702,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
+
     Attributes
     ----------
     estimators_ : list of `int(n_classes * code_size)` estimators
