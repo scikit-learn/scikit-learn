@@ -67,6 +67,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
+        .. versionadded:: v0.20.0
 
     Examples
     --------

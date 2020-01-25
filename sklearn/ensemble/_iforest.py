@@ -143,6 +143,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         contamination parameter different than "auto" is provided, the offset
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
+        .. versionadded:: v0.20.0
 
     Notes
     -----
