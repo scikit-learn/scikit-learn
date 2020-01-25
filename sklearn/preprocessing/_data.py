@@ -2161,6 +2161,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         a better approximation of the cumulative distribution function
         estimator.
 
+        .. versionchanged:: 0.21
+
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
         'uniform' (default) or 'normal'.

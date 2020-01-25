@@ -110,6 +110,8 @@ boolean mask array or callable
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     transformers_ : list
@@ -716,6 +718,8 @@ boolean mask array or callable
     verbose : boolean, optional(default=False)
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+        .. versionadded:: 0.21
 
     Returns
     -------

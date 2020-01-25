@@ -2787,12 +2787,17 @@ def check_fit_non_negative(name, estimator_orig):
 
 
 def check_fit_idempotent(name, estimator_orig):
-    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
-    # check that the estimated parameters during training (e.g. coefs_) are
-    # the same, but having a universal comparison function for those
-    # attributes is difficult and full of edge cases. So instead we check that
-    # predict(), predict_proba(), decision_function() and transform() return
-    # the same results.
+    """
+    Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    check that the estimated parameters during training (e.g. coefs_) are
+    the same, but having a universal comparison function for those
+    attributes is difficult and full of edge cases. So instead we check that
+    predict(), predict_proba(), decision_function() and transform() return
+    the same results.
+
+     .. versionadded:: 0.21
+
+     """
 
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]

@@ -190,6 +190,9 @@ def _astype_copy_false(X):
     """Returns the copy=False parameter for
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
+
+    .. versionadded:: 0.21
+
     """
     if sp_version >= (1, 1) or not sp.issparse(X):
         return {'copy': False}

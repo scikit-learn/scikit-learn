@@ -950,6 +950,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         return yt
 
     def _build_cache(self):
+        """ .. versionadded:: 0.21"""
+
         if self._cached_dict is None:
             self._cached_dict = dict(zip(self.classes_,
                                          range(len(self.classes_))))

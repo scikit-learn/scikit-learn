@@ -37,6 +37,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
 
+        .. versionchanged:: 0.21
+
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
@@ -197,6 +199,8 @@ class OneHotEncoder(_BaseEncoder):
           category is present, the feature will be dropped entirely.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
+
+        .. versionadded:: 0.21
 
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.

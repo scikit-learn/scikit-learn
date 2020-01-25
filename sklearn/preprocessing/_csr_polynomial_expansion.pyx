@@ -83,6 +83,8 @@ def _csr_polynomial_expansion(ndarray[DATA_T, ndim=1] data,
     ----------
     "Leveraging Sparsity to Speed Up Polynomial Feature Expansions of CSR
     Matrices Using K-Simplex Numbers" by Andrew Nystrom and John Hughes.
+
+    .. versionadded:: 0.21
     """
 
     assert degree in (2, 3)

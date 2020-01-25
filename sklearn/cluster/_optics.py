@@ -51,6 +51,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         number or a fraction of the number of samples (rounded to be at least
         2).
 
+        .. versionadded:: 0.21
+
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for one to be considered as
         in the neighborhood of the other. Default value of ``np.inf`` will
@@ -118,6 +120,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         absolute number or a fraction of the number of samples (rounded to be
         at least 2). If ``None``, the value of ``min_samples`` is used instead.
         Used only when ``cluster_method='xi'``.
+
+        .. versionadded:: 0.21
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:

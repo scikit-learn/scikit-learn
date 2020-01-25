@@ -6,6 +6,7 @@
 *.lprof
 *.swp
 *.swo
+env/
 .DS_Store
 build
 sklearn/datasets/__config__.py

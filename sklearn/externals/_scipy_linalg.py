@@ -51,6 +51,8 @@ def pinvh(a, cond=None, rcond=None, lower=True, return_rank=False,
     using its eigenvalue decomposition and including all eigenvalues with
     'large' absolute value.
 
+    .. versionadded:: 0.21
+
     Parameters
     ----------
     a : (N, N) array_like

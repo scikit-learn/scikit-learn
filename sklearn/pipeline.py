@@ -70,6 +70,8 @@ class Pipeline(_BaseComposition):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     named_steps : bunch object, a dictionary with attribute access
@@ -211,6 +213,9 @@ class Pipeline(_BaseComposition):
     def __len__(self):
         """
         Returns the length of the Pipeline
+
+        .. versionadded:: 0.21
+
         """
         return len(self.steps)
 
@@ -678,6 +683,8 @@ def make_pipeline(*steps, **kwargs):
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
+        .. versionadded:: 0.21
+
     See Also
     --------
     sklearn.pipeline.Pipeline : Class for creating a pipeline of
@@ -786,6 +793,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     verbose : boolean, optional(default=False)
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+        .. versionadded:: 0.21
 
     See Also
     --------
@@ -1019,6 +1028,8 @@ def make_union(*transformers, **kwargs):
     verbose : boolean, optional(default=False)
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
+
+        .. versionadded:: 0.21
 
     Returns
     -------

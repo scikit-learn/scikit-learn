@@ -809,6 +809,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
 
     Note that backwards compatibility may not be supported.
 
+    .. versionadded:: 0.21
+
     Parameters
     ----------
     decision_tree : object

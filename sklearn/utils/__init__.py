@@ -486,6 +486,8 @@ def resample(*arrays, **options):
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
+    .. versionadded:: 0.21
+
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures

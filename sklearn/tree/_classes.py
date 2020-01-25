@@ -118,6 +118,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         The depth of a tree is the maximum distance between the root
         and any leaf.
 
+        .. versionadded:: 0.21
+
         Returns
         -------
         self.tree_.max_depth : int
@@ -128,6 +130,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def get_n_leaves(self):
         """Return the number of leaves of the decision tree.
+
+        .. versionadded:: 0.21
 
         Returns
         -------
