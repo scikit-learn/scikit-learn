@@ -2179,7 +2179,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Determines random number generation for subsampling.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>, <subsample>`
+        See :term:`Glossary <random_state>`
 
     copy : boolean, optional, (default=True)
         Set to False to perform inplace transformation and avoid a copy (if the
@@ -2607,7 +2607,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Determines random number generation for subsampling.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>, <subsample>`
+        See :term:`Glossary <random_state>`
 
     copy : boolean, optional, (default=True)
         Set to False to perform inplace transformation and avoid a copy (if the
