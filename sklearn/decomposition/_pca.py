@@ -27,7 +27,8 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features, spectrum_cutoff=None):
+def _assess_dimension_(spectrum, rank, n_samples, n_features,
+                       spectrum_cutoff=None):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
