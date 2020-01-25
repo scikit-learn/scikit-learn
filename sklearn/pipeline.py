@@ -780,6 +780,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
+
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
@@ -1016,6 +1019,9 @@ def make_union(*transformers, **kwargs):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
 
     verbose : boolean, optional(default=False)
         If True, the time elapsed while fitting each transformer will be
