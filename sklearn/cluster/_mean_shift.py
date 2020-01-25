@@ -41,7 +41,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     quantile : float, default=0.3
         should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
-        The default is 0.3.
+        The default is 0.3
 
     n_samples : int, default=None
         The number of samples to use. If not given, all samples are used.
@@ -149,7 +149,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_all : boolean, default=True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
-        If false, then orphans are given cluster label -1. 
+        If false, then orphans are given cluster label -1.
         The default value is True.
 
     max_iter : int, default=300
@@ -466,3 +466,4 @@ class MeanShift(ClusterMixin, BaseEstimator):
         check_is_fitted(self)
 
         return pairwise_distances_argmin(X, self.cluster_centers_)
+        
