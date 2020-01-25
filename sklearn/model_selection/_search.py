@@ -887,6 +887,9 @@ class GridSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
+
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -1216,6 +1219,9 @@ class RandomizedSearchCV(BaseSearchCV):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
