@@ -164,7 +164,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         for more details.
 
         .. versionchanged:: v0.20
-       `n_jobs` change from '1' to 'None'
+       `n_jobs` change from ``1`` to ``None``
 
     Attributes
     ----------
@@ -490,7 +490,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         for more details.
 
         .. versionchanged:: v0.20
-       `n_jobs` change from '1' to 'None'
+       `n_jobs` change from ``1`` to ``None``
+
     Attributes
     ----------
     estimators_ : list of ``n_classes * (n_classes - 1) / 2`` estimators
