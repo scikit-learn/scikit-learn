@@ -114,7 +114,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Determines random number generation for random sub-sampling.
         Use an int to make randomness deterministic.
         See :term: `Glossary <random_state>`.
-    
+
     Attributes
     ----------
     bin_thresholds_ : list of arrays
