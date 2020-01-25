@@ -2176,7 +2176,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         differ for value-identical sparse and dense matrices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Determines random number generation for subsampling.
+        Determines random number generation for subsampling and smoothing noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`
@@ -2604,7 +2604,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         differ for value-identical sparse and dense matrices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Determines random number generation for subsampling.
+        Determines random number generation for subsampling and smoothing noise.
         Please see ``subsample`` for more details.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`
