@@ -556,10 +556,10 @@ class TSNE(BaseEstimator):
         Verbosity level.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator. Use an int to make the
-        randomness deterministic. Note that different initializations might
-        result in different local minima of the cost function.
-        See :term: `Glossary <random_state>`.
+        Determines the random number generator. Pass an int for reproducible
+        results across multiple function calls. Note that different
+        initializations might result in different local minima of the cost
+        function. See :term: `Glossary <random_state>`.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
