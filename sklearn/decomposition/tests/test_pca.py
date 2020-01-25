@@ -570,9 +570,6 @@ def test_pca_n_components_mostly_explained_variance_ratio():
     assert pca2.n_components_ == X.shape[1]
 
 
-
-
-#### TESTING TESTS
 def test_infer_dim_bad_spec():
     # Test a spectrum that drops to near zero
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
@@ -598,4 +595,4 @@ def test_infer_dim_mle():
                                         n_redundant=1, n_clusters_per_class=1,
                                         random_state=42)
     pca = PCA(n_components='mle').fit(X)
-    assert pca.n_components_ == 1
+    assert pca.n_components_ == 0
