@@ -279,12 +279,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     min_bin_freq : int, default=1
        To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds. The default value is 1. 
+       min_bin_freq points as seeds. The default value is 1.
 
     cluster_all : boolean, default=True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
-        If false, then orphans are given cluster label -1. 
+        If false, then orphans are given cluster label -1.
         The default value is True.
 
     n_jobs : int or None, default=None
