@@ -56,9 +56,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    n_features_to_select : int or None (default=None)
-        The number of features to select. If `None`, half of the features
-        are selected.
+    n_features_to_select : int, float, or None (default=None)
+        The number of features to select.
+        If `None`, half of the features are selected.
+        If integer, the parameter is the absolute number of features to select.
+        If float between 0 and 1, it is the fraction of features to select.
+        If float larger than 1, it is converted to integer and represents the absolute number of features to select.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then ``step`` corresponds to the
@@ -123,6 +126,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
+        if n_features_to_select < 0:
+            raise ValueError("n_features_to_select must be positive.")
         self.step = step
         self.verbose = verbose
 
@@ -159,10 +164,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                          force_all_finite=not tags.get('allow_nan', True))
         # Initialization
         n_features = X.shape[1]
+
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        else:
-            n_features_to_select = self.n_features_to_select
+        elif 0.0 < self.n_features_to_select < 1.0:
+            n_features_to_select = int(n_features * self.n_features_to_select)
+        elif n_features_to_select = (self.n_features_to_select
+                                    if isinstance(self.n_features_to_select, numbers.Integral)
+                                    else int(self.n_features_to_select))
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
