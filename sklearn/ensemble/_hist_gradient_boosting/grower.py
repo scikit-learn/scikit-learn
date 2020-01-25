@@ -135,7 +135,7 @@ class TreeGrower:
         maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf.
+        edges to go from the root to the deepest leaf. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
     min_gain_to_split : float, optional (default=0.)
