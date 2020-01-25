@@ -430,6 +430,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         opposite_lof_scores : ndarray of shape (n_samples,)
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
+
+        .. versionadded:: v0.20.0
         """
         if not self.novelty:
             msg = ('score_samples is not available when novelty=False. The '

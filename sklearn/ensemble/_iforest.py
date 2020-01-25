@@ -384,8 +384,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
         scores : ndarray of shape (n_samples,)
             The anomaly score of the input samples.
             The lower, the more abnormal.
+
+        .. versionadded:: v0.20.0
         """
         # code structure from ForestClassifier/predict_proba
+
         check_is_fitted(self)
 
         # Check data
