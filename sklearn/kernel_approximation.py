@@ -38,7 +38,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -140,7 +140,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -258,9 +258,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    sample_steps : int, optional
+    sample_steps : int
         Gives the number of (complex) sampling points.
-    sample_interval : float, optional
+    sample_interval : float
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
     Attributes
@@ -349,7 +349,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : {array, sparse matrix}, \
+        X_new : {array-like, sparse matrix}, \
                shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
@@ -459,7 +459,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
     degree : float, default=None
         Degree of the polynomial kernel. Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -467,7 +467,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -475,13 +475,13 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : array-like of shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    component_indices_ : array, shape (n_components)
+    component_indices_ : array-like of shape (n_components)
         Indices of ``components_`` in the training set.
 
-    normalization_ : array, shape (n_components, n_components)
+    normalization_ : array-like of shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
@@ -586,7 +586,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_transformed : array, shape=(n_samples, n_components)
+        X_transformed : array-like of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
