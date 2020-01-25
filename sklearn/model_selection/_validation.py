@@ -136,6 +136,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
+        .. versionadded:: 0.20
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
