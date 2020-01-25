@@ -232,7 +232,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         to the overhead of spawning processes.
 
         ..versionchanged:: v0.20
-           `n_jobs` change from ``1`` to ``None``
+           `n_jobs` changed from ``1`` to ``None``
 
     Attributes
     ----------
@@ -290,7 +290,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         for more details.
 
         ..versionchanged:: v0.20
-           `n_jobs` change from ``1`` to ``None``
+           `n_jobs` changed from ``1`` to ``None``
 
     Attributes
     ----------
