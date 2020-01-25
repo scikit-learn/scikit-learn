@@ -114,6 +114,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         ``init='random'``, ``random_state`` is used to initialize the random
         transformation. If ``init='pca'``, ``random_state`` is passed as an
         argument to PCA when initializing the transformation.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
