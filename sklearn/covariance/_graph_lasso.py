@@ -561,6 +561,9 @@ class GraphicalLassoCV(GraphicalLasso):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
+
     verbose : bool, default=False
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
