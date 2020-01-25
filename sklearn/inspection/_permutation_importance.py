@@ -78,9 +78,10 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, or None, default=None
-        Pseudo-random number generator to control the permutations of each
-        feature. See :term:`random_state`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation to control the permutations 
+        of each feature.
+        See :term: `Glossary <random_state>`. 
 
     Returns
     -------
