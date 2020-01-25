@@ -185,10 +185,9 @@ def randomized_range_finder(A, size, n_iter,
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function 
+        Pass an int for reproducible results across multiple function
         calls.
         See :term:`Glossary <random_state>`.
-
 
     Returns
     -------
@@ -298,10 +297,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function 
+        Pass an int for reproducible results across multiple function
         calls.
         See :term:`Glossary <random_state>`.
-
+        
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
