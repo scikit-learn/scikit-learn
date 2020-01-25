@@ -41,16 +41,14 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     quantile : float, default=0.3
         should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
-        The default is 0.3
 
     n_samples : int, default=None
         The number of samples to use. If not given, all samples are used.
-        The default value is None.
 
     random_state : int, RandomState instance, default=None
         The generator used to randomly select the samples from input points
         for bandwidth estimation. Use an int to make the randomness
-        deterministic.The default value is None.
+        deterministic.
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
@@ -140,22 +138,20 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
-        Ignored if seeds argument is not None. The default value is False.
+        Ignored if seeds argument is not None.
 
     min_bin_freq : int, default=1
        To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds.The default value is 1.
+       min_bin_freq points as seeds.
 
     cluster_all : boolean, default=True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
-        The default value is True.
 
     max_iter : int, default=300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
-        The default value is 300.
 
     n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by computing
@@ -213,7 +209,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     min_bin_freq : integer, default=1
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
-        makes mean_shift computationally cheaper. The default value is 1.
+        makes mean_shift computationally cheaper.
 
     Returns
     -------
@@ -259,14 +255,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
         function for hints on scalability (see also the Notes, below).
-        The default value is None.
 
     seeds : array, shape=[n_samples, n_features], default=None
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
-        The default value is None.
 
     bin_seeding : boolean, default=False
         If true, initial kernel locations are not locations of all
@@ -279,17 +273,16 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     min_bin_freq : int, default=1
        To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds. The default value is 1.
+       min_bin_freq points as seeds.
 
     cluster_all : boolean, default=True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
-        The default value is True.
 
     n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel. The default value is None.
+        each of the n_init runs in parallel.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -298,7 +291,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
     max_iter : int, default=300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
-        The default value is 300.
 
         .. versionadded:: 0.22
 
