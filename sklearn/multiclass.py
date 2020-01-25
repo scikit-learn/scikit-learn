@@ -162,8 +162,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        .. versionchanged:: v0.20
-       `n_jobs` change from ``1`` to ``None``
+
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
 
     Attributes
     ----------
@@ -487,8 +488,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        .. versionchanged:: v0.20
-       `n_jobs` change from ``1`` to ``None``
+
+        ..versionchanged:: v0.20
+           `n_jobs` change from ``1`` to ``None``
 
     Attributes
     ----------
