@@ -555,7 +555,7 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator. Use an int to make the randomness 
         deterministic. Note that different initializations might result in
         different local minima of the cost function. 

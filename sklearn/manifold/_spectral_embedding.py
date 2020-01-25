@@ -168,7 +168,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator used for the initialization of the 
         lobpc eigenvectors decomposition when ``solver`` == 'amg'.  Use an int to 
         make the randomness deterministic. See :term: `Glossary <random_state>`.
@@ -381,7 +381,7 @@ class SpectralEmbedding(BaseEstimator):
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
 
-    random_state : int, RandomState instance or None, optional, (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator used for the initialization of the 
         lobpc eigenvectors when ``solver`` == 'amg'.  Use an int to 
         make the randomness deterministic. See :term: `Glossary <random_state>`.

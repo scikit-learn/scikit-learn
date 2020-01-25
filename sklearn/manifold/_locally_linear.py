@@ -143,7 +143,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Maximum number of iterations for 'arpack' method.
         Not used if eigen_solver=='dense'
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.
@@ -247,7 +247,7 @@ def locally_linear_embedding(
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.
@@ -578,7 +578,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator when ``eigen_solver`` == 'arpack'. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.

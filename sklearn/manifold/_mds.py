@@ -48,7 +48,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator used to initialize the centers. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.
@@ -194,7 +194,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator used to initialize the centers. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.
@@ -309,7 +309,7 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance, default=None
         Determines the random number generator used to initialize the centers. 
         Use an int to make the randomness deterministic. 
         See :term: `Glossary <random_state>`.
