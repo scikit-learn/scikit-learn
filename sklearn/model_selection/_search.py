@@ -53,7 +53,7 @@ class ParameterGrid:
 
     Parameters
     ----------
-    param_grid : dict of string to sequence, or sequence of such
+    param_grid : dict of str to sequence, or sequence of such
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
@@ -115,7 +115,7 @@ class ParameterGrid:
 
         Returns
         -------
-        params : iterator over dict of string to any
+        params : iterator over dict of str to any
             Yields dictionaries mapping each estimator parameter to one of its
             allowed values.
         """
@@ -147,7 +147,7 @@ class ParameterGrid:
 
         Returns
         -------
-        params : dict of string to any
+        params : dict of str to any
             Equal to list(self)[ind]
         """
         # This is used to make discrete sampling without replacement memory
@@ -213,7 +213,7 @@ class ParameterSampler:
 
     Returns
     -------
-    params : dict of string to any
+    params : dict of str to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
 
@@ -618,7 +618,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
-        **fit_params : dict of string -> object
+        **fit_params : dict of str -> object
             Parameters passed to the ``fit`` method of the estimator
         """
         estimator = self.estimator
@@ -860,14 +860,14 @@ class GridSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
-        Dictionary with parameters names (string) as keys and lists of
+        Dictionary with parameters names (str) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable, list/tuple, dict or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
+    scoring : str, callable, list/tuple, dict or None, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
@@ -887,7 +887,7 @@ class GridSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : int, or string, default=n_jobs
+    pre_dispatch : int, or str, default=n_jobs
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -901,7 +901,7 @@ class GridSearchCV(BaseSearchCV):
             - An int, giving the exact number of total jobs that are
               spawned
 
-            - A string, giving an expression as a function of n_jobs,
+            - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
     iid : bool, default=False
@@ -913,10 +913,11 @@ class GridSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, default=5
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-        
+
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -931,7 +932,7 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : bool, string, or callable, default=True
+    refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
@@ -1195,8 +1196,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable, list/tuple, dict or None, default=None
-        A single string (see :ref:`scoring_parameter`) or a callable
+    scoring : str, callable, list/tuple, dict or None, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
@@ -1216,7 +1217,7 @@ class RandomizedSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : int, or string, default=None
+    pre_dispatch : int, or str, default=None
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1230,7 +1231,7 @@ class RandomizedSearchCV(BaseSearchCV):
             - An int, giving the exact number of total jobs that are
               spawned
 
-            - A string, giving an expression as a function of n_jobs,
+            - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
     iid : bool, default=False
@@ -1242,10 +1243,10 @@ class RandomizedSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, default=5
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1260,7 +1261,7 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : bool, string, or callable, default=True
+    refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 

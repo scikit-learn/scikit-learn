@@ -1963,10 +1963,10 @@ def check_cv(cv=5, y=None, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, default=5
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
