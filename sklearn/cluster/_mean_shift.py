@@ -466,4 +466,3 @@ class MeanShift(ClusterMixin, BaseEstimator):
         check_is_fitted(self)
 
         return pairwise_distances_argmin(X, self.cluster_centers_)
-        
