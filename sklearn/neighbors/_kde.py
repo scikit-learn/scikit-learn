@@ -232,8 +232,8 @@ class KernelDensity(BaseEstimator):
 
         random_state : int, RandomState instance, default=None
             Determines random number generation used to generate
-            random samples.
-            Use an int to make the randomness deterministic.
+            random samples. Pass an int for reproducible results
+            across multiple function calls.
             See :term: `Glossary <random_state>`.
 
         Returns
