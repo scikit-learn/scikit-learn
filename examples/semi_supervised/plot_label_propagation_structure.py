@@ -17,20 +17,20 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 from sklearn.datasets import make_circles
 
 # generate ring with inner box
 n_samples = 200
 X, y = make_circles(n_samples=n_samples, shuffle=False)
 outer, inner = 0, 1
-labels = -np.ones(n_samples)
+labels = np.full(n_samples, -1.)
 labels[0] = outer
 labels[-1] = inner
 
 # #############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.8)
+label_spread = LabelSpreading(kernel='knn', alpha=0.8)
 label_spread.fit(X, labels)
 
 # #############################################################################
