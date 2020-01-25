@@ -27,7 +27,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features):
+def _assess_dimension_(spectrum, rank, n_samples, n_features, spectrum_cutoff=None):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
@@ -36,13 +36,16 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Parameters
     ----------
     spectrum : array of shape (n)
-        Data spectrum.
+        Data spectrum (of type float).
     rank : int
         Tested rank value.
     n_samples : int
         Number of samples.
     n_features : int
         Number of features.
+    spectrum_cutoff : None
+        Cut-off for values in `spectrum`. Any value lower than this
+        will be ignored (`default=epsilon of spectrum`)
 
     Returns
     -------
@@ -57,6 +60,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
+    if spectrum_cutoff is None:
+        spectrum_cutoff = np.finfo(type(spectrum[0])).eps
 
     pu = -rank * log(2.)
     for i in range(rank):
@@ -71,6 +76,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
+        if spectrum_cutoff > v:
+            return -np.inf
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
     m = n_features * rank - rank * (rank + 1.) / 2.
@@ -80,6 +87,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
+        if spectrum_[i] < spectrum_cutoff:
+            break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)

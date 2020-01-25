@@ -568,3 +568,34 @@ def test_pca_n_components_mostly_explained_variance_ratio():
     n_components = pca1.explained_variance_ratio_.cumsum()[-2]
     pca2 = PCA(n_components=n_components).fit(X, y)
     assert pca2.n_components_ == X.shape[1]
+
+
+
+
+#### TESTING TESTS
+def test_infer_dim_bad_spec():
+    # Test a spectrum that drops to near zero
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    ret = _infer_dimension_(spectrum, n_samples, n_features)
+    assert ret == 0
+
+
+def test_assess_dimension_small_eigenvalues():
+    # Test tiny eigenvalues appropriately when 'mle'
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    rank = 4
+    ret = _assess_dimension_(spectrum, rank, n_samples, n_features)
+    assert ret == -np.inf
+
+
+def test_infer_dim_mle():
+    # Test small eigenvalues when 'mle' with pathelogical 'X' dataset
+    X, _ = datasets.make_classification(n_informative=1, n_repeated=18,
+                                        n_redundant=1, n_clusters_per_class=1,
+                                        random_state=42)
+    pca = PCA(n_components='mle').fit(X)
+    assert pca.n_components_ == 1
