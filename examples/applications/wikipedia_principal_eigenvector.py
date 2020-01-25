@@ -74,7 +74,7 @@ for url, filename in resources:
 # #############################################################################
 # Loading the redirect files
 
-memory = Memory(cachedir=".")
+memory = Memory(cachedir="location='.")
 
 
 def index(redirects, index_map, k):
