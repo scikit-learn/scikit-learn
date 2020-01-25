@@ -108,7 +108,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     random_state : int, RandomState instance, default=None
         Determines random number generation used to initialize the centers.
-        Use an int to make the randomness deterministic.
+        Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
     Attributes
@@ -380,7 +380,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         random_state : int, RandomState instance, default=0
             Determines random number generation to randomly draw samples.
-            Use an int to make the randomness deterministic.
+            Pass an int for reproducible results across multiple function
+            calls.
             See :term: `Glossary <random_state>`.
 
         Returns
