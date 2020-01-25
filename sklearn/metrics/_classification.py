@@ -1827,6 +1827,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     output_dict : bool (default = False)
         If True, return output as dict
+        .. versionadded:: 0.20
 
     zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division. If set to
