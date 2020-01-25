@@ -136,8 +136,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like, shape  (n_samples, n_features)
 
-        random_state : RandomState
-            A random number generator instance.
+        random_state : int, RandomState, default=None
+            A random number generator instance. Pass an
+            int for reproducible results across multiple function calls.
+            See :term: `Glossary <random_state>`.
         """
         n_samples, _ = X.shape
 

@@ -501,11 +501,10 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState, default=None
+        Determines random number generation for Gaussian Mixture. Pass an
+        int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
