@@ -376,7 +376,7 @@ class KFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : boolean, default=None
+    shuffle : bool, default=None
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
@@ -583,7 +583,7 @@ class StratifiedKFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : boolean, default=None
+    shuffle : bool, default=None
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
@@ -1984,7 +1984,7 @@ def check_cv(cv=5, y=None, classifier=False):
     y : array-like, default=None
         The target variable for supervised learning problems.
 
-    classifier : boolean, default=False
+    classifier : bool, default=False
         Whether the task is a classification task, in which case
         stratified KFold will be used.
 
@@ -2046,7 +2046,7 @@ def train_test_split(*arrays, **options):
         function calls.
         See :term:`Glossary <random_state>`.
 
-    shuffle : boolean, default=True
+    shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 

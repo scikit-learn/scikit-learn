@@ -904,7 +904,7 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=False
+    iid : bool, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
@@ -931,7 +931,7 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : boolean, string, or callable, default=True
+    refit : bool, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
@@ -970,7 +970,7 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error. 
 
-    return_train_score : boolean, default=False
+    return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
@@ -1233,7 +1233,7 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=False
+    iid : bool, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
@@ -1260,7 +1260,7 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : boolean, string, or callable, default=True
+    refit : bool, string, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
@@ -1306,7 +1306,7 @@ class RandomizedSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error. Default is ``np.nan``.
 
-    return_train_score : boolean, default=False
+    return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different

@@ -53,16 +53,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : array-like, default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, list/tuple, dict or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -77,11 +77,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         If None, the estimator's score method is used.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -96,19 +95,19 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, default=Noneonal
         Parameters to pass to the fit method of the estimator.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, default=None
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -125,7 +124,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, default=False
+    return_train_score : bool, default=False
         Whether to include train scores.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
@@ -133,7 +132,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    return_estimator : boolean, default False
+    return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
 
     error_score : 'raise' or numeric
@@ -275,16 +274,16 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : array-like, default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)`` which should return only
@@ -295,11 +294,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         If None, the estimator's default scorer (if available) is used.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -314,19 +312,19 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, default=None
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -406,7 +404,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional, default: None
+    y : array-like, default=None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -441,28 +439,28 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
 
-    return_train_score : boolean, optional, default: False
+    return_train_score : bool,  default=False
         Compute and return score on training set.
 
-    return_parameters : boolean, optional, default: False
+    return_parameters : bool, default=False
         Return parameters that has been used for the estimator.
 
-    return_n_test_samples : boolean, optional, default: False
+    return_n_test_samples : bool, default=False
         Whether to return the ``n_test_samples``
 
-    return_times : boolean, optional, default: False
+    return_times : bool, default=False
         Whether to return the fit/score times.
 
-    return_estimator : boolean, optional, default: False
+    return_estimator : bool, default=False
         Whether to return the fitted estimator.
 
     Returns
     -------
-    train_scores : dict of scorer name -> float, optional
+    train_scores : dict of scorer name -> float, default=None
         Score on training set (for all the scorers),
         returned only if `return_train_score` is `True`.
 
-    test_scores : dict of scorer name -> float, optional
+    test_scores : dict of scorer name -> float,default=None
         Score on testing set (for all the scorers).
 
     n_test_samples : int
@@ -474,7 +472,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     score_time : float
         Time spent for scoring in seconds.
 
-    parameters : dict or None, optional
+    parameters : dict or None, default=None
         The parameters that have been evaluated.
 
     estimator : estimator object
@@ -635,20 +633,19 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
     X : array-like
         The data to fit. Can be, for example a list, or an array at least 2d.
 
-    y : array-like, optional, default: None
+    y : array-like, default=None
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -663,19 +660,19 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, default=None
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -692,7 +689,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    method : string, optional, default: 'predict'
+    method : string, default='predict'
         Invokes the passed method name of the passed estimator. For
         method='predict_proba', the columns correspond to the classes
         in sorted order.
@@ -801,7 +798,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional, default: None
+    y : array-like, default=None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -959,7 +956,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Labels to constrain permutation within groups, i.e. ``y`` values
         are permuted among samples with the same group identifier.
         When not specified, ``y`` values are permuted among all samples.
@@ -969,17 +966,16 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         If None the estimator's score method is used.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -994,10 +990,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    n_permutations : integer, optional
+    n_permutations : integer, default=None
         Number of times to permute ``y``.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of CPUs to use to do the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1008,7 +1004,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         The verbosity level.
 
     Returns
@@ -1107,11 +1103,11 @@ def learning_curve(estimator, X, y, groups=None,
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+    y : array-like, shape (n_samples) or (n_samples, n_features), default=None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
@@ -1126,11 +1122,10 @@ def learning_curve(estimator, X, y, groups=None,
         be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 5))
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1145,34 +1140,34 @@ def learning_curve(estimator, X, y, groups=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    exploit_incremental_learning : boolean, optional, default: False
+    exploit_incremental_learning : bool, default=False
         If the estimator supports incremental learning, this will be
         used to speed up fitting for different training set sizes.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : integer or string, optional
+    pre_dispatch : integer or string, default=None
         Number of predispatched jobs for parallel execution (default is
         all). The option can reduce the allocated memory. The string can
         be an expression like '2*n_jobs'.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         Controls the verbosity: the higher, the more messages.
 
-    shuffle : boolean, optional
+    shuffle : bool, default=None
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         Used when ``shuffle`` is True.
         Pass an int for reproducible output across multiple
         function calls.
@@ -1184,7 +1179,7 @@ def learning_curve(estimator, X, y, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
-    return_times : boolean, optional (default: False)
+    return_times : bool, default=False
         Whether to return the fit and score times.
 
     Returns
@@ -1388,7 +1383,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+    y : array-like, shape (n_samples) or (n_samples, n_features), default=None
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
@@ -1398,16 +1393,15 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), default=None
         Group labels for the samples used while splitting the dataset into
         train/test set. Only used in conjunction with a "Group" :term:`cv`
         instance (e.g., :class:`GroupKFold`).
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1422,23 +1416,23 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : integer or string, optional
+    pre_dispatch : integer or string, default=None
         Number of predispatched jobs for parallel execution (default is
         all). The option can reduce the allocated memory. The string can
         be an expression like '2*n_jobs'.
 
-    verbose : integer, optional
+    verbose : integer, default=None
         Controls the verbosity: the higher, the more messages.
 
     error_score : 'raise' or numeric
