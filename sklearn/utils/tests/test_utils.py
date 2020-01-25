@@ -57,27 +57,17 @@ def test_make_rng():
 def test_gen_batches():
     # Make sure gen_batches errors on invalid batch_size
 
-    zero_batch_size = gen_batches(4, 0)
-    float_batch_size = gen_batches(4, 0.5)
-    two_batch_size = gen_batches(4, 2)
-
     assert_array_equal(
-        list(two_batch_size),
+        list(gen_batches(4, 2)),
         [slice(0, 2, None), slice(2, 4, None)]
     )
+    msg_zero = "gen_batches got batch_size=0, must be positive"
+    with pytest.raises(ValueError, match=msg_zero):
+        next(gen_batches(4, 0))
 
-    assert_raises_regex(
-        ValueError,
-        "gen_batches got batch_size=0, must be positive",
-        next,
-        zero_batch_size
-    )
-    assert_raises_regex(
-        TypeError,
-        "gen_batches got batch_size=0.5, must be an integer",
-        next,
-        float_batch_size
-    )
+    msg_float = "gen_batches got batch_size=0.5, must be an integer"
+    with pytest.raises(TypeError, match=msg_float):
+        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
