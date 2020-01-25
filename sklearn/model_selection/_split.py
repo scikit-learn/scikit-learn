@@ -1477,7 +1477,6 @@ class GroupShuffleSplit(ShuffleSplit):
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
         set to the complement of the train size.
-        
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement
         the specified ``train_size``.
