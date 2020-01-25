@@ -163,6 +163,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    .. versionchanged:: 0.20
+   `n_jobs` change from '1' to 'None'
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
