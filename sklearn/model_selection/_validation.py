@@ -1391,12 +1391,28 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
+<<<<<<< HEAD
+=======
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    param_name : str
+>>>>>>> upstream/master
         Name of the parameter that will be varied.
 
     param_range : array-like of shape (n_values,)
         The values of the parameter that will be evaluated.
 
+<<<<<<< HEAD
         instance (e.g., :class:`GroupKFold`).
+=======
+    groups : array-like of shape (n_samples,), default=None
+        Group labels for the samples used while splitting the dataset into
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
+
+>>>>>>> upstream/master
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
