@@ -1,4 +1,4 @@
-    """
+"""
 The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
