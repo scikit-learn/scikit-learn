@@ -780,6 +780,8 @@ class ComplementNB(_BaseDiscreteNB):
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     alpha : float, default=1.0
