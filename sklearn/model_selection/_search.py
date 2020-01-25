@@ -340,11 +340,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error. 
 
     Returns
     -------
@@ -430,7 +430,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -609,11 +609,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
@@ -866,7 +866,7 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, list/tuple, dict or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -881,13 +881,13 @@ class GridSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, default=n_jobs
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -913,12 +913,11 @@ class GridSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        
+        - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -965,11 +964,11 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error. 
 
     return_train_score : boolean, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
@@ -1196,7 +1195,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, list/tuple, dict or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -1211,13 +1210,13 @@ class RandomizedSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, default=None
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1243,12 +1242,11 @@ class RandomizedSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a `(Stratified)KFold` (default is 5-fold cross validation),
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
