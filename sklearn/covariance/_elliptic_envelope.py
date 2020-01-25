@@ -67,7 +67,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
 
     Examples
     --------
@@ -181,7 +181,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
 
-         .. versionadded:: v0.20.0
+         .. versionadded:: 0.20
         """
         X = check_array(X)
         is_inlier = np.full(X.shape[0], -1, dtype=int)

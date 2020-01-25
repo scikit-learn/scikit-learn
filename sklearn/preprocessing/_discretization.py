@@ -114,7 +114,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
 
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
         """
 
     def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):

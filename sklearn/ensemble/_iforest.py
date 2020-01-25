@@ -143,7 +143,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         contamination parameter different than "auto" is provided, the offset
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
 
     Notes
     -----
@@ -386,7 +386,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The anomaly score of the input samples.
             The lower, the more abnormal.
 
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
         """
         # code structure from ForestClassifier/predict_proba
 
