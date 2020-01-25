@@ -76,7 +76,7 @@ def show_versions():
     """Print useful debugging information"
 
         .. versionadded:: 0.20
-    ""
+    """
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
