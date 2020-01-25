@@ -751,7 +751,7 @@ def gen_batches(n, batch_size, min_batch_size=0):
     if not isinstance(batch_size, numbers.Integral):
         raise TypeError("gen_batches got batch_size=%s, must be an"
                         " integer" % batch_size)
-    if batch_size < 1:
+    if batch_size <= 0:
         raise ValueError("gen_batches got batch_size=%s, must be"
                          " positive" % batch_size)
     start = 0
