@@ -1026,7 +1026,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         k(x_1, x_2) = constant_value
 
     constant_value_bounds : pair of floats >= 0 or string "fixed"
-        The lower and upper bound on constant_value (default: (1e-5, 1e5))
+        The lower and upper bound on constant_value, default=(1e-5, 1e5)
         If set to "fixed", constant_value cannot be changed during
         hyperparameter tuning.
 
@@ -1129,8 +1129,8 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     noise_level : float, default: 1.0
         Parameter controlling the noise level (variance)
 
-    noise_level_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on noise_level
+    noise_level_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on noise_level, default=(1e-5, 1e5)
         If set to "fixed", noise_level cannot be changed during
         hyperparameter tuning.
 
@@ -1239,8 +1239,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on length_scale.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale, default=(1e-5, 1e5)
         If set to "fixed", length_scale cannot be changed during
         hyperparameter tuning.
 
@@ -1354,8 +1354,8 @@ class Matern(RBF):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on length_scale.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale, default=(1e-5, 1e5)
         If set to "fixed", length_scale cannot be changed during
         hyperparameter tuning.
 
@@ -1508,13 +1508,13 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     alpha : float > 0, default: 1.0
         Scale mixture parameter
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on length_scale.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale, default=(1e-5, 1e5)
         If set to "fixed", length_scale cannot be changed during
         hyperparameter tuning.
 
-    alpha_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on alpha.
+    alpha_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on alpha, default=(1e-5, 1e5)
         If set to "fixed", alpha cannot be changed during
         hyperparameter tuning.
 
@@ -1628,13 +1628,13 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     periodicity : float > 0, default: 1.0
         The periodicity of the kernel.
 
-    length_scale_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on length_scale.
+    length_scale_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on length_scale, default=(1e-5, 1e5)
         If set to "fixed", length_scale cannot be changed during
         hyperparameter tuning.
 
-    periodicity_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on periodicity.
+    periodicity_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on periodicity, default=(1e-5, 1e5)
         If set to "fixed", periodicity cannot be changed during
         hyperparameter tuning.
 
@@ -1747,8 +1747,8 @@ class DotProduct(Kernel):
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
         the kernel is homogenous.
 
-    sigma_0_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on sigma_0.
+    sigma_0_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on sigma_0, default=(1e-5, 1e5)
         If set to "fixed", sigma_0 cannot be changed during
         hyperparameter tuning.
 
@@ -1867,8 +1867,8 @@ class PairwiseKernel(Kernel):
     gamma : float >= 0, default: 1.0
         Parameter gamma of the pairwise kernel specified by metric
 
-    gamma_bounds : pair of floats >= 0 or string "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on gamma.
+    gamma_bounds : pair of floats >= 0 or string "fixed"
+        The lower and upper bound on gamma, default=(1e-5, 1e5)
         If set to "fixed", gamma cannot be changed during
         hyperparameter tuning.
 
