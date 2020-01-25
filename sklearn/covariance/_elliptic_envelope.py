@@ -40,8 +40,8 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     random_state : int or RandomState instance, default=None
         Determines the seed of the pseudo random number generator for shuffling
-        the data. Use an int to make the randomness deterministic.
-        See :term: `Glossary <random_state>`.
+        the data. Pass an int for reproducible results across multiple function
+        calls. See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
