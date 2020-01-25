@@ -66,7 +66,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -240,7 +240,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. See :term: `Glossary <random_state>`.
 
     See Also
     ---------
@@ -336,7 +336,7 @@ def fast_mcd(X, support_fraction=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -553,7 +553,7 @@ class MinCovDet(EmpiricalCovariance):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. See :term: `Glossary <random_state>`.
 
     Attributes
     ----------

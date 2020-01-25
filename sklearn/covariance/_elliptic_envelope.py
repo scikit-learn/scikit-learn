@@ -39,11 +39,9 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         of outliers in the data set. Range is (0, 0.5).
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines the seed of the pseudo random number generator for shuffling
+        the data. Use an int to make the randomness deterministic.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
