@@ -144,8 +144,8 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Not used if eigen_solver=='dense'
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator when ``solver`` == 'arpack'. 
-        Use an int to make the randomness deterministic. 
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Use an int to make the randomness deterministic.
         See :term: `Glossary <random_state>`.
     """
     if eigen_solver == 'auto':
@@ -248,8 +248,8 @@ def locally_linear_embedding(
         Only used if method == 'modified'
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator when ``solver`` == 'arpack'. 
-        Use an int to make the randomness deterministic. 
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Use an int to make the randomness deterministic.
         See :term: `Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
@@ -579,9 +579,9 @@ class LocallyLinearEmbedding(TransformerMixin,
         passed to neighbors.NearestNeighbors instance
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator when ``eigen_solver`` == 'arpack'. 
-        Use an int to make the randomness deterministic. 
-        See :term: `Glossary <random_state>`.
+        Determines the random number generator when
+        ``eigen_solver`` == 'arpack'. Use an int to make the randomness
+        deterministic. See :term: `Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.

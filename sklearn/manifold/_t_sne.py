@@ -556,9 +556,9 @@ class TSNE(BaseEstimator):
         Verbosity level.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator. Use an int to make the randomness 
-        deterministic. Note that different initializations might result in
-        different local minima of the cost function. 
+        Determines the random number generator. Use an int to make the
+        randomness deterministic. Note that different initializations might
+        result in different local minima of the cost function.
         See :term: `Glossary <random_state>`.
 
     method : string (default: 'barnes_hut')

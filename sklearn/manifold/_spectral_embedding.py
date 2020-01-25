@@ -169,9 +169,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         but may also lead to instabilities.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator used for the initialization of the 
-        lobpc eigenvectors decomposition when ``solver`` == 'amg'.  Use an int to 
-        make the randomness deterministic. See :term: `Glossary <random_state>`.
+        Determines the random number generator used for the initialization of
+        the lobpc eigenvectors decomposition when ``solver`` == 'amg'. Use an
+        int to make the randomness deterministic.
+        See :term: `Glossary <random_state>`.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -382,9 +383,9 @@ class SpectralEmbedding(BaseEstimator):
         Kernel coefficient for rbf kernel.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator used for the initialization of the 
-        lobpc eigenvectors when ``solver`` == 'amg'.  Use an int to 
-        make the randomness deterministic. See :term: `Glossary <random_state>`.
+        Determines the random number generator used for the initialization of
+        the lobpc eigenvectors when ``solver`` == 'amg'.  Use an int to make
+        the randomness deterministic. See :term: `Glossary <random_state>`.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg

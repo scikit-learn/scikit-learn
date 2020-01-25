@@ -49,8 +49,8 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         convergence.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator used to initialize the centers. 
-        Use an int to make the randomness deterministic. 
+        Determines the random number generator used to initialize the centers.
+        Use an int to make the randomness deterministic.
         See :term: `Glossary <random_state>`.
 
     Returns
@@ -195,8 +195,8 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         convergence.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator used to initialize the centers. 
-        Use an int to make the randomness deterministic. 
+        Determines the random number generator used to initialize the centers.
+        Use an int to make the randomness deterministic.
         See :term: `Glossary <random_state>`.
 
     return_n_iter : bool, optional, default: False
@@ -310,8 +310,8 @@ class MDS(BaseEstimator):
         for more details.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generator used to initialize the centers. 
-        Use an int to make the randomness deterministic. 
+        Determines the random number generator used to initialize the centers.
+        Use an int to make the randomness deterministic.
         See :term: `Glossary <random_state>`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
