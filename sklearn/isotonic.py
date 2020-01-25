@@ -76,16 +76,7 @@ def check_increasing(x, y):
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
-    """Solve the isotonic regression model::
-
-        min sum w[i] (y[i] - y_[i]) ** 2
-
-        subject to y_min = y_[1] <= y_[2] ... <= y_[n] = y_max
-
-    where:
-        - y[i] are inputs (real numbers)
-        - y_[i] are fitted
-        - w[i] are optional strictly positive weights (default to 1.0)
+    """Solve the isotonic regression model.
 
     Read more in the :ref:`User Guide <isotonic>`.
 
@@ -140,46 +131,31 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """Isotonic regression model.
 
-    The isotonic regression optimization problem is defined by::
-
-        min sum w_i (y[i] - y_[i]) ** 2
-
-        subject to y_[i] <= y_[j] whenever X[i] <= X[j]
-        and min(y_) = y_min, max(y_) = y_max
-
-    where:
-        - ``y[i]`` are inputs (real numbers)
-        - ``y_[i]`` are fitted
-        - ``X`` specifies the order.
-          If ``X`` is non-decreasing then ``y_`` is non-decreasing.
-        - ``w[i]`` are optional strictly positive weights (default to 1.0)
-
     Read more in the :ref:`User Guide <isotonic>`.
 
     .. versionadded:: 0.13
 
     Parameters
     ----------
-    y_min : optional, default: None
-        If not None, set the lowest value of the fit to y_min.
+    y_min : float, default=None
+        Lower bound on the lowest predicted value (the minimum value may
+        still be higher). Defaults to -inf.
 
-    y_max : optional, default: None
-        If not None, set the highest value of the fit to y_max.
+    y_max : float, default=None
+        Upper bound on the highest predicted value (the maximum may still be
+        lower). Defaults to +inf.
 
-    increasing : boolean or string, optional, default: True
-        If boolean, whether or not to fit the isotonic regression with y
-        increasing or decreasing.
+    increasing : bool or 'auto', default= True
+        Determines whether the predictions should be constrained to increase
+        or decrease with `X`. 'auto' will decide based on the Spearman
+        correlation estimate's sign.
 
-        The string value "auto" determines whether y should
-        increase or decrease based on the Spearman correlation estimate's
-        sign.
-
-    out_of_bounds : string, optional, default: "nan"
-        The ``out_of_bounds`` parameter handles how x-values outside of the
-        training domain are handled.  When set to "nan", predicted y-values
-        will be NaN.  When set to "clip", predicted y-values will be
+    out_of_bounds : string, default="nan"
+        The ``out_of_bounds`` parameter handles how `X` values outside of the
+        training domain are handled.  When set to "nan", predictions
+        will be NaN.  When set to "clip", predictions will be
         set to the value corresponding to the nearest train interval endpoint.
-        When set to "raise", allow ``interp1d`` to throw ValueError.
+        When set to "raise" a `ValueError` is raised.
 
 
     Attributes
