@@ -99,22 +99,21 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.inspection import permutation_importance
 
-    >>> # create X_data such that the first feature tells the class and the other ones are random
     >>> X = [[1,9,9],[1,9,9],[1,9,9],
     ...      [0,9,9],[0,9,9],[0,9,9]]
     >>> y = [1,1,1,0,0,0]
 
     >>> clf = LogisticRegression()
     >>> clf.fit(X,y)
+    LogisticRegression()
 
     >>> result = permutation_importance(clf, X, y, n_repeats=10, random_state=42)
 
     >>> result.importances_mean
-    array([0.53333333, 0., 0.])
+    array([0.5, 0. , 0. ])
 
     >>> result.importances_std
-    array([0.22110832, 0., 0.])
-
+    array([0.2236068, 0.       , 0.       ])
 
     References
     ----------
