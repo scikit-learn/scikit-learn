@@ -1179,7 +1179,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         We have the relation: decision_function = score_samples - `offset_`.
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1286,7 +1286,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y_pred : ndarray of shape (n_samples,)
             Class labels for samples in X.
 
-         .. versionadded:: v0.20.0
+         .. versionadded:: 0.20
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)

@@ -840,6 +840,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+        .. versionadded:: 0.20
 
     Returns
     -------

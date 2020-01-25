@@ -115,6 +115,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         LocalOutlierFactor for novelty detection. In this case be aware that
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
+        .. versionadded:: 0.20.0
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -146,7 +147,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         contamination parameter different than "auto" is provided. In that
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
 
     Examples
     --------
@@ -432,7 +433,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
 
-        .. versionadded:: v0.20.0
+        .. versionadded:: 0.20
         """
         if not self.novelty:
             msg = ('score_samples is not available when novelty=False. The '

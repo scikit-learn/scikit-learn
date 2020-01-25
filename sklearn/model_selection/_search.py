@@ -203,6 +203,8 @@ class ParameterSampler:
 
     n_iter : integer
         Number of parameter settings that are produced.
+        .. versionchanged:: 0.20
+            `n-iter` now acts as an upper bound on iterations
 
     random_state : int, RandomState instance or None, default=None
         Pseudo random number generator state used for random uniform sampling
