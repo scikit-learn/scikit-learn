@@ -70,7 +70,6 @@ def empirical_covariance(X, assume_centered=False):
 
     Examples
     --------
-
     >>> from sklearn.covariance import empirical_covariance
     >>> X = [[1,1,1],[1,1,1],[1,1,1],
     ...     [0,0,0],[0,0,0],[0,0,0]]
@@ -78,6 +77,7 @@ def empirical_covariance(X, assume_centered=False):
     array([[0.25, 0.25, 0.25],
        [0.25, 0.25, 0.25],
        [0.25, 0.25, 0.25]])
+
     """
     X = np.asarray(X)
     if X.ndim == 1:
