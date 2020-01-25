@@ -1039,6 +1039,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         Ojala and Garriga. Permutation Tests for Studying Classifier
         Performance.  The Journal of Machine Learning Research (2010)
         vol. 11
+        http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf
+        (it is the pdf of the journal)
 
     """
     X, y, groups = indexable(X, y, groups)
