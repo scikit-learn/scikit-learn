@@ -780,7 +780,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for more details.
 
         ..versionchanged:: v0.20
-           `n_jobs` change from ``1`` to ``None``
+           `n_jobs` changed from ``1`` to ``None``
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
@@ -1020,7 +1020,7 @@ def make_union(*transformers, **kwargs):
         for more details.
 
         ..versionchanged:: v0.20
-           `n_jobs` change from ``1`` to ``None``
+           `n_jobs` changed from ``1`` to ``None``
 
     verbose : boolean, optional(default=False)
         If True, the time elapsed while fitting each transformer will be
