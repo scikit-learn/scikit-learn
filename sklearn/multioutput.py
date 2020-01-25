@@ -679,6 +679,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <regressorchain>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     base_estimator : estimator
