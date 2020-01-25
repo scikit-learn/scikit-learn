@@ -168,13 +168,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`. Used when
-        ``solver`` == 'amg'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Determines the random number generator used for the initialization of the 
+        lobpc eigenvectors decomposition when ``solver`` == 'amg'.  Use an int to 
+        make the randomness deterministic. See :term: `Glossary <random_state>`.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -384,13 +381,10 @@ class SpectralEmbedding(BaseEstimator):
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
-        'amg'.
+    random_state : int, RandomState instance or None, optional, (default=None)
+        Determines the random number generator used for the initialization of the 
+        lobpc eigenvectors when ``solver`` == 'amg'.  Use an int to 
+        make the randomness deterministic. See :term: `Glossary <random_state>`.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
