@@ -90,7 +90,11 @@ Changelog
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
 
-- |Fix| Fixed HistGradientBoosting to allow max_depth=1
+- |Fix|  Changed the convention for `max_depth` parameter of
+  :class:`ensemlble.HistGradientBoostingClassifier` and
+  :class:`ensemlble.HistGradientBoostingRegressor`. The depth now corresponds to
+  the number of edges to go from the root to the deepest leaf.
+  Stumps (trees with one split) are now allowed.
   :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
 :mod:`sklearn.feature_extraction`
