@@ -79,9 +79,9 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         for more details.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation to control the permutations 
+        Determines random number generation to control the permutations
         of each feature.
-        See :term: `Glossary <random_state>`. 
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
