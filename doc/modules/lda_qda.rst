@@ -94,6 +94,10 @@ log-probability ratios :math:`\log[P(y=k | x) / P(y=l | x)]`:
     \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
     - \log\frac{P(y=k)}{P(y=l)}
 
+This shows that the decision boundary between any two classes :math:`k` and
+:math:`l` (i.e. where the probabilities are equal) is a *linear combination*
+of the input features.
+
 In the case of QDA, there are no assumptions on the covariance matrices
 :math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces. See
 [#1]_ for more details.
