@@ -256,7 +256,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         sklearn.cluster.estimate_bandwidth; see the documentation for that
         function for hints on scalability (see also the Notes, below).
 
-    seeds : array, shape=[n_samples, n_features], default=None
+    seeds : array-like of shape (n_samples, n_features), default=None
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
