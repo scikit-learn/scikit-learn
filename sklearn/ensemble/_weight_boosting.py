@@ -237,8 +237,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        """The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 

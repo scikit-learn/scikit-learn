@@ -655,10 +655,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        """The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance..
+        known as the Gini importance.
 
         Returns
         -------
@@ -974,8 +975,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         .. versionadded:: 0.20
 
     feature_importances_ : array, shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
@@ -1447,8 +1449,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Attributes
     ----------
     feature_importances_ : array, shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 

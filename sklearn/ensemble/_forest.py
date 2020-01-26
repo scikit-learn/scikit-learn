@@ -415,8 +415,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @property
     def feature_importances_(self):
         """
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance..
 
@@ -1048,8 +1049,9 @@ class RandomForestClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
@@ -1328,8 +1330,9 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
@@ -1646,8 +1649,9 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
@@ -1924,8 +1928,9 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 

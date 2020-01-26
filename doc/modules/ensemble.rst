@@ -296,7 +296,7 @@ to the prediction function.
 
 But, the impurity-based feature importance suffers from being computed 
 on statistics derived from the training dataset. There is a nice alternative
-to the impurity-based feature importance which is permutation feature importance.
+to the impurity-based feature importance which is :ref:`permutation_importance`.
 These two methods of obtaining feature importance are explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
