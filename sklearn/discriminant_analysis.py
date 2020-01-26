@@ -137,7 +137,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     share the same covariance matrix.
 
     The fitted model can also be used to reduce the dimensionality of the input
-    by projecting it to the most discriminative directions.
+    by projecting it to the most discriminative directions, using the
+    `transform` method.
 
     .. versionadded:: 0.17
        *LinearDiscriminantAnalysis*.
@@ -163,12 +164,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape (n_classes,)
-        Class priors.
+        Class priors. By default, the class proportions are inferred from the
+        training data.
 
     n_components : int, optional (default=None)
         Number of components (<= min(n_classes - 1, n_features)) for
         dimensionality reduction. If None, will be set to
-        min(n_classes - 1, n_features).
+        min(n_classes - 1, n_features). This parameter only affects the
+        `transform` method.
 
     store_covariance : bool, optional
         Additionally compute class covariance matrix (default False), used
@@ -217,22 +220,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     --------
     sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis: Quadratic
         Discriminant Analysis
-
-    Notes
-    -----
-    The default solver is 'svd'. It can perform both classification and
-    transform, and it does not rely on the calculation of the covariance
-    matrix. This can be an advantage in situations where the number of features
-    is large. However, the 'svd' solver cannot be used with shrinkage.
-
-    The 'lsqr' solver is an efficient algorithm that only works for
-    classification. It supports shrinkage.
-
-    The 'eigen' solver is based on the optimization of the between class
-    scatter to within class scatter ratio. It can be used for both
-    classification and transform, and it supports shrinkage. However, the
-    'eigen' solver needs to compute the covariance matrix, so it might not be
-    suitable for situations with a high number of features.
 
     Examples
     --------
@@ -559,7 +546,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     priors : array, optional, shape = [n_classes]
-        Priors on classes
+        Class priors. By default, the class proportions are inferred from the
+        training data.
 
     reg_param : float, optional
         Regularizes the covariance estimate as
@@ -572,7 +560,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.17
 
     tol : float, optional, default 1.0e-4
-        Threshold used for rank estimation.
+        Threshold on singular values to determine the rank of a matrix. This
+        parameter does not affect the predictions. It only controls a warning
+        that is raised when features are considered to be colinear.
 
         .. versionadded:: 0.17
 

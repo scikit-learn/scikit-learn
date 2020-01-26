@@ -7,9 +7,9 @@ Linear and Quadratic Discriminant Analysis
 .. currentmodule:: sklearn
 
 Linear Discriminant Analysis
-(:class:`discriminant_analysis.LinearDiscriminantAnalysis`) and Quadratic
+(:class:`~discriminant_analysis.LinearDiscriminantAnalysis`) and Quadratic
 Discriminant Analysis
-(:class:`discriminant_analysis.QuadraticDiscriminantAnalysis`) are two classic
+(:class:`~discriminant_analysis.QuadraticDiscriminantAnalysis`) are two classic
 classifiers, with, as their names suggest, a linear and a quadratic decision
 surface, respectively.
 
@@ -37,20 +37,17 @@ flexible.
 Dimensionality reduction using Linear Discriminant Analysis
 ===========================================================
 
-:class:`discriminant_analysis.LinearDiscriminantAnalysis` can be used to
+:class:`~discriminant_analysis.LinearDiscriminantAnalysis` can be used to
 perform supervised dimensionality reduction, by projecting the input data to a
 linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
 below). The dimension of the output is necessarily less than the number of
-classes, so this is, in general, a rather strong dimensionality reduction, and
+classes, so this is in general a rather strong dimensionality reduction, and
 only makes sense in a multiclass setting.
 
-This is implemented in
-:func:`discriminant_analysis.LinearDiscriminantAnalysis.transform`. The desired
-dimensionality can be set using the ``n_components`` constructor parameter.
-This parameter has no influence on
-:func:`discriminant_analysis.LinearDiscriminantAnalysis.fit` or
-:func:`discriminant_analysis.LinearDiscriminantAnalysis.predict`.
+This is implemented in the `transform` method. The desired dimensionality can
+be set using the ``n_components`` parameter. This parameter has no influence
+on the `fit` and `predict` methods.
 
 .. topic:: Examples:
 
@@ -131,17 +128,20 @@ onto the linear subspace :math:`H_L` which maximizes the variance of the
 :math:`\mu^*_k` after projection (in effect, we are doing a form of PCA for the
 transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 ``n_components`` parameter used in the
-:func:`discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
+:func:`~discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
 [#1]_ for more details.
 
 Shrinkage
 =========
 
-Shrinkage is a tool to improve estimation of covariance matrices in situations
-where the number of training samples is small compared to the number of
-features. In this scenario, the empirical sample covariance is a poor
-estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
+Shrinkage is a form of regularization used to improve the estimation of
+covariance matrices in situations where the number of training samples is
+small compared to the number of features.
+In this scenario, the empirical sample covariance is a poor
+estimator, and shrinkage helps improving the generalization performance of
+the classifier.
+Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
+the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
 This automatically determines the optimal shrinkage parameter in an analytic
 way following the lemma introduced by Ledoit and Wolf [#2]_. Note that
 currently shrinkage only works when setting the ``solver`` parameter to 'lsqr'
@@ -165,7 +165,11 @@ matrix.
 Estimation algorithms
 =====================
 
-The default solver is 'svd'. It can perform both classification and transform,
+The 'svd' solver is the default solver used for
+:class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, and it is
+the only available solver for
+:class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`.
+It can perform both classification and transform,
 and it does not rely on the calculation of the covariance matrix. This can be
 an advantage in situations where the number of features is large. However, the
 'svd' solver cannot be used with shrinkage.
