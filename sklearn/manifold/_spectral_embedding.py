@@ -170,7 +170,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for the initialization of
-        the lobpc eigenvectors decomposition when ``solver`` == 'amg'. Pass
+        the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
         an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
@@ -384,7 +384,7 @@ class SpectralEmbedding(BaseEstimator):
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for the initialization of
-        the lobpc eigenvectors when ``solver`` == 'amg'.  Pass an int for
+        the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
         reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
