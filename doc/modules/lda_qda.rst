@@ -59,18 +59,19 @@ Mathematical formulation of the LDA and QDA classifiers
 
 Both LDA and QDA can be derived from simple probabilistic models which model
 the class conditional distribution of the data :math:`P(X|y=k)` for each class
-:math:`k`. Predictions can then be obtained by using Bayes' rule:
+:math:`k`. Predictions can then be obtained by using Bayes' rule, for each
+training sample :math:`x`:
 
 .. math::
-    P(y=k | X) = \frac{P(X | y=k) P(y=k)}{P(X)} = \frac{P(X | y=k) P(y = k)}{ \sum_{l} P(X | y=l) \cdot P(y=l)}
+    P(y=k | x) = \frac{P(x | y=k) P(y=k)}{P(x)} = \frac{P(x | y=k) P(y = k)}{ \sum_{l} P(x | y=l) \cdot P(y=l)}
 
 and we select the class :math:`k` which maximizes this conditional probability.
 
 More specifically, for linear and quadratic discriminant analysis,
-:math:`P(X|y)` is modeled as a multivariate Gaussian distribution with
+:math:`P(x|y)` is modeled as a multivariate Gaussian distribution with
 density:
 
-.. math:: P(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right)
+.. math:: P(x | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k)\right)
 
 where :math:`d` is the number of features.
 
@@ -83,13 +84,13 @@ matrices, or by a regularized estimator: see the section on shrinkage below).
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
 linear decision surfaces, which can be seen by comparing the
-log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
+log-probability ratios :math:`\log[P(y=k | x) / P(y=l | x)]`:
 
 .. math::
-    \log\left(\frac{P(y=k|X)}{P(y=l|X)}\right)=
-    \log\left(\frac{P(X|y=k)P(y=k)}{P(X|y=l)P(y=l)}\right)=0 \Leftrightarrow
+    \log\left(\frac{P(y=k|x)}{P(y=l|x)}\right)=
+    \log\left(\frac{P(x|y=k)P(y=k)}{P(x|y=l)P(y=l)}\right)=0 \Leftrightarrow
 
-    (\mu_k-\mu_l)^t\Sigma^{-1} X =
+    (\mu_k-\mu_l)^t\Sigma^{-1} x =
     \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
     - \log\frac{P(y=k)}{P(y=l)}
 
@@ -113,7 +114,7 @@ We write :math:`K` for the total number of target classes. Since in LDA we
 assume that all classes have the same estimated covariance :math:`\Sigma`, we
 can rescale the data so that this covariance is the identity:
 
-.. math:: X^* = D^{-1/2}U^t X\text{ with }\Sigma = UDU^t
+.. math:: x^* = D^{-1/2}U^t x\text{ with }\Sigma = UDU^t
 
 Then one can show that to classify a data point after scaling is equivalent to
 finding the estimated class mean :math:`\mu^*_k` which is closest to the data
