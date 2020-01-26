@@ -8,7 +8,7 @@ jobs:
   one:
     runs-on: ubuntu-latest
     steps:
-      name:
-      run: |
-        echo "Marking issue ${{ github.event.issue.number }} as stalled"
-        curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["help wanted","Stalled"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels
+      - name:
+        run: |
+          echo "Marking issue ${{ github.event.issue.number }} as stalled"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["help wanted","Stalled"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels
