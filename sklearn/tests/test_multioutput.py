@@ -593,7 +593,7 @@ def test_multioutput_estimator_with_fit_params(estimator, dataset):
 def test_regressor_chain_w_fit_params():
     rng = np.random.RandomState(0)
     X, y = datasets.make_regression(n_targets=3)
-    weight = rng.random((y.shape[0], ))
+    weight = rng.rand(y.shape[0])
 
     model = RegressorChain(SGDRegressor())
 
