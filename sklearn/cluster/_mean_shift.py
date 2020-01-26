@@ -206,7 +206,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         not sure how to set this, set it to the value of the bandwidth used
         in clustering.mean_shift.
 
-    min_bin_freq : integer, default=1
+    min_bin_freq : int, default=1
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
