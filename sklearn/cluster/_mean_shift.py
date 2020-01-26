@@ -280,7 +280,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
