@@ -262,7 +262,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         with bandwidth as the grid size and default values for
         other parameters.
 
-    bin_seeding : boolean, default=False
+    bin_seeding : bool, default=False
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
