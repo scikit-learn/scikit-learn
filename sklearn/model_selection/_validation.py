@@ -1007,8 +1007,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         for more details.
 
     random_state : int, RandomState instance or None, default=0
-        Pass an int for reproducible output for permutation of ``y`` values 
-        among samples.  
+        Pass an int for reproducible output for permutation of
+        ``y`` values among samples.  
         See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
