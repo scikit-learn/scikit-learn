@@ -430,7 +430,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
+        y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
