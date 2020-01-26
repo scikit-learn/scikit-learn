@@ -204,7 +204,7 @@ class ParameterSampler:
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
@@ -430,7 +430,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,)
+        y : array-like of shape (n_samples, n_output) or (n_samples,), default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -613,7 +613,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like, with shape (n_samples,), default=None
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
@@ -860,13 +860,13 @@ class GridSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
-        Dictionary with parameters names (str) as keys and lists of
+        Dictionary with parameters names (`str`) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : str, callable, list/tuple, dict or None, default=None
+    scoring : str, callable, list/tuple or dict, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -881,7 +881,7 @@ class GridSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1196,7 +1196,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : str, callable, list/tuple, dict or None, default=None
+    scoring : str, callable, list/tuple or dict, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -1211,7 +1211,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1294,7 +1294,7 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
