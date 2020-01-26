@@ -62,7 +62,7 @@ def clone(estimator, safe=True):
             return copy.deepcopy(estimator)
         else:
             if isinstance(estimator, type):
-                raise TypeError("Cannot clone object " +
+                raise TypeError("Cannot clone object. " +
                                 "You should provide an instance of " +
                                 "scikit-learn estimator instead of a class.")
             else:
