@@ -51,7 +51,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
         deterministic.
         See :term:`Glossary <random_state>`.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
