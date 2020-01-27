@@ -25,8 +25,8 @@ def get_openmp_flag(compiler):
         return ['/Qopenmp']
     elif sys.platform == "win32":
         return ['/openmp']
-    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
-        return ['-openmp']
+    elif sys.platform in ("darwin", "linux") and "icc" in compiler:
+        return ['-qopenmp']
     elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
         # -fopenmp can't be passed as compile flag when using Apple-clang.
         # OpenMP support has to be enabled during preprocessing.
@@ -40,8 +40,6 @@ def get_openmp_flag(compiler):
         # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib
         #                          -L/usr/local/opt/libomp/lib -lomp"
         return []
-    elif sys.platform == "linux" and "icc" in compiler:
-        return ['-qopenmp']
     # Default flag for GCC and clang:
     return ['-fopenmp']
 
