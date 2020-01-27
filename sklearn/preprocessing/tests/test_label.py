@@ -14,6 +14,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _to_object_array
 
 from sklearn.preprocessing._label import LabelBinarizer
 from sklearn.preprocessing._label import MultiLabelBinarizer
@@ -433,8 +434,7 @@ def test_multilabel_binarizer_same_length_sequence():
 
 
 def test_multilabel_binarizer_non_integer_labels():
-    tuple_classes = np.empty(3, dtype=object)
-    tuple_classes[:] = [(1,), (2,), (3,)]
+    tuple_classes = _to_object_array([(1,), (2,), (3,)])
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
         ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),
