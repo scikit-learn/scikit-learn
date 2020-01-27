@@ -174,7 +174,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         increase or decrease based on the Spearman correlation estimate's
         sign.
 
-    out_of_bounds : string, default: "nan"
+    out_of_bounds : str, default="nan"
         The ``out_of_bounds`` parameter handles how x-values outside of the
         training domain are handled.  When set to "nan", predicted y-values
         will be NaN.  When set to "clip", predicted y-values will be
