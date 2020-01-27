@@ -296,8 +296,7 @@ class OneHotEncoder(_BaseEncoder):
             return None
         elif (isinstance(self.drop, str)
               and (self.drop == 'first'
-              or self.drop == 'if_binary')
-            ):
+              or self.drop == 'if_binary')):
             return np.zeros(len(self.categories_), dtype=np.int_)
         elif not isinstance(self.drop, str):
             try:
@@ -407,14 +406,14 @@ class OneHotEncoder(_BaseEncoder):
                 keep_cells = keep_cells.T
                 X_int = X_int.T
                 for i in range(n_features):
-                    if len(self.categories_[i])>2:
+                    if len(self.categories_[i]) > 2:
                         keep_cells[i] = True
                     else:
-                        X_int[i][X_int[i]>0]-=1
+                        X_int[i][X_int[i] > 0] -= 1
                 keep_cells = keep_cells.T
                 X_int = X_int.T
-                n_values = [1 if len(cats)==2
-                              else len(cats) for cats in self.categories_]
+                n_values = [1 if len(cats) == 2
+                            else len(cats) for cats in self.categories_]
 
             else:
                 X_int[X_int > to_drop] -= 1
