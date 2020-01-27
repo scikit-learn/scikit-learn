@@ -929,7 +929,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        X_t : array-like or sparse matrix of shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -975,7 +976,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        X_t : array-like or sparse matrix of shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
