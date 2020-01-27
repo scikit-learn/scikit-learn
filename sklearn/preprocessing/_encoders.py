@@ -190,7 +190,7 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression. 
+        into a neural network or an unregularized regression.
 
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
@@ -400,7 +400,7 @@ class OneHotEncoder(_BaseEncoder):
 
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
-            
+
             keep_cells = X_int != to_drop
 
             if self.drop == 'if_binary':
