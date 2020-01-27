@@ -91,10 +91,10 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Parameters
     ----------
-    y : iterable of floats
+    y : array-like of shape (n_samples,)
         The data.
 
-    sample_weight : iterable of floats, optional, default: None
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
@@ -160,13 +160,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    y_min : optional, default: None
+    y_min : float, default=None
         If not None, set the lowest value of the fit to y_min.
 
-    y_max : optional, default: None
+    y_max : float, default=None
         If not None, set the highest value of the fit to y_max.
 
-    increasing : boolean or string, optional, default: True
+    increasing : bool or string, default=True
         If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
@@ -174,7 +174,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         increase or decrease based on the Spearman correlation estimate's
         sign.
 
-    out_of_bounds : string, optional, default: "nan"
+    out_of_bounds : str, default="nan"
         The ``out_of_bounds`` parameter handles how x-values outside of the
         training domain are handled.  When set to "nan", predicted y-values
         will be NaN.  When set to "clip", predicted y-values will be
