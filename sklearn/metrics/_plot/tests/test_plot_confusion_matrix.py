@@ -282,9 +282,9 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  include_values=True,
                                  values_format=values_format)
-    disp.confusion_matrix = np.array([[10000000, 0],
-                                      [29, 123123]])
-    # Plot the values to see if it works
+    disp.confusion_matrix = cm
+    # Values should be shown as whole numbers 'd',
+    # except the first number which should be shown as 1e+07
     disp.plot()
 
     expected_text = np.array([format(v, test_function_format(v))
@@ -295,14 +295,15 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     assert_array_equal(expected_text, text_text)
 
     # Testing values with mixed float and int (array will only show float)
-    cm = np.array([[0.1, 1],
-                   [1000, 1000000]])
+    cm = np.array([[0.1, 1.5],
+                   [10.99, 100.0]])
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  include_values=True,
                                  values_format=values_format)
-    disp.confusion_matrix = np.array([[0.1, 1],
-                                      [1000, 1000000]])
-    # Plot the values to see if it works
+    disp.confusion_matrix = cm
+    # Since the values in the matrix are floats, the
+    # values should be shown as '.2g' values, which means
+    # the last value should be shown as 1e+02.
     disp.plot()
 
     expected_text = np.array([format(v, test_function_format(v))
