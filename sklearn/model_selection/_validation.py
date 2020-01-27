@@ -1007,9 +1007,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         for more details.
 
     random_state : int, RandomState instance or None, default=0
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term:`Glossary <random_state>`.
+        Pass an int for reproducible output for permutation of
+        ``y`` values among samples. See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         The verbosity level.
@@ -1176,9 +1175,8 @@ def learning_curve(estimator, X, y, groups=None,
         based on``train_sizes``.
 
     random_state : int or RandomState instance, default=None
-        Used when ``shuffle`` is True.
-        Pass an int for reproducible output across multiple
-        function calls.
+        Used when ``shuffle`` is True. Pass an int for reproducible
+        output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     error_score : 'raise' or numeric, default=np.nan
