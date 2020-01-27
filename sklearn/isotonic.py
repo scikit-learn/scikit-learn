@@ -91,7 +91,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Parameters
     ----------
-    y : array-like of shape=(n_samples,)
+    y : array-like of shape (n_samples,)
         The data.
 
     sample_weight : array-like of shape=(n_samples,), default=None
