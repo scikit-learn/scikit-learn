@@ -309,7 +309,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,), default=None
