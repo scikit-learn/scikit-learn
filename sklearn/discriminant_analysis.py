@@ -583,12 +583,17 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         For each class k an array of shape (n_features, n_k), with
         ``n_k = min(n_features, number of elements in class k)``
         It is the rotation of the Gaussian distribution, i.e. its
-        principal axis.
+        principal axis. It corresponds to `V`, the matrix of eigenvectors
+        coming from the SVD of `Xk = U S Vt` where `Xk` is the centered
+        matrix of samples from class k.
 
     scalings_ : list of arrays
-        For each class k an array of shape (n_k,). It contains the scaling
-        of the Gaussian distributions along its principal axes, i.e. the
-        variance in the rotated coordinate system.
+        For each class k an array of shape (n_k,). It contains the scaling of
+        the Gaussian distributions along its principal axes, i.e. the
+        variance in the rotated coordinate system. It corresponds to `S^2 /
+        (n_samples - 1)`, where `S` is the diagonal matrix of singular values
+        from the SVD of `Xk`, where `Xk` is the centered matrix of samples
+        from class k.
 
     classes_ : array-like, shape (n_classes,)
         Unique class labels.
@@ -694,13 +699,18 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, 1))
+            norm2.append(np.sum(X2 ** 2, axis=1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
+
+        The decision function is equal (up to a constant factor) to the
+        log-posterior of the model, i.e. `log p(y = k / x)`. In a binary
+        classification setting this instead corresponds to the difference
+        `log p(y = 1 / x) - log p(y = 0 / x)`.
 
         Parameters
         ----------
@@ -711,7 +721,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         -------
         C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is [n_samples,], giving the
+            In the two-class case, the shape is (n_samples,), giving the
             log likelihood ratio of the positive class.
         """
         dec_func = self._decision_function(X)
