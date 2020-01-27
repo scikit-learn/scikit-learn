@@ -180,7 +180,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
 
     tol : float, optional, (default 1.0e-4)
-        Threshold used for rank estimation in SVD solver.
+        Absolute threshold for a singular value of X to be considered
+        significant, used to estimate the rank of X. Dimensions whose
+        singular values are non-significant are discarded. Only used if
+        solver is 'svd'.
 
         .. versionadded:: 0.17
 
@@ -561,9 +564,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.17
 
     tol : float, optional, default 1.0e-4
-        Threshold on singular values to determine the rank of a matrix. This
-        parameter does not affect the predictions. It only controls a warning
-        that is raised when features are considered to be colinear.
+        Absolute threshold for a singular value of X to be considered
+        significant, used to estimate its rank. This parameter
+        does not affect the predictions. It only controls a warning that is
+        raised when features are considered to be colinear.
 
         .. versionadded:: 0.17
 

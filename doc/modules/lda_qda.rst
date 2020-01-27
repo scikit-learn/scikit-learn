@@ -60,12 +60,12 @@ Mathematical formulation of the LDA and QDA classifiers
 Both LDA and QDA can be derived from simple probabilistic models which model
 the class conditional distribution of the data :math:`P(X|y=k)` for each class
 :math:`k`. Predictions can then be obtained by using Bayes' rule, for each
-training sample :math:`x`:
+training sample :math:`x \in \mathcal{R}^d`:
 
 .. math::
     P(y=k | x) = \frac{P(x | y=k) P(y=k)}{P(x)} = \frac{P(x | y=k) P(y = k)}{ \sum_{l} P(x | y=l) \cdot P(y=l)}
 
-and we select the class :math:`k` which maximizes this conditional probability.
+and we select the class :math:`k` which maximizes this posterior probability.
 
 More specifically, for linear and quadratic discriminant analysis,
 :math:`P(x|y)` is modeled as a multivariate Gaussian distribution with
@@ -73,7 +73,46 @@ density:
 
 .. math:: P(x | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k)\right)
 
-where :math:`d` is the number of features.
+where :math:`d` is the number of features. According to this model, the log
+of the posterior is:
+
+.. math::
+
+    \log P(y=k | x) = \log P(y=k | x) + \log P(y = k) =
+    -\frac{1}{2} \log |\Sigma_k| -\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k) + \log P(y = k) + Cst.
+
+The predicted class is the one that maximises this quantity. In the case of
+LDA, the Gaussians for each class are assumed to share the same covariance
+matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This reduces the log
+posterior to:
+
+.. math:: \log P(y=k | x) = -\frac{1}{2} (x-\mu_k)^t \Sigma^{-1} (x-\mu_k) + \log P(y = k) + Cst.
+
+The term :math:`(x-\mu_k)^t \Sigma^{-1} (x-\mu_k)` corresponds to the
+`Mahalanobis Distance <https://en.wikipedia.org/wiki/Mahalanobis_distance>`_
+between the sample :math:`x` and the mean :math:`\mu_k`. The Mahalanobis
+distance tells how close :math:`x` is from :math:`\mu_k`, while also
+accounting for the variance of each feature. We can thus interpret LDA as
+assigning :math:`x` to the class whose mean is the closest in terms of
+Mahalanobis distance, while also accounting for the class prior
+probabilities.
+
+The **decision surface** of class :math:`k` and :math:`l` corresponds to the
+region where:
+
+.. math::
+
+    P(y=k|x) = P(y=l|x) \Leftrightarrow \log \frac{P(y=k|x)}{P(y=l|x)} = 0 \\
+    \Leftrightarrow (\mu_k-\mu_l)^t\Sigma^{-1} x =
+    \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
+    - \log\frac{P(y=k)}{P(y=l)}
+
+This shows that the decision boundary between any two classes :math:`k` and
+:math:`l` is a *linear combination* of the input features.
+
+In the case of QDA, there are no assumptions on the covariance matrices
+:math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces. See
+[#1]_ for more details.
 
 To use this model as a classifier, we just need to estimate from the training
 data the class priors :math:`P(y=k)` (by the proportion of instances of class
@@ -81,26 +120,6 @@ data the class priors :math:`P(y=k)` (by the proportion of instances of class
 and the covariance matrices (either by the empirical sample class covariance
 matrices, or by a regularized estimator: see the section on shrinkage below).
 
-In the case of LDA, the Gaussians for each class are assumed to share the same
-covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
-linear decision surfaces, which can be seen by comparing the
-log-probability ratios :math:`\log[P(y=k | x) / P(y=l | x)]`:
-
-.. math::
-    \log\left(\frac{P(y=k|x)}{P(y=l|x)}\right)=
-    \log\left(\frac{P(x|y=k)P(y=k)}{P(x|y=l)P(y=l)}\right)=0 \Leftrightarrow
-
-    (\mu_k-\mu_l)^t\Sigma^{-1} x =
-    \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
-    - \log\frac{P(y=k)}{P(y=l)}
-
-This shows that the decision boundary between any two classes :math:`k` and
-:math:`l` (i.e. where the probabilities are equal) is a *linear combination*
-of the input features.
-
-In the case of QDA, there are no assumptions on the covariance matrices
-:math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces. See
-[#1]_ for more details.
 
 .. note:: **Relation with Gaussian Naive Bayes**
 
@@ -174,10 +193,16 @@ The 'svd' solver is the default solver used for
 :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, and it is
 the only available solver for
 :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`.
-It can perform both classification and transform,
-and it does not rely on the calculation of the covariance matrix. This can be
-an advantage in situations where the number of features is large. However, the
-'svd' solver cannot be used with shrinkage.
+It can perform both classification and transform (for LDA).
+The use of the SVD solver relies on the fact that the covariance matrix
+:math:`\Sigma` is, by definition, equal to :math:`\frac{1}{n - 1} X^tX = V
+S^2 V^t` where :math:`V` comes from the SVD of the (centered) input matrix:
+:math:`X = U S V^t`. It turns out that we can compute the log-posterior above
+without having to explictly compute :math:`\Sigma`: computing :math:`S` and
+:math:`V` via the SVD of :math:`X` is enough. As it does not rely on the
+calculation of the covariance matrix the 'svd' solver may be preferable in
+situations where the number of features is large. The 'svd' solver cannot be
+used with shrinkage.
 
 The 'lsqr' solver is an efficient algorithm that only works for classification.
 It supports shrinkage.
