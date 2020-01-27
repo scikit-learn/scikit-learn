@@ -190,11 +190,12 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into a neural network or an unregularized regression. 
 
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
+        - 'if_binary' : drop the first category in each binary feature.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
@@ -293,7 +294,10 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, str) and self.drop == 'first'):
+        elif (isinstance(self.drop, str)
+              and (self.drop == 'first'
+              or self.drop == 'if_binary')
+            ):
             return np.zeros(len(self.categories_), dtype=np.int_)
         elif not isinstance(self.drop, str):
             try:
@@ -323,7 +327,7 @@ class OneHotEncoder(_BaseEncoder):
                              zip(self.drop, self.categories_)], dtype=np.int_)
         else:
             msg = ("Wrong input for parameter `drop`. Expected "
-                   "'first', None or array of objects, got {}")
+                   "'first', 'if_binary', None or array of objects, got {}")
             raise ValueError(msg.format(type(self.drop)))
 
     def fit(self, X, y=None):
@@ -396,11 +400,27 @@ class OneHotEncoder(_BaseEncoder):
 
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
-
+            
             keep_cells = X_int != to_drop
+
+            if self.drop == 'if_binary':
+                keep_cells = keep_cells.T
+                X_int = X_int.T
+                for i in range(n_features):
+                    if len(self.categories_[i])>2:
+                        keep_cells[i] = True
+                    else:
+                        X_int[i][X_int[i]>0]-=1
+                keep_cells = keep_cells.T
+                X_int = X_int.T
+                n_values = [1 if len(cats)==2
+                              else len(cats) for cats in self.categories_]
+
+            else:
+                X_int[X_int > to_drop] -= 1
+                n_values = [len(cats) - 1 for cats in self.categories_]
+
             X_mask &= keep_cells
-            X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - 1 for cats in self.categories_]
         else:
             n_values = [len(cats) for cats in self.categories_]
 
