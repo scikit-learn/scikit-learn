@@ -550,12 +550,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         training data.
 
     reg_param : float, optional
-        Regularizes the covariance estimate as
-        ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
+        Regularizes the covariance estimates by transforming S2 as
+        ``S2 = (1 - reg_param) * S2 + reg_param * np.eye(n_features)``,
+        where S2 corresponds to the scaling.
 
     store_covariance : boolean
-        If True the covariance matrices are computed and stored in the
-        `self.covariance_` attribute.
+        If True, the covariance matrices are explicitely computed and stored
+        in the `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
@@ -569,7 +570,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     covariance_ : list of array-like of shape (n_features, n_features)
-        Covariance matrices of each class.
+        Covariance matrices of each class. Only exists if `store_covariance`
+        is True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class means.
@@ -578,13 +580,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         Class priors (sum to 1).
 
     rotations_ : list of arrays
-        For each class k an array of shape [n_features, n_k], with
+        For each class k an array of shape (n_features, n_k), with
         ``n_k = min(n_features, number of elements in class k)``
         It is the rotation of the Gaussian distribution, i.e. its
         principal axis.
 
     scalings_ : list of arrays
-        For each class k an array of shape [n_k]. It contains the scaling
+        For each class k an array of shape (n_k,). It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
@@ -664,7 +666,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
                                  'is ill defined.' % str(self.classes_[ind]))
             Xgc = Xg - meang
             # Xgc = U * S * V.T
-            U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
+            _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
             rank = np.sum(S > self.tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
