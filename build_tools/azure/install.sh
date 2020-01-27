@@ -7,7 +7,6 @@ UNAMESTR=`uname`
 make_conda() {
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
-    pip install threadpoolctl==$THREADPOOLCTL_VERSION
     source activate $VIRTUALENV
 }
 
@@ -60,6 +59,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
 	make_conda $TO_INSTALL
+
+    pip install threadpoolctl==$THREADPOOLCTL_VERSION
 
     if [[ "$PYTEST_VERSION" == "*" ]]; then
         python -m pip install pytest
