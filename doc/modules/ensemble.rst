@@ -294,9 +294,9 @@ In practice those estimates are stored as an attribute named
 the value, the more important is the contribution of the matching feature
 to the prediction function.
 
-But, the impurity-based feature importance suffers from being computed 
-on statistics derived from the training dataset. There is a nice alternative
-to the impurity-based feature importance which is :ref:`permutation_importance`.
+The impurity-based feature importance suffers from being computed 
+on statistics derived from the training dataset. 
+:ref:`permutation_importance` is a nice alternative impurity-based feature importance.
 These two methods of obtaining feature importance are explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 

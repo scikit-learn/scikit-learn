@@ -420,7 +420,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
-        known as the Gini importance..
+        known as the Gini importance.
 
         Returns
         -------
