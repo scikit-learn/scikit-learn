@@ -38,8 +38,7 @@ jobs:
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '*'
         PYTEST_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '*'
+        JOBLIB_VERSION: '2.0.0'
         COVERAGE: 'true'
 
 - template: build_tools/azure/posix.yml
@@ -71,7 +70,7 @@ jobs:
         MATPLOTLIB_VERSION: '1.5.1'
         # later version of joblib are not packaged in conda for Python 3.5
         JOBLIB_VERSION: '0.12.3'
-        THREADPOOLCTL_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
@@ -112,7 +111,7 @@ jobs:
         PILLOW_VERSION: '*'
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
@@ -124,7 +123,7 @@ jobs:
         PILLOW_VERSION: '*'
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
