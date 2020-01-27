@@ -26,9 +26,8 @@ matrix:
         if: type = cron OR commit_message =~ /\[scipy-dev\]/
     
     - python: 3.7
-        env:
-        - CHECK_WARNING="true"
-        - BUILD_WITH_ICC="true"
+        env: CHECK_WARNING="true"
+        # - BUILD_WITH_ICC="true"
         if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
