@@ -94,7 +94,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     y : array-like of shape (n_samples,)
         The data.
 
-    sample_weight : array-like of shape=(n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
