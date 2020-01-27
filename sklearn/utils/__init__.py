@@ -748,6 +748,12 @@ def gen_batches(n, batch_size, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
+    if not isinstance(batch_size, numbers.Integral):
+        raise TypeError("gen_batches got batch_size=%s, must be an"
+                        " integer" % batch_size)
+    if batch_size <= 0:
+        raise ValueError("gen_batches got batch_size=%s, must be"
+                         " positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
