@@ -56,7 +56,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -167,7 +167,7 @@ class LeaveOneOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -251,7 +251,7 @@ class LeavePOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -542,14 +542,14 @@ class GroupKFold(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), default=None
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -700,7 +700,7 @@ class StratifiedKFold(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -708,7 +708,7 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -796,14 +796,14 @@ class TimeSeriesSplit(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
 
         Yields
@@ -902,7 +902,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -923,14 +923,14 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1033,7 +1033,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1054,14 +1054,14 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1124,7 +1124,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : array-like of length n_samples
             The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,), default=None
@@ -1300,11 +1300,11 @@ class BaseShuffleSplit(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
 
         groups : array-like of shape (n_samples,), default=None
@@ -1487,7 +1487,7 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pass an int for reproducible output across multiple
         function calls.
         See :term:`Glossary <random_state>`.
@@ -1545,7 +1545,7 @@ class GroupShuffleSplit(ShuffleSplit):
         y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1583,23 +1583,23 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int, default 10
+    n_splits : int, default=10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, default=None
+    test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
         complement of the train size. If ``train_size`` is also None, it will
         be set to 0.1.
 
-    train_size : float, int, or None, default is None
+    train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pass an int for reproducible output across multiple
         function calls.
         See :term:`Glossary <random_state>`.
@@ -1701,7 +1701,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -1709,7 +1709,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_labels)
+        y : array-like of shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -1816,7 +1816,7 @@ class PredefinedSplit(BaseCrossValidator):
 
     Parameters
     ----------
-    test_fold : array-like, shape (n_samples,)
+    test_fold : array-like of shape (n_samples,)
         The entry ``test_fold[i]`` represents the index of the test set that
         sample ``i`` belongs to. It is possible to exclude sample ``i`` from
         any test set (i.e. include sample ``i`` in every training set) by

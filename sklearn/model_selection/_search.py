@@ -194,7 +194,7 @@ class ParameterSampler:
     Parameters
     ----------
     param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
+        Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -938,7 +938,7 @@ class GridSearchCV(BaseSearchCV):
         Refit an estimator using the best found parameters on the whole
         dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
+        For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
@@ -1187,7 +1187,7 @@ class RandomizedSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     param_distributions : dict or list of dicts
-        Dictionary with parameters names (string) as keys and distributions
+        Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -1267,7 +1267,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Refit an estimator using the best found parameters on the whole
         dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
+        For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
@@ -1303,11 +1303,11 @@ class RandomizedSearchCV(BaseSearchCV):
         function calls.
         See :term:`Glossary <random_state>`.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error.
 
     return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
