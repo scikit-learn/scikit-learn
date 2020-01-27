@@ -183,3 +183,6 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+- |Enhancement| add warning in :func:`utils.validation.check_array` for
+  pandas sparse DataFrame.
+  :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
