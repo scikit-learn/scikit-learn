@@ -402,7 +402,7 @@ class OneHotEncoder(_BaseEncoder):
 
             keep_cells = X_int != to_drop
 
-            if self.drop == 'if_binary':
+            if isinstance(self.drop, str) and self.drop == 'if_binary':
                 keep_cells = keep_cells.T
                 X_int = X_int.T
                 for i in range(n_features):
