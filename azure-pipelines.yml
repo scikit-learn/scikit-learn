@@ -40,7 +40,6 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
-        BUILD_WITH_ICC: 'true'
 
 - template: build_tools/azure/posix.yml
   parameters:
