@@ -77,6 +77,7 @@ else
     # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
     # to speed-up the building multicore CI machines.
     python setup.py build_ext --inplace -j 3
+fi
 
 python setup.py develop
 
