@@ -12,6 +12,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
 
+from sklearn.inspection import plot_individual_conditional_expectation
 from sklearn.inspection import plot_partial_dependence
 
 
@@ -222,6 +223,64 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     assert len(disp2.axes_[0, 1].get_lines()) == 2
 
 
+@pytest.mark.parametrize("plot_method, nrows, ncols", [
+    (plot_partial_dependence, 2, 2),
+    (plot_individual_conditional_expectation, 3, 1),
+])
+def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston, boston,
+                                                    plot_method, nrows, ncols):
+    grid_resolution = 5
+    fig, axes = pyplot.subplots(nrows, ncols)
+    axes_formats = [list(axes.ravel()), tuple(axes.ravel()), axes]
+
+    msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
+
+    disp = plot_method(clf_boston, boston.data, ['CRIM', 'ZN'],
+                       grid_resolution=grid_resolution,
+                       feature_names=boston.feature_names)
+
+    for ax_format in axes_formats:
+        with pytest.raises(ValueError, match=msg):
+            plot_method(clf_boston, boston.data, ['CRIM', 'ZN'],
+                        grid_resolution=grid_resolution,
+                        feature_names=boston.feature_names, ax=ax_format)
+
+        # with axes object
+        with pytest.raises(ValueError, match=msg):
+            disp.plot(ax=ax_format)
+
+
+@pytest.mark.parametrize("plot_method", [
+    plot_partial_dependence, plot_individual_conditional_expectation
+])
+def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston,
+                                                plot_method):
+    # The first call to plot_partial_dependence will create two new axes to
+    # place in the space of the passed in axes, which results in a total of
+    # three axes in the figure.
+    # Currently the API does not allow for the second call to
+    # plot_partial_dependence to use the same axes again, because it will
+    # create two new axes in the space resulting in five axes. To get the
+    # expected behavior one needs to pass the generated axes into the second
+    # call:
+    # disp1 = plot_partial_dependence(...)
+    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
+
+    grid_resolution = 25
+    fig, ax = pyplot.subplots()
+    plot_method(clf_boston, boston.data, ['CRIM', 'ZN'],
+                grid_resolution=grid_resolution,
+                feature_names=boston.feature_names, ax=ax)
+
+    msg = ("The ax was already used in another plot function, please set "
+           "ax=display.axes_ instead")
+
+    with pytest.raises(ValueError, match=msg):
+        plot_method(clf_boston, boston.data, ['CRIM', 'ZN'],
+                    grid_resolution=grid_resolution,
+                    feature_names=boston.feature_names, ax=ax)
+
+
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
                                                     boston):
     # second call to plot does not change the feature names from the first
@@ -315,7 +374,73 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
+def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+    grid_resolution = 25
+
+    plot_partial_dependence(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
+    plot_individual_conditional_expectation(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
+
+
 dummy_classification_data = make_classification(random_state=0)
+
+
+@pytest.mark.parametrize(
+    "data, params, err_msg",
+    [(multioutput_regression_data, {"target": None, 'features': [0]},
+      "target must be specified for multi-output"),
+     (multioutput_regression_data, {"target": -1, 'features': [0]},
+      r'target must be in \[0, n_tasks\]'),
+     (multioutput_regression_data, {"target": 100, 'features': [0]},
+      r'target must be in \[0, n_tasks\]'),
+     (dummy_classification_data,
+     {'features': ['foobar'], 'feature_names': None},
+     'Feature foobar not in feature_names'),
+     (dummy_classification_data,
+     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
+      'Feature foobar not in feature_names'),
+     (dummy_classification_data,
+      {'features': [123], 'feature_names': ['blahblah']},
+      'All entries of features must be less than '),
+     (dummy_classification_data,
+      {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
+      'feature_names should not contain duplicates')]
+)
+def test_plot_common_error(pyplot, data, params, err_msg):
+    X, y = data
+    estimator = LinearRegression().fit(X, y)
+
+    with pytest.raises(ValueError, match=err_msg):
+        plot_partial_dependence(estimator, X, **params)
+    with pytest.raises(ValueError, match=err_msg):
+        plot_individual_conditional_expectation(estimator, X, **params)
+
+
+@pytest.mark.parametrize(
+    "data, params, err_msg",
+    [(dummy_classification_data, {'features': [(1, 2)]},
+      'Each entry in features must be either an int or'),
+     (dummy_classification_data, {'features': [1, {}]},
+      'Each entry in features must be either an int or'),
+     (dummy_classification_data, {'features': [tuple()]},
+      'Each entry in features must be either an int or'),
+     (dummy_classification_data, {'features': [4.5]},
+      'Each entry in features must be either an int or')]
+)
+def test_plot_ice_error(pyplot, data, params, err_msg):
+    X, y = data
+    estimator = LinearRegression().fit(X, y)
+
+    with pytest.raises(ValueError, match=err_msg):
+        plot_individual_conditional_expectation(estimator, X, **params)
 
 
 @pytest.mark.parametrize(
@@ -325,14 +450,34 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data, {'features': [1, {}]},
       'Each entry in features must be either an int, '),
      (dummy_classification_data, {'features': [tuple()]},
-      'Each entry in features must be either an int, ')]
+      'Each entry in features must be either an int, '),
+     (dummy_classification_data, {'features': [4.5]},
+      'Each entry in features must be either an int, ')
+     ]
 )
-def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
+def test_plot_pdp_error(pyplot, data, params, err_msg):
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(estimator, X, **params)
+
+
+@pytest.mark.parametrize("params, err_msg", [
+    ({'target': 4, 'features': [0]},
+     'target not in est.classes_, got 4'),
+    ({'target': None, 'features': [0]},
+     'target must be specified for multi-class'),
+])
+def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
+    iris = load_iris()
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    clf.fit(iris.data, iris.target)
+
+    with pytest.raises(ValueError, match=err_msg):
+        plot_partial_dependence(clf, iris.data, **params)
+    with pytest.raises(ValueError, match=err_msg):
+        plot_individual_conditional_expectation(clf, iris.data, **params)
 
 
 def test_plot_partial_dependence_fig_deprecated(pyplot):
