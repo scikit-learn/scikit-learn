@@ -138,24 +138,23 @@ class GeneralNB(_BaseNB):
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-    >>> clf = GeneralNB([(GaussianNB(), [0, 1, 2]),
+    >>> clf = GeneralNB()
+    >>> clf.fit(X, y, [(GaussianNB(), [0, 1, 2]),
     ...                  (BernoulliNB(), [3, 4])])
-    >>> clf.fit(X, y)
-    GeneralNB(distributions=[(GaussianNB(), [0, 1, 2]), (BernoulliNB(), [3, 4])])
+    GeneralNB()
     >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
     """
 
-    def __init__(self, distributions):
-        self.distributions_ = distributions
+    def __init__(self):
         self.fits = []
 
-    def __repr__(self):
-        return f"{str(self.__class__.__name__)}(distributions={self.distributions_})"
+    # def __repr__(self):
+    #     return f"{str(self.__class__.__name__)}(distributions={self.distributions_})"
 
-    def fit(self, X, y):
+    def fit(self, X, y, distributions):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -174,7 +173,7 @@ class GeneralNB(_BaseNB):
         -------
         self : object
         """
-        self._check_distributions(self.distributions_, X)
+        self._check_distributions(distributions, X)
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
 
@@ -182,7 +181,7 @@ class GeneralNB(_BaseNB):
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb, features) for (nb, features) in self.distributions_]
+        inits = [(nb, features) for (nb, features) in distributions]
 
         self.fits = [(nb.fit(X[:, features], y), features)
                      for (nb, features) in inits]
