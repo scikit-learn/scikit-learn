@@ -224,6 +224,28 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
+ * Here's a quick look at how to use K-means:
+
+.. code-block:: Python
+
+from sklearn.cluster import KMeans
+import numpy as np
+X = np.array([[5,3],[10,15],[15,12],[24,10],[30,45],[85,70],[71,80],[60,78],[55,52],[80,91],])
+kmeans = KMeans(n_clusters=2)
+kmeans.fit(X)
+print(kmeans.cluster_centers_)
+
+#Expected Output:
+[[ 16.8  17. ]
+ [ 70.2  74.2]]
+
+#This can be done to see the labels for the data
+print(kmeans.labels_)
+
+#Expected Output:
+[0 0 0 0 0 1 1 1 1 1]
+
+
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
    k-means performs intuitively and when it does not
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
