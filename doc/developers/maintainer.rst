@@ -118,7 +118,8 @@ Making a release
    candidate period, the latest stable is two versions behind the master
    branch, instead of one.
 
-3. Create the source tarball:
+3. At this point all relevant PRs should have been merged into the `0.99.X`
+   branch. Create the source tarball:
 
    - Wipe clean your repo::
 
@@ -146,13 +147,13 @@ Making a release
    certain that the release is ready, since adding a tag to the main repo can
    trigger certain automated processes. You can test upload the ``sdist`` to
    ``test.pypi.org``, and test the next step by setting ``BUILD_COMMIT`` to the
-   branch name (``0.22.X`` for instance) in a PR to the wheel building repo.
+   branch name (``0.99.X`` for instance) in a PR to the wheel building repo.
    Once all works, you can proceed with tagging. Create the tag and push it (if
    it's an RC, it can be ``0.xxrc1`` for instance)::
 
-    $ git tag -a 0.999
+    $ git tag -a 0.99  # in the 0.99.X branch
 
-    $ git push git@github.com:scikit-learn/scikit-learn.git 0.999
+    $ git push git@github.com:scikit-learn/scikit-learn.git 0.99
 
 5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
    release tag at:
