@@ -458,9 +458,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             if len(X.shape) != 2 or X.shape[0] != X.shape[1]:
                 raise ValueError(
                     'Matrix should be square, as returned by pdist. '
-                    'Found dimensionality (r, c)'.format(
-                        r=X.shape[0], c=X.shape[1]
-                    )
+                    'Found dimensionality %s' % str(X.shape)
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
