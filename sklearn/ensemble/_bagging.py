@@ -501,10 +501,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the randomness that generates the random subsets of the
+        original dataset (sample wise and feature wise).
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
@@ -900,10 +900,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the randomness that generates the random subsets of the
+        original dataset (sample wise and feature wise).
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
