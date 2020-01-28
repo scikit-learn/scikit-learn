@@ -175,6 +175,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
 
     """
 
+    check_is_fitted(decision_tree)
+
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
                        "It will be removed in 0.25."),
@@ -570,8 +572,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return Tree(name, node_id, *children)
 
     def export(self, decision_tree, ax=None):
-        check_is_fitted(decision_tree)
-
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
 
