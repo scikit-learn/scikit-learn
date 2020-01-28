@@ -75,18 +75,33 @@ density:
 
 .. math:: P(x | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k)\right)
 
-where :math:`d` is the number of features. According to this model, the log
-of the posterior is:
+where :math:`d` is the number of features.
+
+QDA
+---
+
+According to the model above, the log of the posterior is:
 
 .. math::
 
     \log P(y=k | x) = \log P(y=k | x) + \log P(y = k) =
     -\frac{1}{2} \log |\Sigma_k| -\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k) + \log P(y = k) + Cst.
 
-The predicted class is the one that maximises this quantity. In the case of
-LDA, the Gaussians for each class are assumed to share the same covariance
-matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This reduces the log
-posterior to:
+The predicted class is the one that maximises this quantity.
+
+.. note:: **Relation with Gaussian Naive Bayes**
+
+	  If in the QDA model one assumes that the covariance matrices are diagonal,
+	  then the inputs are assumed to be conditionally independent in each class,
+	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
+	  classifier :class:`naive_bayes.GaussianNB`.
+
+LDA
+---
+
+LDA is a special case of QDA, where the Gaussians for each class are assumed
+to share the same covariance matrix: :math:`\Sigma_k = \Sigma` for all
+:math:`k`. This reduces the log posterior to:
 
 .. math:: \log P(y=k | x) = -\frac{1}{2} (x-\mu_k)^t \Sigma^{-1} (x-\mu_k) + \log P(y = k) + Cst.
 
@@ -99,36 +114,20 @@ assigning :math:`x` to the class whose mean is the closest in terms of
 Mahalanobis distance, while also accounting for the class prior
 probabilities.
 
-The **decision surface** of class :math:`k` and :math:`l` corresponds to the
-region where:
+The log-posterior of LDA can also be written [3]_ as:
 
 .. math::
 
-    P(y=k|x) = P(y=l|x) \Leftrightarrow \log \frac{P(y=k|x)}{P(y=l|x)} = 0 \\
-    \Leftrightarrow (\mu_k-\mu_l)^t\Sigma^{-1} x =
-    \frac{1}{2} (\mu_k^t \Sigma^{-1} \mu_k - \mu_l^t \Sigma^{-1} \mu_l)
-    - \log\frac{P(y=k)}{P(y=l)}
+    \log P(y=k | x) = \omega_k^t x + \omega_{k0} + Cst.
 
-This shows that the decision boundary between any two classes :math:`k` and
-:math:`l` is a *linear combination* of the input features.
+where :math:`\omega_k = \Sigma^{-1} \mu_k` and :math:`\omega_{k0} =
+-\frac{1}{2} \mu_k^t\Sigma^{-1}\mu_k + \log P (y = k)`. These quantities
+correspond to the `coef_` and `intercept_` attributes, respectively.
 
+From the above formula, it is clear that LDA has a linear decision surface.
 In the case of QDA, there are no assumptions on the covariance matrices
-:math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces. See
-[#1]_ for more details.
-
-To use this model as a classifier, we just need to estimate from the training
-data the class priors :math:`P(y=k)` (by the proportion of instances of class
-:math:`k`), the class means :math:`\mu_k` (by the empirical sample class means)
-and the covariance matrices (either by the empirical sample class covariance
-matrices, or by a regularized estimator: see the section on shrinkage below).
-
-
-.. note:: **Relation with Gaussian Naive Bayes**
-
-	  If in the QDA model one assumes that the covariance matrices are diagonal,
-	  then the inputs are assumed to be conditionally independent in each class,
-	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
-	  classifier :class:`naive_bayes.GaussianNB`.
+:math:`\Sigma_k` of the Gaussians, leading to quadratic decision surfaces.
+See [1]_ for more details.
 
 Mathematical formulation of LDA dimensionality reduction
 ========================================================
@@ -169,7 +168,7 @@ the classifier.
 Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
 the :class:`~discriminant_analysis.LinearDiscriminantAnalysis` class to 'auto'.
 This automatically determines the optimal shrinkage parameter in an analytic
-way following the lemma introduced by Ledoit and Wolf [#2]_. Note that
+way following the lemma introduced by Ledoit and Wolf [2]_. Note that
 currently shrinkage only works when setting the ``solver`` parameter to 'lsqr'
 or 'eigen'.
 
@@ -191,6 +190,10 @@ matrix.
 Estimation algorithms
 =====================
 
+Using LDA and QDA requires computing the log-posterior which depends on the
+class priors :math:`P(y=k)`, the class means :math:`\mu_k`, and the
+covariance matrices.
+
 The 'svd' solver is the default solver used for
 :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, and it is
 the only available solver for
@@ -206,8 +209,12 @@ calculation of the covariance matrix the 'svd' solver may be preferable in
 situations where the number of features is large. The 'svd' solver cannot be
 used with shrinkage.
 
-The 'lsqr' solver is an efficient algorithm that only works for classification.
-It supports shrinkage.
+The 'lsqr' solver is an efficient algorithm that only works for
+classification. It needs to explicitly compute the covariance matrix
+:math:`\Sigma`, and supports shrinkage. This solver computes the coefficients
+:math:`\omega_k = \Sigma^{-1}\mu_k` by solving for :math:`\Sigma \omega =
+\mu_k`, thus avoiding the explicit computation of the inverse
+:math:`\Sigma^{-1}`.
 
 The 'eigen' solver is based on the optimization of the between class scatter to
 within class scatter ratio. It can be used for both classification and
@@ -222,8 +229,11 @@ a high number of features.
 
 .. topic:: References:
 
-   .. [#1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
+   .. [1] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
       Friedman J., Section 4.3, p.106-119, 2008.
 
-   .. [#2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
+   .. [2] Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix.
       The Journal of Portfolio Management 30(4), 110-119, 2004.
+
+   .. [3] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
+      (Second Edition), section 2.6.2.
