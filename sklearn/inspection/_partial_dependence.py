@@ -638,7 +638,7 @@ def _plot(estimator, X, features, calc_method, display_class,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    # compute averaged predictions
+    # compute predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(calc_method)(estimator, X, fxs,
                              response_method=response_method, method=method,
@@ -1160,7 +1160,7 @@ def individual_conditional_expectation(estimator, X, features,
 
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
-        ``features``, and to compute the averaged predictions.
+        ``features``, and to compute the predictions.
 
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
