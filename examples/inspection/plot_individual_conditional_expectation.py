@@ -123,14 +123,13 @@ fig.suptitle('Centered ICE of house value on non-location features')
 fig.subplots_adjust(hspace=0.3)
 
 
-# In ICE plots it might not be easy to see the average effect of the 'target'
-# variable. Hence, it is recommended to use ICE plot with partial dependency
-# plots.
-
-
 ##############################################################################
 # Partial Dependence computation
 # ------------------------------
+#
+# In ICE plots it might not be easy to see the average effect of the 'target'
+# variable. Hence, it is recommended to use ICE plot with partial dependency
+# plots.
 #
 # Let's compute single-variable partial dependence plots
 
