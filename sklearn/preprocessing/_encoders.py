@@ -161,6 +161,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
                     if process_valid_mask is not None:
                         valid_mask = process_valid_mask(valid_mask, i)
+
                     X_mask[:, i] = valid_mask
 
             # We use check_unknown=False, since _encode_check_unknown was
@@ -243,7 +244,7 @@ class OneHotEncoder(_BaseEncoder):
         encountered in transform:
 
             1. If there was no infrequent category during training, the
-            resulting one-hot encoded columns for this feature will be be all
+            resulting one-hot encoded columns for this feature will be all
             zeros. In the inverse transform, an unknown category will be
             denoted as None.
 
@@ -263,7 +264,7 @@ class OneHotEncoder(_BaseEncoder):
             1. If int, categories with a cardinality smaller will be considered
             infrequent.
 
-            2. If float, categories with a cardinality smaller than this
+            2. If float, categories with a cardinality smaller than the
             fraction of the total number of samples will be considered
             infrequent.
 
@@ -289,6 +290,11 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature. None if all the transformed features will
         be retained.
+
+    infrequent_indices_ : list of shape (n_features,)
+        `infrequent_indices_[i]` is an array of indices corresponding to
+        `categories_[i]` of the infrequent categories. `infrequent_indices_[i]`
+        is None if the ith input feature has no infrequent categories.
 
     See Also
     --------
@@ -432,7 +438,7 @@ class OneHotEncoder(_BaseEncoder):
                 (isinstance(self.min_frequency, numbers.Real)
                     and 0.0 < self.min_frequency < 1.0))
 
-    def _compute_infrequent_indicies(self, category_count, n_samples, col_idx):
+    def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indicies based on max_levels and
         min_frequency.
 
@@ -480,8 +486,15 @@ class OneHotEncoder(_BaseEncoder):
                              .format(col_idx))
         return output if output.size > 0 else None
 
-    def _compute_infrequent_categories(self, category_counts, n_samples):
-        """Compute infrequent categories.
+    def _fit_infrequent_category_mapping(self, category_counts, n_samples):
+        """Fit infrequent categories.
+
+        Defines:
+            1. infrequent_indices_ to be the categories that are infrequent.
+            2. _default_to_infrequent_mappings to be the mapping from the
+               default mapping provided by _encode to the infrequent categories
+            3. _largest_infreq_indices to be the indices of the most frequent
+               infrequent category
 
         Parameters
         ----------
@@ -492,8 +505,7 @@ class OneHotEncoder(_BaseEncoder):
             number of samples
         """
         self.infrequent_indices_ = [
-            self._compute_infrequent_indicies(category_count, n_samples,
-                                              col_idx)
+            self._identify_infrequent(category_count, n_samples, col_idx)
             for col_idx, category_count in enumerate(category_counts)]
 
         # compute mapping from default mapping to infrequent mapping
@@ -530,8 +542,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def _map_to_infrequent_categories(self, X_int):
         """Map categories to infrequent categories.
-
-        Note this will replace the encoding in X_int
+        This modifies X_int in-place.
 
         Parameters
         ----------
@@ -541,12 +552,10 @@ class OneHotEncoder(_BaseEncoder):
         if not self._infrequent_enabled:
             return
 
-        for col_idx, mapping in enumerate(
-                self._default_to_infrequent_mappings):
-
+        for i, mapping in enumerate(self._default_to_infrequent_mappings):
             if mapping is None:
                 continue
-            X_int[:, col_idx] = np.take(mapping, X_int[:, col_idx])
+            X_int[:, i] = np.take(mapping, X_int[:, i])
 
     def _get_default_invalid_category(self, col_idx):
         """Get default invalid category for column index during `_transform`.
@@ -560,7 +569,20 @@ class OneHotEncoder(_BaseEncoder):
         """Process the valid mask during `_transform`
 
         This function is passed to `_transform` to adjust the mask depending
-        on if the infrequent column exist or not.
+        on if the infrequent column exists or not.
+
+        Parameters
+        ----------
+        valid_mask : array of shape (n_samples, )
+            boolean mask representing if a sample was seen during training
+
+        col_idx : int
+            column index
+
+        Returns
+        -------
+        valid_mask : array of shape (n_samples,) or None
+            boolean mask to use for constructing X_mask in `_transform`.
         """
         if self.handle_unknown != 'auto':
             return valid_mask
@@ -568,17 +590,17 @@ class OneHotEncoder(_BaseEncoder):
         # handle_unknown == 'auto'
         infrequent_idx = self.infrequent_indices_[col_idx]
 
-        # infrequent column does not exist
+        # infrequent column does not exists
         # returning the original mask to allow the column to be ignored
         if infrequent_idx is None:
             return valid_mask
 
-        # infrequent column exist
+        # infrequent column exists
         # the unknown categories will be mapped to the infrequent category
         return np.ones_like(valid_mask, dtype=bool)
 
-    def _compute_transformed_category(self, i):
-        """Compute the transformed category used for column `i`.
+    def _compute_transformed_categories(self, i):
+        """Compute the transformed categories used for column `i`.
 
         1. Dropped columns are removed.
         2. If there are infrequent categories, the infrequent category with
@@ -651,7 +673,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         self._validate_keywords()
 
-        process_counts = (self._compute_infrequent_categories
+        process_counts = (self._fit_infrequent_category_mapping
                           if self._infrequent_enabled else None)
         self._fit(X, handle_unknown=self.handle_unknown,
                   process_counts=process_counts)

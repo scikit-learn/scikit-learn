@@ -652,7 +652,7 @@ def test_encode_util(values, expected):
 
 
 def test_encode_util_uniques_unordered():
-    # The return counts are ordered based on the order of uniques
+    # Make sure the returned counts are ordered based on the order of uniques
 
     values = np.array(['b'] * 21 + ['c'] * 5 + ['a'] * 11, dtype=object)
     result = _encode(values, np.array(['a', 'c', 'b']), return_counts=True)

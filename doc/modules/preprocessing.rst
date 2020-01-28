@@ -580,8 +580,9 @@ Infrequent categories
 ---------------------
 
 :class:`OneHotEncoder` supports outputing a feature that combines infrequent
-categories in the training data. The parameters to enable the gathering of
-infrequent categories are `min_frequency` and `max_levels`.
+categories in the training data. For each input feature that has a infrequent
+category a new column is formed to represent it. The parameters to enable the
+gathering of infrequent categories are `min_frequency` and `max_levels`.
 
 1. `min_frequency` can be a integer greater or equal to 1, or a float in
 `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a cardinality
