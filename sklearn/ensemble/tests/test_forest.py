@@ -1399,4 +1399,4 @@ def test_rf_regressor_prediction_range():
     # TODO: check that all the values in y_preds lie between the minimum
     # and maximum values of y_train.
     msg = "Predictions outside training range"
-    assert (y_preds<=y_max).all() and (y_preds>=y_min).all(), msg
+    assert (y_preds <= y_max).all() and (y_preds >= y_min).all(), msg
