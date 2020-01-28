@@ -8,7 +8,7 @@ expectation (ICE) plot [1]_ shows the dependence between the target function
 [2]_ and a 'target' feature, marginalizing over the values of all other
 features (the complement features). However, unlike PD plots which show the
 average effect of the 'target' features, ICE plots visualizes the dependence
-of the prediction on a feature for each instance separately, with one line
+of the prediction on a feature for each instance separately, with one curve
 per instance.
 
 This example shows how to obtain ICE plots from a
