@@ -586,9 +586,9 @@ gathering of infrequent categories are `min_frequency` and `max_levels`.
 
 1. `min_frequency` can be a integer greater or equal to 1, or a float in
 `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a cardinality
-smaller than this value will be considered infrequent. If `min_frequency` is a
-float, categories with a cardinality smaller than this fraction of the
-total number of samples will be considered infrequent.
+smaller than `min_frequency * n_samples`  will be considered infrequent.
+If `min_frequency` is a float, categories with a cardinality smaller than this
+fraction of the total number of samples will be considered infrequent.
 
 2. `max_levels` can be `None` or any integer greater than 1. This parameter
 sets an upper limit to the number of output features for each input feature.

@@ -264,9 +264,8 @@ class OneHotEncoder(_BaseEncoder):
             1. If int, categories with a cardinality smaller will be considered
             infrequent.
 
-            2. If float, categories with a cardinality smaller than the
-            fraction of the total number of samples will be considered
-            infrequent.
+            2. If float, categories with a cardinality smaller than
+            `min_frequency * n_samples`  will be considered infrequent.
 
         .. versionadded:: 0.23
 
