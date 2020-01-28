@@ -164,9 +164,9 @@ def _get_predictions(est, grid, features_indices, X, response_method):
 def _partial_dependence_brute(est, grid, features, X, response_method):
     averaged_predictions = []
     predictions = _get_predictions(est, grid, features, X, response_method)
-    for prediction in predictions:
+    for pred in predictions:
         # average over samples
-        averaged_predictions.append(np.mean(prediction, axis=0))
+        averaged_predictions.append(np.mean(pred, axis=0))
 
     # reshape to (n_targets, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
