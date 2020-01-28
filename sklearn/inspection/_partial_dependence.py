@@ -1244,11 +1244,11 @@ def individual_conditional_expectation(estimator, X, features,
 
 
 def plot_individual_conditional_expectation(estimator, X, features,
-                                            feature_names=None, target=None,
-                                            response_method='auto', n_cols=3,
-                                            grid_resolution=100, centre=True,
+                                            response_method='auto',
                                             percentiles=(0.05, 0.95),
-                                            n_jobs=None, verbose=0,
+                                            grid_resolution=100, centre=True,
+                                            feature_names=None, target=None,
+                                            n_cols=3, n_jobs=None, verbose=0,
                                             line_kw=None, ax=None):
     """Individual Conditional Expectation (ICE) plots.
 
@@ -1292,6 +1292,25 @@ def plot_individual_conditional_expectation(estimator, X, features,
         The target features for which to create the ICEs.
         if any entry is a string, then it must be in ``feature_names``.
 
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto')
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. For regressors
+        this parameter is ignored and the response is always the output of
+        :term:`predict`. By default, :term:`predict_proba` is tried first
+        and we revert to :term:`decision_function` if it doesn't exist.
+
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
+        The lower and upper percentile used to create the extreme values
+        for the ICE axes. Must be in [0, 1].
+
+    grid_resolution : int, optional (default=100)
+        The number of equally spaced points on the axes of the plots, for each
+        target feature.
+
+    centre : bool, optional (default=True)
+        Whether to centre the ICE curves at the beginning of x-axes.
+
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
         with index i.
@@ -1307,28 +1326,9 @@ def plot_individual_conditional_expectation(estimator, X, features,
 
         Ignored in binary classification or classical regression settings.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the target response. For regressors
-        this parameter is ignored and the response is always the output of
-        :term:`predict`. By default, :term:`predict_proba` is tried first
-        and we revert to :term:`decision_function` if it doesn't exist.
-
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
-
-    grid_resolution : int, optional (default=100)
-        The number of equally spaced points on the axes of the plots, for each
-        target feature.
-
-    centre : bool, optional (default=True)
-        Whether to centre the ICE curves at the beginning of x-axes.
-
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
-        The lower and upper percentile used to create the extreme values
-        for the ICE axes. Must be in [0, 1].
 
     n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the ICEs.
