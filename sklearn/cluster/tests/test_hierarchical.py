@@ -765,4 +765,3 @@ def test_invalid_shape_precomputed_dist_matrix():
             affinity='precomputed',
             linkage='complete'
         ).fit(X)
-
