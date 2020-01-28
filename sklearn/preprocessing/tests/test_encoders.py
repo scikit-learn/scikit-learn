@@ -664,6 +664,8 @@ def test_encoders_has_categorical_tags(Encoder):
 @pytest.mark.parametrize("categories",
                          ["auto", [['a', 'b', 'c', 'd']]])
 def test_ohe_infrequent_two_levels(kwargs, categories):
+    # Test that different parameters for combine 'a', 'c', and 'd' into
+    # the infrequent category works as expected
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(categories=categories,
@@ -701,6 +703,8 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     {'max_levels': 4, 'min_frequency': 6},
 ])
 def test_ohe_infrequent_three_levels(kwargs):
+    # Test that different parameters for combine 'a', and 'd' into
+    # the infrequent category works as expected
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3]).T
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
@@ -727,8 +731,32 @@ def test_ohe_infrequent_three_levels(kwargs):
     assert_array_equal(['x0_b', 'x0_c', 'x0_a'], feature_names)
 
 
-def test_ohe_infrequent_two_levels_user_cats():
+@pytest.mark.parametrize("kwargs", [{'max_levels': 3},
+                                    {'min_frequency': 4}])
+def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
+    # 'a' is the only frequent category, all other categories are infrequent
 
+    X_train = np.array([['a'] * 5 + ['e'] * 30], dtype=object).T
+    ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
+                        sparse=False, handle_unknown='auto',
+                        **kwargs).fit(X_train)
+
+    X_test = [['a'], ['b'], ['c'], ['d'], ['e']]
+    expected = np.array([
+        [1, 0],
+        [0, 1],
+        [0, 1],
+        [0, 1],
+        [0, 1]])
+
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected, X_trans)
+
+
+def test_ohe_infrequent_two_levels_user_cats():
+    # Test that the order of the categories provided by a user is respected.
+    # Specifically, the infrequent_indicies_ correspond to the user provided
+    # categories.
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3],
                        dtype=object).T
     ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
@@ -748,12 +776,16 @@ def test_ohe_infrequent_two_levels_user_cats():
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
 
+    # The most frequent infrquent category is used for the inverse transform
     expected_inv = [['b'], ['c'], ['c'], ['c'], ['c']]
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
 
 def test_ohe_infrequent_three_levels_user_cats():
+    # Test that the order of the categories provided by a user is respected.
+    # In this case 'c' is encoded as the first category and 'b' is encoded
+    # as the second one
 
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 3],
                        dtype=object).T
@@ -774,12 +806,15 @@ def test_ohe_infrequent_three_levels_user_cats():
     X_trans = ohe.transform(X_test)
     assert_allclose(expected, X_trans)
 
+    # The most frequent infrquent category is used for the inverse transform
     expected_inv = [['b'], ['a'], ['c'], ['a'], ['a']]
     X_inv = ohe.inverse_transform(X_trans)
     assert_array_equal(expected_inv, X_inv)
 
 
 def test_ohe_infrequent_multiple_categories():
+    # Test infrequent categories with feature matrix with 3 features
+
     X = np.c_[[0, 1, 3, 3, 3, 3, 2, 0, 3],
               [0, 0, 5, 1, 1, 10, 5, 5, 0],
               [1, 0, 1, 0, 1, 0, 1, 0, 1]]
@@ -854,6 +889,8 @@ def test_ohe_infrequent_multiple_categories():
 
 
 def test_ohe_infrequent_multiple_categories_dtypes():
+    # Test infrequent categories with a pandas dataframe with multiple dtypes
+
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame(
         {'str': ['a', 'f', 'c', 'f', 'f', 'a', 'c', 'b', 'b'],
@@ -925,6 +962,19 @@ def test_ohe_infrequent_one_level_errors(min_frequency):
 
     ohe = OneHotEncoder(handle_unknown='auto', sparse=False,
                         min_frequency=min_frequency)
+
+    msg = "All categories in column 0 are infrequent"
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X_train)
+
+
+@pytest.mark.parametrize("kwargs", [{'min_frequency': 2, 'max_levels': 3}])
+def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
+    # All user provided categories are infrequent
+
+    X_train = np.array([['e'] * 3], dtype=object).T
+    ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b']],
+                        sparse=False, handle_unknown='auto', **kwargs)
 
     msg = "All categories in column 0 are infrequent"
     with pytest.raises(ValueError, match=msg):

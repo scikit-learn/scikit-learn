@@ -242,12 +242,14 @@ class OneHotEncoder(_BaseEncoder):
         When this parameter is set to 'auto' and an unknown category is
         encountered in transform:
 
-        1. If there was no infrequent category during training, the resulting
-        one-hot encoded columns for this feature will be be all zeros. In
-        the inverse transform, an unknown category will be denoted as None.
-        2. If there is an infrequent category during training, the unknown
-        category will be considered infrequent. In the inverse transform,
-        an unknown category will be the most frequent infrequent category
+            1. If there was no infrequent category during training, the
+            resulting one-hot encoded columns for this feature will be be all
+            zeros. In the inverse transform, an unknown category will be
+            denoted as None.
+
+            2. If there is an infrequent category during training, the unknown
+            category will be considered infrequent. In the inverse transform,
+            an unknown category will be the most frequent infrequent category
 
         .. versionadded:: 0.23
             'auto' was added to automatically handle unknown categories
@@ -256,19 +258,22 @@ class OneHotEncoder(_BaseEncoder):
             'ignore' is deprecated in favor of 'auto'
 
     min_frequency : int or float, default=1
-        Specifics the categories to be considered infrequent.
+        Specifies the categories to be considered infrequent.
 
-        1. If int, categories with a cardinality smaller will be considered
-        infrequent.
-        2. If float, categories with a cardinality smaller than this fraction
-        of the total number of samples will be considered infrequent.
+            1. If int, categories with a cardinality smaller will be considered
+            infrequent.
+
+            2. If float, categories with a cardinality smaller than this
+            fraction of the total number of samples will be considered
+            infrequent.
 
         .. versionadded:: 0.23
 
     max_levels : int, default=None
-        Specifies the categories to be considered infrequent. Sets an upper
-        limit to the number of categories including the infrequent category.
-        If `None` there is no limit to the number of categories.
+        Specifies an upper limit to the number of output features for each
+        input feature when considering infrequent categories. `max_levels`
+        includes the feature that combines infrequent categories. If `None`
+        there is no limit to the number of output features.
 
         .. versionadded:: 0.23
 
@@ -448,7 +453,8 @@ class OneHotEncoder(_BaseEncoder):
             If there are infrequent categories, indicies of infrequent
             categories. Otherwise None.
         """
-        infrequent_mask = np.zeros_like(category_count, dtype=bool)
+        # categories with no count are infrequent
+        infrequent_mask = category_count == 0
 
         if isinstance(self.min_frequency, numbers.Integral):
             if self.min_frequency > 1:
@@ -462,7 +468,6 @@ class OneHotEncoder(_BaseEncoder):
 
         if (self.max_levels is not None and self.max_levels > 1
                 and self.max_levels < category_count.size):
-
             # stable sort to preserve original count order
             smallest_levels = np.argsort(category_count, kind='mergesort'
                                          )[:-self.max_levels + 1]
@@ -742,6 +747,9 @@ class OneHotEncoder(_BaseEncoder):
         In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
 
+        For a given input feature, if there is an infrequent category, the most
+        frequent infrequent category will be used to represent this category.
+
         Parameters
         ----------
         X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
@@ -824,6 +832,9 @@ class OneHotEncoder(_BaseEncoder):
     def get_feature_names(self, input_features=None):
         """
         Return feature names for output features.
+
+        For a given input feature, if there is an infrequent category, the most
+        frequent infrequent category will be used as a feature name.
 
         Parameters
         ----------

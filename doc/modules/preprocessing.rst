@@ -579,37 +579,56 @@ as a dict, not as scalars.
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` supports creating a category for infrequent categories
-in the training data. The parameters to enable the gathering of infrequent
-categories are `min_frequency` and `max_levels`.
+:class:`OneHotEncoder` supports outputing a feature that combines infrequent
+categories in the training data. The parameters to enable the gathering of
+infrequent categories are `min_frequency` and `max_levels`.
 
-1. `min_frequency` can be a integer greater or equal to one or a float in
+1. `min_frequency` can be a integer greater or equal to 1, or a float in
 `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a cardinality
-smaller than this value will be considered infrequent. If `min_frequency` is an
+smaller than this value will be considered infrequent. If `min_frequency` is a
 float, categories with a cardinality smaller than this fraction of the
 total number of samples will be considered infrequent.
 
-2. `max_levels` can be `None` or any integer greater than one. This parameter
-sets an upper limit of the number of categories including the infrequent
-category.
+2. `max_levels` can be `None` or any integer greater than 1. This parameter
+sets an upper limit to the number of output features for each input feature.
+`max_levels` includes the feature that combines infrequent categories.
 
-These parameters can be used together to filter out infrequent categories. In
-the following example, the categories, `'dog', 'cat'`, are considered infrequent::
+In the following example, the categories, `'dog', 'snake'`, are considered
+infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 + 
    ...               ['snake'] * 3]).T
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6,
    ...                                   handle_unknown='auto').fit(X)
-   >>> enc.transform([['dog']]).toarray()
-   array([[0., 0., 1.]])
-   >>> enc.transform([['rabbit']]).toarray()
-   array([[0., 1., 0.]])
-   
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']]).toarray()
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
 By setting handle_unknown to `'auto'`, unknown categories will be considered
 infrequent::
 
    >>> enc.transform([['dragon']]).toarray()
    array([[0., 0., 1.]])
+
+:meth:`OneHotEncoder.get_feature_names` uses the most frequent infrequent 
+category as the feature name for the infrequent feature name::
+
+   >>> enc.get_feature_names()
+   array(['x0_cat', 'x0_rabbit', 'x0_dog'], dtype=object)
+
+`min_frequency` and `max_levels` can be used together to filter out infrequent
+categories. In the following example, setting `max_levels` to 2 limits the
+number of output features::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, max_levels=2,
+   ...                                   handle_unknown='auto').fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']]).toarray()
+   array([[0., 1.],
+          [1., 0.],
+          [0., 1.],
+          [0., 1.]])
 
 .. _preprocessing_discretization:
 
