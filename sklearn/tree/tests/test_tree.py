@@ -8,7 +8,6 @@ import struct
 
 import pytest
 import numpy as np
-from io import StringIO
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
@@ -1964,17 +1963,3 @@ def test_classes_deprecated():
 
     with pytest.warns(FutureWarning, match=match):
         assert len(clf.n_classes_) == clf.n_outputs_
-
-
-def test_not_fitted_tree():
-
-    # Testing if not fitted tree throws the correct error
-    clf = DecisionTreeRegressor()
-    out = StringIO()
-    with pytest.raises(NotFittedError):
-        tree.plot_tree(clf, out)
-
-    clf = DecisionTreeClassifier()
-    out = StringIO()
-    with pytest.raises(NotFittedError):
-        tree.plot_tree(clf, out)
