@@ -95,7 +95,7 @@ features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 print('Computing ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
                                         n_jobs=3, grid_resolution=20,
-                                        centre=False, n_cols=2,
+                                        fixed_start_point=False, n_cols=2,
                                         line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features')
@@ -116,7 +116,7 @@ fig.subplots_adjust(hspace=0.3)
 print('Computing centered ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
                                         n_jobs=3, grid_resolution=20,
-                                        centre=True, n_cols=2,
+                                        fixed_start_point=True, n_cols=2,
                                         line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('Centered ICE of house value on non-location features')
