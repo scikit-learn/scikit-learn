@@ -17,7 +17,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 # License: BSD 3 clause
 import warnings
 from abc import ABCMeta, abstractmethod
-
+import copy
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
@@ -32,7 +32,7 @@ from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
-           'CategoricalNB']
+           'CategoricalNB', 'GeneralNB']
 
 
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -115,22 +115,18 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
-
 class GeneralNB(_BaseNB):
     """General Naive Bayes
 
     Parameters
     ----------
     distributions : list of tuples
-        Prior probabilities of the classes. If specified the priors are not
-        adjusted according to the data.
+        A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
+        'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
+        a list of indices.
 
     Attributes
     ----------
-    class_prior_ : array, shape (n_classes,)
-        probability of each class.
-    class_count_ : array, shape (n_classes,)
-        number of training samples observed in each class.
     fits_ : list of objects
         list of objects that inherit from BaseNB
 
@@ -178,15 +174,18 @@ class GeneralNB(_BaseNB):
         -------
         self : object
         """
-        self.distributions_ = self._check_distributions(self.distributions_)
+        self._check_distributions(self.distributions_, X)
+        X, y = check_X_y(X, y)
+        y = column_or_1d(y, warn=True)
+
 
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb,features) for (nb,features) in self.distributions_]
+        inits = [(nb, features) for (nb, features) in self.distributions_]
 
-        self.fits = [(nb.fit(X[:,features],y), features)
-                     for (nb,features) in inits]
+        self.fits = [(nb.fit(X[:, features], y), features)
+                     for (nb, features) in inits]
 
         return self
 
@@ -203,7 +202,7 @@ class GeneralNB(_BaseNB):
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-               for (nb, features) in self.fits]
+                for (nb, features) in self.fits]
 
         # jlls has the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
@@ -216,16 +215,57 @@ class GeneralNB(_BaseNB):
         return jll
 
     def _check_X(self, X):
-        # Check for this and
-        # Check for every distribution
-        return X
+        return check_array(X)
 
-    def _check_distributions(self, distr):
-        # TODO
-        # Check duplicate naive bayes algorithms
-        # Check duplicate rows
-        return distr
+    def _check_distributions(self, distributions, X):
+        """Check validity of distributions
 
+        Distributions should be explicitly specified
+        """
+        valid_modules = copy.copy(__all__)
+        valid_modules.remove("GeneralNB")
+        dict_distribution = {}
+
+        X = np.array(X)
+        num_cols_expected = X.shape[-1]
+
+        # Check type
+        if not isinstance(distributions, list):
+            raise TypeError(
+                "Expected list but got {}".format(type(distributions)))
+
+        # Check if all are sklearn classes
+        for distribution in distributions:
+
+            if not isinstance(distribution, tuple):
+                raise TypeError(
+                    "Expected tuple but got {}".format(type(distribution)))
+
+            if len(distribution) != 2:
+                raise ValueError("Expected tuple to have length of 2 " +
+                                "but got {}".format(len(distribution)))
+
+            nb, features = distribution
+
+            if callable(nb):
+                raise ValueError("Wrong format specified.")
+            if nb.__class__.__name__ not in valid_modules:
+                raise ValueError(
+                    "Distributions should be one of {}".format(valid_modules))
+            for feature in features:
+                if feature in dict_distribution:
+                    raise ValueError(
+                        "Duplicate specification of feature found.")
+                else:
+                    dict_distribution[feature] = nb.__class__.__name__.lower()
+
+        num_cols = len(dict_distribution)
+        if num_cols != num_cols_expected:
+            raise ValueError("Expected {} features ".format(num_cols_expected) +
+                             " to have specified distributions " +
+                             "but only {} were specified.".format(num_cols))
+
+        # Check inefficient specification?
 
 
 class GaussianNB(_BaseNB):
