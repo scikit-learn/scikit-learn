@@ -715,8 +715,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           >>> X, y = make_friedman1()
           >>> est = LinearRegression().fit(X, y)
           >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(est, X,
-          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(
+          ...     est, X, ax=disp1.axes_)  # doctest: +SKIP
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
@@ -1271,10 +1271,10 @@ def plot_individual_conditional_expectation(estimator, X, features,
           >>> from sklearn.linear_model import LinearRegression
           >>> X, y = make_friedman1()
           >>> est = LinearRegression().fit(X, y)
-          >>> disp1 = plot_individual_conditional_expectation(est,
-          ...                                 X)  # doctest: +SKIP
-          >>> disp2 = plot_individual_conditional_expectation(est, X,
-          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+          >>> disp1 = plot_individual_conditional_expectation(
+          ...     est, X)  # doctest: +SKIP
+          >>> disp2 = plot_individual_conditional_expectation(
+          ...     est, X,ax=disp1.axes_)  # doctest: +SKIP
 
     Read more in the :ref:`User Guide <individual_conditional_expectation>`.
 
