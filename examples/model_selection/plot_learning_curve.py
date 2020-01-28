@@ -142,9 +142,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
 
 fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 
-digits = load_digits()
-X, y = digits.data, digits.target
-
+X, y = load_digits(return_X_y=True)
 
 title = "Learning Curves (Naive Bayes)"
 # Cross validation with 100 iterations to get smoother mean test and train

@@ -50,7 +50,7 @@ lc.set_linewidths(np.full(n, 0.5))
 
 fig = plt.figure()
 plt.plot(x, y, 'r.', markersize=12)
-plt.plot(x, y_, 'g.-', markersize=12)
+plt.plot(x, y_, 'b.-', markersize=12)
 plt.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
 plt.gca().add_collection(lc)
 plt.legend(('Data', 'Isotonic Fit', 'Linear Fit'), loc='lower right')

@@ -2,10 +2,9 @@ import numpy as np
 
 import pytest
 
-from sklearn.utils.testing import (assert_allclose, assert_raises,
-                                   assert_equal)
+from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
-from sklearn.neighbors.ball_tree import kernel_norm
+from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
@@ -75,7 +74,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
         # draw a tophat sample
         kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(100)
-        assert_equal(X.shape, samp.shape)
+        assert X.shape == samp.shape
 
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
@@ -96,7 +95,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
     # non-regression test: used to return a scalar
     X = rng.randn(4, 1)
     kde = KernelDensity(kernel="gaussian").fit(X)
-    assert_equal(kde.sample().shape, (1, 1))
+    assert kde.sample().shape == (1, 1)
 
 
 @pytest.mark.parametrize('algorithm', ['auto', 'ball_tree', 'kd_tree'])
@@ -116,7 +115,7 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
         kde = KernelDensity(algorithm=algorithm, metric=metric)
         kde.fit(X)
         y_dens = kde.score_samples(Y)
-        assert_equal(y_dens.shape, Y.shape[:1])
+        assert y_dens.shape == Y.shape[:1]
 
 
 def test_kde_score(n_samples=100, n_features=3):
@@ -154,7 +153,7 @@ def test_kde_pipeline_gridsearch():
     params = dict(kerneldensity__bandwidth=[0.001, 0.01, 0.1, 1, 10])
     search = GridSearchCV(pipe1, param_grid=params)
     search.fit(X)
-    assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
+    assert search.best_params_['kerneldensity__bandwidth'] == .1
 
 
 def test_kde_sample_weights():
@@ -203,6 +202,21 @@ def test_kde_sample_weights():
                     kde.fit(X, sample_weight=(scale_factor * weights))
                     scores_scaled_weight = kde.score_samples(test_points)
                     assert_allclose(scores_scaled_weight, scores_weight)
+
+
+def test_sample_weight_invalid():
+    # Check sample weighting raises errors.
+    kde = KernelDensity()
+    data = np.reshape([1., 2., 3.], (-1, 1))
+
+    sample_weight = [0.1, 0.2]
+    with pytest.raises(ValueError):
+        kde.fit(data, sample_weight=sample_weight)
+
+    sample_weight = [0.1, -0.2, 0.3]
+    expected_err = "sample_weight must have positive values"
+    with pytest.raises(ValueError, match=expected_err):
+        kde.fit(data, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize('sample_weight', [None, [0.1, 0.2, 0.3]])

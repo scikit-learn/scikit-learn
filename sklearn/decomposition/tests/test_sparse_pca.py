@@ -6,15 +6,13 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import (SparsePCA, MiniBatchSparsePCA, PCA,
                                    _get_explained_variance)
 from sklearn.utils import check_random_state
-
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
@@ -46,13 +44,13 @@ def test_correct_shapes():
     X = rng.randn(12, 10)
     spca = SparsePCA(n_components=8, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert spca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     spca = SparsePCA(n_components=13, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert spca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 def test_fit_transform():
@@ -74,9 +72,7 @@ def test_fit_transform():
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
-@pytest.mark.filterwarnings("ignore:normalize_components")
-@pytest.mark.parametrize("norm_comp", [False, True])
-def test_fit_transform_variance(norm_comp):
+def test_fit_transform_variance():
     # This function asserts that the variance computed by SparsePCA is the
     # same as the variance in PCA when the components are orthogonal.
     alpha = 1
@@ -84,7 +80,7 @@ def test_fit_transform_variance(norm_comp):
     X, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     # init spca and pca
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
-                          random_state=0, normalize_components=norm_comp)
+                          random_state=0)
     spca_lars.fit(X)
     assert spca_lars.explained_variance_.shape == (3,)
     pca = PCA(n_components=3, random_state=0)
@@ -104,8 +100,6 @@ def test_fit_transform_variance(norm_comp):
     assert_array_almost_equal(explained_variance, explained_variance_sparse)
 
 
-@pytest.mark.filterwarnings("ignore:normalize_components")
-@pytest.mark.parametrize("norm_comp", [False, True])
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel():
     alpha = 1
@@ -159,13 +153,13 @@ def test_mini_batch_correct_shapes():
     X = rng.randn(12, 10)
     pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert pca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert pca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 # XXX: test always skipped
@@ -234,7 +228,7 @@ def test_spca_deprecation_warning(spca):
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
 
     warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         spca(normalize_components=True).fit(Y)
 
 

@@ -8,12 +8,12 @@ import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
-from .linear_model.ridge import _solve_cholesky_kernel
-from .utils import check_array, check_X_y
-from .utils.validation import check_is_fitted
+from .linear_model._ridge import _solve_cholesky_kernel
+from .utils import check_X_y
+from .utils.validation import check_is_fitted, _check_sample_weight
 
 
-class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -74,7 +74,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
     dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
-    X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X_fit_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
         kernel == "precomputed" this is instead the precomputed
         training matrix, shape = [n_samples, n_samples].
@@ -132,12 +132,12 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
             a precomputed kernel matrix, shape = [n_samples,
             n_samples].
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
@@ -151,7 +151,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
         X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
                          y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
@@ -177,7 +177,7 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples. If kernel == "precomputed" this is instead a
             precomputed kernel matrix, shape = [n_samples,
             n_samples_fitted], where n_samples_fitted is the number of
@@ -185,9 +185,9 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples] or [n_samples, n_targets]
+        C : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Returns predicted values.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        check_is_fitted(self)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

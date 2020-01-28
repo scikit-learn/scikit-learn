@@ -130,6 +130,8 @@ def plot_qda_cov(qda, splot):
 
 
 plt.figure(figsize=(10, 8), facecolor='white')
+plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant Analysis',
+             y=0.98, fontsize=15)
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis
     lda = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)
@@ -144,7 +146,6 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)
     plt.axis('tight')
-plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant Analysis',
-             y=1.02, fontsize=15)
 plt.tight_layout()
+plt.subplots_adjust(top=0.92)
 plt.show()
