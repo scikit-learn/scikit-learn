@@ -254,18 +254,18 @@ def test_plain_has_no_average_attr(klass):
     clf = klass(average=True, eta0=.01)
     clf.fit(X, Y)
 
-    assert hasattr(clf, 'average_coef_')
-    assert hasattr(clf, 'average_intercept_')
-    assert hasattr(clf, 'standard_intercept_')
-    assert hasattr(clf, 'standard_coef_')
+    assert hasattr(clf, '_average_coef_')
+    assert hasattr(clf, '_average_intercept_')
+    assert hasattr(clf, '_standard_intercept_')
+    assert hasattr(clf, '_standard_coef_')
 
     clf = klass()
     clf.fit(X, Y)
 
-    assert not hasattr(clf, 'average_coef_')
-    assert not hasattr(clf, 'average_intercept_')
-    assert not hasattr(clf, 'standard_intercept_')
-    assert not hasattr(clf, 'standard_coef_')
+    assert not hasattr(clf, '_average_coef_')
+    assert not hasattr(clf, '_average_intercept_')
+    assert not hasattr(clf, '_standard_intercept_')
+    assert not hasattr(clf, '_standard_coef_')
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
