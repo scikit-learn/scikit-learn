@@ -9,8 +9,8 @@ import numpy as np
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
-from .utils import check_array, check_X_y
-from .utils.validation import check_is_fitted
+from .utils import check_X_y
+from .utils.validation import check_is_fitted, _check_sample_weight
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -151,7 +151,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
                          y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)

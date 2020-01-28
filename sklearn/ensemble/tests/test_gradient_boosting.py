@@ -1170,9 +1170,10 @@ def test_non_uniform_weights_toy_edge_case_clf():
 
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
     dense = EstimatorClass(n_estimators=10, random_state=0,
-                           max_depth=2).fit(X, y)
+                           max_depth=2, min_impurity_decrease=1e-7).fit(X, y)
     sparse = EstimatorClass(n_estimators=10, random_state=0,
-                            max_depth=2).fit(X_sparse, y)
+                            max_depth=2,
+                            min_impurity_decrease=1e-7).fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
