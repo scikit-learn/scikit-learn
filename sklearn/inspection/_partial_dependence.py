@@ -554,7 +554,7 @@ def _plot(estimator, X, features, calc_method, display_class,
     kwargs : dict
         Additional keyword arguments passed to the ``calc_method`` and the
         ``plot`` method of ``display_class``.
-        For ICEs, parameter ``centre`` will be included in kwargs.
+        For ICEs, parameter ``fixed_start_point`` will be included in kwargs.
         For PDPs, parameter ``contour_kw`` will be included in kwargs.
 
     Returns
@@ -1141,7 +1141,8 @@ def _ice_brute(estimator, grid, features_indices, X, response_method):
 def individual_conditional_expectation(estimator, X, features,
                                        response_method='auto',
                                        percentiles=(0.05, 0.95),
-                                       grid_resolution=100, centre=True,
+                                       grid_resolution=100, 
+                                       fixed_start_point=True,
                                        **kwargs):
     """Individual Conditional Expectation (ICE) of ``features``.
 
@@ -1181,8 +1182,8 @@ def individual_conditional_expectation(estimator, X, features,
         The number of equally spaced points on the grid, for each target
         feature.
 
-    centre : bool, optional (default=True)
-        Whether to centre the ICE curves at the beginning of x-axes.
+    fixed_start_point : bool, optional (default=True)
+        Whether to use a fixes starting point for all the ICE curves.
 
     Returns
     -------
@@ -1234,7 +1235,7 @@ def individual_conditional_expectation(estimator, X, features,
     predictions = predictions.reshape(
         -1, X.shape[0], *[val.shape[0] for val in values])
 
-    if centre:
+    if fixed_start_point:
         for i, instances in enumerate(predictions):
             for j, instance in enumerate(instances):
                 first_element = instance.item(0)
@@ -1246,7 +1247,8 @@ def individual_conditional_expectation(estimator, X, features,
 def plot_individual_conditional_expectation(estimator, X, features,
                                             response_method='auto',
                                             percentiles=(0.05, 0.95),
-                                            grid_resolution=100, centre=True,
+                                            grid_resolution=100, 
+                                            fixed_start_point=True,
                                             feature_names=None, target=None,
                                             n_cols=3, n_jobs=None, verbose=0,
                                             line_kw=None, ax=None):
@@ -1308,8 +1310,8 @@ def plot_individual_conditional_expectation(estimator, X, features,
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    centre : bool, optional (default=True)
-        Whether to centre the ICE curves at the beginning of x-axes.
+    fixed_start_point : bool, optional (default=True)
+        Whether to use a fixed starting point for all the ICE curves.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
@@ -1382,7 +1384,7 @@ def plot_individual_conditional_expectation(estimator, X, features,
                  response_method=response_method, n_cols=n_cols,
                  grid_resolution=grid_resolution, percentiles=percentiles,
                  n_jobs=n_jobs, verbose=verbose, line_kw=line_kw, ax=ax,
-                 centre=centre)
+                 fixed_start_point=fixed_start_point)
 
 
 class IndividualConditionalExpectationDisplay:
