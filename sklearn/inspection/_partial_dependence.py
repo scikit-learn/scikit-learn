@@ -1136,7 +1136,7 @@ def _ice_brute(estimator, grid, features_indices, X, response_method):
 def individual_conditional_expectation(estimator, X, features,
                                        response_method='auto',
                                        percentiles=(0.05, 0.95),
-                                       grid_resolution=100, 
+                                       grid_resolution=100,
                                        fixed_start_point=True,
                                        **kwargs):
     """Individual Conditional Expectation (ICE) of ``features``.
@@ -1242,7 +1242,7 @@ def individual_conditional_expectation(estimator, X, features,
 def plot_individual_conditional_expectation(estimator, X, features,
                                             response_method='auto',
                                             percentiles=(0.05, 0.95),
-                                            grid_resolution=100, 
+                                            grid_resolution=100,
                                             fixed_start_point=True,
                                             feature_names=None, target=None,
                                             n_cols=3, n_jobs=None, verbose=0,
