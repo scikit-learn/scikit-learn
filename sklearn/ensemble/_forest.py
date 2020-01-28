@@ -626,7 +626,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
                                                                     axis=1),
                                                           axis=0)
-
+            
             return predictions
 
     def predict_proba(self, X):
