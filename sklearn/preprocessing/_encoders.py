@@ -218,7 +218,9 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression.
+        into a neural network or an unregularized regression. Drop is not
+        support when `min_frequency` or `max_levels` is set to combine
+        infrequent categories.
 
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
