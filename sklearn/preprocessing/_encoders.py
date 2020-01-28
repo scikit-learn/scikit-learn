@@ -294,7 +294,8 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif isinstance(self.drop, str) and self.drop in ['first', 'if_binary']:
+        elif (isinstance(self.drop, str) and
+              self.drop in ['first', 'if_binary']):
             return np.zeros(len(self.categories_), dtype=np.int_)
         elif not isinstance(self.drop, str):
             try:
@@ -405,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
                     if len(self.categories_[col]) > 2:
                         keep_cells[:, col] = True
                     else:
-                        X_int[col][X_int[col] > 0] -= 1
+                        X_int[:, col][X_int[:, col] > 0] -= 1
                 n_values = [1 if len(cats) == 2
                             else len(cats) for cats in self.categories_]
 

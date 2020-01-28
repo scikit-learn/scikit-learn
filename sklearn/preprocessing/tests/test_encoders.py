@@ -406,7 +406,7 @@ def test_one_hot_encoder_drop_equals_if_binary():
                          [0., 0., 0., 1., 0., 0., 1., 0., 0.],
                          [0., 0., 1., 0., 1., 0., 0., 1., 0.]])
 
-    ohe = OneHotEncoder(drop='if_binary', sparse = False)
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
     result = ohe.fit_transform(X)
     assert_allclose(result, expected)
 
