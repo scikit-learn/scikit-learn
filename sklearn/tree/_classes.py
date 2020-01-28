@@ -894,7 +894,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Don't use this parameter unless you know what you do.
 
         use_sample_weight :s bool, default=False
-            Return normalizer with proba for cases where n_outputs_ == 1.
+            Return normalizer with proba for cases where n_outputs == 1.
             Noramlizer is the number of samples in the training set that
             falls into the same leaf as the input sample
 
@@ -906,7 +906,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             classes corresponds to that in the attribute :term:`classes_`.
 
         normalizer : returned iff
-            use_sample_weight == True and self.n_outputs_ == 1
+            use_sample_weight == True and self.n_outputs == 1
             number of samples in the leaf, returned as a number
         """
         check_is_fitted(self)
