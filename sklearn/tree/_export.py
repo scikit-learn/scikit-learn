@@ -570,14 +570,15 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return Tree(name, node_id, *children)
 
     def export(self, decision_tree, ax=None):
+        from sklearn.utils.validation import check_is_fitted
+        check_is_fitted(decision_tree)
+
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
-        from sklearn.utils.validation import check_is_fitted
         if ax is None:
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        check_is_fitted(decision_tree)
         my_tree = self._make_tree(0, decision_tree.tree_,
                                   decision_tree.criterion)
         draw_tree = buchheim(my_tree)
