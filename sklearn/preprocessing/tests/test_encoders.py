@@ -399,13 +399,16 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
 
 
 def test_one_hot_encoder_drop_equals_if_binary():
-    X = [['Male', 1], ['Female', 3], ['Female', 2]]
-    expected = np.array([[1., 1., 0., 0.], [0., 0., 0., 1.], [0., 0., 1., 0.]])
-    ohe = OneHotEncoder(drop='if_binary')
-    ohe.fit(X)
-    result = ohe.transform(X).toarray()
-    assert_array_equal(expected, result)
+    X = [['Male', 1, 'yes', 10, 'true'],
+         ['Female', 3, 'no', 20, 'false'],
+         ['Female', 2, 'yes', 30, 'false']]
+    expected = np.array([[1., 1., 0., 0., 1., 1., 0., 0., 1.],
+                         [0., 0., 0., 1., 0., 0., 1., 0., 0.],
+                         [0., 0., 1., 0., 1., 0., 0., 1., 0.]])
 
+    ohe = OneHotEncoder(drop='if_binary', sparse = False)
+    result = ohe.fit_transform(X)
+    assert_allclose(result, expected)
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
