@@ -25,7 +25,7 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
-from ..tree._tree import DTYPE
+from ..tree import DecisionTreeRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
@@ -590,9 +590,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     from matplotlib import transforms  # noqa
     from matplotlib.ticker import MaxNLocator  # noqa
     from matplotlib.ticker import ScalarFormatter  # noqa
-
     # set target_idx for multi-class estimators
-    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
+    # TODO: Remove isinstance check in 0.24
+    if (not isinstance(estimator, DecisionTreeRegressor) and
+            hasattr(estimator, 'classes_') and
+            np.size(estimator.classes_) > 2):
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(estimator.classes_, target)
