@@ -100,6 +100,27 @@ def test_fit_transform_variance():
     assert_array_almost_equal(explained_variance, explained_variance_sparse)
 
 
+def test_fit_transform_variance_orthogonal_matrix():
+    # Force matrix to be orthogonal. sparse PCA must then be the same as PCA.
+    alpha = 1e-6
+    rng = np.random.RandomState(0)
+    X, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    X_orthogonal, R = np.linalg.qr(X)
+    # init spca and pca
+    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+                          random_state=0)
+    spca_lars.fit(X)
+    pca = PCA(n_components=3, random_state=0)
+    spca_lars.fit(X_orthogonal)
+    pca.fit(X_orthogonal)
+    # When
+    explained_variance = pca.explained_variance_
+    explained_variance_sparse = _get_explained_variance(
+        X_orthogonal, spca_lars.components_)
+    # Then
+    assert_array_almost_equal(explained_variance, explained_variance_sparse)
+
+
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel():
     alpha = 1
