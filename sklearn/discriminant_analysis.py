@@ -94,7 +94,9 @@ def _class_means(X, y):
 
 
 def _class_cov(X, y, priors, shrinkage=None):
-    """Compute class covariance matrix.
+    """Compute weighted within-class covariance matrix.
+
+    The per-class covariance are weighted by the class priors.
 
     Parameters
     ----------
@@ -116,7 +118,7 @@ def _class_cov(X, y, priors, shrinkage=None):
     Returns
     -------
     cov : array-like, shape (n_features, n_features)
-        Class covariance matrix.
+        Weighted within-class covariance matrix
     """
     classes = np.unique(y)
     cov = np.zeros(shape=(X.shape[1], X.shape[1]))
@@ -147,7 +149,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    solver : string, optional
+    solver : {'svd', 'lsqr', 'eigen'}, default='svd'
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
@@ -155,7 +157,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
           - 'lsqr': Least squares solution, can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
-    shrinkage : string or float, optional
+    shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
@@ -163,23 +165,24 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    priors : array, optional, shape (n_classes,)
-        Class priors. By default, the class proportions are inferred from the
-        training data.
+    priors : array-like of shape (n_classes,), default=None
+        The class prior probabilities. By default, the class proportions are
+        inferred from the training data.
 
-    n_components : int, optional (default=None)
+    n_components : int default=None
         Number of components (<= min(n_classes - 1, n_features)) for
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
 
-    store_covariance : bool, optional
-        Additionally compute class covariance matrix (default False), used
-        only in 'svd' solver.
+    store_covariance : bool, default=False
+        If True, explicitely compute the weighted within-class covariance
+        matrix, solver is 'svd'. The matrix is always computed for the other
+        solvers.
 
         .. versionadded:: 0.17
 
-    tol : float, optional, (default 1.0e-4)
+    tol : float, default 1.0e-4
         Absolute threshold for a singular value of X to be considered
         significant, used to estimate the rank of X. Dimensions whose
         singular values are non-significant are discarded. Only used if
@@ -196,7 +199,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)
-        Covariance matrix (shared by all classes).
+        Weighted within-class covariance matrix. It corresponds to
+        `sum_k prior_k * C_k` where `C_k` is the covariance matrix of the
+        samples in class `k`. The `C_k` are estimated using the (potentially
+        shrunk) biased estimator of covariance. If solver is 'svd', only
+        exists when `store_covariance` is True.
 
     explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
@@ -558,8 +565,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         where S2 corresponds to the scaling.
 
     store_covariance : boolean
-        If True, the covariance matrices are explicitely computed and stored
-        in the `self.covariance_` attribute.
+        If True, the class covariance matrices are explicitely computed and
+        stored in the `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
@@ -573,9 +580,10 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    covariance_ : list of array-like of shape (n_features, n_features)
-        Covariance matrices of each class. Only exists if `store_covariance`
-        is True.
+    covariance_ : list of len n_classes of array-like \
+            of shape (n_features, n_features)
+        For each class, gives the covariance matrix estimated using the
+        samples of that class. The estimations are unbiased.
 
     means_ : array-like of shape (n_classes, n_features)
         Class means.
