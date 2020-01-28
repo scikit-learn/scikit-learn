@@ -748,6 +748,12 @@ def gen_batches(n, batch_size, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
+    if not isinstance(batch_size, numbers.Integral):
+        raise TypeError("gen_batches got batch_size=%s, must be an"
+                        " integer" % batch_size)
+    if batch_size <= 0:
+        raise ValueError("gen_batches got batch_size=%s, must be"
+                         " positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -817,6 +823,45 @@ def tosequence(x):
         return x
     else:
         return list(x)
+
+
+def _to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+
+    numpy.array constructor has a similar use but it's output
+    is ambiguous. It can be 1-D NumPy array of object dtype if
+    the input is a ragged array, but if the input is a list of
+    equal length arrays, then the output is a 2D numpy.array.
+    _to_object_array solves this ambiguity by guarantying that
+    the output is a 1-D NumPy array of objects for any input.
+
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted.
+
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _to_object_array
+    >>> _to_object_array([np.array([0]), np.array([1])])
+    array([array([0]), array([1])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    >>> np.array([np.array([0]), np.array([1])])
+    array([[0],
+       [1]])
+    >>> np.array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    """
+    out = np.empty(len(sequence), dtype=object)
+    out[:] = sequence
+    return out
 
 
 def indices_to_mask(indices, mask_length):

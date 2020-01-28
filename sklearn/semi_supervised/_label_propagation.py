@@ -76,29 +76,29 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf', callable}
+    kernel : {'knn', 'rbf'} or callable, default='rbf'
         String identifier for kernel function to use or the kernel function
         itself. Only 'rbf' and 'knn' strings are valid inputs. The function
-        passed should take two inputs, each of shape [n_samples, n_features],
-        and return a [n_samples, n_samples] shaped weight matrix
+        passed should take two inputs, each of shape (n_samples, n_features),
+        and return a (n_samples, n_samples) shaped weight matrix.
 
-    gamma : float
-        Parameter for rbf kernel
+    gamma : float, default=20
+        Parameter for rbf kernel.
 
-    n_neighbors : integer > 0
-        Parameter for knn kernel
+    n_neighbors : int, default=7
+        Parameter for knn kernel. Need to be strictly positive.
 
-    alpha : float
-        Clamping factor
+    alpha : float, default=1.0
+        Clamping factor.
 
-    max_iter : integer
-        Change maximum number of iterations allowed
+    max_iter : int, default=30
+        Change maximum number of iterations allowed.
 
-    tol : float
+    tol : float, default=1e-3
         Convergence tolerance: threshold to consider the system at steady
-        state
+        state.
 
-   n_jobs : int or None, optional (default=None)
+   n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -158,11 +158,12 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-        y : array_like, shape = [n_samples]
-            Predictions for input data
+        y : ndarray of shape (n_samples,)
+            Predictions for input data.
         """
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
@@ -177,12 +178,13 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-        probabilities : array, shape = [n_samples, n_classes]
+        probabilities : ndarray of shape (n_samples, n_classes)
             Normalized probability distributions across
-            class labels
+            class labels.
         """
         check_is_fitted(self)
 
@@ -211,15 +213,15 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            A {n_samples by n_samples} size matrix will be created from this
+            A matrix of shape (n_samples, n_samples) will be created from this.
 
-        y : array_like, shape = [n_samples]
-            n_labeled_samples (unlabeled points are marked as -1)
-            All unlabeled samples will be transductively assigned labels
+        y : array-like of shape (n_samples,)
+            `n_labeled_samples` (unlabeled points are marked as -1)
+            All unlabeled samples will be transductively assigned labels.
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
         """
         X, y = check_X_y(X, y)
         self.X_ = X
@@ -307,26 +309,26 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf', callable}
+    kernel : {'knn', 'rbf'} or callable, default='rbf'
         String identifier for kernel function to use or the kernel function
         itself. Only 'rbf' and 'knn' strings are valid inputs. The function
-        passed should take two inputs, each of shape [n_samples, n_features],
-        and return a [n_samples, n_samples] shaped weight matrix.
+        passed should take two inputs, each of shape (n_samples, n_features),
+        and return a (n_samples, n_samples) shaped weight matrix.
 
-    gamma : float
-        Parameter for rbf kernel
+    gamma : float, default=20
+        Parameter for rbf kernel.
 
-    n_neighbors : integer > 0
-        Parameter for knn kernel
+    n_neighbors : int, default=7
+        Parameter for knn kernel which need to be strictly positive.
 
-    max_iter : integer
-        Change maximum number of iterations allowed
+    max_iter : int, default=1000
+        Change maximum number of iterations allowed.
 
-    tol : float
+    tol : float, 1e-3
         Convergence tolerance: threshold to consider the system at steady
-        state
+        state.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -334,16 +336,16 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : array, shape = [n_samples, n_features]
+    X_ : ndarray of shape (n_samples, n_features)
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : ndarray of shape (n_classes,)
         The distinct labels used in classifying instances.
 
-    label_distributions_ : array, shape = [n_samples, n_classes]
+    label_distributions_ : ndarray of shape (n_samples, n_classes)
         Categorical distribution for each item.
 
-    transduction_ : array, shape = [n_samples]
+    transduction_ : ndarray of shape (n_samples)
         Label assigned to each item via the transduction.
 
     n_iter_ : int
@@ -413,33 +415,33 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf', callable}
+    kernel : {'knn', 'rbf'} or callable, default='rbf'
         String identifier for kernel function to use or the kernel function
         itself. Only 'rbf' and 'knn' strings are valid inputs. The function
-        passed should take two inputs, each of shape [n_samples, n_features],
-        and return a [n_samples, n_samples] shaped weight matrix
+        passed should take two inputs, each of shape (n_samples, n_features),
+        and return a (n_samples, n_samples) shaped weight matrix.
 
-    gamma : float
-      parameter for rbf kernel
+    gamma : float, default=20
+      Parameter for rbf kernel.
 
-    n_neighbors : integer > 0
-      parameter for knn kernel
+    n_neighbors : int, default=7
+      Parameter for knn kernel which is a strictly positive integer.
 
-    alpha : float
+    alpha : float, default=0.2
       Clamping factor. A value in (0, 1) that specifies the relative amount
       that an instance should adopt the information from its neighbors as
       opposed to its initial label.
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
-    max_iter : integer
-      maximum number of iterations allowed
+    max_iter : int, default=30
+      Maximum number of iterations allowed.
 
-    tol : float
+    tol : float, default=1e-3
       Convergence tolerance: threshold to consider the system at steady
-      state
+      state.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -447,16 +449,16 @@ class LabelSpreading(BaseLabelPropagation):
 
     Attributes
     ----------
-    X_ : array, shape = [n_samples, n_features]
+    X_ : ndarray of shape (n_samples, n_features)
         Input array.
 
-    classes_ : array, shape = [n_classes]
+    classes_ : ndarray of shape (n_classes,)
         The distinct labels used in classifying instances.
 
-    label_distributions_ : array, shape = [n_samples, n_classes]
+    label_distributions_ : ndarray of shape (n_samples, n_classes)
         Categorical distribution for each item.
 
-    transduction_ : array, shape = [n_samples]
+    transduction_ : ndarray of shape (n_samples,)
         Label assigned to each item via the transduction.
 
     n_iter_ : int

@@ -286,6 +286,23 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
+    .. warning::
+
+        For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
+        'recursion' method (used by default) will not account for the `init`
+        predictor of the boosting process. In practice, this will produce
+        the same values as 'brute' up to a constant offset in the target
+        response, provided that `init` is a constant estimator (which is the
+        default). However, if `init` is not a constant estimator, the
+        partial dependence values are incorrect for 'recursion' because the
+        offset will be sample-dependent. It is preferable to use the 'brute'
+        method. Note that this only applies to
+        :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
+        :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+
     Parameters
     ----------
     estimator : BaseEstimator
@@ -294,9 +311,10 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Multioutput-multiclass classifiers are not supported.
 
     X : {array-like or dataframe} of shape (n_samples, n_features)
-        ``X`` is used both to generate a grid of values for the
-        ``features``, and to compute the averaged predictions when
-        method is 'brute'.
+        ``X`` is used to generate a grid of values for the target
+        ``features`` (where the partial dependence will be evaluated), and
+        also to generate values for the complement features when the
+        `method` is 'brute'.
 
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
@@ -323,34 +341,24 @@ def partial_dependence(estimator, X, features, response_method='auto',
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator (namely
-          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
-          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
-          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
-          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+        - 'recursion' is only supported for some tree-based estimators (namely
+          :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+          :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`)
           but is more efficient in terms of speed.
-          With this method, ``X`` is only used to build the
-          grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predictor of
-          the boosting process, which may lead to incorrect values (see
-          warning below). With this method, the target response of a
+          With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto':
+        - 'auto': the 'recursion' is used for estimators that support it,
+          and 'brute' is used otherwise.
 
-          - 'recursion' is used for
-            :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-            and
-            :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-            if ``init=None``, and for
-            :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
-            and
-            :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`.
-          - 'brute' is used for all other estimators.
+        Please see :ref:`this note <pdp_method_differences>` for
+        differences between the 'brute' and 'recursion' method.
 
     Returns
     -------
@@ -384,21 +392,6 @@ def partial_dependence(estimator, X, features, response_method='auto',
     See also
     --------
     sklearn.inspection.plot_partial_dependence: Plot partial dependence
-
-    Warnings
-    --------
-    The 'recursion' method only works for gradient boosting estimators, and
-    unlike the 'brute' method, it does not account for the ``init``
-    predictor of the boosting process. In practice this will produce the
-    same values as 'brute' up to a constant offset in the target response,
-    provided that ``init`` is a consant estimator (which is the default).
-    However, as soon as ``init`` is not a constant estimator, the partial
-    dependence values are incorrect for 'recursion'. This is not relevant for
-    :class:`HistGradientBoostingClassifier
-    <sklearn.ensemble.HistGradientBoostingClassifier>` and
-    :class:`HistGradientBoostingRegressor
-    <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
-    ``init`` parameter.
     """
     X, response_method, method = _validate_parameters(estimator, X, features,
                                                       response_method, method)
@@ -448,8 +441,10 @@ def _plot(estimator, X, features, calc_method, display_class,
         :term:`predict_proba`, or :term:`decision_function`.
 
     X : {array-like or dataframe} of shape (n_samples, n_features)
-        The data to use to build the grid of values on which the dependence
-        will be evaluated.
+        ``X`` is used to generate a grid of values for the target
+        ``features`` (where the partial dependence will be evaluated), and
+        also to generate values for the complement features when the
+        `method` is 'brute'.
 
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDP/ICEs.
@@ -500,28 +495,26 @@ def _plot(estimator, X, features, calc_method, display_class,
         for the PDP/ICE axes. Must be in [0, 1].
 
     method : str, optional (default='auto')
-        The method to use to calculate the partial dependence predictions:
+        The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator (namely
-          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
-          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
-          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
-          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+        - 'recursion' is only supported for some tree-based estimators (namely
+          :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+          :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`)
           but is more efficient in terms of speed.
-          With this method, ``X`` is optional and is only used to build the
-          grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predictor of
-          the boosting process, which may lead to incorrect values (see
-          warning below. With this method, the target response of a
+          With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto':
-          - 'recursion' is used for estimators that supports it.
-          - 'brute' is used for all other estimators.
+        - 'auto': the 'recursion' is used for estimators that support it,
+          and 'brute' is used otherwise.
+
+        Please see :ref:`this note <pdp_method_differences>` for
+        differences between the 'brute' and 'recursion' method.
 
         Note: Ignored by ICE calculation at the moment and 'brute' is used.
 
@@ -702,6 +695,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
 
+    Read more in the :ref:`User Guide <partial_dependence>`.
+
     .. note::
 
         :func:`plot_partial_dependence` does not support using the same axes
@@ -715,10 +710,25 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           >>> X, y = make_friedman1()
           >>> est = LinearRegression().fit(X, y)
           >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(
-          ...     est, X, ax=disp1.axes_)  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est, X,
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
-    Read more in the :ref:`User Guide <partial_dependence>`.
+    .. warning::
+
+        For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
+        'recursion' method (used by default) will not account for the `init`
+        predictor of the boosting process. In practice, this will produce
+        the same values as 'brute' up to a constant offset in the target
+        response, provided that `init` is a constant estimator (which is the
+        default). However, if `init` is not a constant estimator, the
+        partial dependence values are incorrect for 'recursion' because the
+        offset will be sample-dependent. It is preferable to use the 'brute'
+        method. Note that this only applies to
+        :class:`~sklearn.ensemble.GradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
+        :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+        :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 
     Parameters
     ----------
@@ -728,8 +738,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Multioutput-multiclass classifiers are not supported.
 
     X : {array-like or dataframe} of shape (n_samples, n_features)
-        The data to use to build the grid of values on which the dependence
-        will be evaluated. This is usually the training data.
+        ``X`` is used to generate a grid of values for the target
+        ``features`` (where the partial dependence will be evaluated), and
+        also to generate values for the complement features when the
+        `method` is 'brute'.
 
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
@@ -776,28 +788,26 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         for the PDP axes. Must be in [0, 1].
 
     method : str, optional (default='auto')
-        The method to use to calculate the partial dependence predictions:
+        The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator (namely
-          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
-          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
-          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
-          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+        - 'recursion' is only supported for some tree-based estimators (namely
+          :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+          :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`)
           but is more efficient in terms of speed.
-          With this method, ``X`` is optional and is only used to build the
-          grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predictor of
-          the boosting process, which may lead to incorrect values (see
-          warning below. With this method, the target response of a
+          With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto':
-          - 'recursion' is used for estimators that supports it.
-          - 'brute' is used for all other estimators.
+        - 'auto': the 'recursion' is used for estimators that support it,
+          and 'brute' is used otherwise.
+
+        Please see :ref:`this note <pdp_method_differences>` for
+        differences between the 'brute' and 'recursion' method.
 
     n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the partial dependences.
@@ -851,21 +861,6 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     --------
     sklearn.inspection.partial_dependence: Return raw partial
       dependence values
-
-    Warnings
-    --------
-    The 'recursion' method only works for gradient boosting estimators, and
-    unlike the 'brute' method, it does not account for the ``init``
-    predictor of the boosting process. In practice this will produce the
-    same values as 'brute' up to a constant offset in the target response,
-    provided that ``init`` is a consant estimator (which is the default).
-    However, as soon as ``init`` is not a constant estimator, the partial
-    dependence values are incorrect for 'recursion'. This is not relevant for
-    :class:`HistGradientBoostingClassifier
-    <sklearn.ensemble.HistGradientBoostingClassifier>` and
-    :class:`HistGradientBoostingRegressor
-    <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
-    ``init`` parameter.
     """
     return _plot(estimator, X, features, partial_dependence,
                  PartialDependenceDisplay, feature_names=feature_names,

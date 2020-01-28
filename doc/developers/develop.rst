@@ -468,50 +468,52 @@ Estimator Tags
 
     The estimator tags are experimental and the API is subject to change.
 
-Scikit-learn introduced estimator tags in version 0.21.  These are annotations
+Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
-sparse matrix support, supported output types and supported methods.  The
-estimator tags are a dictionary returned by the method ``_get_tags()``.  These
-tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
-decide what tests to run and what input data is appropriate. Tags can depend on
-estimator parameters or even system architecture and can in general only be
-determined at runtime.
-
-The default value of all tags except for ``X_types`` and ``requires_fit`` is
-``False``. These are defined in the ``BaseEstimator`` class.
+sparse matrix support, supported output types and supported methods. The
+estimator tags are a dictionary returned by the method ``_get_tags()``. These
+tags are used by the common tests and the
+:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
+tests to run and what input data is appropriate. Tags can depend on estimator
+parameters or even system architecture and can in general only be determined at
+runtime. The default values for the estimator tags are defined in the
+``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
-non_deterministic
+non_deterministic (default=``False``)
     whether the estimator is not deterministic given a fixed ``random_state``
 
-requires_positive_X
+requires_positive_X (default=``False``)
     whether the estimator requires positive X.
 
-requires_positive_y
+requires_positive_y (default=``False``)
     whether the estimator requires a positive y (only applicable for regression).
 
-no_validation
-    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
+no_validation (default=``False``)
+    whether the estimator skips input-validation. This is only meant for
+    stateless and dummy transformers!
 
-multioutput - unused for now
-    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+multioutput - unused for now (default=``False``)
+    whether a regressor supports multi-target outputs or a classifier supports
+    multi-class multi-output.
 
-multilabel
+multilabel (default=``False``)
     whether the estimator supports multilabel output
 
-stateless
-    whether the estimator needs access to data for fitting. Even though
-    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+stateless (default=``False``)
+    whether the estimator needs access to data for fitting. Even though an
+    estimator is stateless, it might still need a call to ``fit`` for
+    initialization.
 
-requires_fit
+requires_fit (default=``True``)
     whether the estimator requires to be fitted before calling one of
     `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-allow_nan
+allow_nan (default=``False``)
     whether the estimator supports data with missing values encoded as np.NaN
 
-poor_score
+poor_score (default=``False``)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -519,24 +521,26 @@ poor_score
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-multioutput_only
+multioutput_only (default=``False``)
     whether estimator supports only multi-output classification or regression.
 
-binary_only
+binary_only (default=``False``)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
-_skip_test
-    whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+_skip_test (default=``False``)
+    whether to skip common tests entirely. Don't use this unless you have a
+    *very good* reason.
 
-X_types
-    Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
-    in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
-    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
-    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
-    The goal is that in the future the supported input type will determine the
-    data used during testing, in particular for ``'string'``, ``'sparse'`` and
-    ``'categorical'`` data.  For now, the test for sparse data do not make use
+X_types (default=``['2darray']``)
+    Supported input types for X as list of strings. Tests are currently only
+    run if '2darray' is contained in the list, signifying that the estimator
+    takes continuous 2d numpy arrays as input. The default value is
+    ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
+    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``. The goal is
+    that in the future the supported input type will determine the data used
+    during testing, in particular for ``'string'``, ``'sparse'`` and
+    ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
 
