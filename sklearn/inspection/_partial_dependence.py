@@ -1348,7 +1348,7 @@ def plot_individual_conditional_expectation(estimator, X, features,
         - If `None`, a figure and a bounding axes is created and treated
             as the single axes case.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 0.23
 
     Returns
     -------
@@ -1394,7 +1394,7 @@ class IndividualConditionalExpectationDisplay:
     :ref:`sphx_glr_auto_examples_plot_individual_conditional_expectation_api.py`
     and the :ref:`User Guide <visualizations>`.
 
-        .. versionadded:: 0.24
+        .. versionadded:: 0.23
 
     Parameters
     ----------
