@@ -124,7 +124,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -320,7 +320,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         probabilities of features given classes, from which the data was
         drawn.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -342,6 +342,17 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         Only returned if ``return_distributions=True``.
 
     """
+    if n_classes < 1:
+        raise ValueError(
+            "'n_classes' should be an integer greater than 0. Got {} instead."
+            .format(n_classes)
+            )
+    if length < 1:
+        raise ValueError(
+            "'length' should be an integer greater than 0. Got {} instead."
+            .format(length)
+            )
+
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
@@ -426,7 +437,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     n_samples : int, optional (default=12000)
         The number of samples.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -517,7 +528,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     coef : boolean, optional (default=False)
         If True, the coefficients of the underlying linear model are returned.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -604,7 +615,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -674,7 +685,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -720,7 +731,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
 
 def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=None):
+               center_box=(-10.0, 10.0), shuffle=True, random_state=None,
+               return_centers=False):
     """Generate isotropic Gaussian blobs for clustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -753,10 +765,15 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    return_centers : bool, optional (default=False)
+        If True, then return the centers of each cluster
+
+        .. versionadded:: 0.23
 
     Returns
     -------
@@ -765,6 +782,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
 
     y : array of shape [n_samples]
         The integer labels for cluster membership of each sample.
+
+    centers : array, shape [n_centers, n_features]
+        The centers of each cluster. Only returned if
+        ``return_centers=True``.
 
     Examples
     --------
@@ -858,7 +879,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         X = X[indices]
         y = y[indices]
 
-    return X, y
+    if return_centers:
+        return X, y, centers
+    else:
+        return X, y
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
@@ -890,7 +914,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -951,7 +975,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1016,7 +1040,7 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset noise. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1092,7 +1116,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
         The relative importance of the fat noisy tail of the singular values
         profile.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1145,7 +1169,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1204,7 +1228,7 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     n_features : int, optional (default=10)
         The number of features.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1244,7 +1268,7 @@ def make_spd_matrix(n_dim, random_state=None):
     n_dim : int
         The matrix dimension.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1293,7 +1317,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     largest_coef : float between 0 and 1, optional (default=0.9)
         The value of the largest coefficient.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1354,7 +1378,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1406,7 +1430,7 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1469,7 +1493,7 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1557,7 +1581,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -1648,7 +1672,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
