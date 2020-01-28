@@ -12,12 +12,12 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=FutureWarning)
     from .partial_dependence import partial_dependence
 
-from ._partial_dependence import individual_conditional_expectation  # noqa
-from ._partial_dependence import plot_individual_conditional_expectation  # noqa
-from ._partial_dependence import IndividualConditionalExpectationDisplay # noqa
-from ._partial_dependence import plot_partial_dependence  # noqa
-from ._partial_dependence import PartialDependenceDisplay  # noqa
-from ._permutation_importance import permutation_importance  # noqa
+from ._partial_dependence import individual_conditional_expectation
+from ._partial_dependence import plot_individual_conditional_expectation
+from ._partial_dependence import IndividualConditionalExpectationDisplay
+from ._partial_dependence import plot_partial_dependence
+from ._partial_dependence import PartialDependenceDisplay
+from ._permutation_importance import permutation_importance
 
 
 __all__ = [
