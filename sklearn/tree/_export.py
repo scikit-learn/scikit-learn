@@ -26,6 +26,7 @@ from . import DecisionTreeClassifier
 
 import warnings
 
+
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -571,14 +572,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree, ax=None):
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
-        from sklearn.exceptions import NotFittedError
+        from sklearn.utils.validation import check_is_fitted
         if ax is None:
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
-        if not hasattr(decision_tree, "tree_"):
-            raise NotFittedError("This Tree instance is not fitted yet. "
-                                 "Call 'fit' with appropriate arguments.")
+        check_is_fitted(decision_tree)
         my_tree = self._make_tree(0, decision_tree.tree_,
                                   decision_tree.criterion)
         draw_tree = buchheim(my_tree)
