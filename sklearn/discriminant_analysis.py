@@ -560,9 +560,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         training data.
 
     reg_param : float, optional
-        Regularizes the covariance estimates by transforming S2 as
+        Regularizes the per-class covariance estimates by transforming S2 as
         ``S2 = (1 - reg_param) * S2 + reg_param * np.eye(n_features)``,
-        where S2 corresponds to the scaling.
+        where S2 corresponds to the `scaling_` attribute of a given class.
 
     store_covariance : boolean
         If True, the class covariance matrices are explicitely computed and
@@ -571,16 +571,17 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         .. versionadded:: 0.17
 
     tol : float, optional, default 1.0e-4
-        Absolute threshold for a singular value of X to be considered
-        significant, used to estimate its rank. This parameter
-        does not affect the predictions. It only controls a warning that is
-        raised when features are considered to be colinear.
+        Absolute threshold for a singular value to be considered significant,
+        used to estimate the rank of `Xk` where `Xk` is the centered matrix
+        of samples in class k. This parameter does not affect the
+        predictions. It only controls a warning that is raised when features
+        are considered to be colinear.
 
         .. versionadded:: 0.17
 
     Attributes
     ----------
-    covariance_ : list of len n_classes of array-like \
+    covariance_ : list of len n_classes of ndarray \
             of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
         samples of that class. The estimations are unbiased.
@@ -591,23 +592,23 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     priors_ : array-like of shape (n_classes)
         Class priors (sum to 1).
 
-    rotations_ : list of arrays
-        For each class k an array of shape (n_features, n_k), with
+    rotations_ : list of len n_classes of ndarray of shape (n_features, n_k)
+        For each class k an array of shape (n_features, n_k), where
         ``n_k = min(n_features, number of elements in class k)``
         It is the rotation of the Gaussian distribution, i.e. its
         principal axis. It corresponds to `V`, the matrix of eigenvectors
         coming from the SVD of `Xk = U S Vt` where `Xk` is the centered
         matrix of samples from class k.
 
-    scalings_ : list of arrays
-        For each class k an array of shape (n_k,). It contains the scaling of
+    scalings_ : list of len n_classes of ndarray of shape (n_k,)
+        For each class, contains the scaling of
         the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system. It corresponds to `S^2 /
         (n_samples - 1)`, where `S` is the diagonal matrix of singular values
         from the SVD of `Xk`, where `Xk` is the centered matrix of samples
         from class k.
 
-    classes_ : array-like, shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Unique class labels.
 
     Examples
@@ -702,6 +703,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         return self
 
     def _decision_function(self, X):
+        # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
         X = check_array(X)
@@ -720,9 +722,9 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         """Apply decision function to an array of samples.
 
         The decision function is equal (up to a constant factor) to the
-        log-posterior of the model, i.e. `log p(y = k / x)`. In a binary
+        log-posterior of the model, i.e. `log p(y = k | x)`. In a binary
         classification setting this instead corresponds to the difference
-        `log p(y = 1 / x) - log p(y = 0 / x)`.
+        `log p(y = 1 | x) - log p(y = 0 | x)`. See :ref:`lda_qda_math`.
 
         Parameters
         ----------
@@ -780,7 +782,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
     def predict_log_proba(self, X):
-        """Return posterior probabilities of classification.
+        """Return log of posterior probabilities of classification.
 
         Parameters
         ----------

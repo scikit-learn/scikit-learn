@@ -54,6 +54,8 @@ on the `fit` and `predict` methods.
     :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
     for dimensionality reduction of the Iris dataset
 
+.. _lda_qda_math:
+
 Mathematical formulation of the LDA and QDA classifiers
 =======================================================
 
