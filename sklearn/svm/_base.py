@@ -749,7 +749,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """
     # nested dicts containing level 1: available loss functions,
     # level2: available penalties for the given loss function,
-    # level3: wether the dual solver is available for the specified
+    # level3: whether the dual solver is available for the specified
     # combination of loss function and penalty
     _solver_type_dict = {
         'logistic_regression': {

@@ -62,11 +62,10 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         The function which will be used to compute the covariance.
         Must return array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -236,11 +235,10 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     See Also
     ---------
@@ -332,11 +330,10 @@ def fast_mcd(X, support_fraction=None,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -550,10 +547,9 @@ class MinCovDet(EmpiricalCovariance):
         (0, 1).
 
     random_state : int or RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
