@@ -432,8 +432,136 @@ def partial_dependence(estimator, X, features, response_method='auto',
 def _plot(estimator, X, features, calc_method, display_class,
           feature_names=None, target=None, response_method='auto', n_cols=3,
           grid_resolution=100, percentiles=(0.05, 0.95), method='auto',
-          n_jobs=None, verbose=0, fig=None, line_kw=None, contour_kw=None,
-          ax=None, **kwargs):
+          n_jobs=None, verbose=0, fig=None, line_kw=None, ax=None, **kwargs):
+    """This is a helper function invoked by :func:`plot_partial_dependence`
+    and :func:`plot_individual_conditional_expectation` methods. The
+    functionality includes,
+    1. validation of input parameters
+    2. calculation of PDP or ICE values using ``calc_method``
+    3. calculation of axis limits and deciles
+    4. displaying the PDP or ICE plots using ``display_class``
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        A fitted estimator object implementing :term:`predict`,
+        :term:`predict_proba`, or :term:`decision_function`.
+
+    X : {array-like or dataframe} of shape (n_samples, n_features)
+        The data to use to build the grid of values on which the dependence
+        will be evaluated.
+
+    features : list of {int, str, pair of int, pair of str}
+        The target features for which to create the PDP/ICEs.
+        if any entry is a string, then it must be in ``feature_names``.
+
+    calc_method : partial_dependence or individual_conditional_expectation
+        The function to calculate values for the PDP/ICE plot
+
+    display_class : PartialDependenceDisplay or
+        IndividualConditionalExpectationDisplay
+        The display class to be used for plotting the PDP/ICE curves
+
+    feature_names : array-like of shape (n_features,), dtype=str, default=None
+        Name of each feature; feature_names[i] holds the name of the feature
+        with index i.
+        By default, the name of the feature corresponds to their numerical
+        index for NumPy array and their column name for pandas dataframe.
+
+    target : int, optional (default=None)
+        - In a multiclass setting, specifies the class for which the PDP/ICEs
+          should be computed. Note that for binary classification, the
+          positive class (index 1) is always used.
+        - In a multioutput setting, specifies the task for which the PDP/ICEs
+          should be computed.
+
+        Ignored in binary classification or classical regression settings.
+
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto')
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. For regressors
+        this parameter is ignored and the response is always the output of
+        :term:`predict`. By default, :term:`predict_proba` is tried first
+        and we revert to :term:`decision_function` if it doesn't exist. If
+        ``method`` is 'recursion', the response is always the output of
+        :term:`decision_function`.
+
+    n_cols : int, optional (default=3)
+        The maximum number of columns in the grid plot. Only active when `ax`
+        is a single axis or `None`.
+
+    grid_resolution : int, optional (default=100)
+        The number of equally spaced points on the axes of the plots, for each
+        target feature.
+
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
+        The lower and upper percentile used to create the extreme values
+        for the PDP/ICE axes. Must be in [0, 1].
+
+    method : str, optional (default='auto')
+        The method to use to calculate the partial dependence predictions:
+
+        - 'recursion' is only supported for gradient boosting estimator (namely
+          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
+          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
+          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
+          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+          but is more efficient in terms of speed.
+          With this method, ``X`` is optional and is only used to build the
+          grid and the partial dependences are computed using the training
+          data. This method does not account for the ``init`` predictor of
+          the boosting process, which may lead to incorrect values (see
+          warning below. With this method, the target response of a
+          classifier is always the decision function, not the predicted
+          probabilities.
+
+        - 'brute' is supported for any estimator, but is more
+          computationally intensive.
+
+        - 'auto':
+          - 'recursion' is used for estimators that supports it.
+          - 'brute' is used for all other estimators.
+
+        Note: Ignored by ICE calculation at the moment and 'brute' is used.
+
+    n_jobs : int, optional (default=None)
+        The number of CPUs to use to compute the partial dependences.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        verbose : int, optional (default=0)
+        Verbose output during partial dependence computations.
+
+    fig : Matplotlib figure object, optional (default=None)
+        A figure object onto which the plots will be drawn, after the figure
+        has been cleared. By default, a new one is created.
+
+    line_kw : dict, optional
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
+        For ICEs and one-way PDPs.
+
+    ax : Matplotlib axes or array-like of Matplotlib axes, default=None
+        - If a single axis is passed in, it is treated as a bounding axes
+            and a grid of PDP/ICEs will be drawn within these bounds.
+            The `n_cols` parameter controls the number of columns in the grid.
+        - If an array-like of axes are passed in, the PDP/ICEs will be drawn
+            directly into these axes.
+        - If `None`, a figure and a bounding axes is created and treated
+            as the single axes case.
+
+    kwargs : dict
+        Additional keyword arguments passed to the ``calc_method`` and the
+        ``plot`` method of ``display_class``.
+        For ICEs, parameter ``centre`` will be included in kwargs.
+        For PDPs, parameter ``contour_kw`` will be included in kwargs.
+
+    Returns
+    -------
+    display: :class:`~sklearn.inspection.PartialDependenceDisplay` or
+        :class:`~sklearn.inspection.IndividualConditionalExpectationDisplay`
+    """
 
     check_matplotlib_support('_plot')  # noqa
     import matplotlib.pyplot as plt  # noqa
@@ -559,8 +687,7 @@ def _plot(estimator, X, features, calc_method, display_class,
 
     display = display_class(pd_results, features, feature_names, target_idx,
                             pdp_lim, deciles)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw)
+    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, **kwargs)
 
 
 def plot_partial_dependence(estimator, X, features, feature_names=None,
