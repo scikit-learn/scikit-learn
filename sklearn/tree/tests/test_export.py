@@ -461,15 +461,10 @@ def test_plot_tree_rotate_deprecation(pyplot):
         plot_tree(tree, rotate=True)
 
 
-def test_not_fitted_tree():
+def test_not_fitted_tree(pyplot):
 
     # Testing if not fitted tree throws the correct error
     clf = DecisionTreeRegressor()
-    out = StringIO()
-    with pytest.raises(NotFittedError):
-        plot_tree(clf, out)
-
-    clf = DecisionTreeClassifier()
     out = StringIO()
     with pytest.raises(NotFittedError):
         plot_tree(clf, out)
