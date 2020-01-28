@@ -16,9 +16,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-
 
 import numpy as np
 
@@ -140,23 +138,18 @@ class GeneralNB(_BaseNB):
     --------
     >>> import numpy as np
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
-                      [2.7, 3.8, 2.3, 1, 0],
-                      [1.7, 0.1, 4.5, 1, 0]])
+    ...               [2.7, 3.8, 2.3, 1, 0],
+    ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-    >>> clf = GeneralNB([
-            (GaussianNB(), [0, 1, 2]),
-            (BernoulliNB(), [3, 4])
-        ])
+    >>> clf = GeneralNB([(GaussianNB(), [0, 1, 2]),
+    ...                  (BernoulliNB(), [3, 4])])
     >>> clf.fit(X, y)
-    GeneralNB(distributions=[
-        (GaussianNB(priors=None, var_smoothing=1e-09), [0, 1, 2]),
-        (BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, 
-            fit_prior=True), [3, 4])])
+    GeneralNB(distributions=[(GaussianNB(), [0, 1, 2]), (BernoulliNB(), [3, 4])])
     >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
-    >>> print(clf.score([[2.7, 3.8, 1, 0]],[1]))
-    [1]
+    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
+    1.0
     """
 
     def __init__(self, distributions):
