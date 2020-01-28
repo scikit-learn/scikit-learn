@@ -145,7 +145,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Upper bound on the highest predicted value (the maximum may still be
         lower). Defaults to +inf.
 
-    increasing : bool or 'auto', default= True
+    increasing : bool or 'auto', default=True
         Determines whether the predictions should be constrained to increase
         or decrease with `X`. 'auto' will decide based on the Spearman
         correlation estimate's sign.
