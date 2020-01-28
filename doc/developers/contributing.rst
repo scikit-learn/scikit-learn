@@ -377,7 +377,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    methods available in scikit-learn.
 
 10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snipets. If relevant, please also add
+    the user guide, with small code snippets. If relevant, please also add
     references in the literature, with PDF links when possible.
 
 11. The user guide should also include expected time and space complexity

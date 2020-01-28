@@ -14,6 +14,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _to_object_array
 
 from sklearn.preprocessing._label import LabelBinarizer
 from sklearn.preprocessing._label import MultiLabelBinarizer
@@ -222,7 +223,7 @@ def test_label_encoder_negative_ints():
 def test_label_encoder_str_bad_shape(dtype):
     le = LabelEncoder()
     le.fit(np.array(["apple", "orange"], dtype=dtype))
-    msg = "bad input shape"
+    msg = "should be a 1d array"
     with pytest.raises(ValueError, match=msg):
         le.transform("apple")
 
@@ -245,7 +246,7 @@ def test_label_encoder_errors():
         le.inverse_transform([-2, -3, -4])
 
     # Fail on inverse_transform("")
-    msg = "bad input shape ()"
+    msg = r"should be a 1d array.+shape \(\)"
     with pytest.raises(ValueError, match=msg):
         le.inverse_transform("")
 
@@ -433,8 +434,7 @@ def test_multilabel_binarizer_same_length_sequence():
 
 
 def test_multilabel_binarizer_non_integer_labels():
-    tuple_classes = np.empty(3, dtype=object)
-    tuple_classes[:] = [(1,), (2,), (3,)]
+    tuple_classes = _to_object_array([(1,), (2,), (3,)])
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
         ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),

@@ -56,14 +56,14 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -167,7 +167,7 @@ class LeaveOneOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -251,7 +251,7 @@ class LeavePOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -305,14 +305,14 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -376,15 +376,16 @@ class KFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : boolean, optional
+    shuffle : bool, default=False
         Whether to shuffle the data before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``shuffle`` is True. This should be left
+    random_state : int or RandomState instance, default=None
+        Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -541,14 +542,14 @@ class GroupKFold(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), optional
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -582,15 +583,16 @@ class StratifiedKFold(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    shuffle : boolean, optional
+    shuffle : bool, default=False
         Whether to shuffle each class's samples before splitting into batches.
+        Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``shuffle`` is True. This should be left
+    random_state : int or RandomState instance, default=None
+        Only used when ``shuffle`` is True. This should be left
         to None if ``shuffle`` is False.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -698,7 +700,7 @@ class StratifiedKFold(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -706,7 +708,7 @@ class StratifiedKFold(_BaseKFold):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -756,7 +758,7 @@ class TimeSeriesSplit(_BaseKFold):
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
 
-    max_train_size : int, optional
+    max_train_size : int, default=None
         Maximum size for a single training set.
 
     Examples
@@ -794,14 +796,14 @@ class TimeSeriesSplit(_BaseKFold):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Always ignored, exists for compatibility.
 
         Yields
@@ -900,7 +902,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -921,14 +923,14 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples, optional
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1031,7 +1033,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -1052,14 +1054,14 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples, optional
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1088,11 +1090,10 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1123,10 +1124,10 @@ class _RepeatedSplits(metaclass=ABCMeta):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, of length n_samples
+        y : array-like of length n_samples
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1160,7 +1161,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
             Always ignored, exists for compatibility.
             ``np.zeros(n_samples)`` may be used as a placeholder.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1193,11 +1194,9 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1247,9 +1246,10 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : None, int or RandomState, default=None
-        Random state to be used to generate random state for each
-        repetition.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1300,14 +1300,14 @@ class BaseShuffleSplit(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1371,27 +1371,26 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int, default 10
+    n_splits : int, default=10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, default=None
+    test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
         complement of the train size. If ``train_size`` is also None, it will
         be set to 0.1.
 
-    train_size : float, int, or None, default=None
+    train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1470,30 +1469,28 @@ class GroupShuffleSplit(ShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int (default 5)
+    n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, optional (default=None)
+    test_size : float, int, default=0.2
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
-        set to the complement of the train size. By default, the value is set
-        to 0.2.
+        set to the complement of the train size.
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement
         the specified ``train_size``.
 
-    train_size : float, int, or None, default is None
+    train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the groups to include in the train split. If
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1541,14 +1538,14 @@ class GroupShuffleSplit(ShuffleSplit):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), optional
+        y : array-like of shape (n_samples,), default=None
             The target variable for supervised learning problems.
 
-        groups : array-like, with shape (n_samples,)
+        groups : array-like of shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1586,27 +1583,26 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int, default 10
+    n_splits : int, default=10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, optional (default=None)
+    test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
         complement of the train size. If ``train_size`` is also None, it will
         be set to 0.1.
 
-    train_size : float, int, or None, default is None
+    train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1705,7 +1701,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -1713,7 +1709,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_labels)
+        y : array-like of shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -1820,7 +1816,7 @@ class PredefinedSplit(BaseCrossValidator):
 
     Parameters
     ----------
-    test_fold : array-like, shape (n_samples,)
+    test_fold : array-like of shape (n_samples,)
         The entry ``test_fold[i]`` represents the index of the test set that
         sample ``i`` belongs to. It is possible to exclude sample ``i`` from
         any test set (i.e. include sample ``i`` in every training set) by
@@ -1967,11 +1963,10 @@ def check_cv(cv=5, y=None, classifier=False):
 
     Parameters
     ----------
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 5-fold cross-validation,
+        - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1986,10 +1981,10 @@ def check_cv(cv=5, y=None, classifier=False):
         .. versionchanged:: 0.22
             ``cv`` default value changed from 3-fold to 5-fold.
 
-    y : array-like, optional
+    y : array-like, default=None
         The target variable for supervised learning problems.
 
-    classifier : boolean, optional, default False
+    classifier : bool, default=False
         Whether the task is a classification task, in which case
         stratified KFold will be used.
 
@@ -2033,30 +2028,29 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int or None, optional (default=None)
+    test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
         complement of the train size. If ``train_size`` is also None, it will
         be set to 0.25.
 
-    train_size : float, int, or None, (default=None)
+    train_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
-    shuffle : boolean, optional (default=True)
+    shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like or None (default=None)
+    stratify : array-like, default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 

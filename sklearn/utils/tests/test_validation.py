@@ -5,6 +5,7 @@ import os
 
 from tempfile import NamedTemporaryFile
 from itertools import product
+from operator import itemgetter
 
 import pytest
 from pytest import importorskip
@@ -14,7 +15,6 @@ import scipy.sparse as sp
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import SkipTest
@@ -32,6 +32,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
+from sklearn.utils import _safe_indexing
 from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
@@ -46,11 +47,11 @@ from sklearn.utils.validation import (
     _check_sample_weight,
     _allclose_dense_sparse,
     FLOAT_DTYPES)
+from sklearn.utils.validation import _check_fit_params
 
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
-from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import TempMemmap
@@ -678,6 +679,52 @@ def test_check_is_fitted():
     assert check_is_fitted(svr) is None
 
 
+def test_check_is_fitted_attributes():
+    class MyEstimator():
+        def fit(self, X, y):
+            return self
+
+    msg = "not fitted"
+    est = MyEstimator()
+
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.a_ = "a"
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"])
+    with pytest.raises(NotFittedError, match=msg):
+        check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+    est.b_ = "b"
+    check_is_fitted(est, attributes=["a_", "b_"])
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=all)
+    check_is_fitted(est, attributes=["a_", "b_"], all_or_any=any)
+
+
+@pytest.mark.parametrize("wrap",
+                         [itemgetter(0), list, tuple],
+                         ids=["single", "list", "tuple"])
+def test_check_is_fitted_with_attributes(wrap):
+    ard = ARDRegression()
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_"]))
+
+    ard.fit(*make_blobs())
+
+    # Does not raise
+    check_is_fitted(ard, wrap(["coef_"]))
+
+    # Raises when using attribute that is not defined
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_bad_"]))
+
+
 def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
@@ -1053,3 +1100,31 @@ def test_deprecate_positional_args_warns_for_class():
     with pytest.warns(FutureWarning,
                       match=r"Pass c=3, d=4 as keyword args"):
         A2(1, 2, 3, 4)
+
+
+@pytest.mark.parametrize("indices", [None, [1, 3]])
+def test_check_fit_params(indices):
+    X = np.random.randn(4, 2)
+    fit_params = {
+        'list': [1, 2, 3, 4],
+        'array': np.array([1, 2, 3, 4]),
+        'sparse-col': sp.csc_matrix([1, 2, 3, 4]).T,
+        'sparse-row': sp.csc_matrix([1, 2, 3, 4]),
+        'scalar-int': 1,
+        'scalar-str': 'xxx',
+        'None': None,
+    }
+    result = _check_fit_params(X, fit_params, indices)
+    indices_ = indices if indices is not None else list(range(X.shape[0]))
+
+    for key in ['sparse-row', 'scalar-int', 'scalar-str', 'None']:
+        assert result[key] is fit_params[key]
+
+    assert result['list'] == _safe_indexing(fit_params['list'], indices_)
+    assert_array_equal(
+        result['array'], _safe_indexing(fit_params['array'], indices_)
+    )
+    assert_allclose_dense_sparse(
+        result['sparse-col'],
+        _safe_indexing(fit_params['sparse-col'], indices_)
+    )

@@ -7,6 +7,7 @@ from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
+from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension_
 from sklearn.decomposition._pca import _infer_dimension_
 
@@ -555,3 +556,15 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     assert pca_32.transform(X_i32).dtype == np.float64
 
     assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
+
+
+def test_pca_n_components_mostly_explained_variance_ratio():
+    # when n_components is the second highest cumulative sum of the
+    # explained_variance_ratio_, then n_components_ should equal the
+    # number of features in the dataset #15669
+    X, y = load_iris(return_X_y=True)
+    pca1 = PCA().fit(X, y)
+
+    n_components = pca1.explained_variance_ratio_.cumsum()[-2]
+    pca2 = PCA(n_components=n_components).fit(X, y)
+    assert pca2.n_components_ == X.shape[1]
