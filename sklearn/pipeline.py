@@ -900,7 +900,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data, used to fit transformers.
 
-        y : array-like of shape (n_samples, n_outputs)
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
@@ -924,7 +924,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
-        y : array-like of shape (n_samples, n_outputs)
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
