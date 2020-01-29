@@ -309,13 +309,15 @@ training error given by
 
 where :math:`L` is a loss function that measures model (mis)fit and
 :math:`R` is a regularization term (aka penalty) that penalizes model
-complexity; :math:`\alpha > 0` is a non-negative hyperparameter.
+complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
+the regularization stength.
 
 Different choices for :math:`L` entail different classifiers such as
 
    - Hinge: (soft-margin) Support Vector Machines.
    - Log:   Logistic Regression.
-   - Least-Squares: Ridge Regression.
+   - Least-Squares: Linear classification (Ridge or Lasso depending on
+     :math:`R`)
    - Epsilon-Insensitive: (soft-margin) Support Vector Regression.
 
 All of the above loss functions can be regarded as an upper bound on the
@@ -328,13 +330,15 @@ misclassification error (Zero-one loss) as shown in the Figure below.
 
 Popular choices for the regularization term :math:`R` include:
 
-   - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
-   - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leads to sparse
+   - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
+   - L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
      solutions.
-   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
+   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +
+     (1-\rho) \sum_{j=1}^{m} |w_i|`, a convex combination of L2 and L1, where
+     :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
-in the parameter space when :math:`R(w) = 1`.
+in a 2-dimensional parameter space (:math:`m=2`) when :math:`R(w) = 1`.
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_penalties_001.png
     :target: ../auto_examples/linear_model/plot_sgd_penalties.html
