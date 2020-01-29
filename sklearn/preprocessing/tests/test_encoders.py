@@ -956,6 +956,24 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_array_equal(expected_inv, X_inv)
 
 
+def test_ohe_infrequent_user_cats_with_many_zero_counts():
+    # Only category 'd' is a frequent category. This should result in
+    # two columns.
+
+    X_train = np.array([['e'] * 3 + ['d']], dtype=object).T
+    ohe = OneHotEncoder(categories=[['c', 'd', 'a', 'b', 'f', 'g']],
+                        max_levels=3, sparse=False,
+                        handle_unknown='auto').fit(X_train)
+
+    X_trans = ohe.transform([['c'], ['d'], ['a'], ['b'], ['e']])
+    expected = [[0, 1],
+                [1, 0],
+                [0, 1],
+                [0, 1],
+                [0, 1]]
+    assert_array_equal(expected, X_trans)
+
+
 @pytest.mark.parametrize("min_frequency", [21])
 def test_ohe_infrequent_one_level_errors(min_frequency):
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 2]).T
