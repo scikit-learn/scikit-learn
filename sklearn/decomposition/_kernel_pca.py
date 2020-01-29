@@ -360,3 +360,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         K = self._get_kernel(X, self.X_transformed_fit_)
 
         return np.dot(K, self.dual_coef_)
+    
+    def _more_tags(self):
+        return {'preserves_32bit_dtype': True}

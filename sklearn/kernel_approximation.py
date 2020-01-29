@@ -616,3 +616,6 @@ class Nystroem(TransformerMixin, BaseEstimator):
                                  "or precomputed kernel")
 
         return params
+
+    def _more_tags(self):
+        return {'preserves_32bit_dtype': True}

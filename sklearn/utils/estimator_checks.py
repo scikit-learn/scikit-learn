@@ -58,6 +58,7 @@ from ..datasets import (load_iris, load_boston, make_blobs,
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
+
 def _safe_tags(estimator, key=None):
     # if estimator doesn't have _get_tags, use _DEFAULT_TAGS
     # if estimator has tags but not key, use _DEFAULT_TAGS[key]
@@ -197,6 +198,9 @@ def _yield_transformer_checks(name, transformer):
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
+    # it's not important to preserve types with Clustering
+    if not isinstance(transformer, ClusterMixin):
+        yield check_estimators_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
@@ -749,7 +753,7 @@ def check_sample_weights_list(name, estimator_orig):
         rnd = np.random.RandomState(0)
         n_samples = 30
         X = _pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)),
-                                         estimator_orig)
+                                          estimator_orig)
         if _safe_tags(estimator, 'binary_only'):
             y = np.arange(n_samples) % 2
         else:
@@ -1339,6 +1343,35 @@ def check_estimators_dtypes(name, estimator_orig):
                 getattr(estimator, method)(X_train)
 
 
+def check_estimators_preserve_dtypes(name, estimator_orig):
+
+    if not _safe_tags(estimator_orig, 'preserves_32bit_dtype'):
+        raise SkipTest("Estimator doesn't preserve 32bit dtype")
+
+    X = np.random.RandomState(0).randn(100, 10)
+    y = np.random.RandomState(0).randn(100)
+
+    for dtype_in, dtype_out in [(np.float32, np.float32),
+                                (np.float64, np.float64),
+                                (np.float16, np.float64)]:
+        X_cast = X.copy().astype(dtype_in)
+        estimator = clone(estimator_orig)
+        set_random_state(estimator)
+        if hasattr(estimator, 'fit_transform'):
+            X_trans = estimator.fit_transform(X_cast, y)
+        elif hasattr(estimator, 'fit') and hasattr(estimator, 'transform'):
+            estimator.fit(X_cast, y)
+            X_trans = estimator.transform(X_cast, y)
+
+        # FIXME: should we check that the dtype of some attributes are the
+        # same than dtype and check that the value of attributes
+        # between 32bit and 64bit are close
+        assert X_trans.dtype == dtype_out, \
+            ('Estimator transform dtype: {} - orginal/expected dtype: {}'
+             .format(X_trans.dtype, dtype_out.__name__))
+        # assert_allclose(X, X_trans)
+
+
 @ignore_warnings(category=FutureWarning)
 def check_estimators_empty_data_messages(name, estimator_orig):
     e = clone(estimator_orig)
@@ -1367,7 +1400,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = _pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
-                                                  estimator_orig)
+                                                   estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
     X_train_inf = rnd.uniform(size=(10, 3))
