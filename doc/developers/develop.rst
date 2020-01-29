@@ -74,7 +74,7 @@ multiple interfaces):
 Estimators
 ----------
 
-The API has one predominant object: the estimator. A estimator is an
+The API has one predominant object: the estimator. An estimator is an
 object that fits a model based on some training data and is capable of
 inferring some properties on new data. It can be, for instance, a
 classifier or a regressor. All estimators implement the fit method::
@@ -220,7 +220,7 @@ an integer called ``n_iter``.
 Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
-An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
+An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
 a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
 the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
