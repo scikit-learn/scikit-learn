@@ -226,8 +226,8 @@ macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you use the conda package manager (version >= 4.7), you can install the
-``compilers`` meta-package from the conda-forge channel (use version >= 1.0.4)
-which provides OpenMP-enabled C/C++ compilers based on the llvm toolchain.
+``compilers`` meta-package from the conda-forge channel which provides
+OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
 First install the macOS command line tools::
 
@@ -237,7 +237,7 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        conda-forge::compilers conda-forge::llvm-openmp
+        conda-forge::compilers">=1.0.4" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --editable .
