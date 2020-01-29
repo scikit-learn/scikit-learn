@@ -128,8 +128,9 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |API| Deprecated public attributes in :class:`linear_model.SGDRegressor`
-  and :class:`linear_model.BaseSGD`.
+- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`, 
+  `average_coef_`, `average_intercept_` in :class:`linear_model.BaseSGD`
+  (inherited by :class:`linear_model.SGDRegressor`).
   :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
 
 :mod:`sklearn.model_selection`
