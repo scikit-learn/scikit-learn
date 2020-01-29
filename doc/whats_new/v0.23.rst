@@ -127,3 +127,6 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+- |Enhancement| :func:`optimize._newton_cg` will now check for inferior or equal
+  instead of strictly inferior for maximum of `absgrad` and `tol`.
+  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
