@@ -25,7 +25,6 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
-from ..tree import DecisionTreeRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
@@ -590,15 +589,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     from matplotlib import transforms  # noqa
     from matplotlib.ticker import MaxNLocator  # noqa
     from matplotlib.ticker import ScalarFormatter  # noqa
-    # set target_idx for multi-class estimators
 
-    # Attribute classes_ in DecisionTreeRegressor has been moved to super class
-    # BaseDecisionTree and is deprecated.
-    # The isinstance(estimator, DecisionTreeRegressor)
-    # check is used to prevent raising a spurious warning.
-    # TODO: Remove isinstance check in 0.24 when the `classes_`
-    # attribute is actually removed from the DecisionTreeRegressor class.
-    if (not isinstance(estimator, DecisionTreeRegressor) and
+    # set target_idx for multi-class estimators
+    if (is_classifier(estimator) and
             hasattr(estimator, 'classes_') and
             np.size(estimator.classes_) > 2):
         if target is None:
