@@ -923,6 +923,14 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     Attributes
     ----------
+    bin_mapper_ : BinMapper object
+        Transformer that maps a dataset into integer-valued bins.
+    do_early_stopping_ : bool
+        Specifies if early stopping is used during the training.
+    loss_ : callable
+        Loss function used by the algorithm.
+    n_features : int
+        The number of selected features.
     n_iter_ : int
         The number of estimators as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
@@ -930,6 +938,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
         classification.
+    scorer_ : callable
+        Scoring parameter to use for early stopping alternatively to the loss.
+        None if the loss is used.
     train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
