@@ -36,7 +36,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     Parameters
     ----------
-    X : array-like or sparse matrix of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
