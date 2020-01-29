@@ -1233,3 +1233,18 @@ def test_n_support_oneclass_svr():
     assert reg.n_support_ == reg.support_vectors_.shape[0]
     assert reg.n_support_.size == 1
     assert reg.n_support_ == 4
+
+
+# TODO: Remove in 0.25 when probA_ and probB_ are deprecated
+@pytest.mark.parametrize("SVMClass, data", [
+    (svm.OneClassSVM, (X, )),
+    (svm.SVR, (X, Y))
+])
+@pytest.mark.parametrize("deprecated_prob", ["probA_", "probB_"])
+def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
+    clf = SVMClass().fit(*data)
+
+    msg = ("The {} attribute is deprecated in version 0.23 and will be "
+           "removed in version 0.25.").format(deprecated_prob)
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(clf, deprecated_prob)
