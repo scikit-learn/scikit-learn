@@ -15,7 +15,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.testing import all_estimators
+from sklearn.utils._testing import all_estimators
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 
