@@ -1640,35 +1640,53 @@ def test_group_time_series_ordering_and_group_preserved():
     """ With this test we check that we are only evaluating
         unseen groups in the future
     """
-    unique_groups = ['Miguel', 'Oriana', 'Lilia', 'Juanito']
-    groups = np.array(unique_groups * 4)
+    import numpy as np
+    import pandas as pd
+    
+    #unique_groups = ['Miguel', 'Oriana', 'Lilia', 'Juanito'] 
+    #sorry Miguel. If I use the names I didn't understand what's happening at all
 
+    unique_groups = ['A','B','C','D']
+    groups = np.array(unique_groups*4)
     n_samples = len(groups)
-    n_splits = 3
+    n_splits = 4
 
     X = y = np.ones(n_samples)
     # Fake array of time like
     time_stamps = X * np.arange(n_samples)
 
-    gtf = GroupTimeSeriesSplit(n_splits=n_splits)
+    #gts = GroupTimeSeriesSplit(n_splits=n_splits)
+    data = pd.DataFrame(dict(group = groups, time = time_stamps))
 
     # We check two things here:
     # 1. Elements of a group in the evaluation split should not be
     # in the training split
     # 2. Elements of the training split should be in the past
-    splits = gtf.split(X, y, groups)
+    
+    #splits = gts.split(X, y, groups)
+    train = [0,2,3,4,6,7,8]
+    test = [9]
 
     # Get all the other entries for the groups found in test
-    for (train, test) in splits:
+    #for (train, test) in splits:
 
         print(f"Test: {test}")
         print(f"Train: {train}")
         # verify that they are not in the test set
         assert len(np.intersect1d(groups[train], groups[test])) == 0
+
+#member of test set that happened during the train time will have to be removed?
+#maybe another test is needed?
+
         # All the elements in the training set should be in past of the
         # elements of the test set
         for e in time_stamps[train]:
             assert (e < time_stamps[test]).all()
+
+#if groups is uniformly distributed, interval between each split cannot be uniform
+#otherwise that one group will never be in the train set
+#in other words, if want to split every 5 minutes, 
+#there cannot be 5 groups that are uniformly distributed
 
 
 def test_group_time_series_more_splits_than_group():
@@ -1678,4 +1696,5 @@ def test_group_time_series_more_splits_than_group():
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next,
                          GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
 >>>>>>> 8712a44e2... WIP Added initial tests for evaluation
