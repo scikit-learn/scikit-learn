@@ -64,8 +64,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array, shape = (n_classes,)
-        Class labels.
+    classes_
 
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
