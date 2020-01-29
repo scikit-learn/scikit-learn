@@ -1962,9 +1962,12 @@ def test_montonic_constraints():
     X_test_1[:, 1] += 10
     X_test_2 = np.copy(X_test_0)
     X_test_2[:, 2] += 10
+    monotonic_cst = np.zeros(X.shape[0])
+    monotonic_cst[0] = -1
+    monotonic_cst[1] = 1
+
     for name, TreeRegressor in REG_TREES.items():
-        est = TreeRegressor(max_depth=None,
-                            decreasing=[1], increasing=[2])
+        est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": 0})
         est.fit(X_train, y_train)
@@ -1981,8 +1984,7 @@ def test_montonic_constraints():
         assert(np.min(y2 - y0) >= 0)
 
     for name, TreeClassifier in CLF_TREES.items():
-        est = TreeClassifier(max_depth=None,
-                             decreasing=[1], increasing=[2])
+        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": 0})
         est.fit(X_train, y_train)

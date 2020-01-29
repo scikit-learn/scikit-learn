@@ -1022,13 +1022,10 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1127,8 +1124,7 @@ class RandomForestClassifier(ForestClassifier):
                  class_weight=None,
                  ccp_alpha=0.0,
                  max_samples=None,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
 
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -1137,7 +1133,7 @@ class RandomForestClassifier(ForestClassifier):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "random_state", "ccp_alpha", "monotonic_cst"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1156,8 +1152,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
 
@@ -1326,13 +1321,10 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1425,8 +1417,7 @@ class RandomForestRegressor(ForestRegressor):
                  warm_start=False,
                  ccp_alpha=0.0,
                  max_samples=None,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -1434,8 +1425,7 @@ class RandomForestRegressor(ForestRegressor):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state",  "ccp_alpha", "increasing",
-                              "decreasing"),
+                              "random_state",  "ccp_alpha", "monotonic_cst"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1454,8 +1444,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1646,13 +1635,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1742,8 +1728,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  class_weight=None,
                  ccp_alpha=0.0,
                  max_samples=None,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1751,8 +1736,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha", "increasing",
-                              "decreasing"),
+                              "random_state", "ccp_alpha", "monotonic_cst"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1772,8 +1756,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1942,13 +1925,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -2014,8 +1994,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  warm_start=False,
                  ccp_alpha=0.0,
                  max_samples=None,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -2023,8 +2002,7 @@ class ExtraTreesRegressor(ForestRegressor):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha", "increasing",
-                              "decreasing"),
+                              "random_state", "ccp_alpha", "monotonic_cst"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -2043,8 +2021,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.ccp_alpha = ccp_alpha
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -2165,13 +2142,10 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -2205,8 +2179,7 @@ class RandomTreesEmbedding(BaseForest):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -2214,7 +2187,7 @@ class RandomTreesEmbedding(BaseForest):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "increasing", "decreasing"),
+                              "random_state", "monotonic_cst"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -2231,8 +2204,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")

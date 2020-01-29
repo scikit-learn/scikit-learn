@@ -147,7 +147,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='deprecated',
                  validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4,  increasing=None, decreasing=None):
+                 tol=1e-4,  monotonic_cst=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -172,8 +172,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -210,8 +209,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
-                increasing=self.increasing,
-                decreasing=self.decreasing)
+                monotonic_cst=self.monotonic_cst)
 
 
             if self.subsample < 1.0:
@@ -967,13 +965,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1051,7 +1046,7 @@ shape (n_estimators, ``loss_.K``)
                  max_leaf_nodes=None, warm_start=False,
                  presort='deprecated', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0,
-                 increasing=None, decreasing=None):
+                 monotonic_cst=None):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1067,7 +1062,7 @@ shape (n_estimators, ``loss_.K``)
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            increasing=increasing, decreasing=decreasing)
+            monotonic_cst=monotonic_cst)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -1454,13 +1449,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1524,7 +1516,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='deprecated',
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-4,
-                 ccp_alpha=0.0, increasing=None, decreasing=None):
+                 ccp_alpha=0.0, monotonic_cst=None):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1539,7 +1531,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha,
-            increasing=increasing, decreasing=decreasing)
+            monotonic_cst=monotonic_cst)
 
     def predict(self, X):
         """Predict regression target for X.

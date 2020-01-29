@@ -96,8 +96,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_split,
                  class_weight=None,
                  presort='deprecated',
-                 increasing=None,
-                 decreasing=None,
+                 monotonic_cst=None,
                  ccp_alpha=0.0):
 
         self.criterion = criterion
@@ -113,8 +112,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
-        self.increasing = increasing
-        self.decreasing = decreasing
+        self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
     def get_depth(self):
@@ -335,44 +333,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
-        def _encode_monotonic(increasing, decreasing):
-            increasing = [] if increasing is None else increasing
-            decreasing = [] if decreasing is None else decreasing
-
-            def is_int_in_range(feature_):
-                return isinstance(feature_, int) and \
-                       0 <= feature_ < self.n_features_
-
-            def is_valid(features):
-                return (isinstance(features, list) and
-                        all(is_int_in_range(feature) for feature in features))
-
-            if not is_valid(increasing):
-                raise ValueError("increasing should be a list of ints in "
-                                 "the range [0,n_features].")
-
-            if not is_valid(decreasing):
-                raise ValueError("decreasing should be a list of ints in "
-                                 "the range [0,n_features].")
-
-            if increasing and decreasing:
-                intersection = set(increasing) & set(decreasing)
-                if intersection:
-                    raise ValueError("The following features cannot be both "
-                                     "increasing and decreasing: "
-                                     + str(list(intersection)))
-
-            monotonic_ = np.zeros(self.n_features_, dtype=np.int32)
-            if increasing:
-                for feature in increasing:
-                    monotonic_[feature] = 1
-            if decreasing:
-                for feature in decreasing:
-                    monotonic_[feature] = -1
-            return monotonic_
-
-        monotonic = _encode_monotonic(self.increasing, self.decreasing)
-
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
@@ -380,7 +340,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                monotonic)
+                                                self.monotonic_cst)
 
         if is_classifier(self):
             self.tree_ = Tree(self.n_features_,
@@ -773,13 +733,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint..
 
     Attributes
     ----------
@@ -866,8 +823,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  min_impurity_split=None,
                  class_weight=None,
                  presort='deprecated',
-                 increasing=None,
-                 decreasing=None,
+                 monotonic_cst=None,
                  ccp_alpha=0.0):
 
         super().__init__(
@@ -884,8 +840,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             presort=presort,
-            increasing=increasing,
-            decreasing=decreasing,
+            monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
@@ -1144,13 +1099,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.22
 
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint.
 
     Attributes
     ----------
@@ -1229,8 +1181,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  min_impurity_split=None,
                  presort='deprecated',
                  ccp_alpha=0.0,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1245,8 +1196,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             min_impurity_split=min_impurity_split,
             presort=presort,
             ccp_alpha=ccp_alpha,
-            increasing=increasing,
-            decreasing=decreasing)
+            monotonic_cst=monotonic_cst)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1516,8 +1466,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_impurity_split=None,
                  class_weight=None,
                  ccp_alpha=0.0,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
 
         super().__init__(
             criterion=criterion,
@@ -1533,8 +1482,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             min_impurity_split=min_impurity_split,
             random_state=random_state,
             ccp_alpha=ccp_alpha,
-            increasing=increasing,
-            decreasing=decreasing)
+            monotonic_cst=monotonic_cst)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1733,8 +1681,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_impurity_split=None,
                  random_state=None,
                  ccp_alpha=0.0,
-                 increasing=None,
-                 decreasing=None):
+                 monotonic_cst=None):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1748,5 +1695,4 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_impurity_split=min_impurity_split,
             random_state=random_state,
             ccp_alpha=ccp_alpha,
-            increasing=increasing,
-            decreasing=decreasing)
+            monotonic_cst=monotonic_cst)
