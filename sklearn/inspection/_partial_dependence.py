@@ -360,6 +360,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
+    kwargs : dict
+        Ignored.
+
     Returns
     -------
     averaged_predictions : ndarray, \
@@ -1180,6 +1183,9 @@ def individual_conditional_expectation(estimator, X, features,
     fixed_start_point : bool, optional (default=True)
         Whether to use a fixes starting point for all the ICE curves.
 
+    kwargs : dict
+        Ignored.
+
     Returns
     -------
     predictions : ndarray, \
@@ -1480,6 +1486,9 @@ class IndividualConditionalExpectationDisplay:
 
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
+
+        kwargs : dict
+            Ignored.
 
         Returns
         -------
