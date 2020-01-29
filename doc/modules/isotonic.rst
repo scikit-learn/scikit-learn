@@ -17,7 +17,10 @@ where the weights :math:`w_i` are strictly positive, and both `X` and `y` are
 arbitrary real quantities.
 
 The `increasing` parameter changes the constraint to
-:math:`\hat{y}_i \ge \hat{y}_j` whenever :math:`X_i \le X_j`.
+:math:`\hat{y}_i \ge \hat{y}_j` whenever :math:`X_i \le X_j`. Setting it to
+'auto' will automatically choose the constraint based on `Spearman's rank
+correlation coefficient
+<https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient>`_.
 
 :class:`IsotonicRegression` produces a series of predictions
 :math:`\hat{y}_i` for the training data which are the closest to the targets
