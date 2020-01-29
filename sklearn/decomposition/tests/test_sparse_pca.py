@@ -96,8 +96,7 @@ def test_fit_transform_variance():
     X = X - X.mean(axis=0)
     explained_variance_sparse = _get_explained_variance(
         X, spca_lars.components_)
-
-    assert_array_almost_equal(explained_variance, explained_variance_sparse)
+    assert_allclose(explained_variance, explained_variance_sparse)
 
 
 def test_fit_transform_variance_orthogonal_matrix():
@@ -118,7 +117,7 @@ def test_fit_transform_variance_orthogonal_matrix():
     explained_variance_sparse = _get_explained_variance(
         X_orthogonal, spca_lars.components_)
     # Then
-    assert_array_almost_equal(explained_variance, explained_variance_sparse)
+    assert_allclose(explained_variance, explained_variance_sparse)
 
 
 @if_safe_multiprocessing_with_blas
