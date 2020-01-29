@@ -1335,7 +1335,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     alphas_ : ndarray of shape (n_alphas,)
         The grid of alphas used for fitting
 
-    dual_gap_ : ndarray of shape ()
+    dual_gap_ : float or ndarray of shape (n_targets,)
         The dual gap at the end of the optimization for the optimal alpha
         (``alpha_``).
 
