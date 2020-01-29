@@ -1026,7 +1026,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         random_state : RandomState
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
-            Controls also the random weighted sampling of the training set with
+            Controls also the bootstrap of the weights used to train the weak learner.
             replacement.
 
         Returns
