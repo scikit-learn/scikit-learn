@@ -144,7 +144,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
-            a precomputed kernel matrix, shape(n_samples, n_samples).
+            a precomputed kernel matrix, of shape(n_samples, n_samples).
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
