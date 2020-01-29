@@ -1332,7 +1332,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     mse_path_ : array of shape (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    alphas_ : numpy array of shape (n_alphas,)
+    alphas_ : ndarray of shape (n_alphas,)
         The grid of alphas used for fitting
 
     dual_gap_ : ndarray of shape ()
