@@ -157,8 +157,9 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 Computing this integral for various values of :math:`x_S` produces a partial
 dependence plot as above.
 
-In ICE, for each instance in :math:`\{(x_S^{(i)}, x_C^{(i)})\}_i=1^N` the
-curve f_S^{(i)} is calculated against x_S^{(i)}, while x_C^{(i)} remains fixed.
+In ICE, for each instance in :math:`\{(x_S^{(i)}, x_C^{(i)})\}_{i=1}^N` the
+curve :math:`f_S^{(i)}` is calculated against :math:`x_S^{(i)}`, while
+:math:`x_C^{(i)}` remains fixed.
 
 Computation methods
 ^^^^^^^^^^^^^^^^^^^
