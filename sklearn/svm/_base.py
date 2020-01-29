@@ -149,7 +149,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             X, y = check_X_y(X, y, dtype=np.float64,
                              order='C', accept_sparse='csr',
                              accept_large_sparse=False)
-            X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
 
         y = self._validate_targets(y)
 
@@ -177,7 +176,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if isinstance(self.gamma, str):
+        kernel = self.kernel
+        if callable(kernel):
+            kernel = 'precomputed'
+
+        if kernel == 'precomputed':
+            self._gamma = 0.  # unused but needs to be a float
+        elif isinstance(self.gamma, str):
             if self.gamma == 'scale':
                 # var = E[X^2] - E[X]^2 if sparse
                 X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
@@ -192,10 +197,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 )
         else:
             self._gamma = self.gamma
-
-        kernel = self.kernel
-        if callable(kernel):
-            kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
