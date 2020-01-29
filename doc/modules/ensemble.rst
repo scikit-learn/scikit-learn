@@ -532,7 +532,7 @@ for regression which can be specified via the argument
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the Boston house price dataset
-(:func:`sklearn.datasets.fetch_openml('boston')`)
+(:func:`sklearn.datasets.fetch_openml('boston', version=1)`)
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
@@ -1199,7 +1199,7 @@ The following example shows how to fit the VotingRegressor::
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> X, y = datasets.fetch_openml('boston', return_X_y=True)
+   >>> X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
 
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
@@ -1255,7 +1255,7 @@ To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
   >>> from sklearn import datasets
-  >>> X, y = datasets.fetch_openml('boston', return_X_y=True)
+  >>> X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)

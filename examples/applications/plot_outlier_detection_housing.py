@@ -56,11 +56,13 @@ from sklearn.covariance import EllipticEnvelope
 from sklearn.svm import OneClassSVM
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
-from sklearn.datasets import load_boston
+from sklearn import datasets
 
 # Get data
-X1 = load_boston()['data'][:, [8, 10]]  # two clusters
-X2 = load_boston()['data'][:, [5, 12]]  # "banana"-shaped
+# two clusters
+X1 = datasets.fetch_openml('boston', version=1)['data'][:, [8, 10]]
+# "banana"-shaped
+X2 = datasets.fetch_openml('boston', version=1)['data'][:, [5, 12]]
 
 # Define "classifiers" to be used
 classifiers = {

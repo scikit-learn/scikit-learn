@@ -256,7 +256,7 @@ be applied to the target variable::
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = datasets.fetch_openml('boston', return_X_y=True)
+  >>> X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,

@@ -27,7 +27,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
 
 # Loading some example data
-X, y = datasets.load_boston(return_X_y=True)
+X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
 
 # Training classifiers
 reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)

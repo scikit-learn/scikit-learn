@@ -24,7 +24,7 @@ from sklearn.metrics import mean_squared_error
 
 # #############################################################################
 # Load data
-boston = datasets.load_boston()
+boston = datasets.fetch_openml('boston', version=1) 
 X, y = shuffle(boston.data, boston.target, random_state=13)
 X = X.astype(np.float32)
 offset = int(X.shape[0] * 0.9)

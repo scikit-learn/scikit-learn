@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_boston
+from sklearn import datasets
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.impute import (
@@ -109,7 +109,8 @@ results_diabetes = np.array(get_results(load_diabetes()))
 mses_diabetes = results_diabetes[:, 0] * -1
 stds_diabetes = results_diabetes[:, 1]
 
-results_boston = np.array(get_results(load_boston()))
+boston = datasets.fetch_openml('boston', version=1) 
+results_boston = np.array(get_results(boston))
 mses_boston = results_boston[:, 0] * -1
 stds_boston = results_boston[:, 1]
 

@@ -45,7 +45,7 @@ np.random.seed(0)
 def generate_data(case, sparse=False):
     """Generate regression/classification data."""
     if case == 'regression':
-        X, y = datasets.load_boston(return_X_y=True)
+        X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
     elif case == 'classification':
         X, y = datasets.fetch_20newsgroups_vectorized(subset='all',
                                                       return_X_y=True)

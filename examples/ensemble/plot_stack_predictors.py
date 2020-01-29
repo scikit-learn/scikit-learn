@@ -85,10 +85,10 @@ stacking_regressor = StackingRegressor(
 
 import time
 import numpy as np
-from sklearn.datasets import load_boston
+from sklearn import datasets
 from sklearn.model_selection import cross_validate, cross_val_predict
 
-X, y = load_boston(return_X_y=True)
+X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)

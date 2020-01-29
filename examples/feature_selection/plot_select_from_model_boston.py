@@ -14,12 +14,12 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.datasets import load_boston
+from sklearn import datasets
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
 # Load the boston dataset.
-X, y = load_boston(return_X_y=True)
+X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
 
 # We use the base estimator LassoCV since the L1 norm promotes sparsity of features.
 clf = LassoCV()

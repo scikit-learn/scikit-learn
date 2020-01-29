@@ -703,7 +703,7 @@ def load_linnerud(return_X_y=False):
             "\nIf you wish to continue using Boston Housing dataset you can "
             "fetch it from openML:"
             "\n> from sklearn import datasets"
-            "\n> boston = datasets.fetch_openml('boston')")
+            "\n> boston = datasets.fetch_openml('boston', version=1)")
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 

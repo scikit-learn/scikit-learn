@@ -130,10 +130,10 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 # targets to be predicted corresponds to the weighted distances to the five
 # Boston employment centers.
 
-from sklearn.datasets import load_boston
+from sklearn import datasets
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
-dataset = load_boston()
+dataset = datasets.fetch_openml('boston', version=1) 
 target = np.array(dataset.feature_names) == "DIS"
 X = dataset.data[:, np.logical_not(target)]
 y = dataset.data[:, target].squeeze()
