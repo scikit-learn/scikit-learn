@@ -324,8 +324,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         achieving a lower test error with fewer boosting iterations.
 
     random_state : int, RandomState instance, default=None
-        For each iteration, controls the generation of the seed for
-        the base estimator, if it accepts a `random_state` attribute.
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` expose a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -901,9 +902,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         boosting iteration.
 
     random_state : int, RandomState instance, default=None
-        For each iteration, controls the generation of the seed for the random
-        weighted sampling of the training set with replacement as well as for
-        the base estimator, if it accepts a `random_state` attribute.
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` expose a `random_state`.
+        In addition, it controls the bootstrap of the weights used to train the
+        `base_estimator` at each boosting iteration.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -1026,7 +1029,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         random_state : RandomState
             The RandomState instance used if the base estimator accepts a
             `random_state` attribute.
-            Controls also the bootstrap of the weights used to train the weak learner.
+            Controls also the bootstrap of the weights used to train the weak
+            learner.
             replacement.
 
         Returns
