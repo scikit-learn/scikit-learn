@@ -4,7 +4,7 @@ including methods to load and fetch popular reference datasets. It also
 features some artificial data generators.
 """
 from ._base import load_breast_cancer
-from ._base import load_boston ## TODO: remove in v0.26
+from ._base import load_boston  # TODO: remove in v0.26
 from ._base import load_diabetes
 from ._base import load_digits
 from ._base import load_files
@@ -65,7 +65,7 @@ __all__ = ['clear_data_home',
            'fetch_kddcup99',
            'fetch_openml',
            'get_data_home',
-           'load_boston' # TODO: remove in v0.26
+           'load_boston'  # TODO: remove in v0.26
            'load_diabetes',
            'load_digits',
            'load_files',
