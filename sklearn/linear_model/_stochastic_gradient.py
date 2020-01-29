@@ -288,29 +288,29 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             sample_weight[validation_mask], classes=classes)
 
     @deprecated("Attribute 'standard_coef_' was renamed to "
-                "'_standard_coef_' in version 0.22 and will "
-                "be removed in 0.24.")
+                "'_standard_coef_' in version 0.23 and will "
+                "be removed in 0.25.")
     @property
     def standard_coef_(self):
         return self._standard_coef_
 
     @deprecated("Attribute 'standard_intercept_' was renamed to "
-                "'_standard_intercept_' in version 0.22 and will "
-                "be removed in 0.24.")
+                "'_standard_intercept_' in version 0.23 and will "
+                "be removed in 0.25.")
     @property
     def standard_intercept_(self):
         return self._standard_intercept_
 
     @deprecated("Attribute 'average_coef_' was renamed to "
-                "'_average_coef_' in version 0.22 and will "
-                "be removed in 0.24.")
+                "'_average_coef_' in version 0.23 and will "
+                "be removed in 0.25.")
     @property
     def average_coef_(self):
         return self._average_coef_
 
     @deprecated("Attribute 'average_intercept_' was renamed to "
-                "'_average_intercept_' in version 0.22 and will "
-                "be removed in 0.24.")
+                "'_average_intercept_' in version 0.23 and will "
+                "be removed in 0.25.")
     @property
     def average_intercept_(self):
         return self._average_intercept_
@@ -1525,18 +1525,18 @@ class SGDRegressor(BaseSGDRegressor):
     average_coef_ : ndarray of shape (n_features,)
         Averaged weights assigned to the features.
 
-        .. deprecated:: 0.22
+        .. deprecated:: 0.23
             Attribute ``average_coef_`` was renamed to
-            ``_average_coef_`` in version 0.22 and will
-            be removed in 0.24.
+            ``_average_coef_`` in version 0.23 and will
+            be removed in 0.25.
 
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term.
 
-        .. deprecated:: 0.22
+        .. deprecated:: 0.23
             Attribute ``average_intercept_`` was renamed to
-            ``_average_intercept_`` in version 0.22 and will
-            be removed in 0.24.
+            ``_average_intercept_`` in version 0.23 and will
+            be removed in 0.25.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
