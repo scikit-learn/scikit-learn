@@ -190,6 +190,12 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     X_max_ : float
         Maximum value of input array `X_` for right bound.
 
+    interpolation_X_ : array-like of shape (n_interpolation_points,)
+        Interpolation point of `X`.
+
+    interpolation_y_ : array-like of shape (n_interpolation_points,)
+        Interpolation point of `y`.
+
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
 
@@ -339,7 +345,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # on the model to make it possible to support model persistence via
         # the pickle module as the object built by scipy.interp1d is not
         # picklable directly.
-        self._necessary_X_, self._necessary_y_ = X, y
+        self.interpolation_X_, self.interpolation_y_ = X, y
 
         # Build the interpolation function
         self._build_f(X, y)
@@ -359,8 +365,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             The transformed data
         """
 
-        if hasattr(self, '_necessary_X_'):
-            dtype = self._necessary_X_.dtype
+        if hasattr(self, 'interpolation_X_'):
+            dtype = self.interpolation_X_.dtype
         else:
             dtype = np.float64
 
@@ -413,8 +419,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         We need to rebuild the interpolation function.
         """
         super().__setstate__(state)
-        if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
-            self._build_f(self._necessary_X_, self._necessary_y_)
+        if hasattr(self, 'interpolation_X_') and hasattr(
+                self, 'interpolation_y_'):
+            self._build_f(self.interpolation_X_, self.interpolation_y_)
 
     def _more_tags(self):
         return {'X_types': ['1darray']}
