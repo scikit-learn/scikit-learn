@@ -453,11 +453,12 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         if affinity == 'precomputed':
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
-            # by pdist: it is a flat array containing the upper triangular of
-            # the distance matrix.
+            # by sklearn.metrics.pairwise_distances: it is a flat array
+            # containing the upper triangular of the distance matrix.
             if len(X.shape) != 2 or X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    'Matrix should be square, as returned by pdist. '
+                    'Matrix should be square, '
+                    'as returned by pairwise_distances. '
                     'Found dimensionality %s' % str(X.shape)
                 )
             i, j = np.triu_indices(X.shape[0], k=1)

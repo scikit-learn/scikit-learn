@@ -759,7 +759,7 @@ def test_invalid_shape_precomputed_dist_matrix():
     X = rng.rand(5, 3)
     with pytest.raises(
         ValueError,
-        match="Matrix should be square, as returned by pdist. "
+        match="Matrix should be square, "
     ):
         AgglomerativeClustering(
             affinity='precomputed',
