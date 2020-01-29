@@ -13,7 +13,8 @@ from ..utils import check_array, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_large_sparse, _num_samples
+from ..utils.validation import check_is_fitted, _check_large_sparse
+from ..utils.validation import _num_samples
 from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
@@ -454,8 +455,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
-                            accept_large_sparse=False)
+            X = check_array(X, accept_sparse='csr', dtype=np.float64,
+                            order="C", accept_large_sparse=False)
 
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -933,8 +934,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
-                             " To disable fitting an intercept,"
+            raise ValueError("Intercept scaling is %r but needs to be greater "
+                             "than 0. To disable fitting an intercept,"
                              " set fit_intercept=False." % intercept_scaling)
         else:
             bias = intercept_scaling
