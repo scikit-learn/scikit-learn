@@ -177,8 +177,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     store_covariance : bool, default=False
         If True, explicitely compute the weighted within-class covariance
-        matrix, solver is 'svd'. The matrix is always computed for the other
-        solvers.
+        matrix when solver is 'svd'. The matrix is always computed for the
+        other solvers.
 
         .. versionadded:: 0.17
 
@@ -219,6 +219,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     scalings_ : array-like, shape (rank, n_classes - 1)
         Scaling of the features in the space spanned by the class centroids.
+        Only available for 'svd' and 'eigen' solvers.
 
     xbar_ : array-like, shape (n_features,)
         Overall mean. Only present if solver is 'svd'.
@@ -584,10 +585,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     covariance_ : list of len n_classes of ndarray \
             of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
-        samples of that class. The estimations are unbiased.
+        samples of that class. The estimations are unbiased. Only present if
+        `store_covariance` is True.
 
     means_ : array-like of shape (n_classes, n_features)
-        Class means.
+        Class-wise means.
 
     priors_ : array-like of shape (n_classes)
         Class priors (sum to 1).
