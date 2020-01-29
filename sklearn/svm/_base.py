@@ -109,17 +109,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
             For kernel="precomputed", the expected shape of X is
             (n_samples, n_samples).
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
@@ -246,8 +246,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self._n_support, \
-            self.dual_coef_, self.intercept_, self.probA_, \
-            self.probB_, self.fit_status_ = libsvm.fit(
+            self.dual_coef_, self.intercept_, self._probA, \
+            self._probB, self.fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
                 class_weight=self.class_weight_, kernel=kernel, C=self.C,
@@ -270,7 +270,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         self.support_, self.support_vectors_, dual_coef_data, \
             self.intercept_, self._n_support, \
-            self.probA_, self.probB_, self.fit_status_ = \
+            self._probA, self._probB, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -304,13 +304,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             (n_samples_test, n_samples_train).
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -334,7 +334,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            self._probA, self._probB, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
 
@@ -359,7 +359,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
@@ -377,11 +377,11 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
+        X : array-like of shape (n_samples, n_class * (n_class-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
         """
@@ -413,7 +413,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA, self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
@@ -438,7 +438,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self)
@@ -539,11 +539,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_classes * (n_classes-1) / 2)
+        X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)
             Returns the decision function of the sample for each class
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
@@ -572,13 +572,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             Class labels for samples in X.
         """
         check_is_fitted(self)
@@ -615,13 +616,13 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape (n_samples, n_classes)
+        T : ndarray of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -654,13 +655,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features) or \
+                (n_samples_test, n_samples_train)
             For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train]
+            (n_samples_test, n_samples_train).
 
         Returns
         -------
-        T : array-like, shape (n_samples, n_classes)
+        T : ndarray of shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -689,7 +691,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA, self._probB,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
@@ -715,7 +717,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
@@ -732,6 +734,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return coef
 
+    @property
+    def probA_(self):
+        return self._probA
+
+    @property
+    def probB_(self):
+        return self._probB
+
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """Find the liblinear magic number for the solver.
@@ -747,7 +757,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """
     # nested dicts containing level 1: available loss functions,
     # level2: available penalties for the given loss function,
-    # level3: wether the dual solver is available for the specified
+    # level3: whether the dual solver is available for the specified
     # combination of loss function and penalty
     _solver_type_dict = {
         'logistic_regression': {
@@ -804,11 +814,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples,)
+    y : array-like of shape (n_samples,)
         Target vector relative to X
 
     C : float
@@ -825,7 +835,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         In order to avoid this, one should increase the intercept_scaling.
         such that the feature vector becomes [x, intercept_scaling].
 
-    class_weight : {dict, 'balanced'}, optional
+    class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -835,7 +845,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    penalty : str, {'l1', 'l2'}
+    penalty : {'l1', 'l2'}
         The norm of the penalty used in regularization.
 
     dual : bool
@@ -850,14 +860,14 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     tol : float
         Stopping condition.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    multi_class : str, {'ovr', 'crammer_singer'}
+    multi_class : {'ovr', 'crammer_singer'}, default='ovr'
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.
         While `crammer_singer` is interesting from an theoretical perspective
@@ -866,21 +876,22 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : str, {'logistic_regression', 'hinge', 'squared_hinge',
-                 'epsilon_insensitive', 'squared_epsilon_insensitive}
+    loss : {'logistic_regression', 'hinge', 'squared_hinge', \
+            'epsilon_insensitive', 'squared_epsilon_insensitive}, \
+            default='logistic_regression'
         The loss function used to fit the model.
 
-    epsilon : float, optional (default=0.1)
+    epsilon : float, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight : array-like, optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Weights assigned to each sample.
 
     Returns
     -------
-    coef_ : ndarray, shape (n_features, n_features + 1)
+    coef_ : ndarray of shape (n_features, n_features + 1)
         The coefficient vector got by minimizing the objective function.
 
     intercept_ : float

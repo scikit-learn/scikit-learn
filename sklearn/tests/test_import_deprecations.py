@@ -24,6 +24,12 @@ def test_import_is_deprecated(deprecated_path, importee):
 
     # TODO: remove in 0.24
 
+    # Special case for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15842
+    if deprecated_path in ("sklearn.decomposition.dict_learning",
+                           "sklearn.inspection.partial_dependence"):
+        pytest.skip("No warning can be raised for " + deprecated_path)
+
     expected_message = (
         "The {deprecated_path} module is  deprecated in version "
         "0.22 and will be removed in version 0.24. "
