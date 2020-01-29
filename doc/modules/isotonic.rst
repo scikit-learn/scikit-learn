@@ -11,13 +11,13 @@ The class :class:`IsotonicRegression` fits a non-decreasing real function to
 
   minimize :math:`\sum_i w_i (y_i - \hat{y}_i)^2`
 
-  subject to :math:`\hat{y}_i \le \hat{y}_j whenever X_i \le X_j`,
+  subject to :math:`\hat{y}_i \le \hat{y}_j` whenever :math:`X_i \le X_j`,
 
 where the weights :math:`w_i` are strictly positive, and both `X` and `y` are
 arbitrary real quantities.
 
-The `increasing` parameter allows to change the constraint to
-:math:`\hat{y}_i \ge \hat{y}_j whenever X_i \le X_j`.
+The `increasing` parameter changes the constraint to
+:math:`\hat{y}_i \ge \hat{y}_j` whenever :math:`X_i \le X_j`.
 
 :class:`IsotonicRegression` produces a series of predictions
 :math:`\hat{y}_i` for the training data which are the closest to the targets
