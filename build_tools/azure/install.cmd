@@ -27,6 +27,9 @@ IF "%PYTHON_ARCH%"=="64" (
 if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov
 )
+if "%TEST_DOCSTRINGS%" == "true" (
+    pip install sphinx numpy-doc
+)
 python --version
 pip --version
 
