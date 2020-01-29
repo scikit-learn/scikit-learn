@@ -286,10 +286,10 @@ def load_wine(return_X_y=False, as_frame=False):
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
+        appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -302,13 +302,13 @@ def load_wine(return_X_y=False, as_frame=False):
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (178,)
-            The classifcation target. If `as_frame=True`, `target` will be
+            The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
         target_names: list
             The names of target classes.
-        frame: {DataFrame} of shape (178, 14)
+        frame: DataFrame of shape (178, 14)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -400,10 +400,10 @@ def load_iris(return_X_y=False, as_frame=False):
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
+        appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -416,13 +416,13 @@ def load_iris(return_X_y=False, as_frame=False):
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (150,)
-            The classifcation target. If `as_frame=True`, `target` will be
+            The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
         target_names: list
             The names of target classes.
-        frame: {DataFrame} of shape (150, 5)
+        frame: DataFrame of shape (150, 5)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -512,10 +512,10 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
+        appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -528,13 +528,13 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
             The data matrix. If `as_frame=True`, `data` will be a pandas
             DataFrame.
         target: {ndarray, Series} of shape (569,)
-            The classifcation target. If `as_frame=True`, `target` will be
+            The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
         target_names: list
             The names of target classes.
-        frame: {DataFrame} of shape (569, 31)
+        frame: DataFrame of shape (569, 31)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -636,10 +636,10 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
+        appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -652,13 +652,13 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
             The flattened data matrix. If `as_frame=True`, `data` will be
             a pandas DataFrame.
         target: {ndarray, Series} of shape (1797,)
-            The classifcation target. If `as_frame=True`, `target` will be
+            The classification target. If `as_frame=True`, `target` will be
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
         target_names: list
             The names of target classes.
-        frame: {DataFrame} of shape (1797, 65)
+        frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -748,10 +748,10 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
+        appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -768,7 +768,7 @@ def load_diabetes(return_X_y=False, as_frame=False):
             a pandas Series.
         feature_names: list
             The names of the dataset columns.
-        frame: {DataFrame} of shape (442, 11)
+        frame: DataFrame of shape (442, 11)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -843,7 +843,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -862,7 +862,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The names of the target columns.
-        frame: {DataFrame} of shape (20, 6)
+        frame: DataFrame of shape (20, 6)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
@@ -942,7 +942,7 @@ def load_boston(return_X_y=False, as_frame=False):
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described above.
+        DataFrames or Series as described below.
 
         .. versionadded:: 0.23
 
@@ -961,7 +961,7 @@ def load_boston(return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The name of the target column.
-        frame: {DataFrame} of shape (506, 14)
+        frame: DataFrame of shape (506, 14)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
