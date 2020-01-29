@@ -1,6 +1,7 @@
 """Test loaders for common functionality.
 """
 import pytest
+import numpy as np
 
 
 def check_pandas_dependency_message(fetch_func):
@@ -35,3 +36,5 @@ def check_as_frame(bunch, fetch_func_partial):
     else:
         assert isinstance(frame_bunch.target, pd.Series)
     assert frame_bunch.target.shape[0] == bunch.target.shape[0]
+    assert frame_bunch.data.values.dtype == np.float64
+    assert frame_bunch.target.values.dtype == np.float64
