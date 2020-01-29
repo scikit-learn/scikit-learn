@@ -118,6 +118,8 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 class GeneralNB(_BaseNB):
     """General Naive Bayes
 
+    Read more in the :ref:`User Guide <general_naive_bayes>`.
+
     Parameters
     ----------
     distributions : list of tuples
@@ -140,7 +142,7 @@ class GeneralNB(_BaseNB):
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
     >>> clf = GeneralNB()
     >>> clf.fit(X, y, [(GaussianNB(), [0, 1, 2]),
-    ...                  (BernoulliNB(), [3, 4])])
+    ...                (BernoulliNB(), [3, 4])])
     GeneralNB()
     >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
@@ -150,9 +152,6 @@ class GeneralNB(_BaseNB):
 
     def __init__(self):
         self.fits = []
-
-    # def __repr__(self):
-    #     return f"{str(self.__class__.__name__)}(distributions={self.distributions_})"
 
     def fit(self, X, y, distributions):
         """Fit Gaussian Naive Bayes according to X, y
@@ -176,7 +175,6 @@ class GeneralNB(_BaseNB):
         self._check_distributions(distributions, X)
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
-
 
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
@@ -260,11 +258,9 @@ class GeneralNB(_BaseNB):
 
         num_cols = len(dict_distribution)
         if num_cols != num_cols_expected:
-            raise ValueError("Expected {} features ".format(num_cols_expected) +
+            raise ValueError("Expected {} features".format(num_cols_expected) +
                              " to have specified distributions " +
-                             "but only {} were specified.".format(num_cols))
-
-        # Check inefficient specification?
+                             "but {} were specified.".format(num_cols))
 
 
 class GaussianNB(_BaseNB):
