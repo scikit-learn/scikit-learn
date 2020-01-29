@@ -20,7 +20,6 @@ import joblib
 from ._base import _fetch_remote
 from . import get_data_home
 from ._base import RemoteFileMetadata
-from ._base import _refresh_cache
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -76,7 +75,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
@@ -293,10 +292,8 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X, y = _refresh_cache([samples_path, targets_path], 0)
-        # TODO: Revert to the following two lines in v0.23
-        # X = joblib.load(samples_path)
-        # y = joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
     return Bunch(data=X, target=y)
 
