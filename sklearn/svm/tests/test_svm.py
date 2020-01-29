@@ -1252,7 +1252,8 @@ def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
         getattr(clf, deprecated_prob)
 
 
-def test_custom_kernel_not_array_input():
+@pytest.mark.parametrize("Estimator", [svm.SVC, svm.SVR])
+def test_custom_kernel_not_array_input(Estimator):
     """Test using a custom kernel that is not fed with array-like for floats"""
     data = ["A A", "A", "B", "B B", "A B"]
     X = np.array([[2, 0], [1, 0], [0, 1], [0, 2], [1, 1]])  # count encoding
@@ -1273,15 +1274,21 @@ def test_custom_kernel_not_array_input():
     K = string_kernel(data, data)
     assert_array_equal(np.dot(X, X.T), K)
 
-    svc1 = svm.SVC(kernel=string_kernel).fit(data, y)
-    svc2 = svm.SVC(kernel='linear').fit(X, y)
-    svc3 = svm.SVC(kernel='precomputed').fit(K, y)
+    svc1 = Estimator(kernel=string_kernel).fit(data, y)
+    svc2 = Estimator(kernel='linear').fit(X, y)
+    svc3 = Estimator(kernel='precomputed').fit(K, y)
 
     assert svc1.score(data, y) == svc3.score(K, y)
     assert svc1.score(data, y) == svc2.score(X, y)
-    assert_array_almost_equal(svc1.decision_function(data),
-                              svc2.decision_function(X))
-    assert_array_almost_equal(svc1.decision_function(data),
-                              svc3.decision_function(K))
-    assert_array_equal(svc1.predict(data), svc2.predict(X))
-    assert_array_equal(svc1.predict(data), svc3.predict(K))
+    if hasattr(svc1, 'decision_function'):  # classifier
+        assert_array_almost_equal(svc1.decision_function(data),
+                                  svc2.decision_function(X))
+        assert_array_almost_equal(svc1.decision_function(data),
+                                  svc3.decision_function(K))
+        assert_array_equal(svc1.predict(data), svc2.predict(X))
+        assert_array_equal(svc1.predict(data), svc3.predict(K))
+    else:  # regressor
+        assert_array_almost_equal(svc1.predict(data),
+                                  svc2.predict(X))
+        assert_array_almost_equal(svc1.predict(data),
+                                  svc3.predict(K))
