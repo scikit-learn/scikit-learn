@@ -61,6 +61,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     check_X
     foo_param
     expected_fit_params
+
+    Attributes
+    ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
