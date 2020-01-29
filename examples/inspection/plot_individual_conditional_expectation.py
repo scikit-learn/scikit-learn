@@ -97,7 +97,7 @@ features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 print('Computing ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
                                         n_jobs=3, grid_resolution=20,
-                                        fixed_start_point=False, n_cols=2,
+                                        fixed_start_point=False,
                                         line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features')
@@ -120,7 +120,7 @@ fig.subplots_adjust(hspace=0.3)
 print('Computing centered ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
                                         n_jobs=3, grid_resolution=20,
-                                        fixed_start_point=True, n_cols=2,
+                                        fixed_start_point=True,
                                         line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('Centered ICE of house value on non-location features')
@@ -152,11 +152,11 @@ plt.show()
 #
 # From the PD plot, we can see that the median house price increases with the
 # median income (top left) and that the median house price drops when the
-# average occupants per household increases (top right). However, from ICE
+# average occupants per household increases (top middle). However, from ICE
 # plots we can see that there are some exceptions, where the house price
 # remain constant with median income and average occupants.
-# On the other hand, while the house age (bottom left) does not have a strong
+# On the other hand, while the house age (top right) does not have a strong
 # influence on the median house price on average, there seems to be a number
 # of exceptions  where the house price increase when between the ages 15-25.
 # Similar exceptions can be observed for average number of rooms (bottom
-# right).
+# left).
