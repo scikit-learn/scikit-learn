@@ -303,11 +303,11 @@ def test_precision():
             # check impurity
             for finding in finditer(pattern, dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
 
 
 def test_export_text_errors():
@@ -459,3 +459,12 @@ def test_plot_tree_rotate_deprecation(pyplot):
              "It will be removed in 0.25.")
     with pytest.warns(FutureWarning, match=match):
         plot_tree(tree, rotate=True)
+
+
+def test_not_fitted_tree(pyplot):
+
+    # Testing if not fitted tree throws the correct error
+    clf = DecisionTreeRegressor()
+    out = StringIO()
+    with pytest.raises(NotFittedError):
+        plot_tree(clf, out)

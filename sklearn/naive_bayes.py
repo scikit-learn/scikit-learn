@@ -118,17 +118,12 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 class GeneralNB(_BaseNB):
     """General Naive Bayes
 
-    Parameters
-    ----------
-    distributions : list of tuples
-        A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
-        'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
-        a list of indices.
+    Read more in the :ref:`User Guide <general_naive_bayes>`.
 
     Attributes
     ----------
     fits_ : list of objects
-        list of objects that inherit from BaseNB
+        list of fitted classifiers
 
     Examples
     --------
@@ -138,24 +133,20 @@ class GeneralNB(_BaseNB):
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-    >>> clf = GeneralNB([(GaussianNB(), [0, 1, 2]),
-    ...                  (BernoulliNB(), [3, 4])])
-    >>> clf.fit(X, y)
-    GeneralNB(distributions=[(GaussianNB(), [0, 1, 2]), (BernoulliNB(), [3, 4])])
+    >>> clf = GeneralNB()
+    >>> clf.fit(X, y, [(GaussianNB(), [0, 1, 2]),
+    ...                (BernoulliNB(), [3, 4])])
+    GeneralNB()
     >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
     """
 
-    def __init__(self, distributions):
-        self.distributions_ = distributions
-        self.fits = []
+    def __init__(self):
+        self.fits_ = []
 
-    def __repr__(self):
-        return f"{str(self.__class__.__name__)}(distributions={self.distributions_})"
-
-    def fit(self, X, y):
+    def fit(self, X, y, distributions):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -165,26 +156,25 @@ class GeneralNB(_BaseNB):
             and n_features is the number of features.
         y : array-like, shape (n_samples,)
             Target values.
-        sample_weight : array-like, shape (n_samples,), optional (default=None)
-            Weights applied to individual samples (1. for unweighted).
-        fits : list of (NB, feature) tuples
-            List of fitted NBs
+        distributions : list of tuples
+            A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
+            'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
+            a list of indices.
 
         Returns
         -------
         self : object
         """
-        self._check_distributions(self.distributions_, X)
+        self._check_distributions(distributions, X)
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
-
 
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb, features) for (nb, features) in self.distributions_]
+        inits = [(nb, features) for (nb, features) in distributions]
 
-        self.fits = [(nb.fit(X[:, features], y), features)
+        self.fits_ = [(nb.fit(X[:, features], y), features)
                      for (nb, features) in inits]
 
         return self
@@ -198,11 +188,11 @@ class GeneralNB(_BaseNB):
         # So we'll take the first one.
         log_priors = [nb.class_log_prior_
                       if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-                      for (nb, _) in self.fits]
+                      for (nb, _) in self.fits_]
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-                for (nb, features) in self.fits]
+                for (nb, features) in self.fits_]
 
         # jlls has the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
@@ -261,11 +251,9 @@ class GeneralNB(_BaseNB):
 
         num_cols = len(dict_distribution)
         if num_cols != num_cols_expected:
-            raise ValueError("Expected {} features ".format(num_cols_expected) +
+            raise ValueError("Expected {} features".format(num_cols_expected) +
                              " to have specified distributions " +
-                             "but only {} were specified.".format(num_cols))
-
-        # Check inefficient specification?
+                             "but {} were specified.".format(num_cols))
 
 
 class GaussianNB(_BaseNB):
@@ -720,8 +708,9 @@ class _BaseDiscreteNB(_BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -772,9 +761,9 @@ class _BaseDiscreteNB(_BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
