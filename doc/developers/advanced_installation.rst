@@ -226,7 +226,7 @@ macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you use the conda package manager (version >= 4.7), you can install the
-``compilers`` meta-package from the conda-forge channel which provides
+``compilers`` meta-package from the conda-forge channel, which provides
 OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
 First install the macOS command line tools::
