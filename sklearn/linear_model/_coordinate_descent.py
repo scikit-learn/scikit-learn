@@ -1247,7 +1247,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    fit_intercept : bool, default True
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
