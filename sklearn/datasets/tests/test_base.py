@@ -11,6 +11,7 @@ import pytest
 import joblib
 
 import numpy as np
+from sklearn.datasets import load_boston
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 from sklearn.datasets import load_files
@@ -21,7 +22,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
@@ -232,6 +232,7 @@ def test_load_breast_cancer():
     check_return_X_y(res, partial(load_breast_cancer))
 
 
+@pytest.mark.filterwarnings('ignore::FutureWarning') 
 def test_load_boston():
     res = load_boston()
     assert res.data.shape == (506, 13)
