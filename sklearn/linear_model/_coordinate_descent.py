@@ -1415,7 +1415,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path, used for each l1_ratio.
 
-    alphas : numpy array, default=None
+    alphas : ndarray, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically
 
