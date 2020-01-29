@@ -1367,7 +1367,7 @@ def plot_individual_conditional_expectation(estimator, X, features,
     See also
     --------
     sklearn.inspection.individual_conditional_expectation: Return raw
-    individual conditional expectation values
+        individual conditional expectation values
     """
     for feature in features:
         if not isinstance(feature, (numbers.Integral, str)):
