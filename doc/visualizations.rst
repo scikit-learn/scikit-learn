@@ -71,6 +71,7 @@ Functions
 
 .. autosummary::
 
+   inspection.plot_individual_conditional_expectation
    inspection.plot_partial_dependence
    metrics.plot_confusion_matrix
    metrics.plot_precision_recall_curve
@@ -84,6 +85,7 @@ Display Objects
 
 .. autosummary::
 
+   inspection.IndividualConditionalExpectationDisplay
    inspection.PartialDependenceDisplay
    metrics.ConfusionMatrixDisplay
    metrics.PrecisionRecallDisplay

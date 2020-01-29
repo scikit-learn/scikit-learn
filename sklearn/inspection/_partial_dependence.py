@@ -1147,7 +1147,7 @@ def individual_conditional_expectation(estimator, X, features,
     ICE of a feature (or a set of features) corresponds to the responses of an
     estimator for each possible value of the feature for all instance in ``X``.
 
-    Read more in the :ref:`User Guide <individual_conditional_expectation>`.
+    Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
     ----------
@@ -1277,7 +1277,7 @@ def plot_individual_conditional_expectation(estimator, X, features,
           >>> disp2 = plot_individual_conditional_expectation(
           ...     est, X,ax=disp1.axes_)  # doctest: +SKIP
 
-    Read more in the :ref:`User Guide <individual_conditional_expectation>`.
+    Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
     ----------
@@ -1396,9 +1396,7 @@ class IndividualConditionalExpectationDisplay:
     :class:`~sklearn.inspection.IndividualConditionalExpectation`.
     All parameters are stored as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_plot_individual_conditional_expectation_api.py`
-    and the :ref:`User Guide <visualizations>`.
+    Read more in the :ref:`User Guide <visualizations>`.
 
         .. versionadded:: 0.23
 
