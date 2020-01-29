@@ -135,6 +135,8 @@ jobs:
         PYTHON_ARCH: '64'
         PYTEST_VERSION: '*'
         COVERAGE: 'true'
+        TEST_DOCSTRINGS: 'true'
       py35_pip_openblas_32bit:
         PYTHON_VERSION: '3.5'
         PYTHON_ARCH: '32'
+        TEST_DOCSTRINGS: 'true'
