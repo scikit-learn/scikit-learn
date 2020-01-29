@@ -235,3 +235,30 @@ def test_fit_docstring_attributes(name, Estimator):
         desc = ' '.join(attr.desc).lower()
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
+
+    IGNORED = ['HistGradientBoostingClassifier', 'HistGradientBoostingRegressor',
+               'MiniBatchKMeans']
+    if Estimator.__name__ in IGNORED:
+        pytest.xfail(
+            reason="Classifier has too many undocumented attributes.")
+
+    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')]
+    fit_attr_names = [attr.name for attr in attributes]
+    for attr in fit_attr:
+        if attr in ['X_offset_', 'X_scale_', 'fit_', 'partial_fit_', 'x_mean_',
+                    'y_mean_', 'x_std_', 'y_std_', 'dual_gap_',
+                    'base_estimator_', 'n_classes_', 'n_estimators_',
+                    'classes_', 'n_features_', 'loss_', 'do_early_stopping_',
+                    'n_samples_fit_', 'effective_metric_params_',
+                    'effective_metric_', 'tree_', 'active_', 'alphas_',
+                    'random_state_', 'exp_dirichlet_component_',
+                    'dissimilarity_matrix_', 'n_iter_', 't_',
+                    'loss_curve_', 'best_loss_', 'eps_',
+                    'class_weight_', 'fit_status_', 'shape_fit_', 'location_',
+                    'n_nonzero_coefs_', 'loss_function_', 'random_weights_',
+                    'random_offset_', 'outlier_label_', 'n_outputs_',
+                    'one_hot_encoder_']:
+            continue
+        if attr.startswith('_'):
+            continue
+        assert attr in fit_attr_names

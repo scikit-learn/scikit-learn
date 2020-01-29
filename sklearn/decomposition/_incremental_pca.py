@@ -104,6 +104,9 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    batch_size_ : int
+        Inferred batch size from ``batch_size``.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
