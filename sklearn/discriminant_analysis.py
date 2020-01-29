@@ -539,6 +539,29 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         return np.log(self.predict_proba(X))
 
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        The decision function is equal (up to a constant factor) to the
+        log-posterior of the model, i.e. `log p(y = k | x)`. In a binary
+        classification setting this instead corresponds to the difference
+        `log p(y = 1 | x) - log p(y = 0 | x)`. See :ref:`lda_qda_math`.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is (n_samples,), giving the
+            log likelihood ratio of the positive class.
+        """
+        # Only override for the doc
+        return super().decision_function(X)
+
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
