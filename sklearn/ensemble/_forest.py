@@ -1307,15 +1307,6 @@ class RandomForestRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-<<<<<<< HEAD:sklearn/ensemble/forest.py
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
-=======
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1334,7 +1325,14 @@ class RandomForestRegressor(ForestRegressor):
           `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
->>>>>>> master:sklearn/ensemble/_forest.py
+
+    increasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1629,15 +1627,6 @@ class ExtraTreesClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-<<<<<<< HEAD:sklearn/ensemble/forest.py
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
-=======
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1656,7 +1645,14 @@ class ExtraTreesClassifier(ForestClassifier):
           `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
->>>>>>> master:sklearn/ensemble/_forest.py
+
+    increasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------

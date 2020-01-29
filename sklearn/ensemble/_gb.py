@@ -1446,15 +1446,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.20
 
-<<<<<<< HEAD:sklearn/ensemble/gradient_boosting.py
-    increasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically increasing
-        effect on the predicted variable.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features constrained to have a monotonically decreasing
-        effect on the predicted variable.
-=======
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1462,7 +1453,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         :ref:`minimal_cost_complexity_pruning` for details.
 
         .. versionadded:: 0.22
->>>>>>> master:sklearn/ensemble/_gb.py
+
+    increasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
