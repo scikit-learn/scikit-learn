@@ -21,8 +21,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_greater_equal
-from sklearn.utils._testing import assert_less_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
@@ -1975,12 +1973,12 @@ def test_montonic_constraints():
         # decreasing constraint
         y1 = est.predict(X_test_1)
         # y1 should always be lower than y0
-        assert_less_equal(np.max(y1 - y0), 0)
+        assert(np.max(y1 - y0) <= 0)
 
         # increasing constraint
         y2 = est.predict(X_test_2)
         # y2 should always be greater than y0
-        assert_greater_equal(np.min(y2 - y0), 0)
+        assert(np.min(y2 - y0) >= 0)
 
     for name, TreeClassifier in CLF_TREES.items():
         est = TreeClassifier(max_depth=None,
@@ -1994,12 +1992,12 @@ def test_montonic_constraints():
         # decreasing constraint
         y1 = est.predict_proba(X_test_1)[:, 0]
         # y1 should always be lower than y0
-        assert_less_equal(np.max(y1 - y0), 0)
+        assert(np.max(y1 - y0) <= 0)
 
         # increasing constraint
         y2 = est.predict_proba(X_test_2)[:, 0]
         # y2 should always be greater than y0
-        assert_greater_equal(np.min(y2 - y0), 0)
+        assert(np.min(y2 - y0) >= 0)
 
 
 def test_classes_deprecated():
