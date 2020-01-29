@@ -28,14 +28,13 @@ the provided labels, contrary to other methods.
 #          Gael Varoquaux
 # License: BSD 3 clause (C) INRIA 2011
 
-print(__doc__)
 from time import time
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import offsetbox
 from sklearn import (manifold, datasets, decomposition, ensemble,
                      discriminant_analysis, random_projection, neighbors)
+print(__doc__)
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data
@@ -99,7 +98,7 @@ X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Projection on to the first 2 principal components
 
 print("Computing PCA projection")
@@ -116,7 +115,8 @@ print("Computing Linear Discriminant Analysis projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
-X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2).fit_transform(X2, y)
+X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2
+                                                         ).fit_transform(X2, y)
 plot_embedding(X_lda,
                "Linear Discriminant projection of the digits (time %.2fs)" %
                (time() - t0))
@@ -235,7 +235,8 @@ plot_embedding(X_tsne,
 # ----------------------------------------------------------------------
 # NCA projection of the digits dataset
 print("Computing NCA projection")
-nca = neighbors.NeighborhoodComponentsAnalysis(n_components=2, random_state=0)
+nca = neighbors.NeighborhoodComponentsAnalysis(init='random',
+                                               n_components=2, random_state=0)
 t0 = time()
 X_nca = nca.fit_transform(X, y)
 

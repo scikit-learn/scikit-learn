@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._cython_blas import _dot_memview
 from sklearn.utils._cython_blas import _asum_memview
 from sklearn.utils._cython_blas import _axpy_memview

@@ -3,11 +3,10 @@ import scipy.sparse as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
 
 from sklearn.base import ClassifierMixin
 from sklearn.utils import check_random_state
@@ -68,8 +67,6 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):
@@ -79,7 +76,7 @@ def test_classifier_accuracy():
                     random_state=1, average=average, tol=None)
                 clf.fit(data, y)
                 score = clf.score(data, y)
-                assert_greater(score, 0.79)
+                assert score > 0.79
                 if average:
                     assert hasattr(clf, 'average_coef_')
                     assert hasattr(clf, 'average_intercept_')
@@ -87,19 +84,16 @@ def test_classifier_accuracy():
                     assert hasattr(clf, 'standard_coef_')
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
         for average in (False, True):
-            clf = PassiveAggressiveClassifier(
-                C=1.0, fit_intercept=True, random_state=0,
+            clf = PassiveAggressiveClassifier(random_state=0,
                 average=average, max_iter=5)
             for t in range(30):
                 clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
-            assert_greater(score, 0.79)
+            assert score > 0.79
             if average:
                 assert hasattr(clf, 'average_coef_')
                 assert hasattr(clf, 'average_intercept_')
@@ -107,8 +101,6 @@ def test_classifier_partial_fit():
                 assert hasattr(clf, 'standard_coef_')
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_refit():
     # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier(max_iter=5).fit(X, y)
@@ -118,20 +110,16 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 @pytest.mark.parametrize('loss', ("hinge", "squared_hinge"))
 def test_classifier_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    clf1 = MyPassiveAggressive(
-        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    clf1 = MyPassiveAggressive(loss=loss, n_iter=2)
     clf1.fit(X, y_bin)
 
     for data in (X, X_csr):
-        clf2 = PassiveAggressiveClassifier(
-            C=1.0, loss=loss, fit_intercept=True, max_iter=2,
+        clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2,
             shuffle=False, tol=None)
         clf2.fit(data, y_bin)
 
@@ -144,8 +132,6 @@ def test_classifier_undefined_methods():
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_class_weights():
     # Test class weights.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -168,16 +154,12 @@ def test_class_weights():
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
     assert_raises(ValueError, clf.partial_fit, X, y, classes=np.unique(y))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
@@ -199,8 +181,6 @@ def test_equal_class_weight():
     assert_almost_equal(clf.coef_, clf_balanced.coef_, decimal=2)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_wrong_class_weight_label():
     # ValueError due to wrong class_weight label.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -211,8 +191,6 @@ def test_wrong_class_weight_label():
     assert_raises(ValueError, clf.fit, X2, y2)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_wrong_class_weight_format():
     # ValueError due to wrong class_weight argument type.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -226,8 +204,6 @@ def test_wrong_class_weight_format():
     assert_raises(ValueError, clf.fit, X2, y2)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_regressor_mse():
     y_bin = y.copy()
     y_bin[y != 1] = -1
@@ -240,7 +216,7 @@ def test_regressor_mse():
                     random_state=0, average=average, max_iter=5)
                 reg.fit(data, y_bin)
                 pred = reg.predict(data)
-                assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+                assert np.mean((pred - y_bin) ** 2) < 1.7
                 if average:
                     assert hasattr(reg, 'average_coef_')
                     assert hasattr(reg, 'average_intercept_')
@@ -248,21 +224,18 @@ def test_regressor_mse():
                     assert hasattr(reg, 'standard_coef_')
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_regressor_partial_fit():
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
     for data in (X, X_csr):
         for average in (False, True):
-            reg = PassiveAggressiveRegressor(
-                C=1.0, fit_intercept=True, random_state=0,
+            reg = PassiveAggressiveRegressor(random_state=0,
                 average=average, max_iter=100)
             for t in range(50):
                 reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
-            assert_less(np.mean((pred - y_bin) ** 2), 1.7)
+            assert np.mean((pred - y_bin) ** 2) < 1.7
             if average:
                 assert hasattr(reg, 'average_coef_')
                 assert hasattr(reg, 'average_intercept_')
@@ -270,8 +243,6 @@ def test_regressor_partial_fit():
                 assert hasattr(reg, 'standard_coef_')
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 @pytest.mark.parametrize(
         'loss',
         ("epsilon_insensitive", "squared_epsilon_insensitive"))
@@ -279,13 +250,11 @@ def test_regressor_correctness(loss):
     y_bin = y.copy()
     y_bin[y != 1] = -1
 
-    reg1 = MyPassiveAggressive(
-        C=1.0, loss=loss, fit_intercept=True, n_iter=2)
+    reg1 = MyPassiveAggressive(loss=loss, n_iter=2)
     reg1.fit(X, y_bin)
 
     for data in (X, X_csr):
-        reg2 = PassiveAggressiveRegressor(
-            C=1.0, tol=None, loss=loss, fit_intercept=True, max_iter=2,
+        reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2,
             shuffle=False)
         reg2.fit(data, y_bin)
 

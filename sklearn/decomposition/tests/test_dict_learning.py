@@ -7,13 +7,10 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -37,24 +34,72 @@ def test_sparse_encode_shapes_omp():
         for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
             code = sparse_encode(X_, dictionary, algorithm=algorithm,
                                  n_jobs=n_jobs)
-            assert_equal(code.shape, (n_samples, n_components))
+            assert code.shape == (n_samples, n_components)
 
 
 def test_dict_learning_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_equal(dico.components_.shape, (n_components, n_features))
+    assert dico.components_.shape == (n_components, n_features)
 
     n_components = 1
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_equal(dico.components_.shape, (n_components, n_features))
-    assert_equal(dico.transform(X).shape, (X.shape[0], n_components))
+    assert dico.components_.shape == (n_components, n_features)
+    assert dico.transform(X).shape == (X.shape[0], n_components)
 
 
 def test_dict_learning_overcomplete():
     n_components = 12
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert dico.components_.shape == (n_components, n_features)
+
+
+def test_max_iter():
+    def ricker_function(resolution, center, width):
+        """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
+        x = np.linspace(0, resolution - 1, resolution)
+        x = ((2 / (np.sqrt(3 * width) * np.pi ** .25))
+             * (1 - (x - center) ** 2 / width ** 2)
+             * np.exp(-(x - center) ** 2 / (2 * width ** 2)))
+        return x
+
+    def ricker_matrix(width, resolution, n_components):
+        """Dictionary of Ricker (Mexican hat) wavelets"""
+        centers = np.linspace(0, resolution - 1, n_components)
+        D = np.empty((n_components, resolution))
+        for i, center in enumerate(centers):
+            D[i] = ricker_function(resolution, center, width)
+        D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
+        return D
+
+    transform_algorithm = 'lasso_cd'
+    resolution = 1024
+    subsampling = 3  # subsampling factor
+    n_components = resolution // subsampling
+
+    # Compute a wavelet dictionary
+    D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
+                          n_components=n_components // 5)
+                          for w in (10, 50, 100, 500, 1000))]
+
+    X = np.linspace(0, resolution - 1, resolution)
+    first_quarter = X < resolution / 4
+    X[first_quarter] = 3.
+    X[np.logical_not(first_quarter)] = -1.
+    X = X.reshape(1, -1)
+
+    # check that the underlying model fails to converge
+    with pytest.warns(ConvergenceWarning):
+        model = SparseCoder(D_multi, transform_algorithm=transform_algorithm,
+                            transform_max_iter=1)
+        model.fit_transform(X)
+
+    # check that the underlying model converges w/o warnings
+    with pytest.warns(None) as record:
+        model = SparseCoder(D_multi, transform_algorithm=transform_algorithm,
+                            transform_max_iter=2000)
+        model.fit_transform(X)
+    assert not record.list
 
 
 def test_dict_learning_lars_positive_parameter():
@@ -166,13 +211,14 @@ def test_dict_learning_nonzero_coefs():
 
     dico.set_params(transform_algorithm='omp')
     code = dico.transform(X[np.newaxis, 1])
-    assert_equal(len(np.flatnonzero(code)), 3)
+    assert len(np.flatnonzero(code)) == 3
 
 
 def test_dict_learning_unknown_fit_algorithm():
     n_components = 5
     dico = DictionaryLearning(n_components, fit_algorithm='<unknown>')
-    assert_raises(ValueError, dico.fit, X)
+    with pytest.raises(ValueError):
+        dico.fit(X)
 
 
 def test_dict_learning_split():
@@ -192,9 +238,9 @@ def test_dict_learning_online_shapes():
     n_components = 8
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             alpha=1, random_state=rng)
-    assert_equal(code.shape, (n_samples, n_components))
-    assert_equal(dictionary.shape, (n_components, n_features))
-    assert_equal(np.dot(code, dictionary).shape, X.shape)
+    assert code.shape == (n_samples, n_components)
+    assert dictionary.shape == (n_components, n_features)
+    assert np.dot(code, dictionary).shape == X.shape
 
 
 def test_dict_learning_online_lars_positive_parameter():
@@ -352,7 +398,7 @@ def test_sparse_encode_shapes():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo)
-        assert_equal(code.shape, (n_samples, n_components))
+        assert code.shape == (n_samples, n_components)
 
 
 @pytest.mark.parametrize("algo", [
@@ -404,7 +450,7 @@ def test_sparse_encode_error():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
     assert not np.all(code == 0)
-    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
 def test_sparse_encode_error_default_sparsity():
@@ -413,14 +459,15 @@ def test_sparse_encode_error_default_sparsity():
     D = rng.randn(2, 64)
     code = ignore_warnings(sparse_encode)(X, D, algorithm='omp',
                                           n_nonzero_coefs=None)
-    assert_equal(code.shape, (100, 2))
+    assert code.shape == (100, 2)
 
 
 def test_unknown_method():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    assert_raises(ValueError, sparse_encode, X, V, algorithm="<unknown>")
+    with pytest.raises(ValueError):
+        sparse_encode(X, V, algorithm="<unknown>")
 
 
 def test_sparse_coder_estimator():
@@ -431,7 +478,7 @@ def test_sparse_coder_estimator():
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
     assert not np.all(code == 0)
-    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+    assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
 
 
 def test_sparse_coder_parallel_mmap():
