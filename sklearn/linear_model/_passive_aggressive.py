@@ -131,8 +131,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Same as ``(n_iter_ * n_samples)``.
 
     loss_function_ : callable
-        Concrete LossFunction used to determine the loss, or
-        difference between the output of the algorithm and the target values.
+        Loss function used by the algorithm.
 
     Examples
     --------
