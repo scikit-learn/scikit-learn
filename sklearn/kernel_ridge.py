@@ -38,7 +38,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float or array-like of shape(n_targets,)
+    alpha : float or array-like of shape (n_targets,)
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
@@ -81,13 +81,13 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    dual_coef_ : ndarray of shape(n_samples,) or (n_samples, n_targets)
+    dual_coef_ : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {ndarray, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
         kernel == "precomputed" this is instead the precomputed
-        training matrix, of shape(n_samples, n_samples).
+        training matrix, of shape (n_samples, n_samples).
 
     References
     ----------
@@ -144,7 +144,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
-            a precomputed kernel matrix, of shape(n_samples, n_samples).
+            a precomputed kernel matrix, of shape (n_samples, n_samples).
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
