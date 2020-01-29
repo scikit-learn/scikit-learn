@@ -697,10 +697,10 @@ def load_linnerud(return_X_y=False):
 
 # TODO: remove in v0.26
 @deprecated("\nBoston housing dataset is depricated in v0.23 "
-            "and will be removed in release 0.26."
-            "\nDue to ethical issues concerning feature B this dataset will "
-            "no longer be included within the scikit-learn. "
-            "\nIf you still wish to use Boston Housing dataset you can "
+            "and will be removed in version 0.26."
+            "\nThis decision was made due to the ethical issues "
+            "concerning feature B in this dataset."
+            "\nIf you wish to continue using Boston Housing dataset you can "
             "fetch it from openML:"
             "\n> from sklearn import datasets"
             "\n> boston = datasets.fetch_openml('boston')")
