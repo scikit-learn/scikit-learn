@@ -520,7 +520,7 @@ poor_score (default=``False``)
     ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
-    
+
 preserves_32bit_dtype (default=``False``)
     whether the transformer preservers ``np.float32`` if given as input.
 
