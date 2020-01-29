@@ -220,6 +220,7 @@ support it, and 'brute' is used for the rest.
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_inspection_plot_individual_conditional_expectation.py`
 
 .. topic:: References
 
