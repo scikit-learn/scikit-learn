@@ -334,6 +334,23 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
         splitter = self.splitter
+        if self.monotonic_cst is None:
+            self.monotonic_cst = np.full(shape=X.shape[1],
+                                    fill_value=0,
+                                    dtype=np.int32)
+        else:
+            self.monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+
+        if self.monotonic_cst.shape[0] != X.shape[1]:
+            raise ValueError(
+                "monotonic_cst has shape {} but the input data "
+                "X has {} features.".format(
+                    self.monotonic_cst.shape[0], X.shape[1]
+                )
+            )
+        if np.any(self.monotonic_cst < -1) or np.any(self.monotonic_cst > 1):
+            raise ValueError(
+                "monotonic_cst must be None or an array-like of -1, 0 or 1.")
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
