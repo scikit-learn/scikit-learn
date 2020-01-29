@@ -1959,10 +1959,10 @@ def test_montonic_constraints():
     y_train = y[train]
     X_test_0 = np.copy(X[test])
     X_test_1 = np.copy(X_test_0)
-    X_test_1[:, 1] += 10
+    X_test_1[:, 0] += 10
     X_test_2 = np.copy(X_test_0)
-    X_test_2[:, 2] += 10
-    monotonic_cst = np.zeros(X.shape[0])
+    X_test_2[:, 1] += 10
+    monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = -1
     monotonic_cst[1] = 1
 
