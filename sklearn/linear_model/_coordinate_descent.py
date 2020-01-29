@@ -1509,7 +1509,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
 
-    alphas_ : numpy array of shape (n_alphas,) or (n_l1_ratio, n_alphas)
+    alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
         The grid of alphas used for fitting, for each l1_ratio.
 
     n_iter_ : int
