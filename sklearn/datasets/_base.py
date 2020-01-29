@@ -694,6 +694,15 @@ def load_linnerud(return_X_y=False):
                  target_filename=target_filename)
 
 
+# TODO: remove in v0.26
+@deprecated("Boston housing dataset is depricated in v0.23 "
+            "and will be removed in release 0.26."
+            "Due to ethical issues concerning feature B this dataset will "
+            "no longer be included within the scikit-learn."
+            "If you still wish to use Boston Housing dataset you can "
+            "fetch it from openML:"
+            "> from sklearn import datasets"
+            "> boston = datasets.fetch_openml('boston')"
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
