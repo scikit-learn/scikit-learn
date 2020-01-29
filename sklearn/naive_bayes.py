@@ -120,17 +120,10 @@ class GeneralNB(_BaseNB):
 
     Read more in the :ref:`User Guide <general_naive_bayes>`.
 
-    Parameters
-    ----------
-    distributions : list of tuples
-        A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
-        'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
-        a list of indices.
-
     Attributes
     ----------
     fits_ : list of objects
-        list of objects that inherit from BaseNB
+        list of fitted classifiers
 
     Examples
     --------
@@ -151,7 +144,7 @@ class GeneralNB(_BaseNB):
     """
 
     def __init__(self):
-        self.fits = []
+        self.fits_ = []
 
     def fit(self, X, y, distributions):
         """Fit Gaussian Naive Bayes according to X, y
@@ -163,10 +156,10 @@ class GeneralNB(_BaseNB):
             and n_features is the number of features.
         y : array-like, shape (n_samples,)
             Target values.
-        sample_weight : array-like, shape (n_samples,), optional (default=None)
-            Weights applied to individual samples (1. for unweighted).
-        fits : list of (NB, feature) tuples
-            List of fitted NBs
+        distributions : list of tuples
+            A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
+            'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
+            a list of indices.
 
         Returns
         -------
@@ -181,7 +174,7 @@ class GeneralNB(_BaseNB):
 
         inits = [(nb, features) for (nb, features) in distributions]
 
-        self.fits = [(nb.fit(X[:, features], y), features)
+        self.fits_ = [(nb.fit(X[:, features], y), features)
                      for (nb, features) in inits]
 
         return self
@@ -195,11 +188,11 @@ class GeneralNB(_BaseNB):
         # So we'll take the first one.
         log_priors = [nb.class_log_prior_
                       if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-                      for (nb, _) in self.fits]
+                      for (nb, _) in self.fits_]
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-                for (nb, features) in self.fits]
+                for (nb, features) in self.fits_]
 
         # jlls has the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
