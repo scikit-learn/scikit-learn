@@ -6,10 +6,10 @@ Individual Conditional Expectation (ICE) Plots
 Similar to a partial dependence (PD) plot, an individual conditional
 expectation (ICE) plot [1]_ shows the dependence between the target function
 [2]_ and a 'target' feature, marginalizing over the values of all other
-features (the complement features). However, unlike PD plots which show the
-average effect of the 'target' features, ICE plots visualizes the dependence
-of the prediction on a feature for each instance separately, with one curve
-per instance.
+features (the complement features). However, unlike PD plots, which show the
+average effect of the 'target' feature, ICE plots visualize the dependence
+of the prediction on the 'target' feature for each instance separately,
+resulting in one curve per instance.
 
 This example shows how to obtain ICE plots from a
 :class:`~sklearn.neural_network.MLPRegressor` trained on the
@@ -57,7 +57,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
 # Configuring a training pipeline
 # -------------------------------
 #
-# Let's configuring a training pipeline fit a MLPRegressor:
+# Let's configuring a training pipeline and fit a MLPRegressor:
 
 print("Training MLPRegressor...")
 est = make_pipeline(QuantileTransformer(),
@@ -68,6 +68,7 @@ est.fit(X_train, y_train)
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
 
+##############################################################################
 # We configured a pipeline to scale the numerical input features and tuned the
 # neural network size and learning rate to get a reasonable compromise between
 # training time and predictive performance on a test set.
@@ -82,11 +83,12 @@ print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 # ICE computation
 # ---------------
 #
-# Let's now compute the ICE plots for the neural network:
-#
 # One of the main limitation of ICE plots is that the plot get overcrowded
-# if many ICE curves are drawn. Due to this we will use a random sample of
+# if many ICE curves are drawn. Due to this, we will use a random sample of
 # 50 instances for the ICE plot.
+#
+# Let's now compute the ICE plots for the neural network.
+
 
 X_train_sample = X_train.sample(50, random_state=0)
 
@@ -102,16 +104,18 @@ fig.suptitle('ICE of house value on non-location features')
 fig.subplots_adjust(hspace=0.3)
 
 
+##############################################################################
 # As the ICE curves do not have the same origin, sometimes it can be hard to
 # see the differences between ICE curves. The ICE curves can be made to have
-# same origin with ``centre`` parameter set to True.
+# same origin with ``fixed_start_point`` parameter set to `True`.
 
 
 ##############################################################################
 # Centered ICE computation
 # ------------------------
 #
-# Let's now compute the ICE plots with ``centre`` parameter set to True:
+# Let's now compute the ICE plots with ``fixed_start_point`` parameter set to
+# `True`.
 
 print('Computing centered ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
@@ -131,7 +135,7 @@ fig.subplots_adjust(hspace=0.3)
 # variable. Hence, it is recommended to use ICE plot with partial dependency
 # plots.
 #
-# Let's compute single-variable partial dependence plots
+# Let's compute single-variable partial dependence plots.
 
 print('Computing partial dependence plots...')
 plot_partial_dependence(est, X_train, features, n_jobs=3, grid_resolution=20,
