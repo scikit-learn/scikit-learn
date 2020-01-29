@@ -68,7 +68,7 @@ def test_fit_transform():
                            alpha=alpha)
     spca_lasso.fit(Y)
     # variance computed by default shape (n_components, )
-    assert spca_lasso.explained_variance_.shape == (3, )
+    assert spca_lasso.explained_variance_.shape == (3,)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 

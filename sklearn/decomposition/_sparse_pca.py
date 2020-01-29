@@ -268,24 +268,12 @@ class SparsePCA(TransformerMixin, BaseEstimator):
                                                dict_init=dict_init,
                                                return_n_iter=True)
         self.components_ = Vt.T
-
-        # compute variance before normalizing components (if both are desired)
-        # requires the mean to be subtracted
-        if not self.normalize_components:
-            # should be removed in version 0.22
-            # (replace Xp with X)
-            Xp = X - np.mean(X, axis=0)
-        else:
-            Xp = X
-
-        self.explained_variance_ = _get_explained_variance(Xp,
+        self.explained_variance_ = _get_explained_variance(X,
                                                            self.components_)
-
-        if self.normalize_components:
-            components_norm = \
-                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = np.linalg.norm(
+            self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         self.error_ = E
         return self
@@ -396,7 +384,7 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features, )
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
@@ -482,21 +470,11 @@ class MiniBatchSparsePCA(SparsePCA):
             random_state=random_state,
             return_n_iter=True)
         self.components_ = Vt.T
-
-        # requires the mean to be subtracted
-        if not self.normalize_components:
-            # should be removed in version 0.22
-            # (replace Xp with X)
-            Xp = X - np.mean(X, axis=0)
-        else:
-            Xp = X
-        self.explained_variance_ = _get_explained_variance(Xp,
+        self.explained_variance_ = _get_explained_variance(X,
                                                            self.components_)
-
-        if self.normalize_components:
-            components_norm = np.linalg.norm(self.components_,
-                                             axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = np.linalg.norm(
+            self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         return self
