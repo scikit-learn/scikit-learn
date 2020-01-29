@@ -649,6 +649,30 @@ def test_radius_neighbors_boundary_handling():
         assert_array_equal(results[0], [0, 1])
 
 
+def test_radius_neighbors_returns_array_of_objects():
+    # check that we can pass precomputed distances to
+    # NearestNeighbors.radius_neighbors()
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16036
+    X = csr_matrix(np.ones((4, 4)))
+    X.setdiag([0, 0, 0, 0])
+
+    nbrs = neighbors.NearestNeighbors(radius=0.5, algorithm='auto',
+                                      leaf_size=30,
+                                      metric='precomputed').fit(X)
+    neigh_dist, neigh_ind = nbrs.radius_neighbors(X, return_distance=True)
+
+    expected_dist = np.empty(X.shape[0], dtype=object)
+    expected_dist[:] = [np.array([0]), np.array([0]), np.array([0]),
+                        np.array([0])]
+    expected_ind = np.empty(X.shape[0], dtype=object)
+    expected_ind[:] = [np.array([0]), np.array([1]), np.array([2]),
+                       np.array([3])]
+
+    assert_array_equal(neigh_dist, expected_dist)
+    assert_array_equal(neigh_ind, expected_ind)
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)

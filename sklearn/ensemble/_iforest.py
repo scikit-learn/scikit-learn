@@ -107,10 +107,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
            0.24.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the pseudo-randomness of the selection of the feature
+        and split values for each branching step and each tree in the forest.
+
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity of the tree building process.
