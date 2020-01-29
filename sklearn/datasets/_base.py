@@ -919,7 +919,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-def load_boston(return_X_y=False, as_frame=False):
+def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -939,39 +939,14 @@ def load_boston(return_X_y=False, as_frame=False):
 
         .. versionadded:: 0.18
 
-    as_frame : bool, default=False
-        If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric, string or categorical). The target is
-        a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
-
     Returns
     -------
-     data : Bunch
-        Dictionary-like object, with attributes:
-
-        data : {ndarray, dataframe} of shape (506, 13)
-            The data matrix. If `as_frame=True`, `data` will be a pandas
-            DataFrame.
-        target: {ndarray, dataframe} of shape (506,)
-            The regression target. If `as_frame=True`, `target` will be
-            a pandas DataFrame.
-        feature_names: list
-            The names of the dataset columns.
-        target_names: list
-            The name of the target column.
-        frame: DataFrame of shape (506, 14)
-            Only present when `as_frame=True`. DataFrame with `data` and
-            `target`.
-
-            .. versionadded:: 0.23
-        DESCR: str
-            The full description of the dataset.
-        filename: str
-            The path to the location of the data.
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the regression targets,
+        'DESCR', the full description of the dataset,
+        and 'filename', the physical location of boston
+        csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -1010,24 +985,13 @@ def load_boston(return_X_y=False, as_frame=False):
             data[i] = np.asarray(d[:-1], dtype=np.float64)
             target[i] = np.asarray(d[-1], dtype=np.float64)
 
-    frame = None
-    target_columns = np.array([feature_names[-1], ])
-    if as_frame:
-        frame, data, target = _convert_data_dataframe("load_boston",
-                                                      data,
-                                                      target,
-                                                      feature_names[:-1],
-                                                      target_columns)
-
     if return_X_y:
         return data, target
 
     return Bunch(data=data,
                  target=target,
-                 frame=frame,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 target_names=target_columns,
                  DESCR=descr_text,
                  filename=data_file_name)
 

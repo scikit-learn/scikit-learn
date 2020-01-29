@@ -262,9 +262,6 @@ def test_load_boston():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_boston))
-    # test as_frame option
-    check_pandas_dependency_message(load_boston)
-    check_as_frame(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():
