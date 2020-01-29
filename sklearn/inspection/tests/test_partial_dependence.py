@@ -312,6 +312,19 @@ def test_partial_dependence_easy_target(est, power):
 
     assert r2 > .99
 
+    predictions, values = individual_conditional_expectation(
+        est, features=[target_variable], X=X, grid_resolution=1000)
+
+    for new_y in predictions[0]:
+        new_X = values[0].reshape(-1, 1)
+        # add polynomial features if needed
+        new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
+
+        lr = LinearRegression().fit(new_X, new_y)
+        r2 = r2_score(new_y, lr.predict(new_X))
+
+        assert r2 > .95
+
 
 @pytest.mark.parametrize('Estimator',
                          (sklearn.tree.DecisionTreeClassifier,
