@@ -61,7 +61,7 @@ def test_fit_transform():
                           random_state=0)
     spca_lars.fit(Y)
     # variance computed by default shape (n_components, )
-    assert (spca_lars.explained_variance_.shape == (3,))
+    assert spca_lars.explained_variance_.shape == (3,)
 
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,

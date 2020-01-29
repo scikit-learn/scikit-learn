@@ -47,9 +47,8 @@ def _get_explained_variance(X, components):
 
     Notes
     -----
-    The variance ratio may not be computed. The main reason is that we
-    do not know what the total variance is since we did not compute all
-    the components.
+    The variance ratio cannot be computed. Indeed, we do not know the total
+    variance since we did not compute all the components.
     Orthogonality is enforced in this case. Other variants exist that don't
     enforce this [2].
 
@@ -69,7 +68,7 @@ def _get_explained_variance(X, components):
     components_norm[components_norm == 0] = 1
     unit_vecs /= components_norm
 
-    # Algorithm, as we compute the adjustd variance for each component, we
+    # Algorithm, as we compute the adjusted variance for each component, we
     # subtract the variance from components in the direction of previous axes
     proj_corrected_vecs = np.zeros_like(components)
     for i in range(n_components):
@@ -165,11 +164,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features, )
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
-    explained_variance_ : array, shape (n_components, )
+    explained_variance_ : array, shape (n_components,)
         The explained variance versus component.
         Only computed if variance is set to True.
 
