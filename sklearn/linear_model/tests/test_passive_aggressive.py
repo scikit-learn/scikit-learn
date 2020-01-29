@@ -78,10 +78,10 @@ def test_classifier_accuracy():
                 score = clf.score(data, y)
                 assert score > 0.79
                 if average:
-                    assert hasattr(clf, '_average_coef_')
-                    assert hasattr(clf, '_average_intercept_')
-                    assert hasattr(clf, '_standard_intercept_')
-                    assert hasattr(clf, '_standard_coef_')
+                    assert hasattr(clf, '_average_coef')
+                    assert hasattr(clf, '_average_intercept')
+                    assert hasattr(clf, '_standard_intercept')
+                    assert hasattr(clf, '_standard_coef')
 
 
 def test_classifier_partial_fit():
@@ -96,10 +96,10 @@ def test_classifier_partial_fit():
             score = clf.score(data, y)
             assert score > 0.79
             if average:
-                assert hasattr(clf, '_average_coef_')
-                assert hasattr(clf, '_average_intercept_')
-                assert hasattr(clf, '_standard_intercept_')
-                assert hasattr(clf, '_standard_coef_')
+                assert hasattr(clf, '_average_coef')
+                assert hasattr(clf, '_average_intercept')
+                assert hasattr(clf, '_standard_intercept')
+                assert hasattr(clf, '_standard_coef')
 
 
 def test_classifier_refit():
@@ -219,10 +219,10 @@ def test_regressor_mse():
                 pred = reg.predict(data)
                 assert np.mean((pred - y_bin) ** 2) < 1.7
                 if average:
-                    assert hasattr(reg, '_average_coef_')
-                    assert hasattr(reg, '_average_intercept_')
-                    assert hasattr(reg, '_standard_intercept_')
-                    assert hasattr(reg, '_standard_coef_')
+                    assert hasattr(reg, '_average_coef')
+                    assert hasattr(reg, '_average_intercept')
+                    assert hasattr(reg, '_standard_intercept')
+                    assert hasattr(reg, '_standard_coef')
 
 
 def test_regressor_partial_fit():
@@ -238,10 +238,10 @@ def test_regressor_partial_fit():
             pred = reg.predict(data)
             assert np.mean((pred - y_bin) ** 2) < 1.7
             if average:
-                assert hasattr(reg, '_average_coef_')
-                assert hasattr(reg, '_average_intercept_')
-                assert hasattr(reg, '_standard_intercept_')
-                assert hasattr(reg, '_standard_coef_')
+                assert hasattr(reg, '_average_coef')
+                assert hasattr(reg, '_average_intercept')
+                assert hasattr(reg, '_standard_intercept')
+                assert hasattr(reg, '_standard_coef')
 
 
 @pytest.mark.parametrize(
