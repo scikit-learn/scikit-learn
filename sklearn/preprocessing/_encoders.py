@@ -293,7 +293,8 @@ class OneHotEncoder(_BaseEncoder):
         be retained.
 
     infrequent_indices_ : list of shape (n_features,)
-        `infrequent_indices_[i]` is an array of indices corresponding to
+        Defined when `min_frequency` or `max_levels` is set to a non-default
+        value. `infrequent_indices_[i]` is an array of indices corresponding to
         `categories_[i]` of the infrequent categories. `infrequent_indices_[i]`
         is None if the ith input feature has no infrequent categories.
 
@@ -642,10 +643,10 @@ class OneHotEncoder(_BaseEncoder):
             return output
 
         # infrequent is enabled
-        for col_idx, infreq_idx in enumerate(self.infrequent_indices_):
+        for i, infreq_idx in enumerate(self.infrequent_indices_):
             if infreq_idx is None:
                 continue
-            output[col_idx] = output[col_idx] - infreq_idx.size + 1
+            output[i] = output[i] - infreq_idx.size + 1
 
         return output
 
