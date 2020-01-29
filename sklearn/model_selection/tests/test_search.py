@@ -104,6 +104,13 @@ class MockClassifier:
             score = 0.
         return score
 
+    def score_samples(self, X):
+        if self.foo_param > 1:
+            scores = [1.] * len(X)
+        else:
+            scores = [0.] * len(X)
+        return scores
+
     def get_params(self, deep=False):
         return {'foo_param': self.foo_param}
 
@@ -1095,6 +1102,19 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     assert_almost_equal(search_multi.score(X, y), search_acc.score(X, y))
     for key in ('best_index_', 'best_score_', 'best_params_'):
         assert getattr(search_multi, key) == getattr(search_acc, key)
+
+
+@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
+@pytest.mark.parametrize('search_cv', [RandomizedSearchCV, GridSearchCV])
+def test_search_cv_score_samples_method(search_cv):
+    X, y = make_classification(n_samples=50, n_features=4, random_state=42)
+    clf = search_cv(MockClassifier(), {'foo_param': [0, 2]},
+                    scoring='precision', refit=True)
+    clf.fit(X, y)
+    # Test that the score_samples method on *SearchCV yields same results as
+    # applying score_samples from the estimator itself directly (best param is
+    # foo_param=1)
+    assert_allclose(clf.score_samples(X), MockClassifier(foo_param=2).score_samples(X))
 
 
 def test_search_cv_results_rank_tie_breaking():
