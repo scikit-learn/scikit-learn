@@ -591,7 +591,13 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     from matplotlib.ticker import MaxNLocator  # noqa
     from matplotlib.ticker import ScalarFormatter  # noqa
     # set target_idx for multi-class estimators
-    # TODO: Remove isinstance check in 0.24
+
+    # Attribute classes_ in DecisionTreeRegressor has been moved to super class
+    # BaseDecisionTree and is deprecated.
+    # The isinstance(estimator, DecisionTreeRegressor)
+    # check is used to prevent raising a spurious warning.
+    # TODO: Remove isinstance check in 0.24 when the `classes_`
+    # attribute is actually removed from the DecisionTreeRegressor class.
     if (not isinstance(estimator, DecisionTreeRegressor) and
             hasattr(estimator, 'classes_') and
             np.size(estimator.classes_) > 2):
