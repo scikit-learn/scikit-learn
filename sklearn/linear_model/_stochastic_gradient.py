@@ -1492,10 +1492,11 @@ class SGDRegressor(BaseSGDRegressor):
         The intercept term.
 
     average_coef_ : ndarray of shape (n_features,)
-        Averaged weights assigned to the features.
+        Averaged weights assigned to the features. Only available
+        if ``average=True``.
 
     average_intercept_ : ndarray of shape (1,)
-        The averaged intercept term.
+        The averaged intercept term. Only available if ``average=True``.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.

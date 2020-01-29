@@ -9,14 +9,19 @@ import importlib
 from pkgutil import walk_packages
 from inspect import signature
 
+import numpy as np
+
 import sklearn
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import all_estimators
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
+from sklearn.datasets import make_classification, make_regression
+from sklearn.base import is_classifier, is_regressor
 
 import pytest
 
@@ -160,3 +165,73 @@ def test_tabs():
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
                                     'or add it to theignore list'
                                     % modname)
+
+
+@pytest.mark.parametrize('name, Estimator',
+                         all_estimators())
+def test_fit_docstring_attributes(name, Estimator):
+    pytest.importorskip('numpydoc')
+    from numpydoc import docscrape
+
+    doc = docscrape.ClassDoc(Estimator)
+    attributes = doc['Attributes']
+
+    IGNORED = ['ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
+               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
+               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+               'NoSampleWeightWrapper', 'OneVsOneClassifier',
+               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
+               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'SpectralBiclustering', 'StackingClassifier',
+               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+               'VotingRegressor']
+    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
+        pytest.xfail(
+            reason="Classifier cannot be fit easily to test fit attributes")
+
+    est = Estimator()
+
+    if Estimator.__name__ in ['SelectKBest']:
+        est.k = 2
+
+    X_classif, y_classif = \
+        make_classification(n_samples=20, n_features=3,
+                            n_redundant=0, n_classes=2)
+
+    X_reg, y_reg = \
+        make_regression(n_samples=10, n_features=2)
+
+    # Make sure features are positive as some models need it
+    X_classif -= X_classif.min()
+    X_reg -= X_reg.min()
+
+    if is_classifier(est):
+        X, y = X_classif, y_classif
+    elif is_regressor(est):
+        X, y = X_reg, y_reg
+    else:
+        X, y = X_classif, y_classif
+
+    tags = est._get_tags()
+
+    if '1darray' in tags['X_types']:
+        X = X[:, 0]
+
+    if tags['multioutput_only']:
+        y = np.c_[y, y]
+
+    if getattr(est, '_pairwise', None):
+        X = X.dot(X.T)
+
+    if '1dlabels' in tags['X_types']:
+        est.fit(y)
+    elif '2dlabels' in tags['X_types']:
+        est.fit(np.c_[y, y])
+    else:
+        est.fit(X, y)
+
+    for attr in attributes:
+        desc = ' '.join(attr.desc).lower()
+        if 'only ' not in desc:
+            assert hasattr(est, attr.name)
