@@ -642,6 +642,7 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
+   inspection.individual_conditional_expectation
    inspection.partial_dependence
    inspection.permutation_importance
 
@@ -654,12 +655,14 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
+   inspection.IndividualConditionalExpectationDisplay
    inspection.PartialDependenceDisplay
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   inspection.plot_individual_conditional_expectation
    inspection.plot_partial_dependence
 
 .. _isotonic_ref:
