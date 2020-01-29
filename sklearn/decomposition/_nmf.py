@@ -325,18 +325,18 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     if init == 'random':
         avg = np.sqrt(X.mean() / n_components)
         rng = check_random_state(random_state)
-        H = avg * rng.randn(n_components, n_features)
-        W = avg * rng.randn(n_samples, n_components)
-        # we do not write np.abs(H, out=H) to stay compatible with
-        # numpy 1.5 and earlier where the 'out' keyword is not
-        # supported as a kwarg on ufuncs
-        np.abs(H, H)
-        np.abs(W, W)
+        H = avg * rng.randn(n_components, n_features).astype(X.dtype,
+                                                             copy=False)
+        W = avg * rng.randn(n_samples, n_components).astype(X.dtype,
+                                                            copy=False)
+        np.abs(H, out=H)
+        np.abs(W, out=W)
         return W, H
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
-    W, H = np.zeros(U.shape), np.zeros(V.shape)
+    W = np.zeros_like(U)
+    H = np.zeros_like(V)
 
     # The leading singular triplet is non-negative
     # so it can be used as is for initialization.
@@ -1004,7 +1004,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1268,7 +1269,8 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=[np.float64, np.float32])
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
