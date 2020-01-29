@@ -13,6 +13,10 @@ if "%CHECK_WARNINGS%" == "true" (
     set PYTEST_ARGS=%PYTEST_ARGS% -Werror::DeprecationWarning -Werror::FutureWarning
 )
 
+if "%TEST_DOCSTRINGS%" == "true" (
+    set PYTEST_ARGS=%PYTEST_ARGS% --doctest-modules
+)
+
 if "%COVERAGE%" == "true" (
     set PYTEST_ARGS=%PYTEST_ARGS% --cov sklearn
 )
