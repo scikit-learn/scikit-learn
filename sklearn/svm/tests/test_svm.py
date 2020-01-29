@@ -1280,4 +1280,7 @@ def test_custom_kernel_not_array_input():
     assert svc1.score(data, y) == svc2.score(X, y)
     assert_array_almost_equal(svc1.decision_function(data),
                               svc2.decision_function(X))
+    assert_array_almost_equal(svc1.decision_function(data),
+                              svc3.decision_function(K))
     assert_array_equal(svc1.predict(data), svc2.predict(X))
+    assert_array_equal(svc1.predict(data), svc3.predict(K))
