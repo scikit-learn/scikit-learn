@@ -2018,8 +2018,8 @@ class ExtraTreesRegressor(ForestRegressor):
                  warm_start=False,
                  ccp_alpha=0.0,
                  max_samples=None,
-                 increasing = None,
-                 decreasing = None):
+                 increasing=None,
+                 decreasing=None):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
