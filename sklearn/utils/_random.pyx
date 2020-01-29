@@ -11,17 +11,17 @@ This module complements missing features of ``numpy.random``.
 
 The module contains:
     * Several algorithms to sample integers without replacement.
-
+    * Fast rand_r alternative based on xor shifts
 """
-from __future__ import division
-
 cimport cython
 
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils import check_random_state
+from . import check_random_state
+
+cdef UINT32_t DEFAULT_SEED = 1
 
 
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
@@ -41,7 +41,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
         np.int_t n_population,
         np.int_t n_samples,
         random_state=None):
-    """Sample integers without replacement.
+    r"""Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
     replacement.
@@ -149,12 +149,12 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     rng_randint = rng.randint
 
     # Initialize the pool
-    for i in xrange(n_population):
+    for i in range(n_population):
         pool[i] = i
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
         pool[j] = pool[n_population - i - 1]  # move non-selected item into
@@ -310,3 +310,9 @@ cpdef sample_without_replacement(np.int_t n_population,
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
+
+
+def _our_rand_r_py(seed):
+    """Python utils to test the our_rand_r function"""
+    cdef UINT32_t my_seed = seed
+    return our_rand_r(&my_seed)

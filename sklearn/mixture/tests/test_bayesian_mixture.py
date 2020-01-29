@@ -1,21 +1,26 @@
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
+import copy
 
 import numpy as np
 from scipy.special import gammaln
+import pytest
 
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
-from sklearn.mixture.bayesian_mixture import _log_dirichlet_norm
-from sklearn.mixture.bayesian_mixture import _log_wishart_norm
+from sklearn.metrics.cluster import adjusted_rand_score
+
+from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm
+from sklearn.mixture._bayesian_mixture import _log_wishart_norm
 
 from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import assert_greater_equal, ignore_warnings
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
+from sklearn.utils._testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -113,7 +118,7 @@ def test_bayesian_mixture_weights_prior_initialisation():
     assert_almost_equal(1. / n_components, bgmm.weight_concentration_prior_)
 
 
-def test_bayesian_mixture_means_prior_initialisation():
+def test_bayesian_mixture_mean_prior_initialisation():
     rng = np.random.RandomState(0)
     n_samples, n_components, n_features = 10, 3, 2
     X = rng.rand(n_samples, n_features)
@@ -291,14 +296,14 @@ def test_monotonic_likelihood():
             bgmm = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
                 n_components=2 * n_components, covariance_type=covar_type,
-                warm_start=True, max_iter=1, random_state=rng, tol=1e-4)
+                warm_start=True, max_iter=1, random_state=rng, tol=1e-3)
             current_lower_bound = -np.infty
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
             for _ in range(600):
                 prev_lower_bound = current_lower_bound
                 current_lower_bound = bgmm.fit(X).lower_bound_
-                assert_greater_equal(current_lower_bound, prev_lower_bound)
+                assert current_lower_bound >= prev_lower_bound
 
                 if bgmm.converged_:
                     break
@@ -419,3 +424,65 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
+
+
+@pytest.mark.filterwarnings("ignore:.*did not converge.*")
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
+    rng = np.random.RandomState(seed)
+    rand_data = RandomData(rng, n_samples=50, scale=7)
+    n_components = 2 * rand_data.n_components
+
+    for covar_type in COVARIANCE_TYPE:
+        bgmm1 = BayesianGaussianMixture(n_components=n_components,
+                                        max_iter=max_iter, random_state=rng,
+                                        tol=tol, reg_covar=0)
+        bgmm1.covariance_type = covar_type
+        bgmm2 = copy.deepcopy(bgmm1)
+        X = rand_data.X[covar_type]
+
+        Y_pred1 = bgmm1.fit(X).predict(X)
+        Y_pred2 = bgmm2.fit_predict(X)
+        assert_array_equal(Y_pred1, Y_pred2)
+
+
+def test_bayesian_mixture_fit_predict_n_init():
+    # Check that fit_predict is equivalent to fit.predict, when n_init > 1
+    X = np.random.RandomState(0).randn(50, 5)
+    gm = BayesianGaussianMixture(n_components=5, n_init=10, random_state=0)
+    y_pred1 = gm.fit_predict(X)
+    y_pred2 = gm.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
+
+
+def test_bayesian_mixture_predict_predict_proba():
+    # this is the same test as test_gaussian_mixture_predict_predict_proba()
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+    for prior_type in PRIOR_TYPE:
+        for covar_type in COVARIANCE_TYPE:
+            X = rand_data.X[covar_type]
+            Y = rand_data.Y
+            bgmm = BayesianGaussianMixture(
+                n_components=rand_data.n_components,
+                random_state=rng,
+                weight_concentration_prior_type=prior_type,
+                covariance_type=covar_type)
+
+            # Check a warning message arrive if we don't do fit
+            assert_raise_message(NotFittedError,
+                                 "This BayesianGaussianMixture instance"
+                                 " is not fitted yet. Call 'fit' with "
+                                 "appropriate arguments before using "
+                                 "this estimator.", bgmm.predict, X)
+
+            bgmm.fit(X)
+            Y_pred = bgmm.predict(X)
+            Y_pred_proba = bgmm.predict_proba(X).argmax(axis=1)
+            assert_array_equal(Y_pred, Y_pred_proba)
+            assert adjusted_rand_score(Y, Y_pred) >= .95

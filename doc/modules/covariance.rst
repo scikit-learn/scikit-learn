@@ -7,14 +7,13 @@ Covariance estimation
 .. currentmodule:: sklearn.covariance
 
 
-Many statistical problems require at some point the estimation of a
+Many statistical problems require the estimation of a
 population's covariance matrix, which can be seen as an estimation of
 data set scatter plot shape. Most of the time, such an estimation has
 to be done on a sample whose properties (size, structure, homogeneity)
-has a large influence on the estimation's quality. The
-`sklearn.covariance` package aims at providing tools affording
-an accurate estimation of a population's covariance matrix under
-various settings.
+have a large influence on the estimation's quality. The
+:mod:`sklearn.covariance` package provides tools for accurately estimating
+a population's covariance matrix under various settings.
 
 We assume that the observations are independent and identically
 distributed (i.i.d.).
@@ -24,22 +23,22 @@ Empirical covariance
 ====================
 
 The covariance matrix of a data set is known to be well approximated
-with the classical *maximum likelihood estimator* (or "empirical
+by the classical *maximum likelihood estimator* (or "empirical
 covariance"), provided the number of observations is large enough
 compared to the number of features (the variables describing the
 observations). More precisely, the Maximum Likelihood Estimator of a
-sample is an unbiased estimator of the corresponding population
+sample is an unbiased estimator of the corresponding population's
 covariance matrix.
 
 The empirical covariance matrix of a sample can be computed using the
 :func:`empirical_covariance` function of the package, or by fitting an
 :class:`EmpiricalCovariance` object to the data sample with the
-:meth:`EmpiricalCovariance.fit` method.  Be careful that depending
-whether the data are centered or not, the result will be different, so
-one may want to use the ``assume_centered`` parameter accurately. More precisely
-if one uses ``assume_centered=False``, then the test set is supposed to have the
-same mean vector as the training set. If not so, both should be centered by the
-user, and ``assume_centered=True`` should be used.
+:meth:`EmpiricalCovariance.fit` method. Be careful that results depend
+on whether the data are centered, so one may want to use the
+``assume_centered`` parameter accurately. More precisely, if
+``assume_centered=False``, then the test set is supposed to have the
+same mean vector as the training set. If not, both should be centered
+by the user, and ``assume_centered=True`` should be used.
 
 .. topic:: Examples:
 
@@ -64,17 +63,17 @@ empirical covariance matrix cannot be inverted for numerical
 reasons. To avoid such an inversion problem, a transformation of the
 empirical covariance matrix has been introduced: the ``shrinkage``.
 
-In the scikit-learn, this transformation (with a user-defined shrinkage
+In scikit-learn, this transformation (with a user-defined shrinkage
 coefficient) can be directly applied to a pre-computed covariance with
 the :func:`shrunk_covariance` method. Also, a shrunk estimator of the
 covariance can be fitted to data with a :class:`ShrunkCovariance` object
-and its :meth:`ShrunkCovariance.fit` method.  Again, depending whether
-the data are centered or not, the result will be different, so one may
-want to use the ``assume_centered`` parameter accurately.
+and its :meth:`ShrunkCovariance.fit` method. Again, results depend on
+whether the data are centered, so one may want to use the
+``assume_centered`` parameter accurately.
 
 
 Mathematically, this shrinkage consists in reducing the ratio between the
-smallest and the largest eigenvalue of the empirical covariance matrix.
+smallest and the largest eigenvalues of the empirical covariance matrix.
 It can be done by simply shifting every eigenvalue according to a given
 offset, which is equivalent of finding the l2-penalized Maximum
 Likelihood Estimator of the covariance matrix. In practice, shrinkage
@@ -95,14 +94,14 @@ bias/variance trade-off, and is discussed below.
 Ledoit-Wolf shrinkage
 ---------------------
 
-In their 2004 paper [1]_, O. Ledoit and M. Wolf propose a formula so as
+In their 2004 paper [1]_, O. Ledoit and M. Wolf propose a formula
 to compute the optimal shrinkage coefficient :math:`\alpha` that
 minimizes the Mean Squared Error between the estimated and the real
 covariance matrix.
 
 The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
-`sklearn.covariance` package, or it can be otherwise obtained by
+:mod:`sklearn.covariance` package, or it can be otherwise obtained by
 fitting a :class:`LedoitWolf` object to the same sample.
 
 .. note:: **Case when population covariance matrix is isotropic**
@@ -147,7 +146,7 @@ Wolf's formula. The resulting estimator is known as the Oracle
 Shrinkage Approximating estimator of the covariance.
 
 The OAS estimator of the covariance matrix can be computed on a sample
-with the :meth:`oas` function of the `sklearn.covariance`
+with the :meth:`oas` function of the :mod:`sklearn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.
 
@@ -190,10 +189,10 @@ The matrix inverse of the covariance matrix, often called the precision
 matrix, is proportional to the partial correlation matrix. It gives the
 partial independence relationship. In other words, if two features are
 independent conditionally on the others, the corresponding coefficient in
-the precision matrix will be zero. This is why it makes sense to estimate
-a sparse precision matrix: by learning independence relations from the
-data, the estimation of the covariance matrix is better conditioned. This
-is known as *covariance selection*.
+the precision matrix will be zero. This is why it makes sense to
+estimate a sparse precision matrix: the estimation of the covariance
+matrix is better conditioned by learning independence relations from
+the data. This is known as *covariance selection*.
 
 In the small-samples situation, in which ``n_samples`` is on the order
 of ``n_features`` or smaller, sparse inverse covariance estimators tend to work
@@ -202,9 +201,9 @@ situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
-The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
+The :class:`GraphicalLasso` estimator uses an l1 penalty to enforce sparsity on
 the precision matrix: the higher its ``alpha`` parameter, the more sparse
-the precision matrix. The corresponding :class:`GraphLassoCV` object uses
+the precision matrix. The corresponding :class:`GraphicalLassoCV` object uses
 cross-validation to automatically set the ``alpha`` parameter.
 
 .. figure:: ../auto_examples/covariance/images/sphx_glr_plot_sparse_cov_001.png
@@ -223,7 +222,7 @@ cross-validation to automatically set the ``alpha`` parameter.
    that:
 
    * Recovery is easier from a correlation matrix than a covariance
-     matrix: standardize your observations before running :class:`GraphLasso`
+     matrix: standardize your observations before running :class:`GraphicalLasso`
 
    * If the underlying graph has nodes with much more connections than
      the average node, the algorithm will miss some of these connections.
@@ -233,7 +232,7 @@ cross-validation to automatically set the ``alpha`` parameter.
 
    * Even if you are in favorable recovery conditions, the alpha
      parameter chosen by cross-validation (e.g. using the
-     :class:`GraphLassoCV` object) will lead to selecting too many edges.
+     :class:`GraphicalLassoCV` object) will lead to selecting too many edges.
      However, the relevant edges will have heavier weights than the
      irrelevant ones.
 
@@ -265,7 +264,7 @@ paper. It is the same algorithm as in the R ``glasso`` package.
 .. topic:: References:
 
    * Friedman et al, `"Sparse inverse covariance estimation with the
-     graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
+     graphical lasso" <https://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
      Biostatistics 9, pp 432, 2008
 
 .. _robust_covariance:
@@ -273,13 +272,13 @@ paper. It is the same algorithm as in the R ``glasso`` package.
 Robust Covariance Estimation
 ============================
 
-Real data set are often subjects to measurement or recording
+Real data sets are often subject to measurement or recording
 errors. Regular but uncommon observations may also appear for a variety
-of reason. Every observation which is very uncommon is called an
-outlier.
+of reasons. Observations which are very uncommon are called
+outliers.
 The empirical covariance estimator and the shrunk covariance
 estimators presented above are very sensitive to the presence of
-outlying observations in the data. Therefore, one should use robust
+outliers in the data. Therefore, one should use robust
 covariance estimators to estimate the covariance of its real data
 sets. Alternatively, robust covariance estimators can be used to
 perform outlier detection and discard/downweight some observations

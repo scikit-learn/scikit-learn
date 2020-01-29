@@ -96,6 +96,33 @@ def test_gridsearch_results_1d():
         plt.close()
 
 
+def test_gridsearch_results_1d_with_train_scores():
+    try:
+        import matplotlib
+    except ImportError:
+        raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
+
+    import matplotlib.pyplot as plt
+
+    X, y = make_blobs(n_samples=20, centers=2, n_features=3,
+                      random_state=0)
+
+    # Define parameters:
+    C_range = np.logspace(-2, 10, 2)
+
+    # Test 1D case:
+    param_grid = dict(C=C_range)
+    grid = GridSearchCV(SVC(), param_grid=param_grid, cv=3,
+                        return_train_score=True)
+    grid.fit(X, y)
+
+    with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
+        plt.figure()
+        plot_gridsearch_results(grid.cv_results_)
+        plt.draw()
+        plt.close()
+
+
 def test_gridsearch_results_2d():
     try:
         import matplotlib

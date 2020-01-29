@@ -42,8 +42,8 @@ for i, kernel in enumerate(kernels):
     image = plt.imshow(Z, interpolation='nearest',
                        extent=(xx.min(), xx.max(), yy.min(), yy.max()),
                        aspect='auto', origin='lower', cmap=plt.cm.PuOr_r)
-    contours = plt.contour(xx, yy, Z, levels=[0], linewidths=2,
-                           linetypes='--')
+    contours = plt.contour(xx, yy, Z, levels=[0.5], linewidths=2,
+                           colors=['k'])
     plt.scatter(X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired,
                 edgecolors=(0, 0, 0))
     plt.xticks(())

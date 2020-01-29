@@ -5,11 +5,10 @@ Testing for the nearest centroid module.
 import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -90,7 +89,7 @@ def test_pickle():
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
+    assert type(obj2) == obj.__class__
     score2 = obj2.score(iris.data, iris.target)
     assert_array_equal(score, score2,
                        "Failed to generate same score"

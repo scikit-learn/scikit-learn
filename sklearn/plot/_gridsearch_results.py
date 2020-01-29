@@ -6,19 +6,21 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
                      fmt, xtickrotation):
     param = params[0]
     param_range = sorted(cv_results['param_%s' % param])
-    train_scores_mean = cv_results['mean_train_score']
-    train_scores_std = cv_results['std_train_score']
     test_scores_mean = cv_results['mean_test_score']
     test_scores_std = cv_results['std_test_score']
 
     lw = 2
     x_vales = range(len(param_range))
-    ax.plot(x_vales, train_scores_mean,
-            label="Training score",
-            color="darkorange", lw=lw)
-    ax.fill_between(x_vales, train_scores_mean - train_scores_std,
-                    train_scores_mean + train_scores_std, alpha=0.2,
-                    color="darkorange", lw=lw)
+
+    if 'mean_train_score' in cv_results and 'std_train_score' in cv_results:
+        train_scores_mean = cv_results['mean_train_score']
+        train_scores_std = cv_results['std_train_score']
+        ax.plot(x_vales, train_scores_mean,
+                label="Training score",
+                color="darkorange", lw=lw)
+        ax.fill_between(x_vales, train_scores_mean - train_scores_std,
+                        train_scores_mean + train_scores_std, alpha=0.2,
+                        color="darkorange", lw=lw)
 
     img = ax.plot(x_vales, test_scores_mean,
                   label="Cross-validation score",
@@ -130,6 +132,7 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
+    print(cv_results)
     if nparams == 1:
         img = _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
                                fmt, xtickrotation)
