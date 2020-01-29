@@ -107,9 +107,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
            0.24.
 
     random_state : int, RandomState instance, default=None
-        Determines the random number generation for selecting the feature
-        and the partition values that are used to generate each tree of
-        the Isolation forest.
+        Controls the pseudo-randomness of the selection of the feature
+        and split values for each branching step and each tree in the forest.
+
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
