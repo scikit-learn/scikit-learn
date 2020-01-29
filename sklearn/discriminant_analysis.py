@@ -212,7 +212,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         or svd solver is used.
 
     means_ : array-like, shape (n_classes, n_features)
-        Class means.
+        Class-wise means.
 
     priors_ : array-like, shape (n_classes,)
         Class priors (sum to 1).
@@ -221,7 +221,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Scaling of the features in the space spanned by the class centroids.
 
     xbar_ : array-like, shape (n_features,)
-        Overall mean.
+        Overall mean. Only present if solver is 'svd'.
 
     classes_ : array-like, shape (n_classes,)
         Unique class labels.
