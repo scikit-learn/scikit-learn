@@ -23,6 +23,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
+from ..utils.array_creation import empty_like
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1585,8 +1586,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         columns.append(bias)
                 XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
             else:
-                XP = np.empty((n_samples, self.n_output_features_),
-                              dtype=X.dtype, order=self.order)
+                XP = empty_like(X, order=self.order,
+                                shape=(n_samples, self.n_output_features_))
 
                 # What follows is a faster implementation of:
                 # for i, comb in enumerate(combinations):
