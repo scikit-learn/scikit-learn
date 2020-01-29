@@ -32,6 +32,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
+from sklearn.utils.fixes import pd_version
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -472,6 +473,23 @@ def test_safe_indexing_container_axis_0_unsupported_type():
     err_msg = "String indexing is not supported with 'axis=0'"
     with pytest.raises(ValueError, match=err_msg):
         _safe_indexing(array, indices, axis=0)
+
+
+def test_safe_indexing_copy_warning():
+    pd = pytest.importorskip('pandas')
+    X = pd.DataFrame(X_toy, columns=["a", "b", "c"])
+
+    def add_new_column(X_, column_name, value):
+        X_[column_name] = value
+
+    assert_no_warnings(add_new_column, X, "d", [11, 12, 13])
+    if pd_version >= (1,):
+        assert_no_warnings(add_new_column,
+                           _safe_indexing(X, 1, axis=0), "e", 10)
+    else:
+        warns_message = "A value is trying to be set on a copy of a slice"
+        with pytest.warns(Warning, match=warns_message):
+            add_new_column(_safe_indexing(X, 1, axis=0), "e", 10)
 
 
 @pytest.mark.parametrize(
