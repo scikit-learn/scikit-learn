@@ -13,7 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 
 @pytest.mark.parametrize('n_bins', [200, 256])
 def test_boston_dataset(n_bins):
-    X, y = datasets.fetch_openml('boston', version=1, return_X_y=True) 
+    X, y = datasets.fetch_openml('boston', version=1, return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=42)
 

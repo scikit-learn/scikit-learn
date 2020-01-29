@@ -33,7 +33,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-X_r, y_r = datasets.fetch_openml('boston', version=1, return_X_y=True) 
+X_r, y_r = datasets.fetch_openml('boston', version=1, return_X_y=True)
 
 
 @pytest.mark.parametrize(
