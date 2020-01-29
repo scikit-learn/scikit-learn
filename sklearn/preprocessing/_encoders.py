@@ -7,6 +7,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.array_creation import zeros_like, ones_like
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
@@ -101,8 +102,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
-        X_int = np.zeros((n_samples, n_features), dtype=np.int)
-        X_mask = np.ones((n_samples, n_features), dtype=np.bool)
+        X_int = zeros_like(X, shape=(n_samples, n_features), dtype=np.int)
+        X_mask = ones_like(X, shape=(n_samples, n_features), dtype=np.bool)
 
         if n_features != len(self.categories_):
             raise ValueError(
