@@ -130,6 +130,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    loss_function_ : callable
+        Loss function used by the algorithm.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
