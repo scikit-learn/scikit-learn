@@ -514,7 +514,7 @@ class BiclusterMixin:
 
         Returns
         -------
-        submatrix : array-like
+        submatrix : ndarray
             The submatrix corresponding to bicluster i.
 
         Notes
