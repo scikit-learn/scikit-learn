@@ -174,7 +174,7 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer  
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
@@ -316,16 +316,16 @@ class IterativeImputer(_BaseImputer):
             # (results in inf sample)
             positive_sigmas = sigmas > 0
             imputed_values[~positive_sigmas] = mus[~positive_sigmas]
-            mus_too_low = mus < self._min_value
-            imputed_values[mus_too_low] = self._min_value
-            mus_too_high = mus > self._max_value
-            imputed_values[mus_too_high] = self._max_value
+            mus_too_low = mus < self._min_value[feat_idx]
+            imputed_values[mus_too_low] = self._min_value[feat_idx]
+            mus_too_high = mus > self._max_value[feat_idx]
+            imputed_values[mus_too_high] = self._max_value[feat_idx]
             # the rest can be sampled without statistical issues
             inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
             mus = mus[inrange_mask]
             sigmas = sigmas[inrange_mask]
-            a = (self._min_value - mus) / sigmas
-            b = (self._max_value - mus) / sigmas
+            a = (self._min_value[feat_idx] - mus) / sigmas
+            b = (self._max_value[feat_idx] - mus) / sigmas
 
             if scipy.__version__ < LooseVersion('0.18'):
                 # bug with vector-valued `a` in old scipy
@@ -343,8 +343,8 @@ class IterativeImputer(_BaseImputer):
         else:
             imputed_values = estimator.predict(X_test)
             imputed_values = np.clip(imputed_values,
-                                     self._min_value,
-                                     self._max_value)
+                                     self._min_value[feat_idx],
+                                     self._max_value[feat_idx])
 
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
@@ -565,8 +565,8 @@ class IterativeImputer(_BaseImputer):
 
         self.imputation_sequence_ = []
 
-        self._min_value = -np.inf if self.min_value is None else self.min_value
-        self._max_value = np.inf if self.max_value is None else self.max_value
+        self._min_value = np.full(X.shape[1], -np.inf) if self.min_value is None else self.min_value
+        self._max_value = np.full(X.shape[1], np.inf) if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
         super()._fit_indicator(X)
