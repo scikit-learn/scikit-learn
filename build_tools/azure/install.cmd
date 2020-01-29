@@ -28,7 +28,7 @@ if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov
 )
 if "%TEST_DOCSTRINGS%" == "true" (
-    pip install sphinx numpy-doc
+    pip install sphinx numpydoc
 )
 python --version
 pip --version
