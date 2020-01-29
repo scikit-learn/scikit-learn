@@ -234,11 +234,11 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self._standard_coef_ = self.coef_
             self._standard_intercept_ = self.intercept_
             self._average_coef_ = np.zeros(self.coef_.shape,
-                                          dtype=np.float64,
-                                          order="C")
-            self._average_intercept_ = np.zeros(self._standard_intercept_.shape,
-                                               dtype=np.float64,
-                                               order="C")
+                                           dtype=np.float64,
+                                           order="C")
+            self._average_intercept_ = np.zeros(
+                self._standard_intercept_.shape,
+                dtype=np.float64, order="C")
 
     def _make_validation_split(self, y):
         """Split the dataset between training set and validation set.
@@ -287,26 +287,30 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
 
-    @deprecated("Attribute 'standard_coef_' was renamed to '_standard_coef_' "
-                "in version 0.22 and will be removed in 0.24.")
+    @deprecated("Attribute 'standard_coef_' was renamed to "
+                "'_standard_coef_' in version 0.22 and will "
+                "be removed in 0.24.")
     @property
     def standard_coef_(self):
         return self._standard_coef_
 
-    @deprecated("Attribute 'standard_intercept_' was renamed to '_standard_intercept_' "
-                "in version 0.22 and will be removed in 0.24.")
+    @deprecated("Attribute 'standard_intercept_' was renamed to "
+                "'_standard_intercept_' in version 0.22 and will "
+                "be removed in 0.24.")
     @property
     def standard_intercept_(self):
         return self._standard_intercept_
 
-    @deprecated("Attribute 'average_coef_' was renamed to '_average_coef_' "
-                "in version 0.22 and will be removed in 0.24.")
+    @deprecated("Attribute 'average_coef_' was renamed to "
+                "'_average_coef_' in version 0.22 and will "
+                "be removed in 0.24.")
     @property
     def average_coef_(self):
         return self._average_coef_
 
-    @deprecated("Attribute 'average_intercept_' was renamed to '_average_intercept_' "
-                "in version 0.22 and will be removed in 0.24.")
+    @deprecated("Attribute 'average_intercept_' was renamed to "
+                "'_average_intercept_' in version 0.22 and will "
+                "be removed in 0.24.")
     @property
     def average_intercept_(self):
         return self._average_intercept_
@@ -1137,8 +1141,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                              "data %d." % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and getattr(self, "_average_coef_", None) is None:
             self._average_coef_ = np.zeros(n_features,
-                                          dtype=np.float64,
-                                          order="C")
+                                           dtype=np.float64,
+                                           order="C")
             self._average_intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
@@ -1323,8 +1327,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                             self.eta0, self.power_t, self.t_,
                             intercept_decay, self.average)
 
-            self._average_intercept_ = np.atleast_1d(self._average_intercept_)
-            self._standard_intercept_ = np.atleast_1d(self._standard_intercept_)
+            self._average_intercept_ = np.atleast_1d(
+                self._average_intercept_)
+            self._standard_intercept_ = np.atleast_1d(
+                self._standard_intercept_)
             self.t_ += self.n_iter_ * X.shape[0]
 
             if self.average <= self.t_ - 1.0:
@@ -1520,15 +1526,17 @@ class SGDRegressor(BaseSGDRegressor):
         Averaged weights assigned to the features.
 
         .. deprecated:: 0.22
-            Attribute ``average_coef_`` was renamed to ``_average_coef_``
-            in version 0.22 and will be removed in 0.24.
+            Attribute ``average_coef_`` was renamed to
+            ``_average_coef_`` in version 0.22 and will
+            be removed in 0.24.
 
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term.
 
         .. deprecated:: 0.22
-            Attribute ``average_intercept_`` was renamed to ``_average_intercept_``
-            in version 0.22 and will be removed in 0.24.
+            Attribute ``average_intercept_`` was renamed to
+            ``_average_intercept_`` in version 0.22 and will
+            be removed in 0.24.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.

@@ -89,7 +89,8 @@ def test_classifier_partial_fit():
     for data in (X, X_csr):
         for average in (False, True):
             clf = PassiveAggressiveClassifier(random_state=0,
-                average=average, max_iter=5)
+                                              average=average,
+                                              max_iter=5)
             for t in range(30):
                 clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
@@ -120,7 +121,7 @@ def test_classifier_correctness(loss):
 
     for data in (X, X_csr):
         clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2,
-            shuffle=False, tol=None)
+                                           shuffle=False, tol=None)
         clf2.fit(data, y_bin)
 
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -231,7 +232,7 @@ def test_regressor_partial_fit():
     for data in (X, X_csr):
         for average in (False, True):
             reg = PassiveAggressiveRegressor(random_state=0,
-                average=average, max_iter=100)
+                                             average=average, max_iter=100)
             for t in range(50):
                 reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
@@ -255,7 +256,7 @@ def test_regressor_correctness(loss):
 
     for data in (X, X_csr):
         reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2,
-            shuffle=False)
+                                          shuffle=False)
         reg2.fit(data, y_bin)
 
         assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
