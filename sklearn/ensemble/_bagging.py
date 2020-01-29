@@ -506,7 +506,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     random_state : int, RandomState instance, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
-        If the base estimator accepts a random_state attribute, a different
+        If the base estimator accepts a `random_state` attribute, a different
         seed is generated for each instance in the ensemble.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
