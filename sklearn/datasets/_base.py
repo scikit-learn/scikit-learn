@@ -8,7 +8,6 @@ Base IO code for all datasets
 # License: BSD 3 clause
 import os
 import csv
-from ..utils import deprecated
 import shutil
 import warnings
 from collections import namedtuple
@@ -19,6 +18,7 @@ import hashlib
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils import deprecated
 
 import numpy as np
 
@@ -696,7 +696,7 @@ def load_linnerud(return_X_y=False):
 
 
 # TODO: remove in v0.26
-@deprecated("\nBoston housing dataset is depricated in v0.23 "
+@deprecated("\nBoston housing dataset is deprecated in v0.23 "
             "and will be removed in version 0.26."
             "\nThis decision was made due to the ethical issues "
             "concerning feature B in this dataset."
