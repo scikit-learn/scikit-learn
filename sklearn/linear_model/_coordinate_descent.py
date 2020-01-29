@@ -659,7 +659,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : ndarray or scipy.sparse matrix of (n_samples, n_features)
+        X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data
 
         y : ndarray of shape (n_samples,) or (n_samples, n_targets)
