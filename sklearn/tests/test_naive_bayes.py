@@ -51,33 +51,33 @@ def test_generalnb_correctness():
     print(clf.score([[2.7, 3.8, 1, 0, 1]], [0]))
 
 
-def test_generalnb_input_distributions_not_enough():
+def test_generalnb_distributions_insufficient():
     clf = GeneralNB()
     assert_raises(ValueError, clf.fit, X, y, [(GaussianNB(), [0])])
 
 
-def test_generalnb_input_distributions_duplicate():
+def test_generalnb_distributions_duplicate():
     clf = GeneralNB()
     assert_raises(ValueError, clf.fit, X, y, [
                   (GaussianNB(), [0, 1]), (GaussianNB(), [1])])
 
 
-def test_generalnb_input_distributions_unknown_distr():
+def test_generalnb_distributions_unknown():
     clf = GeneralNB()
     assert_raises(ValueError, clf.fit, X, y, [(GeneralNB(),[0,1])])
 
 
-def test_generalnb_wrong_type():
+def test_generalnb_distributions_wrong_type():
     clf = GeneralNB()
     assert_raises(TypeError, clf.fit, X, y, [[GaussianNB(), [0, 1]]])
 
 
-def test_generalnb_tuple_too_long():
+def test_generalnb_distributions_tuple_too_long():
     clf = GeneralNB()
     assert_raises(ValueError, clf.fit, X, y, [(GaussianNB(), [0, 1], [3])])
 
 
-def test_generalnb_wrong_format():
+def test_generalnb_distributions_wrong_format():
     clf = GeneralNB()
     assert_raises(ValueError, clf.fit, X, y, [(GaussianNB, [0, 1])])
 
