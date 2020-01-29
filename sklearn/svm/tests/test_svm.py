@@ -543,8 +543,8 @@ def test_negative_weights_svc_leave_just_one_label(Classifier,
 
 @pytest.mark.parametrize(
     "Classifier, model",
-    [(svm.SVC, {'when-left': [0.3998,  0.4], 'when-right': [0.4,  0.3999]}),
-     (svm.NuSVC, {'when-left': [0.3333,  0.3333],
+    [(svm.SVC, {'when-left': [0.3998, 0.4], 'when-right': [0.4, 0.3999]}),
+     (svm.NuSVC, {'when-left': [0.3333, 0.3333],
       'when-right': [0.3333, 0.3333]})],
     ids=['SVC', 'NuSVC']
 )
@@ -682,9 +682,9 @@ def test_unicode_kernel():
     clf.fit(X, Y)
     clf.predict_proba(T)
     _libsvm.cross_validation(iris.data,
-                                iris.target.astype(np.float64), 5,
-                                kernel='linear',
-                                random_seed=0)
+                             iris.target.astype(np.float64), 5,
+                             kernel='linear',
+                             random_seed=0)
 
 
 def test_sparse_precomputed():
@@ -1027,8 +1027,9 @@ def test_svr_coef_sign():
     for svr in [svm.SVR(kernel='linear'), svm.NuSVR(kernel='linear'),
                 svm.LinearSVR()]:
         svr.fit(X, y)
-        assert_array_almost_equal(svr.predict(X),
-                                  np.dot(X, svr.coef_.ravel()) + svr.intercept_)
+        assert_array_almost_equal(
+            svr.predict(X), np.dot(X, svr.coef_.ravel()) + svr.intercept_
+        )
 
 
 def test_linear_svc_intercept_scaling():
@@ -1095,7 +1096,7 @@ def test_ovr_decision_function():
         base_points * [-1, 1],   # Q2
         base_points * [-1, -1],  # Q3
         base_points * [1, -1]    # Q4
-        ))
+    ))
 
     y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
 
