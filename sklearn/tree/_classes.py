@@ -380,8 +380,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                monotonic,
-                                                random_state)
+                                                monotonic)
 
         if is_classifier(self):
             self.tree_ = Tree(self.n_features_,
@@ -1751,4 +1750,3 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             ccp_alpha=ccp_alpha,
             increasing=increasing,
             decreasing=decreasing)
-
