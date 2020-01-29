@@ -703,7 +703,9 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
 
-    feature_names = ['dim_{}'.format(i) for i in range(flat_data.shape[1])]
+    feature_names = ['pixel_{}_{}'.format(row_idx, col_idx)
+                     for row_idx in range(7)
+                     for col_idx in range(7)]
 
     frame = None
     target_columns = ['target', ]
