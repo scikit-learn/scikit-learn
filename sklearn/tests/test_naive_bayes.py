@@ -699,6 +699,16 @@ def test_categoricalnb():
         clf.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
 
+    # Check n_features with int
+    X_features_3 = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y_features_3 = np.array([1, 1, 2, 2])
+    clf = CategoricalNB(alpha=1, fit_prior=False)
+    clf.fit(X_features_3, y_features_3)
+    data_with_unseen_feature = np.array([[0, 2]])
+    nf_3_predictions = clf.predict(data_with_unseen_feature)
+    assert_array_equal(nf_3_predictions, np.array([1]))
+
+
 
 def test_alpha():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
