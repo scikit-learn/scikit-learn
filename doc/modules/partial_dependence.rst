@@ -1,21 +1,25 @@
 
 .. _partial_dependence:
 
-========================
-Partial dependence plots
-========================
+==================
+Partial dependence
+==================
 
 .. currentmodule:: sklearn.inspection
 
-Partial dependence plots (PDP) show the dependence between the target
+Partial dependence plots (PDP) and individual conditional
+expectation (ICE) plots show the dependence between the target
 response [1]_ and a set of 'target' features, marginalizing over the values
-of all other features (the 'complement' features). Intuitively, we can
+of all other features (the 'complement' features). While PDPs show the
+average effect of the 'target' features, ICE plots visualize the dependence
+of the prediction on the 'target' features for each instance separately,
+resulting in one curve per instance. Intuitively, we can
 interpret the partial dependence as the expected target response as a
 function of the 'target' features.
 
 Due to the limits of human perception the size of the target feature set
-must be small (usually, one or two) thus the target features are usually
-chosen among the most important features.
+must be small (usually, one for ICE and one or two for PDP) thus the target
+features are usually chosen among the most important features.
 
 The figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
@@ -41,9 +45,29 @@ an average occupancy greater than two, the house price is nearly independent of
 the house age, whereas for values less than 2 there is a strong dependence
 on age.
 
-The :mod:`sklearn.inspection` module provides a convenience function
-:func:`plot_partial_dependence` to create one-way and two-way partial
-dependence plots. In the below example we show how to create a grid of
+The figure below shows the individual conditional expectation plots for the
+same dataset, with a :class:`MLPRegressor
+<sklearn.neural_network.MLPRegressor>`:
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_individual_conditional_expectation_002.png
+   :target: ../auto_examples/inspection/plot_individual_conditional_expectation.html
+   :align: center
+   :scale: 70
+
+While the PDPs show the average effect of the target features, ICE plots
+effect of the target variable for each instance separately. For example,
+we could observe a linear relationship among median income and the house
+price in PDP. However, the corresponding ICE plot show that there are some
+exceptions, where the house price remain constant with the median income.
+Similar to PDPs, the target features are assumed to be independent from the
+complement features.
+
+The :mod:`sklearn.inspection` module provides a convenience functions,
+:func:`plot_partial_dependence` and
+:func:`plot_individual_conditional_expectation` to create partial
+dependence plots and individual conditional expectation plots respectively.
+
+In the below example we show how to create a grid of
 partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
 and a two-way PDP between the two features::
 
@@ -57,11 +81,18 @@ and a two-way PDP between the two features::
     >>> features = [0, 1, (0, 1)]
     >>> plot_partial_dependence(clf, X, features) #doctest: +SKIP
 
+Individual conditional expectation plots for the features ``0`` and ``1`` can
+be generated with::
+
+    >>> from sklearn.inspection import plot_individual_conditional_expectation
+    >>> features = [0, 1]
+    >>> plot_individual_conditional_expectation(clf, X, features) #doctest: +SKIP
+
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
 
 For multi-class classification, you need to set the class label for which
-the PDPs should be created via the ``target`` argument::
+the PDP/ICEs should be created via the ``target`` argument::
 
     >>> from sklearn.datasets import load_iris
     >>> iris = load_iris()
@@ -69,15 +100,19 @@ the PDPs should be created via the ``target`` argument::
     ...     max_depth=1).fit(iris.data, iris.target)
     >>> features = [3, 2, (3, 2)]
     >>> plot_partial_dependence(mc_clf, X, features, target=0) #doctest: +SKIP
+    >>> features = [3, 2]
+    >>> plot_individual_conditional_expectation(mc_clf, X, features, target=0) #doctest: +SKIP
 
 The same parameter ``target`` is used to specify the target in multi-output
 regression settings.
 
-If you need the raw values of the partial dependence function rather than
-the plots, you can use the
-:func:`sklearn.inspection.partial_dependence` function::
+If you need the raw values of the partial dependence/individual conditional
+expectation function rather than the plots, you can use functions
+:func:`sklearn.inspection.partial_dependence` and
+:func:`individual_conditional_expectation`::
 
     >>> from sklearn.inspection import partial_dependence
+    >>> from sklearn.inspection import individual_conditional_expectation
 
     >>> pdp, axes = partial_dependence(clf, X, [0])
     >>> pdp
@@ -85,10 +120,17 @@ the plots, you can use the
     >>> axes
     [array([-1.624..., -1.592..., ...
 
-The values at which the partial dependence should be evaluated are directly
-generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
-generated. The ``values`` field returned by
-:func:`sklearn.inspection.partial_dependence` gives the actual values
+    >>> ice, axes = individual_conditional_expectation(clf, X, [0])
+    >>> ice
+    array([[[ 0.     ,  0.      , ...
+    >>> axes
+    [array([-1.624..., -1.592..., ...
+
+The values at which the partial dependence/individual conditional
+expectation should be evaluated are directly generated from ``X``.
+For 2-way partial dependence, a 2D-grid of values is generated.
+The ``values`` field returned by :func:`sklearn.inspection.partial_dependence`
+or :func:`individual_conditional_expectation` gives the actual values
 used in the grid for each target feature. They also correspond to the axis
 of the plots.
 
@@ -112,8 +154,11 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 :math:`x_C` for the features in :math:`X_C`. Note that :math:`x_S` and
 :math:`x_C` may be tuples.
 
-Computing this integral for various values of :math:`x_S` produces a plot as
-above.
+Computing this integral for various values of :math:`x_S` produces a partial
+dependence plot as above.
+
+In ICE, for each instance in :math:`\{(x_S^{(i)}, x_C^{(i)})\}_i=1^N` the
+curve f_S^{(i)} is calculated against x_S^{(i)}, while x_C^{(i)} remains fixed.
 
 Computation methods
 ^^^^^^^^^^^^^^^^^^^
@@ -131,7 +176,9 @@ approximates the above integral by computing an average over the data `X`:
 
 where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
 :math:`X_C`. For each value of :math:`x_S`, this method requires a full pass
-over the dataset `X` which is computationally intensive.
+over the dataset `X` which is computationally intensive. Note that only
+'brute' method is available for individual conditional expectation
+calculation.
 
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported by some tree-based estimators. It is computed as follows. For a
