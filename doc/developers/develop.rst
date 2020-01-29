@@ -35,11 +35,11 @@ multiple interfaces):
 
     The base object, implements a ``fit`` method to learn from data, either::
 
-      estimation = estimator.fit(data, targets)
+      estimator = estimator.fit(data, targets)
 
     or::
 
-      estimation = estimator.fit(data)
+      estimator = estimator.fit(data)
 
 :Predictor:
 
