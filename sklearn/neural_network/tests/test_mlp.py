@@ -14,7 +14,8 @@ import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
-from sklearn.datasets import load_digits, load_boston, load_iris
+from sklearn.datasets import load_digits, load_iris
+from sklearn.datasets import fetch_openml
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from io import StringIO
@@ -42,7 +43,7 @@ y_digits_binary = y_digits[:200]
 classification_datasets = [(X_digits_multi, y_digits_multi),
                            (X_digits_binary, y_digits_binary)]
 
-boston = load_boston()
+boston = fetch_openml('boston', version=1)
 
 Xboston = StandardScaler().fit_transform(boston.data)[: 200]
 yboston = boston.target[:200]

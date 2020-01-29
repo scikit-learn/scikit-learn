@@ -4,7 +4,7 @@ from scipy.stats.mstats import mquantiles
 import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_openml
 from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingRegressor
@@ -23,7 +23,7 @@ pytestmark = pytest.mark.filterwarnings(
 
 @pytest.fixture(scope="module")
 def boston():
-    return load_boston()
+    return fetch_openml('boston', version=1)
 
 
 @pytest.fixture(scope="module")

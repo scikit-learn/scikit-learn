@@ -7,7 +7,7 @@ import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_openml
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -554,7 +554,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    X, y = load_boston(return_X_y=True)
+    X, y = fetch_openml('boston', version=1, return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
