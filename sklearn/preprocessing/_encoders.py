@@ -652,7 +652,7 @@ class OneHotEncoder(_BaseEncoder):
     @property
     def _transformed_categories(self):
         """Transformed categories."""
-        return [self._compute_transformed_category(i)
+        return [self._compute_transformed_categories(i)
                 for i in range(len(self.categories_))]
 
     def fit(self, X, y=None):
