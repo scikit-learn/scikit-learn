@@ -69,7 +69,6 @@ They can be loaded using the following functions:
    :toctree: ../modules/generated/
    :template: function.rst
 
-   load_boston
    load_iris
    load_diabetes
    load_digits

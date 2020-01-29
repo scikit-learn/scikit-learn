@@ -251,12 +251,12 @@ the regressor that will be used for prediction, and the transformer that will
 be applied to the target variable::
 
   >>> import numpy as np
-  >>> from sklearn.datasets import load_boston
+  >>> from sklearn import datasets
   >>> from sklearn.compose import TransformedTargetRegressor
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = load_boston(return_X_y=True)
+  >>> X, y = datasets.fetch_openml('boston', return_X_y=True)
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
