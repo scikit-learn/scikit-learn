@@ -64,7 +64,7 @@ def test_generalnb_distributions_duplicate():
 
 def test_generalnb_distributions_unknown():
     clf = GeneralNB()
-    assert_raises(ValueError, clf.fit, X, y, [(GeneralNB(),[0,1])])
+    assert_raises(ValueError, clf.fit, X, y, [(GeneralNB(), [0, 1])])
 
 
 def test_generalnb_distributions_wrong_type():

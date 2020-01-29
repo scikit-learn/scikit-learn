@@ -157,9 +157,9 @@ class GeneralNB(_BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
         distributions : list of tuples
-            A list of (NB, features) tuples, where NB is 'BernoulliNB', 'GaussianNB',
-            'MultinomialNB', 'ComplementNB' or 'CategoricalNB', and features is
-            a list of indices.
+            A list of (NB, features) tuples, where NB is 'BernoulliNB',
+            'GaussianNB', 'MultinomialNB', 'ComplementNB' or 'CategoricalNB',
+            and features is a list of indices.
 
         Returns
         -------
@@ -175,7 +175,7 @@ class GeneralNB(_BaseNB):
         inits = [(nb, features) for (nb, features) in distributions]
 
         self.fits_ = [(nb.fit(X[:, features], y), features)
-                     for (nb, features) in inits]
+                      for (nb, features) in inits]
 
         return self
 
@@ -186,9 +186,10 @@ class GeneralNB(_BaseNB):
 
         # For now assume all class log priors are the same for all the NB's
         # So we'll take the first one.
-        log_priors = [nb.class_log_prior_
-                      if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-                      for (nb, _) in self.fits_]
+        log_priors = [
+            nb.class_log_prior_
+            if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
+            for (nb, _) in self.fits_]
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
@@ -233,7 +234,7 @@ class GeneralNB(_BaseNB):
 
             if len(distribution) != 2:
                 raise ValueError("Expected tuple to have length of 2 " +
-                                "but got {}".format(len(distribution)))
+                                 "but got {}".format(len(distribution)))
 
             nb, features = distribution
 
