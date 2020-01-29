@@ -14,6 +14,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
@@ -504,3 +505,26 @@ def test_nmf_underflow():
     X[0, 0] = 1e-323
     res = nmf._beta_divergence(X, W, H, beta=1.0)
     assert_almost_equal(res, ref)
+
+
+@pytest.mark.parametrize("dtype_in, dtype_out", [
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)])
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+def test_nmf_dtype_match(dtype_in, dtype_out, solver):
+    X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
+    np.abs(X, out=X)
+    Xt = NMF(solver=solver).fit_transform(X)
+    assert Xt.dtype == dtype_out
+
+
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+def test_nmf_float32_float64_consistency(solver):
+    X = np.random.RandomState(0).randn(20, 15)
+    np.abs(X, out=X)
+    nmf32 = NMF(solver=solver, random_state=0).fit(X.astype(np.float32))
+    nmf64 = NMF(solver=solver, random_state=0).fit(X)
+
+    assert_allclose(nmf32.components_, nmf64.components_, rtol=1e-6)
