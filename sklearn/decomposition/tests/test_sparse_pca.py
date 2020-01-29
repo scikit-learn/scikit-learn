@@ -92,7 +92,8 @@ def test_fit_transform_variance():
 
     # force the components in spca_lars to be the same as in pca
     spca_lars.components_ = pca.components_
-    # compute using private method
+    # we want to test spca_lars.explained_variance_ but are not able to do it
+    # directly since it is normally set in fit together with components_
     X = X - X.mean(axis=0)
     explained_variance_sparse = _get_explained_variance(
         X, spca_lars.components_)
@@ -113,6 +114,8 @@ def test_fit_transform_variance_orthogonal_matrix():
     spca_lars.fit(X_orthogonal)
     pca.fit(X_orthogonal)
     # When
+    # we want to test spca_lars.explained_variance_ but are not able to do it
+    # directly since it is normally set in fit together with components_
     explained_variance = pca.explained_variance_
     explained_variance_sparse = _get_explained_variance(
         X_orthogonal, spca_lars.components_)
