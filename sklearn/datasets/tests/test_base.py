@@ -232,7 +232,7 @@ def test_load_breast_cancer():
     check_return_X_y(res, partial(load_breast_cancer))
 
 
-@pytest.mark.filterwarnings('ignore::FutureWarning') 
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_load_boston():
     res = load_boston()
     assert res.data.shape == (506, 13)
