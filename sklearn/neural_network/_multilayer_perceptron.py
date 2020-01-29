@@ -1189,7 +1189,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     random_state : int, RandomState instance, default=None
         Determines random number generation for weights and bias
         initialization, train-test split if early stopping is used, and batch
-        sampling in 'sgd' and 'adam'.
+        sampling when solver='sgd' or 'adam'.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
