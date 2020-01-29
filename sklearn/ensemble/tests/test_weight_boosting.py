@@ -47,7 +47,7 @@ perm = rng.permutation(iris.target.size)
 iris.data, iris.target = shuffle(iris.data, iris.target, random_state=rng)
 
 # Load the boston dataset and randomly permute it
-boston = datasets.load_boston()
+boston = datasets.fetch_openml('boston', version=1) 
 boston.data, boston.target = shuffle(boston.data, boston.target,
                                      random_state=rng)
 
@@ -143,6 +143,7 @@ def test_iris():
                       np.abs(clf_samme.predict_proba(iris.data) - prob_samme))
 
 
+# TODO: remove in v0.26
 @pytest.mark.parametrize('loss', ['linear', 'square', 'exponential'])
 def test_boston(loss):
     # Check consistency on dataset boston house prices.

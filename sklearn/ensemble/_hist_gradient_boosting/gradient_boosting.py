@@ -764,8 +764,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> # To use this experimental feature, we need to explicitly ask for it:
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> from sklearn import datasets
+    >>> X, y = datasets.fetch_openml('boston', version=1, return_X_y=True) 
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
     0.98...

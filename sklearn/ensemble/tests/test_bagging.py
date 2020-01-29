@@ -29,7 +29,8 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
+from sklearn.datasets import load_iris, make_hastie_10_2
+from sklearn.datasets import fetch_openml
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import FunctionTransformer
 
@@ -46,7 +47,7 @@ iris.target = iris.target[perm]
 
 # also load the boston dataset
 # and randomly permute it
-boston = load_boston()
+boston = fetch_openml('boston', version=1) 
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]

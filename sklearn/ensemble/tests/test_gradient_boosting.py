@@ -54,7 +54,7 @@ true_result = [-1, 1, 1]
 rng = np.random.RandomState(0)
 # also load the boston dataset
 # and randomly permute it
-boston = datasets.load_boston()
+boston = datasets.fetch_openml('boston', version=1) 
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
@@ -213,6 +213,7 @@ def test_classification_synthetic(loss):
     check_classification_synthetic(loss)
 
 
+# TODO: remove in v0.26
 def check_boston(loss, subsample):
     # Check consistency on dataset boston house prices with least squares
     # and least absolute deviation.
