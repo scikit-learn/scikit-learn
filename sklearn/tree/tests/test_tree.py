@@ -260,6 +260,7 @@ def test_iris():
             "".format(name, criterion, score))
 
 
+# TODO: remove in v0.26
 def test_boston():
     # Check consistency on dataset boston house prices.
 

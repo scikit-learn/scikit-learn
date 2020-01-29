@@ -40,7 +40,7 @@ iris.target = iris.target[perm]
 
 # also load the boston dataset
 # and randomly permute it
-boston = fetch_openml('boston', version=1) 
+boston = fetch_openml('boston', version=1)
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
