@@ -17,7 +17,7 @@ print(__doc__)
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_boston
+from sklearn import datasets
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -32,7 +32,7 @@ from sklearn.inspection import plot_partial_dependence
 # First, we train a decision tree and a multi-layer perceptron on the boston
 # housing price dataset.
 
-boston = load_boston()
+boston = datasets.fetch_openml('boston', version=1) 
 X = pd.DataFrame(boston.data, columns=boston.feature_names)
 y = boston.target
 
