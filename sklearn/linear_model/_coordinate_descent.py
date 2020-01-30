@@ -365,7 +365,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     dual_gaps : ndarray of shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
 
-    n_iters : array-like of shape (n_alphas,)
+    n_iters : list of int
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
         (Is returned when ``return_n_iter`` is set to True).
