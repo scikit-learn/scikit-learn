@@ -167,7 +167,7 @@ class BayesianGaussianMixture(BaseMixture):
         Controls the random seed given to the method chosen to initialize the
         parameters (see `init_params`).
         In addition, it controls the generation of random samples from the
-        fitted distribution (see the function `sample`).
+        fitted distribution (see the method `sample`).
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
