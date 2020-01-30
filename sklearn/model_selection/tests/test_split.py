@@ -1638,11 +1638,6 @@ def test_group_time_series_ordering_and_group_preserved():
     """ With this test we check that we are only evaluating
         unseen groups in the future
     """
-    import numpy as np
-    import pandas as pd
-    
-    #unique_groups = ['Miguel', 'Oriana', 'Lilia', 'Juanito'] 
-    #sorry Miguel. If I use the names I didn't understand what's happening at all
 
     unique_groups = ['A','B','C','D']
     groups = np.array(unique_groups*4)
