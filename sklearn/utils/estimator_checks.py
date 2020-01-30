@@ -198,8 +198,9 @@ def _yield_transformer_checks(name, transformer):
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
-    # it's not important to preserve types with Clustering
-    if not isinstance(transformer, ClusterMixin):
+    # it's not possible to preserve dtypes in transform with clustering
+    if (not isinstance(transformer, ClusterMixin) and
+            _safe_tags(transformer, "preserves_32bit_dtype")):
         yield check_estimators_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, "stateless"):
@@ -1345,11 +1346,8 @@ def check_estimators_dtypes(name, estimator_orig):
 
 def check_estimators_preserve_dtypes(name, estimator_orig):
 
-    if not _safe_tags(estimator_orig, 'preserves_32bit_dtype'):
-        raise SkipTest("Estimator doesn't preserve 32bit dtype")
-
-    X = np.random.RandomState(0).randn(100, 10)
-    y = np.random.RandomState(0).randn(100)
+    X = np.random.RandomState(0).randn(50, 5)
+    y = np.random.RandomState(0).randn(50)
 
     for dtype_in, dtype_out in [(np.float32, np.float32),
                                 (np.float64, np.float64),
@@ -1369,7 +1367,6 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         assert X_trans.dtype == dtype_out, \
             ('Estimator transform dtype: {} - orginal/expected dtype: {}'
              .format(X_trans.dtype, dtype_out.__name__))
-        # assert_allclose(X, X_trans)
 
 
 @ignore_warnings(category=FutureWarning)

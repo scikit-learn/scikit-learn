@@ -522,7 +522,7 @@ poor_score (default=``False``)
     something more systematic.
 
 preserves_32bit_dtype (default=``False``)
-    whether the transformer preservers ``np.float32`` if given as input.
+    whether an estimator preserves `np.float32` if given as input.
 
 multioutput_only (default=``False``)
     whether estimator supports only multi-output classification or regression.
