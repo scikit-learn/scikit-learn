@@ -90,9 +90,11 @@ for kernel_name, kernel in kernels:
         ax.set_xlim((-6, 6))
         ax.set_ylim((-6, 6))
 
-        ax.set_title("%s %s (%d/200, %d/40, %d/40)"
-                     % (model_name, kernel_name, n_error_train,
-                        n_error_test, n_error_outliers))
+        ax.set_title("%s %s (%d/%d, %d/%d, %d/%d)"
+                     % (model_name, kernel_name,
+                        n_error_train, len(X_train),
+                        n_error_test, len(X_test),
+                        n_error_outliers, len(X_outliers)))
 
         ax.legend([a.collections[0], b1, b2, c],
                   ["learned frontier", "training observations",
