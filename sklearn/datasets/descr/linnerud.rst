@@ -11,10 +11,10 @@ Linnerrud dataset
 
 The Linnerud dataset constains two small dataset:
 
-- *physiological* - CSV containing 20 observations on 3 exercise variables:
+- *physiological* - CSV containing 20 observations on 3 physiological variables:
    Weight, Waist and Pulse.
 
-- *exercise* - CSV containing 20 observations on 3 physiological variables:
+- *exercise* - CSV containing 20 observations on 3 exercise variables:
    Chins, Situps and Jumps.
 
 .. topic:: References
