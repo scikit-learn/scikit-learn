@@ -1513,7 +1513,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     intercept_ : float or array of shape (n_targets, n_features)
         Independent term in the decision function.
 
-    mse_path_ : array of shape (n_l1_ratio, n_alpha, n_folds)
+    mse_path_ : ndarray of shape (n_l1_ratio, n_alpha, n_folds)
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
 
