@@ -20,7 +20,8 @@ to make sure the training is not part of the benchmark.
 
 ::
 
-    py-spy record --native --function --rate=10 -o profile.svg -- python bench_random_forest_parallel_predict.py -e 100 -n 1 -f 10 -r 1000
+    py-spy record --native --function --rate=10 -o profile.svg --
+    python bench_random_forest_parallel_predict.py -e 100 -n 1 -f 10 -r 1000
 """
 import argparse
 import time
@@ -59,7 +60,7 @@ def build_model(e, n, f, o):
 
     print("saving to '%s'" % filename)
     with open(filename, "wb") as f:
-        pickle.dump(data, f)    
+        pickle.dump(data, f)
     raise RuntimeError("Data and data are cached. Run the script "
                        "again to measure the performance.")
 
@@ -133,9 +134,9 @@ def benchmark(model, model_onnx, X, repeat):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-e', type=int, default=100)
-    parser.add_argument('-n', type=int, default=1)
+    parser.add_argument('-n', type=int, default=100000)
     parser.add_argument('-f', type=int, default=10)
-    parser.add_argument('-r', type=int, default=1000)
+    parser.add_argument('-r', type=int, default=10)
     parser.add_argument('-a', type=int, default=1)
     parser.add_argument('-o', type=int, default=1)
     args = parser.parse_args()

@@ -783,9 +783,11 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         if parallel_predict:
             if not check_input:
                 raise NotImplementedError(
-                    "check_input=False not implemented when parallel_predict=True.")
+                    "check_input=False not implemented "
+                    "when parallel_predict=True.")
             # Assign chunk of trees to jobs
-            n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+            n_jobs, _, _ = _partition_estimators(
+                self.n_estimators, self.n_jobs)
 
             # Parallel loop
             lock = threading.Lock()
