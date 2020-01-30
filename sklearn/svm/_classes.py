@@ -89,7 +89,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
+        Controls the pseudo random number generator to use when shuffling
         the data for the dual coordinate descent (if ``dual=True``). When
         ``dual=False`` the underlying implementation of :class:`LinearSVC`
         is not random and ``random_state`` has no effect on the results.
@@ -298,8 +298,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.
+        Controls the pseudo random number generator to use when shuffling the
+        data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -519,7 +519,7 @@ class SVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
+        Controls the pseudo random number generator used when shuffling
         the data for probability estimates.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -724,7 +724,7 @@ class NuSVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
+        Controls the pseudo random number generator used when shuffling
         the data for probability estimates.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
