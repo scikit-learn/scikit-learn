@@ -165,7 +165,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    precompute : True | False | 'auto' | array-like, default='auto'
+    precompute : "auto", bool or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
