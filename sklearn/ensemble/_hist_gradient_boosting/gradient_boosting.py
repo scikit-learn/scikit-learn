@@ -737,7 +737,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
-        is enabled. See :term:`random_state`.
+        is enabled.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -919,7 +921,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
-        is enabled. See :term:`random_state`.
+        is enabled.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
