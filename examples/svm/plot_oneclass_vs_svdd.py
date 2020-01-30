@@ -79,7 +79,7 @@ for kernel_name, kernel in kernels:
         ax.contourf(xx, yy, Z, levels=[0, Z.max()], colors='palevioletred',
                     zorder=-98)
         a = ax.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred',
-                       zorder=-97, label="learned frontier")
+                       zorder=-97)
 
         s = 40
         b1 = ax.scatter(X_train[:, 0], X_train[:, 1], s=s,
