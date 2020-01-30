@@ -875,7 +875,7 @@ class Lasso(ElasticNet):
 
     Attributes
     ----------
-    coef_ : array of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
