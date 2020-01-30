@@ -2207,7 +2207,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     alpha_ : float
         The amount of penalization chosen by cross validation
 
-    mse_path_ : array of shape (n_alphas, n_folds)
+    mse_path_ : ndarray of shape (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
     alphas_ : numpy array of shape (n_alphas,)
