@@ -51,6 +51,12 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
+  avoids high memory footprint by calculating the distances matrix using 
+  a chunked scheme.
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :user:`Alex Shacked <alexshacked>`.
+
 :mod:`sklearn.datasets`
 .......................
 
