@@ -98,10 +98,10 @@ def _pprint(params, offset=0, printer=repr):
     params : dict
         The dictionary to pretty print
 
-    offset : int
+    offset : int, default=0
         The offset in characters to add at the begin of each line.
 
-    printer : callable
+    printer : callable, default=repr
         The function to convert entries to strings, typically
         the builtin str or repr
 
