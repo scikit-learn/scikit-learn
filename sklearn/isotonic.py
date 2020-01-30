@@ -190,11 +190,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     X_max_ : float
         Maximum value of input array `X_` for right bound.
 
-    interpolation_X_ : array-like of shape (n_interpolation_points,)
-        Interpolation point of `X`.
+    X_thresholds_ : array-like of shape (n_thresholds,)
+        De-duplicated ascending `X` values suitable to interpolate the y = f(X) monotonic function.
 
-    interpolation_y_ : array-like of shape (n_interpolation_points,)
-        Interpolation point of `y`.
+    y_thresholds_ : array-like of shape (n_thresholds,)
+        De-duplicated ascending `y` values suitable to interpolate the y = f(X) monotonic function.
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
@@ -345,7 +345,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # on the model to make it possible to support model persistence via
         # the pickle module as the object built by scipy.interp1d is not
         # picklable directly.
-        self.interpolation_X_, self.interpolation_y_ = X, y
+        self.X_thresholds_, self.y_thresholds_ = X, y
 
         # Build the interpolation function
         self._build_f(X, y)
@@ -365,8 +365,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             The transformed data
         """
 
-        if hasattr(self, 'interpolation_X_'):
-            dtype = self.interpolation_X_.dtype
+        if hasattr(self, 'X_thresholds_'):
+            dtype = self.X_thresholds_.dtype
         else:
             dtype = np.float64
 
