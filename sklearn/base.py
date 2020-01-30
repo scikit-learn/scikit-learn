@@ -436,10 +436,10 @@ class ClusterMixin:
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
-        y : Ignored, default=None
+        y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
@@ -575,7 +575,7 @@ class DensityMixin:
         ----------
         X : array-like of shape (n_samples, n_features)
 
-        y : Ignored, default=None
+        y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
@@ -599,7 +599,7 @@ class OutlierMixin:
         X : ndarray of shape (n_samples, n_features)
             Input data.
 
-        y : Ignored, default=None
+        y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
