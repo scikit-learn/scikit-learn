@@ -616,3 +616,13 @@ def test_infer_dim_mle():
                                         random_state=42)
     pca = PCA(n_components='mle').fit(X)
     assert pca.n_components_ == 0
+
+
+def test_fit_mle_too_few_samples():
+    # Tests that an error is raised when the number of samples is smaller than the number of features during an mle fit
+    X, _ = datasets.make_classification(n_samples=20, n_features=21,
+                                        random_state=42)
+
+    pca = PCA(n_components='mle', svd_solver='full')
+    with pytest.raises(ValueError):
+        pca.fit(X)
