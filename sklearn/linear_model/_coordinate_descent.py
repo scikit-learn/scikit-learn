@@ -179,7 +179,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    coef_init : array of shape (n_features, ), default=None
+    coef_init : ndarray of shape (n_features, ), default=None
         The initial values of the coefficients.
 
     verbose : bool or int, default=False
