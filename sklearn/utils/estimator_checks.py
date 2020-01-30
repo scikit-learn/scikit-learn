@@ -26,7 +26,6 @@ from ._testing import assert_allclose_dense_sparse
 from ._testing import assert_warns_message
 from ._testing import set_random_state
 from ._testing import SkipTest
-from ._testing import KnownFailureTest
 from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
@@ -71,6 +70,32 @@ def _safe_tags(estimator, key=None):
     if key is not None:
         return _DEFAULT_TAGS[key]
     return _DEFAULT_TAGS
+
+
+def _raise_xfail(reason, request=None):
+    """Mark a check as a known failure
+
+    This function is mostly useful to be able to skip the test
+    if pytest is not installed.
+
+    Parameters
+    ----------
+    reason : str
+        reason for the known failure
+    request: default=None
+        result of the pytest request fixture.
+    """
+    try:
+        import pytest
+        if request is None:
+            # raise XFAIL and halt execution
+            pytest.xfail(reason)
+        else:
+            # mark test as XFAIL and continue excecution to see if it will
+            # actually fail.
+            request.applymarker(pytest.mark.xfail(run=False, reason=reason))
+    except ImportError:
+        raise SkipTest('XFAIL ' + str(reason))
 
 
 def _yield_checks(name, estimator):
@@ -1035,7 +1060,7 @@ def check_methods_subset_invariance(name, estimator_orig):
                               ('MiniBatchSparsePCA', 'transform'),
                               ('DummyClassifier', 'predict'),
                               ('BernoulliRBM', 'score_samples')]:
-            raise KnownFailureTest(msg)
+            _raise_xfail(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2235,16 +2260,15 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_class_weight_classifiers(name, classifier_orig):
+def check_class_weight_classifiers(name, classifier_orig, request=None):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
-        raise KnownFailureTest(
-            "Not testing NuSVC class weight as it is ignored."
-        )
+        _raise_xfail("Not testing NuSVC class weight as it is ignored.",
+                     request)
     if name.endswith("NB"):
         # FIXME SOON!
-        reason = "NaiveByes classifiers have a somewhat different interface."
-        raise KnownFailureTest(reason)
+        _raise_xfail("NaiveByes classifiers have a somewhat different "
+                     "interface.", request)
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]

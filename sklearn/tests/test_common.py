@@ -13,6 +13,7 @@ import re
 import pkgutil
 from inspect import isgenerator
 from functools import partial
+from inspect import signature
 
 import pytest
 
@@ -23,13 +24,13 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin, BiclusterMixin
+from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest, KnownFailureTest
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -87,28 +88,18 @@ def _tested_estimators():
 
 
 @parametrize_with_checks(_tested_estimators())
-def test_estimators(estimator, check):
+def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-
-        try:
-            check(estimator)
-        except KnownFailureTest as e:
-            pytest.xfail(*e.args)
-            msg = (
-                "detected running pytest with --runxfail. To fix this known "
-                "failure please comment 'raise KnownFailureTest' in "
-                "utils/estimator_checks.py (exact location in the traceback "
-                "above). Then re-run pytest with the --ff -x options (runs "
-                "failures first and stops on first failure)."
-            )
-            # raise this exception from the original excpeption context
-            raise ValueError(msg) from e
-        except Exception as e:
-            raise e
+        check_valid_args = [p.name
+                            for p in signature(check).parameters.values()]
+        args = {}
+        if "request" in check_valid_args:
+            args['request'] = request
+        check(estimator, **args)
 
 
 def test_check_estimator_generate_only():

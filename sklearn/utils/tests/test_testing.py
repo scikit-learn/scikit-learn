@@ -692,22 +692,3 @@ def test_convert_container(constructor_name, container_type):
     container = [0, 1]
     assert isinstance(_convert_container(container, constructor_name),
                       container_type)
-
-
-def test_known_failure_exception():
-    # Check that it is an exception
-    with pytest.raises(KnownFailureTest):
-        raise KnownFailureTest
-
-    # Manually check for raised exception to avoid any
-    # pytest side effects. 
-    # KnownFailureTest is a subclass of SkipTest,
-    # and so catching the former with the latter should work.
-    assert issubclass(KnownFailureTest, SkipTest)
-
-    raised = False
-    try:
-        raise KnownFailureTest
-    except SkipTest:
-        raised = True
-    assert raised
