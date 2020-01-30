@@ -1403,7 +1403,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     Parameters
     ----------
-    l1_ratio : float or array of floats, default=0.5
+    l1_ratio : float or list of float, default=0.5
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
