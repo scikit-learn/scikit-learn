@@ -237,7 +237,7 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        conda-forge::compilers conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --editable .
@@ -252,7 +252,9 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list compilers llvm-openmp
+    conda list 
+
+which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
 variables::
@@ -339,7 +341,7 @@ architecture (e.g. ARM), you can install the system versions::
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
+    sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
 Linux compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -156,7 +156,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
-        check_consistent_length(X, y, sample_weight)
+        check_consistent_length(X, y)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -245,7 +245,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 classes_ = [np.array([c]) for c in constant]
 
             y = _random_choice_csc(n_samples, classes_, class_prob,
-                                  self.random_state)
+                                   self.random_state)
         else:
             if self._strategy in ("most_frequent", "prior"):
                 y = np.tile([classes_[k][class_prior_[k].argmax()] for

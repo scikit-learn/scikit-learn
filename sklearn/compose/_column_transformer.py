@@ -130,7 +130,7 @@ boolean mask array or callable
         objects.
 
     sparse_output_ : boolean
-        Boolean flag indicating wether the output of ``transform`` is a
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 

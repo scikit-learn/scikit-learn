@@ -161,14 +161,12 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
                                     labels, lower_bounds, upper_bounds,
                                     n_samples, n_features, n_clusters)
     cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
-    cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
     cdef np.ndarray[floating, ndim=2, mode='c'] new_centers
 
     if max_iter <= 0:
         raise ValueError('Number of iterations should be a positive number'
         ', got %d instead' % max_iter)
 
-    col_indices = np.arange(center_half_distances.shape[0], dtype=np.int)
     for iteration in range(max_iter):
         if verbose:
             print("start iteration")

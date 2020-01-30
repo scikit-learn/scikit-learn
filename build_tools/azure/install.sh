@@ -44,7 +44,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4 \
                         conda-forge::llvm-openmp"
         fi
     fi
@@ -92,6 +92,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
+    # do not install dependencies for lightgbm since it requires scikit-learn
+    python -m pip install lightgbm --no-deps
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
