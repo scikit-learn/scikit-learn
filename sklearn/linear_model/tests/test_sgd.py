@@ -279,7 +279,7 @@ def test_sgd_deprecated_attr(klass):
                 'standard_coef_', 'standard_intercept_']:
         with pytest.warns(FutureWarning, match=msg):
             getattr(clf, att)
-            
+
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
