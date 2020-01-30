@@ -1281,14 +1281,12 @@ def test_custom_kernel_not_array_input(Estimator):
     assert svc1.score(data, y) == svc3.score(K, y)
     assert svc1.score(data, y) == svc2.score(X, y)
     if hasattr(svc1, 'decision_function'):  # classifier
-        assert_array_almost_equal(svc1.decision_function(data),
-                                  svc2.decision_function(X))
-        assert_array_almost_equal(svc1.decision_function(data),
-                                  svc3.decision_function(K))
+        assert_allclose(svc1.decision_function(data),
+                        svc2.decision_function(X))
+        assert_allclose(svc1.decision_function(data),
+                        svc3.decision_function(K))
         assert_array_equal(svc1.predict(data), svc2.predict(X))
         assert_array_equal(svc1.predict(data), svc3.predict(K))
     else:  # regressor
-        assert_array_almost_equal(svc1.predict(data),
-                                  svc2.predict(X))
-        assert_array_almost_equal(svc1.predict(data),
-                                  svc3.predict(K))
+        assert_allclose(svc1.predict(data), svc2.predict(X))
+        assert_allclose(svc1.predict(data), svc3.predict(K))
