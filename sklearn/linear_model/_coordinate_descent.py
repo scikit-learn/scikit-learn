@@ -2023,7 +2023,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Attributes
     ----------
-    intercept_ : array of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_tasks,)
         Independent term in decision function.
 
     coef_ : array of shape (n_tasks, n_features)
