@@ -419,9 +419,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         We need to rebuild the interpolation function.
         """
         super().__setstate__(state)
-        if hasattr(self, 'interpolation_X_') and hasattr(
-                self, 'interpolation_y_'):
-            self._build_f(self.interpolation_X_, self.interpolation_y_)
+        # for backward compatibility
+        if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
+            self._build_f(self._necessary_X_, self._necessary_y_)
+        if hasattr(self, 'X_thresholds_') and hasattr(self, 'y_thresholds_'):
+            self._build_f(self.X_thresholds_, self.y_thresholds_)
 
     def _more_tags(self):
         return {'X_types': ['1darray']}
