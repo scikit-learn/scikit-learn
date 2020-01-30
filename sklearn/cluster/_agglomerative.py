@@ -456,8 +456,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             # by sklearn.metrics.pairwise_distances.
             if len(X.shape) != 2 or X.shape[0] != X.shape[1]:
                 raise ValueError(
-                    'Matrix should be square, '
-                    'as returned by pairwise_distances. '
+                    'Input distance matrix should be square, '
                     'Found dimensionality %s' % str(X.shape)
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
