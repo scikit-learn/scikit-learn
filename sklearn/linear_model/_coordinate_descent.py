@@ -603,7 +603,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             (n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
 
     n_iter_ : array-like of shape (n_targets,)
