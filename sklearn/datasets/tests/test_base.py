@@ -152,7 +152,9 @@ def test_load_digits():
     check_return_X_y(digits, partial(load_digits))
     # test as_frame option
     check_pandas_dependency_message(load_digits)
-    check_as_frame(digits, partial(load_digits))
+    check_as_frame(digits, partial(load_digits),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_digits_n_class_lt_10():
@@ -189,7 +191,9 @@ def test_load_diabetes():
     check_return_X_y(res, partial(load_diabetes))
     # test as_frame option
     check_pandas_dependency_message(load_diabetes)
-    check_as_frame(res, partial(load_diabetes))
+    check_as_frame(res, partial(load_diabetes),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_linnerud():
@@ -205,7 +209,9 @@ def test_load_linnerud():
     check_return_X_y(res, partial(load_linnerud))
     # test as_frame option
     check_pandas_dependency_message(load_linnerud)
-    check_as_frame(res, partial(load_linnerud))
+    check_as_frame(res, partial(load_linnerud),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_iris():
@@ -220,7 +226,9 @@ def test_load_iris():
     check_return_X_y(res, partial(load_iris))
     # test as_frame option
     check_pandas_dependency_message(load_iris)
-    check_as_frame(res, partial(load_iris))
+    check_as_frame(res, partial(load_iris),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_wine():
@@ -234,7 +242,9 @@ def test_load_wine():
     check_return_X_y(res, partial(load_wine))
     # test as_frame option
     check_pandas_dependency_message(load_wine)
-    check_as_frame(res, partial(load_wine))
+    check_as_frame(res, partial(load_wine),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_breast_cancer():
@@ -249,7 +259,9 @@ def test_load_breast_cancer():
     check_return_X_y(res, partial(load_breast_cancer))
     # test as_frame option
     check_pandas_dependency_message(load_breast_cancer)
-    check_as_frame(res, partial(load_breast_cancer))
+    check_as_frame(res, partial(load_breast_cancer),
+                   expected_data_dtype=np.float64,
+                   expected_target_dtype=np.float64)
 
 
 def test_load_boston():
