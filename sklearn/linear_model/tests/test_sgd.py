@@ -268,6 +268,19 @@ def test_plain_has_no_average_attr(klass):
     assert not hasattr(clf, '_standard_coef')
 
 
+# TODO: remove in 0.25
+@pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
+def test_sgd_deprecated_attr(klass):
+    clf = klass(average=True, eta0=.01)
+    clf.fit(X, Y)
+
+    msg = "removed in 0.25"
+    for att in ['average_coef_', 'average_intercept_',
+                'standard_coef_', 'standard_intercept_']:
+        with pytest.warns(FutureWarning, match=msg):
+            getattr(clf, att)
+            
+
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
 def test_late_onset_averaging_not_reached(klass):
