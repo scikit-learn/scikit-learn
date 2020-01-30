@@ -580,7 +580,7 @@ def test_infer_dim_bad_spec():
 
 
 def test_assess_dimension_error_rank_greater_than_features():
-    # Test that
+    # Test error when tested rank is greater than the number of features
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
     n_samples = 10
     n_features = 4
