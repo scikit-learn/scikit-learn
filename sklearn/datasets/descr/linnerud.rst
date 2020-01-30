@@ -9,7 +9,8 @@ Linnerrud dataset
     :Number of Attributes: 3
     :Missing Attribute Values: None
 
-The Linnerud dataset constains two small dataset:
+The Linnerud dataset consists of three excercise (data) and three physiological
+(target) variables collected from twenty middle-aged men in a fitness club:
 
 - *physiological* - CSV containing 20 observations on 3 exercise variables:
    Weight, Waist and Pulse.
