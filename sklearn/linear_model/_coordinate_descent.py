@@ -786,7 +786,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Returns
         -------
-        T : array of shape (n_samples,)
+        T : ndarray of shape (n_samples,)
             The predicted decision function
         """
         check_is_fitted(self)
