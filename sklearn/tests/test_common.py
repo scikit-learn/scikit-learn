@@ -98,6 +98,8 @@ def test_estimators(estimator, check, request):
                             for p in signature(check).parameters.values()]
         args = {}
         if "request" in check_valid_args:
+            # pass the pytest request fixture, so that we can mark the
+            # check as XFAIL when necessary.
             args['request'] = request
         check(estimator, **args)
 
