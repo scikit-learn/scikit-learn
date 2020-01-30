@@ -552,7 +552,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | array-like, default=False
+    precompute : bool or array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``True`` to preserve sparsity.
