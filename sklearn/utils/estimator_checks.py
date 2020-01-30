@@ -76,7 +76,8 @@ def _raise_xfail(reason, request=None):
     """Mark a check as a known failure
 
     This function is mostly useful to be able to skip the test
-    if pytest is not installed.
+    if pytest is not installed. Outside of a scikit-learn pytest
+    session the SkipTest exception will allways be raised.
 
     Parameters
     ----------
@@ -85,6 +86,9 @@ def _raise_xfail(reason, request=None):
     request: default=None
         result of the pytest request fixture.
     """
+    if not getattr(sys, "_is_pytest_session", False):
+        # outside of a scikit-learn pytest session always raise SkipTest
+        raise SkipTest('XFAIL ' + str(reason))
     try:
         import pytest
         if request is None:
