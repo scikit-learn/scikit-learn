@@ -237,16 +237,22 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
-    cdef inline bint split_passes_monotonic_check(self, INT32_t monotonic_constraint) nogil:
+    cdef inline bint split_passes_monotonic_check(self, INT32_t monotonic_cst,
+                                                  double lower_bound,
+                                                  double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current split"""
 
-        if monotonic_constraint == 0: # No constraint
+        if monotonic_cst == 0: # No constraint
             return 1
         else:
-            delta =  (self.criterion.sum_left[0] * self.criterion.weighted_n_right \
-                    - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
-                    * monotonic_constraint
-            return delta <= 0
+            b_middle = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
+                        - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
+                       * monotonic_cst
+            #b_left = (self.criterion.sum_left[0] - lower_bound * self.criterion.weighted_n_left) \
+            #         * monotonic_cst >= 0
+            #b_right = (self.criterion.sum_right[0] - upper_bound * self.criterion.weighted_n_right) \
+            #          * monotonic_cst <= 0
+            return b_middle <= 0 # & b_left & b_right
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
@@ -437,7 +443,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            if not self.split_passes_monotonic_check(monotonic_constraint):
+                            if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -761,7 +767,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    if not self.split_passes_monotonic_check(monotonic_constraint):
+                    if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -1313,7 +1319,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            if not self.split_passes_monotonic_check(monotonic_constraint):
+                            if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -1549,7 +1555,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    if not self.split_passes_monotonic_check(monotonic_constraint):
+                    if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
