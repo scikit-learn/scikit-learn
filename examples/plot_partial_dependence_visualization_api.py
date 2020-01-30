@@ -17,7 +17,7 @@ print(__doc__)
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -26,15 +26,15 @@ from sklearn.inspection import plot_partial_dependence
 
 
 ##############################################################################
-# Train models on the boston housing price dataset
+# Train models on the diabetes dataset
 # ================================================
 #
-# First, we train a decision tree and a multi-layer perceptron on the boston
-# housing price dataset.
+# First, we train a decision tree and a multi-layer perceptron on the diabetes
+# dataset.
 
-boston = load_boston()
-X = pd.DataFrame(boston.data, columns=boston.feature_names)
-y = boston.target
+diabetes = load_diabetes()
+X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
+y = diabetes.target
 
 tree = DecisionTreeRegressor()
 mlp = make_pipeline(StandardScaler(),
@@ -44,6 +44,7 @@ tree.fit(X, y)
 mlp.fit(X, y)
 
 
+import pdb; pdb.set_trace()
 ##############################################################################
 # Plotting partial dependence for two features
 # ============================================
