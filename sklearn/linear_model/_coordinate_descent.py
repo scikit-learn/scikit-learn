@@ -885,7 +885,7 @@ class Lasso(ElasticNet):
     intercept_ : float or array of shape (n_targets,)
         independent term in decision function.
 
-    n_iter_ : int or array-like of shape (n_targets,)
+    n_iter_ : int or list of int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
