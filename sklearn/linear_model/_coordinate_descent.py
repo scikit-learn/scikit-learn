@@ -43,7 +43,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     y : ndarray of shape (n_samples,)
         Target values
 
-    Xy : array-like, default=None
+    Xy : array-like of shape (n_features,), default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float, default=1.0
@@ -165,12 +165,12 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    precompute : "auto", bool or array-like, default='auto'
+    precompute : 'auto', bool or array-like of shape (n_features, n_features), default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like, default=None
+    Xy : array-like of shape (n_features,) or (n_features, n_outputs), default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -317,12 +317,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
-    precompute : "auto", bool or array-like, default='auto'
+    precompute : 'auto', bool or array-like of shape (n_features, n_features), default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    Xy : array-like, default=None
+    Xy : array-like of shape (n_features,) or (n_features, n_outputs), default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
@@ -552,7 +552,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : bool or array-like, default=False
+    precompute : bool or array-like of shape (n_features, n_features), default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``True`` to preserve sparsity.
@@ -829,7 +829,7 @@ class Lasso(ElasticNet):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | array-like, default=False
+    precompute : 'auto', bool or array-like of shape (n_features, n_features), default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
@@ -1260,7 +1260,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : 'auto', bool or array-like, default='auto'
+    precompute : 'auto', bool or array-like of shape (n_features, n_features), default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
@@ -1432,7 +1432,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : 'auto', bool or array-like, default='auto'
+    precompute : 'auto', bool or array-like of shape (n_features, n_features), default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
