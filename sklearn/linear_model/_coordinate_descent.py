@@ -1432,7 +1432,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like, default='auto'
+    precompute : 'auto', bool or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
