@@ -1208,8 +1208,9 @@ class CategoricalNB(_BaseDiscreteNB):
                     weights = None
                 else:
                     weights = Y[mask, j]
+                minlength = n_categories if n_categories > 0 else None
                 counts = np.bincount(X_feature[mask], weights=weights,
-                                     minlength=n_categories)
+                                     minlength=minlength)
                 indices = np.nonzero(counts)[0]
                 cat_count[j, indices] += counts[indices]
 
