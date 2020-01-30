@@ -2501,7 +2501,6 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     if pos_label is None:
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
     loss = 0.
     count = 0.
