@@ -704,8 +704,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
         images = images[idx]
 
     feature_names = ['pixel_{}_{}'.format(row_idx, col_idx)
-                     for row_idx in range(7)
-                     for col_idx in range(7)]
+                     for row_idx in range(8)
+                     for col_idx in range(8)]
 
     frame = None
     target_columns = ['target', ]
