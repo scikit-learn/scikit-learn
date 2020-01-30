@@ -108,6 +108,7 @@ anomaly_algorithms = [
             ),
         ),
     ),
+    ("SVDD", svm.SVDD(nu=outliers_fraction, kernel="rbf", gamma=0.1)),
     (
         "Isolation Forest",
         IsolationForest(contamination=outliers_fraction, random_state=42),
