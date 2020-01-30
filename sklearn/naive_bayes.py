@@ -1032,7 +1032,7 @@ class CategoricalNB(_BaseDiscreteNB):
         adjusted according to the data.
 
     min_categories : int or array-like or None, (default=None)
-        Minimum number of categories (unique values) per feature:
+        Minimum number of categories per feature:
         - int : Sets the minimum number of categories per feature to
           `n_categories` for each features.
         - array-like : `n_categories[i]` holds the minimum number of categories
