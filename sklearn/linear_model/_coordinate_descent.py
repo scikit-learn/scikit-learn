@@ -151,7 +151,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         unnecessary memory duplication. If ``y`` is mono-output then ``X``
         can be sparse.
 
-    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of shape (n_samples,) or \
+        (n_samples, n_outputs)
         Target values
 
     eps : float, default=1e-3
@@ -301,7 +302,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         unnecessary memory duplication. If ``y`` is mono-output then ``X``
         can be sparse.
 
-    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of shape (n_samples,) or \
+        (n_samples, n_outputs)
         Target values.
 
     l1_ratio : float, default=0.5
@@ -667,7 +669,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X : {ndarray, sparse matrix} of (n_samples, n_features)
             Data
 
-        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+        y : {ndarray, sparse matrix} of shape (n_samples,) or \
+            (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
 
         check_input : bool, default=True
@@ -882,7 +885,7 @@ class Lasso(ElasticNet):
             (n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
 
     n_iter_ : int or list of int
@@ -1061,7 +1064,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Pass directly as Fortran-contiguous data
             to avoid unnecessary memory duplication. If y is mono-output,
             X can be sparse.
@@ -1333,7 +1336,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    intercept_ : float or array of shape (n_targets,)
+    intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
 
     mse_path_ : ndarray of shape (n_alphas, n_folds)
@@ -1510,7 +1513,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the cost function formula),
 
-    intercept_ : float or array of shape (n_targets, n_features)
+    intercept_ : float or ndarray of shape (n_targets, n_features)
         Independent term in the decision function.
 
     mse_path_ : ndarray of shape (n_l1_ratio, n_alpha, n_folds)
