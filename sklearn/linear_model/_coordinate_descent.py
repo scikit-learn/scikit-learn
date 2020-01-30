@@ -1336,7 +1336,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     intercept_ : float or array of shape (n_targets,)
         independent term in decision function.
 
-    mse_path_ : array of shape (n_alphas, n_folds)
+    mse_path_ : ndarray of shape (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
     alphas_ : ndarray of shape (n_alphas,)
