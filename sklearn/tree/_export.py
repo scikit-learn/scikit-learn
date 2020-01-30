@@ -26,6 +26,7 @@ from . import DecisionTreeClassifier
 
 import warnings
 
+
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
 
@@ -173,6 +174,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     [Text(251.5,345.217,'X[3] <= 0.8...
 
     """
+
+    check_is_fitted(decision_tree)
 
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
@@ -571,6 +574,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree, ax=None):
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
+
         if ax is None:
             ax = plt.gca()
         ax.clear()

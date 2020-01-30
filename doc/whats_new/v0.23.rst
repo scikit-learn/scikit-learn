@@ -51,6 +51,12 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
+  avoids high memory footprint by calculating the distances matrix using 
+  a chunked scheme.
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :user:`Alex Shacked <alexshacked>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -94,6 +100,13 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
   `max_leaf_nodes` parameter if the criteria was reached at the same time as
   the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
+
+- |Fix|  Changed the convention for `max_depth` parameter of
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
+  the number of edges to go from the root to the deepest leaf.
+  Stumps (trees with one split) are now allowed.
+  :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -175,6 +188,13 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
+  `probB_`, are now deprecated as they were not useful. :pr:`15558` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
