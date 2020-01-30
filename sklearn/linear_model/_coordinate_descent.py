@@ -301,7 +301,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         unnecessary memory duplication. If ``y`` is mono-output then ``X``
         can be sparse.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs)
         Target values.
 
     l1_ratio : float, default=0.5
