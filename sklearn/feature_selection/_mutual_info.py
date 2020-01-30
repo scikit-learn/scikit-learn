@@ -224,8 +224,8 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -331,8 +331,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -408,8 +408,8 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 

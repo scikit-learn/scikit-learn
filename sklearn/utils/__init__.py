@@ -476,7 +476,7 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
+        Determines the pseudo random number generator to use when shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -620,7 +620,7 @@ def shuffle(*arrays, **options):
     Other Parameters
     ----------------
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
+        Determines the pseudo random number generator to use when shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
