@@ -13,6 +13,7 @@ import re
 import pkgutil
 from inspect import isgenerator
 from functools import partial
+from contextlib import suppress
 
 import pytest
 
@@ -36,6 +37,8 @@ from sklearn.utils.estimator_checks import (
     _set_check_estimator_ids,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
+    check_class_weight_classifiers,
+    check_methods_subset_invariance,
     parametrize_with_checks)
 
 
@@ -86,13 +89,30 @@ def _tested_estimators():
         yield estimator
 
 
+_xfail_checks = {}
+
+# check_class_weight_classifiers
+_xfail_checks[(check_class_weight_classifiers, 'NuSVC')] = \
+    "Not testing NuSVC class weight as it is ignored."
+
+# check_methods_subset_invariance
+_xfail_checks.update({
+    (check_methods_subset_invariance, name):
+        "{} fails for check_methods_subset_invariance".format(name)
+        for name in ['DummyClassifier', 'BernoulliRBM']})
+
+
 @parametrize_with_checks(_tested_estimators())
-def test_estimators(estimator, check):
+def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
+        print(_xfail_checks)
+        with suppress(KeyError):
+            reason = _xfail_checks[(check.func, check.args[0])]
+            request.applymarker(pytest.mark.xfail(run=True, reason=reason))
         check(estimator)
 
 
