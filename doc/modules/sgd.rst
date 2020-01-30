@@ -23,10 +23,10 @@ examples and more than 10^5 features.
 
 Strictly speaking, SGD is merely an optimization technique and does not
 correspond to a specific family of machine learning models. It is only a
-*way* to train a model. Often, :class:`SGDClassifier` or
-:class:`SGDRegressor` with a specific loss will have an equivalent object in
+*way* to train a model. Often, and instance of :class:`SGDClassifier` or
+:class:`SGDRegressor` will have an equivalent estimator in
 the scikit-learn API, potentially using a different optimization technique.
-For example, using SGDClassifier(loss='log') results in logistic regression,
+For example, using `SGDClassifier(loss='log')` results in logistic regression,
 i.e. a model equivalent to :class:`~sklearn.linear_model.LogisticRegression`
 which is fitted via SGD instead of being fitted by one of the other solvers
 in :class:`~sklearn.linear_model.LogisticRegression`. Similarly,
@@ -53,7 +53,7 @@ The disadvantages of Stochastic Gradient Descent include:
   or use ``shuffle=True`` to shuffle after each iteration (used by default).
   Also, ideally, features should be standardized using e.g.
   `make_pipeline(StandardScaler(), SGDClassifier())` (see :ref:`Pipelines
-  <combining_estimators>`.
+  <combining_estimators>`).
 
 Classification
 ==============
@@ -398,8 +398,8 @@ example updates the model parameters according to the update rule given by
 
 .. math::
 
-    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
-    + \frac{\partial L(w^T x_i + b, y_i)}{\partial w})
+    w \leftarrow w - \eta \left[\alpha \frac{\partial R(w)}{\partial w}
+    + \frac{\partial L(w^T x_i + b, y_i)}{\partial w}\right]
 
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
