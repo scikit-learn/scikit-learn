@@ -1031,6 +1031,15 @@ class CategoricalNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    n_categories : int or array-like or None, (default=None)
+        Minimum number of categories (unique values) per feature:
+        - int : Sets the minimum number of categories per feature to
+          `n_categories` for each features.
+        - array-like : `n_categories[i]` holds the minimum number of categories
+          for the ith column of the input.
+        - None : Determines the number of categories automatically from the
+          training data.
+
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1070,10 +1079,12 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 n_categories=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.n_categories = n_categories
 
     def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
@@ -1099,6 +1110,9 @@ class CategoricalNB(_BaseDiscreteNB):
         -------
         self : object
         """
+        if self.n_categories is not None:
+            self.n_categories = check_array(self.n_categories, ensure_2d=False,
+                                            ensure_min_samples=0, dtype=np.int)
         return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -1172,25 +1186,44 @@ class CategoricalNB(_BaseDiscreteNB):
                 return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
             return cat_count
 
-        def _update_cat_count(X_feature, Y, cat_count, n_classes):
+        def _update_cat_count(X_feature, Y, cat_count, n_classes,
+                              min_categories):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
                 if Y.dtype.type == np.int64:
                     weights = None
                 else:
                     weights = Y[mask, j]
-                counts = np.bincount(X_feature[mask], weights=weights)
+                counts = np.bincount(X_feature[mask], weights=weights,
+                                     minlength=min_categories)
                 indices = np.nonzero(counts)[0]
                 cat_count[j, indices] += counts[indices]
+
+        def _get_min_categories(n_categories, index):
+            # first tries to index the n_categories as if it is array-like
+            try:
+                min_categories = n_categories[index] - 1
+            # occurs if self.n_categories is single int (could potentially
+            # not catch that self.n_categories is a string)
+            except IndexError:
+                min_categories = n_categories - 1
+            # should only occur if n_categories is None because everything
+            # else has been coerced to an array already in .fit()
+            except TypeError:
+                min_categories = 0
+            return min_categories
 
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
+            min_categories = _get_min_categories(self.n_categories, i)
+            feature_categories = max(X_feature.max(), min_categories)
             self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], X_feature.max())
+                self.category_count_[i], feature_categories)
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
-                              self.class_count_.shape[0])
+                              self.class_count_.shape[0],
+                              min_categories)
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = []
