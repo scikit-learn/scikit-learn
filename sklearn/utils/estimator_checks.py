@@ -2464,12 +2464,6 @@ def check_regressor_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
-    
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
-
-
-
-def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
