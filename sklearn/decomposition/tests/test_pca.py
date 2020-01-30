@@ -619,7 +619,8 @@ def test_infer_dim_mle():
 
 
 def test_fit_mle_too_few_samples():
-    # Tests that an error is raised when the number of samples is smaller than the number of features during an mle fit
+    # Tests that an error is raised when the number of samples is smaller
+    # than the number of features during an mle fit
     X, _ = datasets.make_classification(n_samples=20, n_features=21,
                                         random_state=42)
 
