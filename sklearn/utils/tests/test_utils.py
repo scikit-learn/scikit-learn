@@ -18,6 +18,7 @@ from sklearn.utils._testing import (assert_raises,
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
+from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
@@ -28,6 +29,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -50,6 +52,22 @@ def test_make_rng():
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
+
+
+def test_gen_batches():
+    # Make sure gen_batches errors on invalid batch_size
+
+    assert_array_equal(
+        list(gen_batches(4, 2)),
+        [slice(0, 2, None), slice(2, 4, None)]
+    )
+    msg_zero = "gen_batches got batch_size=0, must be positive"
+    with pytest.raises(ValueError, match=msg_zero):
+        next(gen_batches(4, 0))
+
+    msg_float = "gen_batches got batch_size=0.5, must be an integer"
+    with pytest.raises(TypeError, match=msg_float):
+        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -646,3 +664,14 @@ def test_deprecation_joblib_api(tmpdir):
 
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1
