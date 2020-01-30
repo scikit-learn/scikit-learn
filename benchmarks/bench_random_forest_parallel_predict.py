@@ -45,7 +45,7 @@ def build_model(e, n, f, o):
         n_samples=nt + n, n_features=f, n_informative=f // 2,
         n_targets=1, random_state=1)
     X_train, X_test = X[:nt], X[nt:]
-    y_train, y_test = y[:nt], y[nt:]
+    y_train = y[:nt]
     rf = RandomForestRegressor(n_estimators=e, random_state=1)
     rf.fit(X_train, y_train)
 
@@ -133,9 +133,9 @@ def benchmark(model, model_onnx, X, repeat):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-e', type=int, default=100)
-    parser.add_argument('-n', type=int, default=100000)
-    parser.add_argument('-f', type=int, default=10)
+    parser.add_argument('-e', type=int, default=200)
+    parser.add_argument('-n', type=int, default=10000)
+    parser.add_argument('-f', type=int, default=200)
     parser.add_argument('-r', type=int, default=10)
     parser.add_argument('-a', type=int, default=1)
     parser.add_argument('-o', type=int, default=1)
