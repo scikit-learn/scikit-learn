@@ -7,7 +7,7 @@ Stochastic Gradient Descent
 .. currentmodule:: sklearn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient
-approach to discriminative learning of linear classifiers under
+approach to fitting linear classifiers and regressors under
 convex loss functions such as (linear) `Support Vector Machines
 <https://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic
 Regression <https://en.wikipedia.org/wiki/Logistic_regression>`_.
@@ -20,6 +20,19 @@ learning problems often encountered in text classification and natural
 language processing.  Given that the data is sparse, the classifiers
 in this module easily scale to problems with more than 10^5 training
 examples and more than 10^5 features.
+
+Strictly speaking, SGD is merely an optimization technique and does not
+correspond to a specific family of machine learning models. It is only a
+*way* to train a model. Often, :class:`SGDClassifier` or
+:class:`SGDRegressor` with a specific loss will have an equivalent object in
+the scikit-learn API, potentially using a different optimization technique.
+For example, using SGDClassifier(loss='log') results in logistic regression,
+i.e. a model equivalent to :class:`~sklearn.linear_model.LogisticRegression`
+which is fitted via SGD instead of being fitted by one of the other solvers
+in :class:`~sklearn.linear_model.LogisticRegression`. Similarly,
+`SGDRegressor(loss='squared_loss', penalty='l2')` and
+:class:`~sklearn.linear_model.Ridge` solve the same optimization problem, via
+different means.
 
 The advantages of Stochastic Gradient Descent are:
 
@@ -34,26 +47,31 @@ The disadvantages of Stochastic Gradient Descent include:
 
     + SGD is sensitive to feature scaling.
 
-Classification
-==============
-
 .. warning::
 
   Make sure you permute (shuffle) your training data before fitting the
-  model or use ``shuffle=True`` to shuffle after each iteration.
+  model or use ``shuffle=True`` to shuffle after each iteration. Also ideally
+  features should be standardized using e.g.
+  `make_pipeline(StandardScaler(), SGDClassifier())` (see :ref:`Pipelines
+  <combining_estimators>`.
+
+Classification
+==============
+
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
-penalties for classification.
+penalties for classification. Below is the decision boundary of a
+:class:`SGDClassifier` trained with the hinge loss, equivalent to a linear SVM.
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_separating_hyperplane_001.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
 
-As other classifiers, SGD has to be fitted with two arrays: an array X
-of size [n_samples, n_features] holding the training samples, and an
-array Y of size [n_samples] holding the target values (class labels)
+As other classifiers, SGD has to be fitted with two arrays: an array `X`
+of shape (n_samples, n_features) holding the training samples, and an
+array y of shape (n_samples,) holding the target values (class labels)
 for the training samples::
 
     >>> from sklearn.linear_model import SGDClassifier
@@ -69,13 +87,13 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-SGD fits a linear model to the training data. The member ``coef_`` holds
+SGD fits a linear model to the training data. The ``coef_`` attribute holds
 the model parameters::
 
     >>> clf.coef_
     array([[9.9..., 9.9...]])
 
-Member ``intercept_`` holds the intercept (aka offset or bias)::
+The ``intercept_`` attribute holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_
     array([-9.9...])
@@ -83,7 +101,9 @@ Member ``intercept_`` holds the intercept (aka offset or bias)::
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter ``fit_intercept``.
 
-To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
+The signed distance to the hyperplane (computed as the dot product between
+the coefficients and the input sample, plus the intercept) is given by
+:meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
     array([29.6...])
@@ -96,10 +116,15 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
   * ``loss="log"``: logistic regression,
   * and all regression losses below.
 
+.. TODO: describe losses, (what is modified huber????) or provide ref
+.. TODO: how do the regression losses work for classification?
+
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models, even when L2 penalty
 is used.
+
+.. TODO: what does sparse mean??
 
 Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
@@ -139,8 +164,8 @@ the decision surface induced by the three classifiers.
    :scale: 75
 
 In the case of multi-class classification ``coef_`` is a two-dimensional
-array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a
-one-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
+array of shape (n_classes, n_features) and ``intercept_`` is a
+one-dimensional array of shape (n_classes,). The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
 indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,
@@ -159,6 +184,8 @@ further information.
  - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
  - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+
+.. TODO: describe ASGD in math section
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting ```average=True```. ASGD works by averaging the coefficients
@@ -203,6 +230,8 @@ Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 Stochastic Gradient Descent for sparse data
 ===========================================
 
+.. TODO: what does this mean
+
 .. note:: The sparse implementation produces slightly different results
   than the dense implementation due to a shrunk learning rate for the
   intercept.
@@ -236,17 +265,17 @@ criteria to stop the algorithm when a given level of convergence is reached:
 
   * With ``early_stopping=True``, the input data is split into a training set
     and a validation set. The model is then fitted on the training set, and the
-    stopping criterion is based on the prediction score computed on the
-    validation set. The size of the validation set can be changed with the
-    parameter ``validation_fraction``.
+    stopping criterion is based on the prediction score (using the `score`
+    method) computed on the validation set. The size of the validation set
+    can be changed with the parameter ``validation_fraction``.
   * With ``early_stopping=False``, the model is fitted on the entire input data
     and the stopping criterion is based on the objective function computed on
-    the input data.
+    the training data.
 
 In both cases, the criterion is evaluated once by epoch, and the algorithm stops
 when the criterion does not improve ``n_iter_no_change`` times in a row. The
-improvement is evaluated with a tolerance ``tol``, and the algorithm stops in
-any case after a maximum number of iteration ``max_iter``.
+improvement is evaluated with absolute tolerance ``tol``, and the algorithm
+stops in any case after a maximum number of iteration ``max_iter``.
 
 
 Tips on Practical Use
@@ -265,15 +294,23 @@ Tips on Practical Use
       X_train = scaler.transform(X_train)
       X_test = scaler.transform(X_test)  # apply same transformation to test data
 
+      # Or better yet: use a pipeline!
+      from sklearn.pipeline import make_pipeline
+      est = make_pipeline(StandardScaler(), SGDClassifier())
+      est.fit(X_train)
+      est.predict(X_test)
+
     If your attributes have an intrinsic scale (e.g. word frequencies or
     indicator features) scaling is not needed.
 
   * Finding a reasonable regularization term :math:`\alpha` is
-    best done using :class:`GridSearchCV`, usually in the
+    best done using automatic hyper-parameter search, e.g.
+    :class:`~sklearn.model_selection.GridSearchCV` or
+    :class:`~sklearn.model_selection.RandomizedSearchCV`, usually in the
     range ``10.0**-np.arange(1,7)``.
 
   * Empirically, we found that SGD converges after observing
-    approx. 10^6 training samples. Thus, a reasonable first guess
+    approximately 10^6 training samples. Thus, a reasonable first guess
     for the number of iterations is ``max_iter = np.ceil(10**6 / n)``,
     where ``n`` is the size of the training set.
 
@@ -294,6 +331,8 @@ Tips on Practical Use
 
 Mathematical formulation
 ========================
+
+.. TODO: domain of y is wrong
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
 :math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \{-1,1\}`, our goal is to
