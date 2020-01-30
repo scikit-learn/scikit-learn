@@ -547,12 +547,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+        If ``order='random'``, determines random number generation for the
+        chain orders.
+        In addition, it controls the random seed given at each `base_estimator`
+        at each chaining iteration. Thus, it is only used when `base_estimator`
+        exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -707,12 +708,13 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+        If ``order='random'``, determines random number generation for the
+        chain orders.
+        In addition, it controls the random seed given at each `base_estimator`
+        at each chaining iteration. Thus, it is only used when `base_estimator`
+        exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
