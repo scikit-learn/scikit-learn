@@ -62,7 +62,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         visible layers and sampling hidden activations during fit and partial
         fit; for corrupting a feature of a sample in score_samples. Pass an
         int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
