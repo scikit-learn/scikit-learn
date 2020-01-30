@@ -2026,7 +2026,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     intercept_ : ndarray of shape (n_tasks,)
         Independent term in decision function.
 
-    coef_ : array of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
