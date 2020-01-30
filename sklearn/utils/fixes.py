@@ -33,12 +33,6 @@ def _parse_version(version_string):
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
-try:
-    import pandas as pd
-    pd_version = _parse_version(pd.__version__)
-except ImportError:
-    pd = None
-    pd_version = None
 
 try:  # SciPy >= 0.19
     from scipy.special import comb, logsumexp

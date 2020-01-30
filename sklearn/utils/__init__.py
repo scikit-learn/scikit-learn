@@ -24,7 +24,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version, pd_version
+from .fixes import np_version
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -185,24 +185,12 @@ def _pandas_indexing(X, key, key_dtype, axis):
     elif isinstance(key, tuple):
         key = list(key)
     # check whether we should index with loc or iloc
-    # indexer = X.iloc if key_dtype == 'int' else X.loc
-    # return indexer[:, key] if axis else indexer[key]
-
-    # check whether we should index with loc or take
-    if key_dtype == 'int':
-        # for `pd.DataFrame.take`, integer key should be enlisted
-        if not isinstance(key, list) or not hasattr(key, 'shape'):
-            key = [key]
-        if pd_version < (1,):
-            # the explanation of the is_copy argument is confusing / wrong,
-            # you need to use `is_copy=False` to get a "real" copy
-            # (without tracking the parent DataFrame)
-            return X.take(key, axis, is_copy=False)
-        else:
-            # `is_copy` deprecated in pandas 1.0.0
-            return X.take(key, axis)
-    else:
-        return X.loc[:, key] if axis else X.loc[key]
+    indexer = X.iloc if key_dtype == 'int' else X.loc
+    sliced_X = indexer[:, key] if axis else indexer[key]
+    # quick hack to silent redundant pandas SettingWithCopyWarning
+    if hasattr(sliced_X, "_is_copy"):
+        sliced_X._is_copy = None
+    return sliced_X
 
 
 def _list_indexing(X, key, key_dtype):
@@ -399,7 +387,7 @@ def _safe_indexing(X, indices, axis=0):
             "pandas DataFrames"
         )
 
-    if hasattr(X, "loc"):
+    if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis)

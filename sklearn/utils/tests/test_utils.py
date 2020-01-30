@@ -32,7 +32,6 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
-from sklearn.utils.fixes import pd_version
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -480,16 +479,17 @@ def test_safe_indexing_copy_warning():
     X = pd.DataFrame(X_toy, columns=["a", "b", "c"])
 
     def add_new_column(X_, column_name, value):
-        X_[column_name] = value
+        X_.loc[:, column_name] = value
 
-    assert_no_warnings(add_new_column, X, "d", [11, 12, 13])
-    if pd_version >= (1,):
-        assert_no_warnings(add_new_column,
-                           _safe_indexing(X, 1, axis=0), "e", 10)
-    else:
-        warns_message = "A value is trying to be set on a copy of a slice"
-        with pytest.warns(Warning, match=warns_message):
-            add_new_column(_safe_indexing(X, 1, axis=0), "e", 10)
+    assert_no_warnings(add_new_column, X, "d", 15)
+
+    # indexing columns
+    X_columns = _safe_indexing(X, [1, 2], axis=1)
+    assert_no_warnings(add_new_column, X_columns, "e", 10)
+
+    # indexing rows
+    X_rows = _safe_indexing(X, [1, 2], axis=0)
+    assert_no_warnings(add_new_column, X_rows, "e", 10)
 
 
 @pytest.mark.parametrize(
