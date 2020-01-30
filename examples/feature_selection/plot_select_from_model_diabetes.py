@@ -34,10 +34,10 @@ n_features = sfm.transform(X).shape[1]
 # Reset the threshold till the number of features equals two.
 # Note that the attribute can be set directly instead of repeatedly
 # fitting the metatransformer.
-while n_featuresc > 2:
-    sfmc.threshold += 0.1
-    X_transform = sfmc.transform(Xc)
-    n_featuresc = X_transform.shape[1]
+while n_features > 2:
+    sfm.threshold += 0.1
+    X_transform = sfm.transform(X)
+    n_features = X_transform.shape[1]
 
 # Plot the selected two features from X.
 plt.title(
