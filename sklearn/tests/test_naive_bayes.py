@@ -701,13 +701,13 @@ def test_categoricalnb():
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
 
 
-def test_categoricalnb_with_n_categories():
+def test_categoricalnb_with_min_categories():
     # None as n_categories is checked by default in test_categoricalnb
 
     X_n_categories = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y_n_categories = np.array([1, 1, 2, 2])
 
-    # Check n_categories with int
+    # Check min_categories with int
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=3)
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
@@ -718,7 +718,7 @@ def test_categoricalnb_with_n_categories():
     assert_array_equal(predictions, np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([3, 3]))
 
-    # Check n_categories with list
+    # Check min_categories with list
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=[3, 4])
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
@@ -728,6 +728,11 @@ def test_categoricalnb_with_n_categories():
     predictions = clf.predict(data_with_unseen_feature_3)
     assert_array_equal(predictions, np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([3, 4]))
+
+    # check min_categories with min less than actual
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=1)
+    clf.fit(X_n_categories, y_n_categories)
+    assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
     # does not accept string
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories='bad_arg')
