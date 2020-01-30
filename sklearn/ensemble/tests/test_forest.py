@@ -1367,3 +1367,50 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
+
+
+def check_disabled_parallelization(name):
+    """Check that parallel_predict True, False gives
+    the same outputs."""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    forest = ForestEstimator(n_estimators=10, n_jobs=3, random_state=0)
+
+    forest.fit(X, y)
+    assert len(forest) == 10
+
+    y1 = forest.predict(X, parallel_predict=True)
+    try:
+        forest.predict(X, parallel_predict=True, check_input=False)
+        assert False
+    except NotImplementedError:
+        pass
+    y2 = forest.predict(X, parallel_predict=False)
+    assert_array_almost_equal(y1, y2, 3)
+    y3 = forest.predict(X, parallel_predict=False, check_input=False)
+    assert_array_almost_equal(y1, y3, 3)
+
+
+def test_disabled_parallelization():
+    """Check that parallel_predict True, False gives
+    the same outputs."""
+    check_disabled_parallelization('RandomForestRegressor')
+
+
+def check_disabled_parallelization_boston(name):
+    """Check that parallel_predict True, False gives
+    the same outputs on Boston dataset."""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    forest = ForestEstimator(n_estimators=10, n_jobs=3, random_state=0)
+
+    forest.fit(boston.data, boston.target)
+    assert len(forest) == 10
+
+    y1 = forest.predict(boston.data, parallel_predict=True)
+    y2 = forest.predict(boston.data, parallel_predict=False)
+    assert_array_almost_equal(y1, y2, 3)
+
+
+def test_disabled_parallelization_boston():
+    """Check that parallel_predict True, False gives
+    the same outputs on Boston dataset."""
+    check_disabled_parallelization_boston('RandomForestRegressor')

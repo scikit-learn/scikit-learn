@@ -743,7 +743,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             max_samples=max_samples)
 
-    def predict(self, X):
+    def predict(self, X, check_input=True, parallel_predict=True):
         """
         Predict regression target for X.
 
@@ -757,17 +757,22 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
+        check_input : bool, default=True
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        parallel_predict : bool, default=True
+            Disable the parallelization.
+
         Returns
         -------
         y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The predicted values.
         """
         check_is_fitted(self)
+
         # Check data
         X = self._validate_X_predict(X)
-
-        # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
         # avoid storing the output of every estimator by summing them here
         if self.n_outputs_ > 1:
@@ -775,12 +780,22 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         else:
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
-        # Parallel loop
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
-            for e in self.estimators_)
+        if parallel_predict:
+            if not check_input:
+                raise NotImplementedError(
+                    "check_input=False not implemented when parallel_predict=True.")
+            # Assign chunk of trees to jobs
+            n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+            # Parallel loop
+            lock = threading.Lock()
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
+                for e in self.estimators_)
+        else:
+            for e in self.estimators_:
+                y_hat += e.predict(X, check_input=check_input)
 
         y_hat /= len(self.estimators_)
 
