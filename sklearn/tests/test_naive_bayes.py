@@ -659,6 +659,7 @@ def test_categoricalnb():
     clf = CategoricalNB(alpha=1, fit_prior=False)
 
     clf.fit(X3, y3)
+    assert_array_equal(clf.n_categories_, np.array([3, 6]))
 
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
@@ -707,7 +708,7 @@ def test_categoricalnb_with_n_categories():
     y_n_categories = np.array([1, 1, 2, 2])
 
     # Check n_categories with int
-    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories=3)
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=3)
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, np.array([[2, 0, 0], [1, 1, 0]]))
@@ -715,9 +716,10 @@ def test_categoricalnb_with_n_categories():
     data_with_unseen_feature_2 = np.array([[0, 2]])
     predictions = clf.predict(data_with_unseen_feature_2)
     assert_array_equal(predictions, np.array([1]))
+    assert_array_equal(clf.n_categories_, np.array([3, 3]))
 
     # Check n_categories with list
-    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories=[3, 4])
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=[3, 4])
     clf.fit(X_n_categories, y_n_categories)
     X1_count, X2_count = clf.category_count_
     assert_array_equal(X1_count, np.array([[2, 0, 0], [1, 1, 0]]))
@@ -725,9 +727,10 @@ def test_categoricalnb_with_n_categories():
     data_with_unseen_feature_3 = np.array([[0, 3]])
     predictions = clf.predict(data_with_unseen_feature_3)
     assert_array_equal(predictions, np.array([1]))
+    assert_array_equal(clf.n_categories_, np.array([3, 4]))
 
     # does not accept string
-    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories='bad_arg')
+    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories='bad_arg')
     assert_raises(ValueError, clf.fit, X_n_categories, y_n_categories)
 
 
