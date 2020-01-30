@@ -294,9 +294,12 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, str) and
-              self.drop in ['first', 'if_binary']):
-            return np.zeros(len(self.categories_), dtype=np.int_)
+        elif isinstance(self.drop, str): 
+            if self.drop == 'first':
+                return np.zeros(len(self.categories_), dtype=np.int_)
+            elif self.drop == 'if_binary':
+                return np.array([0 if len(cats) == 2 else None
+                                for cats in self.categories_], dtype=object)
         elif not isinstance(self.drop, str):
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
@@ -403,7 +406,7 @@ class OneHotEncoder(_BaseEncoder):
 
             if isinstance(self.drop, str) and self.drop == 'if_binary':
                 for col in range(n_features):
-                    if len(self.categories_[col]) > 2:
+                    if self.drop_idx_[col] == None:
                         keep_cells[:, col] = True
                     else:
                         X_int[:, col][X_int[:, col] > 0] -= 1
