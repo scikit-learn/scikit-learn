@@ -335,20 +335,20 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         splitter = self.splitter
         if self.monotonic_cst is None:
-            self.monotonic_cst = np.full(shape=X.shape[1],
+            monotonic_cst = np.full(shape=X.shape[1],
                                     fill_value=0,
                                     dtype=np.int32)
         else:
-            self.monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
+            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
 
-        if self.monotonic_cst.shape[0] != X.shape[1]:
+        if monotonic_cst.shape[0] != X.shape[1]:
             raise ValueError(
                 "monotonic_cst has shape {} but the input data "
                 "X has {} features.".format(
-                    self.monotonic_cst.shape[0], X.shape[1]
+                    monotonic_cst.shape[0], X.shape[1]
                 )
             )
-        if np.any(self.monotonic_cst < -1) or np.any(self.monotonic_cst > 1):
+        if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
             raise ValueError(
                 "monotonic_cst must be None or an array-like of -1, 0 or 1.")
         if not isinstance(self.splitter, Splitter):
@@ -357,7 +357,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                self.monotonic_cst)
+                                                monotonic_cst)
 
         if is_classifier(self):
             self.tree_ = Tree(self.n_features_,
