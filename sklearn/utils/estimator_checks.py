@@ -1029,7 +1029,7 @@ def _apply_on_subsets(func, X):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_methods_subset_invariance(name, estimator_orig):
+def check_methods_subset_invariance(name, estimator_orig, request=None):
     # check that method gives invariant results if applied
     # on mini batches or the whole set
     rnd = np.random.RandomState(0)
@@ -1060,7 +1060,7 @@ def check_methods_subset_invariance(name, estimator_orig):
                               ('MiniBatchSparsePCA', 'transform'),
                               ('DummyClassifier', 'predict'),
                               ('BernoulliRBM', 'score_samples')]:
-            _raise_xfail(msg)
+            _raise_xfail(msg, request)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
