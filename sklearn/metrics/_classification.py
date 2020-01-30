@@ -2497,6 +2497,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
+    if any(y_prob < 0) or any(y_prob > 1):
+        raise ValueError("y_prob has values outside of [0, 1] range")
 
     if pos_label is None:
         pos_label = y_true.max()
