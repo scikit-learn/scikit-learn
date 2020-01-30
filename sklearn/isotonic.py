@@ -123,6 +123,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
     sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
