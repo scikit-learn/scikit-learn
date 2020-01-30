@@ -606,7 +606,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
 
-    n_iter_ : array-like of shape (n_targets,)
+    n_iter_ : list of int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
