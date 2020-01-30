@@ -26,6 +26,7 @@ from ._testing import assert_allclose_dense_sparse
 from ._testing import assert_warns_message
 from ._testing import set_random_state
 from ._testing import SkipTest
+from ._testing import KnownFailureTest
 from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
@@ -1034,7 +1035,7 @@ def check_methods_subset_invariance(name, estimator_orig):
                               ('MiniBatchSparsePCA', 'transform'),
                               ('DummyClassifier', 'predict'),
                               ('BernoulliRBM', 'score_samples')]:
-            raise SkipTest(msg)
+            raise KnownFailureTest(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2237,11 +2238,13 @@ def check_regressors_no_decision_function(name, regressor_orig):
 def check_class_weight_classifiers(name, classifier_orig):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
-        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
+        raise KnownFailureTest(
+            "Not testing NuSVC class weight as it is ignored."
+        )
     if name.endswith("NB"):
-        # NaiveBayes classifiers have a somewhat different interface.
         # FIXME SOON!
-        raise SkipTest
+        reason = "NaiveByes classifiers have a somewhat different interface."
+        raise KnownFailureTest(reason)
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]

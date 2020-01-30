@@ -29,7 +29,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import SkipTest, KnownFailureTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -93,7 +93,22 @@ def test_estimators(estimator, check):
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-        check(estimator)
+
+        try:
+            check(estimator)
+        except KnownFailureTest as e:
+            pytest.xfail(*e.args)
+            msg = (
+                "detected running pytest with --runxfail. To fix this known "
+                "failure please comment 'raise KnownFailureTest' in "
+                "utils/estimator_checks.py (exact location in the traceback "
+                "above). Then re-run pytest with the --ff -x options (runs "
+                "failures first and stops on first failure)."
+            )
+            # raise this exception from the original excpeption context
+            raise ValueError(msg) from e
+        except Exception as e:
+            raise e
 
 
 def test_check_estimator_generate_only():

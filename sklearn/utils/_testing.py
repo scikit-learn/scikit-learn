@@ -86,6 +86,10 @@ assert_raises_regex = _dummy.assertRaisesRegex
 assert_raises_regexp = assert_raises_regex
 
 
+class KnownFailureTest(SkipTest):
+    pass
+
+
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 
