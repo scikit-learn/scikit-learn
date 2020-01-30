@@ -35,7 +35,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container)
 
-from sklearn.utils._testing import SkipTest, KnownFailureTest
+from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
