@@ -595,7 +595,7 @@ def test_assess_dimension_same_n_rank_and_features():
     n_samples = 10
     n_features = 4
     rank = 4
-    ret =_assess_dimension_(spectrum, rank, n_samples, n_features)
+    ret = _assess_dimension_(spectrum, rank, n_samples, n_features)
     assert ret is not None
 
 
