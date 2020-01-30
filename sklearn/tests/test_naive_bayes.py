@@ -699,15 +699,36 @@ def test_categoricalnb():
         clf.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
 
-    # Check n_features with int
-    X_features_3 = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
-    y_features_3 = np.array([1, 1, 2, 2])
-    clf = CategoricalNB(alpha=1, fit_prior=False)
-    clf.fit(X_features_3, y_features_3)
-    data_with_unseen_feature = np.array([[0, 2]])
-    nf_3_predictions = clf.predict(data_with_unseen_feature)
-    assert_array_equal(nf_3_predictions, np.array([1]))
 
+def test_categoricalnb_with_n_categories():
+    # None as n_categories is checked by default in test_categoricalnb
+
+    X_n_categories = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y_n_categories = np.array([1, 1, 2, 2])
+
+    # Check n_categories with int
+    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories=3)
+    clf.fit(X_n_categories, y_n_categories)
+    X1_count, X2_count = clf.category_count_
+    assert_array_equal(X1_count, np.array([[2, 0, 0], [1, 1, 0]]))
+    assert_array_equal(X2_count, np.array([[1, 1, 0], [1, 1, 0]]))
+    data_with_unseen_feature_2 = np.array([[0, 2]])
+    predictions = clf.predict(data_with_unseen_feature_2)
+    assert_array_equal(predictions, np.array([1]))
+
+    # Check n_categories with list
+    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories=[3, 4])
+    clf.fit(X_n_categories, y_n_categories)
+    X1_count, X2_count = clf.category_count_
+    assert_array_equal(X1_count, np.array([[2, 0, 0], [1, 1, 0]]))
+    assert_array_equal(X2_count, np.array([[1, 1, 0, 0], [1, 1, 0, 0]]))
+    data_with_unseen_feature_3 = np.array([[0, 3]])
+    predictions = clf.predict(data_with_unseen_feature_3)
+    assert_array_equal(predictions, np.array([1]))
+
+    # does not accept string
+    clf = CategoricalNB(alpha=1, fit_prior=False, n_categories='bad_arg')
+    assert_raises(ValueError, clf.fit, X_n_categories, y_n_categories)
 
 
 def test_alpha():
