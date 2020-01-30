@@ -49,9 +49,9 @@ The disadvantages of Stochastic Gradient Descent include:
 
 .. warning::
 
-  Make sure you permute (shuffle) your training data before fitting the
-  model or use ``shuffle=True`` to shuffle after each iteration. Also ideally
-  features should be standardized using e.g.
+  Make sure you permute (shuffle) your training data before fitting the model
+  or use ``shuffle=True`` to shuffle after each iteration (used by default).
+  Also, ideally, features should be standardized using e.g.
   `make_pipeline(StandardScaler(), SGDClassifier())` (see :ref:`Pipelines
   <combining_estimators>`.
 
