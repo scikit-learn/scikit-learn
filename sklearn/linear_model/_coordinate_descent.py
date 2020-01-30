@@ -1934,7 +1934,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Parameters
     ----------
-    l1_ratio : float or array of floats, default=0.5
+    l1_ratio : float or list of float, default=0.5
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
         For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
         is an L2 penalty.
