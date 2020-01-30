@@ -1507,7 +1507,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         The compromise between l1 and l2 penalization chosen by
         cross validation
 
-    coef_ : array of shape (n_features,) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the cost function formula),
 
     intercept_ : float or array of shape (n_targets, n_features)
