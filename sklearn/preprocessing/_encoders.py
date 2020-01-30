@@ -300,6 +300,11 @@ class OneHotEncoder(_BaseEncoder):
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else None
                                 for cats in self.categories_], dtype=object)
+            else:
+                msg = ("Wrong input for parameter `drop`. Expected "
+                       "'first', None or array of objects, got {}")
+                raise ValueError(msg.format(type(self.drop)))
+
         elif not isinstance(self.drop, str):
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
