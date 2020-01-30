@@ -13,8 +13,6 @@ and can be found here:
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #
 # License: BSD 3 clause
-#
-# cython: language_level=3
 
 
 cimport cython

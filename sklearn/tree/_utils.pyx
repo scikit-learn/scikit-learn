@@ -1,7 +1,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: language_level=3
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -21,7 +20,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils cimport _random
+from ..utils._random cimport our_rand_r
 
 # =============================================================================
 # Helper functions
@@ -65,13 +64,13 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
     """Generate a random integer in [low; end)."""
-    return low + _random.our_rand_r(random_state) % (high - low)
+    return low + our_rand_r(random_state) % (high - low)
 
 
 cdef inline double rand_uniform(double low, double high,
                                 UINT32_t* random_state) nogil:
     """Generate a random double in [low; high)."""
-    return ((high - low) * <double> _random.our_rand_r(random_state) /
+    return ((high - low) * <double> our_rand_r(random_state) /
             <double> RAND_R_MAX) + low
 
 
@@ -512,7 +511,7 @@ cdef class WeightedMedianCalculator:
         or 0 otherwise.
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -569,7 +568,7 @@ cdef class WeightedMedianCalculator:
         from consideration in the median calculation
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -584,7 +583,7 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
-        cdef double original_median
+        cdef double original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()

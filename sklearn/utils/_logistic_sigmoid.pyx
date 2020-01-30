@@ -1,7 +1,6 @@
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
-#cython: language_level=3
 
 from libc.math cimport log, exp
 
