@@ -399,7 +399,7 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
 
 
 @pytest.mark.parametrize(
-    "X, expected, expected_drop_idx_",
+    "X, expected, expected_drop_idx",
     [
         (
             [['Male', 1],
@@ -436,10 +436,10 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
         ),
     ]
 )
-def test_one_hot_encoder_drop_equals_if_binary(X, expected, expected_drop_idx_):
+def test_one_hot_encoder_drop_equals_if_binary(X, expected, expected_drop_idx):
     ohe = OneHotEncoder(drop='if_binary', sparse=False)
     result = ohe.fit_transform(X)
-    assert_array_equal(ohe.drop_idx_, expected_drop_idx_)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
     assert_allclose(result, expected)
 
 
