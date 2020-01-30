@@ -68,7 +68,9 @@ def _get_explained_variance(X, components, ridge_alpha):
     variance = np.square(np.diag(r)) / (X.shape[0]-1)
 
     # Variance in the original dataset
-    total_variance_in_x = np.matrix.trace(np.cov(X.T))
+    cov_mat = np.cov(X.T)
+    total_variance_in_x = np.trace(cov_mat) if cov_mat.size >= 2 \
+        else cov_mat
     return variance,  variance / total_variance_in_x
 
 
