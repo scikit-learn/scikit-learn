@@ -278,7 +278,7 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     disp.confusion_matrix = cm
     # Values should be shown as whole numbers 'd',
     # except the first number which should be shown as 1e+07
-    assert disp.confusion_matrix.dtype.kind == 'i'
+    assert disp.confusion_matrix.dtype.char == 'l'
     disp.plot()
 
     # Testing values with mixed float and int (array will only show float)
@@ -291,5 +291,5 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     # Since the values in the matrix are floats, the
     # values should be shown as '.2g' values, which means
     # the last value should be shown as 1e+02.
-    assert disp.confusion_matrix.dtype.kind == 'f'
+    assert disp.confusion_matrix.dtype.char == 'd'
     disp.plot()
