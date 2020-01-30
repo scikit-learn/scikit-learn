@@ -75,50 +75,51 @@ def test_fit_transform():
 def test_fit_transform_variance():
     # This function asserts that the variance computed by SparsePCA is the
     # same as the variance in PCA when the components are orthogonal.
+    # Given
     alpha = 1
+    ridge_alpha = 1e-8
     rng = np.random.RandomState(0)
     X, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     # init spca and pca
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
-                          random_state=0)
+                          ridge_alpha=ridge_alpha, random_state=0)
     spca_lars.fit(X)
-    assert spca_lars.explained_variance_.shape == (3,)
     pca = PCA(n_components=3, random_state=0)
-
-    # fit PCA
     pca.fit(X)
-
     explained_variance = pca.explained_variance_
-
     # force the components in spca_lars to be the same as in pca
     spca_lars.components_ = pca.components_
     # we want to test spca_lars.explained_variance_ but are not able to do it
     # directly since it is normally set in fit together with components_
     X = X - X.mean(axis=0)
-    explained_variance_sparse = _get_explained_variance(
-        X, spca_lars.components_)
+
+    # When
+    explained_variance_sparse, _ = _get_explained_variance(
+        X, spca_lars.components_, ridge_alpha)
+
+    # Then
     assert_allclose(explained_variance, explained_variance_sparse)
 
 
 def test_fit_transform_variance_orthogonal_matrix():
     # Force matrix to be orthogonal. sparse PCA must then be the same as PCA.
+    # Given
     alpha = 1e-6
+    ridge_alpha = 1e-8
     rng = np.random.RandomState(0)
     X, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     X_orthogonal, R = np.linalg.qr(X)
     # init spca and pca
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
-                          random_state=0)
-    spca_lars.fit(X)
+                          ridge_alpha=ridge_alpha, random_state=0)
     pca = PCA(n_components=3, random_state=0)
-    spca_lars.fit(X_orthogonal)
     pca.fit(X_orthogonal)
-    # When
-    # we want to test spca_lars.explained_variance_ but are not able to do it
-    # directly since it is normally set in fit together with components_
     explained_variance = pca.explained_variance_
-    explained_variance_sparse = _get_explained_variance(
-        X_orthogonal, spca_lars.components_)
+
+    # When
+    spca_lars.fit(X_orthogonal)
+    explained_variance_sparse = spca_lars.explained_variance_
+
     # Then
     assert_allclose(explained_variance, explained_variance_sparse)
 

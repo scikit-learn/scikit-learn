@@ -29,8 +29,8 @@ def _check_normalize_components(normalize_components, estimator_name):
             )
 
 
-def _get_explained_variance(X, components):
-    '''Get the explained variance.
+def _get_explained_variance(X, components, ridge_alpha):
+    """Get the explained variance.
 
     Get the explained variance from the principal components of the
     data. This follows the method outlined in [1] section 3.4 (Adjusted Total
@@ -43,12 +43,10 @@ def _get_explained_variance(X, components):
         samples and features, respectively.
 
     components : array, shape (n_components, n_features)
-        The (un-normalized) principle components. [1]
+        The principal components. [1]
 
     Notes
     -----
-    The variance ratio cannot be computed. Indeed, we do not know the total
-    variance since we did not compute all the components.
     Orthogonality is enforced in this case. Other variants exist that don't
     enforce this [2].
 
@@ -60,33 +58,18 @@ def _get_explained_variance(X, components):
     .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach ; Proceedings
         of the Thirteenth International Conference on Artificial Intelligence
         and Statistics (AISTATS), PMLR 9:366-373, 2010.
-    '''
-    # the number of samples
-    n_samples = X.shape[0]
-    n_components = components.shape[0]
-    unit_vecs = components.copy()
-    components_norm = np.linalg.norm(components, axis=1)[:, np.newaxis]
-    components_norm[components_norm == 0] = 1
-    unit_vecs /= components_norm
+    """
+    # Transform input
+    t_spca = ridge_regression(components.T, X.T, ridge_alpha,
+                              solver="cholesky")
 
-    # Algorithm, as we compute the adjusted variance for each component, we
-    # subtract the variance from components in the direction of previous axes
-    proj_corrected_vecs = np.zeros_like(components)
-    for i in range(n_components):
-        vec = components[i].copy()
-        # subtract the previous projections
-        for j in range(i):
-            vec -= np.dot(unit_vecs[j], vec)*unit_vecs[j]
+    # QR decomposition of modified PCs
+    _, r = np.linalg.qr(t_spca)
+    variance = np.square(np.diag(r)) / (X.shape[0]-1)
 
-        proj_corrected_vecs[i] = vec
-
-    # get estimated variance of Y which is matrix product of feature vector
-    # and the adjusted components
-    Y = np.tensordot(X, proj_corrected_vecs.T, axes=(1, 0))
-    YYT = np.tensordot(Y.T, Y, axes=(1, 0))
-    explained_variance = np.diag(YYT)/(n_samples-1)
-
-    return explained_variance
+    # Variance in the original dataset
+    total_variance_in_x = np.matrix.trace(np.cov(X.T))
+    return variance,  variance / total_variance_in_x
 
 
 class SparsePCA(TransformerMixin, BaseEstimator):
@@ -170,8 +153,10 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         Equal to ``X.mean(axis=0)``.
 
     explained_variance_ : array, shape (n_components,)
-        The explained variance versus component.
-        Only computed if variance is set to True.
+        The amount of variance explained by each of the selected components.
+
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
 
     Examples
     --------
@@ -245,7 +230,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
-
         _check_normalize_components(
             self.normalize_components, self.__class__.__name__
         )
@@ -270,13 +254,12 @@ class SparsePCA(TransformerMixin, BaseEstimator):
                                                dict_init=dict_init,
                                                return_n_iter=True)
         self.components_ = Vt.T
-        self.explained_variance_ = _get_explained_variance(X,
-                                                           self.components_)
         components_norm = np.linalg.norm(
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
-
+        self.explained_variance_, self.explained_variance_ratio_ = \
+            _get_explained_variance(X, self.components_, self.ridge_alpha)
         self.error_ = E
         return self
 
@@ -390,9 +373,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
-    explained_variance_ : array, shape (n_components, )
-        The explained variance versus component.
-        Only computed if variance is set to True
+    explained_variance_ : array, shape (n_components,)
+        The amount of variance explained by each of the selected components.
+
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
 
     Examples
     --------
@@ -472,11 +457,12 @@ class MiniBatchSparsePCA(SparsePCA):
             random_state=random_state,
             return_n_iter=True)
         self.components_ = Vt.T
-        self.explained_variance_ = _get_explained_variance(X,
-                                                           self.components_)
         components_norm = np.linalg.norm(
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
+
+        self.explained_variance_, self.explained_variance_ratio_ = \
+            _get_explained_variance(X, self.components_, self.ridge_alpha)
 
         return self
