@@ -1864,7 +1864,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         Parameter vector (W in the cost function formula).
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
-    intercept_ : array of shape (n_tasks,)
+    intercept_ : ndarray of shape (n_tasks,)
         independent term in decision function.
 
     n_iter_ : int
