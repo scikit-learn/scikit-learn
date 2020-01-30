@@ -252,7 +252,9 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list compilers llvm-openmp
+    conda list 
+
+which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
 variables::

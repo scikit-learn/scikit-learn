@@ -51,8 +51,20 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
+  avoids high memory footprint by calculating the distances matrix using 
+  a chunked scheme.
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :user:`Alex Shacked <alexshacked>`.
+
 :mod:`sklearn.datasets`
 .......................
+
+- |Enhancement| Added ``return_centers`` parameter  in  
+  :func:`datasets.make_blobs`, which can be used to return
+  centers for each cluster.
+  :pr:`15709` by :user:`<shivamgargsya>` and
+  :user:`Venkatachalam N <venkyyuvy>`.
 
 - |Enhancement| Functions :func:`datasets.make_circles` and
   :func:`datasets.make_moons` now accept two-element tuple.
@@ -67,8 +79,15 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
+   exclusively choose the components that explain the variance greater than
+   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+
 :mod:`sklearn.ensemble`
-.................................
+.......................
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
@@ -76,6 +95,13 @@ Changelog
   :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix|  Changed the convention for `max_depth` parameter of
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
+  the number of edges to go from the root to the deepest leaf.
+  Stumps (trees with one split) are now allowed.
+  :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -158,6 +184,13 @@ Changelog
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
+  `probB_`, are now deprecated as they were not useful. :pr:`15558` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -170,3 +203,6 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+- |Enhancement| add warning in :func:`utils.validation.check_array` for
+  pandas sparse DataFrame.
+  :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
