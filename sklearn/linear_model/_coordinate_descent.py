@@ -2037,7 +2037,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
                 (n_l1_ratio, n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    alphas_ : numpy array of shape (n_alphas,) or (n_l1_ratio, n_alphas)
+    alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
         The grid of alphas used for fitting, for each l1_ratio
 
     l1_ratio_ : float
