@@ -1613,15 +1613,13 @@ def test_leave_p_out_empty_trainset():
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
 
-
-<<<<<<< HEAD
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError,
                        match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)
-=======
+
 def test_group_time_series_fail_groups_are_none():
     """
     The GroupTimeSeriesSplit with no group should work exactlhy as a
@@ -1669,7 +1667,10 @@ def test_group_time_series_ordering_and_group_preserved():
 
     # Get all the other entries for the groups found in test
     #for (train, test) in splits:
+<<<<<<< HEAD
 
+=======
+>>>>>>> add hard-code expected result from split function
         print(f"Test: {test}")
         print(f"Train: {train}")
         # verify that they are not in the test set
@@ -1688,7 +1689,10 @@ def test_group_time_series_ordering_and_group_preserved():
 #in other words, if want to split every 5 minutes, 
 #there cannot be 5 groups that are uniformly distributed
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> add hard-code expected result from split function
 def test_group_time_series_more_splits_than_group():
     # Should fail if there are more folds than groups
     groups = np.array([1, 1, 1, 2, 2])
@@ -1696,5 +1700,8 @@ def test_group_time_series_more_splits_than_group():
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next,
                          GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+<<<<<<< HEAD
 
 >>>>>>> 8712a44e2... WIP Added initial tests for evaluation
+=======
+>>>>>>> add hard-code expected result from split function
