@@ -1679,7 +1679,7 @@ class MultiTaskElasticNet(Lasso):
     intercept_ : ndarray of shape (n_tasks,)
         Independent term in decision function.
 
-    coef_ : array of shape (n_tasks, n_features)
+    coef_ : ndarray of shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
         Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
