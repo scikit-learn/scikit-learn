@@ -195,7 +195,8 @@ class OneHotEncoder(_BaseEncoder):
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
-        - 'if_binary' : drop the first category in each binary feature.
+        - 'if_binary' : drop the first category in each feature with two
+          categories.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 

@@ -398,28 +398,49 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     assert_array_equal(expected_names, feature_names)
 
 
-def test_one_hot_encoder_drop_equals_if_binary():
-    X = [['Male', 1, 'yes', 10, 'true', 'a'],
-         ['Female', 3, 'no', 20, 'false', 'a'],
-         ['Female', 2, 'yes', 30, 'false', 'a']]
-    expected = np.array([[1., 1., 0., 0., 1., 1., 0., 0., 1., 1.],
-                         [0., 0., 0., 1., 0., 0., 1., 0., 0., 1.],
-                         [0., 0., 1., 0., 1., 0., 0., 1., 0., 1.]])
+@pytest.mark.parametrize(
+    "X, expected, expected_drop_idx_",
+    [
+        (
+            [['Male', 1],
+             ['Female', 3],
+             ['Female', 2]],
 
+            np.array([[1., 1., 0., 0.],
+                      [0., 0., 0., 1.],
+                      [0., 0., 1., 0.]]),
+
+            np.array([0, None]),
+        ),
+        (
+            [[10, 'yes'],
+             [20, 'no'],
+             [30, 'yes']],
+
+            np.array([[1., 0., 0., 1.],
+                      [0., 1., 0., 0.],
+                      [0., 0., 1., 1.]]),
+
+            np.array([None, 0]),
+        ),
+        (
+            [['true', 'a'],
+             ['false', 'a'],
+             ['false', 'a']],
+
+            np.array([[1., 1.],
+                      [0., 1.],
+                      [0., 1.]]),
+
+            np.array([0, None]),
+        ),
+    ]
+)
+def test_one_hot_encoder_drop_equals_if_binary(X, expected, expected_drop_idx_):
     ohe = OneHotEncoder(drop='if_binary', sparse=False)
     result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx_)
     assert_allclose(result, expected)
-
-
-def test_one_hot_encoder_drop_idx_if_binary():
-    X = [['Male', 1, 'yes', 'true', 10],
-         ['Female', 3, 'no', 'false', 10],
-         ['Female', 2, 'yes', 'false', 10]]
-    expected = np.array([0, None, 0, 0, None])
-    ohe = OneHotEncoder(drop='if_binary', sparse=False)
-    ohe.fit(X)
-    result = ohe.drop_idx_
-    assert_array_equal(result, expected)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
