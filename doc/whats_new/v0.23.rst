@@ -125,7 +125,7 @@ Changelog
   :class:`linear_model.GammaRegressor` and :class:`linear_model.TweedieRegressor`
   which use Poisson, Gamma and Tweedie distributions respectively.
   :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
-  `Olivier Grisel`_ and `Nicolas Hug`_.
+  and `Olivier Grisel`_.
 
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
