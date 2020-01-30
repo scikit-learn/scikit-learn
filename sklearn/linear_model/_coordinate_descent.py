@@ -151,7 +151,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         unnecessary memory duplication. If ``y`` is mono-output then ``X``
         can be sparse.
 
-    y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_outputs)
         Target values
 
     eps : float, default=1e-3
