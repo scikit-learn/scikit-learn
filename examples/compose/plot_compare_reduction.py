@@ -19,13 +19,13 @@ again the same transformers over and over.
 
 Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
-"""
 
 ###############################################################################
-# Illustration of ``Pipeline`` and ``GridSearchCV``
+Illustration of ``Pipeline`` and ``GridSearchCV``
 ###############################################################################
-# This section illustrates the use of a ``Pipeline`` with
-# ``GridSearchCV``
+
+This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
+"""
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
@@ -63,9 +63,9 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid, iid=False)
-digits = load_digits()
-grid.fit(digits.data, digits.target)
+grid = GridSearchCV(pipe, n_jobs=1, param_grid=param_grid)
+X, y = load_digits(return_X_y=True)
+grid.fit(X, y)
 
 mean_scores = np.array(grid.cv_results_['mean_test_score'])
 # scores are in the order of param_grid iteration, which is alphabetical
@@ -102,25 +102,22 @@ plt.show()
 #     cache. Hence, use the ``memory`` constructor parameter when the fitting
 #     of a transformer is costly.
 
-from tempfile import mkdtemp
-from shutil import rmtree
 from joblib import Memory
+from shutil import rmtree
 
 # Create a temporary folder to store the transformers of the pipeline
-cachedir = mkdtemp()
-memory = Memory(location=cachedir, verbose=10)
+location = 'cachedir'
+memory = Memory(location=location, verbose=10)
 cached_pipe = Pipeline([('reduce_dim', PCA()),
                         ('classify', LinearSVC(dual=False, max_iter=10000))],
                        memory=memory)
 
 # This time, a cached pipeline will be used within the grid search
-grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid,
-                    iid=False)
-digits = load_digits()
-grid.fit(digits.data, digits.target)
+
 
 # Delete the temporary cache before exiting
-rmtree(cachedir)
+memory.clear(warn=False)
+rmtree(location)
 
 ###############################################################################
 # The ``PCA`` fitting is only computed at the evaluation of the first

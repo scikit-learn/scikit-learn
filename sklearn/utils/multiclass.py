@@ -134,7 +134,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -227,7 +227,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
     >>> type_of_target([[1, 2]])
-    'multiclass-multioutput'
+    'multilabel-indicator'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
@@ -240,9 +240,9 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    sparseseries = (y.__class__.__name__ == 'SparseSeries')
-    if sparseseries:
-        raise ValueError("y cannot be class 'SparseSeries'.")
+    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    if sparse_pandas:
+        raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
@@ -333,7 +333,7 @@ def class_distribution(y, sample_weight=None):
     y : array like or sparse matrix of size (n_samples, n_outputs)
         The labels for each example.
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -353,6 +353,8 @@ def class_distribution(y, sample_weight=None):
     class_prior = []
 
     n_samples, n_outputs = y.shape
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
 
     if issparse(y):
         y = y.tocsc()
@@ -362,7 +364,7 @@ def class_distribution(y, sample_weight=None):
             col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
-                nz_samp_weight = np.asarray(sample_weight)[col_nonzero]
+                nz_samp_weight = sample_weight[col_nonzero]
                 zeros_samp_weight_sum = (np.sum(sample_weight) -
                                          np.sum(nz_samp_weight))
             else:

@@ -20,7 +20,8 @@ of the predict_proba method can be directly interpreted as a confidence level.
 For instance, a well calibrated (binary) classifier should classify the samples
 such that among the samples to which it gave a predict_proba value close to 0.8,
 approximately 80% actually belong to the positive class. The following plot compares
-how well the probabilistic predictions of different classifiers are calibrated:
+how well the probabilistic predictions of different classifiers are calibrated,
+using :func:`calibration_curve`:
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
@@ -169,7 +170,7 @@ probability vectors predicted by the same classifier after sigmoid calibration
 on a hold-out validation set. Colors indicate the true class of an instance
 (red: class 1, green: class 2, blue: class 3).
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_000.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
@@ -181,7 +182,7 @@ method='sigmoid' on the remaining 200 datapoints reduces the confidence of the
 predictions, i.e., moves the probability vectors from the edges of the simplex
 towards the center:
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_002.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 

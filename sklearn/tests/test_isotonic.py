@@ -3,12 +3,13 @@ import numpy as np
 import pickle
 import copy
 
+import pytest
+
 from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression, _make_unique)
 
 from sklearn.utils.validation import check_array
-from sklearn.utils.testing import (assert_raises, assert_array_equal,
-                                   assert_equal,
+from sklearn.utils._testing import (assert_raises, assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
@@ -311,8 +312,8 @@ def test_isotonic_regression_oob_clip():
     # Predict from  training and test x and check that min/max match.
     y1 = ir.predict([min(x) - 10, max(x) + 10])
     y2 = ir.predict(x)
-    assert_equal(max(y1), max(y2))
-    assert_equal(min(y1), min(y2))
+    assert max(y1) == max(y2)
+    assert min(y1) == min(y2)
 
 
 def test_isotonic_regression_oob_nan():
@@ -326,7 +327,7 @@ def test_isotonic_regression_oob_nan():
 
     # Predict from  training and test x and check that we have two NaNs.
     y1 = ir.predict([min(x) - 10, max(x) + 10])
-    assert_equal(sum(np.isnan(y1)), 2)
+    assert sum(np.isnan(y1)) == 2
 
 
 def test_isotonic_regression_oob_bad():
@@ -386,19 +387,19 @@ def test_isotonic_ymin_ymax():
                   -0.896, -0.377, -1.327, 0.180])
     y = isotonic_regression(x, y_min=0., y_max=0.1)
 
-    assert(np.all(y >= 0))
-    assert(np.all(y <= 0.1))
+    assert np.all(y >= 0)
+    assert np.all(y <= 0.1)
 
     # Also test decreasing case since the logic there is different
     y = isotonic_regression(x, y_min=0., y_max=0.1, increasing=False)
 
-    assert(np.all(y >= 0))
-    assert(np.all(y <= 0.1))
+    assert np.all(y >= 0)
+    assert np.all(y <= 0.1)
 
     # Finally, test with only one bound
     y = isotonic_regression(x, y_min=0., increasing=False)
 
-    assert(np.all(y >= 0))
+    assert np.all(y >= 0)
 
 
 def test_isotonic_zero_weight_loop():
@@ -478,12 +479,25 @@ def test_isotonic_dtype():
                             ensure_2d=False).dtype
 
             res = isotonic_regression(y_np, sample_weight=sample_weight)
-            assert_equal(res.dtype, expected_dtype)
+            assert res.dtype == expected_dtype
 
             X = np.arange(len(y)).astype(dtype)
             reg.fit(X, y_np, sample_weight=sample_weight)
             res = reg.predict(X)
-            assert_equal(res.dtype, expected_dtype)
+            assert res.dtype == expected_dtype
+
+
+@pytest.mark.parametrize(
+    "y_dtype", [np.int32, np.int64, np.float32, np.float64]
+)
+def test_isotonic_mismatched_dtype(y_dtype):
+    # regression test for #15004
+    # check that data are converted when X and y dtype differ
+    reg = IsotonicRegression()
+    y = np.array([2, 1, 4, 3, 5], dtype=y_dtype)
+    X = np.arange(len(y), dtype=np.float32)
+    reg.fit(X, y)
+    assert reg.predict(X).dtype == X.dtype
 
 
 def test_make_unique_dtype():

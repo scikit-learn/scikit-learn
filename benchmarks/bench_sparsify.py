@@ -45,7 +45,7 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
 from scipy.sparse.csr import csr_matrix
 import numpy as np
-from sklearn.linear_model.stochastic_gradient import SGDRegressor
+from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import r2_score
 
 np.random.seed(42)
@@ -77,7 +77,7 @@ X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 print("test data sparsity: %f" % sparsity_ratio(X_test))
 
 ###############################################################################
-clf = SGDRegressor(penalty='l1', alpha=.2, fit_intercept=True, max_iter=2000,
+clf = SGDRegressor(penalty='l1', alpha=.2, max_iter=2000,
                    tol=None)
 clf.fit(X_train, y_train)
 print("model sparsity: %f" % sparsity_ratio(clf.coef_))

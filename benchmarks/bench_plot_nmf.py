@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt
 from joblib import Memory
 import pandas
 
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition.nmf import NMF
-from sklearn.decomposition.nmf import _initialize_nmf
-from sklearn.decomposition.nmf import _beta_divergence
-from sklearn.decomposition.nmf import INTEGER_TYPES, _check_init
+from sklearn.decomposition import NMF
+from sklearn.decomposition._nmf import _initialize_nmf
+from sklearn.decomposition._nmf import _beta_divergence
+from sklearn.decomposition._nmf import _check_init
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array
@@ -213,13 +213,13 @@ class _PGNMF(NMF):
         return self
 
     def transform(self, X):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         H = self.components_
         W, _, self.n_iter_ = self._fit_transform(X, H=H, update_H=False)
         return W
 
     def inverse_transform(self, W):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -236,11 +236,12 @@ class _PGNMF(NMF):
         if n_components is None:
             n_components = n_features
 
-        if (not isinstance(n_components, INTEGER_TYPES) or
+        if (not isinstance(n_components, numbers.Integral) or
                 n_components <= 0):
             raise ValueError("Number of components must be a positive integer;"
                              " got (n_components=%r)" % n_components)
-        if not isinstance(self.max_iter, INTEGER_TYPES) or self.max_iter < 0:
+        if (not isinstance(self.max_iter, numbers.Integral) or
+                self.max_iter < 0):
             raise ValueError("Maximum number of iterations must be a positive "
                              "integer; got (max_iter=%r)" % self.max_iter)
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
