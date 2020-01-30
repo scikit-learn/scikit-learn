@@ -38,19 +38,29 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : {float, array-like}, shape = [n_targets]
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``(2*C)^-1`` in other linear models such as LogisticRegression or
-        LinearSVC. If an array is passed, penalties are assumed to be specific
-        to the targets. Hence they must correspond in number.
+    alpha : float or array-like of shape (n_targets,)
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number. See :ref:`ridge_regression` for formula.
 
     kernel : string or callable, default="linear"
-        Kernel mapping used internally. A callable should accept two arguments
-        and the keyword arguments passed to this object as kernel_params, and
-        should return a floating point number. Set to "precomputed" in
-        order to pass a precomputed kernel matrix to the estimator
-        methods instead of samples.
+        Kernel mapping used internally. This parameter is directly passed to
+        :class:`sklearn.metrics.pairwise.pairwise_kernel`.
+        If `kernel` is a string, it must be one of the metrics
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        If `kernel` is "precomputed", X is assumed to be a kernel matrix.
+        Alternatively, if `kernel` is a callable function, it is called on
+        each pair of instances (rows) and the resulting value recorded. The
+        callable should take two rows from X as input and return the
+        corresponding kernel value as a single number. This means that
+        callables from :mod:`sklearn.metrics.pairwise` are not allowed, as
+        they operate on matrices, not single samples. Use the string
+        identifying the kernel instead.
 
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
@@ -71,13 +81,13 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Attributes
     ----------
-    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
+    dual_coef_ : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Representation of weight vector(s) in kernel space
 
-    X_fit_ : {array-like, sparse matrix} of shape (n_samples, n_features)
+    X_fit_ : {ndarray, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
         kernel == "precomputed" this is instead the precomputed
-        training matrix, shape = [n_samples, n_samples].
+        training matrix, of shape (n_samples, n_samples).
 
     References
     ----------
@@ -134,8 +144,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
-            a precomputed kernel matrix, shape = [n_samples,
-            n_samples].
+            a precomputed kernel matrix, of shape (n_samples, n_samples).
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
