@@ -8,6 +8,7 @@ from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
+from .utils.validation import _check_sample_weight
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
@@ -121,10 +122,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     order = np.s_[:] if increasing else np.s_[::-1]
     y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
-    if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=y.dtype)
-    else:
-        sample_weight = np.array(sample_weight[order], dtype=y.dtype)
+    sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype)
+    sample_weight = np.ascontiguousarray(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
@@ -261,13 +260,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         # If sample_weights is passed, removed zero-weight values and clean
         # order
-        if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False,
-                                        dtype=X.dtype)
-            mask = sample_weight > 0
-            X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
-        else:
-            sample_weight = np.ones(len(y), dtype=X.dtype)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        mask = sample_weight > 0
+        X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
