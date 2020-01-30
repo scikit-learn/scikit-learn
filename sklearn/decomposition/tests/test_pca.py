@@ -579,6 +579,26 @@ def test_infer_dim_bad_spec():
     assert ret == 0
 
 
+def test_assess_dimension_error_rank_greater_than_features():
+    # Test that
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 4
+    rank = 5
+    with pytest.raises(ValueError):
+        ret=_assess_dimension_(spectrum, rank, n_samples, n_features)
+
+
+def test_assess_dimension_same_n_rank_and_features():
+    # Test that
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 4
+    rank = 4
+    ret=_assess_dimension_(spectrum, rank, n_samples, n_features)
+    assert ret is not None
+
+
 def test_assess_dimension_small_eigenvalues():
     # Test tiny eigenvalues appropriately when 'mle'
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
