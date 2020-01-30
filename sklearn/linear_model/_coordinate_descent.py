@@ -358,7 +358,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     alphas : ndarray of shape (n_alphas,)
         The alphas along the path where models are computed.
 
-    coefs : array of shape (n_features, n_alphas) or \
+    coefs : ndarray of shape (n_features, n_alphas) or \
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
 
