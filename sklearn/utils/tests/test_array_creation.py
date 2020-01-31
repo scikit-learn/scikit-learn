@@ -55,8 +55,20 @@ def test_empty_like_no_nep18():
         assert second_array.shape == (3, 5)
         assert second_array.dtype == np.float64
 
+        # and the dtype is optional for ndarrays
         second_array_same_type = empty_like(an_array, shape=(3, 5))
         assert second_array_same_type.shape == (3, 5)
         assert second_array_same_type.dtype == np.float32
+
+        c_like_array = empty_like(an_array.T, shape=(3, 5))
+        assert c_like_array.flags['C_CONTIGUOUS']
+
+        fortran_like_array = empty_like(an_array.T, order='A', shape=(3, 5))
+        assert fortran_like_array.flags['F_CONTIGUOUS']
+
+        # unlike numpy, we don't implement order=K
+        with pytest.raises(NotImplementedError):
+            empty_like(an_array, order='K', shape=(4, 2))
+
     finally:
         sklearn.utils.array_creation.np_version = real_np_version
