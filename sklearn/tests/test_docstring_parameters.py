@@ -216,7 +216,7 @@ def test_fit_docstring_attributes(name, Estimator):
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
-    IGNORED = ['Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+    IGNORED = ['BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
                'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor', 'IsolationForest',
