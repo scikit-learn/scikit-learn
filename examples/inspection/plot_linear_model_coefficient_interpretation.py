@@ -1,7 +1,7 @@
 """
-===============================================
-Interpretation of coefficients in linear models
-===============================================
+==================================================================
+Common pitfalls in interpretation of coefficients of linear models
+==================================================================
 
 .. contents::
    :local:
@@ -140,17 +140,17 @@ preprocessor = make_column_transformer(
 
 ##############################################################################
 # To describe the dataset as a linear model we choose to use a ridge regressor
-# and to model the logarithm of the WAGE.
-# We sample the regularization parameter space between 1.e-10 and 1.e10.
+# with a very small regularization and to model the logarithm of the WAGE.
+
 
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import Ridge
 from sklearn.compose import TransformedTargetRegressor
 
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
+        regressor=Ridge(alpha=1e-10),
         func=np.log10,
         inverse_func=sp.special.exp10
     )
@@ -160,15 +160,12 @@ model = make_pipeline(
 # Processing the dataset
 # ----------------------
 #
-# First, we fit the model and we verify which value of :math:`\alpha` has been
-# selected.
+# First, we fit the model.
 
 model.fit(X_train, y_train)
-model[-1].regressor_.alpha_
 
 ##############################################################################
-# Once verified that the :math:`\alpha` parameter is not at the boundary of
-# the sampled parameter space, we can check the performance of the computed
+# Then we check the performance of the computed
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
 
@@ -290,7 +287,7 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
-plt.title('Coefficient variability')
+plt.title('Coefficient importance variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -307,8 +304,7 @@ plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
-# positive the AGE one is in general negative and viceversa, except for a small
-# number of positive points around zero.
+# positive the AGE one is negative and viceversa.
 #
 # To go further we remove one of the 2 features and check what is the impact
 # on the model stability.
@@ -342,8 +338,6 @@ plt.subplots_adjust(left=.3)
 #
 # As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
-# In the following we will check how this approach will modify the analysis on
-# coefficient variability and interpretation.
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
 
@@ -362,14 +356,13 @@ preprocessor = make_column_transformer(
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
+        regressor=Ridge(alpha=1e-10),
         func=np.log10,
         inverse_func=sp.special.exp10
     )
 )
 
 model.fit(X_train, y_train)
-model[-1].regressor_.alpha_
 
 ##############################################################################
 # Again, we check the performance of the computed
@@ -427,17 +420,72 @@ plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
 ##############################################################################
-# The result is significantly different.
-# AGE and EXPERIENCE coefficients are less variable than other coefficients,
-# they are both positive.
+# The result is quite similar to the non-normalised case.
+#
+# Linear models with regularization
+# ---------------------------------
+#
+# In practice, Ridge Regression is more often used with some regularization.
+# Regularization improves the conditioning of the problem and reduces the
+# variance of the estimates. RidgeCV applies cross validation in order to
+# determine which value of the regularization parameter (`alpha`) is best
+# suited for the model estimation.
 
-plt.ylabel('Age coefficient')
-plt.xlabel('Experience coefficient')
-plt.grid(True)
-plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
+from sklearn.linear_model import RidgeCV
+from sklearn.compose import TransformedTargetRegressor
+
+model = make_pipeline(
+    preprocessor,
+    TransformedTargetRegressor(
+        regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
+        func=np.log10,
+        inverse_func=sp.special.exp10
+    )
+)
+
+model.fit(X_train, y_train)
 
 ##############################################################################
+# First we verify which value of :math:`\alpha` has been selected.
+
+model[-1].regressor_.alpha_
+
+##############################################################################
+# Then we check the quality of the predictions.
+
+y_pred = model.predict(X_train)
+mae = median_absolute_error(y_train, y_pred)
+string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+y_pred = model.predict(X_test)
+mae = median_absolute_error(y_test, y_pred)
+r2score = model.score(X_test, y_test)
+
+string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += '\nR2 score: {0:.4f}'.format(r2score)
+fig, ax = plt.subplots(figsize=(6, 6))
+sns.regplot(y_test, y_pred)
+
+plt.text(3, 20, string_score)
+
+plt.ylabel('Model predictions')
+plt.xlabel('Truths')
+plt.xlim([0, 27])
+plt.ylim([0, 27])
+
+##############################################################################
+# The R squared coefficient is similar to the non-regularized case.
+
+coefs = pd.DataFrame(
+    model.named_steps['transformedtargetregressor'].regressor_.coef_,
+    columns=['Coefficients'], index=feature_names
+)
+coefs.plot(kind='barh', figsize=(9, 7))
+plt.axvline(x=0, color='.5')
+plt.subplots_adjust(left=.3)
+
+##############################################################################
+# Coefficients are significantly different.
+# AGE and EXPERIENCE coefficients are both positive.
 # Even if the model is still not able to provide a good description of the
-# dataset, the normalization of numerical features clearly provides more
-# reliable results for the coefficients.
+# dataset, the regularization manages to lower the influence of correlated
+# variables on the model.
