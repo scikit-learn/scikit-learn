@@ -198,7 +198,8 @@ def test_fit_docstring_attributes(name, Estimator):
         est.k = 2
 
     X, y = make_classification(n_samples=20, n_features=3,
-                               n_redundant=0, n_classes=2)
+                               n_redundant=0, n_classes=2,
+                               random_state=2)
 
     y = _enforce_estimator_tags_y(est, y)
     X = _enforce_estimator_tags_x(est, X)
@@ -215,7 +216,7 @@ def test_fit_docstring_attributes(name, Estimator):
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
-    IGNORED = ['BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+    IGNORED = ['Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
                'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor', 'IsolationForest',
