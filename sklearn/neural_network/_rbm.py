@@ -57,11 +57,15 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         The verbosity level. The default, zero, means silent mode.
 
     random_state : integer or RandomState, default=None
-        Determines random number generation for Gibbs sampling from visible
-        and hidden layers; for initializing components, sampling from
-        visible layers and sampling hidden activations during fit and partial
-        fit; for corrupting a feature of a sample in score_samples. Pass an
-        int for reproducible results across multiple function calls.
+        Determines random number generation for:
+
+        - Gibbs sampling from visible and hidden layers.
+
+        - Initializing components, sampling from layers during fit.
+
+        - Corrupting the data when scoring samples.
+
+        Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
