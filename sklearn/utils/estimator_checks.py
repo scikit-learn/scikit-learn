@@ -2271,7 +2271,7 @@ def check_class_weight_classifiers(name, classifier_orig, request=None):
                      request)
     if name.endswith("NB"):
         # FIXME SOON!
-        _raise_xfail("NaiveByes classifiers have a somewhat different "
+        _raise_xfail("NaiveBayes classifiers have a somewhat different "
                      "interface.", request)
 
     if _safe_tags(classifier_orig, 'binary_only'):
