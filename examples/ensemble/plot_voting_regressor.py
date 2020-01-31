@@ -5,7 +5,7 @@ Plot individual and voting regression predictions
 
 .. currentmodule:: sklearn
 
-Plot individual and averaged regression predictions for Boston dataset.
+Plot individual and averaged regression predictions for diabetes dataset.
 
 First, three exemplary regressors are initialized
 (:class:`~ensemble.GradientBoostingRegressor`,
@@ -27,7 +27,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
 
 # Loading some example data
-X, y = datasets.load_boston(return_X_y=True)
+X, y = datasets.load_diabetes(return_X_y=True)
 
 # Training classifiers
 reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
