@@ -1,4 +1,4 @@
-  # make it explicit that we favor the new container-based travis workers
+# make it explicit that we favor the new container-based travis workers
 language: python
 
 cache:
