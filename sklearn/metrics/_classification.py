@@ -2425,8 +2425,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
-                     bin_size_ratio=0.1, sliding_window=False, pos_label=None, debiased=True):
+def calibration_loss(y_true, y_prob, sample_weight=None, norm="avg",
+                     n_bins=10, pos_label=None, reduce_bias=True):
     """Compute calibration loss.
 
     Across all items in a set of N predictions, the calibration loss measures
@@ -2452,26 +2452,18 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    reducer : 'avg' | 'max' | 'l2'
-        Aggregation method.
+    norm : 'l1' | 'l2' | 'max'
+        Norm method.
 
-    bin_size_ratio : float, optional (default=0.1)
-        Ratio of the size of bins over the size of input arrays.
-        Each bins will contain N * bin_size_ratio elements.
-        Smaller bin_size_ratio might increase the accuracy of the calibration
-        loss, provided sufficient data in bins.
-
-    sliding_window : bool, optional (default=False)
-        If true, compute the loss based on overlapping bins. Each neighboring
-        bins share all but 2 elements.
+    n_bins : int, optional (default=10)
+       The number of bins to compute error on. 
 
     pos_label : int or str, optional (default=None)
         Label of the positive class. If None, the maximum label is used as
         positive class
 
-     debiased : bool, optional (default=True)
-        Apply debiasing term as in Verified Uncertainty Calibration, A. Kumar. This
-        uses l2 reducer. 
+    reduce_bias : bool, optional (default=True)
+        Add debiasing term as in Verified Uncertainty Calibration, A. Kumar
 
     Returns
     -------
@@ -2484,16 +2476,16 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     >>> from sklearn.metrics import calibration_loss
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5)
+    >>> calibration_loss(y_true, y_pred, n_bins=5)
     0.0
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, \
-                         reducer="max")
+    >>> calibration_loss(y_true, y_pred, n_bins=5, \
+                         norm="max")
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5)
+    >>> calibration_loss(y_true, y_pred, n_bins=5)
     0.25
-    >>> calibration_loss(y_true, y_pred, bin_size_ratio=0.5, \
-                         reducer="max")
+    >>> calibration_loss(y_true, y_pred, n_bins=5, \
+                         norm="max")
     0.25
     """
     y_true = column_or_1d(y_true)
@@ -2517,65 +2509,47 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     if sample_weight is not None:
         sample_weight = sample_weight[remapping]
 
-    if sliding_window:
-        if sample_weight:
-            raise ValueError("sample_weight is incompatible with "
-                             "sliding_window set to True")
-        bin_size = int(bin_size_ratio * y_true.shape[0])
-        # compute averages over a sliding window of size bin_size
-        cumsum_true = np.zeros(y_true.shape[0] + 1)
-        cumsum_true[1:] = np.cumsum(y_true)
-        cumsum_prob = np.zeros(y_prob.shape[0] + 1)
-        cumsum_prob[1:] = np.cumsum(y_prob)
-        avg_pos = ((cumsum_true[bin_size:] - cumsum_true[:-bin_size])
-                   / bin_size)
-        avg_pred = ((cumsum_prob[bin_size:] - cumsum_prob[:-bin_size])
-                    / bin_size)
-        deltas = np.abs(avg_pos - avg_pred)
-        if reducer == "max":
-            loss = deltas.max()
-        elif reducer == "avg":
-            loss = deltas.sum()
-            count = deltas.shape[0]
-    else:
-        i_thres = np.searchsorted(y_prob,
-                                  np.arange(0, 1, bin_size_ratio)).tolist()
-        i_thres.append(y_true.shape[0])
-        for i, i_start in enumerate(i_thres[:-1]):
-            i_end = i_thres[i+1]
-            if sample_weight is None:
-                delta_count = float(i_end - i_start)
-                avg_pred_true = y_true[i_start:i_end].sum() / delta_count
-                bin_centroid = y_prob[i_start:i_end].sum() / delta_count
-            else:
-                delta_count = float(sample_weight[i_start:i_end].sum())
-                avg_pred_true = (np.dot(y_true[i_start:i_end],
-                                        sample_weight[i_start:i_end])
-                                 / delta_count)
-                bin_centroid = (np.dot(y_prob[i_start:i_end],
-                                       sample_weight[i_start:i_end])
+    i_thres = np.searchsorted(y_prob,
+                                np.arange(0, 1, 1./n_bins)).tolist()
+    i_thres.append(y_true.shape[0])
+    for i, i_start in enumerate(i_thres[:-1]):
+        i_end = i_thres[i+1]
+        if sample_weight is None:
+            delta_count = float(i_end - i_start)
+            avg_pred_true = y_true[i_start:i_end].sum() / delta_count
+            bin_centroid = y_prob[i_start:i_end].sum() / delta_count
+        else:
+            delta_count = float(sample_weight[i_start:i_end].sum())
+            avg_pred_true = (np.dot(y_true[i_start:i_end],
+                                    sample_weight[i_start:i_end])
                                 / delta_count)
-            count += delta_count
-            if debiased:
-                reducer = "l2"
-                delta_debias = bin_centroid*(1-bin_centroid) * delta_count
-                delta_debias /= y_true.shape[0]*delta_count-1
-                if not np.isnan(delta_debias):
-                     debias += delta_debias
-            if reducer == "max":
-                loss = max(loss, abs(avg_pred_true - bin_centroid))
-            elif reducer == "avg":
-                delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
-                if not np.isnan(delta_loss):
-                    loss += delta_loss
-            elif reducer == "l2":
-                 delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
-                 if not np.isnan(delta_loss):
-                     loss += delta_loss
-            else:
-                raise ValueError("reducer is neither 'avg', 'max' nor 'l2'")
-    if reducer == "avg" or reducer == "l2":
+            bin_centroid = (np.dot(y_prob[i_start:i_end],
+                                    sample_weight[i_start:i_end])
+                            / delta_count)
+        count += delta_count
+        if reduce_bias:
+            norm = "l2"
+            delta_debias = avg_pred_true*(avg_pred_true-1) * delta_count
+            delta_debias /= y_true.shape[0]*delta_count-1
+            if not np.isnan(delta_debias):
+                debias += delta_debias
+        if norm == "max":
+            loss = max(loss, abs(avg_pred_true - bin_centroid))
+        elif norm == "l1":
+            delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
+            if not np.isnan(delta_loss):
+                loss += delta_loss
+        elif norm == "l2":
+            delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
+            if not np.isnan(delta_loss):
+                loss += delta_loss
+        else:
+            raise ValueError("norm is neither 'l1', 'l2' nor 'max'")
+    if norm == "l1":
         loss /= count
-    if debiased:
-        loss -= debias
+    if norm == "l2":
+        loss /= count
+        if reduce_bias:
+            loss += debias
+        loss = np.sqrt(max(loss, 0.))
     return loss
