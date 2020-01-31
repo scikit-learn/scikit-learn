@@ -79,16 +79,16 @@ stacking_regressor = StackingRegressor(
 
 
 ###############################################################################
-# We used the Boston data set (prediction of house prices). We check the
-# performance of each individual predictor as well as the stack of the
-# regressors.
+# We used the diabetes data set (prediction of the disease progression from the
+# baseline). We check the performance of each individual predictor as well as
+# the stack of the regressors.
 
 import time
 import numpy as np
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.model_selection import cross_validate, cross_val_predict
 
-X, y = load_boston(return_X_y=True)
+X, y = load_diabetes(return_X_y=True)
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
