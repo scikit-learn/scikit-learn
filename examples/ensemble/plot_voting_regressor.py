@@ -35,8 +35,10 @@ from sklearn.ensemble import VotingRegressor
 =================================
 Training classifiers
 =================================
-
-
+First, we are going to load diabetes dataset and initiate gradient boosting
+regressor, random forest regressor and linear regression. We set random_state
+to 1 to have the same results after each run. Next, we are going to use each of
+the initialized regressors to build the voting regressor.
 
 """
 
@@ -44,8 +46,8 @@ Training classifiers
 X, y = datasets.load_diabetes(return_X_y=True)
 
 # Training classifiers
-reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
-reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+reg1 = GradientBoostingRegressor(random_state=1)
+reg2 = RandomForestRegressor(random_state=1)
 reg3 = LinearRegression()
 ereg = VotingRegressor([('gb', reg1), ('rf', reg2), ('lr', reg3)])
 reg1.fit(X, y)
