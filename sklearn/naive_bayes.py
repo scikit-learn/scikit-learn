@@ -1200,17 +1200,14 @@ class CategoricalNB(_BaseDiscreteNB):
                 return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
             return cat_count
 
-        def _update_cat_count(X_feature, Y, cat_count, n_classes,
-                              n_categories):
+        def _update_cat_count(X_feature, Y, cat_count, n_classes):
             for j in range(n_classes):
                 mask = Y[:, j].astype(bool)
                 if Y.dtype.type == np.int64:
                     weights = None
                 else:
                     weights = Y[mask, j]
-                minlength = n_categories if n_categories > 0 else None
-                counts = np.bincount(X_feature[mask], weights=weights,
-                                     minlength=minlength)
+                counts = np.bincount(X_feature[mask], weights=weights)
                 indices = np.nonzero(counts)[0]
                 cat_count[j, indices] += counts[indices]
 
@@ -1222,8 +1219,7 @@ class CategoricalNB(_BaseDiscreteNB):
                 self.category_count_[i], self.n_categories_[i] - 1)
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
-                              self.class_count_.shape[0],
-                              self.n_categories_[i] - 1)
+                              self.class_count_.shape[0])
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = []
