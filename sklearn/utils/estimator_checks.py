@@ -52,7 +52,9 @@ from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..datasets import (load_iris, load_boston, make_blobs,
-                        make_multilabel_classification, make_regression)
+                        make_multilabel_classification, make_regression,
+                        make_classification)
+
 
 
 BOSTON = None
@@ -1346,27 +1348,46 @@ def check_estimators_dtypes(name, estimator_orig):
 
 def check_estimators_preserve_dtypes(name, estimator_orig):
 
-    X = np.random.RandomState(0).randn(50, 5)
-    y = np.random.RandomState(0).randn(50)
+    #X = np.random.RandomState(0).randn(50, 5).astype(np.float32)
+    if is_classifier(estimator_orig):
+        X, y = make_classification(n_samples=50, n_features=5)
+    else:
+        X, y = make_regression(n_samples=50, n_features=5)
+    if _safe_tags(estimator_orig, "requires_positive_X"):
+        X = np.absolute(X)
+    if _safe_tags(estimator_orig, "requires_positive_y"):
+        y = np.absolute(y)
+    X = X.astype(np.float32)
+    #y = np.random.RandomState(0).randn(50).astype(np.float32)
 
-    for dtype_in, dtype_out in [(np.float32, np.float32),
-                                (np.float64, np.float64),
-                                (np.float16, np.float64)]:
-        X_cast = X.copy().astype(dtype_in)
+    Xts = []
+    in_out_types = [(np.float64, np.float64),
+                    (np.float32, np.float32),
+                    (np.float16, np.float64)]
+    for dtype_in, dtype_out in in_out_types:
+        X_cast = X.astype(dtype_in)
         estimator = clone(estimator_orig)
         set_random_state(estimator)
         if hasattr(estimator, 'fit_transform'):
             X_trans = estimator.fit_transform(X_cast, y)
-        elif hasattr(estimator, 'fit') and hasattr(estimator, 'transform'):
+        elif hasattr(estimator, 'fit'):
             estimator.fit(X_cast, y)
-            X_trans = estimator.transform(X_cast, y)
+            X_trans = estimator.transform(X_cast)
 
         # FIXME: should we check that the dtype of some attributes are the
         # same than dtype and check that the value of attributes
         # between 32bit and 64bit are close
-        assert X_trans.dtype == dtype_out, \
-            ('Estimator transform dtype: {} - orginal/expected dtype: {}'
-             .format(X_trans.dtype, dtype_out.__name__))
+        #assert X_trans.dtype == dtype_out, \
+        #    ('Estimator transform dtype: {} - orginal/expected dtype: {}'
+        #     .format(X_trans.dtype, dtype_out.__name__))
+        Xts.append(X_trans)
+    
+    # We assume float64 input is correct and compare all the others
+    # against them.
+    for i in range(1, len(Xts)):
+        assert_allclose(Xts[1], Xts[0], rtol=1e-4,
+                        err_msg='dtype_in: {} dtype_out: {}\n'.format(in_out_types[i][0].__name__, in_out_types[i][1].__name__))
+
 
 
 @ignore_warnings(category=FutureWarning)
