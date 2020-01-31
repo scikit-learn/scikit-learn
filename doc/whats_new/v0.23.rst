@@ -149,7 +149,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in `_regression.mean_squared_error` to not ignore
+- |Fix| Fixed a bug in  :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`. 
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
