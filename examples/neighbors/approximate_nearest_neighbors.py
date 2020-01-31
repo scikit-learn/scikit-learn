@@ -210,8 +210,7 @@ def test_transformers():
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
     mnist = fetch_openml("mnist_784")
-    X, y = shuffle(mnist.data[:60000], mnist.target[:60000],
-                   random_state=0)
+    X, y = shuffle(mnist.data, mnist.target, random_state=2)
     return X[:n_samples] / 255, y[:n_samples]
 
 
