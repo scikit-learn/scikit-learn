@@ -25,7 +25,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
-from scipy.stats import bernoulli, expon, uniform
+from scipy.stats import bernoulli, expon, uniform, ttest_rel
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
@@ -1914,3 +1914,69 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+@pytest.mark.parametrize("param_grid", [{'C': [1, 10]},
+                                        {'kernel': ('linear', 'rbf'),
+                                        'C': [1, 10]}])
+@pytest.mark.parametrize("scorers", [['accuracy'], ['accuracy', 'roc_auc']])
+def test_search_correct_stats_output(param_grid, scorers):
+    # test datatype and shape of statistical outputs is correct
+    X, y = make_blobs(random_state=0, centers=2)
+    clf = SVC(random_state=0)
+    n_splits = 5
+
+    search = GridSearchCV(clf, param_grid, scoring=scorers, refit=False,
+                          cv=n_splits, return_stats=True).fit(X, y)
+    n_cand = len(search.cv_results_['params'])
+
+    for score in scorers:
+        ttest_results = search.cv_results_['ttest_test_%s' % score]
+        # assert number of rows is correct
+        assert len(ttest_results) == n_cand
+        # assert number of comparisons per candidate is correct
+        assert len(ttest_results[0]) == n_cand
+
+        # assert datatype is correct
+        assert all(isinstance(ttest_results[i], np.ma.MaskedArray)
+                   for i in range(n_cand))
+
+
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_search_correct_stats_results(SearchCV):
+    # test that correct stat results are returned
+    X, y = make_blobs(random_state=0, centers=2)
+    clf = SVC(random_state=0)
+    parameters = {'C': [0.1, 1, 10]}
+    scorers = ['accuracy', 'roc_auc']
+    n_splits = 5
+
+    search = SearchCV(clf, parameters, scoring=scorers, refit=False,
+                      cv=n_splits, return_stats=True).fit(X, y)
+
+    for score in scorers:
+        test_scores_cand0 = np.array(list(search.cv_results_['split%d_test_%s'
+                                                             % (s_i, score)][0]
+                                     for s_i in range(search.n_splits_)))
+
+        test_scores_cand1 = np.array(list(search.cv_results_['split%d_test_%s'
+                                                             % (s_i, score)][1]
+                                     for s_i in range(search.n_splits_)))
+
+        _, ttest_result = ttest_rel(test_scores_cand0, test_scores_cand1)
+        cv_results_ttest = search.cv_results_['ttest_test_%s' % score]
+        assert ttest_result == cv_results_ttest[0][1]
+
+        # assert values in the matrix are symmetrical
+        assert np.allclose(np.asarray(cv_results_ttest),
+                           np.asarray(cv_results_ttest).T)
+
+
+def test_search_no_stats_output():
+    # test no stat output is given by default
+    X, y = make_blobs(random_state=0, centers=2)
+
+    search = GridSearchCV(SVC(), {'C': [0.1, 1]}, scoring='accuracy',
+                          cv=5).fit(X, y)
+
+    assert 'ttest_test_score' not in search.cv_results_
