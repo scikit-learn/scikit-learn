@@ -1,8 +1,8 @@
-"""Test the california_housing loader.
+"""Test the california_housing loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 
-Skipped if california_housing is not already downloaded to data_home.
-"""
-
+import os
 import pytest
 
 from sklearn.datasets import fetch_california_housing
@@ -15,8 +15,12 @@ def fetch(*args, **kwargs):
 
 
 def _is_california_housing_dataset_not_available():
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
     try:
-        fetch_california_housing(download_if_missing=False)
+        fetch_california_housing(download_if_missing=download_if_missing)
         return False
     except IOError:
         return True

@@ -1,18 +1,23 @@
-"""Test  kddcup99 loader. Only 'percent10' mode is tested, as the full data
-is too big to use in unit-testing.
+"""Test  kddcup99 loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job).
 
-The test is skipped if the data wasn't previously fetched and saved to
-scikit-learn data folder.
+Only 'percent10' mode is tested, as the full data
+is too big to use in unit-testing.
 """
 
+import os
 from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils._testing import SkipTest
 from functools import partial
 
 
-
 def test_percent10():
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
     try:
         data = fetch_kddcup99(download_if_missing=False)
     except IOError:

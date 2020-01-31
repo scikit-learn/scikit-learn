@@ -1,4 +1,8 @@
-"""Test Olivetti faces fetcher, if the data is available."""
+"""Test Olivetti faces fetcher, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
+
+import os
 import pytest
 import numpy as np
 
@@ -10,8 +14,12 @@ from sklearn.utils._testing import assert_array_equal
 
 
 def _is_olivetti_faces_not_available():
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
     try:
-        datasets.fetch_olivetti_faces(download_if_missing=False)
+        datasets.fetch_olivetti_faces(download_if_missing=download_if_missing)
         return False
     except IOError:
         return True

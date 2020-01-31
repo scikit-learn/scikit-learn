@@ -1,8 +1,8 @@
-"""Test the covtype loader.
+"""Test the covtype loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 
-Skipped if covtype is not already downloaded to data_home.
-"""
-
+import os
 from sklearn.datasets import fetch_covtype
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
@@ -10,7 +10,12 @@ from functools import partial
 
 
 def fetch(*args, **kwargs):
-    return fetch_covtype(*args, download_if_missing=False, **kwargs)
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
+    return fetch_covtype(*args, download_if_missing=download_if_missing,
+                         **kwargs)
 
 
 def test_fetch():
