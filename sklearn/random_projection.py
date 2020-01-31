@@ -464,6 +464,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         at fit time.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
     Attributes
     ----------
     n_components_ : int
