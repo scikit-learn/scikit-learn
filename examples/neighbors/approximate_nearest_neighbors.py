@@ -46,8 +46,6 @@ Sample output::
 # License: BSD 3 clause
 import time
 import sys
-import io
-import urllib
 
 try:
     import annoy
@@ -62,11 +60,9 @@ except ImportError:
     sys.exit()
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 from scipy.sparse import csr_matrix
-from scipy.io import arff
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
@@ -211,25 +207,19 @@ def test_transformers():
     assert_array_almost_equal(Xt0.toarray(), Xt2.toarray(), decimal=5)
 
 
-def load_mnist(n_samples_list):
+def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    url = 'https://www.openml.org/data/v1/download/18689782/MNIST.arff'
-    fstream = urllib.request.urlopen(url)
-    data, meta = arff.loadarff(io.StringIO(fstream.read().decode('utf-8')))
-    df = pd.DataFrame(np.array(data.tolist(), dtype=np.float64),
-                      columns=meta.names())
-    df_X = df.drop('class', axis=1)
-    df_y = df['class'].astype(int)
-    X, y = shuffle(df_X.to_numpy(), df_y.to_numpy(), random_state=42)
-    datasets = [
-        ('MINST_{}'.format(n_samples), (X[:n_samples], y[:n_samples]))
-        for n_samples in n_samples_list
-    ]
-    return datasets
+    mnist = fetch_openml("mnist_784")
+    X, y = shuffle(mnist.data[:60000], mnist.target[:60000],
+                   random_state=0)
+    return X[:n_samples] / 255, y[:n_samples]
 
 
 def run_benchmark():
-    datasets = load_mnist(n_samples_list=[2000, 10000])
+    datasets = [
+        ('MNIST_2000', load_mnist(n_samples=2000)),
+        ('MNIST_10000', load_mnist(n_samples=10000)),
+    ]
 
     n_iter = 500
     perplexity = 30
@@ -289,8 +279,8 @@ def run_benchmark():
             # plot TSNE embedding which should be very similar across methods
             if 'TSNE' in transformer_name:
                 axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
-                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
-                                   cmap=plt.cm.viridis)
+                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y.astype(np.int32),
+                                   alpha=0.2, cmap=plt.cm.viridis)
                 axes[i_ax].xaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].yaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].axis('tight')
