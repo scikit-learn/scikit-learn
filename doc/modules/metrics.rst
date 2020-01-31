@@ -33,6 +33,34 @@ the kernel:
     2. ``S = 1. / (D / np.max(D))``
 
 
+.. currentmodule:: sklearn.metrics
+
+The distances between the row vectors of ``X`` and the row vectors of ``Y``
+can be evaluated using :func:`pairwise_distances`. If ``Y`` is omitted the
+pairwise distances of the row vectors of ``X`` are calculated. Similarly,
+:func:`pairwise.pairwise_kernels` can be used to calculate the kernel between `X`
+and `Y` using different kernel functions. See the API reference for more
+details.
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> X = np.array([[2, 3], [3, 5], [5, 8]])
+    >>> Y = np.array([[1, 0], [2, 1]])
+    >>> pairwise_distances(X, Y, metric='manhattan')
+    array([[ 4.,  2.],
+           [ 7.,  5.],
+           [12., 10.]])
+    >>> pairwise_distances(X, metric='manhattan')
+    array([[0., 3., 8.],
+           [3., 0., 5.],
+           [8., 5., 0.]])
+    >>> pairwise_kernels(X, Y, metric='linear')
+    array([[ 2.,  7.],
+           [ 3., 11.],
+           [ 5., 18.]])
+
+
 .. currentmodule:: sklearn.metrics.pairwise
 
 .. _cosine_similarity:
@@ -165,7 +193,7 @@ It can be computed using :func:`chi2_kernel` and then passed to an
     >>> X = [[0, 1], [1, 0], [.2, .8], [.7, .3]]
     >>> y = [0, 1, 0, 1]
     >>> K = chi2_kernel(X, gamma=.5)
-    >>> K                        # doctest: +ELLIPSIS
+    >>> K
     array([[1.        , 0.36787944, 0.89483932, 0.58364548],
            [0.36787944, 1.        , 0.51341712, 0.83822343],
            [0.89483932, 0.51341712, 1.        , 0.7768366 ],

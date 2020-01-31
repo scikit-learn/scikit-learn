@@ -14,9 +14,7 @@ better**.
 ::
 
     >>> from sklearn import datasets, svm
-    >>> digits = datasets.load_digits()
-    >>> X_digits = digits.data
-    >>> y_digits = digits.target
+    >>> X_digits, y_digits = datasets.load_digits(return_X_y=True)
     >>> svc = svm.SVC(C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
     0.98
@@ -38,7 +36,7 @@ data in *folds* that we use for training and testing::
     ...     y_test = y_train.pop(k)
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
-    >>> print(scores)  # doctest: +ELLIPSIS
+    >>> print(scores)
     [0.934..., 0.956..., 0.939...]
 
 .. currentmodule:: sklearn.model_selection
@@ -73,7 +71,7 @@ This example shows an example usage of the ``split`` method.
 The cross-validation can then be performed easily::
 
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...  for train, test in k_fold.split(X_digits)]  # doctest: +ELLIPSIS
+    ...  for train, test in k_fold.split(X_digits)]
     [0.963..., 0.922..., 0.963..., 0.963..., 0.930...]
 
 The cross-validation score can be directly calculated using the
@@ -263,18 +261,13 @@ scikit-learn exposes :ref:`cross_validation` estimators that set their
 parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
-    >>> lasso = linear_model.LassoCV(cv=3)
-    >>> diabetes = datasets.load_diabetes()
-    >>> X_diabetes = diabetes.data
-    >>> y_diabetes = diabetes.target
+    >>> lasso = linear_model.LassoCV()
+    >>> X_diabetes, y_diabetes = datasets.load_diabetes(return_X_y=True)
     >>> lasso.fit(X_diabetes, y_diabetes)
-    LassoCV(alphas=None, copy_X=True, cv=3, eps=0.001, fit_intercept=True,
-        max_iter=1000, n_alphas=100, n_jobs=None, normalize=False,
-        positive=False, precompute='auto', random_state=None,
-        selection='cyclic', tol=0.0001, verbose=False)
+    LassoCV()
     >>> # The estimator chose automatically its lambda:
-    >>> lasso.alpha_ # doctest: +ELLIPSIS
-    0.01229...
+    >>> lasso.alpha_
+    0.00375...
 
 These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.

@@ -7,7 +7,7 @@
 # License: BSD 3 clause
 
 #!python
-#cython: boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
@@ -111,24 +111,24 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
         np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
                                                              dtype=np.int64)
 
-    for i in xrange(non_zero):
+    for i in range(non_zero):
         col_ind = X_indices[i]
         if not isnan(X_data[i]):
             means[col_ind] += X_data[i]
         else:
             counts_nan[col_ind] += 1
 
-    for i in xrange(n_features):
+    for i in range(n_features):
         means[i] /= (n_samples - counts_nan[i])
 
-    for i in xrange(non_zero):
+    for i in range(non_zero):
         col_ind = X_indices[i]
         if not isnan(X_data[i]):
             diff = X_data[i] - means[col_ind]
             variances[col_ind] += diff * diff
             counts[col_ind] += 1
 
-    for i in xrange(n_features):
+    for i in range(n_features):
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
         variances[i] /= (n_samples - counts_nan[i])
 
@@ -171,7 +171,6 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.npy_intp i, j
         unsigned long long counts
         unsigned long long startptr
-        unsigned long long endptr
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means
@@ -189,13 +188,13 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     cdef np.ndarray[np.int64_t, ndim=1] counts_nan = np.zeros(n_features,
                                                               dtype=np.int64)
 
-    for i in xrange(n_features):
+    for i in range(n_features):
 
         startptr = X_indptr[i]
         endptr = X_indptr[i + 1]
         counts = endptr - startptr
 
-        for j in xrange(startptr, endptr):
+        for j in range(startptr, endptr):
             if not isnan(X_data[j]):
                 means[i] += X_data[j]
             else:
@@ -203,7 +202,7 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         counts -= counts_nan[i]
         means[i] /= (n_samples - counts_nan[i])
 
-        for j in xrange(startptr, endptr):
+        for j in range(startptr, endptr):
             if not isnan(X_data[j]):
                 diff = X_data[j] - means[i]
                 variances[i] += diff * diff
@@ -321,12 +320,12 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         new_mean, new_var, counts_nan = _csc_mean_variance_axis0(
             X_data, n_samples, n_features, X_indices, X_indptr)
 
-    for i in xrange(n_features):
+    for i in range(n_features):
         new_n[i] -= counts_nan[i]
 
     # First pass
     cdef bint is_first_pass = True
-    for i in xrange(n_features):
+    for i in range(n_features):
         if last_n[i] > 0:
             is_first_pass = False
             break
@@ -334,19 +333,19 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         return new_mean, new_var, new_n
 
     # Next passes
-    for i in xrange(n_features):
+    for i in range(n_features):
         updated_n[i] = last_n[i] + new_n[i]
         last_over_new_n[i] = last_n[i] / new_n[i]
 
     # Unnormalized stats
-    for i in xrange(n_features):
+    for i in range(n_features):
         last_mean[i] *= last_n[i]
         last_var[i] *= last_n[i]
         new_mean[i] *= new_n[i]
         new_var[i] *= new_n[i]
 
     # Update stats
-    for i in xrange(n_features):
+    for i in range(n_features):
         updated_var[i] = (last_var[i] + new_var[i] +
                           last_over_new_n[i] / updated_n[i] *
                           (last_mean[i] / last_over_new_n[i] - new_mean[i])**2)
@@ -375,10 +374,10 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
     cdef np.npy_intp i, j
     cdef double sum_
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         sum_ = 0.0
 
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+        for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += fabs(X_data[j])
 
         if sum_ == 0.0:
@@ -386,7 +385,7 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
             # correctly)
             continue
 
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+        for j in range(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
 
 
@@ -405,10 +404,10 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
     cdef np.npy_intp i, j
     cdef double sum_
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         sum_ = 0.0
 
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+        for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += (X_data[j] * X_data[j])
 
         if sum_ == 0.0:
@@ -418,7 +417,7 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
 
         sum_ = sqrt(sum_)
 
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+        for j in range(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
 
 

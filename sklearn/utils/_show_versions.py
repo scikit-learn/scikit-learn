@@ -9,6 +9,8 @@ import platform
 import sys
 import importlib
 
+from ._openmp_helpers import _openmp_parallelism_enabled
+
 
 def _get_sys_info():
     """System information
@@ -47,6 +49,8 @@ def _get_deps_info():
         "scipy",
         "Cython",
         "pandas",
+        "matplotlib",
+        "joblib",
     ]
 
     def get_version(module):
@@ -68,49 +72,19 @@ def _get_deps_info():
     return deps_info
 
 
-def _get_blas_info():
-    """Information on system BLAS
-
-    Uses the `scikit-learn` builtin method
-    :func:`sklearn._build_utils.get_blas_info` which may fail from time to time
-
-    Returns
-    -------
-    blas_info: dict
-        system BLAS information
-
-    """
-    from .._build_utils import get_blas_info
-
-    cblas_libs, blas_dict = get_blas_info()
-
-    macros = ['{key}={val}'.format(key=a, val=b)
-              for (a, b) in blas_dict.get('define_macros', [])]
-
-    blas_blob = [
-        ('macros', ', '.join(macros)),
-        ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),
-        ('cblas_libs', ', '.join(cblas_libs)),
-    ]
-
-    return dict(blas_blob)
-
-
 def show_versions():
-    "Print useful debugging information"
+    """Print useful debugging information"""
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
-    blas_info = _get_blas_info()
 
     print('\nSystem:')
     for k, stat in sys_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nBLAS:')
-    for k, stat in blas_info.items():
-        print("{k:>10}: {stat}".format(k=k, stat=stat))
-
-    print('\nPython deps:')
+    print('\nPython dependencies:')
     for k, stat in deps_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
+
+    print("\n{k:>10}: {stat}".format(k="Built with OpenMP",
+                                     stat=_openmp_parallelism_enabled()))

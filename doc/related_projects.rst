@@ -90,8 +90,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model export for production**
 
-- `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
-  Serialization of (some) scikit-learn estimators into PMML.
+- `onnxmltools <https://github.com/onnx/onnxmltools>`_ Serializes many
+  Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
+  prediction.
 
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
@@ -116,6 +117,8 @@ scikit-learn for additional learning algorithms, infrastructures
 and tasks.
 
 **Structured learning**
+
+- `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
 
 - `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification
   using HMMs or structured perceptron.
@@ -150,6 +153,9 @@ and tasks.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
+  
+- `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible 
+  neural network library that wraps PyTorch.
 
 **Broad scope**
 
@@ -250,6 +256,28 @@ Other packages useful for data analysis and machine learning.
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
 
+Recommendation Engine packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ - `GraphLab
+   <https://turi.com/products/create/docs/graphlab.toolkits.recommender.html>`_
+   Implementation of classical recommendation techniques (in C++, with
+   Python bindings).
+
+- `implicit <https://github.com/benfred/implicit>`_, Library for implicit
+  feedback datasets.
+
+- `lightfm <https://github.com/lyst/lightfm>`_ A Python/Cython
+  implementation of a hybrid recommender system.
+
+- `OpenRec <https://github.com/ylongqi/openrec>`_ TensorFlow-based
+  neural-network inspired recommendation algorithms.
+
+- `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
+  implementation of deep recommender models.
+
+- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+  datasets.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~

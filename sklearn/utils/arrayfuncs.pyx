@@ -2,16 +2,15 @@
 Small collection of auxiliary functions that operate on arrays
 
 """
+
 cimport numpy as np
 import  numpy as np
-
 cimport cython
-
+from cython cimport floating
+from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
 
-cdef extern from "src/cholesky_delete.h":
-    int cholesky_delete_dbl(int m, int n, double *L, int go_out)
-    int cholesky_delete_flt(int m, int n, float  *L, int go_out)
+from ._cython_blas cimport _copy, _rotg, _rot
 
 ctypedef np.float64_t DOUBLE
 
@@ -51,14 +50,41 @@ cdef double _double_min_pos(double *X, Py_ssize_t size):
    return min_val
 
 
-# we should be using np.npy_intp or Py_ssize_t for indices, but BLAS wants int
-def cholesky_delete(np.ndarray L, int go_out):
-    cdef int n = <int> L.shape[0]
-    cdef int m = <int> L.strides[0]
+# General Cholesky Delete.
+# Remove an element from the cholesky factorization
+# m = columns
+# n = rows
+#
+# TODO: put transpose as an option
+def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
+   cdef:
+      int n = L.shape[0]
+      int m = L.strides[0]
+      floating c, s
+      floating *L1
+      int i
+   
+   if floating is float:
+      m /= sizeof(float)
+   else:
+      m /= sizeof(double)
 
-    if L.dtype.name == 'float64':
-        cholesky_delete_dbl(m / sizeof(double), n, <double *> L.data, go_out)
-    elif L.dtype.name == 'float32':
-        cholesky_delete_flt(m / sizeof(float),  n, <float *> L.data,  go_out)
-    else:
-        raise TypeError("unsupported dtype %r." % L.dtype)
+   # delete row go_out
+   L1 = &L[0, 0] + (go_out * m)
+   for i in range(go_out, n-1):
+      _copy(i + 2, L1 + m, 1, L1, 1)
+      L1 += m
+
+   L1 = &L[0, 0] + (go_out * m)
+   for i in range(go_out, n-1):
+      _rotg(L1 + i, L1 + i + 1, &c, &s)
+      if L1[i] < 0:
+         # Diagonals cannot be negative
+         L1[i] = fabs(L1[i])
+         c = -c
+         s = -s
+
+      L1[i + 1] = 0.  # just for cleanup
+      L1 += m
+
+      _rot(n - i - 2, L1 + i, m, L1 + i + 1, m, c, s)

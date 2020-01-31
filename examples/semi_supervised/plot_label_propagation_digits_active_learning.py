@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import classification_report, confusion_matrix
 
 digits = datasets.load_digits()
@@ -41,7 +41,7 @@ y = digits.target[indices[:330]]
 images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
-n_labeled_points = 10
+n_labeled_points = 40
 max_iterations = 5
 
 unlabeled_indices = np.arange(n_total_samples)[n_labeled_points:]
@@ -54,7 +54,7 @@ for i in range(max_iterations):
     y_train = np.copy(y)
     y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
+    lp_model = LabelSpreading(gamma=0.25, max_iter=20)
     lp_model.fit(X, y_train)
 
     predicted_labels = lp_model.transduction_[unlabeled_indices]
@@ -83,7 +83,7 @@ for i in range(max_iterations):
         np.in1d(uncertainty_index, unlabeled_indices)][:5]
 
     # keep track of indices that we get labels for
-    delete_indices = np.array([])
+    delete_indices = np.array([], dtype=int)
 
     # for more than 5 iterations, visualize the gain only on the first 5
     if i < 5:
