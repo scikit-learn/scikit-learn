@@ -17,7 +17,7 @@ from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
-np.random.seed(1338)
+rng = np.random.RandomState(1338)
 cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
 n_splits = 4
@@ -38,14 +38,16 @@ n_splits = 4
 
 # Generate the class/group data
 n_points = 100
-X = np.random.randn(100, 10)
+X = rng.randn(100, 10)
 
 percentiles_classes = [.1, .3, .6]
 y = np.hstack([[ii] * int(100 * perc)
                for ii, perc in enumerate(percentiles_classes)])
 
-# Evenly spaced groups repeated once
-groups = np.hstack([[ii] * 10 for ii in range(10)])
+# Generate uneven groups
+group_prior = rng.dirichlet([2]*10)
+rng.multinomial(100, group_prior)
+groups = np.repeat(np.arange(10), rng.multinomial(100, group_prior))
 
 
 def visualize_groups(classes, groups, name):
