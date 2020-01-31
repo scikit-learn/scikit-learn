@@ -60,7 +60,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, np.ndarray[INT32_t] monotonic):
+                  object random_state, np.ndarray[INT32_t] monotonic_cst):
         """
         Parameters
         ----------
@@ -98,7 +98,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
-        self.monotonic = <INT32_t*> monotonic.data
+        self.monotonic_cst = <INT32_t*> monotonic_cst.data
 
     def __dealloc__(self):
         """Destructor."""
@@ -216,7 +216,8 @@ cdef class Splitter:
         return 0
 
     cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
+                        SIZE_t* n_constant_features, double lower_bound,
+                        double upper_bound) nogil except -1:
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
@@ -245,14 +246,14 @@ cdef class Splitter:
         if monotonic_cst == 0: # No constraint
             return 1
         else:
-            b_middle = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
-                        - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
-                       * monotonic_cst
-            #b_left = (self.criterion.sum_left[0] - lower_bound * self.criterion.weighted_n_left) \
-            #         * monotonic_cst >= 0
-            #b_right = (self.criterion.sum_right[0] - upper_bound * self.criterion.weighted_n_right) \
-            #          * monotonic_cst <= 0
-            return b_middle <= 0 # & b_left & b_right
+            delta_middle = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
+                            - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
+                           * monotonic_cst
+            delta_left = (self.criterion.sum_left[0] - lower_bound * self.criterion.weighted_n_left) \
+                         * monotonic_cst
+            delta_right = (self.criterion.sum_right[0] - upper_bound * self.criterion.weighted_n_right) \
+                          * monotonic_cst
+            return (delta_middle <= 0) & (delta_left >= 0) & (delta_right <= 0)
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
@@ -265,12 +266,12 @@ cdef class BaseDenseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, np.ndarray[INT32_t] monotonic):
+                  object random_state, np.ndarray[INT32_t] monotonic_cst):
 
         self.X_idx_sorted_ptr = NULL
         self.X_idx_sorted_stride = 0
         self.sample_mask = NULL
-        self.monotonic = <INT32_t*> monotonic.data
+        self.monotonic_cst = <INT32_t*> monotonic_cst.data
 
     cdef int init(self,
                   object X,
@@ -300,7 +301,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.random_state), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
+                        SIZE_t* n_constant_features, double lower_bound,
+                        double upper_bound) nogil except -1:
         """Find the best split on node samples[start:end]
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -393,7 +395,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
                 current.feature = features[f_j]
 
-                monotonic_constraint = self.monotonic[current.feature]
+                monotonic_constraint = self.monotonic_cst[current.feature]
                 # Sort samples along that feature; by
                 # copying the values into an array and
                 # sorting the array in a manner which utilizes the cache more
@@ -619,7 +621,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.random_state), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
+                        SIZE_t* n_constant_features, double lower_bound,
+                        double upper_bound) nogil except -1:
         """Find the best random split on node samples[start:end]
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -706,7 +709,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
                 current.feature = features[f_j]
 
-                monotonic_constraint = self.monotonic[current.feature]
+                monotonic_constraint = self.monotonic_cst[current.feature]
 
                 # Find min, max
                 min_feature_value = self.X[samples[start], current.feature]
@@ -824,7 +827,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, np.ndarray[INT32_t] monotonic):
+                  object random_state, np.ndarray[INT32_t] monotonic_cst):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
@@ -835,7 +838,7 @@ cdef class BaseSparseSplitter(Splitter):
 
         self.index_to_samples = NULL
         self.sorted_samples = NULL
-        self.monotonic = <INT32_t*> monotonic.data
+        self.monotonic_cst = <INT32_t*> monotonic_cst.data
 
     def __dealloc__(self):
         """Deallocate memory."""
@@ -1143,7 +1146,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.random_state), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
+                        SIZE_t* n_constant_features, double lower_bound,
+                        double upper_bound) nogil except -1:
         """Find the best split on node samples[start:end], using sparse features
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1245,7 +1249,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
-                monotonic_constraint = self.monotonic[current.feature]
+                monotonic_constraint = self.monotonic_cst[current.feature]
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
@@ -1377,7 +1381,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.random_state), self.__getstate__())
 
     cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
+                        SIZE_t* n_constant_features, double lower_bound,
+                        double upper_bound) nogil except -1:
         """Find a random split on node samples[start:end], using sparse features
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -1483,7 +1488,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
-                monotonic_constraint = self.monotonic[current.feature]
+                monotonic_constraint = self.monotonic_cst[current.feature]
 
                 # Add one or two zeros in Xf, if there is any
                 if end_negative < start_positive:
