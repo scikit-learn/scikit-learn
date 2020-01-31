@@ -2426,7 +2426,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 
 def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
-                     bin_size_ratio=0.1, sliding_window=False, pos_label=None):
+                     bin_size_ratio=0.1, sliding_window=False, pos_label=None, debiased=True):
     """Compute calibration loss.
 
     Across all items in a set of N predictions, the calibration loss measures
@@ -2452,7 +2452,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    reducer : 'avg' | 'max'
+    reducer : 'avg' | 'max' | 'l2'
         Aggregation method.
 
     bin_size_ratio : float, optional (default=0.1)
@@ -2468,6 +2468,10 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     pos_label : int or str, optional (default=None)
         Label of the positive class. If None, the maximum label is used as
         positive class
+
+     debiased : bool, optional (default=True)
+        Apply debiasing term as in Verified Uncertainty Calibration, A. Kumar. This
+        uses l2 reducer. 
 
     Returns
     -------
@@ -2551,14 +2555,24 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
                                        sample_weight[i_start:i_end])
                                 / delta_count)
             count += delta_count
+            if debiased:
+                debias = bin_centroid*(1-bin_centroid)
+                debias /= min(1,y_true.shape[0] -1)
+                reducer = "l2"
+            else:
+                debias = 1
             if reducer == "max":
                 loss = max(loss, abs(avg_pred_true - bin_centroid))
             elif reducer == "avg":
                 delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
                 if not np.isnan(delta_loss):
                     loss += delta_loss
+            elif reducer == "l2":
+                 delta_loss = abs(avg_pred_true - bin_centroid)**2 * delta_count * debias
+                 if not np.isnan(delta_loss):
+                     loss += delta_loss
             else:
-                raise ValueError("reducer is neither 'avg' nor 'max'")
-    if reducer == "avg":
+                raise ValueError("reducer is neither 'avg', 'max' nor 'l2'")
+    if reducer == "avg" or reducer == "l2":
         loss /= count
     return loss
