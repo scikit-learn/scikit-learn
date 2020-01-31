@@ -13,7 +13,7 @@ dataset.
 
 Diabetes dataset consists of 10 variables (features) collected from 442
 diabetes patients. This example shows how to use SelectFromModel and LassoCv to
-find the best two features predictiong disease progression after one year from
+find the best two features predicting disease progression after one year from
 the baseline.
 
 Authors: Manoj Kumar <mks542@nyu.edu>
@@ -68,34 +68,23 @@ print(importance)
 # our data.
 
 idx_third = importance.argsort()[-3]
-threshold = importance[idx_third] + 1.e-17
+threshold = importance[idx_third] + 0.01
 
 idx_features = (-importance).argsort()[:2]
-name_features = np.array(feature_names)[most_important]
+name_features = np.array(feature_names)[idx_features]
 print('Selected features: {}'.format(name_features))
 
 sfm = SelectFromModel(clf, threshold=threshold)
 sfm.fit(X, y)
+X_transform = sfm.transform(X)
+
 n_features = sfm.transform(X).shape[1]
 
 ##############################################################################
-# 
+# Plot the two most important features
 # ---------------------------------------------------------
 #
-# Reset the threshold till the number of features equals two.
-# Note that the attribute can be set directly instead of repeatedly
-# fitting the metatransformer.
-
-while n_features > 2:
-    sfm.threshold += 0.1
-    X_transform = sfm.transform(X)
-    n_features = X_transform.shape[1]
-
-##############################################################################
-# 
-# ---------------------------------------------------------
-#
-# Plot the selected two features from X.
+# Finally we will plot the selected two features from the data.
 
 plt.title(
     "Features from diabets using SelectFromModel with "
@@ -103,7 +92,7 @@ plt.title(
 feature1 = X_transform[:, 0]
 feature2 = X_transform[:, 1]
 plt.plot(feature1, feature2, 'r.')
-plt.xlabel("Feature number 1")
-plt.ylabel("Feature number 2")
+plt.xlabel("First feature: {}".format(name_features[0]))
+plt.ylabel("Second feature: {}".format(name_features[1]))
 plt.ylim([np.min(feature2), np.max(feature2)])
 plt.show()
