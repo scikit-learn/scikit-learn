@@ -424,7 +424,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # for backward compatibility with objects pickled with versions
         # strictly older than 0.23.
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
-            self._build_f(self._necessary_X_, self._necessary_y_)
+            self.X_thresholds_ = self._necessary_X_
+            self.y_thresholds_ = self._necessary_y_
+            del self._necessary_X_
+            del self._necessary_y_
+            self._build_f(self.X_thresholds_, self.y_thresholds_)
         if hasattr(self, 'X_thresholds_') and hasattr(self, 'y_thresholds_'):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
