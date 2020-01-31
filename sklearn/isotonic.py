@@ -331,7 +331,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        T_ : array, shape=(n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             The transformed data
         """
 
@@ -371,7 +371,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        T_ : array, shape=(n_samples,)
+        y_pred : ndarry of shape (n_samples,)
             Transformed data.
         """
         return self.transform(T)
