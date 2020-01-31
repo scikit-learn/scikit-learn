@@ -89,11 +89,13 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
-    y_min : optional, default: None
-        If not None, set the lowest value of the fit to y_min.
+    y_min : float, default=None
+        Lower bound on the lowest predicted value (the minimum value may
+        still be higher). If not set, defaults to -inf.
 
-    y_max : optional, default: None
-        If not None, set the highest value of the fit to y_max.
+    y_max : float, default=None
+        Upper bound on the highest predicted value (the maximum may still be
+        lower). If not set, defaults to +inf.
 
     increasing : boolean, optional, default: True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
@@ -139,11 +141,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     ----------
     y_min : float, default=None
         Lower bound on the lowest predicted value (the minimum value may
-        still be higher). Defaults to -inf.
+        still be higher). If not set, defaults to -inf.
 
     y_max : float, default=None
         Upper bound on the highest predicted value (the maximum may still be
-        lower). Defaults to +inf.
+        lower). If not set, defaults to +inf.
 
     increasing : bool or 'auto', default=True
         Determines whether the predictions should be constrained to increase
@@ -371,7 +373,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y_pred : ndarry of shape (n_samples,)
+        y_pred : ndarray of shape (n_samples,)
             Transformed data.
         """
         return self.transform(T)
