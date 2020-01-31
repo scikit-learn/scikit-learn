@@ -191,10 +191,12 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Maximum value of input array `X_` for right bound.
 
     X_thresholds_ : array-like of shape (n_thresholds,)
-        De-duplicated ascending `X` values suitable to interpolate the y = f(X) monotonic function.
+        De-duplicated ascending `X` values suitable to interpolate
+        the y = f(X) monotonic function.
 
     y_thresholds_ : array-like of shape (n_thresholds,)
-        De-duplicated ascending `y` values suitable to interpolate the y = f(X) monotonic function.
+        De-duplicated ascending `y` values suitable to interpolate
+        the y = f(X) monotonic function.
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
@@ -419,8 +421,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         We need to rebuild the interpolation function.
         """
         super().__setstate__(state)
-        # for backward compatibility with objects pickled with versions strictly older than
-        # 0.23.
+        # for backward compatibility with objects pickled with versions
+        # strictly older than 0.23.
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
         if hasattr(self, 'X_thresholds_') and hasattr(self, 'y_thresholds_'):
