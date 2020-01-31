@@ -2266,10 +2266,6 @@ def check_class_weight_classifiers(name, classifier_orig, request=None):
         # the sparse version has a parameter that doesn't do anything
         _raise_xfail("Not testing NuSVC class weight as it is ignored.",
                      request)
-    if name.endswith("NB"):
-        # FIXME SOON!
-        _raise_xfail("NaiveBayes classifiers have a somewhat different "
-                     "interface.", request)
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
