@@ -880,9 +880,9 @@ class GridSearchCV(BaseSearchCV):
     Important members are fit, predict.
 
     GridSearchCV implements a "fit" and a "score" method.
-    It also implements "score_samples", "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated grid-search over a parameter grid.
@@ -1193,9 +1193,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
-    It also implements "score_samples", "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated search over parameter settings.
