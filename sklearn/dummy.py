@@ -421,12 +421,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        Controls the randomness to generate the predictions when
-        ``strategy='stratified'`` or ``strategy='uniform'``.
-        Pass an int for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
     constant : int or float or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
