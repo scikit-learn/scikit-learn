@@ -216,12 +216,10 @@ def load_mnist(n_samples_list):
     url = 'https://www.openml.org/data/v1/download/18689782/MNIST.arff'
     fstream = urllib.request.urlopen(url)
     data, meta = arff.loadarff(io.StringIO(fstream.read().decode('utf-8')))
-
     df = pd.DataFrame(np.array(data.tolist(), dtype=np.float64),
                       columns=meta.names())
     df_X = df.drop('class', axis=1)
     df_y = df['class'].astype(int)
-    
     X, y = shuffle(df_X.to_numpy(), df_y.to_numpy(), random_state=42)
     datasets = [
         ('MINST_{}'.format(n_samples), (X[:n_samples], y[:n_samples]))
