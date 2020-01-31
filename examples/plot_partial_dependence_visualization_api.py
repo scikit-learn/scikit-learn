@@ -56,7 +56,6 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
 tree_disp = plot_partial_dependence(tree, X, ["s1", "s5"], ax=ax)
 
-
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
 # In this case, `line_kw` is passed to
@@ -64,7 +63,7 @@ tree_disp = plot_partial_dependence(tree, X, ["s1", "s5"], ax=ax)
 # the curve.
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
-mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT", "RM"], ax=ax,
+mlp_disp = plot_partial_dependence(mlp, X, ["s1", "s5"], ax=ax,
                                    line_kw={"c": "red"})
 
 ##############################################################################
@@ -124,7 +123,6 @@ tree_disp.axes_[0, 0].legend()
 tree_disp.axes_[0, 1].legend()
 plt.show()
 
-
 ##############################################################################
 # Plotting partial dependence for one feature
 # ===========================================
@@ -132,6 +130,6 @@ plt.show()
 # Here, we plot the partial dependence curves for a single feature, "LSTAT", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
-tree_disp = plot_partial_dependence(tree, X, ["LSTAT"])
-mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT"],
+tree_disp = plot_partial_dependence(tree, X, ["s5"])
+mlp_disp = plot_partial_dependence(mlp, X, ["s5"],
                                    ax=tree_disp.axes_, line_kw={"c": "red"})
