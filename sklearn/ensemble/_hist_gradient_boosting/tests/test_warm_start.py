@@ -102,14 +102,14 @@ def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
 
     n_iter_no_change = 5
     gb = GradientBoosting(
-        n_iter_no_change=n_iter_no_change, max_iter=10000,
+        n_iter_no_change=n_iter_no_change, max_iter=10000, early_stopping=True,
         random_state=42, warm_start=True, tol=1e-3, scoring=scoring,
     )
     gb.fit(X, y)
     n_iter_first_fit = gb.n_iter_
     gb.fit(X, y)
     n_iter_second_fit = gb.n_iter_
-    assert n_iter_second_fit - n_iter_first_fit < n_iter_no_change
+    assert 0 < n_iter_second_fit - n_iter_first_fit < n_iter_no_change
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
