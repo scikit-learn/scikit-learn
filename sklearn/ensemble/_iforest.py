@@ -483,7 +483,7 @@ def _average_path_length(n_samples_leaf):
 
     Returns
     -------
-    average_path_length : array of same shape as n_samples_leaf
+    average_path_length : ndarray of shape (n_samples,)
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
