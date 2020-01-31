@@ -97,7 +97,7 @@ def _raise_xfail(reason, request=None):
         else:
             # mark test as XFAIL and continue excecution to see if it will
             # actually fail.
-            request.applymarker(pytest.mark.xfail(run=False, reason=reason))
+            request.applymarker(pytest.mark.xfail(reason=reason))
     except ImportError:
         raise SkipTest('XFAIL ' + str(reason))
 
