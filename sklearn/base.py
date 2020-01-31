@@ -345,17 +345,16 @@ class BaseEstimator:
         return collected_tags
 
     def _check_n_features(self, X, reset):
-        """Set the n_features_in_ attribute, or check against it.
+        """Set the `n_features_in_` attribute, or check against it.
 
         Parameters
         ----------
-
-        X : ndarray or sparse matrix
-            The input samples
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
         reset : bool
-            If True, the n_features_in_ attribute is set to X.shape[1]. Else,
+            If True, the `n_features_in_` attribute is set to `X.shape[1]`. Else,
             the attribute must already exist and the function checks that it is
-            equal to X.shape[1].
+            equal to `X.shape[1]`.
         """
         n_features = X.shape[1]
 
@@ -364,7 +363,7 @@ class BaseEstimator:
         else:
             if not hasattr(self, 'n_features_in_'):
                 raise RuntimeError(
-                    "reset parameter is False but there is no n_features_in_ "
+                    "The reset parameter is False but there is no n_features_in_ "
                     "attribute."
                 )
             if n_features != self.n_features_in_:
@@ -375,26 +374,25 @@ class BaseEstimator:
                 )
 
     def _validate_data(self, X, y=None, reset=True, **check_params):
-        """Validate input data and set or check the n_features_in_ attribute.
+        """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
         ----------
-
-        X : array-like
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
             The input samples.
-        y : array-like or None, default=None
-            The targets. If None, check_array is called on X and check_X_y is
+        y : array-like of shape (n_samples,), default=None
+            The targets. If None, `check_array` is called on `X` and `check_X_y` is
             called otherwise.
         reset : bool, default=True
-            Whether to reset the n_features_in_ attribute. See
-            _check_n_features().
+            Whether to reset the `n_features_in_` attribute. See
+            :func:`_check_n_features`.
         **check_params : kwargs
-            Parameters passed to check_array() or check_X_y().
+            Parameters passed to :func:`sklearn.utils.check_array` or :func:`sklearn.utils.check_X_y`.
 
         Returns
         -------
         out : {ndarray, sparse matrix} or tuple of these
-            The validated input. A tuple is returned if y is not None.
+            The validated input. A tuple is returned if `y` is not None.
         """
 
         if y is None:
