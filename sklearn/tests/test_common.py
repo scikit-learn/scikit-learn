@@ -92,12 +92,12 @@ def _tested_estimators():
 _xfail_checks = {}
 
 # check_class_weight_classifiers
-_xfail_checks[(check_class_weight_classifiers, 'NuSVC')] = \
+_xfail_checks["NuSVC()-check_class_weight_classifiers"] = \
     "Not testing NuSVC class weight as it is ignored."
 
 # check_methods_subset_invariance
 _xfail_checks.update({
-    (check_methods_subset_invariance, name):
+    "{}()-check_class_weight_classifiers".format(name):
         "{} fails for check_methods_subset_invariance".format(name)
         for name in ['DummyClassifier', 'BernoulliRBM']})
 
@@ -109,9 +109,10 @@ def test_estimators(estimator, check, request):
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-        print(_xfail_checks)
         with suppress(KeyError):
-            reason = _xfail_checks[(check.func, check.args[0])]
+            start = len(request.node.originalname) + 1
+            name = request.node.name[start:-1]
+            reason = _xfail_checks[name]
             request.applymarker(pytest.mark.xfail(run=True, reason=reason))
         check(estimator)
 
