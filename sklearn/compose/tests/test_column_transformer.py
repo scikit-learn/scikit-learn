@@ -70,7 +70,7 @@ class TransRaise(BaseEstimator):
         raise ValueError("specific message")
 
     def transform(self, X, y=None):
-        pass  # pragma: no cover
+        raise ValueError("specific message")
 
 
 def test_column_transformer():

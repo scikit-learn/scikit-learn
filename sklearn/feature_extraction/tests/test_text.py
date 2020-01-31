@@ -382,8 +382,6 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    clean_warning_registry()
-
     in_warning_message = 'divide by zero'
     assert_warns_message(RuntimeWarning, in_warning_message,
                          tr.fit_transform, X).toarray()

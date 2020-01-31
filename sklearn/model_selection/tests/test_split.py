@@ -164,13 +164,10 @@ def check_valid_split(train, test, n_samples=None):
         assert train.union(test) == set(range(n_samples))
 
 
-def check_cv_coverage(cv, X, y, groups, expected_n_splits=None):
+def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
-    if expected_n_splits is not None:
-        assert cv.get_n_splits(X, y, groups) == expected_n_splits
-    else:
-        expected_n_splits = cv.get_n_splits(X, y, groups)
+    assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
     iterations = 0
@@ -236,7 +233,7 @@ def test_kfold_indices():
     # Check all indices are returned in the test folds
     X1 = np.ones(18)
     kf = KFold(3)
-    check_cv_coverage(kf, X1, y=None, groups=None, expected_n_splits=None)
+    check_cv_coverage(kf, X1, y=None, groups=None, expected_n_splits=3)
 
     # Check all indices are returned in the test folds even when equal-sized
     # folds are not possible
