@@ -113,8 +113,7 @@ def test_deterministic_vocabulary():
 
 
 def test_n_features_in():
-    # For vectorizers, n_features_in_ does not make sense and it is always
-    # None
+    # For vectorizers, n_features_in_ does not make sense and does not exist.
     dv = DictVectorizer()
     assert not hasattr(dv, 'n_features_in_')
     d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]

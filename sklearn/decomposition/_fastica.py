@@ -425,17 +425,10 @@ class FastICA(TransformerMixin, BaseEstimator):
             X_new : array-like, shape (n_samples, n_components)
         """
 
-        # This validates twice but there is not clean way to avoid validation
-        # in fastica(). Please see issue 14897.
-        self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                            ensure_min_samples=2).T
+        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                                ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
-
-        # make interface compatible with other decompositions
-        # a copy is required only for non whitened data
-        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                        ensure_min_samples=2).T
 
         alpha = fun_args.get('alpha', 1.0)
         if not 1 <= alpha <= 2:

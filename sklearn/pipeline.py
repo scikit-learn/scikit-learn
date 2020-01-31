@@ -629,6 +629,7 @@ class Pipeline(_BaseComposition):
 
     @property
     def n_features_in_(self):
+        # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
 

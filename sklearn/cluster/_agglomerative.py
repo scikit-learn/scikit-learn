@@ -1053,10 +1053,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         """
         X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
                                 ensure_min_features=2, estimator=self)
+        # save n_features_in_ attribute here to reset it after, because it will
+        # be overridden in AgglomerativeClustering since we passed it X.T.
         n_features_in_ = self.n_features_in_
         AgglomerativeClustering.fit(self, X.T, **params)
-        # Need to restore n_features_in_ attribute that was overridden in
-        # AgglomerativeClustering since we passed it X.T.
         self.n_features_in_ = n_features_in_
         return self
 

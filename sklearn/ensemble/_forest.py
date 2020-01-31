@@ -293,8 +293,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
         """
         # Validate or convert input data
-        X = self._validate_data(X, accept_sparse="csc", dtype=DTYPE)
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        X, y = self._validate_data(X, y, multi_output=True,
+                                   accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
         if issparse(X):
