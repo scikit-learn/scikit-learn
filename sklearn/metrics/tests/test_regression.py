@@ -63,8 +63,7 @@ def test_mean_squared_error_multioutput_raw_value_squared():
     mse2 = mean_squared_error(
         [[1]], [[10]], multioutput="raw_values", squared=False
     )
-    with pytest.raises(AssertionError):
-        assert_allclose(mse1, mse2)
+    assert_allclose(np.sqrt(mse1), mse2)
 
 
 def test_multioutput_regression():
