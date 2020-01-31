@@ -6,6 +6,11 @@ Feature selection using SelectFromModel and LassoCV
 Use SelectFromModel meta-transformer along with Lasso to select the best
 couple of features from the diabetes dataset.
 
+Since the L1 norm promotes sparsity of features we might be interested in
+selecting only a subset of the most interesting features from the dataset. This
+example shows how to select two the most interesting features from the diabetes
+dataset.
+
 Diabetes dataset consists of 10 variables (features) collected from 442
 diabetes patients. This example shows how to use SelectFromModel and LassoCv to
 find the best two features predictiong disease progression after one year from
@@ -29,49 +34,49 @@ from sklearn.linear_model import LassoCV
 # ---------------------------------------------------------
 #
 # First, let's load the diabetes dataset which is available from within
-# sklearn. Then, we will look the features used of the diabates patients:
+# sklearn. Then, we will look what features are collected for the diabates
+# patients:
 
 diabetes = load_diabetes()
+
 X = diabetes.data
 y = diabetes.target
 
-feature_names = data.feature_names
-print(features_names)
+feature_names = diabetes.feature_names
+print(feature_names)
 
 ##############################################################################
 # Find importance of the features
 # ---------------------------------------------------------
 #
-# Since the L1 norm promotes sparsity of features only a subset of the provided
-# variables should be selected. To decide which of the features are the most
-# important we are going to use LassoCV estimator:
+# To decide on the importance of the features we are going to use LassoCV
+# estimator. The features with the highest absolute coef_ value are considered
+# the most important
 
 clf = LassoCV().fit(X, y)
-importance = clf.coef_
+importance = np.abs(clf.coef_)
 print(importance)
 
+##############################################################################
+# Select from the model features with the higest score
+# ---------------------------------------------------------
+#
+# Now we want to select the two features which are the most important.
+# SelectFromModel() allows for setting the threshold. Only the features with
+# the coef_ higher than the threshold will remain. Here, we want to set the
+# threshold slightly above the third highest coef_ calculated by LassoCV() from
+# our data.
 
-idx_important = importance.argsort()[-2:][::-1]
+idx_third = importance.argsort()[-3]
+threshold = importance[idx_third] + 1.e-17
 
+idx_features = (-importance).argsort()[:2]
+name_features = np.array(feature_names)[most_important]
+print('Selected features: {}'.format(name_features))
 
-clf = LassoCV()
-sfm = SelectFromModel(clf, threshold='mean')
-sfm.fit(X, y)
-importance = sfm.estimator_.coef_
-print(importance)
-
-# The numbers with the highest values show the hightest importance of the
-# feature 
-# can choose the minimum threshold directly (here 0.25). 
-# Features will be considered unimportant and will be removed if their features
-# coef_ values are below this threshold.
-# the transform() function will remove features to those considered important
-
-clf = LassoCV()
-sfm = SelectFromModel(clf, threshold=0.25)
+sfm = SelectFromModel(clf, threshold=threshold)
 sfm.fit(X, y)
 n_features = sfm.transform(X).shape[1]
-import pdb; pdb.set_trace()
 
 ##############################################################################
 # 
