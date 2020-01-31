@@ -2557,7 +2557,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
                                 / delta_count)
             count += delta_count
             if debiased:
-                debias = bin_centroid*(1-bin_centroid)
+                debias = bin_centroid*(1-bin_centroid) * delta_count
+                debias /= y_true.shape[0]*delta_count-1
                 debias += debias
                 reducer = "l2"
             if reducer == "max":
@@ -2575,6 +2576,5 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
     if reducer == "avg" or reducer == "l2":
         loss /= count
     if debiased:
-        debias /= min(1,y_true.shape[0] -1)
         loss -= debias
     return loss
