@@ -37,6 +37,8 @@ class IncrementalPCA(_BasePCA):
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     n_components : int or None, (default=None)
@@ -268,7 +270,7 @@ class IncrementalPCA(_BasePCA):
             self.mean_ = .0
             self.var_ = .0
 
-        # Update stats - they are 0 if this is the fisrt step
+        # Update stats - they are 0 if this is the first step
         col_mean, col_var, n_total_samples = \
             _incremental_mean_and_var(
                 X, last_mean=self.mean_, last_variance=self.var_,

@@ -1238,7 +1238,8 @@ def test_min_impurity_split():
 
     for Estimator in all_estimators:
         est = Estimator(min_impurity_split=0.1)
-        est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+        est = assert_warns_message(FutureWarning,
+                                   "min_impurity_decrease",
                                    est.fit, X, y)
         for tree in est.estimators_:
             assert tree.min_impurity_split == 0.1

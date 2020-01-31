@@ -736,39 +736,6 @@ def test_linearsvc_parameters():
         svm.LinearSVC(loss="l3").fit(X, y)
 
 
-# FIXME remove in 0.23
-def test_linearsvx_loss_penalty_deprecations():
-    X, y = [[0.0], [1.0]], [0, 1]
-
-    msg = ("loss='%s' has been deprecated in favor of "
-           "loss='%s' as of 0.16. Backward compatibility"
-           " for the %s will be removed in %s")
-
-    # LinearSVC
-    # loss l1 --> hinge
-    assert_warns_message(DeprecationWarning,
-                         msg % ("l1", "hinge", "loss='l1'", "0.23"),
-                         svm.LinearSVC(loss="l1").fit, X, y)
-
-    # loss l2 --> squared_hinge
-    assert_warns_message(DeprecationWarning,
-                         msg % ("l2", "squared_hinge", "loss='l2'", "0.23"),
-                         svm.LinearSVC(loss="l2").fit, X, y)
-
-    # LinearSVR
-    # loss l1 --> epsilon_insensitive
-    assert_warns_message(DeprecationWarning,
-                         msg % ("l1", "epsilon_insensitive", "loss='l1'",
-                                "0.23"),
-                         svm.LinearSVR(loss="l1").fit, X, y)
-
-    # loss l2 --> squared_epsilon_insensitive
-    assert_warns_message(DeprecationWarning,
-                         msg % ("l2", "squared_epsilon_insensitive",
-                                "loss='l2'", "0.23"),
-                         svm.LinearSVR(loss="l2").fit, X, y)
-
-
 def test_linear_svx_uppercase_loss_penality_raises_error():
     # Check if Upper case notation raises error at _fit_liblinear
     # which is called by fit
@@ -1266,3 +1233,18 @@ def test_n_support_oneclass_svr():
     assert reg.n_support_ == reg.support_vectors_.shape[0]
     assert reg.n_support_.size == 1
     assert reg.n_support_ == 4
+
+
+# TODO: Remove in 0.25 when probA_ and probB_ are deprecated
+@pytest.mark.parametrize("SVMClass, data", [
+    (svm.OneClassSVM, (X, )),
+    (svm.SVR, (X, Y))
+])
+@pytest.mark.parametrize("deprecated_prob", ["probA_", "probB_"])
+def test_svm_probA_proB_deprecated(SVMClass, data, deprecated_prob):
+    clf = SVMClass().fit(*data)
+
+    msg = ("The {} attribute is deprecated in version 0.23 and will be "
+           "removed in version 0.25.").format(deprecated_prob)
+    with pytest.warns(FutureWarning, match=msg):
+        getattr(clf, deprecated_prob)

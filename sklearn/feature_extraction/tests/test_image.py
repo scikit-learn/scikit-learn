@@ -340,5 +340,5 @@ def test_width_patch():
 def test_extract_patches_deprecated():
     msg = ("The function feature_extraction.image.extract_patches has been "
            "deprecated in 0.22 and will be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         extract_patches(downsampled_face)

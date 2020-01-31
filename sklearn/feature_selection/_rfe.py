@@ -103,6 +103,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
     See also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
@@ -150,7 +154,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2)
+        tags = self._get_tags()
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
+                         force_all_finite=not tags.get('allow_nan', True))
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -326,7 +332,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {'poor_score': True}
+        estimator_tags = self.estimator._get_tags()
+        return {'poor_score': True,
+                'allow_nan': estimator_tags.get('allow_nan', True)}
 
 
 class RFECV(RFE):
@@ -421,6 +429,8 @@ class RFECV(RFE):
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
     Examples
     --------
     The following example shows how to retrieve the a-priori not known 5
@@ -479,7 +489,8 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2)
+        X, y = check_X_y(X, y, "csr", ensure_min_features=2,
+                         force_all_finite=False)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))

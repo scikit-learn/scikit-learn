@@ -31,8 +31,7 @@ X_regression, y_regression = make_regression(random_state=0)
      ({'max_iter': 0}, 'max_iter=0 must not be smaller than 1'),
      ({'max_leaf_nodes': 0}, 'max_leaf_nodes=0 should not be smaller than 2'),
      ({'max_leaf_nodes': 1}, 'max_leaf_nodes=1 should not be smaller than 2'),
-     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 2'),
-     ({'max_depth': 1}, 'max_depth=1 should not be smaller than 2'),
+     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 1'),
      ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
      ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
      ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
@@ -413,7 +412,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())

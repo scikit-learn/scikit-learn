@@ -48,7 +48,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
           sparse matrix. If the conversion is not possible an exception is
           raised.
 
-        .. deprecated:: 0.22
+        .. versionchanged:: 0.22
            The default of ``validate`` changed from True to False.
 
     accept_sparse : boolean, optional

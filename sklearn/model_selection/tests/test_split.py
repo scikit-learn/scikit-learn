@@ -175,7 +175,7 @@ def test_cross_validator_with_default_params():
         # Test that train, test indices returned are integers
         for train, test in cv.split(X, y, groups):
             assert np.asarray(train).dtype.kind == 'i'
-            assert np.asarray(train).dtype.kind == 'i'
+            assert np.asarray(test).dtype.kind == 'i'
 
         # Test if the repr works without any errors
         assert cv_repr == repr(cv)
@@ -1338,7 +1338,7 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(shuffle=True, random_state=0).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
@@ -1423,7 +1423,7 @@ def test_group_kfold():
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", FutureWarning)
         for group in np.unique(groups):
             assert len(np.unique(folds[groups == group])) == 1
 
@@ -1590,6 +1590,6 @@ def test_leave_p_out_empty_trainset():
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     # TODO 0.24: raise a ValueError instead of a warning
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)

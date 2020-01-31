@@ -181,7 +181,12 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers.
+  to get some feedbacks from core developers. 
+  
+  One easy way to find an issue to work on is by applying the "help wanted" 
+  label in your search. This lists all the issues that have been unclaimed 
+  so far. In order to claim an issue for yourself, please comment exactly 
+  ``take`` on it for the CI to automatically assign the issue to you.  
 
 How to contribute
 -----------------
@@ -251,7 +256,7 @@ modifying code and submitting a PR:
    to record your changes in Git, then push the changes to your GitHub
    account with::
 
-       $ git push -u origin my-feature
+       $ git push -u origin my_feature
 
 10. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
@@ -377,7 +382,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    methods available in scikit-learn.
 
 10. New features often need to be illustrated with narrative documentation in
-    the user guide, with small code snipets. If relevant, please also add
+    the user guide, with small code snippets. If relevant, please also add
     references in the literature, with PDF links when possible.
 
 11. The user guide should also include expected time and space complexity
@@ -437,6 +442,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
+    [lint skip]            Azure pipeline skips linting
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots
@@ -537,9 +543,12 @@ Building the documentation
 First, make sure you have :ref:`properly installed <install_bleeding_edge>`
 the development version.
 
+..
+    packaging is not needed once setuptools starts shipping packaging>=17.0
+
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image packaging
 
 To build the documentation, you need to be in the ``doc`` folder::
 
@@ -826,7 +835,8 @@ E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
     def labels_(self):
         return self.classes_
 
-If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
+If a parameter has to be deprecated, a ``FutureWarning`` warning
+must be raised too.
 In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
@@ -834,7 +844,8 @@ In the following example, k is deprecated and renamed to n_clusters::
     def example_function(n_clusters=8, k='deprecated'):
         if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                          "will be removed in 0.15.", DeprecationWarning)
+                          "will be removed in 0.15.",
+                          FutureWarning)
             n_clusters = k
 
 When the change is in a class, we validate and raise warning in ``fit``::
@@ -849,7 +860,8 @@ When the change is in a class, we validate and raise warning in ``fit``::
       def fit(self, X, y):
           if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                            "will be removed in 0.15.", DeprecationWarning)
+                            "will be removed in 0.15.",
+                            FutureWarning)
               self._n_clusters = self.k
           else:
               self._n_clusters = self.n_clusters

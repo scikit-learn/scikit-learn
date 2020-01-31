@@ -1,3 +1,7 @@
+# Authors: Ashim Bhattarai <ashimb9@gmail.com>
+#          Thomas J Fan <thomasjpfan@gmail.com>
+# License: BSD 3 clause
+
 import numpy as np
 
 from ._base import _BaseImputer
@@ -80,9 +84,9 @@ class KNNImputer(_BaseImputer):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.impute import KNNImputer
-    >>> nan = float("NaN")
-    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
     >>> imputer = KNNImputer(n_neighbors=2)
     >>> imputer.fit_transform(X)
     array([[1. , 2. , 4. ],

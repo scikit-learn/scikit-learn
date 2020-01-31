@@ -28,7 +28,8 @@ __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 
 class Pipeline(_BaseComposition):
-    """Pipeline of transforms with a final estimator.
+    """
+    Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
     Intermediate steps of the pipeline must be 'transforms', that is, they
@@ -46,6 +47,8 @@ class Pipeline(_BaseComposition):
 
     Read more in the :ref:`User Guide <pipeline>`.
 
+    .. versionadded:: 0.5
+
     Parameters
     ----------
     steps : list
@@ -53,7 +56,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -63,7 +66,7 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
@@ -73,9 +76,9 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_pipeline : convenience function for simplified
+    sklearn.pipeline.make_pipeline : Convenience function for simplified
         pipeline construction.
 
     Examples
@@ -137,7 +140,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -304,7 +307,7 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
             else:
                 cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transfomer
+            # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
@@ -499,7 +502,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : ndarray, shape (n_samples,)
+        y_score : ndarray of shape (n_samples,)
         """
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
@@ -661,7 +664,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -671,11 +674,11 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
-    See also
+    See Also
     --------
     sklearn.pipeline.Pipeline : Class for creating a pipeline of
         transforms with a final estimator.
@@ -759,6 +762,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <feature_union>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples
@@ -768,23 +773,23 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    transformer_weights : dict, optional
+    transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_union : convenience function for simplified
+    sklearn.pipeline.make_union : Convenience function for simplified
         feature union construction.
 
     Examples
@@ -813,7 +818,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -849,7 +854,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 warnings.warn("Using None as a transformer is deprecated "
                               "in version 0.22 and will be removed in "
                               "version 0.24. Please use 'drop' instead.",
-                              DeprecationWarning)
+                              FutureWarning)
                 continue
             if t == 'drop':
                 continue
@@ -895,7 +900,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data, used to fit transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
@@ -919,12 +924,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -970,7 +976,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -994,7 +1001,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(*transformers, **kwargs):
-    """Construct a FeatureUnion from the given transformers.
+    """
+    Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -1004,13 +1012,13 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -1018,7 +1026,7 @@ def make_union(*transformers, **kwargs):
     -------
     f : FeatureUnion
 
-    See also
+    See Also
     --------
     sklearn.pipeline.FeatureUnion : Class for concatenating the results
         of multiple transformer objects.

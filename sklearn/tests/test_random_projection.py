@@ -8,7 +8,9 @@ import pytest
 from sklearn.metrics import euclidean_distances
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
+from sklearn.random_projection import _gaussian_random_matrix
 from sklearn.random_projection import gaussian_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
@@ -21,8 +23,8 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import DataDimensionalityWarning
 
-all_sparse_random_matrix = [sparse_random_matrix]
-all_dense_random_matrix = [gaussian_random_matrix]
+all_sparse_random_matrix = [_sparse_random_matrix]
+all_dense_random_matrix = [_gaussian_random_matrix]
 all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
 all_SparseRandomProjection = [SparseRandomProjection]
@@ -137,7 +139,7 @@ def test_gaussian_random_matrix():
     #
     n_components = 100
     n_features = 1000
-    A = gaussian_random_matrix(n_components, n_features, random_state=0)
+    A = _gaussian_random_matrix(n_components, n_features, random_state=0)
 
     assert_array_almost_equal(0.0, np.mean(A), 2)
     assert_array_almost_equal(np.var(A, ddof=1), 1 / n_components, 1)
@@ -151,7 +153,7 @@ def test_sparse_random_matrix():
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = sparse_random_matrix(n_components,
+        A = _sparse_random_matrix(n_components,
                                  n_features,
                                  density=density,
                                  random_state=0)
@@ -351,3 +353,13 @@ def test_works_with_sparse_data():
                                      random_state=1).fit(sp.csr_matrix(data))
         assert_array_almost_equal(densify(rp_dense.components_),
                                   densify(rp_sparse.components_))
+
+
+# TODO remove in 0.24
+def test_deprecations():
+
+    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
+        gaussian_random_matrix(10, 100)
+
+    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
+        sparse_random_matrix(10, 100)

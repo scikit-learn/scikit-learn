@@ -30,7 +30,6 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils._testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
@@ -543,7 +542,7 @@ def test_tfidf_vectorizer_deprecationwarning():
     msg = ("'copy' param is unused and has been deprecated since "
            "version 0.22. Backward compatibility for 'copy' will "
            "be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tv = TfidfVectorizer()
         train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)
@@ -1099,6 +1098,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
     assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
     assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    vec.fit(["some text", "some other text"])
     assert_raise_message(ValueError, message, vec.transform, "hello world!")
 
 
@@ -1293,12 +1293,8 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
 @pytest.mark.parametrize('input_type', ['file', 'filename'])
 def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     data = ['this is text, not file or filename']
-    warn_msg = 'Since v0.21, vectorizer'
     with pytest.raises((FileNotFoundError, AttributeError)):
-        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
-            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
-    assert len(records) == 1
-    assert warn_msg in str(records[0])
+        Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
 
 
 @pytest.mark.parametrize(
@@ -1368,5 +1364,5 @@ def test_vectorizermixin_is_deprecated():
 
     msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         MyVectorizer()
