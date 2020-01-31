@@ -2443,10 +2443,13 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
                       copy=False):
         """Check inputs before fit and transform"""
-        # deactivating check for now (specific tests about error message would
-        # break)
-        # TODO: uncomment when addressing reset in predict/transform/etc.
-        # reset = in_fit
+        # In theory reset should be equal to `in_fit`, but there are tests
+        # checking the input number of feature and they expect a specific
+        # string, which is not the same one raised by check_n_features. So we
+        # don't check n_features_in_ here for now (it's done with adhoc code in
+        # the estimator anyway).
+        # TODO: set reset=in_fit when addressing reset in
+        # predict/transform/etc.
         reset = True
 
         X = self._validate_data(X, reset=reset,

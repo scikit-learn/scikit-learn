@@ -499,10 +499,13 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self._check_params()
         first_time = not hasattr(self, 'components_')
 
-        # deactivating check for now (specific tests about error message would
-        # break)
-        # TODO: uncomment when addressing reset in predict/transform/etc.
-        # reset = first_time
+        # In theory reset should be equal to `first_time`, but there are tests
+        # checking the input number of feature and they expect a specific
+        # string, which is not the same one raised by check_n_features. So we
+        # don't check n_features_in_ here for now (it's done with adhoc code in
+        # the estimator anyway).
+        # TODO: set reset=first_time when addressing reset in
+        # predict/transform/etc.
         reset_n_features = True
         X = self._check_non_neg_array(X, reset_n_features,
                                       "LatentDirichletAllocation.partial_fit")
