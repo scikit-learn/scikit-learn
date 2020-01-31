@@ -569,8 +569,9 @@ class _BaseDiscreteNB(_BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -621,9 +622,9 @@ class _BaseDiscreteNB(_BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
