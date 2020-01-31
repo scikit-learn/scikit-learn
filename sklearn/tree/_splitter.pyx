@@ -445,6 +445,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # TODO
                             if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                                 continue
 
@@ -770,6 +771,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # TODO
                     if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                         continue
 
@@ -1323,6 +1325,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
+                            # TODO
                             if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                                 continue
 
@@ -1560,6 +1563,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # TODO
                     if not self.split_passes_monotonic_check(monotonic_constraint, -INFINITY, INFINITY):
                         continue
 
