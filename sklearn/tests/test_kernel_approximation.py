@@ -118,6 +118,20 @@ def test_skewed_chi2_sampler():
     assert_raises(ValueError, transform.transform, Y_neg)
 
 
+def test_additive_chi2_sampler_exceptions():
+    """Ensures correct error message"""
+    transform = AdditiveChi2Sampler()
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+        X_neg = X.copy()
+        X_neg[0, 0] = -1
+        transform.fit(X_neg)
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+        transform.fit(X)
+        X_neg = X.copy()
+        X_neg[0, 0] = -1
+        transform.transform(X_neg)
+
+
 def test_rbf_sampler():
     # test that RBFSampler approximates kernel on random data
     # compute exact kernel
