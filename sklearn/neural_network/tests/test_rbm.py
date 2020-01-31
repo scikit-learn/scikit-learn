@@ -10,6 +10,7 @@ from sklearn.datasets import load_digits
 from io import StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
+from sklearn.utils.testing import set_random_state
 
 Xdigits, _ = load_digits(return_X_y=True)
 Xdigits -= Xdigits.min()
@@ -194,11 +195,14 @@ def test_sparse_and_verbose():
 
 @pytest.mark.parametrize("dtype_in, dtype_out", [
     (np.float32, np.float32),
-    (np.float64, np.float64)])
-def test_dtype_match(dtype_in, dtype_out):
+    (np.float64, np.float64),
+    (np.int, np.float64)])
+def check_transformer_dtypes_casting(dtype_in, dtype_out):
     X = Xdigits[:100].astype(dtype_in)
-    rbm = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
-                       random_state=42)
-    rbm.fit(X)
-    Xt = rbm.transform(X)
-    assert Xt.dtype == dtype_out
+    rbm = BernoulliRBM(n_components=16, batch_size=5, n_iter=5)
+    set_random_state(rbm)
+    Xt = rbm.fit_transform(X)
+
+    # dtype_in and dtype_out consistent
+    assert Xt.dtype == dtype_out, ('transform dtype: {} - original dtype: {}'
+                                   .format(Xt.dtype, X.dtype))

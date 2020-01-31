@@ -21,7 +21,6 @@ from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import _astype_copy_false
 
 
 class BernoulliRBM(TransformerMixin, BaseEstimator):
