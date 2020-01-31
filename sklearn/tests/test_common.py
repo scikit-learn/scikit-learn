@@ -97,7 +97,7 @@ _xfail_checks["NuSVC()-check_class_weight_classifiers"] = \
 
 # check_methods_subset_invariance
 _xfail_checks.update({
-    "{}()-check_class_weight_classifiers".format(name):
+    "{}()-check_methods_subset_invariance".format(name):
         "{} fails for check_methods_subset_invariance".format(name)
         for name in ['DummyClassifier', 'BernoulliRBM']})
 
