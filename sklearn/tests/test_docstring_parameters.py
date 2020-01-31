@@ -178,7 +178,7 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = ['ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
+    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
                'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
                'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
@@ -187,15 +187,18 @@ def test_fit_docstring_attributes(name, Estimator):
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor']
+               'VotingRegressor'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.xfail(
             reason="Classifier cannot be fit easily to test fit attributes")
 
     est = Estimator()
 
-    if Estimator.__name__ in ['SelectKBest']:
+    if Estimator.__name__ == 'SelectKBest':
         est.k = 2
+
+    if Estimator.__name__ == 'DummyClassifier':
+        est.strategy = "stratified"
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
@@ -216,7 +219,7 @@ def test_fit_docstring_attributes(name, Estimator):
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
-    IGNORED = ['BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
                'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor', 'IsolationForest',
@@ -232,7 +235,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
                'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
                'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler']
+               'SkewedChi2Sampler'}
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
             reason="Classifier has too many undocumented attributes.")
