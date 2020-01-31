@@ -106,11 +106,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to initialize the centers. If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
@@ -379,11 +378,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState instance or None, optional (default=0)
-            If int, random_state is the seed used by the random number
-            generator; If RandomState instance, random_state is the
-            random number generator; If None, the random number
-            generator is the RandomState instance used by `np.random`.
+        random_state : int, RandomState instance, default=0
+            Determines random number generation to randomly draw samples.
+            Pass an int for reproducible results across multiple function
+            calls.
+            See :term: `Glossary <random_state>`.
 
         Returns
         -------

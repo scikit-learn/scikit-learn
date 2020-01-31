@@ -260,9 +260,9 @@ class SpectralCoclustering(BaseSpectral):
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
-    >>> clustering.row_labels_
+    >>> clustering.row_labels_ #doctest: +SKIP
     array([0, 1, 1, 0, 0, 0], dtype=int32)
-    >>> clustering.column_labels_
+    >>> clustering.column_labels_ #doctest: +SKIP
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)

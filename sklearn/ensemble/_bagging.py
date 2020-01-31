@@ -464,13 +464,16 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         The number of base estimators in the ensemble.
 
     max_samples : int or float, default=1.0
-        The number of samples to draw from X to train each base estimator.
+        The number of samples to draw from X to train each base estimator (with
+        replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, default=1.0
-        The number of features to draw from X to train each base estimator.
+        The number of features to draw from X to train each base estimator (
+        without replacement by default, see `bootstrap_features` for more
+        details).
 
         - If int, then draw `max_features` features.
         - If float, then draw `max_features * X.shape[1]` features.
@@ -501,10 +504,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random resampling of the original dataset
+        (sample wise and feature wise).
+        If the base estimator accepts a `random_state` attribute, a different
+        seed is generated for each instance in the ensemble.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
@@ -866,13 +871,16 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         The number of base estimators in the ensemble.
 
     max_samples : int or float, default=1.0
-        The number of samples to draw from X to train each base estimator.
+        The number of samples to draw from X to train each base estimator (with
+        replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, default=1.0
-        The number of features to draw from X to train each base estimator.
+        The number of features to draw from X to train each base estimator (
+        without replacement by default, see `bootstrap_features` for more
+        details).
 
         - If int, then draw `max_features` features.
         - If float, then draw `max_features * X.shape[1]` features.
@@ -900,10 +908,12 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random resampling of the original dataset
+        (sample wise and feature wise).
+        If the base estimator accepts a `random_state` attribute, a different
+        seed is generated for each instance in the ensemble.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.

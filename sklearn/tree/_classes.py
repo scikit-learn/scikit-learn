@@ -1598,6 +1598,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    feature_importances_ : ndarray of shape (n_features,)
+        Return the feature importances (the higher, the more important the
+        feature).
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 

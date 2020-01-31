@@ -120,6 +120,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
+        # Initializion of the random number instance that will be used to
+        # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
 
         for iboost in range(self.n_estimators):
@@ -311,10 +313,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         achieving a lower test error with fewer boosting iterations.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -466,7 +469,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The current sample weights.
 
         random_state : RandomState
-            The current random number generator
+            The RandomState instance used if the base estimator accepts a
+            `random_state` attribute.
 
         Returns
         -------
@@ -887,10 +891,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         boosting iteration.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        In addition, it controls the bootstrap of the weights used to train the
+        `base_estimator` at each boosting iteration.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -1009,7 +1016,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The current sample weights.
 
         random_state : RandomState
-            The current random number generator
+            The RandomState instance used if the base estimator accepts a
+            `random_state` attribute.
+            Controls also the bootstrap of the weights used to train the weak
+            learner.
+            replacement.
 
         Returns
         -------

@@ -793,11 +793,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -1185,11 +1186,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving

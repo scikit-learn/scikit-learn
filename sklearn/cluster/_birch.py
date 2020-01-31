@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 from math import sqrt
 
+from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
@@ -579,10 +580,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
-        reduced_distance = safe_sparse_dot(X, self.subcluster_centers_.T)
-        reduced_distance *= -2
-        reduced_distance += self._subcluster_norms
-        return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
+        kwargs = {'Y_norm_squared': self._subcluster_norms}
+        return self.subcluster_labels_[
+                pairwise_distances_argmin(X,
+                                          self.subcluster_centers_,
+                                          metric_kwargs=kwargs)
+            ]
 
     def transform(self, X):
         """
