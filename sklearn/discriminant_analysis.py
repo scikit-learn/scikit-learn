@@ -34,10 +34,10 @@ def _cov(X, shrinkage=None):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data.
 
-    shrinkage : string or float, optional
+    shrinkage : {'empirical', 'auto'} or float, default=None
         Shrinkage parameter, possible values:
           - None or 'empirical': no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
@@ -45,7 +45,7 @@ def _cov(X, shrinkage=None):
 
     Returns
     -------
-    s : array, shape (n_features, n_features)
+    s : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
@@ -74,15 +74,15 @@ def _class_means(X, y):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like, shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
     Returns
     -------
-    means : array-like, shape (n_classes, n_features)
+    means : array-like of shape (n_classes, n_features)
         Class means.
     """
     classes, y = np.unique(y, return_inverse=True)
@@ -98,16 +98,16 @@ def _class_cov(X, y, priors, shrinkage=None):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like, shape (n_samples,) or (n_samples, n_targets)
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
-    priors : array-like, shape (n_classes,)
+    priors : array-like of shape (n_classes,)
         Class priors.
 
-    shrinkage : string or float, optional
+    shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
@@ -115,7 +115,7 @@ def _class_cov(X, y, priors, shrinkage=None):
 
     Returns
     -------
-    cov : array-like, shape (n_features, n_features)
+    cov : array-like of shape (n_features, n_features)
         Class covariance matrix.
     """
     classes = np.unique(y)
@@ -146,7 +146,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    solver : string, optional
+    solver : {'svd', 'lsqr', 'eigen'}, default='svd'
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
@@ -154,7 +154,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
           - 'lsqr': Least squares solution, can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
-    shrinkage : string or float, optional
+    shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
@@ -162,55 +162,55 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    priors : array, optional, shape (n_classes,)
+    priors : array-like of shape (n_classes,), default=None
         Class priors.
 
-    n_components : int, optional (default=None)
+    n_components : int, default=None
         Number of components (<= min(n_classes - 1, n_features)) for
         dimensionality reduction. If None, will be set to
         min(n_classes - 1, n_features).
 
-    store_covariance : bool, optional
+    store_covariance : bool, default=False
         Additionally compute class covariance matrix (default False), used
         only in 'svd' solver.
 
         .. versionadded:: 0.17
 
-    tol : float, optional, (default 1.0e-4)
+    tol : float, default=1.0e-4
         Threshold used for rank estimation in SVD solver.
 
         .. versionadded:: 0.17
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_classes, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_classes,)
+    intercept_ : ndarray of shape (n_classes,)
         Intercept term.
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Covariance matrix (shared by all classes).
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If ``n_components`` is not set then all components are stored and the
         sum of explained variances is equal to 1.0. Only available when eigen
         or svd solver is used.
 
-    means_ : array-like, shape (n_classes, n_features)
+    means_ : array-like of shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape (n_classes,)
+    priors_ : array-like of shape (n_classes,)
         Class priors (sum to 1).
 
-    scalings_ : array-like, shape (rank, n_classes - 1)
+    scalings_ : array-like of shape (rank, n_classes - 1)
         Scaling of the features in the space spanned by the class centroids.
 
-    xbar_ : array-like, shape (n_features,)
+    xbar_ : array-like of shape (n_features,)
         Overall mean.
 
-    classes_ : array-like, shape (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     See also
@@ -267,15 +267,15 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_classes)
+        y : array-like of shape (n_samples,) or (n_samples, n_classes)
             Target values.
 
-        shrinkage : string or float, optional
+        shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
-              - None: no shrinkage (default).
+              - None: no shrinkage.
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
@@ -305,15 +305,15 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        shrinkage : string or float, optional
+        shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
-              - None: no shrinkage (default).
+              - None: no shrinkage.
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
@@ -349,10 +349,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
         """
         n_samples, n_features = X.shape
@@ -417,10 +417,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
         """
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
@@ -483,12 +483,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         if self.solver == 'lsqr':
@@ -509,12 +509,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape (n_samples, n_classes)
+        C : ndarray of shape (n_samples, n_classes)
             Estimated probabilities.
         """
         check_is_fitted(self)
@@ -531,12 +531,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape (n_samples, n_classes)
+        C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
         return np.log(self.predict_proba(X))
@@ -558,20 +558,20 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    priors : array, optional, shape = [n_classes]
+    priors : ndarray of shape (n_classes,), default=None
         Priors on classes
 
-    reg_param : float, optional
+    reg_param : float, default=0.0
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-    store_covariance : boolean
+    store_covariance : bool, default=False
         If True the covariance matrices are computed and stored in the
         `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
-    tol : float, optional, default 1.0e-4
+    tol : float, default=1.0e-4
         Threshold used for rank estimation.
 
         .. versionadded:: 0.17
@@ -584,21 +584,21 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     means_ : array-like of shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like of shape (n_classes)
+    priors_ : array-like of shape (n_classes,)
         Class priors (sum to 1).
 
-    rotations_ : list of arrays
-        For each class k an array of shape [n_features, n_k], with
+    rotations_ : list of ndarrays
+        For each class k an array of shape (n_features, n_k), with
         ``n_k = min(n_features, number of elements in class k)``
         It is the rotation of the Gaussian distribution, i.e. its
         principal axis.
 
-    scalings_ : list of arrays
-        For each class k an array of shape [n_k]. It contains the scaling
+    scalings_ : list of ndarrays
+        For each class k an array of shape (n_k,). It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
-    classes_ : array-like, shape (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     Examples
@@ -642,7 +642,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers)
         """
         X, y = check_X_y(X, y)
