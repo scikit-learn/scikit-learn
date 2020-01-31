@@ -927,6 +927,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     Attributes
     ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
     n_iter_ : int
         The number of estimators as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
