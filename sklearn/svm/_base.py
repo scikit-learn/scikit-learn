@@ -861,8 +861,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         Stopping condition.
 
     random_state : int or RandomState instance, default=None
-        Controls the pseudo random number generator to use when shuffling the
-        data.
+        Controls the pseudo random number generation for shuffling the data.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
