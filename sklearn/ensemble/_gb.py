@@ -1367,7 +1367,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         In addition, it controls the random permutation of the features at
         each split (see Notes for more details).
         It also controls the random spliting of the training data to obtain a
-        validation set if 'n_iter_no_change' is not None.
+        validation set if `n_iter_no_change` is not None.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
