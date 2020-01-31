@@ -37,10 +37,12 @@ def test_empty_like_no_nep18():
         real_np_version = sklearn.utils.array_creation.np_version
         sklearn.utils.array_creation.np_version = (1, 16)
 
-        # for numpy < 1.17, we should give an error msg, if we provide shape
         no_array = NotAnArray()
-        with pytest.raises(ValueError):
-            empty_like(no_array, dtype=np.float32, shape=(4, 2))
+        empty_like(no_array, dtype=np.float32, shape=(4, 2))
+        # for numpy < 1.17, we should give an error msg, if we provide shape
+        # with a non-numpy array, and no dtype
+        with pytest.raises(NotImplementedError):
+            empty_like(no_array, shape=(4, 2))
 
         # we can pass a non-ndarray object, but without shape
         no_array = NotAnArray()

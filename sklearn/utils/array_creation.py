@@ -18,19 +18,17 @@ def create_like(create, create_like):
 
         Before numpy 1.17, numpy.{name}_like did not take a shape argument.
 
-        When version of numpy < (1, 17), prototype is not an ndarray instance
-        and shape is provided, a ValueError will be raised.
         When version of numpy < (1, 17), and shape is provided, the call will
-        be forwarded to numpy.{name}.
+        be forwarded to numpy.{name}. If shape is not provided, the call is
+        forwarded to numpy.{name}_like.
         """.format(name=name)
         if np_version < (1, 17):
-            if not isinstance(prototype, np.ndarray) and shape is not None:
-                raise ValueError('NumPy %r does not support NEP18' %
-                                 (np_version,))
             if shape is not None:
-                prototype = np.array(prototype, copy=False, order=order,
-                                     subok=subok)
                 if dtype is None:
+                    if not hasattr(prototype, 'dtype'):
+                        raise NotImplementedError('Passed prototype to {name}_'
+                                                  'like without a dtype'.
+                                                  format(name=name))
                     dtype = prototype.dtype
                 if order == 'A':
                     order = 'F' if prototype.flags['F_CONTIGUOUS'] else 'C'
