@@ -1,5 +1,3 @@
-# from sklearn.plot import plot_heatmap
-# from sklearn.plot import plot_confusion_matrix
 from sklearn.metrics import plot_gridsearch_results
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
@@ -7,67 +5,30 @@ from sklearn.svm import SVC
 from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import assert_raise_message
 import numpy as np
-from numpy.random import (RandomState,
-                          randint)
+
+from sklearn.metrics._plot.gridsearch_results import _plot_heatmap
+from numpy.random import RandomState
 
 
-# def test_heatmap():
-#     try:
-#         import matplotlib
-#     except ImportError:
-#         raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
+def test_heatmap():
+    try:
+        import matplotlib
+    except ImportError:
+        raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
 
-#     import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-#     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
-#         plt.figure()
-#         rng = RandomState(0)
-#         X = rng.normal(size=(10, 5))
-#         # use mixture of default values and keyword args
-#         plot_heatmap(X, ylabel="y-axis",
-#                      xticklabels=["a", "b", "c", "d", "efgh"],
-#                      cmap="Paired", ax=plt.gca())
+    with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
+        plt.figure()
+        rng = RandomState(0)
+        X = rng.normal(size=(10, 5))
+        # use mixture of default values and keyword args
+        _plot_heatmap(X, ylabel="y-axis",
+                      xticklabels=["a", "b", "c", "d", "efgh"],
+                      cmap="Paired", ax=plt.gca())
 
-#         plt.draw()
-#         plt.close()
-
-
-# def test_confusion_matrix():
-#     try:
-#         import matplotlib
-#     except ImportError:
-#         raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
-
-#     import matplotlib.pyplot as plt
-
-#     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
-#         plt.figure()
-#         array1 = randint(1, 3, size=20)
-#         array2 = randint(1, 3, size=20)
-
-#         # plot un-normalized matrix
-#         plot_confusion_matrix(array1, array2, classes=["dummy1", "dummy2"],
-#                               cmap="Paired", ax=plt.gca())
-
-#         # plot normalized matrix
-#         plot_confusion_matrix(array1, array2, normalize=True,
-#                               classes=["dummay1", "dummy2"],
-#                               cmap="Paired", ax=plt.gca())
-
-#         # plot without passing classes explicitly
-#         plot_confusion_matrix(array1, array2,
-#                               cmap="Paired", ax=plt.gca())
-
-#         # y having different value than classes should raise error
-#         expected_msg = ("y_true and y_pred contain 2 unique classes, which is"
-#                         " not the same as 3 classes found in "
-#                         "`classes=[1, 2, 3]` parameter")
-#         assert_raise_message(ValueError, expected_msg,
-#                              plot_confusion_matrix, array1, array2,
-#                              classes=[1, 2, 3], ax=plt.gca())
-
-#         plt.draw()
-#         plt.close()
+        plt.draw()
+        plt.close()
 
 
 def test_gridsearch_results_1d():
