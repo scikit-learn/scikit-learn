@@ -426,7 +426,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return sp.hstack(X_new)
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {'stateless': True,
+                'requires_positive_X': True}
 
 
 class Nystroem(TransformerMixin, BaseEstimator):
