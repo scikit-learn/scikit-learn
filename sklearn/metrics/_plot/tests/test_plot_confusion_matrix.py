@@ -269,27 +269,31 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
 def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
                                           fitted_clf, values_format):
     X, y = data
-
-    cm = np.array([[10000000, 0],
-                   [29, 123123]])
+    cm = np.array([[10000000, 0], [29, 123123]])
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  include_values=True,
                                  values_format=values_format)
     disp.confusion_matrix = cm
+    plotted_text_values = disp.plot().text_
     # Values should be shown as whole numbers 'd',
     # except the first number which should be shown as 1e+07
-    assert disp.confusion_matrix.dtype.char == 'l'
-    disp.plot()
+    test = []
+    for i in plotted_text_values.flatten():
+        test.append(i.get_text())
+    test = np.asarray(test)
+    assert_array_equal(test,  np.array(['1e+07', '0', '29', '123123']))
 
-    # Testing values with mixed float and int (array will only show float)
-    cm = np.array([[0.1, 1.5],
-                   [10.99, 99]])
+    X, y = data
+    cm = np.array([[0.1, 10], [100, 0.5]])
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  include_values=True,
                                  values_format=values_format)
     disp.confusion_matrix = cm
-    # Since the values in the matrix are floats, the
-    # values should be shown as '.2g' values, which means
-    # the last value should be shown as 1e+02.
-    assert disp.confusion_matrix.dtype.char == 'd'
-    disp.plot()
+    plotted_text_values = disp.plot().text_
+    # Values should now formatted as '.2g',
+    # Values are have two dec places max, and =>100 becomes e+02.
+    test = []
+    for i in plotted_text_values.flatten():
+        test.append(i.get_text())
+    test = np.asarray(test)
+    assert_array_equal(test,  np.array(['0.1', '10', '1e+02', '0.5']))
