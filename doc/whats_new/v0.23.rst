@@ -57,6 +57,13 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
   :user:`Alex Shacked <alexshacked>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` method ``get_feature_names`` now
+  returns correct results when one of the transformer steps applies on an
+  empty list of columns :pr:`15963` by `Roman Yurchak`_.
+
 :mod:`sklearn.datasets`
 .......................
 

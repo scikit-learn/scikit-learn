@@ -312,6 +312,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Attributes
     ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
