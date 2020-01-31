@@ -166,10 +166,10 @@ def test_tabs():
 @pytest.mark.parametrize('name, Classifier',
                          all_estimators(type_filter='classifier'))
 def test_classifier_docstring_attributes(name, Classifier):
-    pytest.importorskip('numpydoc')
+    docscrape = pytest.importorskip('numpydoc.docscrape')
     from numpydoc import docscrape
 
     doc = docscrape.ClassDoc(Classifier)
     attributes = doc['Attributes']
     assert attributes
-    assert any(['classes_' in att[0] for att in attributes])
+    assert 'classes_' in [att.name for att in attributes]
