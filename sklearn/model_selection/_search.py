@@ -474,12 +474,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         y_score : ndarray, shape (n_samples,)
         """
         self._check_is_fitted('score_samples')
-        if self.scorer_ is None:
-            raise ValueError("No score function explicitly defined, "
-                             "and the estimator doesn't provide one %s"
-                             % self.best_estimator_)
-        score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-        return score(self.best_estimator_, X)
+        return self.best_estimator_.score_samples(X)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
