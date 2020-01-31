@@ -5,11 +5,15 @@ Feature selection using SelectFromModel and LassoCV
 
 Use SelectFromModel meta-transformer along with Lasso to select the best
 couple of features from the diabetes dataset.
-"""
-# Authors: Manoj Kumar <mks542@nyu.edu>
-#          Maria Telenczuk
-# License: BSD 3 clause
 
+Diabetes dataset consists of multiple variables of 442 diabetes patients.
+This example shows how to use SelectFromModel and LassoCv to find the best two
+features predictiong disease progression after one year from the baseline.
+
+ Authors: Manoj Kumar <mks542@nyu.edu>
+          Maria Telenczuk
+ License: BSD 3 clause
+"""
 print(__doc__)
 
 import matplotlib.pyplot as plt
@@ -19,9 +23,20 @@ from sklearn.datasets import load_diabetes
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
-# Load the diabetes dataset.
+##############################################################################
+# Diabetes dataset data preprocessing
+# -------------------------------------
+#
+# Center target to avoid gradient boosting init bias: gradient boosting
+# with the 'recursion' method does not account for the initial estimator
+# (here the average target, by default)
+
 X, y = load_diabetes(return_X_y=True)
 
+##############################################################################
+# Setting LassoCV
+# ---------------------------------------------------------
+#
 # We use the base estimator LassoCV since the L1 norm
 # promotes sparsity of features.
 clf = LassoCV()
@@ -41,7 +56,7 @@ while n_features > 2:
 
 # Plot the selected two features from X.
 plt.title(
-    "Features selected from diabets using SelectFromModel with "
+    "Features from diabets using SelectFromModel with "
     "threshold %0.3f." % sfm.threshold)
 feature1 = X_transform[:, 0]
 feature2 = X_transform[:, 1]
