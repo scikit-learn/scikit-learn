@@ -43,20 +43,19 @@ mlp = make_pipeline(StandardScaler(),
 tree.fit(X, y)
 mlp.fit(X, y)
 
-
-import pdb; pdb.set_trace()
 ##############################################################################
 # Plotting partial dependence for two features
 # ============================================
 #
-# We plot partial dependence curves for features "LSTAT" and "RM" for
+# We plot partial dependence curves for features "s1" and "s5" for
 # the decision tree. With two features,
 # :func:`~sklearn.inspection.plot_partial_dependence` expects to plot two
 # curves. Here the plot function place a grid of two plots using the space
 # defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"], ax=ax)
+tree_disp = plot_partial_dependence(tree, X, ["s1", "s5"], ax=ax)
+
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
