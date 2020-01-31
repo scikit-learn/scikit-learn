@@ -885,10 +885,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         ``DummyEstimator`` predicting the classes priors is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random seed given to each Tree estimator at each
+        boosting iteration.
+        In addition, it controls the random permutation of the features at
+        each split (see Notes for more details).
+        It also controls the random spliting of the training data to obtain a
+        validation set if `n_iter_no_change` is not None.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -1358,10 +1362,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         (for loss='ls'), or a quantile for the other losses.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random seed given to each Tree estimator at each
+        boosting iteration.
+        In addition, it controls the random permutation of the features at
+        each split (see Notes for more details).
+        It also controls the random spliting of the training data to obtain a
+        validation set if `n_iter_no_change` is not None.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
