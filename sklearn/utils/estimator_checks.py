@@ -1380,6 +1380,8 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         #assert X_trans.dtype == dtype_out, \
         #    ('Estimator transform dtype: {} - orginal/expected dtype: {}'
         #     .format(X_trans.dtype, dtype_out.__name__))
+        if sparse.issparse(X_trans):
+            X_trans = X_trans.toarray()
         Xts.append(X_trans)
     
     # We assume float64 input is correct and compare all the others
