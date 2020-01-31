@@ -197,8 +197,8 @@ def test_sparse_and_verbose():
     (np.float64, np.float64)])
 def test_dtype_match(dtype_in, dtype_out):
     X = Xdigits[:100].astype(dtype_in)
-    rbm = BernoulliRBM(n_components=16, batch_size=5,
-                        n_iter=5, random_state=42)
+    rbm = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                       random_state=42)
     rbm.fit(X)
     Xt = rbm.transform(X)
     assert Xt.dtype == dtype_out

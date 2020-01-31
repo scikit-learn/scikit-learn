@@ -21,6 +21,7 @@ from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import _astype_copy_false
 
 
 class BernoulliRBM(TransformerMixin, BaseEstimator):
@@ -123,7 +124,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -139,8 +140,10 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         h : ndarray of shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
+
         p = safe_sparse_dot(v, self.components_.T)
         p += self.intercept_hidden_
+
         return expit(p, out=p)
 
     def _sample_hiddens(self, v, rng):
@@ -336,16 +339,18 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F')
-        self.intercept_hidden_ = np.zeros(self.n_components, )
-        self.intercept_visible_ = np.zeros(X.shape[1], )
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+            order='F',
+            dtype=X.dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
+                                   dtype=X.dtype)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
