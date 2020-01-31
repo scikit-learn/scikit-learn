@@ -54,6 +54,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
 
+    dtype : data-type, default=np.float64
+        The desired data-type for the output.
+
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
@@ -115,10 +118,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
+    def __init__(self, n_bins=5, encode='onehot', strategy='quantile',
+                 dtype=np.float64):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         """
@@ -279,9 +284,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'ordinal':
-            return Xt
+            return Xt.astype(self.dtype)
 
-        return self._encoder.transform(Xt)
+        return self._encoder.transform(Xt).astype(self.dtype)
 
     def inverse_transform(self, Xt):
         """
@@ -316,4 +321,4 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
             Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
 
-        return Xinv
+        return Xinv.astype(self.dtype)
