@@ -885,7 +885,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         ``DummyEstimator`` predicting the classes priors is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls the random seed given at each Tree estimator at each
+        Controls the random seed given to each Tree estimator at each
         boosting iteration.
         In additions, it controls the random permutation of the features at
         each split (see 'Notes' for more details).
