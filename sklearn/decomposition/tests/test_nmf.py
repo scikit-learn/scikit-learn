@@ -524,7 +524,9 @@ def test_nmf_dtype_match(dtype_in, dtype_out, solver):
 def test_nmf_float32_float64_consistency(solver):
     X = np.random.RandomState(0).randn(20, 15)
     np.abs(X, out=X)
-    nmf32 = NMF(solver=solver, random_state=0).fit(X.astype(np.float32))
-    nmf64 = NMF(solver=solver, random_state=0).fit(X)
+    nmf32 = NMF(solver=solver, random_state=0)
+    W32 = nmf32.fit_transform(X.astype(np.float32))
+    nmf64 = NMF(solver=solver, random_state=0)
+    W64 = nmf64.fit_transform(X)
 
-    assert_allclose(nmf32.components_, nmf64.components_, rtol=1e-6)
+    assert_allclose(W32, W64, rtol=1e-4)
