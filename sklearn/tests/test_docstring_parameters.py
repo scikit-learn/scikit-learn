@@ -18,12 +18,9 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import all_estimators
-<<<<<<< HEAD
 from sklearn.utils.estimator_checks import _safe_tags
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
-=======
->>>>>>> 83985e9fe82d22ae984a09282d82a6a8dbcbaa9a
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
@@ -172,7 +169,6 @@ def test_tabs():
                                     % modname)
 
 
-<<<<<<< HEAD
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -246,15 +242,3 @@ def test_fit_docstring_attributes(name, Estimator):
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
-=======
-@pytest.mark.parametrize('name, Classifier',
-                         all_estimators(type_filter='classifier'))
-def test_classifier_docstring_attributes(name, Classifier):
-    docscrape = pytest.importorskip('numpydoc.docscrape')
-    from numpydoc import docscrape
-
-    doc = docscrape.ClassDoc(Classifier)
-    attributes = doc['Attributes']
-    assert attributes
-    assert 'classes_' in [att.name for att in attributes]
->>>>>>> 83985e9fe82d22ae984a09282d82a6a8dbcbaa9a
