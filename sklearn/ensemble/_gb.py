@@ -887,7 +887,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     random_state : int, RandomState instance or None, optional (default=None)
         Controls the random seed given to each Tree estimator at each
         boosting iteration.
-        In additions, it controls the random permutation of the features at
+        In addition, it controls the random permutation of the features at
         each split (see 'Notes' for more details).
         It also controls the random spliting of the training data to obtain a
         validation set if 'n_iter_no_change' is not None.
