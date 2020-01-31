@@ -18,10 +18,12 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import all_estimators
+from sklearn.utils.estimator_checks import _safe_tags
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
-from sklearn.datasets import make_classification, make_regression
-from sklearn.base import is_classifier, is_regressor
+from sklearn.datasets import make_classification
 
 import pytest
 
@@ -195,38 +197,15 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in ['SelectKBest']:
         est.k = 2
 
-    X_classif, y_classif = \
-        make_classification(n_samples=20, n_features=3,
-                            n_redundant=0, n_classes=2)
+    X, y = make_classification(n_samples=20, n_features=3,
+                               n_redundant=0, n_classes=2)
 
-    X_reg, y_reg = \
-        make_regression(n_samples=10, n_features=2)
+    y = _enforce_estimator_tags_y(est, y)
+    X = _enforce_estimator_tags_x(est, X)
 
-    # Make sure features are positive as some models need it
-    X_classif -= X_classif.min()
-    X_reg -= X_reg.min()
-
-    if is_classifier(est):
-        X, y = X_classif, y_classif
-    elif is_regressor(est):
-        X, y = X_reg, y_reg
-    else:
-        X, y = X_classif, y_classif
-
-    tags = est._get_tags()
-
-    if '1darray' in tags['X_types']:
-        X = X[:, 0]
-
-    if tags['multioutput_only']:
-        y = np.c_[y, y]
-
-    if getattr(est, '_pairwise', None):
-        X = X.dot(X.T)
-
-    if '1dlabels' in tags['X_types']:
+    if '1dlabels' in _safe_tags(est, 'X_types'):
         est.fit(y)
-    elif '2dlabels' in tags['X_types']:
+    elif '2dlabels' in _safe_tags(est, 'X_types'):
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
@@ -236,29 +215,30 @@ def test_fit_docstring_attributes(name, Estimator):
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
-    IGNORED = ['HistGradientBoostingClassifier', 'HistGradientBoostingRegressor',
-               'MiniBatchKMeans']
+    IGNORED = ['BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+               'ElasticNetCV', 'GaussianProcessClassifier',
+               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
+               'HistGradientBoostingRegressor', 'IsolationForest',
+               'KNeighborsClassifier', 'KNeighborsRegressor',
+               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
+               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
+               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
+               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
+               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
+               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSRegression', 'PLSSVD',
+               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
+               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
+               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
+               'SkewedChi2Sampler']
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
             reason="Classifier has too many undocumented attributes.")
 
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')]
+    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
+                and not k.startswith('_')]
     fit_attr_names = [attr.name for attr in attributes]
-    for attr in fit_attr:
-        if attr in ['X_offset_', 'X_scale_', 'fit_', 'partial_fit_', 'x_mean_',
-                    'y_mean_', 'x_std_', 'y_std_', 'dual_gap_',
-                    'base_estimator_', 'n_classes_', 'n_estimators_',
-                    'classes_', 'n_features_', 'loss_', 'do_early_stopping_',
-                    'n_samples_fit_', 'effective_metric_params_',
-                    'effective_metric_', 'tree_', 'active_', 'alphas_',
-                    'random_state_', 'exp_dirichlet_component_',
-                    'dissimilarity_matrix_', 'n_iter_', 't_',
-                    'loss_curve_', 'best_loss_', 'eps_',
-                    'class_weight_', 'fit_status_', 'shape_fit_', 'location_',
-                    'n_nonzero_coefs_', 'loss_function_', 'random_weights_',
-                    'random_offset_', 'outlier_label_', 'n_outputs_',
-                    'one_hot_encoder_']:
-            continue
-        if attr.startswith('_'):
-            continue
-        assert attr in fit_attr_names
+    undocumented_attrs = set(fit_attr).difference(fit_attr_names)
+    assert not undocumented_attrs,\
+        "Undocumented attributes: {}".format(undocumented_attrs)
