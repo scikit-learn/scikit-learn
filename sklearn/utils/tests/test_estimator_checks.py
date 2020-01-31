@@ -10,7 +10,7 @@ from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils._testing import assert_warns, ignore_warnings, SkipTest
+from sklearn.utils._testing import ignore_warnings, SkipTest
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -346,7 +346,8 @@ def test_check_estimator():
     with pytest.raises(AssertionError, match=msg):
         check_estimator(ModifiesValueInsteadOfRaisingError())
 
-    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
+    with pytest.warns(UserWarning):
+        check_estimator(RaisesErrorInSetParams())
 
     with pytest.raises(AssertionError, match=msg):
         check_estimator(ModifiesAnotherValue())
