@@ -75,29 +75,26 @@ def _safe_tags(estimator, key=None):
 def _raise_xfail(reason, request=None):
     """Mark a check as a known failure
 
-    This function is mostly useful to be able to skip the test
-    if pytest is not installed. Outside of a scikit-learn pytest
-    session the SkipTest exception will allways be raised.
+    If pytest function request is not provided, the SkipTest exception will
+    be raised instead.
 
     Parameters
     ----------
     reason : str
         reason for the known failure
     request: default=None
-        result of the pytest request fixture.
+        result of the pytest request fixture, or None. This parameter
+        should be not None to call pytest.xfail.
     """
-    if not getattr(sys, "_is_pytest_session", False):
-        # outside of a scikit-learn pytest session always raise SkipTest
+    if request is None:
+        # if a pytest request context is not provided raise SkipTest
         raise SkipTest('XFAIL ' + str(reason))
     try:
         import pytest
-        if request is None:
-            # raise XFAIL and halt execution
-            pytest.xfail(reason)
-        else:
-            # mark test as XFAIL and continue excecution to see if it will
-            # actually fail.
-            request.applymarker(pytest.mark.xfail(reason=reason))
+
+        # mark test as XFAIL and continue excecution to see if it will
+        # actually fail.
+        request.applymarker(pytest.mark.xfail(reason=reason))
     except ImportError:
         raise SkipTest('XFAIL ' + str(reason))
 
