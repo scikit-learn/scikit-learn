@@ -144,7 +144,7 @@ Changelog
 - |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
   iteration when `solver='newton-cg'` by checking for inferior or equal instead
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
-  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`. 
+  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
 :mod:`sklearn.metrics`
 ......................
