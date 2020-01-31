@@ -361,11 +361,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive : boolean, optional
         Whether to enforce positivity when finding the dictionary.
@@ -483,10 +482,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         To control the verbosity of the procedure.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -690,10 +688,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         initialization.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -704,7 +703,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     inner_stats : tuple of (A, B) ndarrays
         Inner sufficient statistics that are kept by the algorithm.
         Passing them at initialization is useful in online settings, to
-        avoid loosing the history of the evolution.
+        avoid losing the history of the evolution.
         A (n_components, n_components) is the dictionary covariance matrix.
         B (n_features, n_components) is the data approximation matrix
 
@@ -952,7 +951,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
         normalized to unit norm.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}
+    'threshold'}, default='omp'
         Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -963,12 +962,12 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+    transform_n_nonzero_coefs : int, default=0.1*n_features
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha : float, 1. by default
+    transform_alpha : float, default=1.
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -977,23 +976,23 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign : bool, False by default
+    split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    positive_code : bool
+    positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
         .. versionadded:: 0.20
 
-    transform_max_iter : int, optional (default=1000)
+    transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
@@ -1132,11 +1131,12 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
@@ -1323,10 +1323,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         performance of downstream classifiers.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
@@ -1351,7 +1352,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     inner_stats_ : tuple of (A, B) ndarrays
         Internal sufficient statistics that are kept by the algorithm.
-        Keeping them is useful in online settings, to avoid loosing the
+        Keeping them is useful in online settings, to avoid losing the
         history of the evolution, but they shouldn't have any use for the
         end user.
         A (n_components, n_components) is the dictionary covariance matrix.

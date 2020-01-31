@@ -11,9 +11,9 @@ make_conda() {
 }
 
 version_ge() {
-    # The two version numbers are seperated with a new line is piped to sort
+    # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
-    # decending order. If the first argument is the top element of the sort, it
+    # descending order. If the first argument is the top element of the sort, it
     # is greater than or equal to the second argument.
     test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
@@ -22,13 +22,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
+                blas[build=$BLAS]"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
@@ -49,7 +44,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4 \
                         conda-forge::llvm-openmp"
         fi
     fi
@@ -97,6 +92,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
+    # do not install dependencies for lightgbm since it requires scikit-learn
+    python -m pip install lightgbm --no-deps
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
