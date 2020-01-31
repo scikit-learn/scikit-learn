@@ -428,7 +428,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             self.y_thresholds_ = self._necessary_y_
             del self._necessary_X_
             del self._necessary_y_
-            self._build_f(self.X_thresholds_, self.y_thresholds_)
         if hasattr(self, 'X_thresholds_') and hasattr(self, 'y_thresholds_'):
             self._build_f(self.X_thresholds_, self.y_thresholds_)
 
