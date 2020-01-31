@@ -5,15 +5,20 @@ Plot individual and voting regression predictions
 
 .. currentmodule:: sklearn
 
-Plot individual and averaged regression predictions for diabetes dataset.
-
-First, three exemplary regressors are initialized
-(:class:`~ensemble.GradientBoostingRegressor`,
+Regression is a method to predict the average value of the target y from the
+given data X. It is possible to use different type of regressors to predict the
+data. In this example we are going to use three of them:
+:class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
-:class:`~linear_model.LinearRegression`) and used to initialize a
+:class:`~linear_model.LinearRegression`). Next, we are going to use their
+predictions to make andother one: voting regression predictions using
 :class:`~ensemble.VotingRegressor`.
 
-The red starred dots are the averaged predictions.
+Finally, we will plot all of them for comparison:
+
+We will work with the diabetes dataset which consists of the 10 featuers
+collected from the diabetes patients. The target is the disease progression
+after one year from the baseline.
 
 """
 print(__doc__)
@@ -25,6 +30,15 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
+
+"""
+=================================
+Training classifiers
+=================================
+
+
+
+"""
 
 # Loading some example data
 X, y = datasets.load_diabetes(return_X_y=True)
@@ -40,6 +54,15 @@ reg3.fit(X, y)
 ereg.fit(X, y)
 
 xt = X[:20]
+
+"""
+=================================
+Plot figure
+=================================
+
+
+
+"""
 
 plt.figure()
 plt.plot(reg1.predict(xt), 'gd', label='GradientBoostingRegressor')
