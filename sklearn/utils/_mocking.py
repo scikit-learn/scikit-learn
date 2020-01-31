@@ -65,10 +65,6 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     classes_
-<<<<<<< HEAD
-=======
-
->>>>>>> 83985e9fe82d22ae984a09282d82a6a8dbcbaa9a
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
