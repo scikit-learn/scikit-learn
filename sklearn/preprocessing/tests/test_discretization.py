@@ -284,19 +284,18 @@ def test_percentile_numeric_stability():
 
 
 @pytest.mark.parametrize("input_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("output_dtype", [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("output_dtype", [None, np.float32, np.float64])
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
 def test_dtype(input_dtype, output_dtype, encode):
-    # test dtype` parameter to properly cast output dtype
-    kbd = KBinsDiscretizer(n_bins=3,  encode=encode, dtype=output_dtype)
+    # test dtype parameter to properly cast output dtype (output_dtype if
+    # specified or consistent with input_dtype instead).
+    kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=output_dtype)
     kbd.fit(X)
-
-    # transform
     X_input = np.array(X, dtype=input_dtype)
+    output_dtype_ = output_dtype if output_dtype is not None else X_input.dtype
+    # wrong input_dtype are cast in np.float64 by default so the expected
+    # output_dtype will be 64 bit.
+    if input_dtype == np.float16 and output_dtype is None:
+        output_dtype_ = np.float64
     Xt = kbd.transform(X_input)
-    assert Xt.dtype == output_dtype
-
-    # inverse_transform
-    Xt = Xt.astype(input_dtype)
-    Xinv = kbd.inverse_transform(Xt)
-    assert Xinv.dtype == output_dtype
+    assert Xt.dtype == output_dtype_
