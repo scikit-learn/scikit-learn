@@ -19,7 +19,7 @@ def test_percent10():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
         download_if_missing = True
     try:
-        data = fetch_kddcup99(download_if_missing=False)
+        data = fetch_kddcup99(download_if_missing=download_if_missing)
     except IOError:
         raise SkipTest("kddcup99 dataset can not be loaded.")
 
