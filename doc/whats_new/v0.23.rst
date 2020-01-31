@@ -184,6 +184,10 @@ Changelog
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`. :pr:`16335` by :user:`Arthur Imbert
+  <Henley13>`.
+
 :mod:`sklearn.svm`
 ..................
 
