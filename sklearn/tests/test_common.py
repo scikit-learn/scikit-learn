@@ -94,10 +94,9 @@ def test_estimators(estimator, check, request):
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-        check_valid_args = [p.name
-                            for p in signature(check).parameters.values()]
+
         args = {}
-        if "request" in check_valid_args:
+        if "request" in signature(check).parameters:
             # pass the pytest request fixture, so that we can mark the
             # check as XFAIL when necessary.
             args['request'] = request
