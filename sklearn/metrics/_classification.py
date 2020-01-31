@@ -2557,10 +2557,11 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
                                 / delta_count)
             count += delta_count
             if debiased:
-                debias = bin_centroid*(1-bin_centroid) * delta_count
-                debias /= y_true.shape[0]*delta_count-1
-                debias += debias
                 reducer = "l2"
+                delta_debias = bin_centroid*(1-bin_centroid) * delta_count
+                delta_debias /= y_true.shape[0]*delta_count-1
+                if not np.isnan(delta_debias):
+                     debias += delta_debias
             if reducer == "max":
                 loss = max(loss, abs(avg_pred_true - bin_centroid))
             elif reducer == "avg":
@@ -2568,7 +2569,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, reducer="avg",
                 if not np.isnan(delta_loss):
                     loss += delta_loss
             elif reducer == "l2":
-                 delta_loss = abs(avg_pred_true - bin_centroid)**2 * delta_count
+                 delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
                  if not np.isnan(delta_loss):
                      loss += delta_loss
             else:
