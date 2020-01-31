@@ -1,5 +1,6 @@
 import sys
 import re
+import pytest
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
@@ -189,3 +190,15 @@ def test_sparse_and_verbose():
                         r" time = (\d|\.)+s", s)
     finally:
         sys.stdout = old_stdout
+
+
+@pytest.mark.parametrize("dtype_in, dtype_out", [
+    (np.float32, np.float32),
+    (np.float64, np.float64)])
+def test_dtype_match(dtype_in, dtype_out):
+    X = Xdigits[:100].astype(dtype_in)
+    rbm = BernoulliRBM(n_components=16, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm.fit(X)
+    Xt = rbm.transform(X)
+    assert Xt.dtype == dtype_out
