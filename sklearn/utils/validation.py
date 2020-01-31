@@ -1172,7 +1172,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     return lambdas
 
 
-def _check_sample_weight(sample_weight, X, dtype=None, positive=False):
+def _check_sample_weight(sample_weight, X, dtype=None, check_negative=False):
     """Validate sample weights.
 
     Note that passing sample_weight=None will output an array of ones.
@@ -1205,9 +1205,9 @@ def _check_sample_weight(sample_weight, X, dtype=None, positive=False):
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is not None and positive:
+    if sample_weight is not None and check_negative:
         if not np.all(sample_weight >= 0):
-            raise ValueError("negative values in sample_weight are invalid")
+            raise ValueError("Negative values in sample_weight are invalid")
 
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
         if sample_weight is None:
