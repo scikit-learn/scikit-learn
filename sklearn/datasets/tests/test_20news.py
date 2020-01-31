@@ -1,5 +1,8 @@
-"""Test the 20news downloader, if the data is available."""
+"""Test the 20news downloader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 from functools import partial
+import os
 
 import numpy as np
 import scipy.sparse as sp
@@ -12,9 +15,14 @@ from sklearn.preprocessing import normalize
 
 
 def test_20news():
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
     try:
         data = datasets.fetch_20newsgroups(
-            subset='all', download_if_missing=False, shuffle=False)
+            subset='all', download_if_missing=download_if_missing,
+            shuffle=False)
     except IOError:
         raise SkipTest("Download 20 newsgroups to run this test")
 

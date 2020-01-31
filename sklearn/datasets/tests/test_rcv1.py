@@ -1,7 +1,6 @@
-"""Test the rcv1 loader.
-
-Skipped if rcv1 is not already downloaded to data_home.
-"""
+"""Test the rcv1 loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 
 import errno
 import os
