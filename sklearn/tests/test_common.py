@@ -104,16 +104,17 @@ _xfail_checks.update({
 
 @parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check, request):
+    with suppress(KeyError):
+        start = len(request.node.originalname) + 1
+        name = request.node.name[start:-1]
+        reason = _xfail_checks[name]
+        request.applymarker(pytest.mark.xfail(run=True, reason=reason))
+
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-        with suppress(KeyError):
-            start = len(request.node.originalname) + 1
-            name = request.node.name[start:-1]
-            reason = _xfail_checks[name]
-            request.applymarker(pytest.mark.xfail(run=True, reason=reason))
         check(estimator)
 
 
