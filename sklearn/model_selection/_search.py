@@ -21,7 +21,7 @@ import time
 import warnings
 
 import numpy as np
-from scipy.stats import rankdata
+from scipy.stats import rankdata, ttest_rel
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -396,7 +396,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True):
+                 error_score=np.nan, return_train_score=True,
+                 return_stats=False):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -408,6 +409,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.return_stats = return_stats
 
     @property
     def _estimator_type(self):
@@ -770,7 +772,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         results = {}
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
+        def _store(key_name, array, weights=None, splits=False, rank=False, 
+                   ttest=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
@@ -781,6 +784,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     # Uses closure to alter the results
                     results["split%d_%s"
                             % (split_i, key_name)] = array[:, split_i]
+
+            # Compute ttest between each candidates pair
+            if ttest:
+                matrix_pval = MaskedArray(np.empty([n_candidates,
+                                                    n_candidates]),
+                                          mask=True)
+                for cand_i in range(n_candidates):
+                    for cand_k in range(cand_i):
+                        _, pval = ttest_rel(array[cand_i, :],
+                                            array[cand_k, :])
+                        matrix_pval[cand_i, cand_k] = pval
+                        matrix_pval[cand_k, cand_i] = pval
+                results['ttest_%s' % key_name] = [matrix_pval[i]
+                                                  for i in range(n_candidates)]
 
             array_means = np.average(array, axis=1, weights=weights)
             results['mean_%s' % key_name] = array_means
@@ -835,6 +852,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             if self.return_train_score:
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
+
+            # Store paired t-test comparison for each split-pair test scores
+            if self.return_stats:
+                _store('test_%s' % scorer_name, test_scores[scorer_name],
+                       ttest=True)
 
         return results
 
@@ -982,6 +1004,11 @@ class GridSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    return_stats : bool, default=False
+        If True, run a paired two-sided t-test between the test scores of each
+        pair of possible parameter candidates.
+        For multiple metric evaluation, a separate t-test is run for each
+        score type.
 
     Examples
     --------
@@ -1138,12 +1165,14 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False):
+                 error_score=np.nan, return_train_score=False,
+                 return_stats=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            return_stats=return_stats)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1318,6 +1347,12 @@ class RandomizedSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+    return_stats : bool, default=False
+        If True, run a paired two-sided t-test between the test scores of each
+        pair of possible parameter candidates.
+        For multiple metric evaluation, a separate t-test is run for each
+        score type.
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -1466,7 +1501,7 @@ class RandomizedSearchCV(BaseSearchCV):
                  n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=False):
+                 return_train_score=False, return_stats=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1474,7 +1509,8 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            return_stats=return_stats)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
