@@ -4,6 +4,7 @@ Skipped if rcv1 is not already downloaded to data_home.
 """
 
 import errno
+import os
 import scipy.sparse as sp
 import numpy as np
 from functools import partial
@@ -15,8 +16,13 @@ from sklearn.utils._testing import SkipTest
 
 
 def test_fetch_rcv1():
+    # Do not download data, unless explicitly requested via environment var
+    download_if_missing = False
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
+        download_if_missing = True
     try:
-        data1 = fetch_rcv1(shuffle=False, download_if_missing=False)
+        data1 = fetch_rcv1(shuffle=False,
+                           download_if_missing=download_if_missing)
     except IOError as e:
         if e.errno == errno.ENOENT:
             raise SkipTest("Download RCV1 dataset to run this test.")
