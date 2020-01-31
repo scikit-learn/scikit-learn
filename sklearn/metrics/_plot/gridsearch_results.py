@@ -69,14 +69,13 @@ def plot_gridsearch_results(cv_results, params=None, metric='mean_test_score',
 
     if params is None:
         if len(cv_params) > 2:
-            raise ValueError("Plot current support 1D, 2D set of parameters."
-                             "Check 'params' argument to specify a subset.")
-    else:
+            raise ValueError("Plot function supports upto 2 parameters in grid"
+                             "search, got %d." % len(cv_params))
         params = cv_params
     assert params is not None
 
     if len(params) == 0:
-        raise ValueError("Expecting a non-null set of params.
+        raise ValueError("Expecting a non-null set of params. "
                          "Nothing to do with empty set of params")
 
     if not isinstance(params, (list, tuple)):
@@ -84,9 +83,8 @@ def plot_gridsearch_results(cv_results, params=None, metric='mean_test_score',
         params = [params]
 
     if len(params) > 2:
-        raise ValueError("'params' expected to have one or two items. "
-                         "GridSearchCV results visualization supports only "
-                         "one-/two-parameters at a time."
+        raise ValueError("Plot function supports upto 2 parameters in grid"
+                         "search, got %d." % len(params))
 
     if not all(p in cv_params for p in params):
         msg = "Expected to have 'params' from {!s}, instead got {!s}"
@@ -103,8 +101,9 @@ class GridSearchDisplay:
     """
     GridSearch display
     """
-    def __init__(self, cv_results):
+    def __init__(self, cv_results, params):
         self.cv_results = cv_results
+        self.params = params
 
     def plot(self, metric='mean_test_score',
              xlabel=None, ylabel=None,
@@ -121,14 +120,15 @@ class GridSearchDisplay:
             fig = ax.figure
 
         img = _plot_gridsearch_results(
-            self.cv_results, metric=metric, xlabel=xlabel, ylabel=ylabel,
+            self.cv_results, params=self.params,
+            metric=metric, xlabel=xlabel, ylabel=ylabel,
             title=title, cmap=cmap,
             vmin=vmin, vmax=vmax, ax=ax, fmt=fmt,
             xtickrotation=xtickrotation, norm=norm)
 
         self.im_ = img
 
-        fig.colorbar(self.im_, ax=ax)
+        # fig.colorbar(self.im_, ax=ax)
         # ax.set(xticks=np.arange(n_classes),
         #        yticks=np.arange(n_classes),
         #        xticklabels=self.display_labels,
@@ -145,14 +145,14 @@ class GridSearchDisplay:
         return self
 
 
-def _plot_gridsearch_results(cv_results, metric='mean_test_score',
+def _plot_gridsearch_results(cv_results, params,
+                             metric='mean_test_score',
                              xlabel=None, ylabel=None,
                              title='Grid Search Results', cmap=None,
                              vmin=None, vmax=None, ax=None, fmt="{:.2f}",
                              xtickrotation=45, norm=None):
     import matplotlib.pyplot as plt
 
-    params = sorted(cv_results['params'][0].keys())
     nparams = len(params)
 
     if ax is None:
@@ -337,5 +337,7 @@ def _plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     # set title if not none:
     if title is not None:
         ax.set_title(title)
+
+    ax.figure.colorbar(img, ax=ax)
 
     return img
