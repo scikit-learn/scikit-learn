@@ -1023,6 +1023,10 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         )
         self.dictionary = dictionary
 
+    @property
+    def n_components(self):
+        return self.dictionary.shape[1]
+
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged
 
@@ -1040,7 +1044,6 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         self : object
             Returns the object itself
         """
-        self.n_components = self.dictionary.shape[1]
         self.components_ = self.dictionary
         return self
 
