@@ -47,7 +47,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     random_offset_: ndarray of shape (n_components,), dtype=float64
-        Random offset used to compute the projection in the n_components
+        Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_: ndarray of shape (n_features, n_components), dtype=float64
