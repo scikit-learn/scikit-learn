@@ -208,10 +208,6 @@ Changelog
   kernels in :class:`svm.SVC` and :class:`svm.SVR`.
   :pr:`11296` by `Alexandre Gramfort`_ and  :user:`Georgi Peev <georgipeev>`.
 
-- |API| Do not enforce float entries in X when using custom kernel
-  in :class:`svm.SVC` and :class:`svm.SVR`.
-  :pr:`11296` by `Alexandre Gramfort`_ and  :user:`Georgi Peev <georgipeev>`.
-
 :mod:`sklearn.tree`
 ...................
 
