@@ -141,6 +141,11 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
+  iteration when `solver='newton-cg'` by checking for inferior or equal instead
+  of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
+  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -203,6 +208,7 @@ Changelog
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
