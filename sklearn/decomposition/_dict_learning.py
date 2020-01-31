@@ -877,21 +877,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
 
-    def _set_sparse_coding_params(self, n_components,
-                                  transform_algorithm='omp',
-                                  transform_n_nonzero_coefs=None,
-                                  transform_alpha=None, split_sign=False,
-                                  n_jobs=None, positive_code=False,
-                                  transform_max_iter=1000):
-        self.n_components = n_components
-        self.transform_algorithm = transform_algorithm
-        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
-        self.transform_alpha = transform_alpha
-        self.transform_max_iter = transform_max_iter
-        self.split_sign = split_sign
-        self.n_jobs = n_jobs
-        self.positive_code = positive_code
-
     def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.
 
@@ -931,7 +916,21 @@ class SparseCodingMixin(TransformerMixin):
         return code
 
 
-class SparseCoder(SparseCodingMixin, BaseEstimator):
+class _BaseSparseCoding:
+    """Base class to set shared parameters of sparse coding classes."""
+    def __init__(self, transform_algorithm, transform_n_nonzero_coefs,
+                 transform_alpha, split_sign, n_jobs, positive_code,
+                 transform_max_iter):
+        self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
+        self.transform_max_iter = transform_max_iter
+        self.split_sign = split_sign
+        self.n_jobs = n_jobs
+        self.positive_code = positive_code
+
+
+class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -1017,12 +1016,12 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
-        self._set_sparse_coding_params(dictionary.shape[0],
-                                       transform_algorithm,
-                                       transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs,
-                                       positive_code, transform_max_iter)
-        self.components_ = dictionary
+        super().__init__(
+            transform_algorithm, transform_n_nonzero_coefs,
+            transform_alpha, split_sign, n_jobs, positive_code,
+            transform_max_iter
+        )
+        self.dictionary = dictionary
 
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged
@@ -1041,10 +1040,16 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
         self : object
             Returns the object itself
         """
+        self.n_components = self.dictionary.shape[1]
+        self.components_ = self.dictionary
         return self
 
+    def transform(self, X, y=None):
+        self.fit(X, y)
+        return super().transform(X)
 
-class DictionaryLearning(SparseCodingMixin, BaseEstimator):
+
+class DictionaryLearning(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1186,10 +1191,12 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
                  split_sign=False, random_state=None, positive_code=False,
                  positive_dict=False, transform_max_iter=1000):
 
-        self._set_sparse_coding_params(n_components, transform_algorithm,
-                                       transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs,
-                                       positive_code, transform_max_iter)
+        super().__init__(
+            transform_algorithm, transform_n_nonzero_coefs,
+            transform_alpha, split_sign, n_jobs, positive_code,
+            transform_max_iter
+        )
+        self.n_components = n_components
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
@@ -1241,7 +1248,8 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         return self
 
 
-class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
+class MiniBatchDictionaryLearning(_BaseSparseCoding, SparseCodingMixin,
+                                  BaseEstimator):
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1392,10 +1400,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
                  positive_code=False, positive_dict=False,
                  transform_max_iter=1000):
 
-        self._set_sparse_coding_params(n_components, transform_algorithm,
-                                       transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs,
-                                       positive_code, transform_max_iter)
+        super().__init__(
+            transform_algorithm, transform_n_nonzero_coefs, transform_alpha,
+            split_sign, n_jobs, positive_code, transform_max_iter
+        )
+        self.n_components = n_components
         self.alpha = alpha
         self.n_iter = n_iter
         self.fit_algorithm = fit_algorithm
