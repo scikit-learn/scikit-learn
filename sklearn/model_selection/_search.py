@@ -772,7 +772,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         results = {}
 
-        def _store(key_name, array, weights=None, splits=False, rank=False, 
+        def _store(key_name, array, weights=None, splits=False, rank=False,
                    ttest=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
