@@ -27,7 +27,7 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils import _check_sample_weight
+from ..utils.validation import _check_sample_weight
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
@@ -536,13 +536,6 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
             (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    # Check to make sure sample_weight is strictly positive
-    _check_sample_weight(sample_weight, y_true, positive=True)
-    nonzero_weight_mask = sample_weight > 0
-    y_true = y_true[nonzero_mask]
-    probas_pred = probas_pred[nonzero_mask]
-    sample_weight = sample_weight[nonzero_mask]
-
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
@@ -552,6 +545,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 
+    # Check to make sure sample_weight is strictly positive
+    _check_sample_weight(sample_weight, y_true, check_negative=True)
+    nonzero_weight_mask = sample_weight > 0
+    y_true = y_true[nonzero_weight_mask]
+    y_score = y_score[nonzero_weight_mask]
+    sample_weight = sample_weight[nonzero_weight_mask]
+    
     # ensure binary classification if pos_label is not specified
     # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
