@@ -127,7 +127,7 @@ plt.show()
 # Plotting partial dependence for one feature
 # ===========================================
 #
-# Here, we plot the partial dependence curves for a single feature, "LSTAT", on
+# Here, we plot the partial dependence curves for a single feature, "s5", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
 tree_disp = plot_partial_dependence(tree, X, ["s5"])
