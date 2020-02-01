@@ -294,6 +294,13 @@ In practice those estimates are stored as an attribute named
 the value, the more important is the contribution of the matching feature
 to the prediction function.
 
+The impurity-based feature importance for trees suffers from being computed
+on statistics derived from the training dataset
+and favors high cardinality features.
+:ref:`permutation_importance` is a nice alternative impurity-based feature importance.
+These two methods of obtaining feature importance are explored in:
+:ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
@@ -540,8 +547,8 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the feature importances which can be obtained via
-the ``feature_importances_`` property.
+The plot on the right shows the impurity-based feature importances which can be
+obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -798,7 +805,7 @@ appropriate split points. This information can be used to measure the
 importance of each feature; the basic idea is: the more often a
 feature is used in the split points of a tree the more important that
 feature is. This notion of importance can be extended to decision tree
-ensembles by simply averaging the feature importance of each tree (see
+ensembles by simply averaging the impurity-based feature importance of each tree (see
 :ref:`random_forest_feature_importance` for more details).
 
 The feature importance scores of a fit gradient boosting model can be
