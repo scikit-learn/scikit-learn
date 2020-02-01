@@ -979,7 +979,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.20
 
-    feature_importances_ : array of shape (n_features,)
+    feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the (normalized)

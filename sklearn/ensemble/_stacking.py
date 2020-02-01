@@ -315,7 +315,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Attributes
     ----------
-    classes_ : array, shape = (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Class labels.
 
     estimators_ : list of estimators
