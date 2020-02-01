@@ -102,7 +102,7 @@ regression is also supported.
   obtained at one location and both wind speed and direction would be
   output for each sample.
 
-  A valid representation of :term:`multilabel` `y` is a dense matrix of shape
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
   :term:`continuous` variables. An example of ``y`` for 3 samples:
 
@@ -130,7 +130,7 @@ regression is also supported.
   image of a fruit, a label is output for both properties and each label is
   one of the possible classes of the corresponding property.
 
-  A valid representation of :term:`multilabel` `y` is a dense matrix of shape
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
   ``(n_samples, n_classes)`` of class labels. A column wise concatenation of 1d
   :term:`multiclass` variables. An example of ``y`` for 3 samples:
 
