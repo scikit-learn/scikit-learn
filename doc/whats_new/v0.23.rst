@@ -23,8 +23,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- :class:`svm.SVC` and :class:`svm.SVR` when `kernel` is callable and input is
-  not castable as float array. |Fix|
+- list models here
 
 Details are listed in the changelog below.
 
@@ -205,7 +204,9 @@ Changelog
   `Thomas Fan`_.
 
 - |Fix| Fix use of custom kernel not taking float entries such as string
-  kernels in :class:`svm.SVC` and :class:`svm.SVR`.
+  kernels in :class:`svm.SVC` and :class:`svm.SVR`. Note that custom kennels
+  are now expected to validate their input where they previously received
+  valid numeric arrays.
   :pr:`11296` by `Alexandre Gramfort`_ and  :user:`Georgi Peev <georgipeev>`.
 
 :mod:`sklearn.tree`
