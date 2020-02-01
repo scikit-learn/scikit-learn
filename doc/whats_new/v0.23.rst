@@ -202,8 +202,13 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
-- |Fix| :func:`tree.predict`, :func:`tree.decision_path` and :func:`tree.apply`
-  can now be used with joblib based multiprocessing.
+
+- |Fix| Fix support of read-only float32 array input in ``predict``,
+  ``decision_path`` and ``predict_proba`` methods of
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier` and
+  :class:`ensemble.GradientBoostingClassifier` as well as ``predict`` method of
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeRegressor`, and
+  :class:`ensemble.GradientBoostingRegressor`.
   :pr:`16331` by :user:`Alexandre Batisse <batalex>`.
 
 :mod:`sklearn.utils`
