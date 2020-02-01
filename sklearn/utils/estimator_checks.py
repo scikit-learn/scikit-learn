@@ -315,8 +315,8 @@ def _set_check_estimator_ids(obj):
         if not obj.keywords:
             return obj.func.__name__
 
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in obj.keywords.items()])
+        kwstring = ",".join(["{}={}".format(k, v)
+                             for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
