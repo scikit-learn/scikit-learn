@@ -117,7 +117,7 @@ def _yield_checks(name, estimator):
 def _yield_classifier_checks(name, classifier):
     tags = _safe_tags(classifier)
 
-    # test classifiers can handle non-array data
+    # test classifiers can handle non-array data and pandas objects
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
@@ -2447,7 +2447,9 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2455,11 +2457,13 @@ def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_data_not_an_array(name, estimator_orig, X, y):
+def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
@@ -2470,8 +2474,28 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
-    y_ = _NotAnArray(np.asarray(y))
-    X_ = _NotAnArray(np.asarray(X))
+    if obj_type not in ["NotAnArray", 'PandasDataframe']:
+        raise ValueError("Data type {0} not supported".format(obj_type))
+
+    if obj_type == "NotAnArray":
+        y_ = _NotAnArray(np.asarray(y))
+        X_ = _NotAnArray(np.asarray(X))
+    else:
+        # Here pandas objects (Series and DataFrame) are tested explicitly
+        # because some estimators may handle them (especially their indexing)
+        # specially.
+        try:
+            import pandas as pd
+            y_ = np.asarray(y)
+            if y_.ndim == 1:
+                y_ = pd.Series(y_)
+            else:
+                y_ = pd.DataFrame(y_)
+            X_ = pd.DataFrame(np.asarray(X))
+
+        except ImportError:
+            raise SkipTest("pandas is not installed: not checking estimators "
+                           "for pandas objects.")
 
     # fit
     estimator_1.fit(X_, y_)
