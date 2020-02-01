@@ -1824,15 +1824,6 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-def test_decision_tree_memmap():
-    # check that decision trees supports read-only buffer (#13626)
-    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
-    y = np.zeros(10)
-
-    with TempMemmap((X, y)) as (X_read_only, y_read_only):
-        DecisionTreeClassifier().fit(X_read_only, y_read_only)
-
-
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
