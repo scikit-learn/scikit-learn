@@ -337,3 +337,9 @@ def test_fowlkes_mallows_score_properties():
     # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
+
+
+def test_mutual_info_score_positive_constant_label():
+    # non-regression test for #16355
+    score = mutual_info_score([1, 1, 0, 0, 1, 1],  ['a'] * 6)
+    assert score >= 0
