@@ -347,5 +347,4 @@ def test_fowlkes_mallows_score_properties():
 ])
 def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
     # non-regression test for #16355
-    score = mutual_info_score(labels_true, labels_pred)
-    assert score >= 0
+    assert mutual_info_score(labels_true, labels_pred) >= 0
