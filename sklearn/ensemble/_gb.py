@@ -888,7 +888,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
-    random_state : int, RandomState, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given to each Tree estimator at each
         boosting iteration.
         In addition, it controls the random permutation of the features at
@@ -1369,7 +1369,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``DummyEstimator`` is used, predicting either the average target value
         (for loss='ls'), or a quantile for the other losses.
 
-    random_state : int, RandomState, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given to each Tree estimator at each
         boosting iteration.
         In addition, it controls the random permutation of the features at

@@ -327,7 +327,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -905,7 +905,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.

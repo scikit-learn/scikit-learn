@@ -142,7 +142,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -371,7 +371,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
