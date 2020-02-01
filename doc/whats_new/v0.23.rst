@@ -140,16 +140,16 @@ Changelog
   specific scoring strategy. Before the internal estimator outputs score
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
- 
+
 - |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
   iteration when `solver='newton-cg'` by checking for inferior or equal instead
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
-  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`. 
+  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in `_regression.mean_squared_error` to not ignore
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`. 
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
