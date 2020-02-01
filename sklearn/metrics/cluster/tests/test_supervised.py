@@ -339,7 +339,13 @@ def test_fowlkes_mallows_score_properties():
     assert_almost_equal(score_both, expected)
 
 
-def test_mutual_info_score_positive_constant_label():
+@pytest.mark.parametrize('labels_true, labels_pred', [
+    (['a'] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1, 1, 0, 0, 1, 1], ['a'] * 6),
+    ([1, 1, 0, 0, 1, 1], [1] * 6),
+])
+def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
     # non-regression test for #16355
-    score = mutual_info_score([1, 1, 0, 0, 1, 1],  ['a'] * 6)
+    score = mutual_info_score(labels_true, labels_pred)
     assert score >= 0
