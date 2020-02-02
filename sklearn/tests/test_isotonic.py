@@ -508,3 +508,29 @@ def test_make_unique_dtype():
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
         assert_array_equal(x, [2, 3, 5])
+
+
+@pytest.mark.parametrize("increasing", [True, False])
+def test_isotonic_thresholds(increasing):
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    y = rng.normal(size=n_samples)
+    X = rng.normal(size=n_samples)
+    ireg = IsotonicRegression(increasing=increasing).fit(X, y)
+    X_thresholds, y_thresholds = ireg.X_thresholds_, ireg.y_thresholds_
+    assert X_thresholds.shape == y_thresholds.shape
+
+    # Input thresholds are a subset of the training set:
+    assert X_thresholds.shape[0] <= X.shape[0]
+    assert np.in1d(X_thresholds, X).all()
+
+    # Output thresholds lie in the range of the training set:
+    assert y_thresholds.max() <= y.max()
+    assert y_thresholds.min() >= y.min()
+
+    if increasing:
+        assert all(np.diff(X_thresholds) >= 0)
+        assert all(np.diff(y_thresholds) >= 0)
+    else:
+        assert all(np.diff(X_thresholds) >= 0)
+        assert all(np.diff(y_thresholds) <= 0)
