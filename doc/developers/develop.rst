@@ -491,7 +491,7 @@ binary_only (default=``False``)
 multilabel (default=``False``)
     whether the estimator supports multilabel output
 
-multioutput - unused for now (default=``False``)
+multioutput (default=``False``)
     whether a regressor supports multi-target outputs or a classifier supports
     multi-class multi-output.
 
