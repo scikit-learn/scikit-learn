@@ -128,6 +128,8 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
+    yield partial(check_classifiers_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
@@ -174,6 +176,8 @@ def _yield_regressor_checks(name, regressor):
     # basic testing
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
+    yield partial(check_regressors_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     if tags["multioutput"]:
@@ -311,8 +315,8 @@ def _set_check_estimator_ids(obj):
         if not obj.keywords:
             return obj.func.__name__
 
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in obj.keywords.items()])
+        kwstring = ",".join(["{}={}".format(k, v)
+                             for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
@@ -1711,8 +1715,10 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
+def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
+                            X_dtype='float64'):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
+    X_m = X_m.astype(X_dtype)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
@@ -2163,8 +2169,10 @@ def check_regressors_int(name, regressor_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_regressors_train(name, regressor_orig, readonly_memmap=False):
+def check_regressors_train(name, regressor_orig, readonly_memmap=False,
+                           X_dtype=np.float64):
     X, y = _boston_subset()
+    X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
