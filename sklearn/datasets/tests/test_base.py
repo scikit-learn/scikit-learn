@@ -150,11 +150,6 @@ def test_load_digits():
 
     # test return_X_y option
     check_return_X_y(digits, partial(load_digits))
-    # test as_frame option
-    check_pandas_dependency_message(load_digits)
-    check_as_frame(digits, partial(load_digits),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
 
 
 def test_load_digits_n_class_lt_10():
@@ -242,6 +237,7 @@ def test_load_breast_cancer():
 @pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
     (load_breast_cancer, np.float64, np.int64),
     (load_diabetes, np.float64, np.float64),
+    (load_digits, np.float64, np.int64),
     (load_iris, np.float64, np.int64),
     (load_linnerud, np.float64, np.float64),
     (load_wine, np.float64, np.int64),
@@ -256,6 +252,7 @@ def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
 @pytest.mark.parametrize("loader_func", [
     load_breast_cancer,
     load_diabetes,
+    load_digits,
     load_iris,
     load_linnerud,
     load_wine,
