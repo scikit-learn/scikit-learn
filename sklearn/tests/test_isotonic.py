@@ -10,8 +10,8 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
 
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import (assert_raises, assert_array_equal,
-                                   assert_array_almost_equal,
-                                   assert_warns_message, assert_no_warnings)
+                                    assert_array_almost_equal,
+                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
 from scipy.special import expit
