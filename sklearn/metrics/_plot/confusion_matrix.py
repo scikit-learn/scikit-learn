@@ -189,6 +189,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     ...         X, y, random_state=0)
     >>> clf = SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
     >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
     >>> plt.show()  # doctest: +SKIP
     """
