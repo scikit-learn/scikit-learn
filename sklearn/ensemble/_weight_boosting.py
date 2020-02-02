@@ -327,7 +327,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -342,16 +342,16 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int
         The number of classes.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Classification error for each estimator in the boosted
         ensemble.
 
@@ -905,7 +905,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -922,10 +922,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Regression error for each estimator in the boosted ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)

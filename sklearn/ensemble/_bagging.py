@@ -503,7 +503,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
@@ -907,7 +907,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random resampling of the original dataset
         (sample wise and feature wise).
         If the base estimator accepts a `random_state` attribute, a different
