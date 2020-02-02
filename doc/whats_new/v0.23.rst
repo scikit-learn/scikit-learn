@@ -58,8 +58,8 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
-- |Efficiency| :func:`datasets.fetch_openml` no longer stores the full dataset
-  text stream in memory.
+- |Efficiency| :func:`datasets.fetch_openml` uses less memory by no longer
+  storing the full dataset text stream in memory.
   :pr:`16084` by `Joel Nothman`_.
 
 - |Feature| :func:`datasets.fetch_california_housing` now supports
