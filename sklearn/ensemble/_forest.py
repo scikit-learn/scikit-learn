@@ -415,8 +415,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @property
     def feature_importances_(self):
         """
-        Return the feature importances (the higher, the more important the
-           feature).
+        The impurity-based feature importances.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
         Returns
         -------
@@ -949,7 +953,7 @@ class RandomForestClassifier(ForestClassifier):
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
@@ -1046,7 +1050,11 @@ class RandomForestClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1266,7 +1274,7 @@ class RandomForestRegressor(ForestRegressor):
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, default=False
         whether to use out-of-bag samples to estimate
@@ -1323,7 +1331,11 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1638,7 +1650,11 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1913,7 +1929,11 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
     n_features_ : int
         The number of features.
