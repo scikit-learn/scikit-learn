@@ -967,6 +967,51 @@ cdef class MSE(RegressionCriterion):
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
+cdef class CDELoss(MSE):
+    """Conditional density estimation loss impurity criterion.
+
+        CDELoss = \sum_k (beta_k) ** 2
+        where beta_k = (1 / n) * \sum_i^n (y_ik)
+
+       References
+       -------------
+       .. [1] T. Pospisil, and A. Lee, "RFCDE: Random Forests for Conditional
+              Density Estimation", arXiv:1804.05753 [stat.ML], 2018.
+
+    """
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+           samples[start:end]."""
+
+        cdef double* sum_total = self.sum_total
+        cdef double impurity
+        cdef SIZE_t k
+
+        impurity = 0.0
+        for k in range(self.n_outputs):
+            impurity -= (sum_total[k] * sum_total[k] / self.weighted_n_node_samples)
+
+        return impurity
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end])."""
+
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+
+        cdef SIZE_t k
+
+        impurity_left[0] = 0.0
+        impurity_right[0] = 0.0
+
+        for k in range(self.n_outputs):
+            impurity_left[0] -= (sum_left[k] * sum_left[k] / self.weighted_n_left)
+            impurity_right[0] -= (sum_right[k] * sum_right[k] / self.weighted_n_right)
+
 cdef class MAE(RegressionCriterion):
     r"""Mean absolute error impurity criterion
 

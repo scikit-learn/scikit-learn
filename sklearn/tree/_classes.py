@@ -61,7 +61,7 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
 CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
-                "mae": _criterion.MAE}
+                "mae": _criterion.MAE, "cde_loss": _criterion.CDELoss}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -961,14 +961,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
+    criterion : {"mse", "friedman_mse", "mae", "cde_loss"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
         using the mean of each terminal node, "friedman_mse", which uses mean
         squared error with Friedman's improvement score for potential splits,
-        and "mae" for the mean absolute error, which minimizes the L1 loss
-        using the median of each terminal node.
+        "mae" for the mean absolute error, which minimizes the L1 loss
+        using the median of each terminal node, and "cde_loss" which uses
+        an approximation for the conditional density estimation loss.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
