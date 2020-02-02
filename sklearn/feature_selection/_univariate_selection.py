@@ -238,8 +238,8 @@ def f_regression(X, y, center=True):
     This is done in 2 steps:
 
     1. The correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)).
+       that is, mean((X[:, i] - mean(X[:, i])) * (y - mean(y))) / (std(X[:, i])*       std(y)).
+
     2. It is converted to an F score then to a p-value.
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
