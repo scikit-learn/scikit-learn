@@ -189,11 +189,6 @@ def test_load_diabetes():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_diabetes))
-    # test as_frame option
-    check_pandas_dependency_message(load_diabetes)
-    check_as_frame(res, partial(load_diabetes),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
 
 
 def test_load_linnerud():
@@ -207,11 +202,6 @@ def test_load_linnerud():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_linnerud))
-    # test as_frame option
-    check_pandas_dependency_message(load_linnerud)
-    check_as_frame(res, partial(load_linnerud),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
 
 
 def test_load_iris():
@@ -224,11 +214,6 @@ def test_load_iris():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_iris))
-    # test as_frame option
-    check_pandas_dependency_message(load_iris)
-    check_as_frame(res, partial(load_iris),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
 
 
 def test_load_wine():
@@ -240,11 +225,6 @@ def test_load_wine():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_wine))
-    # test as_frame option
-    check_pandas_dependency_message(load_wine)
-    check_as_frame(res, partial(load_wine),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
 
 
 def test_load_breast_cancer():
@@ -257,11 +237,31 @@ def test_load_breast_cancer():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_breast_cancer))
-    # test as_frame option
-    check_pandas_dependency_message(load_breast_cancer)
-    check_as_frame(res, partial(load_breast_cancer),
-                   expected_data_dtype=np.float64,
-                   expected_target_dtype=np.float64)
+
+
+@pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
+    (load_breast_cancer, np.float64, np.int64),
+    (load_diabetes, np.float64, np.float64),
+    (load_iris, np.float64, np.int64),
+    (load_linnerud, np.float64, np.float64),
+    (load_wine, np.float64, np.int64),
+])
+def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
+    default_result = loader_func()
+    check_as_frame(default_result, partial(loader_func),
+                   expected_data_dtype=data_dtype,
+                   expected_target_dtype=target_dtype)
+
+
+@pytest.mark.parametrize("loader_func", [
+    load_breast_cancer,
+    load_diabetes,
+    load_iris,
+    load_linnerud,
+    load_wine,
+])
+def test_toy_dataset_as_frame_no_pandas(loader_func):
+    check_pandas_dependency_message(loader_func)
 
 
 def test_load_boston():
