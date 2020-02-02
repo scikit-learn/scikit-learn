@@ -3,12 +3,18 @@
 Isotonic Regression
 ===================
 
-An illustration of the isotonic regression on generated data. The
-isotonic regression finds a non-decreasing approximation of a function
-while minimizing the mean squared error on the training data. The benefit
-of such a model is that it does not assume any form for the target
+An illustration of the isotonic regression on generated data (non-linear
+monotonic trend with homoschedastic uniform noise).
+
+The isotonic regression algorithm finds a non-decreasing approximation of a
+function while minimizing the mean squared error on the training data. The
+benefit of such a model is that it does not assume any form for the target
 function such as linearity. For comparison a linear regression is also
 presented.
+
+The plot on the right-hand side shows the model decision functions that results
+from the linear interpolation of thresholds points (asubset of the training
+data input observations and there matching isotonic predictions).
 
 """
 print(__doc__)
@@ -34,7 +40,6 @@ y = rs.randint(-50, 50, size=(n,)) + 50. * np.log1p(np.arange(n))
 # Fit IsotonicRegression and LinearRegression models
 
 ir = IsotonicRegression()
-
 y_ = ir.fit_transform(x, y)
 
 lr = LinearRegression()
@@ -48,11 +53,16 @@ lc = LineCollection(segments, zorder=0)
 lc.set_array(np.ones(len(y)))
 lc.set_linewidths(np.full(n, 0.5))
 
-fig = plt.figure()
-plt.plot(x, y, 'r.', markersize=12)
-plt.plot(x, y_, 'b.-', markersize=12)
-plt.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
-plt.gca().add_collection(lc)
-plt.legend(('Data', 'Isotonic Fit', 'Linear Fit'), loc='lower right')
-plt.title('Isotonic regression')
+fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(12, 6))
+
+ax0.plot(x, y, 'r.', markersize=12)
+ax0.plot(x, y_, 'b.-', markersize=12)
+ax0.plot(x, lr.predict(x[:, np.newaxis]), 'b-')
+ax0.add_collection(lc)
+ax0.legend(('Training data', 'Isotonic fit', 'Linear fit'), loc='lower right')
+ax0.set_title('Isotonic regression fit on noisy data (n=%d)' % n)
+
+ax1.plot(ir.X_thresholds_, ir.y_thresholds_, marker=".", markersize=12)
+ax1.set_title("Prediction function (%d thresholds)" % len(ir.X_thresholds_))
+
 plt.show()
