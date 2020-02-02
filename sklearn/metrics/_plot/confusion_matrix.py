@@ -179,7 +179,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import plot_confusion_matrix
     >>> from sklearn.model_selection import train_test_split
