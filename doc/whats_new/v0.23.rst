@@ -166,6 +166,9 @@ Changelog
   argument `squared` when argument `multioutput='raw_values'`. 
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
+- |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
+  scores could be returned. :pr:`16362` by `Thomas Fan`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
