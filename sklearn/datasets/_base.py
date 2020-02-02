@@ -631,7 +631,9 @@ def load_diabetes(return_X_y=False):
 
 
 def load_linnerud(return_X_y=False):
-    """Load and return the linnerud dataset (multivariate regression).
+    """Load and return the physical excercise linnerud dataset
+
+    This dataset is suitable for multi-ouput regression tasks.
 
     ==============   ============================
     Samples total    20

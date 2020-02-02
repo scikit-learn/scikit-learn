@@ -23,7 +23,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- models come here
+- list models here
 
 Details are listed in the changelog below.
 
@@ -153,6 +153,13 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
+  argument `squared` when argument `multioutput='raw_values'`. 
+  :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -203,12 +210,26 @@ Changelog
   `probB_`, are now deprecated as they were not useful. :pr:`15558` by
   `Thomas Fan`_.
 
+- |Fix| Fix use of custom kernel not taking float entries such as string
+  kernels in :class:`svm.SVC` and :class:`svm.SVR`. Note that custom kennels
+  are now expected to validate their input where they previously received
+  valid numeric arrays.
+  :pr:`11296` by `Alexandre Gramfort`_ and  :user:`Georgi Peev <georgipeev>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix support of read-only float32 array input in ``predict``,
+  ``decision_path`` and ``predict_proba`` methods of
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier` and
+  :class:`ensemble.GradientBoostingClassifier` as well as ``predict`` method of
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeRegressor`, and
+  :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`16331` by :user:`Alexandre Batisse <batalex>`.
 
 :mod:`sklearn.utils`
 ....................

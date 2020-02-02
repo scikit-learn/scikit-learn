@@ -736,8 +736,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         or a list of arrays of class labels (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
 
@@ -1398,8 +1399,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         output (for multi-output problems).
 
     feature_importances_ : ndarray of shape (n_features,)
-        Return the feature importances (the higher, the more important the
-        feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
 
     n_features_ : int
         The number of features when ``fit`` is performed.

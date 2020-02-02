@@ -14,7 +14,8 @@ from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _num_samples
+from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
@@ -143,9 +144,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64,
-                         order='C', accept_sparse='csr',
-                         accept_large_sparse=False)
+        if callable(self.kernel):
+            check_consistent_length(X, y)
+        else:
+            X, y = check_X_y(X, y, dtype=np.float64,
+                             order='C', accept_sparse='csr',
+                             accept_large_sparse=False)
+
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -154,24 +159,31 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
-        if solver_type != 2 and X.shape[0] != y.shape[0]:
+        n_samples = _num_samples(X)
+        if solver_type != 2 and n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
+                             (n_samples, y.shape[0]))
 
-        if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
+        if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError("Precomputed matrix must be a square matrix."
                              " Input is a {}x{} matrix."
                              .format(X.shape[0], X.shape[1]))
 
-        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
+        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != n_samples:
             raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if isinstance(self.gamma, str):
+        kernel = 'precomputed' if callable(self.kernel) else self.kernel
+
+        if kernel == 'precomputed':
+            # unused but needs to be a float for cython code that ignores
+            # it anyway
+            self._gamma = 0.
+        elif isinstance(self.gamma, str):
             if self.gamma == 'scale':
                 # var = E[X^2] - E[X]^2 if sparse
                 X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
@@ -187,10 +199,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         else:
             self._gamma = self.gamma
 
-        kernel = self.kernel
-        if callable(kernel):
-            kernel = 'precomputed'
-
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
             print('[LibSVM]', end='')
@@ -199,7 +207,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
         # see comment on the other call to np.iinfo in this file
 
-        self.shape_fit_ = X.shape
+        self.shape_fit_ = X.shape if hasattr(X, "shape") else (n_samples, )
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ and self._dual_coef_
@@ -443,8 +451,10 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _validate_for_predict(self, X):
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
-                        accept_large_sparse=False)
+        if not callable(self.kernel):
+            X = check_array(X, accept_sparse='csr', dtype=np.float64,
+                            order="C", accept_large_sparse=False)
+
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -454,17 +464,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
-        n_samples, n_features = X.shape
 
         if self.kernel == "precomputed":
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
-        elif n_features != self.shape_fit_[1]:
+        elif not callable(self.kernel) and X.shape[1] != self.shape_fit_[1]:
             raise ValueError("X.shape[1] = %d should be equal to %d, "
                              "the number of features at training time" %
-                             (n_features, self.shape_fit_[1]))
+                             (X.shape[1], self.shape_fit_[1]))
         return X
 
     @property
@@ -920,8 +929,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
-                             " To disable fitting an intercept,"
+            raise ValueError("Intercept scaling is %r but needs to be greater "
+                             "than 0. To disable fitting an intercept,"
                              " set fit_intercept=False." % intercept_scaling)
         else:
             bias = intercept_scaling
