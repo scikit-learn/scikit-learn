@@ -91,7 +91,10 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     rotation : None | 'varimax' | 'quartimax'
         If not None, apply the indicated rotation. Currently, varimax and
-        quartimax are implemented.
+        quartimax are implemented. See
+        `"The varimax criterion for analytic rotation in factor analysis"
+        <https://link.springer.com/article/10.1007%2FBF02289233>`_
+        H. F. Kaiser, 1958
 
     random_state : int, RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
@@ -248,7 +251,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
         self.components_ = W
         if self.rotation is not None:
-            self.components_ = self._rotate(W, method=self.rotation)
+            self.components_ = self._rotate(W)
         self.noise_variance_ = psi
         self.loglike_ = loglike
         self.n_iter_ = i + 1
@@ -369,10 +372,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         """
         return np.mean(self.score_samples(X))
 
-    def _rotate(self, components, method="varimax", n_components=None,
-                tol=1e-6):
+    def _rotate(self, components, n_components=None, tol=1e-6):
         "Rotate the factor analysis solution."
+        # note that tol is not exposed
         implemented = ("varimax", "quartimax")
+        method = self.rotation
         if method in implemented:
             return _ortho_rotation(components.T, method=method,
                                    tol=tol)[:self.n_components]
