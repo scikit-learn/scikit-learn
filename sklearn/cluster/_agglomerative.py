@@ -454,10 +454,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
             # by sklearn.metrics.pairwise_distances.
-            if len(X.shape) != 2 or X.shape[0] != X.shape[1]:
+            if X.ndim != 2 or X.shape[0] != X.shape[1]:
                 raise ValueError(
                     'Distance matrix should be square, '
-                    'Found dimensionality %s' % str(X.shape)
+                    'Got matrix of shape {}'.format(X.shape)
                 )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
