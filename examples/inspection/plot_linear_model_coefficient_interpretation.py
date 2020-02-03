@@ -293,6 +293,8 @@ plt.title('Coefficient importance variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
+# The problem of correlated variables
+# -------------------------------------------------
 # The AGE and EXPERIENCE coefficients are affected by strong variability which
 # might be due to the collinearity between the 2 features.
 # To verify this interpretation we plot the variability of the AGE and
