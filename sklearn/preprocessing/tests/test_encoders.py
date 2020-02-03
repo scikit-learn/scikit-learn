@@ -400,8 +400,8 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
 
 def test_one_hot_encoder_drop_equals_if_binary():
     X = [['Male', 1],
-          ['Female', 3],
-          ['Female', 2]]
+         ['Female', 3],
+         ['Female', 2]]
     expected = np.array([[1., 1., 0., 0.],
                          [0., 0., 0., 1.],
                          [0., 0., 1., 0.]])
@@ -413,8 +413,8 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_allclose(result, expected)
 
     X = [[10, 'yes'],
-          [20, 'no'],
-          [30, 'yes']]
+         [20, 'no'],
+         [30, 'yes']]
     expected = np.array([[1., 0., 0., 1.],
                          [0., 1., 0., 0.],
                          [0., 0., 1., 1.]])
@@ -426,8 +426,8 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_allclose(result, expected)
 
     X = [['true', 'a'],
-          ['false', 'a'],
-          ['false', 'a']]
+         ['false', 'a'],
+         ['false', 'a']]
     expected = np.array([[1., 1.],
                          [0., 1.],
                          [0., 1.]])
