@@ -280,8 +280,7 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     test = []
     for i in plotted_text_values.ravel():
         test.append(i.get_text())
-    test = np.asarray(test)
-    assert_array_equal(test,  np.array(['1e+07', '0', '29', '123123']))
+    assert test == ['1e+07', '0', '29', '123123']
 
     X, y = data
     cm = np.array([[0.1, 10], [100, 0.5]])
@@ -295,5 +294,4 @@ def test_confusion_matrix_standard_format(pyplot, data, y_pred, n_classes,
     test = []
     for i in plotted_text_values.ravel():
         test.append(i.get_text())
-    test = np.asarray(test)
-    assert_array_equal(test,  np.array(['0.1', '10', '1e+02', '0.5']))
+    assert test == ['0.1', '10', '1e+02', '0.5']
