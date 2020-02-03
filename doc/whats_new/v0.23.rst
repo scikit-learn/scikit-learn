@@ -118,10 +118,6 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
-  method for both estimators. :pr:`13769` by `Nicolas Hug`_.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
