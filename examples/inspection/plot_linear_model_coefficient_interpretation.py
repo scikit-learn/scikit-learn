@@ -200,7 +200,7 @@ plt.ylim([0, 27])
 # the model that we build, rather than about the true (real-world) generative
 # process of the data.
 #
-# Interpreting coefficients
+# Interpreting coefficients: scale matters
 # -------------------------
 #
 # First of all, we can plot the values of the coefficients of the regressor we
