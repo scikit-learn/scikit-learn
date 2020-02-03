@@ -750,8 +750,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     Attributes
     ----------
     n_iter_ : int
-        The number of iterations as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+        The number of iterations as selected by early stopping, depending on
+        the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
@@ -940,8 +940,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     classes_ : array, shape = (n_classes,)
         Class labels.
     n_iter_ : int
-        The number of estimators as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+        The number of iterations as selected by early stopping, depending on
+        the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
