@@ -181,7 +181,7 @@ r2score = model.score(X_test, y_test)
 
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 string_score += '\nR2 score: {0:.4f}'.format(r2score)
-fig, ax = plt.subplots(figsize=(6, 6))
+fig, ax = plt.subplots(figsize=(5, 5))
 sns.regplot(y_test, y_pred)
 
 plt.text(3, 20, string_score)
