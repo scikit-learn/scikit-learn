@@ -51,6 +51,8 @@ def _retry_with_clean_cache(openml_path, data_home):
                 return f(*args, **kw)
             except HTTPError:
                 raise
+            except ValueError:
+                raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
                 local_path = _get_local_path(openml_path, data_home)
@@ -449,12 +451,31 @@ def _get_num_samples(data_qualities):
 
 
 def _download_data_to_bunch(url, sparse, data_home, *,
-                            as_frame, features_dict, data_columns,
-                            target_columns, col_slice_x, col_slice_y, shape):
+                            as_frame, features_list, data_columns,
+                            target_columns, shape):
     """Download OpenML ARFF and convert to Bunch of data
     """
     # NB: this function is long in order to handle retry for any failure
     #     during the streaming parse of the ARFF.
+
+    # Prepare which columns and data types should be returned for the X and y
+    features_dict = {feature['name']: feature for feature in features_list}
+
+    # XXX: col_slice_y should be all nominal or all numeric
+    _verify_target_data_type(features_dict, target_columns)
+
+    col_slice_y = [int(features_dict[col_name]['index'])
+                   for col_name in target_columns]
+
+    col_slice_x = [int(features_dict[col_name]['index'])
+                   for col_name in data_columns]
+    for col_idx in col_slice_y:
+        feat = features_list[col_idx]
+        nr_missing = int(feat['number_of_missing_values'])
+        if nr_missing > 0:
+            raise ValueError('Target column {} has {} missing values. '
+                             'Missing values are not supported for target '
+                             'columns. '.format(feat['name'], nr_missing))
 
     # Access an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
@@ -768,31 +789,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     else:
         shape = None
 
-    # Prepare which columns and data types should be returned for the X and y
-    features_dict = {feature['name']: feature for feature in features_list}
-
-    # XXX: col_slice_y should be all nominal or all numeric
-    _verify_target_data_type(features_dict, target_columns)
-
-    col_slice_y = [int(features_dict[col_name]['index'])
-                   for col_name in target_columns]
-
-    col_slice_x = [int(features_dict[col_name]['index'])
-                   for col_name in data_columns]
-    for col_idx in col_slice_y:
-        feat = features_list[col_idx]
-        nr_missing = int(feat['number_of_missing_values'])
-        if nr_missing > 0:
-            raise ValueError('Target column {} has {} missing values. '
-                             'Missing values are not supported for target '
-                             'columns. '.format(feat['name'], nr_missing))
-
     # obtain the data
     url = _DATA_FILE.format(data_description['file_id'])
     download = _retry_with_clean_cache(url, data_home)(_download_data_to_bunch)
     bunch = download(url, return_sparse, data_home, as_frame=as_frame,
-                     features_dict=features_dict, shape=shape,
-                     col_slice_x=col_slice_x, col_slice_y=col_slice_y,
+                     features_list=features_list, shape=shape,
                      target_columns=target_columns, data_columns=data_columns)
 
     if return_X_y:
