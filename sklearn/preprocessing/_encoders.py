@@ -196,7 +196,8 @@ class OneHotEncoder(_BaseEncoder):
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
         - 'if_binary' : drop the first category in each feature with two
-          categories.
+          categories. Features with 1 or more than 2 categories are
+          left intact.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
@@ -226,7 +227,9 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature.
         ``drop_idx_[i] = -1`` if no category is to be dropped from the feature
-        with index ``i``.
+        with index ``i``, e.g. when `drop='if_binary'` and the feature isn't 
+        binary
+
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
     See Also
@@ -304,8 +307,10 @@ class OneHotEncoder(_BaseEncoder):
                 return np.array([0 if len(cats) == 2 else -1
                                 for cats in self.categories_], dtype=np.int_)
             else:
-                msg = ("Wrong input for parameter `drop`. Expected "
-                       "'first', None or array of objects, got {}")
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
                 raise ValueError(msg.format(type(self.drop)))
 
         elif not isinstance(self.drop, str):
@@ -313,8 +318,10 @@ class OneHotEncoder(_BaseEncoder):
                 self.drop = np.asarray(self.drop, dtype=object)
                 droplen = len(self.drop)
             except (ValueError, TypeError):
-                msg = ("Wrong input for parameter `drop`. Expected "
-                       "'first', None or array of objects, got {}")
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
                 raise ValueError(msg.format(type(self.drop)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
@@ -405,19 +412,22 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, n_features = X_int.shape
 
         if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1).copy()
-
+            to_drop = self.drop_idx_.copy()
+            # We remove all the dropped categories from mask, and decrement all	
+            # categories that occur after them to avoid an empty column.
             keep_cells = X_int != to_drop
             n_values = []
             for i, cats in enumerate(self.categories_):
                 n_cats = len(cats)
-                if to_drop[0, i] == -1:
+                if to_drop[i] == -1: # drop='if_binary' but feature isn't
+                                     # binary
                     # set to cardinality to not drop from X_int
-                    to_drop[0, i] = n_cats
+                    to_drop[i] = n_cats
                     n_values.append(n_cats)
                 else:  # dropped
                     n_values.append(n_cats - 1)
 
+            to_drop = to_drop.reshape(1, -1)
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
         else:

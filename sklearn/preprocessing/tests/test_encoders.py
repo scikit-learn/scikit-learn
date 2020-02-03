@@ -399,19 +399,7 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
 
 
 def test_one_hot_encoder_drop_equals_if_binary():
-    X = [['Male', 1],
-         ['Female', 3],
-         ['Female', 2]]
-    expected = np.array([[1., 1., 0., 0.],
-                         [0., 0., 0., 1.],
-                         [0., 0., 1., 0.]])
-    expected_drop_idx = np.array([0, -1])
-
-    ohe = OneHotEncoder(drop='if_binary', sparse=False)
-    result = ohe.fit_transform(X)
-    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
-    assert_allclose(result, expected)
-
+    # Canonical case
     X = [[10, 'yes'],
          [20, 'no'],
          [30, 'yes']]
@@ -425,6 +413,7 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_array_equal(ohe.drop_idx_, expected_drop_idx)
     assert_allclose(result, expected)
 
+    # with only one cat, the behaviour is equivalent to drop=None
     X = [['true', 'a'],
          ['false', 'a'],
          ['false', 'a']]
