@@ -229,9 +229,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
-                is_leaf = (is_leaf or
-                           (impurity <= min_impurity_split))
-
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
                     # If EPSILON=0 in the below comparison, float precision

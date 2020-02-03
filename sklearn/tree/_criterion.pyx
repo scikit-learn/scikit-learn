@@ -983,7 +983,6 @@ cdef class CDELoss(MSE):
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
-
         cdef double* sum_total = self.sum_total
         cdef double impurity
         cdef SIZE_t k
