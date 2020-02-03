@@ -91,7 +91,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     classes_ : array, shape (n_classes)
         The class labels.
 
-    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit"
+    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit" \
         or ensemble == False)
         When ``ensemble`` is True, a list of calibrated classifiers, one for
         each crossvalidation fold, which has been fitted on all but the
