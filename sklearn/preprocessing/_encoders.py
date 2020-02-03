@@ -313,7 +313,7 @@ class OneHotEncoder(_BaseEncoder):
                     )
                 raise ValueError(msg.format(type(self.drop)))
 
-        elif not isinstance(self.drop, str):
+        else:
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
                 droplen = len(self.drop)
@@ -341,10 +341,6 @@ class OneHotEncoder(_BaseEncoder):
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
                              zip(self.drop, self.categories_)], dtype=np.int_)
-        else:
-            msg = ("Wrong input for parameter `drop`. Expected "
-                   "'first', 'if_binary', None or array of objects, got {}")
-            raise ValueError(msg.format(type(self.drop)))
 
     def fit(self, X, y=None):
         """
