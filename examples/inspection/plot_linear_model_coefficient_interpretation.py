@@ -288,6 +288,7 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
+plt.xlabel('Coefficient importance')
 plt.title('Coefficient importance variability')
 plt.subplots_adjust(left=.3)
 
