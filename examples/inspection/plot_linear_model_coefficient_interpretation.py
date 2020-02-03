@@ -201,7 +201,7 @@ plt.ylim([0, 27])
 # process of the data.
 #
 # Interpreting coefficients: scale matters
-# -------------------------
+# ---------------------------------------------
 #
 # First of all, we can plot the values of the coefficients of the regressor we
 # have fitted.
