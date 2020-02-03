@@ -20,7 +20,7 @@ from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.naive_bayes import CategoricalNB
+from sklearn.naive_bayes import CategoricalNB, GeneralNB
 from sklearn.naive_bayes import BaseNB, BaseDiscreteNB
 
 
@@ -37,6 +37,53 @@ y1 = (rng.normal(size=(10)) > 0).astype(np.int)
 # three classes.
 X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
+
+
+def test_generalnb_correctness():
+    X = np.array([[1.5, 2.3, 5.7, 0, 1],
+                  [2.7, 3.8, 2.3, 1, 0],
+                  [1.7, 0.1, 4.5, 1, 0]])
+    y = np.array([1, 0, 0])
+    clf = GeneralNB()
+    clf.fit(X, y, [(GaussianNB(), [0, 1, 2]),
+                   (BernoulliNB(), [3, 4])])
+    print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
+    print(clf.score([[2.7, 3.8, 1, 0, 1]], [0]))
+
+
+def test_generalnb_distributions_insufficient():
+    clf = GeneralNB()
+    assert_raises(ValueError, clf.fit, X, y, [(GaussianNB(), [0])])
+
+
+def test_generalnb_distributions_duplicate():
+    clf = GeneralNB()
+    assert_raises(ValueError, clf.fit, X, y, [
+                  (GaussianNB(), [0, 1]), (GaussianNB(), [1])])
+
+
+def test_generalnb_distributions_unknown():
+    clf = GeneralNB()
+    assert_raises(ValueError, clf.fit, X, y, [(GeneralNB(), [0, 1])])
+
+
+def test_generalnb_distributions_wrong_type():
+    clf = GeneralNB()
+    assert_raises(TypeError, clf.fit, X, y, [[GaussianNB(), [0, 1]]])
+
+
+def test_generalnb_distributions_tuple_too_long():
+    clf = GeneralNB()
+    assert_raises(ValueError, clf.fit, X, y, [(GaussianNB(), [0, 1], [3])])
+
+
+def test_generalnb_distributions_wrong_format():
+    clf = GeneralNB()
+    assert_raises(ValueError, clf.fit, X, y, [(GaussianNB, [0, 1])])
+
+
+def test_pickle():
+    pass
 
 
 def test_gnb():

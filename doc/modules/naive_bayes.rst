@@ -229,10 +229,10 @@ It is advisable to evaluate both models, if time permits.
 Categorical Naive Bayes
 -----------------------
 
-:class:`CategoricalNB` implements the categorical naive Bayes 
-algorithm for categorically distributed data. It assumes that each feature, 
-which is described by the index :math:`i`, has its own categorical 
-distribution. 
+:class:`CategoricalNB` implements the categorical naive Bayes
+algorithm for categorically distributed data. It assumes that each feature,
+which is described by the index :math:`i`, has its own categorical
+distribution.
 
 For each feature :math:`i` in the training set :math:`X`,
 :class:`CategoricalNB` estimates a categorical distribution for each feature i
@@ -258,6 +258,13 @@ of samples with class c, :math:`\alpha` is a smoothing parameter and
 categories for each feature :math:`i` are represented with numbers
 :math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
 of feature :math:`i`.
+
+.. _general_naive_bayes:
+
+General Naive Bayes
+-------------------
+
+[WIP]
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
