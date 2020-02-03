@@ -228,7 +228,7 @@ plt.subplots_adjust(left=.3)
 # while the EDUCATION one is expressed in $/hours/years of education.
 # Looking at the coefficient plot to extrapolate feature importance could be
 # misleading as some of them vary on a small scale (as UNION or SEX that are
-# either 0 or 1), while feature like AGE varies a lot more, several decades.
+# either 0 or 1), while a feature like AGE varies a lot more, several decades.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
