@@ -224,8 +224,10 @@ class OneHotEncoder(_BaseEncoder):
 
     drop_idx_ : array of shape (n_features,)
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
-        be dropped for each feature. None if all the transformed features will
-        be retained.
+        be dropped for each feature.
+        ``drop_idx_[i] = -1`` if no category is to be dropped from the feature
+        with index ``i``.
+        ``drop_idx_ = None`` if all the transformed features will be retained.
 
     See Also
     --------
@@ -299,8 +301,8 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop == 'first':
                 return np.zeros(len(self.categories_), dtype=np.int_)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=object)
+                return np.array([0 if len(cats) == 2 else -1
+                                for cats in self.categories_], dtype=np.int_)
             else:
                 msg = ("Wrong input for parameter `drop`. Expected "
                        "'first', None or array of objects, got {}")
@@ -403,29 +405,24 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, n_features = X_int.shape
 
         if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1)
-
-            # We remove all the dropped categories from mask, and decrement all
-            # categories that occur after them to avoid an empty column.
+            to_drop = self.drop_idx_.reshape(1, -1).copy()
 
             keep_cells = X_int != to_drop
+            n_values = []
+            for i, cats in enumerate(self.categories_):
+                n_cats = len(cats)
+                if to_drop[0, i] == -1:
+                    # set to cardinality to not drop from X_int
+                    to_drop[0, i] = n_cats
+                    n_values.append(n_cats)
+                else:  # dropped
+                    n_values.append(n_cats - 1)
 
-            if isinstance(self.drop, str) and self.drop == 'if_binary':
-                for col in range(n_features):
-                    if self.drop_idx_[col] is None:
-                        keep_cells[:, col] = True
-                    else:
-                        X_int[:, col][X_int[:, col] > 0] -= 1
-                n_values = [1 if len(cats) == 2
-                            else len(cats) for cats in self.categories_]
-
-            else:
-                X_int[X_int > to_drop] -= 1
-                n_values = [len(cats) - 1 for cats in self.categories_]
-
+            X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
         else:
             n_values = [len(cats) for cats in self.categories_]
+
 
         mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + n_values)

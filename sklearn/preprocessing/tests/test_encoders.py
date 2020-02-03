@@ -410,7 +410,7 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
                       [0., 0., 0., 1.],
                       [0., 0., 1., 0.]]),
 
-            np.array([0, None]),
+            np.array([0, -1]),
         ),
         (
             [[10, 'yes'],
@@ -421,7 +421,7 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
                       [0., 1., 0., 0.],
                       [0., 0., 1., 1.]]),
 
-            np.array([None, 0]),
+            np.array([-1, 0]),
         ),
         (
             [['true', 'a'],
@@ -432,7 +432,7 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
                       [0., 1.],
                       [0., 1.]]),
 
-            np.array([0, None]),
+            np.array([0, -1]),
         ),
     ]
 )
