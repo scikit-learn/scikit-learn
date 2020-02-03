@@ -96,7 +96,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         When ``ensemble`` is True, a list of calibrated classifiers, one for
         each crossvalidation fold, which has been fitted on all but the
         validation fold and calibrated on the validation fold.
-        When ``ensemble`` is False, or when using "prefit", the list contains 
+        When ``ensemble`` is False, or when using "prefit", the list contains
         the single calibrated classifier produced by the fit method.
 
     References
