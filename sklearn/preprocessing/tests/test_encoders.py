@@ -398,45 +398,41 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     assert_array_equal(expected_names, feature_names)
 
 
-@pytest.mark.parametrize(
-    "X, expected, expected_drop_idx",
-    [
-        (
-            [['Male', 1],
-             ['Female', 3],
-             ['Female', 2]],
+def test_one_hot_encoder_drop_equals_if_binary():
+    X  = [['Male', 1],
+          ['Female', 3],
+          ['Female', 2]]
+    expected = np.array([[1., 1., 0., 0.],
+                         [0., 0., 0., 1.],
+                         [0., 0., 1., 0.]])
+    expected_drop_idx = np.array([0, -1])
 
-            np.array([[1., 1., 0., 0.],
-                      [0., 0., 0., 1.],
-                      [0., 0., 1., 0.]]),
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
 
-            np.array([0, -1]),
-        ),
-        (
-            [[10, 'yes'],
-             [20, 'no'],
-             [30, 'yes']],
+    X  = [[10, 'yes'],
+          [20, 'no'],
+          [30, 'yes']]
+    expected = np.array([[1., 0., 0., 1.],
+                         [0., 1., 0., 0.],
+                         [0., 0., 1., 1.]])
+    expected_drop_idx = np.array([-1, 0])
 
-            np.array([[1., 0., 0., 1.],
-                      [0., 1., 0., 0.],
-                      [0., 0., 1., 1.]]),
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
 
-            np.array([-1, 0]),
-        ),
-        (
-            [['true', 'a'],
-             ['false', 'a'],
-             ['false', 'a']],
+    X  = [['true', 'a'],
+          ['false', 'a'],
+          ['false', 'a']]
+    expected = np.array([[1., 1.],
+                         [0., 1.],
+                         [0., 1.]])
+    expected_drop_idx = np.array([0, -1])
 
-            np.array([[1., 1.],
-                      [0., 1.],
-                      [0., 1.]]),
-
-            np.array([0, -1]),
-        ),
-    ]
-)
-def test_one_hot_encoder_drop_equals_if_binary(X, expected, expected_drop_idx):
     ohe = OneHotEncoder(drop='if_binary', sparse=False)
     result = ohe.fit_transform(X)
     assert_array_equal(ohe.drop_idx_, expected_drop_idx)

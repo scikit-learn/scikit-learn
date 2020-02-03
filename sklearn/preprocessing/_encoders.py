@@ -423,7 +423,6 @@ class OneHotEncoder(_BaseEncoder):
         else:
             n_values = [len(cats) for cats in self.categories_]
 
-
         mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
