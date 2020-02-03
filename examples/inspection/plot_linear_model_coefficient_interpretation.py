@@ -21,7 +21,7 @@ added to the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
-appropriate to describe the dataset, or features are correlated.
+appropriate to describe the dataset, or when features are correlated.
 
 We will use data from the "Current Population Survey" from 1985 to predict
 wage as a function of various features such as experience, age, or education.
