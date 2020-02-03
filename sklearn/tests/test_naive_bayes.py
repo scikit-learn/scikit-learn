@@ -738,6 +738,12 @@ def test_categoricalnb_with_min_categories():
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories='bad_arg')
     assert_raises(ValueError, clf.fit, X_n_categories, y_n_categories)
 
+    # gives error for min_categories with wrong shape
+    clf = CategoricalNB(alpha=1, fit_prior=False,
+                        min_categories=[[3, 2], [2, 4]])
+    assert_raise_message(ValueError, 'min_categories must be', clf.fit,
+                         X_n_categories, y_n_categories)
+
 
 def test_alpha():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
