@@ -181,7 +181,12 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers.
+  to get some feedbacks from core developers. 
+  
+  One easy way to find an issue to work on is by applying the "help wanted" 
+  label in your search. This lists all the issues that have been unclaimed 
+  so far. In order to claim an issue for yourself, please comment exactly 
+  ``take`` on it for the CI to automatically assign the issue to you.  
 
 How to contribute
 -----------------

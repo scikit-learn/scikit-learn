@@ -8,16 +8,15 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import (assert_raises,
-                                    assert_array_equal,
+from sklearn.utils._testing import (assert_array_equal,
                                     assert_allclose_dense_sparse,
-                                    assert_raises_regex,
                                     assert_warns_message,
                                     assert_no_warnings,
                                     _convert_container)
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
+from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
@@ -28,6 +27,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -49,7 +49,24 @@ def test_make_rng():
     rng_42 = np.random.RandomState(42)
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
-    assert_raises(ValueError, check_random_state, "some invalid seed")
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
+
+
+def test_gen_batches():
+    # Make sure gen_batches errors on invalid batch_size
+
+    assert_array_equal(
+        list(gen_batches(4, 2)),
+        [slice(0, 2, None), slice(2, 4, None)]
+    )
+    msg_zero = "gen_batches got batch_size=0, must be positive"
+    with pytest.raises(ValueError, match=msg_zero):
+        next(gen_batches(4, 0))
+
+    msg_float = "gen_batches got batch_size=0.5, must be an integer"
+    with pytest.raises(TypeError, match=msg_float):
+        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -94,10 +111,13 @@ def test_resample():
     assert resample() is None
 
     # Check that invalid arguments yield ValueError
-    assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1],
-                  replace=False, n_samples=3)
-    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    with pytest.raises(ValueError):
+        resample([0], [0, 1])
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], replace=False, n_samples=3)
+
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -196,7 +216,8 @@ def test_column_or_1d():
         if y_type in ["binary", 'multiclass', "continuous"]:
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
-            assert_raises(ValueError, column_or_1d, y)
+            with pytest.raises(ValueError):
+                column_or_1d(y)
 
 
 @pytest.mark.parametrize(
@@ -521,8 +542,9 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
-                        " >=1", next, slices)
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
+                                         " must be >=1"):
+        next(slices)
 
 
 @pytest.mark.parametrize(
@@ -646,3 +668,14 @@ def test_deprecation_joblib_api(tmpdir):
 
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1
