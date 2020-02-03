@@ -191,6 +191,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t node_id
 
         cdef double impurity = INFINITY
+        cdef double children_lower_bound = -INFINITY
+        cdef double children_upper_bound = INFINITY
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
@@ -218,6 +220,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
                 n_constant_features = stack_record.n_constant_features
+                children_lower_bound = stack_record.children_lower_bound
+                children_upper_bound = stack_record.children_upper_bound
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -235,8 +239,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (impurity <= min_impurity_split))
 
                 if not is_leaf:
-                    # TODO add proper lower and upper bounds
-                    splitter.node_split(impurity, &split, &n_constant_features, -INFINITY, INFINITY)
+                    splitter.node_split(impurity, &split, &n_constant_features, children_lower_bound, children_upper_bound)
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -447,6 +450,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
         cdef double imp_diff
+        cdef double children_lower_bound = parent.children_lower_bound if parent != NULL else -INFINITY
+        cdef double children_upper_bound = parent.children_upper_bound if parent != NULL else INFINITY
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
@@ -461,8 +466,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    impurity <= min_impurity_split)
 
         if not is_leaf:
-            # TODO add proper lower and upper bounds
-            splitter.node_split(impurity, &split, &n_constant_features, -INFINITY, INFINITY)
+            splitter.node_split(impurity, &split, &n_constant_features, children_lower_bound,
+                                children_upper_bound)
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
