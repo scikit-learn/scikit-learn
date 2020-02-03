@@ -983,6 +983,7 @@ cdef class CDELoss(MSE):
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
+
         cdef double* sum_total = self.sum_total
         cdef double impurity
         cdef SIZE_t k
@@ -1010,6 +1011,28 @@ cdef class CDELoss(MSE):
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] * sum_left[k] / self.weighted_n_left)
             impurity_right[0] -= (sum_right[k] * sum_right[k] / self.weighted_n_right)
+
+    cdef double impurity_improvement(self, double impurity) nogil:
+        """Compute the improvement in impurity
+
+        This method computes the improvement in impurity when a split occurs.
+
+        Parameters
+        ----------
+        impurity : double
+            The initial impurity of the node before the split
+
+        Return
+        ------
+        double : improvement in impurity after the split occurs
+        """
+
+        cdef double impurity_left
+        cdef double impurity_right
+
+        self.children_impurity(&impurity_left, &impurity_right)
+
+        return impurity - (impurity_left + impurity_right)
 
 cdef class MAE(RegressionCriterion):
     r"""Mean absolute error impurity criterion

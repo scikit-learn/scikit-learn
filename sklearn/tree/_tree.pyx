@@ -450,8 +450,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         is_leaf = (depth >= self.max_depth or
                    n_node_samples < self.min_samples_split or
                    n_node_samples < 2 * self.min_samples_leaf or
-                   weighted_n_node_samples < 2 * self.min_weight_leaf or
-                   impurity <= min_impurity_split)
+                   weighted_n_node_samples < 2 * self.min_weight_leaf)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)

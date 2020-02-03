@@ -1780,6 +1780,80 @@ def test_mae():
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
 
+def test_cdeloss():
+    """Check CDELoss criterion produces correct results on small toy dataset:
+
+    -------------------------
+    | X | y1 | y2 | weight |
+    -------------------------
+    | 3 | 3  | 1  | 0.1   |
+    | 5 | 3  | 1  | 0.3   |
+    | 8 | 4  | 2  | 1.0   |
+    | 3 | 6  | 1  | 0.6   |
+    | 5 | 7  | 3  | 0.3   |
+    -------------------------
+    |sum wt:|  2.3   |
+    -------------------------
+
+    CDELoss is usually multioutput because we have more than 1 basis
+    function. Here, we have 2 basis functions (y1 and y2). Therefore:
+    beta_1 = (3 * 0.1 + 3 * 0.3 + 4 * 1 + 6 * 0.6 + 7 * 0.3)
+           = 4.739
+    beta_2 = (1 * 0.1 + 1 * 0.3 + 2 * 1 + 1 * 0.6 + 3 * 0.3)
+           = 1.696
+
+    CDELoss = Impurity = (- (beta_1)**2 - (beta_2)**2) /
+              (0.1 + 0.3 + 1 + 0.6 + 0.3)
+            = -58.269
+             ------------------
+
+    From this root node, the next best split is between X values of 3 and 5.
+    Thus, we have left and right child nodes. Impurity is found in the
+    same way:
+
+    Left Impurity = Left CDELoss
+            = -22.428
+            -------------------
+
+    Likewise for Right node:
+    Right Impurity = Right CDELoss
+            = -37.025
+            -------------------
+
+    Total Impurity =
+            = -32.041 - 23.141
+            = -59.45 < -58.269
+            -------------------
+
+    An additional split on the right node between X values of 5 and 8
+    will yield further impurity improvement.
+
+    Left Impurity = Left CDELoss
+            = -(1.2^2 + 3^2) / 0.6
+            = -17.4
+            -----------------------
+
+    Likewise for Right node:
+    Right Impurity = Right CDELoss
+            = -16 - 4 = -20.0
+            -------------------
+
+    Total Impurity =
+            = -17.4 - 20.0
+            = -37.4 < -37.025
+            -------------------
+    """
+    dt_cde = DecisionTreeRegressor(random_state=0, criterion="cde_loss",
+                                   max_leaf_nodes=5)
+
+    dt_cde.fit(X=[[3], [5], [3], [8], [5]],
+               y=[[6, 1], [7, 3], [3, 1], [4, 2], [3, 1]],
+               sample_weight=[0.6, 0.3, 0.1, 1.0, 0.3])
+    assert_allclose(dt_cde.tree_.impurity,
+                    [-58.26956522, -22.42857143, -37.025, -17.4, -20.])
+    assert dt_cde.tree_.node_count == 5
+
+
 def test_criterion_copy():
     # Let's check whether copy of our criterion has the same type
     # and properties as original
