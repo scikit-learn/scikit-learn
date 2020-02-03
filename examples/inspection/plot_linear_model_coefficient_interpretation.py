@@ -3,19 +3,15 @@
 Common pitfalls in interpretation of coefficients of linear models
 ==================================================================
 
-.. contents::
-   :local:
-   :depth: 1
-
 Linear models describe situations in which the target value is expected to be
 a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
 scikit-learn).
 Coefficients in multiple linear models represent the relationship between the
-given feature (`X[i]`) and the target (`y`) assuming that all the other
+given feature, :math:`X_i` and the target, :math:`y`, assuming that all the other
 features remain constant (`conditional dependence
 <https://en.wikipedia.org/wiki/Conditional_dependence>`_).
-This is not the same thing than plotting `X[i]` versus `y` and fitting a linear
+This is different from plotting :math:`X_i` versus :math:`y` and fitting a linear
 relationship: in that case all possible values of the other features are
 added to the estimation (marginal dependence).
 
@@ -26,7 +22,9 @@ appropriate to describe the dataset, or when features are correlated.
 We will use data from the "Current Population Survey" from 1985 to predict
 wage as a function of various features such as experience, age, or education.
 
-A description of the dataset follows.
+.. contents::
+   :local:
+   :depth: 1
 """
 
 print(__doc__)
@@ -59,8 +57,6 @@ X.describe(include="all")
 ##############################################################################
 # Notice that the dataset contains categorical and numerical variables.
 # Some of the categorical variables are binary variables.
-# About the numerical ones we can observe that AGE and EXPERIENCE have similar
-# distributions while the EDUCATION distribution is narrower.
 # This will give us directions on how to preprocess the data thereafter.
 
 X.head()
@@ -74,7 +70,8 @@ survey.target.head()
 # We split the sample in a train and a test dataset.
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
-# an unknown target.
+# an unknown target, and we don't want our analysis and decisions to be biased
+# by our knowledge of the test data.
 
 from sklearn.model_selection import train_test_split
 
@@ -85,7 +82,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 ##############################################################################
 # First, let's get some insights by looking at the variable distributions and
 # at the pairwise relationships between them. Only numerical
-# variables will be used.
+# variables will be used. In the following plot, each dot represents a sample.
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
@@ -104,7 +101,7 @@ sns.pairplot(train_dataset, diag_kind='kde')
 # .. _the-pipeline:
 #
 # The machine-learning pipeline
-# ------------------------------------
+# -----------------------------
 #
 # To design our machine-learning pipeline, we manually
 # check the type of data that we are dealing with:
@@ -257,9 +254,14 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
+# .. warning::
+#  
+#   Why does the plot above suggest that an increase in age leads to a
+#   decrease in wage? Is that counter-intuitive?
+#
 # The plot above tells us about dependencies between a specific feature and
-# the target when all other features remain constant, i.e., conditional
-# dependencies. An increase of the AGE will induce a decrease
+# the target when all other features remain constant, i.e., **conditional
+# dependencies**. An increase of the AGE will induce a decrease
 # of the WAGE when all other features remain constant. On the contrary, an
 # increase of the EXPERIENCE will induce an increase of the WAGE when all
 # other features remain constant.
@@ -269,7 +271,8 @@ plt.subplots_adjust(left=.3)
 #
 # We can check the coefficient variability through cross-validation.
 # If coefficients vary in a significant way changing the input dataset
-# the robustness of the model is not guaranteed.
+# their robustness is not guaranteed, and they should probably be interpreted
+# with caution.
 
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
@@ -289,16 +292,19 @@ sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.xlabel('Coefficient importance')
-plt.title('Coefficient importance variability')
+plt.title('Coefficient importance and its variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The problem of correlated variables
-# -------------------------------------------------
+# -----------------------------------
+#
 # The AGE and EXPERIENCE coefficients are affected by strong variability which
-# might be due to the collinearity between the 2 features.
+# might be due to the collinearity between the 2 features: as AGE and
+# EXPERIENCE vary together in the data, their effect is difficult to tease
+# apart.
 # To verify this interpretation we plot the variability of the AGE and
-# EXPERIENCE coefficient:
+# EXPERIENCE coefficient.
 
 plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
@@ -330,7 +336,8 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
-plt.title('Coefficient variability')
+plt.title('Coefficient importance and its variability')
+plt.xlabel('Coefficient importance')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -342,6 +349,8 @@ plt.subplots_adjust(left=.3)
 #
 # As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
+# This can be useful to apply a similar amount regularization to all of them
+# in the Ridge.
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
 
@@ -429,7 +438,9 @@ plt.subplots_adjust(left=.3)
 # Linear models with regularization
 # ---------------------------------
 #
-# In practice, Ridge Regression is more often used with some regularization.
+# In machine-learning practice, Ridge Regression is more often used with
+# non-negligible regularization.
+# Above, we limited this regularization to a very little amount.
 # Regularization improves the conditioning of the problem and reduces the
 # variance of the estimates. RidgeCV applies cross validation in order to
 # determine which value of the regularization parameter (`alpha`) is best
