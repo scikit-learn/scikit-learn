@@ -1114,11 +1114,6 @@ class CategoricalNB(_BaseDiscreteNB):
         -------
         self : object
         """
-        if self.min_categories is not None:
-            self.min_categories = check_array(self.min_categories,
-                                              ensure_2d=False,
-                                              ensure_min_samples=0,
-                                              dtype=np.int)
         return super().fit(X, y, sample_weight=sample_weight)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -1188,7 +1183,9 @@ class CategoricalNB(_BaseDiscreteNB):
         feature_n_categories = X.max(axis=0) + 1
         if self.min_categories is not None:
             self.n_categories_ = np.maximum(feature_n_categories,
-                                            self.min_categories)
+                                            self.min_categories,
+                                            dtype=np.int,
+                                            casting='unsafe')
         else:
             self.n_categories_ = feature_n_categories
 
