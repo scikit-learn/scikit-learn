@@ -8,11 +8,11 @@ a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
 scikit-learn).
 Coefficients in multiple linear models represent the relationship between the
-given feature, :math:`X_i` and the target, :math:`y`, assuming that all the other
-features remain constant (`conditional dependence
+given feature, :math:`X_i` and the target, :math:`y`, assuming that all the
+other features remain constant (`conditional dependence
 <https://en.wikipedia.org/wiki/Conditional_dependence>`_).
-This is different from plotting :math:`X_i` versus :math:`y` and fitting a linear
-relationship: in that case all possible values of the other features are
+This is different from plotting :math:`X_i` versus :math:`y` and fitting a
+linear relationship: in that case all possible values of the other features are
 added to the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
@@ -255,7 +255,7 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # .. warning::
-#  
+#
 #   Why does the plot above suggest that an increase in age leads to a
 #   decrease in wage? Is that counter-intuitive?
 #
