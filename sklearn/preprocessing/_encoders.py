@@ -413,14 +413,15 @@ class OneHotEncoder(_BaseEncoder):
 
         if self.drop is not None:
             to_drop = self.drop_idx_.copy()
-            # We remove all the dropped categories from mask, and decrement all	
+            # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
             keep_cells = X_int != to_drop
             n_values = []
             for i, cats in enumerate(self.categories_):
                 n_cats = len(cats)
-                if to_drop[i] == -1: # drop='if_binary' but feature isn't
-                                     # binary
+
+                # drop='if_binary' but feature isn't binary
+                if to_drop[i] == -1:
                     # set to cardinality to not drop from X_int
                     to_drop[i] = n_cats
                     n_values.append(n_cats)
