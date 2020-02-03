@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #############################################################################
-# The dataset
+# The dataset: wages
 # -----------
 #
 # We fetch the data from `OpenML <http://openml.org/>`_.
