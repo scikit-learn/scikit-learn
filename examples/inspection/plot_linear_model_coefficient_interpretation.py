@@ -39,7 +39,7 @@ import seaborn as sns
 
 #############################################################################
 # The dataset: wages
-# -----------
+# ------------------
 #
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to True will retrieve the data
