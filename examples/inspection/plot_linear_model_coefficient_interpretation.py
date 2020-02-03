@@ -302,7 +302,7 @@ plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
 plt.grid(True)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
+plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
