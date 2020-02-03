@@ -21,7 +21,7 @@ added to the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
-appropriate to describe the dataset, or features are correlated.
+appropriate to describe the dataset, or when features are correlated.
 
 We will use data from the "Current Population Survey" from 1985 to predict
 wage as a function of various features such as experience, age, or education.
@@ -38,8 +38,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 #############################################################################
-# The dataset
-# -----------
+# The dataset: wages
+# ------------------
 #
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to True will retrieve the data
@@ -66,6 +66,7 @@ X.describe(include="all")
 X.head()
 
 ##############################################################################
+# Our target for prediction: the wage
 y = survey.target.values.ravel()
 survey.target.head()
 
@@ -102,8 +103,8 @@ sns.pairplot(train_dataset, diag_kind='kde')
 #
 # .. _the-pipeline:
 #
-# The pipeline
-# ------------
+# The machine-learning pipeline
+# ------------------------------------
 #
 # To design our machine-learning pipeline, we manually
 # check the type of data that we are dealing with:
@@ -180,7 +181,7 @@ r2score = model.score(X_test, y_test)
 
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 string_score += '\nR2 score: {0:.4f}'.format(r2score)
-fig, ax = plt.subplots(figsize=(6, 6))
+fig, ax = plt.subplots(figsize=(5, 5))
 sns.regplot(y_test, y_pred)
 
 plt.text(3, 20, string_score)
@@ -199,8 +200,8 @@ plt.ylim([0, 27])
 # the model that we build, rather than about the true (real-world) generative
 # process of the data.
 #
-# Interpreting coefficients
-# -------------------------
+# Interpreting coefficients: scale matters
+# ---------------------------------------------
 #
 # First of all, we can plot the values of the coefficients of the regressor we
 # have fitted.
@@ -227,7 +228,7 @@ plt.subplots_adjust(left=.3)
 # while the EDUCATION one is expressed in $/hours/years of education.
 # Looking at the coefficient plot to extrapolate feature importance could be
 # misleading as some of them vary on a small scale (as UNION or SEX that are
-# either 0 or 1), while feature like AGE varies a lot more, several decades.
+# either 0 or 1), while a feature like AGE varies a lot more, several decades.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
@@ -287,10 +288,13 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
+plt.xlabel('Coefficient importance')
 plt.title('Coefficient importance variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
+# The problem of correlated variables
+# -------------------------------------------------
 # The AGE and EXPERIENCE coefficients are affected by strong variability which
 # might be due to the collinearity between the 2 features.
 # To verify this interpretation we plot the variability of the AGE and
@@ -300,7 +304,7 @@ plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
 plt.grid(True)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-plt.title('Variations of coefficients for AGE and EXPERIENCE across folds')
+plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
