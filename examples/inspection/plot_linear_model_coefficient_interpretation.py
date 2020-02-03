@@ -66,6 +66,7 @@ X.describe(include="all")
 X.head()
 
 ##############################################################################
+# Our target for prediction: the wage
 y = survey.target.values.ravel()
 survey.target.head()
 
