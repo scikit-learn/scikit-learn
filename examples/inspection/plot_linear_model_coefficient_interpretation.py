@@ -103,7 +103,7 @@ sns.pairplot(train_dataset, diag_kind='kde')
 #
 # .. _the-pipeline:
 #
-# The pipeline
+# The machine-learning pipeline
 # ------------
 #
 # To design our machine-learning pipeline, we manually
