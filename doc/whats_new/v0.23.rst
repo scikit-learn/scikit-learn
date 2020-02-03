@@ -23,7 +23,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- models come here
+- list models here
 
 Details are listed in the changelog below.
 
@@ -51,8 +51,27 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
+  avoids high memory footprint by calculating the distances matrix using 
+  a chunked scheme.
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :user:`Alex Shacked <alexshacked>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| :class:`compose.ColumnTransformer` method ``get_feature_names`` now
+  returns correct results when one of the transformer steps applies on an
+  empty list of columns :pr:`15963` by `Roman Yurchak`_.
+
 :mod:`sklearn.datasets`
 .......................
+
+- |Enhancement| Added ``return_centers`` parameter  in  
+  :func:`datasets.make_blobs`, which can be used to return
+  centers for each cluster.
+  :pr:`15709` by :user:`<shivamgargsya>` and
+  :user:`Venkatachalam N <venkyyuvy>`.
 
 - |Enhancement| Functions :func:`datasets.make_circles` and
   :func:`datasets.make_moons` now accept two-element tuple.
@@ -63,12 +82,25 @@ Changelog
   by :user:`Stephanie Andrews <gitsteph>` and
   :user:`Reshama Shaikh <reshamas>`.
 
+- |Feature| embedded dataset loaders :func:`load_breast_cancer`,
+  :func:`load_diabetes`, :func:`load_digits`, :func:`load_iris`,
+  :func:`load_linnerud` and :func:`load_wine` now support loading as a pandas
+  ``DataFrame`` by setting `as_frame=True`. :pr:`15980` by :user:`wconnell` and
+  :user:`Reshama Shaikh <reshamas>`.
+
 - |Fix| :func:`datasets.make_multilabel_classification` now generates
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
+   exclusively choose the components that explain the variance greater than
+   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+
 :mod:`sklearn.ensemble`
-.................................
+.......................
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
@@ -76,6 +108,13 @@ Changelog
   :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix|  Changed the convention for `max_depth` parameter of
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
+  the number of edges to go from the root to the deepest leaf.
+  Stumps (trees with one split) are now allowed.
+  :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -114,6 +153,21 @@ Changelog
   specific scoring strategy. Before the internal estimator outputs score
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
+
+- |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
+  iteration when `solver='newton-cg'` by checking for inferior or equal instead
+  of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
+  :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
+  argument `squared` when argument `multioutput='raw_values'`. 
+  :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
+
+- |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
+  scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -158,6 +212,19 @@ Changelog
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
+:mod:`sklearn.svm`
+..................
+
+- |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
+  `probB_`, are now deprecated as they were not useful. :pr:`15558` by
+  `Thomas Fan`_.
+
+- |Fix| Fix use of custom kernel not taking float entries such as string
+  kernels in :class:`svm.SVC` and :class:`svm.SVR`. Note that custom kennels
+  are now expected to validate their input where they previously received
+  valid numeric arrays.
+  :pr:`11296` by `Alexandre Gramfort`_ and  :user:`Georgi Peev <georgipeev>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -165,8 +232,20 @@ Changelog
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
 
+- |Fix| Fix support of read-only float32 array input in ``predict``,
+  ``decision_path`` and ``predict_proba`` methods of
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier` and
+  :class:`ensemble.GradientBoostingClassifier` as well as ``predict`` method of
+  :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeRegressor`, and
+  :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`16331` by :user:`Alexandre Batisse <batalex>`.
+
 :mod:`sklearn.utils`
 ....................
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
+
+- |Enhancement| add warning in :func:`utils.validation.check_array` for
+  pandas sparse DataFrame.
+  :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
