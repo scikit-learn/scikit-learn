@@ -1035,8 +1035,8 @@ class CategoricalNB(_BaseDiscreteNB):
         Minimum number of categories per feature:
         - int : Sets the minimum number of categories per feature to
           `n_categories` for each features.
-        - array-like : `n_categories[i]` holds the minimum number of categories
-          for the ith column of the input.
+        - array-like : shape (n_features,) where `n_categories[i]` holds the
+          minimum number of categories for the ith column of the input.
         - None : Determines the number of categories automatically from the
           training data.
 
@@ -1182,10 +1182,14 @@ class CategoricalNB(_BaseDiscreteNB):
     def _init_n_categories(self, X):
         feature_n_categories = X.max(axis=0) + 1
         if self.min_categories is not None:
-            self.n_categories_ = np.maximum(feature_n_categories,
-                                            self.min_categories,
-                                            dtype=np.int,
-                                            casting='unsafe')
+            n_categories_ = np.maximum(feature_n_categories,
+                                       self.min_categories,
+                                       dtype=np.int,
+                                       casting='unsafe')
+            if np.shape(n_categories_) != feature_n_categories.shape:
+                raise ValueError('min_categories must be scalar, array-like '
+                                 'of shape (n_features,), or None.')
+            self.n_categories_ = n_categories_
         else:
             self.n_categories_ = feature_n_categories
 
