@@ -456,6 +456,6 @@ def test_max_depth_max_leaf_nodes():
     X, y = make_classification(random_state=0)
     est = HistGradientBoostingClassifier(max_depth=2, max_leaf_nodes=3,
                                          max_iter=1).fit(X, y)
-    tree = est._predictors[-0][0]
+    tree = est._predictors[0][0]
     assert tree.get_max_depth() == 2
     assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix
