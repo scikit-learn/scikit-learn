@@ -10,6 +10,7 @@ import subprocess
 from distutils.dist import Distribution
 from distutils.sysconfig import customize_compiler
 from numpy.distutils.ccompiler import new_compiler
+from numpy.distutils.command.config_compiler import config_cc
 
 
 def _get_compiler():
@@ -20,7 +21,8 @@ def _get_compiler():
         - CC=<compiler> python setup.py build_ext
     """
     dist = Distribution({'script_name': os.path.basename(sys.argv[0]),
-                         'script_args': sys.argv[1:]})
+                         'script_args': sys.argv[1:],
+                         'cmdclass': {'config_cc': config_cc}})
     dist.parse_config_files()
     dist.parse_command_line()
 
