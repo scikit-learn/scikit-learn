@@ -74,10 +74,10 @@ def test_sgd_deprecated_attr(klass):
     est = klass(average=True)
     est.fit(X, y)
 
-    msg = "removed in 0.25"
+    msg = "Attribute {} was deprecated"
     for att in ['average_coef_', 'average_intercept_',
                 'standard_coef_', 'standard_intercept_']:
-        with pytest.warns(FutureWarning, match=msg):
+        with pytest.warns(FutureWarning, match=msg.format(att)):
             getattr(est, att)
 
 
