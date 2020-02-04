@@ -701,7 +701,7 @@ class Sum(KernelOperator):
         Sum(RBF(), RBF())
 
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -804,7 +804,7 @@ class Product(KernelOperator):
         Product(RBF(), RBF())
 
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -902,7 +902,7 @@ class Exponentiation(Kernel):
         k_{exp}(X, Y) = k(X, Y) ^p
 
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1099,7 +1099,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
             kernel = RBF() + 2
 
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1220,7 +1220,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
         k(x_1, x_2) = noise\\_level \\text{ if } x_i == x_j \\text{ else } 0
 
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1348,7 +1348,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     and are thus very smooth.
     See [2]_, Chapter 4, Section 4.2, for further details of the RBF kernel.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1503,7 +1503,7 @@ class Matern(RBF):
     See [1]_, Chapter 4, Section 4.2, for details regarding the different
     variants of the Matern kernel.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1684,7 +1684,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     Euclidean distance.
     For advice on how to set the parameters, see e.g. [1]_.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1828,7 +1828,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
     Euclidean distance.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
@@ -1967,7 +1967,7 @@ class DotProduct(Kernel):
     See [1]_, Chapter 4, Section 4.2, for further details regarding the
     DotProduct kernel.
 
-    Read more in the :ref:`User Guide <gaussian_process>`.
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
