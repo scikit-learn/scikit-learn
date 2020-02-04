@@ -184,7 +184,7 @@ fig, ax = plt.subplots(figsize=(5, 5))
 sns.regplot(y_test, y_pred)
 
 plt.text(3, 20, string_score)
-
+plt.title('Ridge model, small regularization')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
@@ -215,19 +215,23 @@ coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
     columns=['Coefficients'], index=feature_names
 )
+plt.title('Ridge model, small regularization')
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
+# In the plot above, the AGE coefficient is expressed in $/hours/living years
+# while the EDUCATION one is expressed in $/hours/years of education.
+# On the other hand, categorical variables (as UNION or SEX) are adimensional
+# numbers taking the value either of 0 or 1. Their coefficients are expressed
+# in $/hours.
+# Looking at the coefficient plot to extrapolate feature importance could be
+# misleading as some of them vary on a small scale, while others, like AGE,
+# varies a lot more, several decades.
 # Soon we realize that we cannot compare different coefficients since the
 # features have different natural scales and hence value ranges
 # because of their different unit of measure.
-# For instance, the AGE coefficient is expressed in $/hours/living years
-# while the EDUCATION one is expressed in $/hours/years of education.
-# Looking at the coefficient plot to extrapolate feature importance could be
-# misleading as some of them vary on a small scale (as UNION or SEX that are
-# either 0 or 1), while a feature like AGE varies a lot more, several decades.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
@@ -239,9 +243,10 @@ plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# For the reasons explained above, multiplying the coefficients by the
-# standard deviation of the related feature would improve our understanding on
-# feature importance on the model.
+# Multiplying the coefficients by the standard deviation of the related
+# feature would reduce all the coefficients to the same unit of measure.
+# As we will see :ref:`after<scaling_num>` this is equivalent to normalize
+# numerical variables to their standard deviation.  
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
@@ -251,6 +256,7 @@ coefs = pd.DataFrame(
     X_train_preprocessed.std(axis=0),
     columns=['Coefficient importance'], index=feature_names
 )
+plt.title('Ridge model, small regularization')
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
@@ -347,6 +353,8 @@ plt.subplots_adjust(left=.3)
 # The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all predictors trained during cross-validation.
 #
+# .. _scaling_num:
+# 
 # Preprocessing numerical variables
 # ---------------------------------
 #
