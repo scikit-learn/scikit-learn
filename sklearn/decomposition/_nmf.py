@@ -1003,7 +1003,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
     X = check_array(X, accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
@@ -1032,14 +1031,21 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if H.dtype != X.dtype or W.dtype != X.dtype:
+            raise TypeError("H and W should have the same dtype as X. Got "
+                            "H.dtype = {} and W.dtype = {}."
+                            .format(H.dtype, W.dtype))
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
+        if H.dtype != X.dtype:
+            raise TypeError("H should have the same dtype as X. Got H.dtype = "
+                            "{}.".format(H.dtype))
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = np.full((n_samples, n_components), avg)
+            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
         else:
-            W = np.zeros((n_samples, n_components))
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)

@@ -514,19 +514,36 @@ def test_nmf_underflow():
     (np.int64, np.float64)])
 @pytest.mark.parametrize("solver", ["cd", "mu"])
 def test_nmf_dtype_match(dtype_in, dtype_out, solver):
+    # Check that NMF preserves dtype (float32 and float64)
     X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
     np.abs(X, out=X)
-    Xt = NMF(solver=solver).fit_transform(X)
-    assert Xt.dtype == dtype_out
+    nmf = NMF(solver=solver)
+
+    assert nmf.fit(X).transform(X).dtype == dtype_out
+    assert nmf.fit_transform(X).dtype == dtype_out
+    assert nmf.components_.dtype == dtype_out
 
 
 @pytest.mark.parametrize("solver", ["cd", "mu"])
 def test_nmf_float32_float64_consistency(solver):
-    X = np.random.RandomState(0).randn(20, 15)
+    # Check that the result of NMF is the same between float32 and float64
+    X = np.random.RandomState(0).randn(50, 7)
     np.abs(X, out=X)
     nmf32 = NMF(solver=solver, random_state=0)
     W32 = nmf32.fit_transform(X.astype(np.float32))
     nmf64 = NMF(solver=solver, random_state=0)
     W64 = nmf64.fit_transform(X)
 
-    assert_allclose(W32, W64, rtol=1e-4)
+    assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
+
+
+def test_nmf_custom_init_dtype_error():
+    # Check that an error is raise if custom H and/or W don't have the same
+    # dtype as X.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((20, 15))
+    H = rng.random_sample((15, 15)).astype(np.float32)
+    W = rng.random_sample((20, 15))
+
+    with pytest.raises(TypeError, match="should have the same dtype as X"):
+        NMF(init='custom').fit(X, H=H, W=W)
