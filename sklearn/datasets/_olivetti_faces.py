@@ -24,7 +24,6 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ._base import _pkl_filepath
-from ._base import _refresh_cache
 from ..utils import check_random_state, Bunch
 
 # The original data can be found at:
@@ -61,7 +60,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    random_state : int, RandomState instance or None (default=0)
+    random_state : int, RandomState instance or None, default=0
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -110,9 +109,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = _refresh_cache([filepath], 6)
-        # TODO: Revert to the following line in v0.23
-        # faces = joblib.load(filepath)
+        faces = joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)

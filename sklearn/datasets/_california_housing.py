@@ -35,7 +35,6 @@ from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
-from ._base import _refresh_cache
 from ..utils import Bunch
 
 # The original data can be found at:
@@ -146,9 +145,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         remove(archive_path)
 
     else:
-        cal_housing = _refresh_cache([filepath], 6)
-        # TODO: Revert to the following line in v0.23
-        # cal_housing = joblib.load(filepath)
+        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]
