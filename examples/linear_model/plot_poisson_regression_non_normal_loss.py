@@ -4,7 +4,7 @@ Poisson regression and non-normal loss
 ======================================
 
 This example illustrates the use of log-linear Poisson regression
-on the French Motor Third-Party Liability Claims dataset [1] and compares
+on the French Motor Third-Party Liability Claims dataset [1]_ and compares
 it with models learned with least squared error. The goal is to predict the
 expected number of insurance claims (or frequency) following car accidents for
 a policyholder given historical data over a population of policyholders.
@@ -47,9 +47,9 @@ def load_mtpl2(n_samples=100000):
 
     Parameters
     ----------
-    n_samples: int, default=100000
-      number of samples to select (for faster run time). Full dataset has
-      678013 samples.
+    n_samples: int or None, default=100000
+      number of samples to select (for faster run time). If None, the full
+      dataset has with 678013 samples is returned.
     """
 
     # freMTPL2freq dataset from https://www.openml.org/d/41214
