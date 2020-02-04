@@ -67,6 +67,20 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
+# TODO: remove in 0.25
+@pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,
+                                   PassiveAggressiveRegressor])
+def test_sgd_deprecated_attr(klass):
+    est = klass(average=True)
+    est.fit(X, y)
+
+    msg = "removed in 0.25"
+    for att in ['average_coef_', 'average_intercept_',
+                'standard_coef_', 'standard_intercept_']:
+        with pytest.warns(FutureWarning, match=msg):
+            getattr(est, att)
+
+
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):

@@ -67,6 +67,16 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
                                                            **kw)
 
 
+def PassiveAggressiveClassifier(**kwargs):
+    _update_kwargs(kwargs)
+    return linear_model.PassiveAggressiveClassifier
+
+
+def PassiveAggressiveRegressor(**kwargs):
+    _update_kwargs(kwargs)
+    return linear_model.PassiveAggressiveRegressor
+
+
 def SGDClassifier(**kwargs):
     _update_kwargs(kwargs)
     return linear_model.SGDClassifier(**kwargs)
@@ -271,14 +281,14 @@ def test_plain_has_no_average_attr(klass):
 # TODO: remove in 0.25
 @pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
 def test_sgd_deprecated_attr(klass):
-    clf = klass(average=True, eta0=.01)
-    clf.fit(X, Y)
+    est = klass(average=True, eta0=.01)
+    est.fit(X, Y)
 
     msg = "removed in 0.25"
     for att in ['average_coef_', 'average_intercept_',
                 'standard_coef_', 'standard_intercept_']:
         with pytest.warns(FutureWarning, match=msg):
-            getattr(clf, att)
+            getattr(est, att)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
