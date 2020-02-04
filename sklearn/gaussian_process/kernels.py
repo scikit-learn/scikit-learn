@@ -717,7 +717,7 @@ class Sum(KernelOperator):
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -828,7 +828,7 @@ class Product(KernelOperator):
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -933,7 +933,7 @@ class Exponentiation(Kernel):
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -1138,7 +1138,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -1265,7 +1265,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -1400,7 +1400,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
@@ -1740,7 +1740,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     References
     ----------
-    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
         Advice on Covariance functions".
         <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
