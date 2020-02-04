@@ -86,9 +86,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details. Number of workers are only relevant when calculating 
-        the distances, if distances are precomputed nuber of workers will not 
-        effect. 
+        for more details. Parallel execution is implemented for computing the 
+        distances. If precomputed distance are used, parallel execution is not 
+        available and thus n_jobs will have no effect.
 
     Returns
     -------
