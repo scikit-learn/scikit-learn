@@ -120,6 +120,10 @@ class SimpleImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <impute>`.
 
+    .. versionadded:: 0.20
+       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
+       estimator which is now removed.
+
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
@@ -462,6 +466,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
 
     Read more in the :ref:`User Guide <impute>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------

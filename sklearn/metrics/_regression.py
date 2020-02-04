@@ -255,7 +255,7 @@ def mean_squared_error(y_true, y_pred,
                                weights=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
-            return output_errors
+            return output_errors if squared else np.sqrt(output_errors)
         elif multioutput == 'uniform_average':
             # pass None as weights to np.average: uniform mean
             multioutput = None
