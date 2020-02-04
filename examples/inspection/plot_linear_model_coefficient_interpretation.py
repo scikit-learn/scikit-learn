@@ -83,10 +83,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 # First, let's get some insights by looking at the variable distributions and
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
+#
+#   .. _marginal_dependencies:
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
-sns.pairplot(train_dataset, diag_kind='kde')
+sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 
 ##############################################################################
 # Looking closely at the WAGE distribution it could be noticed that it has a
@@ -160,7 +162,7 @@ model = make_pipeline(
 #
 # First, we fit the model.
 
-model.fit(X_train, y_train)
+_ = model.fit(X_train, y_train)
 
 ##############################################################################
 # Then we check the performance of the computed
@@ -257,7 +259,8 @@ plt.subplots_adjust(left=.3)
 # .. warning::
 #
 #   Why does the plot above suggest that an increase in age leads to a
-#   decrease in wage? Is that counter-intuitive?
+#   decrease in wage? Why this is different from the :ref:`initial pairplot
+#   <marginal_dependencies>`?
 #
 # The plot above tells us about dependencies between a specific feature and
 # the target when all other features remain constant, i.e., **conditional
@@ -375,7 +378,7 @@ model = make_pipeline(
     )
 )
 
-model.fit(X_train, y_train)
+_ = model.fit(X_train, y_train)
 
 ##############################################################################
 # Again, we check the performance of the computed
@@ -458,7 +461,7 @@ model = make_pipeline(
     )
 )
 
-model.fit(X_train, y_train)
+_ = model.fit(X_train, y_train)
 
 ##############################################################################
 # First we verify which value of :math:`\alpha` has been selected.
