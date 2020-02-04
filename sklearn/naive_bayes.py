@@ -24,12 +24,13 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
+from .utils import check_X_y, check_array, deprecated, Bunch
 from .utils.fixes import logsumexp
+from .utils.validation import _check_sample_weight
+from .utils.metaestimators import _BaseComposition
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
-from .utils.validation import _check_sample_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB', 'GeneralNB']
@@ -115,7 +116,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
-class GeneralNB(_BaseNB):
+class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     """General Naive Bayes
 
     Read more in the :ref:`User Guide <general_naive_bayes>`.
@@ -128,25 +129,47 @@ class GeneralNB(_BaseNB):
     Examples
     --------
     >>> import numpy as np
+    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
     ...               [2.7, 3.8, 2.3, 1, 0],
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
-    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-    >>> clf = GeneralNB()
-    >>> clf.fit(X, y, [(GaussianNB(), [0, 1, 2]),
-    ...                (BernoulliNB(), [3, 4])])
-    GeneralNB()
+    >>> clf = GeneralNB([
+    >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
+    >>>     ("bernoulli", BernoulliNB(), [3, 4])
+    >>> ])
+    >>> clf.fit(X, y)
     >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
     [1]
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
     """
 
-    def __init__(self):
+    def __init__(self, distributions):
+        self.distributions = distributions
         self.fits_ = []
 
-    def fit(self, X, y, distributions):
+    @property
+    def _distributions(self):
+        return [(name, distr) for name, distr, _ in self.distributions]
+
+    # TODO doesn't seem right
+    @_distributions.setter
+    def _distributions(self, value):
+        print(self.distributions)
+        print(list(zip(value, self.distributions)))
+        self.distributions = [
+            (name, distr, col) for ((name, distr), (_, _, col))
+            in zip(value, self.distributions)]
+
+    def get_params(self, deep=True):
+        return self._get_params('_distributions', deep=deep)
+
+    def set_params(self, **kwargs):
+        self._set_params('_distributions', **kwargs)
+        return self
+
+    def fit(self, X, y):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -165,14 +188,14 @@ class GeneralNB(_BaseNB):
         -------
         self : object
         """
-        self._check_distributions(distributions, X)
+        self._validate_distributions()
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
 
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb, features) for (nb, features) in distributions]
+        inits = [(nb, features) for (nb, features) in self.distributions]
 
         self.fits_ = [(nb.fit(X[:, features], y), features)
                       for (nb, features) in inits]
@@ -189,11 +212,11 @@ class GeneralNB(_BaseNB):
         log_priors = [
             nb.class_log_prior_
             if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-            for (nb, _) in self.fits_]
+            for (nb, _) in self._fits]
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-                for (nb, features) in self.fits_]
+                for (nb, features) in self._fits]
 
         # jlls has the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
@@ -205,10 +228,7 @@ class GeneralNB(_BaseNB):
 
         return jll
 
-    def _check_X(self, X):
-        return check_array(X)
-
-    def _check_distributions(self, distributions, X):
+    def _validate_distributions(self):
         """Check validity of distributions
 
         Distributions should be explicitly specified
@@ -221,19 +241,24 @@ class GeneralNB(_BaseNB):
         num_cols_expected = X.shape[-1]
 
         # Check type
-        if not isinstance(distributions, list):
+        if not isinstance(self.distributions, list):
             raise TypeError(
-                "Expected list but got {}".format(type(distributions)))
+                "Expected list but got {}".format(type(self.distributions)))
+
+        names, distributions, _ = zip(*self.distributions)
+        self._validate_names(names)
+
+    def _validate_nb_callables(self):
 
         # Check if all are sklearn classes
-        for distribution in distributions:
+        for distribution in self.distributions:
 
             if not isinstance(distribution, tuple):
                 raise TypeError(
                     "Expected tuple but got {}".format(type(distribution)))
 
             if len(distribution) != 2:
-                raise ValueError("Expected tuple to have length of 2 " +
+                raise ValueError("Expected tuple to have length of 2 "
                                  "but got {}".format(len(distribution)))
 
             nb, features = distribution
@@ -253,8 +278,28 @@ class GeneralNB(_BaseNB):
         num_cols = len(dict_distribution)
         if num_cols != num_cols_expected:
             raise ValueError("Expected {} features".format(num_cols_expected) +
-                             " to have specified distributions " +
+                             " to have specified distributions "
                              "but {} were specified.".format(num_cols))
+
+    def _validate_remainder(self):
+        pass
+
+    def _check_X(self, X):
+        return check_array(X)
+
+    @property
+    def named_distributions_(self):
+        """Access the fitted transformer by name.
+
+        Read-only attribute to access any transformer by given name.
+        Keys are transformer names and values are the fitted transformer
+        objects.
+
+        """
+        # Use Bunch object to improve autocomplete
+        return Bunch(**{name: trans for name, trans, _
+                        in self.distributions})
+
 
 
 class GaussianNB(_BaseNB):
