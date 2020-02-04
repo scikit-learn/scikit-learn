@@ -246,7 +246,7 @@ plt.subplots_adjust(left=.3)
 # Multiplying the coefficients by the standard deviation of the related
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
-# numerical variables to their standard deviation.  
+# numerical variables to their standard deviation.
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
@@ -354,7 +354,7 @@ plt.subplots_adjust(left=.3)
 # remain important for all predictors trained during cross-validation.
 #
 # .. _scaling_num:
-# 
+#
 # Preprocessing numerical variables
 # ---------------------------------
 #
