@@ -6,5 +6,4 @@ requires = [
     "Cython>=0.28.5",
     "numpy>=1.11.0",
     "scipy>=0.17.0",
-    "joblib>=0.11",
 ]
