@@ -49,9 +49,7 @@ def _retry_with_clean_cache(openml_path, data_home):
                 return f(*args, **kw)
             try:
                 return f(*args, **kw)
-            except HTTPError:
-                raise
-            except ValueError:
+            except (HTTPError, ValueError):
                 raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
@@ -488,9 +486,8 @@ def _download_data_to_bunch(url, sparse, data_home, *,
     response = _open_openml_url(url, data_home)
 
     with closing(response):
-        # Note that if the data is dense, _arff.load will parse the headers,
-        # but the data will only be read line by line when it is converted
-        # below. This is intended to minimise memory usage.
+        # Note that if the data is dense, no reading is done until the data
+        # generator is iterated.
         arff = _arff.load((line.decode('utf-8')
                            for line in response),
                           return_type=return_type,
