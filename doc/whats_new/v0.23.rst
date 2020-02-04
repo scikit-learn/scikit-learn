@@ -131,8 +131,6 @@ Changelog
 :mod:`sklearn.feature_selection`
 .................................
 
-- |Enhancement| In :class:`feature_selection.RFE`  and
-  :class:`feature_selection.RFECV` added support for multioutput by setting
-  the argument multi_output=TRUE.
-  :pr:`16103` by :user:`Divyaprabha M <divyaprabha123>`.
-
+- |Enhancement| Added support for multioutput data in :class:`feature_selection.RFE`
+  and :class:`feature_selection.RFECV`.
+  :pr:`16103` by :user:`Divyaprabha <divyaprabha123>`.
