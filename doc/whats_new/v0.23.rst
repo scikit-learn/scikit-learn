@@ -129,7 +129,7 @@ Changelog
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
 - |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`,
-  `average_coef_`, `average_intercept_` in
+  `average_coef_`, and `average_intercept_` in
   :class:`linear_model.BaseSGD`,
   :class:`linear_model.BaseSGDClassifier`,
   :class:`linear_model.SGDClassifier`,
