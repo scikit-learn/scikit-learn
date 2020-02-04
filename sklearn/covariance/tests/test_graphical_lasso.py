@@ -1,6 +1,7 @@
 """ Test the graphical_lasso module.
 """
 import sys
+import pytest
 
 import numpy as np
 from scipy import linalg
@@ -148,3 +149,18 @@ def test_graphical_lasso_cv(random_state=1):
 
     # Smoke test with specified alphas
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
+
+
+def test_graphical_lasso_cv_grid_scores_deprecated():
+    true_cov = np.array([[0.8, 0.0, 0.2, 0.0],
+                         [0.0, 0.4, 0.0, 0.0],
+                         [0.2, 0.0, 0.3, 0.1],
+                         [0.0, 0.0, 0.1, 0.7]])
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+    cov = GraphicalLassoCV().fit(X)
+
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+           r"favor of cv_results_ and will be removed in version 0\.25")
+    with pytest.warns(FutureWarning, match=msg):
+        cov.grid_scores_

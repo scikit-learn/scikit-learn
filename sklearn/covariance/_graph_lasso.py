@@ -22,6 +22,7 @@ from ..utils.validation import check_random_state, check_array
 from ..linear_model import _cd_fast as cd_fast
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils.deprecation import deprecated
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -591,6 +592,13 @@ class GraphicalLassoCV(GraphicalLasso):
     grid_scores_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
+        .. deprecated:: 0.21
+            The `grid_scores_` attribute is deprecated in version 0.23 in favor
+            of `cv_results_` and will be removed in version 0.25
+
+    cv_results_ : ndarray of shape (n_alphas, n_folds)
+        Log-likelihood score on left-out data across folds.
+
     n_iter_ : int
         Number of iterations run for the optimal alpha.
 
@@ -767,7 +775,7 @@ class GraphicalLassoCV(GraphicalLasso):
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                            cv=cv, n_jobs=self.n_jobs,
                                            verbose=inner_verbose))
-        self.grid_scores_ = np.array(grid_scores)
+        self.cv_results_ = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
         self.cv_alphas_ = alphas
@@ -778,3 +786,10 @@ class GraphicalLassoCV(GraphicalLasso):
             enet_tol=self.enet_tol, max_iter=self.max_iter,
             verbose=inner_verbose, return_n_iter=True)
         return self
+
+    @deprecated(
+        "The grid_scores_ attribute is deprecated in version 0.23 in favor "
+        "of cv_results_ and will be removed in version 0.25")
+    @property
+    def grid_scores_(self):
+        return self.cv_results_
