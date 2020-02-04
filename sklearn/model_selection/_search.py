@@ -610,7 +610,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def _check_multimetric_scores_refit(self, scores_dict):
+    def _check_refit_for_multimetric(self, scores_dict):
         """Check score contains the string in refit"""
         multimetric_refit_msg = ("For multi-metric scoring, the parameter "
                                  "refit must be set to a scorer key or a "
@@ -660,7 +660,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             scorers = check_scoring(self.estimator, self.scoring)
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
-            self._check_multimetric_scores_refit(scorers)
+            self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
@@ -734,7 +734,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             # scorer is callable, check refit_metric now
             if callable(self.scoring) and self.multimetric_:
-                self._check_multimetric_scores_refit(successful_score)
+                self._check_refit_for_multimetric(successful_score)
                 refit_metric = self.refit
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
