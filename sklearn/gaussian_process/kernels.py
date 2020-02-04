@@ -700,8 +700,6 @@ class Sum(KernelOperator):
 
         Sum(RBF(), RBF())
 
-    As a reference on how to best combine different kernels,
-    please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -714,12 +712,6 @@ class Sum(KernelOperator):
 
     k2 : Kernel object
         The second base-kernel of the sum-kernel
-
-    References
-    ----------
-    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
-        Advice on Covariance functions".
-        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
     Examples
     --------
@@ -801,7 +793,7 @@ class Product(KernelOperator):
     and combines them via
 
     .. math::
-        k_{prod}(X, Y) = k_1(X, Y) \\cdot k_2(X, Y)
+        k_{prod}(X, Y) = k_1(X, Y) * k_2(X, Y)
 
     Using the Product-kernel is equivalent to multiplying two kernels::
 
@@ -811,8 +803,6 @@ class Product(KernelOperator):
 
         Product(RBF(), RBF())
 
-    As a reference on how to best combine different kernels,
-    please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -826,11 +816,6 @@ class Product(KernelOperator):
     k2 : Kernel object
         The second base-kernel of the product-kernel
 
-    References
-    ----------
-    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
-        Advice on Covariance functions".
-        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
     Examples
     --------
@@ -916,8 +901,6 @@ class Exponentiation(Kernel):
     .. math::
         k_{exp}(X, Y) = k(X, Y) ^p
 
-    As a reference on how to best combine different kernels, please refer
-    to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -931,11 +914,6 @@ class Exponentiation(Kernel):
     exponent : float
         The exponent for the base kernel
 
-    References
-    ----------
-    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
-        Advice on Covariance functions".
-        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
     Examples
     --------
@@ -1120,8 +1098,6 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
 
             kernel = RBF() + 2
 
-    As a reference on how to best combine different kernels, please
-    refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -1136,11 +1112,6 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
     constant_value_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on constant_value
 
-    References
-    ----------
-    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
-        Advice on Covariance functions".
-        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
     Examples
     --------
@@ -1248,8 +1219,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     .. math::
         k(x_1, x_2) = noise\\_level \\text{ if } x_i == x_j \\text{ else } 0
 
-    As a reference on how to best combine different kernels, please
-    refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -1263,11 +1232,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
 
-    References
-    ----------
-    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
-        Advice on Covariance functions".
-        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
     Examples
     --------

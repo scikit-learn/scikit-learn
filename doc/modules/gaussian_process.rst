@@ -365,7 +365,8 @@ translations in the input space, while non-stationary kernels
 depend also on the specific values of the datapoints. Stationary kernels can further
 be subdivided into isotropic and anisotropic kernels, where isotropic kernels are
 also invariant to rotations in the input space. For more details, we refer to
-Chapter 4 of [RW2006]_.
+Chapter 4 of [RW2006]_. For guidance on how to best combine different kernels,
+we refer to [Duv2014]_.
 
 Gaussian Process Kernel API
 ---------------------------
@@ -473,7 +474,7 @@ Kernel operators take one or two base kernels and combine them into a new
 kernel. The :class:`Sum` kernel takes two kernels :math:`k_1` and :math:`k_2`
 and combines them via :math:`k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)`.
 The  :class:`Product` kernel takes two kernels :math:`k_1` and :math:`k_2`
-and combines them via :math:`k_{product}(X, Y) = k_1(X, Y) \cdot k_2(X, Y)`.
+and combines them via :math:`k_{product}(X, Y) = k_1(X, Y) * k_2(X, Y)`.
 The :class:`Exponentiation` kernel takes one base kernel and a scalar parameter
 :math:`p` and combines them via
 :math:`k_{exp}(X, Y) = k(X, Y)^p`.
@@ -489,6 +490,7 @@ The kernel is given by:
 .. math::
    k(x_i, x_j) = \text{exp}\left(- \frac{d(x_i, x_j)^2}{2l^2} \right)
 
+where :math:`d(\cdot, \cdot)` is the Euclidean distance.
 This kernel is infinitely differentiable, which implies that GPs with this
 kernel as covariance function have mean square derivatives of all orders, and are thus
 very smooth. The prior and posterior of a GP resulting from an RBF kernel are shown in
@@ -604,5 +606,7 @@ References
 ----------
 
 .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+
+.. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
