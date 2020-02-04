@@ -54,7 +54,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| Added ``return_centers`` parameter  in  
+- |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
   :pr:`15709` by :user:`<shivamgargsya>` and
@@ -103,7 +103,7 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -128,9 +128,15 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`, 
-  `average_coef_`, `average_intercept_` in :class:`linear_model.BaseSGD`
-  (inherited by :class:`linear_model.SGDRegressor`).
+- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`,
+  `average_coef_`, `average_intercept_` in
+  :class:`linear_model.BaseSGD`,
+  :class:`linear_model.BaseSGDClassifier`,
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.BaseSGDRegressor`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
   :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
 
 :mod:`sklearn.model_selection`
@@ -157,10 +163,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
