@@ -1,9 +1,9 @@
 """
-====================================================================
-Normal and Shrinkage Linear Discriminant Analysis for classification
-====================================================================
+===========================================================================
+Normal, Ledoit-Wolf and OAS Linear Discriminant Analysis for classification
+===========================================================================
 
-Shows how shrinkage improves classification.
+Shows how Ledoit-Wolf or OAS estimator of covariance improves classification.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,7 +60,7 @@ for n_features in n_features_range:
 features_samples_ratio = np.array(n_features_range) / n_train
 
 plt.plot(features_samples_ratio, acc_clf1, linewidth=2,
-         label="Linear Discriminant Analysis with shrinkage", color='navy')
+         label="Linear Discriminant Analysis with Ledoit Wolf", color='navy')
 plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
          label="Linear Discriminant Analysis", color='gold')
 plt.plot(features_samples_ratio, acc_clf3, linewidth=2,
