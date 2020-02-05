@@ -139,6 +139,10 @@ for i_dataset, X in enumerate(datasets):
         algorithm.fit(X)
         t1 = time.time()
         
+        plt.subplot(len(datasets), len(anomaly_algorithms), plot_num)	
+        if i_dataset == 0:	
+            plt.title(name, size=18)
+        
         # fit the data and tag outliers
         if name == "Local Outlier Factor":
             y_pred = algorithm.fit_predict(X)
