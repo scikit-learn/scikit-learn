@@ -63,6 +63,11 @@ plt.ylabel('Deviance')
 
 # #############################################################################
 # Plot impurity-based feature importance
+#
+# Warning: impurity-based feature importances can be misleading for
+# high cardinality features (many unique values). See
+# :func:`sklearn.inspection.permutation_importance` as an alternative.
+
 feature_importance = clf.feature_importances_
 # make importances relative to max importance
 feature_importance = 100.0 * (feature_importance / feature_importance.max())

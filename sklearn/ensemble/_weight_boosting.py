@@ -246,6 +246,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
@@ -356,7 +360,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     See Also
     --------
@@ -394,8 +403,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
     AdaBoostClassifier(n_estimators=100, random_state=0)
-    >>> clf.feature_importances_
-    array([0.28..., 0.42..., 0.14..., 0.16...])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
@@ -929,7 +936,12 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         Regression error for each estimator in the boosted ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     Examples
     --------
@@ -940,8 +952,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
-    >>> regr.feature_importances_
-    array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
     >>> regr.predict([[0, 0, 0, 0]])
     array([4.7972...])
     >>> regr.score(X, y)
