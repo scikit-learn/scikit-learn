@@ -134,8 +134,8 @@ transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
 [#1]_ for more details.
 
-Shrinkage
-=========
+Shrinkage and Covariance Estimator
+==================================
 
 Shrinkage is a tool to improve estimation of covariance matrices in situations
 where the number of training samples is small compared to the number of
@@ -155,33 +155,24 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
+The Ledoit and Wolf estimator of covariance may not always be the best choice.
+For example if the data are Gaussian distributed the
+Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's
+formula used with shrinkage="auto".
+
+The covariance estimator can be chosen using with the ``covariance_estimator``
+parameter of the :class:`discriminant_analysis.LinearDiscriminantAnalysis` class.
+A covariance estimator should have a :term:`fit` method and
+a ``covariance_`` attribute like all covariance estimators in the
+:mod:`sklearn.covariance` package.
+
+
 .. |shrinkage| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
         :scale: 75
 
 .. centered:: |shrinkage|
-
-Covariance Estimator
-=====================
-
-LDA and QDA uses by default an empirical estimate of covariance.
-It some situations (typically when the number of training samples
-is small compared to the number of features) other estimators might be
-more appropriate.
-
-For example if the data are Gaussian distributed the
-Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
-yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's formula.
-
-A covariance estimator should have a :term:`fit` method and
-a ``covariance_`` attribute like all covariance estimators in the
-:mod:`sklearn.covariance` package.
-
-.. |ldaoas| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_oas_001.png
-        :target: ../auto_examples/classification/plot_lda_oas.html
-        :scale: 75
-
-.. centered:: |ldaoas|
 
 Estimation algorithms
 =====================

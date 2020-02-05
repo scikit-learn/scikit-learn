@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.covariance import OAS
 
 
 n_train = 20  # samples for training
@@ -35,22 +36,26 @@ def generate_data(n_samples, n_features):
         X = np.hstack([X, np.random.randn(n_samples, n_features - 1)])
     return X, y
 
-acc_clf1, acc_clf2 = [], []
+acc_clf1, acc_clf2, acc_clf3 = [], [], []
 n_features_range = range(1, n_features_max + 1, step)
 for n_features in n_features_range:
-    score_clf1, score_clf2 = 0, 0
+    score_clf1, score_clf2, score_clf3 = 0, 0, 0
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
         clf1 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto').fit(X, y)
         clf2 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage=None).fit(X, y)
+        oa = OAS(store_precision=False, assume_centered=False)
+        clf3 = LinearDiscriminantAnalysis(solver='lsqr', covariance_estimator=oa)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
         score_clf2 += clf2.score(X, y)
+        score_clf3 += clf3.score(X, y)
 
     acc_clf1.append(score_clf1 / n_averages)
     acc_clf2.append(score_clf2 / n_averages)
+    acc_clf3.append(score_clf3 / n_averages)
 
 features_samples_ratio = np.array(n_features_range) / n_train
 
@@ -58,6 +63,8 @@ plt.plot(features_samples_ratio, acc_clf1, linewidth=2,
          label="Linear Discriminant Analysis with shrinkage", color='navy')
 plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
          label="Linear Discriminant Analysis", color='gold')
+plt.plot(features_samples_ratio, acc_clf3, linewidth=2,
+         label="Linear Discriminant Analysis with OAS", color='red')
 
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
