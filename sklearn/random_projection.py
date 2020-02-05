@@ -460,8 +460,8 @@ class GaussianRandomProjection(BaseRandomProjection):
         dimensions (n_components) in the target projection space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls the pseudo random number generator used to generate the matrix
-        at fit time.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -581,8 +581,8 @@ class SparseRandomProjection(BaseRandomProjection):
         the input is sparse.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls the pseudo random number generator used to generate the matrix
-        at fit time.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
