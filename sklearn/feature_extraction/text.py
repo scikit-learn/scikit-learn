@@ -25,6 +25,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.feature_extraction._lri import FeatureLightweightRandomIndexing
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
@@ -36,6 +37,7 @@ from ..exceptions import NotFittedError
 
 
 __all__ = ['HashingVectorizer',
+           'LightweightRandomIndexingVectorizer',
            'CountVectorizer',
            'ENGLISH_STOP_WORDS',
            'TfidfTransformer',
@@ -792,6 +794,38 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'X_types': ['string']}
+
+
+class LightweightRandomIndexingVectorizer(HashingVectorizer):
+    """Applies lightweight random indexing [1] to a collection of texts.
+
+    It exploits the implementation of HashingVectorizer, changing hashing
+    object returned by _get_hasher(self).
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import \
+            LightweightRandomIndexingVectorizer
+    >>> corpus = [
+    ...     'This is the first document.',
+    ...     'This document is the second document.',
+    ...     'And this is the third one.',
+    ...     'Is this the first document?',
+    ... ]
+    >>> vectorizer = LightweightRandomIndexingVectorizer(n_features=2**4)
+    >>> X = vectorizer.fit_transform(corpus)
+    >>> print(X.shape)
+    (4, 16)
+
+    See Also
+    --------
+    HashingVectorizer, CountVectorizer, TfidfVectorizer
+
+    """
+
+    def _get_hasher(self):
+        return FeatureLightweightRandomIndexing(n_features=self.n_features,
+                             input_type='string', dtype=self.dtype)
 
 
 def _document_frequency(X):

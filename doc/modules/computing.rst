@@ -47,6 +47,13 @@ use the so-called :ref:`hashing trick<feature_hashing>` as implemented by
 :class:`sklearn.feature_extraction.FeatureHasher` for datasets with categorical
 variables represented as list of Python dicts or
 :class:`sklearn.feature_extraction.text.HashingVectorizer` for text documents.
+Alternatively, a method based on the theory of
+:ref:`random indexing<feature_lri>` is implemented by
+:class:`sklearn.feature_extraction.FeatureLightweightRandomIndexing` for
+datasets with categorical variables represented as list of Python dicts or
+:class:`sklearn.feature_extraction.text.LightweightRandomIndexingVectorizer`
+for text documents.
+
 
 Incremental learning
 .....................

@@ -479,6 +479,7 @@ Samples generator
 
    feature_extraction.DictVectorizer
    feature_extraction.FeatureHasher
+   feature_extraction.FeatureLightweightRandomIndexing
 
 From images
 -----------
@@ -519,6 +520,7 @@ From text
 
    feature_extraction.text.CountVectorizer
    feature_extraction.text.HashingVectorizer
+   feature_extraction.text.LightweightRandomIndexingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 

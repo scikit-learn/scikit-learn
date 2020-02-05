@@ -6,8 +6,9 @@ images.
 
 from ._dict_vectorizer import DictVectorizer
 from ._hash import FeatureHasher
+from ._lri import FeatureLightweightRandomIndexing
 from .image import img_to_graph, grid_to_graph
 from . import text
 
 __all__ = ['DictVectorizer', 'image', 'img_to_graph', 'grid_to_graph', 'text',
-           'FeatureHasher']
+           'FeatureHasher', 'FeatureLightweightRandomIndexing']

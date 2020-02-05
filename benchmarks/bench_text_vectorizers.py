@@ -16,8 +16,7 @@ import pandas as pd
 from memory_profiler import memory_usage
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer,
-                                             HashingVectorizer)
+import sklearn.feature_extraction.text as fet
 
 n_repeat = 3
 
@@ -39,7 +38,8 @@ print("This benchmarks runs in ~1 min ...")
 res = []
 
 for Vectorizer, (analyzer, ngram_range) in itertools.product(
-            [CountVectorizer, TfidfVectorizer, HashingVectorizer],
+            [fet.CountVectorizer, fet.TfidfVectorizer, fet.HashingVectorizer,
+             fet.LightweightRandomIndexingVectorizer],
             [('word', (1, 1)),
              ('word', (1, 2)),
              ('char', (4, 4)),

@@ -212,6 +212,47 @@ otherwise the features will not be mapped evenly to the columns.
  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
 
+.. _feature_lri:
+
+Lightweight Random Indexing
+===============
+
+.. currentmodule:: sklearn.feature_extraction
+
+The class :class:`FeatureLightweightRandomIndexing` is a hash-based indexing
+ method that implements a
+`random indexing <https://en.wikipedia.org/wiki/Random_indexing>`_ technique
+called lightweight random indexing.
+:class:`FeatureLightweightRandomIndexing` represents every feature with
+a vector in which exactly two indices has non-zero value, randomly selected
+from the two possible values +1 and -1.
+This random indexing criteria has similar speed and reduced memory usage
+properties of :class:`FeatureHasher`, plus it gives to the indexing vectors
+good properties of quasiorthogonality, reducing the loss of information the
+the dimensionality of the indexing space (`n_feature`) is much smaller than
+the number of input features.
+
+The input and output data of :class:`FeatureLightweightRandomIndexing` are
+the same of :class:`FeatureHasher`.
+A dedicated :ref:`text vectorizer<lri_vectorizer>' that also includes the
+tokenization process is implemented by
+:class:`LightweightRandomIndexingVectorizer`.
+
+Implementation details
+----------------------
+
+The difference with respect to :class:`FeatureHasher` is that the MurmurHash3
+hashing function is invoked twice, using different seeds, checking for
+possible collisions between the two hashes, and eventually generating a second
+hash with a different seed until there is no collision.
+
+.. topic:: References:
+
+ * Alejandro Moreo, Andrea Esuli, Fabrizio Sebastiani (2016).
+   `Lightweight Random Indexing for Polylingual Text Classification
+   <https://www.jair.org/index.php/jair/article/view/11025>`_. JAIR
+
+
 .. _text_feature_extraction:
 
 Text feature extraction
@@ -872,6 +913,18 @@ time is often limited by the CPU time one wants to spend on the task.
 
 For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
+
+.. _lri_vectorizer:
+
+Stateless vectorization with lightweight random indexing
+------------------------------------------------------
+
+Another method that implements stateless vectorization of text is
+:ref:`lightweight random indexing<_feature_lri>`_.
+:class:`LightweightRandomIndexingVectorizer` is a subclass of
+:class:`HashingVectorizer` that differs only in the use of the method
+implemented by :class:`FeatureLightweightRandomIndexing` to perform indexing.
+
 
 Customizing the vectorizer classes
 ----------------------------------
