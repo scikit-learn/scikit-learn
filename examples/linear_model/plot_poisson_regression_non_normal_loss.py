@@ -49,7 +49,7 @@ def load_mtpl2(n_samples=100000):
     ----------
     n_samples: int or None, default=100000
       number of samples to select (for faster run time). If None, the full
-      dataset has with 678013 samples is returned.
+      dataset with 678013 samples is returned.
     """
 
     # freMTPL2freq dataset from https://www.openml.org/d/41214
