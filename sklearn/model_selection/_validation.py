@@ -1535,10 +1535,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     n_params = len(param_range)
 
     results = _aggregate_list_of_dicts(results)
-    train_scores = (np.asarray(results["train_scores"])
-                    .reshape(-1, n_params).T)
-    test_scores = (np.asarray(results["test_scores"])
-                   .reshape(-1, n_params).T)
+    train_scores = results["train_scores"].reshape(-1, n_params).T
+    test_scores = results["test_scores"].reshape(-1, n_params).T
 
     return train_scores, test_scores
 
@@ -1560,10 +1558,13 @@ def _aggregate_list_of_dicts(elements):
     Example
     -------
 
-    >>> elements = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
-    ...             {'a': 10, 'b': 10}] # doctest: +SKIP
-    >>> _aggregate_list_of_dicts(elements) # doctest: +SKIP
-    {'a': array([1, 2, 3, 10]), 'b': array([10, 2, 3, 10])}
+    >>> elements = [{'a': 1, 'b': 10}, {'a': 2, 'b': 2}, {'a': 3, 'b': 3},
+    ...             {'a': 10, 'b': 10}]
+    >>> output = _aggregate_list_of_dicts(elements)
+    >>> output['a']
+    array([ 1, 2, 3, 10])
+    >>> output['b']
+    array([10, 2, 3, 10])
     """
     return {key: np.asarray([elm[key] for elm in elements])
             for key in elements[0]}
