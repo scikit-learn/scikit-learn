@@ -93,7 +93,7 @@ anomaly_algorithms = [
     ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          behaviour = "new", random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
-        n_neighbors=35, contamination=outliers_fraction, novelty = False))]
+        n_neighbors=35, contamination=outliers_fraction))]
 
 # Define datasets
 blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
@@ -195,44 +195,31 @@ for i_dataset, X in enumerate(datasets):
         
         # use many if...else for cleaner legends
         if i_dataset == 0:
-            plt.plot(
-                list_fpr[algo_index],
-                list_tpr[algo_index],
-                label="algo "
-                + str(algo_index + 1)+ ")"
-                + (" AUC %.2f" % list_AUC[algo_index]).lstrip("0"),
-            )
+            plt.plot(list_fpr[algo_index], list_tpr[algo_index],
+                label="algo " + str(algo_index + 1)+ ")"
+                + (" AUC %.2f" % list_AUC[algo_index]).lstrip("0"))
             
             if algo_index == 0:
                 plt.scatter(
                     list_fpr[algo_index][list_thresh[algo_index]],
                     list_tpr[algo_index][list_thresh[algo_index]],
-                    s=40,
-                    marker="x",
-                    color="black",
-                    label="thresholds",
-                )
+                    s=40, marker="x", color="black", label="thresholds")
             else:
                 plt.scatter(
                     list_fpr[algo_index][list_thresh[algo_index]],
                     list_tpr[algo_index][list_thresh[algo_index]],
-                    s=40,
-                    marker="x",
-                    color="black",
-                )
+                    s=40, marker="x", color="black")
                 
         else:
             plt.plot(
-                list_fpr[algo_index],
-                list_tpr[algo_index],
+                list_fpr[algo_index], list_tpr[algo_index],
                 label=str(algo_index + 1) + ")"
-                + (" %.2f" % list_AUC[algo_index]).lstrip("0"),
-            )
+                + (" %.2f" % list_AUC[algo_index]).lstrip("0"))
+            
             plt.scatter(
                 list_fpr[algo_index][list_thresh[algo_index]],
                 list_tpr[algo_index][list_thresh[algo_index]],
-                s=40,
-                marker="x")
+                s=40, marker="x")
 
     plt.plot(np.array([0, 1]), np.array([0, 1]), linestyle="--", color="black")
     plt.legend()
