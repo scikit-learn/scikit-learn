@@ -422,6 +422,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
@@ -1056,6 +1060,10 @@ class RandomForestClassifier(ForestClassifier):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
@@ -1078,8 +1086,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
     >>> clf.fit(X, y)
     RandomForestClassifier(max_depth=2, random_state=0)
-    >>> print(clf.feature_importances_)
-    [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1337,6 +1343,10 @@ class RandomForestRegressor(ForestRegressor):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -1361,8 +1371,6 @@ class RandomForestRegressor(ForestRegressor):
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
     >>> regr.fit(X, y)
     RandomForestRegressor(max_depth=2, random_state=0)
-    >>> print(regr.feature_importances_)
-    [0.18146984 0.81473937 0.00145312 0.00233767]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
 
@@ -1656,6 +1664,10 @@ class ExtraTreesClassifier(ForestClassifier):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -1934,6 +1946,10 @@ class ExtraTreesRegressor(ForestRegressor):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features.

@@ -279,6 +279,19 @@ for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
 
+.. warning::
+
+  The impurity-based feature importances computed on tree-based models suffer
+  from two flaws that can lead to misleading conclusions. First they are
+  computed on statistics derived from the training dataset and therefore **do
+  not necessarily inform us on which features are most important to make good
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
+  :ref:`permutation_importance` is an alternative to impurity-based feature
+  importance that does not suffer from these flaws. These two methods of
+  obtaining feature importance are explored in:
+  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
@@ -293,13 +306,6 @@ In practice those estimates are stored as an attribute named
 ``(n_features,)`` whose values are positive and sum to 1.0. The higher
 the value, the more important is the contribution of the matching feature
 to the prediction function.
-
-The impurity-based feature importance for trees suffers from being computed
-on statistics derived from the training dataset
-and favors high cardinality features.
-:ref:`permutation_importance` is a nice alternative impurity-based feature importance.
-These two methods of obtaining feature importance are explored in:
-:ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 .. topic:: Examples:
 
@@ -329,8 +335,9 @@ trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
 ** max_depth``, the maximum number of leaves in the forest.
 
-As neighboring data points are more likely to lie within the same leaf of a tree,
-the transformation performs an implicit, non-parametric density estimation.
+As neighboring data points are more likely to lie within the same leaf of a
+tree, the transformation performs an implicit, non-parametric density
+estimation.
 
 .. topic:: Examples:
 
