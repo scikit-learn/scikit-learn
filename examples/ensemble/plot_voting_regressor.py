@@ -76,7 +76,7 @@ pred4 = ereg.predict(X)
 Plot figure
 =================================
 Finally, we will calculate each prediction, plot them and visualize first 20
-predictions.
+predictions. The red stars show the average prediction
 
 """
 
