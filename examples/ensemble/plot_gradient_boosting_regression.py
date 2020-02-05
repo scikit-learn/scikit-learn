@@ -62,7 +62,7 @@ plt.xlabel('Boosting Iterations')
 plt.ylabel('Deviance')
 
 # #############################################################################
-# Plot feature importance
+# Plot impurity-based feature importance
 feature_importance = clf.feature_importances_
 # make importances relative to max importance
 feature_importance = 100.0 * (feature_importance / feature_importance.max())
