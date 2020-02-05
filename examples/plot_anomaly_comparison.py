@@ -15,7 +15,8 @@ Decision boundaries between inliers and outliers are displayed in black
 except for Local Outlier Factor (LOF) as it has no predict method to be applied
 on new data when it is used for outlier detection.
 
-There are two main performance measurement parameters in this example. First, `sklearn.metrics.accuracy_score` measures the matching between ground truth 
+There are two main performance measurement parameters in this example. First, 
+`sklearn.metrics.accuracy_score` measures the matching between ground truth 
 labels and predicted labels. Second, `sklearn.metrics.roc_auc_score` computes
 the area under receiver (AUC) operating characteristic (ROC) curve. 
 The last column of the examples visualize the ROC curves except LOF for 
