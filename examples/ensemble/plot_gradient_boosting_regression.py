@@ -3,7 +3,7 @@
 Gradient Boosting regression
 ============================
 
-Demonstrate Gradient Boosting on the Boston housing dataset.
+Demonstrate Gradient Boosting on the Diabetes dataset.
 
 This example fits a Gradient Boosting model with least squares loss and
 500 regression trees of depth 4.
@@ -24,8 +24,8 @@ from sklearn.metrics import mean_squared_error
 
 # #############################################################################
 # Load data
-boston = datasets.load_boston()
-X, y = shuffle(boston.data, boston.target, random_state=13)
+diabetes = datasets.load_diabetes()
+X, y = shuffle(diabetes.data, diabetes.target, random_state=13)
 X = X.astype(np.float32)
 offset = int(X.shape[0] * 0.9)
 X_train, y_train = X[:offset], y[:offset]
@@ -75,7 +75,7 @@ sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
 plt.subplot(1, 2, 2)
 plt.barh(pos, feature_importance[sorted_idx], align='center')
-plt.yticks(pos, boston.feature_names[sorted_idx])
+plt.yticks(pos, np.array(diabetes.feature_names)[sorted_idx])
 plt.xlabel('Relative Importance')
 plt.title('Variable Importance')
 plt.show()
