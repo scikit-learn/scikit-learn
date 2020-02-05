@@ -158,8 +158,8 @@ For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_boston.py`: Selecting the two
-      most important features from the Boston dataset without knowing the
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`: Selecting the two
+      most important features from the diabetes dataset without knowing the
       threshold beforehand.
 
 .. _l1_feature_selection:
