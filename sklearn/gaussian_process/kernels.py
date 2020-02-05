@@ -691,8 +691,7 @@ class Sum(KernelOperator):
     .. math::
         k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)
 
-    Using the Sum-kernel is equivalent to adding two kernels::
-
+    Using the Sum-kernel is equivalent to using the + operator::
 
         RBF() + RBF()
 
