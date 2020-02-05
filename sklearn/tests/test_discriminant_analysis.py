@@ -26,6 +26,8 @@ from sklearn.covariance import ShrunkCovariance
 from sklearn.covariance import LedoitWolf
 from sklearn.covariance import EmpiricalCovariance
 
+from sklearn.preprocessing import StandardScaler
+
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
 y = np.array([1, 1, 1, 2, 2, 2])
@@ -386,6 +388,15 @@ def test_lda_ledoitwolf():
     covariance after standardizing the data.
     This checks that it is indeed the case
     """
+    class StandardizedLedoitWolf():
+        def fit(self, X):
+            sc = StandardScaler()
+            Xsc = sc.fit_transform(X)
+            ldw = LedoitWolf()
+            ldw.fit(Xsc)
+            scale = sc.scale_[:, np.newaxis]
+            self.covariance_ = scale * ldw.covariance_ * scale
+
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100,))
     c1 = LinearDiscriminantAnalysis(
@@ -394,9 +405,9 @@ def test_lda_ledoitwolf():
             solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
             store_covariance=True,
-            covariance_estimator=LedoitWolf(),
+            covariance_estimator=StandardizedLedoitWolf,
             solver="lsqr",
-            standardize=True)
+            )
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
@@ -661,11 +672,10 @@ def test_covariance():
         """
         def fit(self, X):
             return self
-    for standardize in [True, False]:
-        with pytest.raises(RuntimeError,
-                           match="InvalidCovarianceEstimator does not have a"
-                                 + " covariance_ attribute"):
-            _cov(x, None, InvalidCovarianceEstimator(), standardize)
+    with pytest.raises(RuntimeError,
+                       match="InvalidCovarianceEstimator does not have a"
+                       + " covariance_ attribute"):
+        _cov(x, None, InvalidCovarianceEstimator())
 
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
