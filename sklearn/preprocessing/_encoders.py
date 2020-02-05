@@ -474,12 +474,12 @@ class OneHotEncoder(_BaseEncoder):
             n_transformed_features = sum(len(cats)
                                          for cats in self.categories_)
         else:
-            if self.drop == 'first':
-                n_transformed_features = sum(len(cats) - 1
-                                             for cats in self.categories_)
-            else:  # self.drop = 'if_binary'
+            if isinstance(self.drop, str) and self.drop == 'if_binary':
                 n_transformed_features = sum(1 if len(cats) == 2
                                              else len(cats)
+                                             for cats in self.categories_)
+            else:
+                n_transformed_features = sum(len(cats) - 1
                                              for cats in self.categories_)
 
         # validate shape of passed X
