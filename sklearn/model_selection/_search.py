@@ -787,7 +787,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         score_time = results["score_time"]
 
         info_dict = _check_fit_and_score_results(results, self.error_score)
-        score_names = info_dict["score_names"]
         test_scores = info_dict["test_scores"]
 
         if self.return_train_score:
@@ -852,7 +851,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             iid = False
 
-        for scorer_name in score_names:
+        for scorer_name in test_scores:
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,

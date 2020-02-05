@@ -245,7 +245,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     results = _aggregate_list_of_dicts(results, constructor=list)
 
     info_dict = _check_fit_and_score_results(results, error_score)
-    score_names = info_dict["score_names"]
     test_scores = info_dict["test_scores"]
 
     if return_estimator:
@@ -258,7 +257,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    for name in score_names:
+    for name in test_scores:
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
             train_scores = info_dict["train_scores"]
@@ -272,14 +271,18 @@ def _check_fit_and_score_results(results, error_score):
     fit_failed = results["fit_failed"]
     test_score_dicts = results["test_scores"]
 
-    if all(fit_failed):
+    failed_indices = []
+    for i, failed in enumerate(fit_failed):
+        if failed:
+            failed_indices.append(i)
+        else:
+            successful_score = test_score_dicts[i]
+
+    if len(failed_indices) == len(fit_failed):
         raise NotFittedError("All estimators failed to fit")
 
-    successful_score = test_score_dicts[fit_failed.index(False)]
-    if any(fit_failed) and isinstance(successful_score, dict):
-        for i, failed in enumerate(fit_failed):
-            if not failed:
-                continue
+    if failed_indices and isinstance(successful_score, dict):
+        for i in failed_indices:
             test_score_dicts[i] = {name: error_score
                                    for name in successful_score}
 
@@ -287,9 +290,6 @@ def _check_fit_and_score_results(results, error_score):
     # converts single metrics into a list of dictionaries
     if not isinstance(successful_score, dict):
         test_score_dicts = [{"score": elm} for elm in test_score_dicts]
-        output["score_names"] = ["score"]
-    else:
-        output["score_names"] = list(successful_score.keys())
 
     output["test_scores"] = _aggregate_list_of_dicts(test_score_dicts)
 
