@@ -285,8 +285,8 @@ evaluation with Random Forests.
   from two flaws that can lead to misleading conclusions. First they are
   computed on statistics derived from the training dataset and therefore **do
   not necessarily inform us on which features are most important to make good
-  predictions on helf-out dataset**. Secondly, **they favor high cardinality
-  features**, that is feature with many unique values.
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
   :ref:`permutation_importance` is an alternative to impurity-based feature
   importance that does not suffer from these flaws. These two methods of
   obtaining feature importance are explored in:
