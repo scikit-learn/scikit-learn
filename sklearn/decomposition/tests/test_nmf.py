@@ -547,3 +547,6 @@ def test_nmf_custom_init_dtype_error():
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
         NMF(init='custom').fit(X, H=H, W=W)
+
+    with pytest.raises(TypeError, match="should have the same dtype as X"):
+        non_negative_factorization(X, H=H, update_H=False)
