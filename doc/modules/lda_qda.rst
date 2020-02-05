@@ -183,7 +183,7 @@ an advantage in situations where the number of features is large. However, the
 'svd' solver cannot be used with shrinkage.
 
 The 'lsqr' solver is an efficient algorithm that only works for classification.
-It supports shrinkage.
+It supports shrinkage and custom covariance estimators.
 
 The 'eigen' solver is based on the optimization of the between class scatter to
 within class scatter ratio. It can be used for both classification and
