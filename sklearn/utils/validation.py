@@ -21,6 +21,8 @@ from inspect import signature, isclass, Parameter
 from numpy.core.numeric import ComplexWarning
 import joblib
 
+from contextlib import suppress
+
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
@@ -449,6 +451,15 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
+        # throw warning if pandas dataframe is sparse
+        with suppress(ImportError):
+            from pandas.api.types import is_sparse
+            if array.dtypes.apply(is_sparse).any():
+                warnings.warn(
+                    "pandas.DataFrame with sparse columns found."
+                    "It will be converted to a dense numpy array."
+                )
+
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
@@ -1197,8 +1208,7 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     if sample_weight is None:
         sample_weight = np.ones(n_samples, dtype=dtype)
     elif isinstance(sample_weight, numbers.Number):
-        sample_weight = np.full(n_samples, sample_weight,
-                                dtype=dtype)
+        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]

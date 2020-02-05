@@ -38,7 +38,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for rotation matrix initialization.
         Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -194,7 +194,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
         the K-Means initialization. Use an int to make the randomness
@@ -310,7 +310,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     n_components : integer, optional, default=n_clusters
         Number of eigen vectors to use for the spectral embedding
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when ``eigen_solver='amg'`` and by
         the K-Means initialization. Use an int to make the randomness

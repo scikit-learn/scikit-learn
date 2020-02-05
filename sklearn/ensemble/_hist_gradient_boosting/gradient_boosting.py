@@ -689,8 +689,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than 1. If None, there is no maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf. Must be strictly greater
-        than 1. Depth isn't constrained by default.
+        edges to go from the root to the deepest leaf.
+        Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
@@ -737,7 +737,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
-        is enabled. See :term:`random_state`.
+        is enabled.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -872,8 +874,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         than 1. If None, there is no maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf. Must be strictly greater
-        than 1. Depth isn't constrained by default.
+        edges to go from the root to the deepest leaf.
+        Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
@@ -919,10 +921,14 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         optional (default=None)
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
-        is enabled. See :term:`random_state`.
+        is enabled.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
     n_iter_ : int
         The number of estimators as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
