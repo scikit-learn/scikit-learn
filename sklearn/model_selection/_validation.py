@@ -244,9 +244,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     results = _aggregate_list_of_dicts(results)
 
-    info_dict = _check_fit_and_score_results(results, error_score)
-    test_scores = info_dict["test_scores"]
-
     if return_estimator:
         fitted_estimators = results["estimator"]
 
@@ -257,19 +254,21 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
+    score_results = _check_fit_and_score_results(results, error_score)
+    test_scores = score_results["test_scores"]
     for name in test_scores:
         ret['test_%s' % name] = test_scores[name]
         if return_train_score:
-            train_scores = info_dict["train_scores"]
             key = 'train_%s' % name
-            ret[key] = train_scores[name]
+            ret[key] = score_results["train_scores"][name]
 
     return ret
 
 
 def _check_fit_and_score_results(results, error_score):
     """Aggregate scores in results into a single dictionary of scores. Results
-    that failed are set to error_score
+    that failed are set to error_score. `results` are the aggregated output
+    of `_fit_and_score`.
     """
     fit_failed = results["fit_failed"]
     test_score_dicts = results["test_scores"]

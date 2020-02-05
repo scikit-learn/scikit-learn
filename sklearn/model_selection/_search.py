@@ -780,17 +780,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, n_splits, out):
         n_candidates = len(candidate_params)
-        results = _aggregate_list_of_dicts(out)
+        agg_out = _aggregate_list_of_dicts(out)
 
-        test_sample_counts = results["n_test_samples"]
-        fit_time = results["fit_time"]
-        score_time = results["score_time"]
+        test_sample_counts = agg_out["n_test_samples"]
+        fit_time = agg_out["fit_time"]
+        score_time = agg_out["score_time"]
 
-        info_dict = _check_fit_and_score_results(results, self.error_score)
-        test_scores = info_dict["test_scores"]
-
-        if self.return_train_score:
-            train_scores = info_dict["train_scores"]
+        score_results = _check_fit_and_score_results(agg_out, self.error_score)
 
         results = {}
 
@@ -851,13 +847,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             iid = False
 
+        test_scores = score_results["test_scores"]
         for scorer_name in test_scores:
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,
                    weights=test_sample_counts if iid else None)
             if self.return_train_score:
-                _store('train_%s' % scorer_name, train_scores[scorer_name],
+                _store('train_%s' % scorer_name,
+                       score_results["train_scores"][scorer_name],
                        splits=True)
 
         return results
