@@ -17,7 +17,7 @@ find the best two features predicting disease progression after one year from
 the baseline.
 
 Authors: Manoj Kumar <mks542@nyu.edu>
-         Maria Telenczuk
+         Maria Telenczuk <https://github.com/maikia>
 License: BSD 3 clause
 """
 print(__doc__)
