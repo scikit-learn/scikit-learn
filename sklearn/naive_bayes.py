@@ -13,6 +13,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Lars Buitinck
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         (parts based on earlier work by Mathieu Blondel)
+#         Raimi Karim <raimi.bkarim@gmail.com>
 #
 # License: BSD 3 clause
 import warnings
@@ -123,7 +124,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     Attributes
     ----------
-    fits_ : list of objects
+    # TODO
+    distributions : list of objects
         list of fitted classifiers
 
     Examples
@@ -144,18 +146,19 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
     """
+    # TODO check_is_fitted
 
     def __init__(self, distributions):
         self.distributions = distributions
-        self.fits_ = []
+        self._fits = []
 
     @property
     def _distributions(self):
         return [(name, distr) for name, distr, _ in self.distributions]
 
-    # TODO doesn't seem right
     @_distributions.setter
     def _distributions(self, value):
+        # TODO wrong
         print(self.distributions)
         print(list(zip(value, self.distributions)))
         self.distributions = [
@@ -188,17 +191,17 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         -------
         self : object
         """
-        self._validate_distributions()
+        self._validate_distributions(X)
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
 
         # FIXME aggregate all classes and all priors?
         self.classes_ = np.unique(y)
 
-        inits = [(nb, features) for (nb, features) in self.distributions]
+        inits = [(_, nb, features) for (_, nb, features) in self.distributions]
 
         self.fits_ = [(nb.fit(X[:, features], y), features)
-                      for (nb, features) in inits]
+                      for (_, nb, features) in inits]
 
         return self
 
@@ -207,18 +210,19 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         X = np.array(X)
 
-        # For now assume all class log priors are the same for all the NB's
-        # So we'll take the first one.
         log_priors = [
             nb.class_log_prior_
             if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
             for (nb, _) in self._fits]
+
+        # Assume all class log priors are the same for all the NB's
+        # so we'll take the first one.
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-                for (nb, features) in self._fits]
+                for (_, nb, features) in self._fits]
 
-        # jlls has the shape (distribution, sample, class)
+        # jlls have the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
 
         # Remove the class log prior from all the distributions
@@ -228,70 +232,87 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         return jll
 
-    def _validate_distributions(self):
-        """Check validity of distributions
+    def _validate_distributions(self, X):
 
-        Distributions should be explicitly specified
-        """
         valid_modules = copy.copy(__all__)
         valid_modules.remove("GeneralNB")
-        dict_distribution = {}
+        self._dict_distribution = {}
 
-        X = np.array(X)
-        num_cols_expected = X.shape[-1]
+        _list_fit_prior = []
+        _list_class_prior = []
+
+        names, _, _ = zip(*self.distributions)
+        self._validate_names(names)
 
         # Check type
         if not isinstance(self.distributions, list):
             raise TypeError(
                 "Expected list but got {}".format(type(self.distributions)))
 
-        names, distributions, _ = zip(*self.distributions)
-        self._validate_names(names)
-
-    def _validate_nb_callables(self):
-
-        # Check if all are sklearn classes
         for distribution in self.distributions:
 
+            # Check type
             if not isinstance(distribution, tuple):
                 raise TypeError(
-                    "Expected tuple but got {}".format(type(distribution)))
-
-            if len(distribution) != 2:
-                raise ValueError("Expected tuple to have length of 2 "
+                    "Expected list of tuples "
+                    "but got list of {}s".format(type(distribution)))
+            if len(distribution) != 3:
+                raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(distribution)))
 
-            nb, features = distribution
+            _, model, features = distribution
 
-            if callable(nb):
+            # Check naive bayes model
+            if callable(model):
                 raise ValueError("Wrong format specified.")
-            if nb.__class__.__name__ not in valid_modules:
+            if not (hasattr(model, "fit") or hasattr(model, "_joint_log_likelihood")):
+                raise TypeError("Naive bayes model should implement "
+                                "the fit and _joint_log_likelihood methods. "
+                                "{} doesn't.".format(type(model)))
+            if model.__class__.__name__ not in valid_modules:
                 raise ValueError(
                     "Distributions should be one of {}".format(valid_modules))
-            for feature in features:
-                if feature in dict_distribution:
-                    raise ValueError(
-                        "Duplicate specification of feature found.")
-                else:
-                    dict_distribution[feature] = nb.__class__.__name__.lower()
 
-        num_cols = len(dict_distribution)
+            # For checking fit_prior later
+            _class_prior = getattr(model, "prior", None) or getattr(model, "class_prior", None)
+            _list_class_prior.append(_class_prior)
+
+            _fit_prior = getattr(model, "fit_prior", True)
+            _list_fit_prior.append(_fit_prior)
+
+            # Check the feature
+            for feature in features:
+                if feature in self._dict_distribution:
+                    raise ValueError("Duplicate specification of feature found.")
+                else:
+                    self._dict_distribution[feature] = model.__class__.__name__.lower()
+
+        if len(set(_list_class_prior)) != 1:
+            raise ValueError("The parameters 'class_prior' or 'prior' "
+                             "must have the same values through out all models "
+                             "if specified.")
+
+        if len(set(_list_fit_prior)) != 1:
+            raise ValueError("The parameter 'fit_prior' "
+                             "must have the same values through out all models "
+                             "if specified.")
+
+        X = np.array(X)
+        num_cols_expected = X.shape[-1]
+        num_cols = len(self._dict_distribution)
         if num_cols != num_cols_expected:
-            raise ValueError("Expected {} features".format(num_cols_expected) +
-                             " to have specified distributions "
+            raise ValueError("Expected {} columns".format(num_cols_expected) +
                              "but {} were specified.".format(num_cols))
 
-    def _validate_remainder(self):
-        pass
 
     def _check_X(self, X):
         return check_array(X)
 
     @property
     def named_distributions_(self):
-        """Access the fitted transformer by name.
+        """Access the fitted models by name.
 
-        Read-only attribute to access any transformer by given name.
+        Read-only attribute to access any distribution by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
 
