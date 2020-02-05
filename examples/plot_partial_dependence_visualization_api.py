@@ -47,14 +47,14 @@ mlp.fit(X, y)
 # Plotting partial dependence for two features
 # ============================================
 #
-# We plot partial dependence curves for features "s1" and "s5" for
-# the decision tree. With two features,
+# We plot partial dependence curves for features "age" and "bmi" (body mass
+# index) for the decision tree. With two features,
 # :func:`~sklearn.inspection.plot_partial_dependence` expects to plot two
 # curves. Here the plot function place a grid of two plots using the space
 # defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = plot_partial_dependence(tree, X, ["s1", "s5"], ax=ax)
+tree_disp = plot_partial_dependence(tree, X, ["age", "bmi"], ax=ax)
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
@@ -63,7 +63,7 @@ tree_disp = plot_partial_dependence(tree, X, ["s1", "s5"], ax=ax)
 # the curve.
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
-mlp_disp = plot_partial_dependence(mlp, X, ["s1", "s5"], ax=ax,
+mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
                                    line_kw={"c": "red"})
 
 ##############################################################################
@@ -127,9 +127,9 @@ plt.show()
 # Plotting partial dependence for one feature
 # ===========================================
 #
-# Here, we plot the partial dependence curves for a single feature, "s5", on
+# Here, we plot the partial dependence curves for a single feature, "age", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
-tree_disp = plot_partial_dependence(tree, X, ["s5"])
-mlp_disp = plot_partial_dependence(mlp, X, ["s5"],
+tree_disp = plot_partial_dependence(tree, X, ["age"])
+mlp_disp = plot_partial_dependence(mlp, X, ["age"],
                                    ax=tree_disp.axes_, line_kw={"c": "red"})
