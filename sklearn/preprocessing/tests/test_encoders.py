@@ -271,7 +271,7 @@ def test_one_hot_encoder_inverse_if_binary():
          ['Female', 2]]
     ohe = OneHotEncoder(drop='if_binary', sparse=False)
     X_tr = ohe.fit_transform(X)
-    exp = np.array(X, dtype = object)
+    exp = np.array(X, dtype=object)
     assert_array_equal(ohe.inverse_transform(X_tr), exp)
 
 
