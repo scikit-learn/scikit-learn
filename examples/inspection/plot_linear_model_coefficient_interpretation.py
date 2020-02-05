@@ -224,8 +224,8 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # In the plot above, the AGE coefficient is expressed in
-# :math:`$/hours/(living\ years)`
-# while the EDUCATION one is expressed in :math:`$/hours/(years\ of\ education)`.
+# :math:`$/hours/(living\ years)` while the EDUCATION one is expressed
+# in :math:`$/hours/(years\ of\ education)`.
 # On the other hand, categorical variables (as UNION or SEX) are adimensional
 # numbers taking the value either of 0 or 1. Their coefficients are expressed
 # in :math:`$/hours`. An increase of
