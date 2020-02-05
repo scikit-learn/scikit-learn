@@ -123,7 +123,6 @@ plot_num = 1
 rng = np.random.RandomState(42)
 
 for i_dataset, X in enumerate(datasets):
-    # Add outliers
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
                        size=(n_outliers, 2))], axis=0)
     
@@ -139,10 +138,6 @@ for i_dataset, X in enumerate(datasets):
         algorithm.fit(X)
         t1 = time.time()
         
-        plt.subplot(len(datasets), len(anomaly_algorithms), plot_num)	
-        if i_dataset == 0:	
-            plt.title(name, size=18)
-        
         # fit the data and tag outliers
         if name == "Local Outlier Factor":
             y_pred = algorithm.fit_predict(X)
@@ -150,7 +145,8 @@ for i_dataset, X in enumerate(datasets):
             y_pred = algorithm.fit(X).predict(X)
             
             # store ROC plot 
-            probas_ = algorithm.fit(X).decision_function(X)
+            probas_ = algorithm.fit(X).decision_function(X) 
+            ## LOF does not implement decision_function
             AUC = roc_auc_score(y_true, probas_) # AUC
             fpr, tpr, thresholds = roc_curve(y_true, probas_)
             thresh_index = np.where(abs(thresholds) == min(abs(thresholds)))[0][0]
@@ -159,14 +155,12 @@ for i_dataset, X in enumerate(datasets):
             list_tpr.append(tpr)
             list_thresh.append(thresh_index)   
         
-        # measure accuracy
         acc = accuracy_score(y_true, y_pred) # acuracy
-
         plt.subplot(len(datasets), len(anomaly_algorithms)+1, plot_num)
         if i_dataset == 0:
             plt.title(str(algo_index + 1) + ") " + name, size=15, weight="bold")
 
-        # plot the levels lines and the points and show accuracy scores
+        # plot the levels lines and the points
         if name != "Local Outlier Factor":  # LOF does not implement predict
             Z = algorithm.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
@@ -179,9 +173,12 @@ for i_dataset, X in enumerate(datasets):
         plt.ylim(-7, 7)
         plt.xticks(())
         plt.yticks(())
+        
         plt.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
                  transform=plt.gca().transAxes, size=15,
                  horizontalalignment='right')
+        
+        # show prediction accuracy
         bbox_props = dict(boxstyle="square", fc="white", ec="none", alpha =0.8)
         plt.text(.03, .89, ("acc %.3f" % acc).lstrip("0"),
                  transform=plt.gca().transAxes, size=15,
@@ -195,36 +192,25 @@ for i_dataset, X in enumerate(datasets):
     if i_dataset == 0:
         plt.title("ROC", size=15, color="black", weight="bold")
         
-    for algo_index in range(len(anomaly_algorithms)-1):
+        # lebel the decision_function's thresholds
+        plt.scatter([], [], marker="x", color="black", label="thresholds")
         
-        # use many if...else for cleaner legends
+    for algo_index in range(len(anomaly_algorithms)-1): # exclude LOF
+        
         if i_dataset == 0:
             plt.plot(list_fpr[algo_index], list_tpr[algo_index],
                 label="algo " + str(algo_index + 1)+ ")"
                 + (" AUC %.2f" % list_AUC[algo_index]).lstrip("0"))
-            
-            if algo_index == 0:
-                plt.scatter(
-                    list_fpr[algo_index][list_thresh[algo_index]],
-                    list_tpr[algo_index][list_thresh[algo_index]],
-                    s=40, marker="x", color="black", label="thresholds")
-            else:
-                plt.scatter(
-                    list_fpr[algo_index][list_thresh[algo_index]],
-                    list_tpr[algo_index][list_thresh[algo_index]],
-                    s=40, marker="x", color="black")
-                
         else:
-            plt.plot(
-                list_fpr[algo_index], list_tpr[algo_index],
-                label=str(algo_index + 1) + ")"
+            plt.plot(list_fpr[algo_index], list_tpr[algo_index],
+                label= str(algo_index + 1)+ ")"
                 + (" %.2f" % list_AUC[algo_index]).lstrip("0"))
+        
+        plt.scatter(
+        list_fpr[algo_index][list_thresh[algo_index]],
+        list_tpr[algo_index][list_thresh[algo_index]],
+        s=40, marker="x", color = 'black')
             
-            plt.scatter(
-                list_fpr[algo_index][list_thresh[algo_index]],
-                list_tpr[algo_index][list_thresh[algo_index]],
-                s=40, marker="x")
-
     plt.plot(np.array([0, 1]), np.array([0, 1]), linestyle="--", color="black")
     plt.legend()
     plt.tick_params(labelleft = False, labelbottom = False, direction  = "in")
