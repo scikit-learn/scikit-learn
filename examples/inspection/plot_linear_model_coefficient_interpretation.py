@@ -473,7 +473,6 @@ plt.subplots_adjust(left=.3)
 # suited for the model estimation.
 
 from sklearn.linear_model import RidgeCV
-from sklearn.compose import TransformedTargetRegressor
 
 model = make_pipeline(
     preprocessor,
@@ -534,3 +533,75 @@ plt.subplots_adjust(left=.3)
 # Even if the model is still not able to provide a good description of the
 # dataset, the regularization manages to lower the influence of correlated
 # variables on the model.
+#
+# Linear models with sparse coefficients
+# --------------------------------------
+#
+# Another possibility to take into account correlated variables in the dataset,
+# is to estimate sparse coefficients. In some way we already did it manually
+# when we dropped the AGE column in a previous Ridge estimation.
+#
+# Lasso models (see the :ref:`lasso` User Guide section) estimates sparse
+# coefficients. LassoCV applies cross validation in order to
+# determine which value of the regularization parameter (`alpha`) is best
+# suited for the model estimation.
+
+from sklearn.linear_model import LassoCV
+
+model = make_pipeline(
+    preprocessor,
+    TransformedTargetRegressor(
+        regressor=LassoCV(alphas=np.logspace(-10, 10, 21), max_iter=100000),
+        func=np.log10,
+        inverse_func=sp.special.exp10
+    )
+)
+
+_ = model.fit(X_train, y_train)
+
+##############################################################################
+# First we verify which value of :math:`\alpha` has been selected.
+
+model[-1].regressor_.alpha_
+
+##############################################################################
+# Then we check the quality of the predictions.
+
+y_pred = model.predict(X_train)
+mae = median_absolute_error(y_train, y_pred)
+string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+y_pred = model.predict(X_test)
+mae = median_absolute_error(y_test, y_pred)
+string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+r2score = model.score(X_train, y_train)
+string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
+r2score = model.score(X_test, y_test)
+string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
+
+fig, ax = plt.subplots(figsize=(6, 6))
+sns.regplot(y_test, y_pred)
+
+plt.text(3, 20, string_score)
+
+plt.title('Lasso model, regularization, normalized variables')
+plt.ylabel('Model predictions')
+plt.xlabel('Truths')
+plt.xlim([0, 27])
+plt.ylim([0, 27])
+
+##############################################################################
+# For our dataset the R squared coefficient is of the same order than all other
+# models.
+
+coefs = pd.DataFrame(
+    model.named_steps['transformedtargetregressor'].regressor_.coef_,
+    columns=['Coefficients'], index=feature_names
+)
+coefs.plot(kind='barh', figsize=(9, 7))
+plt.title('Lasso model, regularization, normalized variables')
+plt.axvline(x=0, color='.5')
+plt.subplots_adjust(left=.3)
+
+#############################################################################
+# It is worth noticing that a Lasso model identifies the correlation between
+# AGE and EXPERIENCE and suppresses one of them.
