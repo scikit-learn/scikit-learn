@@ -59,8 +59,6 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
                             vertices[1:, 1:, 1:].ravel()))      
 
-    edges_right_shallow = np.vstack((vertices[:, :-1, 1:].ravel(),
-                            vertices[:, 1:, :-1].ravel()))
     edges_down_left = np.vstack((vertices[:-1, 1:, :].ravel(),
                             vertices[1:, :-1, :].ravel()))
     edges_down_shallow = np.vstack((vertices[:-1, :, 1:].ravel(),
@@ -71,13 +69,15 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     edges_down_left_deep = np.vstack((vertices[:-1, 1:, :-1].ravel(),
                             vertices[1:, :-1, 1:].ravel()))
     edges_down_right_shallow = np.vstack((vertices[:-1, :-1, 1:].ravel(),
-                            vertices[1:, 1:, :-1].ravel()))   
+                            vertices[1:, 1:, :-1].ravel())) 
+    edges_down_left_shallow = np.vstack((vertices[:-1, 1:, 1:].ravel(),
+                            vertices[1:, :-1, :-1].ravel()))  
 
     edges = np.hstack((edges_deep, edges_right, edges_down,
                     edges_right_deep, edges_down_right, edges_down_deep,
-                    edges_down_right_deep, edges_right_shallow, edges_down_left,
+                    edges_down_right_deep, edges_down_left,
                     edges_down_shallow, edges_deep_left, edges_down_left_deep,
-                    edges_down_right_shallow))
+                    edges_down_right_shallow, edges_down_left_shallow))
     return edges
 
 
