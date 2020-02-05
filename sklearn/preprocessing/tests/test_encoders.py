@@ -265,6 +265,16 @@ def test_one_hot_encoder_inverse(sparse_, drop):
         enc.inverse_transform(X_tr)
 
 
+def test_one_hot_encoder_inverse_if_binary():
+    X = [['Male', 1],
+         ['Female', 3],
+         ['Female', 2]]
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    X_tr = ohe.fit_transform(X)
+    exp = np.array(X, dtype = object)
+    assert_array_equal(ohe.inverse_transform(X_tr), exp)
+
+
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
 @pytest.mark.parametrize("X", [
     [1, 2],
