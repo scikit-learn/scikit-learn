@@ -158,7 +158,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         X, y = self._validate_data(
             X, y, accept_sparse="csc",
             ensure_min_features=2,
-            force_all_finite=not tags.get('allow_nan', True)
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
         )
         # Initialization
         n_features = X.shape[1]
@@ -492,9 +493,16 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
+<<<<<<< HEAD
         X, y = self._validate_data(X, y, accept_sparse="csr",
                                    ensure_min_features=2,
                                    force_all_finite=False)
+=======
+        tags = self._get_tags()
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
+                         force_all_finite=not tags.get('allow_nan', True),
+                         multi_output=True)
+>>>>>>> 54c3a1fbe7ef0f6814ae6406fbc0d52804303370
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
