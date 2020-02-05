@@ -232,7 +232,7 @@ Tree-based feature selection
 
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
-feature importances, which in turn can be used to discard irrelevant
+impurity-based feature importances, which in turn can be used to discard irrelevant
 features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
 meta-transformer)::
 

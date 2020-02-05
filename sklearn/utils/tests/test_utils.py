@@ -8,10 +8,8 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import (assert_raises,
-                                    assert_array_equal,
+from sklearn.utils._testing import (assert_array_equal,
                                     assert_allclose_dense_sparse,
-                                    assert_raises_regex,
                                     assert_warns_message,
                                     assert_no_warnings,
                                     _convert_container)
@@ -51,7 +49,8 @@ def test_make_rng():
     rng_42 = np.random.RandomState(42)
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
-    assert_raises(ValueError, check_random_state, "some invalid seed")
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
 
 
 def test_gen_batches():
@@ -112,10 +111,13 @@ def test_resample():
     assert resample() is None
 
     # Check that invalid arguments yield ValueError
-    assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1],
-                  replace=False, n_samples=3)
-    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    with pytest.raises(ValueError):
+        resample([0], [0, 1])
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], replace=False, n_samples=3)
+
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -214,7 +216,8 @@ def test_column_or_1d():
         if y_type in ["binary", 'multiclass', "continuous"]:
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
-            assert_raises(ValueError, column_or_1d, y)
+            with pytest.raises(ValueError):
+                column_or_1d(y)
 
 
 @pytest.mark.parametrize(
@@ -539,8 +542,9 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
-                        " >=1", next, slices)
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
+                                         " must be >=1"):
+        next(slices)
 
 
 @pytest.mark.parametrize(
