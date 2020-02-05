@@ -52,7 +52,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit.
+        X may be a :term:`sparse graph <sparse graph>`,
         in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional
