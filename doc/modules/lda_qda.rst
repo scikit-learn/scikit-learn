@@ -194,7 +194,7 @@ a high number of features.
 .. topic:: Examples:
 
     :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with and without shrinkage.
+    with Empirical, Ledoit Wolf and OAS covariance estimator.
 
 .. topic:: References:
 
