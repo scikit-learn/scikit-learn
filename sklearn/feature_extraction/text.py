@@ -825,7 +825,8 @@ class LightweightRandomIndexingVectorizer(HashingVectorizer):
 
     def _get_hasher(self):
         return FeatureLightweightRandomIndexing(n_features=self.n_features,
-                             input_type='string', dtype=self.dtype)
+                                                input_type='string',
+                                                dtype=self.dtype)
 
 
 def _document_frequency(X):

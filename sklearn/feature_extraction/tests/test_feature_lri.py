@@ -86,7 +86,7 @@ def test_feature_lri_pairs_with_string_values():
                                        {"bax": "abc"}])
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = np.abs(x1[x1 != 0])
-    assert_array_equal([1,1], x1_nz)
+    assert_array_equal([1, 1], x1_nz)
     assert_array_equal(x1, x2)
 
 
@@ -94,7 +94,8 @@ def test_lri_empty_input():
     n_features = 16
     raw_X = [[], (), iter(range(0))]
 
-    h = FeatureLightweightRandomIndexing(n_features=n_features, input_type="string")
+    h = FeatureLightweightRandomIndexing(n_features=n_features,
+                                         input_type="string")
     X = h.transform(raw_X)
 
     assert_array_equal(X.A, np.zeros((len(raw_X), n_features)))
