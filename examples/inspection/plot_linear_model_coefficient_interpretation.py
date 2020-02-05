@@ -172,14 +172,16 @@ _ = model.fit(X_train, y_train)
 from sklearn.metrics import median_absolute_error
 
 y_pred = model.predict(X_train)
+
 mae = median_absolute_error(y_train, y_pred)
 string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-r2score = model.score(X_test, y_test)
-
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-string_score += '\nR2 score: {0:.4f}'.format(r2score)
+r2score = model.score(X_train, y_train)
+string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
+r2score = model.score(X_test, y_test)
+string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 fig, ax = plt.subplots(figsize=(5, 5))
 sns.regplot(y_test, y_pred)
 
@@ -215,23 +217,28 @@ coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
     columns=['Coefficients'], index=feature_names
 )
-plt.title('Ridge model, small regularization')
 coefs.plot(kind='barh', figsize=(9, 7))
+plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# In the plot above, the AGE coefficient is expressed in $/hours/living years
-# while the EDUCATION one is expressed in $/hours/years of education.
+# In the plot above, the AGE coefficient is expressed in
+# :math:`$/hours/(living\ years)`
+# while the EDUCATION one is expressed in :math:`$/hours/(years\ of\ education)`.
 # On the other hand, categorical variables (as UNION or SEX) are adimensional
 # numbers taking the value either of 0 or 1. Their coefficients are expressed
-# in $/hours.
+# in :math:`$/hours`. An increase of
+# :math:`1` in AGE is not comparable with an increase of :math:`1` in UNION.
+# We cannot compare different coefficients since the
+# features have different natural scales and hence value ranges
+# because of their different unit of measure.
+# Indeed, from this plot the most important factor in determining WAGE is the
+# variable UNION, even if it is plausible that variables like EXPERIENCE
+# should have more impact.
 # Looking at the coefficient plot to extrapolate feature importance could be
 # misleading as some of them vary on a small scale, while others, like AGE,
 # varies a lot more, several decades.
-# Soon we realize that we cannot compare different coefficients since the
-# features have different natural scales and hence value ranges
-# because of their different unit of measure.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
@@ -246,7 +253,9 @@ plt.subplots_adjust(left=.3)
 # Multiplying the coefficients by the standard deviation of the related
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
-# numerical variables to their standard deviation.
+# numerical variables to their standard deviation,
+# as :math:`y = \sum{coeff_i * X_i} = \sum{(coeff_i * std_i) * (X_i / std_i)}`.
+#
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
 # coefficient on the output, all else being equal.
@@ -256,8 +265,8 @@ coefs = pd.DataFrame(
     X_train_preprocessed.std(axis=0),
     columns=['Coefficient importance'], index=feature_names
 )
-plt.title('Ridge model, small regularization')
 coefs.plot(kind='barh', figsize=(9, 7))
+plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
@@ -268,12 +277,15 @@ plt.subplots_adjust(left=.3)
 #   decrease in wage? Why this is different from the :ref:`initial pairplot
 #   <marginal_dependencies>`?
 #
+# Now that the coefficients have been scaled, we can start to interpret them.
 # The plot above tells us about dependencies between a specific feature and
 # the target when all other features remain constant, i.e., **conditional
 # dependencies**. An increase of the AGE will induce a decrease
 # of the WAGE when all other features remain constant. On the contrary, an
 # increase of the EXPERIENCE will induce an increase of the WAGE when all
 # other features remain constant.
+# Also, AGE, EXPERIENCE and EDUCATION are the three variables that most
+# influence the model.
 #
 # Checking the variability of the coefficients
 # --------------------------------------------
@@ -398,15 +410,17 @@ mae = median_absolute_error(y_train, y_pred)
 string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-r2score = model.score(X_test, y_test)
-
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-string_score += '\nR2 score: {0:.4f}'.format(r2score)
+r2score = model.score(X_train, y_train)
+string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
+r2score = model.score(X_test, y_test)
+string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 fig, ax = plt.subplots(figsize=(6, 6))
 sns.regplot(y_test, y_pred)
 
 plt.text(3, 20, string_score)
 
+plt.title('Ridge model, small regularization, normalized variables')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
@@ -421,6 +435,7 @@ coefs = pd.DataFrame(
     columns=['Coefficients'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
+plt.title('Ridge model, small regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
@@ -444,7 +459,7 @@ plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
 ##############################################################################
-# The result is quite similar to the non-normalised case.
+# The result is quite similar to the non-normalized case.
 #
 # Linear models with regularization
 # ---------------------------------
@@ -484,15 +499,18 @@ mae = median_absolute_error(y_train, y_pred)
 string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-r2score = model.score(X_test, y_test)
-
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-string_score += '\nR2 score: {0:.4f}'.format(r2score)
+r2score = model.score(X_train, y_train)
+string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
+r2score = model.score(X_test, y_test)
+string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
+
 fig, ax = plt.subplots(figsize=(6, 6))
 sns.regplot(y_test, y_pred)
 
 plt.text(3, 20, string_score)
 
+plt.title('Ridge model, regularization, normalized variables')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
@@ -506,6 +524,7 @@ coefs = pd.DataFrame(
     columns=['Coefficients'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
+plt.title('Ridge model, regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
