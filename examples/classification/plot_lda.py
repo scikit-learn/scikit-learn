@@ -46,7 +46,7 @@ for n_features in n_features_range:
         clf1 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto').fit(X, y)
         clf2 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage=None).fit(X, y)
         oa = OAS(store_precision=False, assume_centered=False)
-        clf3 = LinearDiscriminantAnalysis(solver='lsqr', covariance_estimator=oa)
+        clf3 = LinearDiscriminantAnalysis(solver='lsqr', covariance_estimator=oa).fit(X, y)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
@@ -70,6 +70,7 @@ plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
 plt.legend(loc=1, prop={'size': 12})
-plt.suptitle('Linear Discriminant Analysis vs. \
-shrinkage Linear Discriminant Analysis (1 discriminative feature)')
+plt.suptitle('Linear Discriminant Analysis vs. ' + '\n'
+             + 'Shrinkage Linear Discriminant Analysis vs. ' + '\n'
+             + 'OAS Linear Discriminant Analysis (1 discriminative feature)')
 plt.show()
