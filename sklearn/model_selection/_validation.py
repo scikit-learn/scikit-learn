@@ -242,7 +242,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    results = _aggregate_list_of_dicts(results, constructor=list)
+    results = _aggregate_list_of_dicts(results)
 
     info_dict = _check_fit_and_score_results(results, error_score)
     test_scores = info_dict["test_scores"]
@@ -251,23 +251,26 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         fitted_estimators = results["estimator"]
 
     ret = {}
-    ret['fit_time'] = np.array(results["fit_time"])
-    ret['score_time'] = np.array(results["score_time"])
+    ret['fit_time'] = results["fit_time"]
+    ret['score_time'] = results["score_time"]
 
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
     for name in test_scores:
-        ret['test_%s' % name] = np.array(test_scores[name])
+        ret['test_%s' % name] = test_scores[name]
         if return_train_score:
             train_scores = info_dict["train_scores"]
             key = 'train_%s' % name
-            ret[key] = np.array(train_scores[name])
+            ret[key] = train_scores[name]
 
     return ret
 
 
 def _check_fit_and_score_results(results, error_score):
+    """Aggregate scores in results into a single dictionary of scores. Results
+    that failed are set to error_score
+    """
     fit_failed = results["fit_failed"]
     test_score_dicts = results["test_scores"]
 
@@ -1310,19 +1313,14 @@ def learning_curve(estimator, X, y, groups=None,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
-        results = _aggregate_list_of_dicts(results, constructor=list)
-        train_scores = (np.array(results["train_scores"])
-                        .reshape(-1, n_unique_ticks).T)
-
-        test_scores = (np.array(results["test_scores"])
-                       .reshape(-1, n_unique_ticks).T)
+        results = _aggregate_list_of_dicts(results)
+        train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
+        test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
         out = [train_scores, test_scores]
 
         if return_times:
-            fit_times = (np.array(results["fit_time"])
-                         .reshape(-1, n_unique_ticks).T)
-            score_times = (np.array(results["score_time"])
-                           .reshape(-1, n_unique_ticks).T)
+            fit_times = results["fit_time"].reshape(-1, n_unique_ticks).T
+            score_times = results["score_time"].reshape(-1, n_unique_ticks).T
             out.extend([fit_times, score_times])
 
     ret = train_sizes_abs, out[0], out[1]
@@ -1545,7 +1543,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     return train_scores, test_scores
 
 
-def _aggregate_list_of_dicts(elements, constructor=np.asarray):
+def _aggregate_list_of_dicts(elements):
     """Aggregate the list of dicts
 
     The aggregated output of _fit_and_score will be a list of dict
@@ -1559,9 +1557,6 @@ def _aggregate_list_of_dicts(elements, constructor=np.asarray):
         List of dicts of the elements for all scorers. This is a flat list,
         assumed originally to be of row major order.
 
-    constructor : function, default=np.asarray
-        Used to combine elements of dictionaries in list
-
     Example
     -------
 
@@ -1570,5 +1565,5 @@ def _aggregate_list_of_dicts(elements, constructor=np.asarray):
     >>> _aggregate_list_of_dicts(elements) # doctest: +SKIP
     {'a': array([1, 2, 3, 10]), 'b': array([10, 2, 3, 10])}
     """
-    return {key: constructor([elm[key] for elm in elements])
+    return {key: np.asarray([elm[key] for elm in elements])
             for key in elements[0]}

@@ -780,7 +780,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, n_splits, out):
         n_candidates = len(candidate_params)
-        results = _aggregate_list_of_dicts(out, constructor=list)
+        results = _aggregate_list_of_dicts(out)
 
         test_sample_counts = results["n_test_samples"]
         fit_time = results["fit_time"]
