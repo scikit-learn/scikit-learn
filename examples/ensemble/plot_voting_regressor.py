@@ -5,8 +5,10 @@ Plot individual and voting regression predictions
 
 .. currentmodule:: sklearn
 
-Regression is a method to predict the average value of the target y from the
-given data X. It is possible to use different type of regressors to predict the
+A voting regressor is an ensemble meta-estimator that fits base regressors each
+on the whole dataset. It, then, averages the individual predictions to form a
+final prediction. It is possible to use different type of regressors to
+predict the
 data. In this example we are going to use three of them:
 :class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
