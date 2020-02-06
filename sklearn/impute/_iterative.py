@@ -112,14 +112,14 @@ class IterativeImputer(_BaseImputer):
         time to save compute.
 
     min_value : float or array-like, default=None
-        Minimum possible imputed value. Broadcast to shape (num_features,) if
-        scalar. Expects shape (num_features,) if array-like, one min value for
+        Minimum possible imputed value. Broadcast to shape (n_features,) if
+        scalar. Expects shape (n_features,) if array-like, one min value for
         each feature. Default of ``None`` will set minimum to negative infinity
         for all features.
 
     max_value : float or array-like, default=None
-        Maximum possible imputed value. Broadcast to shape (num_features,) if
-        scalar. Expects shape (num_features,) if array-like, one max value for
+        Maximum possible imputed value. Broadcast to shape (n_features,) if
+        scalar. Expects shape (n_features,) if array-like, one max value for
         each feature. Default of ``None`` will set maximum to positive infinity
         for all features.
 
@@ -569,16 +569,6 @@ class IterativeImputer(_BaseImputer):
 
         self.imputation_sequence_ = []
 
-        # Convert min and max values to float arrays if array-like
-        # Else (i.e, if scalar) broadcast it to an array of shape=num_features
-        self._min_value = as_float_array(self.min_value, force_all_finite=False) if _is_arraylike(self.min_value) \
-                          else as_float_array(np.full(X.shape[1], self.min_value), force_all_finite=False)
-        self._max_value = as_float_array(self.max_value, force_all_finite=False) if _is_arraylike(self.max_value) \
-                          else as_float_array(np.full(X.shape[1], self.max_value), force_all_finite=False)
-        # Fill in any np.nan in min and max value arrays with -np.inf and np.inf respectively
-        self._min_value[np.isnan(self._min_value)] = -np.inf
-        self._max_value[np.isnan(self._max_value)] = np.inf
-
         self.initial_imputer_ = None
         super()._fit_indicator(X)
         X_indicator = super()._transform_indicator(X)
@@ -591,6 +581,16 @@ class IterativeImputer(_BaseImputer):
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
+
+        # Convert min and max values to float arrays if array-like
+        # Else (i.e, if scalar) broadcast it to an array of shape=n_features
+        self._min_value = as_float_array(self.min_value, force_all_finite=False) if _is_arraylike(self.min_value) \
+                          else as_float_array(np.full(X.shape[1], self.min_value), force_all_finite=False)
+        self._max_value = as_float_array(self.max_value, force_all_finite=False) if _is_arraylike(self.max_value) \
+                          else as_float_array(np.full(X.shape[1], self.max_value), force_all_finite=False)
+        # Fill in any np.nan in min and max value arrays with -np.inf and np.inf respectively
+        self._min_value[np.isnan(self._min_value)] = -np.inf
+        self._max_value[np.isnan(self._max_value)] = np.inf
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
