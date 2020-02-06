@@ -130,7 +130,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         distribution objects to be applied to subsets of the data.
 
         name : string
-            Like in Pipeline and ColumnTransformer, this allows the 
+            Like in Pipeline and ColumnTransformer, this allows the
             distribution and its parameters to be set using ``set_params``.
         distribution : estimator or {'passthrough', 'drop'}
             Estimator must support :term:`fit` and :term:`transform`.
@@ -164,6 +164,7 @@ boolean mask array or callable
     1.0
     """
     # TODO check_is_fitted
+    # TODO consider jll for each estimator
 
     def __init__(self, distributions):
         self.distributions = distributions
@@ -171,23 +172,20 @@ boolean mask array or callable
         self._is_fitted = False
 
     @property
-    def _distributions(self):
+    def distributions_(self):
         return [(name, distr) for name, distr, _ in self.distributions]
 
-    @_distributions.setter
-    def _distributions(self, value):
-        # TODO wrong
-        print(self.distributions)
-        print(list(zip(value, self.distributions)))
+    @distributions_.setter
+    def distributions_(self, value):
         self.distributions = [
             (name, distr, col) for ((name, distr), (_, _, col))
             in zip(value, self.distributions)]
 
     def get_params(self, deep=True):
-        return self._get_params('_distributions', deep=deep)
+        return self._get_params('distributions_', deep=deep)
 
     def set_params(self, **kwargs):
-        self._set_params('_distributions', **kwargs)
+        self._set_params('distributions_', **kwargs)
         return self
 
     def fit(self, X, y):
@@ -216,12 +214,10 @@ boolean mask array or callable
         # Should be the same after the validation
         self.classes_ = np.unique(y)
 
-        inits = [(_, nb, features) for (_, nb, features) in self.distributions]
+        inits = [(nb, features) for (_, nb, features) in self.distributions]
 
         self._fits = [(nb.fit(X[:, features], y), features)
-                      for (_, nb, features) in inits]
-
-        self._is_fitted = True
+                      for (nb, features) in inits]
 
         return self
 
@@ -280,12 +276,13 @@ boolean mask array or callable
                 raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(distribution)))
 
-            _, model, features = distribution
+            name, model, features = distribution
 
             # Check naive bayes model
             if callable(model):
                 raise ValueError("Wrong format specified.")
-            if not (hasattr(model, "fit") or hasattr(model, "_joint_log_likelihood")):
+            if not (hasattr(model, "fit")
+                    or hasattr(model, "_joint_log_likelihood")):
                 raise TypeError("Naive bayes model should implement "
                                 "the fit and _joint_log_likelihood methods. "
                                 "{} doesn't.".format(type(model)))
@@ -294,7 +291,8 @@ boolean mask array or callable
                     "Distributions should be one of {}".format(valid_modules))
 
             # For checking fit_prior later
-            _class_prior = getattr(model, "prior", None) or getattr(model, "class_prior", None)
+            _class_prior = getattr(model, "prior", None) or 
+                getattr(model, "class_prior", None)
             _list_class_prior.append(_class_prior)
 
             _fit_prior = getattr(model, "fit_prior", True)
@@ -309,12 +307,12 @@ boolean mask array or callable
 
         if len(set(_list_class_prior)) != 1:
             raise ValueError("The parameters 'class_prior' or 'prior' "
-                             "must have the same values through out all models "
+                             "must be the same values throughout all models "
                              "if specified.")
 
         if len(set(_list_fit_prior)) != 1:
             raise ValueError("The parameter 'fit_prior' "
-                             "must have the same values through out all models "
+                             "must be the same values through out all models "
                              "if specified.")
 
         X = np.array(X)
