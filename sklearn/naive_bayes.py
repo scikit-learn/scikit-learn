@@ -125,8 +125,25 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     Attributes
     ----------
     # TODO
-    distributions : list of objects
-        list of fitted classifiers
+    distributions : list of tuples
+        List of (name, distribution, column(s)) tuples specifying the
+        distribution objects to be applied to subsets of the data.
+
+        name : string
+            Like in Pipeline and ColumnTransformer, this allows the 
+            distribution and its parameters to be set using ``set_params``.
+        distribution : estimator or {'passthrough', 'drop'}
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
+        column(s) : string or int, array-like of string or int, slice, \
+boolean mask array or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name.  A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
 
     Examples
     --------
@@ -151,6 +168,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     def __init__(self, distributions):
         self.distributions = distributions
         self._fits = []
+        self._is_fitted = False
 
     @property
     def _distributions(self):
@@ -195,13 +213,15 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         X, y = check_X_y(X, y)
         y = column_or_1d(y, warn=True)
 
-        # FIXME aggregate all classes and all priors?
+        # Should be the same after the validation
         self.classes_ = np.unique(y)
 
         inits = [(_, nb, features) for (_, nb, features) in self.distributions]
 
-        self.fits_ = [(nb.fit(X[:, features], y), features)
+        self._fits = [(nb.fit(X[:, features], y), features)
                       for (_, nb, features) in inits]
+
+        self._is_fitted = True
 
         return self
 
@@ -220,7 +240,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         log_prior = log_priors[0]
 
         jlls = [nb._joint_log_likelihood(X[:, features])
-                for (_, nb, features) in self._fits]
+                for (nb, features) in self._fits]
 
         # jlls have the shape (distribution, sample, class)
         jlls = np.hstack([jlls])
@@ -236,7 +256,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         valid_modules = copy.copy(__all__)
         valid_modules.remove("GeneralNB")
-        self._dict_distribution = {}
+        _dict_distribution = {}
 
         _list_fit_prior = []
         _list_class_prior = []
@@ -282,10 +302,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
             # Check the feature
             for feature in features:
-                if feature in self._dict_distribution:
+                if feature in _dict_distribution:
                     raise ValueError("Duplicate specification of feature found.")
                 else:
-                    self._dict_distribution[feature] = model.__class__.__name__.lower()
+                    _dict_distribution[feature] = model.__class__.__name__.lower()
 
         if len(set(_list_class_prior)) != 1:
             raise ValueError("The parameters 'class_prior' or 'prior' "
@@ -299,11 +319,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         X = np.array(X)
         num_cols_expected = X.shape[-1]
-        num_cols = len(self._dict_distribution)
+        num_cols = len(_dict_distribution)
         if num_cols != num_cols_expected:
             raise ValueError("Expected {} columns".format(num_cols_expected) +
                              "but {} were specified.".format(num_cols))
-
 
     def _check_X(self, X):
         return check_array(X)
