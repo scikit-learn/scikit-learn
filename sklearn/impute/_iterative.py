@@ -11,8 +11,8 @@ import numpy as np
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, _safe_indexing
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils import check_array, check_random_state, _safe_indexing, as_float_array
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted, _is_arraylike
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 
@@ -111,13 +111,17 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float, default=None
-        Minimum possible imputed value. Default of ``None`` will set minimum
-        to negative infinity.
+    min_value : float or array-like, default=None
+        Minimum possible imputed value. Broadcast to shape (num_features,) if
+        scalar. Expects shape (num_features,) if array-like, one min value for
+        each feature. Default of ``None`` will set minimum to negative infinity
+        for all features.
 
-    max_value : float, default=None
-        Maximum possible imputed value. Default of ``None`` will set maximum
-        to positive infinity.
+    max_value : float or array-like, default=None
+        Maximum possible imputed value. Broadcast to shape (num_features,) if
+        scalar. Expects shape (num_features,) if array-like, one max value for
+        each feature. Default of ``None`` will set maximum to positive infinity
+        for all features.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -565,8 +569,15 @@ class IterativeImputer(_BaseImputer):
 
         self.imputation_sequence_ = []
 
-        self._min_value = np.full(X.shape[1], -np.inf) if self.min_value is None else self.min_value
-        self._max_value = np.full(X.shape[1], np.inf) if self.max_value is None else self.max_value
+        # Convert min and max values to float arrays if array-like
+        # Else (i.e, if scalar) broadcast it to an array of shape=num_features
+        self._min_value = as_float_array(self.min_value, force_all_finite=False) if _is_arraylike(self.min_value) \
+                          else np.full(X.shape[1], self.min_value)
+        self._max_value = as_float_array(self.max_value, force_all_finite=False) if _is_arraylike(self.max_value) \
+                          else np.full(X.shape[1], self.max_value)
+        # Fill in any np.nan in min and max value arrays with -np.inf and np.inf respectively
+        self._min_value[np.isnan(self._min_value)] = -np.inf
+        self._max_value[np.isnan(self._max_value)] = np.inf
 
         self.initial_imputer_ = None
         super()._fit_indicator(X)
