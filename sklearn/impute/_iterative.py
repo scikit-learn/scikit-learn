@@ -11,9 +11,9 @@ import numpy as np
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, _safe_indexing, as_float_array
+from ..utils import (check_array, check_random_state, _safe_indexing,
+                     as_float_array, is_scalar_nan)
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted, _is_arraylike
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 
 from ._base import _BaseImputer
@@ -300,9 +300,9 @@ class IterativeImputer(_BaseImputer):
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
             X_train = _safe_indexing(X_filled[:, neighbor_feat_idx],
-                                    ~missing_row_mask)
+                                     ~missing_row_mask)
             y_train = _safe_indexing(X_filled[:, feat_idx],
-                                    ~missing_row_mask)
+                                     ~missing_row_mask)
             estimator.fit(X_train, y_train)
 
         # if no missing values, don't predict
@@ -594,7 +594,8 @@ class IterativeImputer(_BaseImputer):
             if _is_arraylike(self.max_value) \
             else as_float_array(np.full(X.shape[1], self.max_value),
                                 force_all_finite=False)
-        # Fill in any np.nan in min and max value arrays with -np.inf and np.inf respectively
+        # Fill in any np.nan in min and max value arrays
+        # with -np.inf and np.inf respectively
         self._min_value[np.isnan(self._min_value)] = -np.inf
         self._max_value[np.isnan(self._max_value)] = np.inf
 
