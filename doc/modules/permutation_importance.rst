@@ -7,7 +7,7 @@ Permutation feature importance
 .. currentmodule:: sklearn.inspection
 
 Permutation feature importance is a model inspection technique that can be used
-for any :term:`fitted` :term:`estimator` when the data is rectangular. This is
+for any :term:`fitted` :term:`estimator` when the data is tabular. This is
 especially useful for non-linear or opaque :term:`estimators`. The permutation
 feature importance is defined to be the decrease in a model score when a single
 feature value is randomly shuffled [1]_. This procedure breaks the relationship
@@ -19,33 +19,98 @@ different permutations of the feature.
 The :func:`permutation_importance` function calculates the feature importance
 of :term:`estimators` for a given dataset. The ``n_repeats`` parameter sets the
 number of times a feature is randomly shuffled and returns a sample of feature
-importances. Permutation importances can either be computed on the training set
-or an held-out testing or validation set. Using a held-out set makes it
-possible to highlight which features contribute the most to the generalization
-power of the inspected model. Features that are important on the training set
-but not on the held-out set might cause the model to overfit.
+importances::
 
-Note that features that are deemed non-important for some model with a
-low predictive performance could be highly predictive for a model that
-generalizes better. The conclusions should always be drawn in the context of
-the specific model under inspection and cannot be automatically generalized to
-the intrinsic predictive value of the features by them-selves. Therefore it is
-always important to evaluate the predictive power of a model using a held-out
-set (or better with cross-validation) prior to computing importances.
+  >>> from sklearn.datasets import load_diabetes
+  >>> from sklearn.model_selection import train_test_split
+  >>> from sklearn.linear_model import Ridge
+  >>> from sklearn.inspection import permutation_importance
+  >>> diabetes = load_diabetes()
+  >>> X_train, X_val, y_train, y_val = train_test_split(
+  ...     diabetes.data, diabetes.target, random_state=0)
+  ...
+  >>> model = Ridge(alpha=1e-2).fit(X_train, y_train)
+  >>> model.score(X_val, y_val)
+  0.356...
+  >>> r = permutation_importance(model, X_val, y_val,
+  ...                            n_repeats=10,
+  ...                            random_state=0)
+  ...
+  >>> print("Most predictive features:")
+  ... for i in importances.argsort()[::-1]:
+  ...     if r.importances_mean[i] > 0.05:
+  ...         print("%s:\t%.3f +/- %.3f" % (diabetes.feature_names[i],
+  ...                                       r.importances_mean[i],
+  ...                                       r.importances_std[i]))
+  Most predictive features:
+  s5:   0.194 +/- 0.054
+  bmi:	0.170 +/- 0.068
+  bp:   0.101 +/- 0.028
+  sex:	0.060 +/- 0.024
+
+Permutation importances can be computed either on the training set or on a
+held-out testing or validation set. Using a held-out set makes it possible to
+highlight which features contribute the most to the generalization power of the
+inspected model. Features that are important on the training set but not on the
+held-out set might cause the model to overfit.
+
+.. warning::
+
+  Features that are deemed of **low importance for a bad model** (low
+  cross-validation score) could be **very important for a good model**.
+
+  Therefore it is always important to evaluate the predictive power of a model
+  using a held-out set (or better with cross-validation) prior to computing
+  importances.
+
+  Permutation importance does not reflect to the intrinsic predictive value of a
+  feature by itself but **how important this feature is for a particular model**.
+
+Outline of the permutation importance algorithm
+-----------------------------------------------
+
+0. Inputs: fitted predictive model $m$, tabular dataset (training or
+   validation) $D$.
+
+1. Compute the reference score $s$ of the model $m$ on data $D$ (for instance
+   the accuracy for a classifier or the $R^2$ for a regressor).
+
+2. For each feature $j$ (column of $D$):
+
+   2.1 For each repetition $k$ in ${1, ..., K}$ ($K$ is `n_repeats`):
+
+       2.1.1. Randomly shuffle column $j$ of dataset $D$ to generate a
+              corrupted version of the data named $\tilde{D}_{k,j}$.
+
+       2.1.2 Compute the score $s_{k,j}$ of model $m$ on corrupted data
+             $\tilde{D}_{k,j}$.
+
+   2.2 Compute importance $i_j$ for feature $f_j$ as
+       $i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}$.
 
 Relation to impurity-based importance in trees
 ----------------------------------------------
 
-Tree based models provides a different measure of feature importances based
-on the mean decrease in impurity (MDI, the splitting criterion). This gives
-importance to features that may not be predictive on unseen data. The
-permutation feature importance avoids this issue, since it can be applied to
-unseen data. Furthermore, impurity-based feature importance for trees
-are strongly biased and favor high cardinality features
-(typically numerical features). Permutation-based feature importances do not
-exhibit such a bias. Additionally, the permutation feature importance may use
-an arbitrary metric on the tree's predictions. These two methods of obtaining
-feature importance are explored in:
+Tree-based models provide an alternative measure of :ref:`feature importances
+based on the mean decrease in impurity <random_forest_feature_importance>`
+(MDI). Impurity is quantified by the splitting criterion of the decision trees
+(Gini, Entropy or Mean Squared Error). However this method can give high
+importance to features that may not be predictive on unseen data when the model
+is overfitting. Permutation-based feature importance, on the other hand, avoids
+this issue, since it can be computed on unseen data.
+
+Furthermore, impurity-based feature importance for trees are **strongly
+biased** and **favor high cardinality features** (typically numerical features)
+over low cardinality features such as binary features or categorical variables
+with a small number of possible categories.
+
+Permutation-based feature importances do not exhibit such a bias. Additionally,
+the permutation feature importance may be computed performance metric on the
+model predictions predictions and can be used to analyze any model class (not
+just tree-based models).
+
+The following example highlights the limitations of impurity-based feature
+importance in contrast to permutation-based feature importance:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 Misleading values on strongly correlated features
@@ -53,9 +118,12 @@ Misleading values on strongly correlated features
 
 When two features are correlated and one of the features is permuted, the model
 will still have access to the feature through its correlated feature. This will
-result in a lower importance for both features, where they might *actually* be
-important. One way  to handle this is to cluster features that are correlated
-and only keep one feature from each cluster. This use case is explored in:
+result in a lower importance value for both features, where they might
+*actually* be important.
+
+One way  to handle this is to cluster features that are correlated and only
+keep one feature from each cluster. This strategy is explored in the following
+example:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`.
 
 .. topic:: Examples:
