@@ -45,11 +45,12 @@ predictive::
   ...                            random_state=0)
   ...
   >>> print("Most predictive features:")
-  ... for i in importances.argsort()[::-1]:
+  >>> for i in importances.argsort()[::-1]:
   ...     if r.importances_mean[i] > 0.05:
   ...         print("%s:\t%.3f +/- %.3f" % (diabetes.feature_names[i],
   ...                                       r.importances_mean[i],
   ...                                       r.importances_std[i]))
+  ...
   Most predictive features:
   s5:   0.194 +/- 0.054
   bmi:	0.170 +/- 0.068
