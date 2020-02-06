@@ -21,6 +21,7 @@ from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
+from sklearn.covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 
 from sklearn.covariance import ShrunkCovariance
 from sklearn.covariance import LedoitWolf
@@ -390,12 +391,12 @@ def test_lda_ledoitwolf():
     """
     class StandardizedLedoitWolf():
         def fit(self, X):
-            sc = StandardScaler()
-            Xsc = sc.fit_transform(X)
-            ldw = LedoitWolf(assume_centered=True)
-            ldw.fit(Xsc)
-            scale = sc.scale_[:, np.newaxis]
-            self.covariance_ = scale * ldw.covariance_ * scale
+            sc = StandardScaler()  # standardize features
+            X_sc = sc.fit_transform(X)
+            s = ledoit_wolf(X_sc)[0]
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
+            self.covariance_ = s
 
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100,))
