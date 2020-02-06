@@ -18,7 +18,7 @@ Then, using them we will make voting regressor
 Finally, we will plot all of them for comparison.
 
 We will work with the diabetes dataset which consists of the 10 features
-collected from the diabetes patients. The target is the disease progression
+collected from a cohort of diabetes patients. The target is the disease progression
 after one year from the baseline.
 
 """
@@ -37,11 +37,11 @@ from sklearn.ensemble import VotingRegressor
 # --------------------------------
 # First, we are going to load diabetes dataset and initiate gradient boosting
 # regressor, random forest regressor and linear regression. Next, we are going
-# to use each of the initialized regressors to build the voting regressor:
+# to use each of them o build the voting regressor:
 
 X, y = datasets.load_diabetes(return_X_y=True)
 
-# Training classifiers
+# Train classifiers
 reg1 = GradientBoostingRegressor(random_state=1)
 reg2 = RandomForestRegressor(random_state=1)
 reg3 = LinearRegression()
