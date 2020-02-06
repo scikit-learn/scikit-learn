@@ -15,6 +15,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import all_estimators
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 
@@ -160,3 +161,15 @@ def test_tabs():
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
                                     'or add it to theignore list'
                                     % modname)
+
+
+@pytest.mark.parametrize('name, Classifier',
+                         all_estimators(type_filter='classifier'))
+def test_classifier_docstring_attributes(name, Classifier):
+    docscrape = pytest.importorskip('numpydoc.docscrape')
+    from numpydoc import docscrape
+
+    doc = docscrape.ClassDoc(Classifier)
+    attributes = doc['Attributes']
+    assert attributes
+    assert 'classes_' in [att.name for att in attributes]

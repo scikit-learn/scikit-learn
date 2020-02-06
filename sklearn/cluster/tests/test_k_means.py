@@ -132,7 +132,7 @@ def test_relocate_empty_clusters(representation):
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
+@pytest.mark.parametrize('tol', [0, 1e-2, 1e-4, 1e-8])
 def test_elkan_results(distribution, tol):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
