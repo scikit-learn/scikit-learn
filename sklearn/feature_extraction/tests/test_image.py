@@ -67,8 +67,6 @@ def test_grid_to_graph_18():
                 [1,1,0,1,1,1,1,1],
                 [1,0,1,1,1,1,1,1],
                 [0,1,1,1,1,1,1,1]])
-    print(A)
-    print(B)
     assert np.array_equal(A,B)
 
 def test_grid_to_graph_26():
