@@ -664,7 +664,7 @@ def test_covariance():
         """
         def fit(self, X):
             return self
-    with pytest.raises(RuntimeError,
+    with pytest.raises(ValueError,
                        match="InvalidCovarianceEstimator does not have a"
                        + " covariance_ attribute"):
         _cov(x, None, InvalidCovarianceEstimator())
