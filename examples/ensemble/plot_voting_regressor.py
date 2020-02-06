@@ -32,17 +32,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
 
-"""
-=================================
-Training classifiers
-=================================
-First, we are going to load diabetes dataset and initiate gradient boosting
-regressor, random forest regressor and linear regression. Next, we are going to
-use each of the initialized regressors to build the voting regressor.
+##############################################################################
+# Training classifiers
+# --------------------------------
+# First, we are going to load diabetes dataset and initiate gradient boosting
+# regressor, random forest regressor and linear regression. Next, we are going
+# to use each of the initialized regressors to build the voting regressor:
 
-"""
-
-# Loading some example data
 X, y = datasets.load_diabetes(return_X_y=True)
 
 # Training classifiers
@@ -57,28 +53,22 @@ reg3.fit(X, y)
 ereg = VotingRegressor([('gb', reg1), ('rf', reg2), ('lr', reg3)])
 ereg.fit(X, y)
 
-"""
-=================================
-Making predictions
-=================================
-Now we will use each of the regressors to make predictions about the diabetes
-dataset.
-
-"""
+##############################################################################
+# Making predictions
+# --------------------------------
+# Now we will use each of the regressors to make predictions about the diabetes
+# dataset.
 
 pred1 = reg1.predict(X)
 pred2 = reg2.predict(X)
 pred3 = reg3.predict(X)
 pred4 = ereg.predict(X)
 
-"""
-=================================
-Plot figure
-=================================
-Finally, we will calculate each prediction, plot them and visualize first 20
-predictions. The red stars show the average prediction
-
-"""
+##############################################################################
+# Plot the results
+# --------------------------------
+# Finally, we will calculate each prediction, plot them and visualize first 20
+# predictions. The red stars show the average prediction
 
 plt.figure()
 plt.plot(pred1, 'gd', label='GradientBoostingRegressor')
