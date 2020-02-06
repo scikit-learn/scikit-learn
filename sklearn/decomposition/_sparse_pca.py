@@ -5,6 +5,7 @@
 import warnings
 
 import numpy as np
+from scipy import linalg
 
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
@@ -64,7 +65,7 @@ def _get_explained_variance(X, components, ridge_alpha):
                               solver="cholesky")
 
     # QR decomposition of modified PCs
-    _, r = np.linalg.qr(t_spca)
+    _, r = linalg.qr(t_spca)
     variance = np.square(np.diag(r)) / (X.shape[0]-1)
 
     # Variance in the original dataset
