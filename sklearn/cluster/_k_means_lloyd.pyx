@@ -182,10 +182,12 @@ cdef void _update_chunk_dense(floating *X,
     # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to store
     # the - 2 X.C^T + ||C||² term since the argmin for a given sample only
     # depends on the centers.
+    # pairwise_distances = ||C||²
     for i in range(n_samples):
         for j in range(n_clusters):
             pairwise_distances[i * n_clusters + j] = centers_squared_norms[j]
 
+    # pairwise_distances += -2 * X.dot(C.T)
     _gemm(RowMajor, NoTrans, Trans, n_samples, n_clusters, n_features,
           -2.0, X, n_features, &centers_old[0, 0], n_features,
           1.0, pairwise_distances, n_clusters)
