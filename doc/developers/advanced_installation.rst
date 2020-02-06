@@ -71,8 +71,11 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You will have to re-run the ``pip install --editable .`` command every time
-    the source code of a Cython file is updated (ending in `.pyx` or `.pxd`).
+    You will have to run the ``pip install --no-build-isolation --editable .``
+    command every time the source code of a Cython file is updated
+    (ending in `.pyx` or `.pxd`). Use the ``--no-build-isolation`` flag to
+    avoid compiling the whole project each time, only the files you have
+    modified.
 
 Dependencies
 ------------
