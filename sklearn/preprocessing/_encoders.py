@@ -405,12 +405,14 @@ class OneHotEncoder(_BaseEncoder):
             n_values = [len(cats) for cats in self.categories_]
 
         mask = X_mask.ravel()
-        n_values = np.array([0] + n_values)
-        feature_indices = np.cumsum(n_values)
+        feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
-        indptr = X_mask.sum(axis=1).cumsum()
-        indptr = np.insert(indptr, 0, 0)
-        data = np.ones(n_samples * n_features)[mask]
+
+        indptr = np.empty(n_samples + 1, dtype=np.int)
+        indptr[0] = 0
+        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.cumsum(indptr[1:], out=indptr[1:])
+        data = np.ones(indptr[-1])
 
         out = sparse.csr_matrix((data, indices, indptr),
                                 shape=(n_samples, feature_indices[-1]),

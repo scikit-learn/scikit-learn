@@ -1,6 +1,7 @@
 """Testing for the VotingClassifier and VotingRegressor"""
 
 import pytest
+import re
 import numpy as np
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
@@ -511,6 +512,29 @@ def test_check_estimators_voting_estimator(estimator):
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('rf', RandomForestRegressor(random_state=123))],
+        verbose=True),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=123)),
+                     ('rf', RandomForestClassifier(random_state=123))],
+        verbose=True)]
+)
+def test_voting_verbose(estimator, capsys):
+
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    pattern = (r'\[Voting\].*\(1 of 2\) Processing lr, total=.*\n'
+               r'\[Voting\].*\(2 of 2\) Processing rf, total=.*\n$')
+
+    estimator.fit(X, y)
+    assert re.match(pattern, capsys.readouterr()[0])
 
 
 # TODO: Remove in 0.24 when None is removed in Voting*

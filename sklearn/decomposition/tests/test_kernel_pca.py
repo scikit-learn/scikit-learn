@@ -215,8 +215,6 @@ def test_kernel_pca_invalid_kernel():
         kpca.fit(X_fit)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -231,8 +229,6 @@ def test_gridsearch_pipeline():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -248,8 +244,6 @@ def test_gridsearch_pipeline_precomputed():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,

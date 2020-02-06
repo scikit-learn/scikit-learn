@@ -24,11 +24,6 @@ from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
 
-# 0.23. warning about tol not having its correct default value.
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:max_iter and tol parameters have been")
-
-
 def _update_kwargs(kwargs):
     if "random_state" not in kwargs:
         kwargs["random_state"] = 42

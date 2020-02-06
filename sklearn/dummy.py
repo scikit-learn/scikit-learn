@@ -50,17 +50,17 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           .. versionchanged:: 0.22
              The default value of `strategy` will change to "prior" in version
              0.24. Starting from version 0.22, a warning will be raised if
-             `strategy` is not explicity set.
+             `strategy` is not explicitly set.
 
           .. versionadded:: 0.17
              Dummy Classifier now supports prior fitting strategy using
              parameter *prior*.
 
     random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the randomness to generate the predictions when
+        ``strategy='stratified'`` or ``strategy='uniform'``.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
@@ -156,7 +156,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
-        check_consistent_length(X, y, sample_weight)
+        check_consistent_length(X, y)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -245,7 +245,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                 classes_ = [np.array([c]) for c in constant]
 
             y = _random_choice_csc(n_samples, classes_, class_prob,
-                                  self.random_state)
+                                   self.random_state)
         else:
             if self._strategy in ("most_frequent", "prior"):
                 y = np.tile([classes_[k][class_prior_[k].argmax()] for
