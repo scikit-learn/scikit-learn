@@ -50,6 +50,9 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now converges with
+  ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
+  :user:`Erich Schubert <kno10>`.
 
 - |Efficiency| :class:`cluster.Birch` implementation of the predict method 
   avoids high memory footprint by calculating the distances matrix using 
