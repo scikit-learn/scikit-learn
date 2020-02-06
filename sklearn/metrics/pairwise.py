@@ -1408,8 +1408,6 @@ _NAN_METRICS = ['nan_euclidean']
 def _check_chunk_size(reduced, chunk_size):
     """Checks chunk is a sequence of expected size or a tuple of same
     """
-    if reduced is None:
-        return
     is_tuple = isinstance(reduced, tuple)
     if not is_tuple:
         reduced = (reduced,)
@@ -1470,8 +1468,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         reducing it to needed values.  ``reduce_func(D_chunk, start)``
         is called repeatedly, where ``D_chunk`` is a contiguous vertical
         slice of the pairwise distance matrix, starting at row ``start``.
-        It should return one of: None; an array, a list, or a sparse matrix
-        of length ``D_chunk.shape[0]``; or a tuple of such objects.
+        It should return an array, a list, or a sparse matrix of length
+        ``D_chunk.shape[0]``, or a tuple of such objects.
 
         If None, pairwise_distances_chunked returns a generator of vertical
         chunks of the distance matrix.
