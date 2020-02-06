@@ -44,14 +44,16 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
                             category=FutureWarning)  # 0.24
 def test_assert_less():
     assert 0 < 1
-    assert_raises(AssertionError, assert_less, 1, 0)
+    with pytest.raises(AssertionError):
+        assert_less(1, 0)
 
 
 @pytest.mark.filterwarnings("ignore",
                             category=FutureWarning)  # 0.24
 def test_assert_greater():
     assert 1 > 0
-    assert_raises(AssertionError, assert_greater, 0, 1)
+    with pytest.raises(AssertionError):
+        assert_greater(0, 1)
 
 
 @pytest.mark.filterwarnings("ignore",
@@ -59,7 +61,8 @@ def test_assert_greater():
 def test_assert_less_equal():
     assert 0 <= 1
     assert 1 <= 1
-    assert_raises(AssertionError, assert_less_equal, 1, 0)
+    with pytest.raises(AssertionError):
+        assert_less_equal(1, 0)
 
 
 @pytest.mark.filterwarnings("ignore",
@@ -67,7 +70,8 @@ def test_assert_less_equal():
 def test_assert_greater_equal():
     assert 1 >= 0
     assert 1 >= 1
-    assert_raises(AssertionError, assert_greater_equal, 0, 1)
+    with pytest.raises(AssertionError):
+        assert_greater_equal(0, 1)
 
 
 def test_set_random_state():
@@ -85,18 +89,17 @@ def test_assert_allclose_dense_sparse():
     y = sparse.csc_matrix(x)
     for X in [x, y]:
         # basic compare
-        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
-                             X, X * 2)
+        with pytest.raises(AssertionError, match=msg):
+            assert_allclose_dense_sparse(X, X*2)
         assert_allclose_dense_sparse(X, X)
 
-    assert_raise_message(ValueError, "Can only compare two sparse",
-                         assert_allclose_dense_sparse, x, y)
+    with pytest.raises(ValueError, match="Can only compare two sparse"):
+        assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
     B = sparse.csr_matrix(np.ones((1, 5)))
-
-    assert_raise_message(AssertionError, "Arrays are not equal",
-                         assert_allclose_dense_sparse, B, A)
+    with pytest.raises(AssertionError, match="Arrays are not equal"):
+        assert_allclose_dense_sparse(B, A)
 
 
 def test_assert_raises_msg():
@@ -252,8 +255,8 @@ class TestWarns(unittest.TestCase):
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
-
-        assert_raises(AssertionError, assert_no_warnings, f)
+        with pytest.raises(AssertionError):
+            assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
     def test_warn_wrong_warning(self):
@@ -265,6 +268,9 @@ class TestWarns(unittest.TestCase):
         try:
             try:
                 # Should raise an AssertionError
+
+                # assert_warns has a special handling of "FutureWarning" that
+                # pytest.warns does not have
                 assert_warns(UserWarning, f)
                 failed = True
             except AssertionError:
@@ -492,10 +498,10 @@ def test_check_docstring_parameters():
     assert incorrect == []
     incorrect = check_docstring_parameters(f_missing, ignore=['b'])
     assert incorrect == []
-    assert_raise_message(RuntimeError, 'Unknown section Results',
-                         check_docstring_parameters, f_bad_sections)
-    assert_raise_message(RuntimeError, 'Unknown section Parameter',
-                         check_docstring_parameters, Klass.f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Results"):
+        check_docstring_parameters(f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Parameter"):
+        check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
     assert (

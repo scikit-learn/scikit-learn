@@ -1,15 +1,13 @@
 import numpy as np
+import pytest
 
-from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import make_blobs
+from sklearn.linear_model import LogisticRegression
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.utils.class_weight import compute_sample_weight
-
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
 
 
 def test_compute_class_weight():
@@ -28,17 +26,19 @@ def test_compute_class_weight_not_present():
     # Raise error when y does not contain all class labels
     classes = np.arange(4)
     y = np.asarray([0, 0, 0, 1, 1, 2])
-    assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    with pytest.raises(ValueError):
+        compute_class_weight("balanced", classes, y)
     # Fix exception in error message formatting when missing label is a string
     # https://github.com/scikit-learn/scikit-learn/issues/8312
-    assert_raise_message(ValueError,
-                         'Class label label_not_present not present',
-                         compute_class_weight,
-                         {'label_not_present': 1.}, classes, y)
+    with pytest.raises(ValueError,
+                       match="Class label label_not_present not present"):
+        compute_class_weight({"label_not_present": 1.}, classes, y)
     # Raise error when y has items not in classes
     classes = np.arange(2)
-    assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
-    assert_raises(ValueError, compute_class_weight, {0: 1., 1: 2.}, classes, y)
+    with pytest.raises(ValueError):
+        compute_class_weight("balanced", classes, y)
+    with pytest.raises(ValueError):
+        compute_class_weight({0: 1., 1: 2.}, classes, y)
 
 
 def test_compute_class_weight_dict():
@@ -55,12 +55,13 @@ def test_compute_class_weight_dict():
     # should get raised
     msg = 'Class label 4 not present.'
     class_weights = {0: 1.0, 1: 2.0, 2: 3.0, 4: 1.5}
-    assert_raise_message(ValueError, msg, compute_class_weight, class_weights,
-                         classes, y)
+    with pytest.raises(ValueError, match=msg):
+        compute_class_weight(class_weights, classes, y)
+
     msg = 'Class label -1 not present.'
     class_weights = {-1: 5.0, 0: 1.0, 1: 2.0, 2: 3.0}
-    assert_raise_message(ValueError, msg, compute_class_weight, class_weights,
-                         classes, y)
+    with pytest.raises(ValueError, match=msg):
+        compute_class_weight(class_weights, classes, y)
 
 
 def test_compute_class_weight_invariance():
@@ -232,20 +233,27 @@ def test_compute_sample_weight_errors():
     # Invalid preset string
     y = np.asarray([1, 1, 1, 2, 2, 2])
     y_ = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
-    assert_raises(ValueError, compute_sample_weight, "ni", y)
-    assert_raises(ValueError, compute_sample_weight, "ni", y, range(4))
-    assert_raises(ValueError, compute_sample_weight, "ni", y_)
-    assert_raises(ValueError, compute_sample_weight, "ni", y_, range(4))
+
+    with pytest.raises(ValueError):
+        compute_sample_weight("ni", y)
+    with pytest.raises(ValueError):
+        compute_sample_weight("ni", y, range(4))
+    with pytest.raises(ValueError):
+        compute_sample_weight("ni", y_)
+    with pytest.raises(ValueError):
+        compute_sample_weight("ni", y_, range(4))
 
     # Not "balanced" for subsample
-    assert_raises(ValueError,
-                  compute_sample_weight, {1: 2, 2: 1}, y, range(4))
+    with pytest.raises(ValueError):
+        compute_sample_weight({1: 2, 2: 1}, y, range(4))
 
     # Not a list or preset for multi-output
-    assert_raises(ValueError, compute_sample_weight, {1: 2, 2: 1}, y_)
+    with pytest.raises(ValueError):
+        compute_sample_weight({1: 2, 2: 1}, y_)
 
     # Incorrect length list for multi-output
-    assert_raises(ValueError, compute_sample_weight, [{1: 2, 2: 1}], y_)
+    with pytest.raises(ValueError):
+        compute_sample_weight([{1: 2, 2: 1}], y_)
 
 
 def test_compute_sample_weight_more_than_32():
