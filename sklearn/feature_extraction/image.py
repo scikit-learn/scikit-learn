@@ -56,18 +56,13 @@ def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
     edges = [edges_deep, edges_right, edges_down]
 
     #Add the other connections
-    if connectivity == 26:
+    if connectivity >= 18:
         edges_right_deep = np.vstack((vertices[:, :-1, :-1].ravel(),
                                 vertices[:, 1:, 1:].ravel()))
         edges_down_right = np.vstack((vertices[:-1, :-1, :].ravel(),
                                 vertices[1:, 1:, :].ravel()))
         edges_down_deep = np.vstack((vertices[:-1, :, :-1].ravel(),
                                 vertices[1:, :, 1:].ravel()))
-
-                        
-        edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
-                                vertices[1:, 1:, 1:].ravel()))      
-
         edges_down_left = np.vstack((vertices[:-1, 1:, :].ravel(),
                                 vertices[1:, :-1, :].ravel()))
         edges_down_shallow = np.vstack((vertices[:-1, :, 1:].ravel(),
@@ -75,6 +70,12 @@ def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
         edges_deep_left = np.vstack((vertices[:, 1:, :-1].ravel(),
                                 vertices[:, :-1, 1:].ravel()))
 
+        edges.extend([edges_right_deep, edges_down_right, edges_down_deep,
+                    edges_down_left, edges_down_shallow, edges_deep_left])
+
+    if connectivity == 26:
+        edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
+                                vertices[1:, 1:, 1:].ravel())) 
         edges_down_left_deep = np.vstack((vertices[:-1, 1:, :-1].ravel(),
                                 vertices[1:, :-1, 1:].ravel()))
         edges_down_right_shallow = np.vstack((vertices[:-1, :-1, 1:].ravel(),
@@ -82,9 +83,7 @@ def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
         edges_down_left_shallow = np.vstack((vertices[:-1, 1:, 1:].ravel(),
                                 vertices[1:, :-1, :-1].ravel()))
 
-        edges.extend([edges_right_deep, edges_down_right, edges_down_deep,
-                    edges_down_right_deep, edges_down_left,
-                    edges_down_shallow, edges_deep_left, edges_down_left_deep,
+        edges.extend([edges_down_right_deep, edges_down_left_deep,
                     edges_down_right_shallow, edges_down_left_shallow])
 
     edges = np.hstack(edges)
