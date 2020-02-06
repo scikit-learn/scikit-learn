@@ -49,7 +49,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying the empirical
         covariance estimator (with potential shrinkage).
-        The object should have a fit method and a covariance_ attribute
+        The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
@@ -141,7 +141,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying the empirical
         covariance estimator (with potential shrinkage).
-        The object should have a fit method and a covariance_ attribute
+        The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
@@ -184,7 +184,7 @@ def _classes_cov(X, y, shrinkage=None, covariance_estimator=None):
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying the empirical
         covariance estimator (with potential shrinkage).
-        The object should have a fit method and a covariance_ attribute
+        The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
@@ -273,7 +273,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying the empirical
         covariance estimator (with potential shrinkage).
-        The object should have a fit method and a covariance_ attribute
+        The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
@@ -392,7 +392,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             If not None, `covariance_estimator` is used to estimate
             the covariance matrices instead of relying the empirical
             covariance estimator (with potential shrinkage).
-            The object should have a fit method and a covariance_ attribute
+            The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
@@ -445,7 +445,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             If not None, `covariance_estimator` is used to estimate
             the covariance matrices instead of relying the empirical
             covariance estimator (with potential shrinkage).
-            The object should have a fit method and a covariance_ attribute
+            The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
@@ -736,11 +736,13 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         If not None, `covariance_estimator` is used to estimate
         the covariance matrices instead of relying the empirical
         covariance estimator (with potential shrinkage).
-        The object should have a fit method and a covariance_ attribute
+        The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         if None the reg_param parameter drives the estimate.
 
         Note that covariance_estimator works only with 'lsqr' solver
+
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -875,9 +877,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             If not None, `covariance_estimator` is used to estimate
             the covariance matrices instead of relying the empirical
             covariance estimator (with potential shrinkage).
-            The object should have a fit method and a covariance_ attribute
+            The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the reg_param parameter drives the estimate.
+
+            .. versionadded:: 0.23
 
         Notes
         -----
