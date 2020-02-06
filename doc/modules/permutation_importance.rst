@@ -94,7 +94,7 @@ Outline of the permutation importance algorithm
       :math:`\tilde{D}_{k,j}`.
 
   - Compute importance :math:`i_j` for feature :math:`f_j` as
-    :math:`i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}`.
+    :math:`i_j = s - \frac{1}{K} \sum_{k=1}^{K} s_{k,j}`.
 
 Relation to impurity-based importance in trees
 ----------------------------------------------
