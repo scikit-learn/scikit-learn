@@ -67,7 +67,7 @@ Xc, yc = cancer.data, cancer.target
 # In this example we will use the same parameters for both datasets even if
 # they might not be the most optimal
 
-X_train, X_test, y_train, y_test = train_test_split(Xd, yd,
+Xd_train, Xd_test, yd_train, yd_test = train_test_split(Xd, yd,
                                                         test_size=0.1,
                                                         random_state=13)
 
@@ -81,14 +81,25 @@ params = {'n_estimators': 500,
           'learning_rate': 0.01,
           'loss': 'ls'}
 
-# #############################################################################
+##############################################################################
 # Fit regression model
+# -------------------------------------
+#
+# Now we will initiate the gradient boosting regressors and fit it with our
+# training data. Let's also look and the mean squared error on the test data.
+# You can already see that the results for the diabetes dataset are not ideal.
 
-clf = ensemble.GradientBoostingRegressor(**params)
+clf_d = ensemble.GradientBoostingRegressor(**params)
+clf_c = ensemble.GradientBoostingRegressor(**params)
 
-clf.fit(X_train, y_train)
-mse = mean_squared_error(y_test, clf.predict(X_test))
-print("MSE: %.4f" % mse)
+clf_d.fit(Xd_train, yd_train)
+clf_c.fit(Xc_train, yc_train)
+
+mse_d = mean_squared_error(yd_test, clf_d.predict(Xd_test))
+mse_c = mean_squared_error(yc_test, clf_c.predict(Xc_test))
+print("The mean squared error (MSE) on the")
+print("diabetes dataset: {:.4f}".format(mse_d))
+print("cancer dataset: {:.4f}".format(mse_c))
 
 # #############################################################################
 # Plot training deviance
