@@ -55,6 +55,22 @@ def test_grid_to_graph():
                       dtype=np.float64)
     assert A.dtype == np.float64
 
+def test_grid_to_graph_18():
+    #Check that 2x2x2 block has edges everywhere except across corners
+    size = 2
+    A = grid_to_graph(n_x=2, n_y=2, n_z=2, connectivity=18).todense()
+    B = np.array([[1,1,1,1,1,1,1,0],
+                [1,1,1,1,1,1,0,1],
+                [1,1,1,1,1,0,1,1],
+                [1,1,1,1,0,1,1,1],
+                [1,1,1,0,1,1,1,1],
+                [1,1,0,1,1,1,1,1],
+                [1,0,1,1,1,1,1,1],
+                [0,1,1,1,1,1,1,1]])
+    print(A)
+    print(B)
+    assert np.array_equal(A,B)
+
 def test_grid_to_graph_26():
     #Check that 2x2x2 block has edges everywhere
     size = 2
