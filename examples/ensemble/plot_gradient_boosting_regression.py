@@ -87,7 +87,6 @@ params = {'n_estimators': 500,
 #
 # Now we will initiate the gradient boosting regressors and fit it with our
 # training data. Let's also look and the mean squared error on the test data.
-# You can already see that the results for the diabetes dataset are not ideal.
 
 clf_d = ensemble.GradientBoostingRegressor(**params)
 clf_c = ensemble.GradientBoostingRegressor(**params)
@@ -101,25 +100,44 @@ print("The mean squared error (MSE) on the")
 print("diabetes dataset: {:.4f}".format(mse_d))
 print("cancer dataset: {:.4f}".format(mse_c))
 
-# #############################################################################
+##############################################################################
 # Plot training deviance
+# -------------------------------------
+#
+# Finally, we will visualize the results. To do that we will first compute the
+# test set deviance and then plot it. We are going to plot the results for both
+# datasets on a single figure.
 
-# compute test set deviance
-test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
 
-for i, y_pred in enumerate(clf.staged_predict(X_test)):
-    test_score[i] = clf.loss_(y_test, y_pred)
+test_score_c = np.zeros((params['n_estimators'],), dtype=np.float64)
+test_score_d = np.zeros((params['n_estimators'],), dtype=np.float64)
 
-plt.figure(figsize=(12, 6))
+for i, yc_pred in enumerate(clf_c.staged_predict(Xc_test)):
+    test_score_c[i] = clf_c.loss_(yc_test, yc_pred)
+
+for i, yd_pred in enumerate(clf_d.staged_predict(Xd_test)):
+    test_score_d[i] = clf_d.loss_(yd_test, yd_pred)
+
+plt.figure()
+
 plt.subplot(1, 2, 1)
-plt.title('Deviance')
-plt.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
+plt.title('Diabetes dataset')
+plt.plot(np.arange(params['n_estimators']) + 1, clf_d.train_score_, 'b-',
          label='Training Set Deviance')
-plt.plot(np.arange(params['n_estimators']) + 1, test_score, 'r-',
+plt.plot(np.arange(params['n_estimators']) + 1, test_score_d, 'r-',
+         label='Test Set Deviance')
+plt.xlabel('Boosting Iterations')
+plt.ylabel('Deviance')
+
+plt.subplot(1, 2, 2)
+plt.title('Cancer dataset')
+plt.plot(np.arange(params['n_estimators']) + 1, clf_c.train_score_, 'b-',
+         label='Training Set Deviance')
+plt.plot(np.arange(params['n_estimators']) + 1, test_score_c, 'r-',
          label='Test Set Deviance')
 plt.legend(loc='upper right')
 plt.xlabel('Boosting Iterations')
-plt.ylabel('Deviance')
+
 
 # #############################################################################
 # Plot impurity-based feature importance
@@ -128,7 +146,8 @@ plt.ylabel('Deviance')
 # high cardinality features (many unique values). See
 # :func:`sklearn.inspection.permutation_importance` as an alternative.
 
-feature_importance = clf.feature_importances_
+plt.figure()
+feature_importance = clf_c.feature_importances_
 # make importances relative to max importance
 feature_importance = 100.0 * (feature_importance / feature_importance.max())
 sorted_idx = np.argsort(feature_importance)
