@@ -7,14 +7,12 @@ Plot individual and voting regression predictions
 
 A voting regressor is an ensemble meta-estimator that fits base regressors each
 on the whole dataset. It, then, averages the individual predictions to form a
-final prediction. It is possible to use different type of regressors to
-predict the
-data. In this example we are going to use three of them:
+final prediction.
+We will use three different regressors to predict the data:
 :class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
 :class:`~linear_model.LinearRegression`).
-Then, we are going to use their predictions to make another one: voting
-regression predictions using
+Then, using them we will make voting regressor
 :class:`~ensemble.VotingRegressor`.
 
 Finally, we will plot all of them for comparison.
