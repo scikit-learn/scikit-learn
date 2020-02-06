@@ -656,12 +656,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         refit_metric = "score"
         if callable(self.scoring):
             scorers = self.scoring
+            check_fit_and_score_results = True
         elif self.scoring is None or isinstance(self.scoring, str):
             scorers = check_scoring(self.estimator, self.scoring)
+            check_fit_and_score_results = False
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
+            check_fit_and_score_results = False
 
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
@@ -715,6 +718,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                      .format(n_splits,
                                              len(out) // n_candidates))
 
+                if check_fit_and_score_results:
+                    _check_fit_and_score_results(out, self.error_score)
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 
@@ -725,16 +730,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._run_search(evaluate_candidates)
 
-            for out in all_out:
-                if not out["fit_failed"]:
-                    successful_score = out['test_scores']
-                    break
-
-            self.multimetric_ = isinstance(successful_score, dict)
+            sample_score = all_out[0]['test_scores']
+            self.multimetric_ = isinstance(sample_score, dict)
 
             # scorer is callable, check refit_metric now
             if callable(self.scoring) and self.multimetric_:
-                self._check_refit_for_multimetric(successful_score)
+                self._check_refit_for_multimetric(sample_score)
                 refit_metric = self.refit
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
@@ -780,13 +781,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, n_splits, out):
         n_candidates = len(candidate_params)
-        agg_out = _aggregate_list_of_dicts(out)
-
-        test_sample_counts = agg_out["n_test_samples"]
-        fit_time = agg_out["fit_time"]
-        score_time = agg_out["score_time"]
-
-        score_results = _check_fit_and_score_results(agg_out, self.error_score)
+        out = _aggregate_list_of_dicts(out)
 
         results = {}
 
@@ -814,8 +809,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        _store('fit_time', fit_time)
-        _store('score_time', score_time)
+        _store('fit_time', out["fit_time"])
+        _store('score_time', out["score_time"])
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
@@ -835,7 +830,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         results['params'] = candidate_params
 
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
+        test_sample_counts = np.array(out["n_test_samples"][:n_splits],
                                       dtype=np.int)
 
         if self.iid != 'deprecated':
@@ -847,15 +842,27 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             iid = False
 
-        test_scores = score_results["test_scores"]
-        for scorer_name in test_scores:
+        test_scores = out["test_scores"]
+        if isinstance(test_scores[0], dict):
+            test_scores_dict = _aggregate_list_of_dicts(test_scores)
+        else:
+            test_scores_dict = {"score": test_scores}
+
+        if self.return_train_score:
+            train_scores = out["train_scores"]
+            if isinstance(test_scores[0], dict):
+                train_scores_dict = _aggregate_list_of_dicts(train_scores)
+            else:
+                train_scores_dict = {"score": train_scores}
+
+        for scorer_name in test_scores_dict:
             # Computed the (weighted) mean and std for test scores alone
-            _store('test_%s' % scorer_name, test_scores[scorer_name],
+            _store('test_%s' % scorer_name, test_scores_dict[scorer_name],
                    splits=True, rank=True,
                    weights=test_sample_counts if iid else None)
             if self.return_train_score:
                 _store('train_%s' % scorer_name,
-                       score_results["train_scores"][scorer_name],
+                       train_scores_dict[scorer_name],
                        splits=True)
 
         return results

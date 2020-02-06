@@ -225,10 +225,13 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     if callable(scoring):
         scorers = scoring
+        check_fit_and_score_results = True
     elif scoring is None or isinstance(scoring, str):
         scorers = check_scoring(estimator, scoring)
+        check_fit_and_score_results = False
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
+        check_fit_and_score_results = False
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -242,6 +245,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
+    if check_fit_and_score_results:
+        _check_fit_and_score_results(results, error_score)
     results = _aggregate_list_of_dicts(results)
 
     if return_estimator:
@@ -254,13 +259,24 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    score_results = _check_fit_and_score_results(results, error_score)
-    test_scores = score_results["test_scores"]
-    for name in test_scores:
-        ret['test_%s' % name] = test_scores[name]
+    test_scores = results["test_scores"]
+    if isinstance(test_scores[0], dict):
+        test_scores_dict = _aggregate_list_of_dicts(test_scores)
+    else:
+        test_scores_dict = {"score": test_scores}
+
+    if return_train_score:
+        train_scores = results["train_scores"]
+        if isinstance(test_scores[0], dict):
+            train_scores_dict = _aggregate_list_of_dicts(train_scores)
+        else:
+            train_scores_dict = {"score": train_scores}
+
+    for name in test_scores_dict:
+        ret['test_%s' % name] = test_scores_dict[name]
         if return_train_score:
             key = 'train_%s' % name
-            ret[key] = score_results["train_scores"][name]
+            ret[key] = train_scores_dict[name]
 
     return ret
 
@@ -270,38 +286,23 @@ def _check_fit_and_score_results(results, error_score):
     that failed are set to error_score. `results` are the aggregated output
     of `_fit_and_score`.
     """
-    fit_failed = results["fit_failed"]
-    test_score_dicts = results["test_scores"]
-
+    successful_score = None
     failed_indices = []
-    for i, failed in enumerate(fit_failed):
-        if failed:
+    for i, result in enumerate(results):
+        if result["fit_failed"]:
             failed_indices.append(i)
-        else:
-            successful_score = test_score_dicts[i]
+        elif successful_score is None:
+            successful_score = result["test_scores"]
 
-    if len(failed_indices) == len(fit_failed):
+    if successful_score is None:
         raise NotFittedError("All estimators failed to fit")
 
-    if failed_indices and isinstance(successful_score, dict):
+    if isinstance(successful_score, dict):
+        formatted_erorr = {name: error_score for name in successful_score}
         for i in failed_indices:
-            test_score_dicts[i] = {name: error_score
-                                   for name in successful_score}
-
-    output = {}
-    # converts single metrics into a list of dictionaries
-    if not isinstance(successful_score, dict):
-        test_score_dicts = [{"score": elm} for elm in test_score_dicts]
-
-    output["test_scores"] = _aggregate_list_of_dicts(test_score_dicts)
-
-    if "train_scores" in results:
-        train_score_dicts = results["train_scores"]
-        if not isinstance(successful_score, dict):
-            train_score_dicts = [{"score": elm} for elm in train_score_dicts]
-        output["train_scores"] = _aggregate_list_of_dicts(train_score_dicts)
-
-    return output
+            results[i]["test_scores"] = formatted_erorr.copy()
+            if "train_scores" in results[i]:
+                results[i]["train_scores"] = formatted_erorr.copy()
 
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
