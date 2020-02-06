@@ -50,6 +50,9 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now converges with
+  ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
+  :user:`Erich Schubert <kno10>`.
 
 - |Efficiency| :class:`cluster.Birch` implementation of the predict method 
   avoids high memory footprint by calculating the distances matrix using 
@@ -123,6 +126,11 @@ Changelog
   features after pruning them by document frequency. This improves performances
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
+
+
+- |Enhancement| Added support for multioutput data in
+  :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`.
+  :pr:`16103` by :user:`Divyaprabha M <divyaprabha123>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................

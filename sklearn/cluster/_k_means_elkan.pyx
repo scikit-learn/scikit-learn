@@ -245,7 +245,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
                     % (iteration, np.sum((X_ - centers_[labels]) ** 2 *
                                          sample_weight[:,np.newaxis])))
         center_shift_total = np.sum(center_shift ** 2)
-        if center_shift_total < tol:
+        if center_shift_total <= tol:
             if verbose:
                 print("center shift %e within tolerance %e"
                       % (center_shift_total, tol))

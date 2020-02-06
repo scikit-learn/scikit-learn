@@ -10,6 +10,11 @@ along with their inter-trees variability.
 
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
+
+Warning: impurity-based feature importances can be misleading for high
+cardinality features (many unique values). See
+:func:`sklearn.inspection.permutation_importance` as an alternative.
+
 """
 print(__doc__)
 
@@ -49,7 +54,7 @@ for f in range(X.shape[1]):
 plt.figure()
 plt.title("Feature importances")
 plt.bar(range(X.shape[1]), importances[indices],
-       color="r", yerr=std[indices], align="center")
+        color="r", yerr=std[indices], align="center")
 plt.xticks(range(X.shape[1]), indices)
 plt.xlim([-1, X.shape[1]])
 plt.show()
