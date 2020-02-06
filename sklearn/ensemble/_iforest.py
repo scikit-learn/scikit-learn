@@ -106,11 +106,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
            ``behaviour`` parameter is deprecated in 0.22 and removed in
            0.24.
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Controls the pseudo-randomness of the selection of the feature
+        and split values for each branching step and each tree in the forest.
+
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity of the tree building process.
@@ -482,7 +483,7 @@ def _average_path_length(n_samples_leaf):
 
     Returns
     -------
-    average_path_length : array of same shape as n_samples_leaf
+    average_path_length : ndarray of shape (n_samples,)
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
