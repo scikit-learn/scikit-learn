@@ -102,6 +102,19 @@ Changelog
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Enhancement| Added 'lsqr' solver to 
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+
+- |Enhancement| Disciminant analysis methods can now use custom
+  covariance estimate by setting the `covariance_estimator` parameter of
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+
 :mod:`sklearn.ensemble`
 .......................
 
