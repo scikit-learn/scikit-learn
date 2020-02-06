@@ -1043,7 +1043,7 @@ def test_precompute_distance_deprecated(precompute_distances):
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
 
-    with pytest.warns(DeprecationWarning, match=depr_msg):
+    with pytest.warns(FutureWarning, match=depr_msg):
         kmeans.fit(X)
 
 
