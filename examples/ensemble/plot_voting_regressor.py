@@ -18,8 +18,8 @@ Then, using them we will make voting regressor
 Finally, we will plot all of them for comparison.
 
 We will work with the diabetes dataset which consists of the 10 features
-collected from a cohort of diabetes patients. The target is the disease progression
-after one year from the baseline.
+collected from a cohort of diabetes patients. The target is the disease
+progression after one year from the baseline.
 
 """
 print(__doc__)
@@ -56,8 +56,8 @@ ereg.fit(X, y)
 ##############################################################################
 # Making predictions
 # --------------------------------
-# Now we will use each of the regressors to make predictions about the diabetes
-# dataset.
+# Now we will use each of the regressors to make predictions about the
+# diabetes dataset.
 
 pred1 = reg1.predict(X)
 pred2 = reg2.predict(X)
