@@ -79,27 +79,22 @@ held-out set might cause the model to overfit.
 Outline of the permutation importance algorithm
 -----------------------------------------------
 
-0. Inputs: fitted predictive model :math:`m`, tabular dataset (training or
-   validation) :math:`D`.
+- Inputs: fitted predictive model :math:`m`, tabular dataset (training or
+  validation) :math:`D`.
+- Compute the reference score :math:`s` of the model :math:`m` on data
+  :math:`D` (for instance the accuracy for a classifier or the :math:`R^2` for
+  a regressor).
+- For each feature :math:`j` (column of :math:`D`):
 
-1. Compute the reference score :math:`s` of the model :math:`m` on data
-   :math:`D` (for instance the accuracy for a classifier or the :math:`R^2` for
-   a regressor).
+  - For each repetition :math:`k` in :math:`{1, ..., K}`:
 
-2. For each feature :math:`j` (column of :math:`D`):
+    - Randomly shuffle column :math:`j` of dataset :math:`D` to generate a
+      corrupted version of the data named :math:`\tilde{D}_{k,j}`.
+    - Compute the score :math:`s_{k,j}` of model :math:`m` on corrupted data
+      :math:`\tilde{D}_{k,j}`.
 
-   2.1. For each repetition :math:`k` in :math:`{1, ..., K}` (:math:`K` is
-        `n_repeats`):
-
-        2.1.1. Randomly shuffle column :math:`j` of dataset :math:`D` to
-               generate a corrupted version of the data named
-               :math:`\tilde{D}_{k,j}`.
-
-        2.1.2 Compute the score :math:`s_{k,j}` of model :math:`m` on corrupted
-              data :math:`\tilde{D}_{k,j}`.
-
-   2.2. Compute importance :math:`i_j` for feature :math:`f_j` as
-        :math:`i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}`.
+  - Compute importance :math:`i_j` for feature :math:`f_j` as
+    :math:`i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}`.
 
 Relation to impurity-based importance in trees
 ----------------------------------------------
