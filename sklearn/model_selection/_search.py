@@ -37,7 +37,7 @@ from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-
+from ..utils import deprecated
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -300,7 +300,11 @@ class ParameterSampler:
         """Number of points that will be sampled."""
         return self.n_iter
 
-
+@deprecated(
+    "Function fit_grid_point has never been used anywhere in code"
+    "in version 0.22"
+    "and will be removed in release 0.24"
+)
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
