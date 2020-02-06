@@ -5,8 +5,8 @@ Gradient Boosting regression
 
 This example demonstrate Gradient Boosting which will produce a prediction
 model from ensemble of weak prediction models. Gradient boosting can be used
-for regression and classification problems. Here, we will use Diabetes
-(regression) and breast cancer (classification) datasets.
+for regression and classification problems. Here, we will use breast cancer 
+(classification) datasets.
 
 We will obtain the results from
 :class:`~sklearn.ensemble.GradientBoostingRegressor` with least squares loss
@@ -36,17 +36,14 @@ from sklearn.model_selection import train_test_split
 # First we need to load the data. We will work on both datasets
 # simultaneously. We set random state to be consistent with the result.
 
-diabetes = datasets.load_diabetes()
 cancer = datasets.load_breast_cancer()
-
-Xd, yd = diabetes.data, diabetes.target
-Xc, yc = cancer.data, cancer.target
+X, y = cancer.data, cancer.target
 
 ##############################################################################
 # Data preprocessing
 # -------------------------------------
 #
-# Next, we will split our datasets to 90% for training and leave the rest for
+# Next, we will split our dataset to 90% for training and leave the rest for
 # testing. We will also prepare the parameters we want to use to fit our
 # regression model. You can play with those parameters to see how the
 # results change:
@@ -67,11 +64,7 @@ Xc, yc = cancer.data, cancer.target
 # In this example we will use the same parameters for both datasets even if
 # they might not be the most optimal
 
-Xd_train, Xd_test, yd_train, yd_test = train_test_split(Xd, yd,
-                                                        test_size=0.1,
-                                                        random_state=13)
-
-Xc_train, Xc_test, yc_train, yc_test = train_test_split(Xc, yc,
+X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         test_size=0.1,
                                                         random_state=13)
 
@@ -88,74 +81,55 @@ params = {'n_estimators': 500,
 # Now we will initiate the gradient boosting regressors and fit it with our
 # training data. Let's also look and the mean squared error on the test data.
 
-clf_d = ensemble.GradientBoostingRegressor(**params)
-clf_c = ensemble.GradientBoostingRegressor(**params)
+clf = ensemble.GradientBoostingRegressor(**params)
+clf.fit(X_train, y_train)
 
-clf_d.fit(Xd_train, yd_train)
-clf_c.fit(Xc_train, yc_train)
-
-mse_d = mean_squared_error(yd_test, clf_d.predict(Xd_test))
-mse_c = mean_squared_error(yc_test, clf_c.predict(Xc_test))
-print("The mean squared error (MSE) on the")
-print("diabetes dataset: {:.4f}".format(mse_d))
-print("cancer dataset: {:.4f}".format(mse_c))
+mse = mean_squared_error(y_test, clf.predict(X_test))
+print("The mean squared error (MSE): {:.4f}".format(mse))
 
 ##############################################################################
 # Plot training deviance
 # -------------------------------------
 #
 # Finally, we will visualize the results. To do that we will first compute the
-# test set deviance and then plot it. We are going to plot the results for both
-# datasets on a single figure.
+# test set deviance and then plot it.
 
+test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
 
-test_score_c = np.zeros((params['n_estimators'],), dtype=np.float64)
-test_score_d = np.zeros((params['n_estimators'],), dtype=np.float64)
+for i, y_pred in enumerate(clf.staged_predict(X_test)):
+    test_score[i] = clf.loss_(y_test, y_pred)
 
-for i, yc_pred in enumerate(clf_c.staged_predict(Xc_test)):
-    test_score_c[i] = clf_c.loss_(yc_test, yc_pred)
-
-for i, yd_pred in enumerate(clf_d.staged_predict(Xd_test)):
-    test_score_d[i] = clf_d.loss_(yd_test, yd_pred)
-
-plt.figure()
+fig = plt.figure(figsize=(12, 8))
 
 plt.subplot(1, 2, 1)
-plt.title('Diabetes dataset')
-plt.plot(np.arange(params['n_estimators']) + 1, clf_d.train_score_, 'b-',
+plt.title('Deviance')
+plt.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
          label='Training Set Deviance')
-plt.plot(np.arange(params['n_estimators']) + 1, test_score_d, 'r-',
-         label='Test Set Deviance')
-plt.xlabel('Boosting Iterations')
-plt.ylabel('Deviance')
-
-plt.subplot(1, 2, 2)
-plt.title('Cancer dataset')
-plt.plot(np.arange(params['n_estimators']) + 1, clf_c.train_score_, 'b-',
-         label='Training Set Deviance')
-plt.plot(np.arange(params['n_estimators']) + 1, test_score_c, 'r-',
+plt.plot(np.arange(params['n_estimators']) + 1, test_score, 'r-',
          label='Test Set Deviance')
 plt.legend(loc='upper right')
 plt.xlabel('Boosting Iterations')
+plt.ylabel('Deviance')
 
-
-# #############################################################################
+##############################################################################
 # Plot impurity-based feature importance
+# -------------------------------------
 #
+# Next we will plot the impurity-based feature importance.
 # Warning: impurity-based feature importances can be misleading for
 # high cardinality features (many unique values). See
 # :func:`sklearn.inspection.permutation_importance` as an alternative.
 
-plt.figure()
-feature_importance = clf_c.feature_importances_
+feature_importance = clf.feature_importances_
 # make importances relative to max importance
 feature_importance = 100.0 * (feature_importance / feature_importance.max())
 sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
 plt.subplot(1, 2, 2)
 plt.barh(pos, feature_importance[sorted_idx], align='center')
-#plt.yticks(pos, np.array(diabetes.feature_names)[sorted_idx])
 plt.yticks(pos, np.array(cancer.feature_names)[sorted_idx])
 plt.xlabel('Relative Importance')
 plt.title('Variable Importance')
+fig.tight_layout()
+
 plt.show()
