@@ -137,6 +137,13 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
+
+:mod:`sklearn.impute`
+...............................
+
+- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
+  chunking pairwise distance computation.
+  :pr:`16397` by `Joel Nothman`_.
   
 :mod:`sklearn.linear_model`
 ...........................
@@ -169,6 +176,10 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
+  its ``reduce_func`` to not have a return value, enabling in-place operations.
+  :pr:`16397` by `Joel Nothman`_.
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`. 
