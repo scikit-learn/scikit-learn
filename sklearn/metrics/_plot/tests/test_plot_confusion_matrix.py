@@ -265,7 +265,7 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     assert_array_equal(expected_text, text_text)
 
 
-def test_confusion_matrix_standard_format():
+def test_confusion_matrix_standard_format(pyplot):
     cm = np.array([[10000000, 0], [29, 123123]])
     plotted_text_values = ConfusionMatrixDisplay(cm, [False, True]).plot(
                                                 values_format=None).text_
