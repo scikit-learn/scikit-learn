@@ -377,8 +377,8 @@ def test_lda_shrinkage():
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert np.allclose(c1.means_[i], c2.means_[i])
-    assert np.allclose(c1.covariance_, c2.covariance_)
+        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
+    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
 
 
 def test_lda_ledoitwolf():
@@ -392,7 +392,7 @@ def test_lda_ledoitwolf():
         def fit(self, X):
             sc = StandardScaler()
             Xsc = sc.fit_transform(X)
-            ldw = LedoitWolf()
+            ldw = LedoitWolf(assume_centered=True)
             ldw.fit(Xsc)
             scale = sc.scale_[:, np.newaxis]
             self.covariance_ = scale * ldw.covariance_ * scale
@@ -405,14 +405,14 @@ def test_lda_ledoitwolf():
             solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
             store_covariance=True,
-            covariance_estimator=StandardizedLedoitWolf,
+            covariance_estimator=StandardizedLedoitWolf(),
             solver="lsqr",
             )
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert np.allclose(c1.means_[i], c2.means_[i])
-    assert np.allclose(c1.covariance_, c2.covariance_)
+        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
+    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
 
 
 @pytest.mark.parametrize('n_features', [3, 5])
@@ -650,8 +650,8 @@ def test_qda_covariance_sample_estimate():
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert np.allclose(c1.means_[i], c2.means_[i])
-    assert np.allclose(c1.covariance_, c2.covariance_)
+        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
+    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
 
 
 def test_covariance():
