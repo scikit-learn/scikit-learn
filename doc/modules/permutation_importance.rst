@@ -19,12 +19,13 @@ different permutations of the feature.
 The :func:`permutation_importance` function calculates the feature importance
 of :term:`estimators` for a given dataset. The ``n_repeats`` parameter sets the
 number of times a feature is randomly shuffled and returns a sample of feature
-importances::
+importances.
+
+Let's consider the following trained regression model::
 
   >>> from sklearn.datasets import load_diabetes
   >>> from sklearn.model_selection import train_test_split
   >>> from sklearn.linear_model import Ridge
-  >>> from sklearn.inspection import permutation_importance
   >>> diabetes = load_diabetes()
   >>> X_train, X_val, y_train, y_val = train_test_split(
   ...     diabetes.data, diabetes.target, random_state=0)
@@ -32,6 +33,13 @@ importances::
   >>> model = Ridge(alpha=1e-2).fit(X_train, y_train)
   >>> model.score(X_val, y_val)
   0.356...
+
+Its validation performance, measured via the :math:`R^2` score, is
+significantly larger than the chance level. This makes it possible to use the
+:func:`permutation_importance` function to probe which features are most
+predictive::
+
+  >>> from sklearn.inspection import permutation_importance
   >>> r = permutation_importance(model, X_val, y_val,
   ...                            n_repeats=10,
   ...                            random_state=0)
@@ -48,6 +56,9 @@ importances::
   bp:   0.101 +/- 0.028
   sex:	0.060 +/- 0.024
 
+Note that the importance values for the top features represent a large
+fraction of the reference score of 0.356.
+
 Permutation importances can be computed either on the training set or on a
 held-out testing or validation set. Using a held-out set makes it possible to
 highlight which features contribute the most to the generalization power of the
@@ -58,35 +69,36 @@ held-out set might cause the model to overfit.
 
   Features that are deemed of **low importance for a bad model** (low
   cross-validation score) could be **very important for a good model**.
-
   Therefore it is always important to evaluate the predictive power of a model
   using a held-out set (or better with cross-validation) prior to computing
-  importances.
-
-  Permutation importance does not reflect to the intrinsic predictive value of a
-  feature by itself but **how important this feature is for a particular model**.
+  importances. Permutation importance does not reflect to the intrinsic
+  predictive value of a feature by itself but **how important this feature is
+  for a particular model**.
 
 Outline of the permutation importance algorithm
 -----------------------------------------------
 
-0. Inputs: fitted predictive model $m$, tabular dataset (training or
-   validation) $D$.
+0. Inputs: fitted predictive model :math:`m`, tabular dataset (training or
+   validation) :math:`D`.
 
-1. Compute the reference score $s$ of the model $m$ on data $D$ (for instance
-   the accuracy for a classifier or the $R^2$ for a regressor).
+1. Compute the reference score :math:`s` of the model :math:`m` on data
+   :math:`D` (for instance the accuracy for a classifier or the :math:`R^2` for
+   a regressor).
 
-2. For each feature $j$ (column of $D$):
+2. For each feature :math:`j` (column of :math:`D`):
 
-   2.1 For each repetition $k$ in ${1, ..., K}$ ($K$ is `n_repeats`):
+   2.1. For each repetition :math:`k` in :math:`{1, ..., K}` (:math:`K` is
+        `n_repeats`):
 
-       2.1.1. Randomly shuffle column $j$ of dataset $D$ to generate a
-              corrupted version of the data named $\tilde{D}_{k,j}$.
+        2.1.1. Randomly shuffle column :math:`j` of dataset :math:`D` to
+               generate a corrupted version of the data named
+               :math:`\tilde{D}_{k,j}`.
 
-       2.1.2 Compute the score $s_{k,j}$ of model $m$ on corrupted data
-             $\tilde{D}_{k,j}$.
+        2.1.2 Compute the score :math:`s_{k,j}` of model :math:`m` on corrupted
+              data :math:`\tilde{D}_{k,j}`.
 
-   2.2 Compute importance $i_j$ for feature $f_j$ as
-       $i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}$.
+   2.2. Compute importance :math:`i_j` for feature :math:`f_j` as
+        :math:`i_j = s - \frac{1}{K} \sum_{k=1}^K s_{k,j}`.
 
 Relation to impurity-based importance in trees
 ----------------------------------------------
