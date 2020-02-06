@@ -44,14 +44,12 @@ predictive::
   ...                            n_repeats=10,
   ...                            random_state=0)
   ...
-  >>> print("Most predictive features:")
   >>> for i in importances.argsort()[::-1]:
   ...     if r.importances_mean[i] > 0.05:
   ...         print("%s:\t%.3f +/- %.3f" % (diabetes.feature_names[i],
   ...                                       r.importances_mean[i],
   ...                                       r.importances_std[i]))
   ...
-  Most predictive features:
   s5:   0.194 +/- 0.054
   bmi:	0.170 +/- 0.068
   bp:   0.101 +/- 0.028
@@ -93,8 +91,9 @@ Outline of the permutation importance algorithm
     - Compute the score :math:`s_{k,j}` of model :math:`m` on corrupted data
       :math:`\tilde{D}_{k,j}`.
 
-  - Compute importance :math:`i_j` for feature :math:`f_j` as
-    :math:`i_j = s - \frac{1}{K} \sum_{k=1}^{K} s_{k,j}`.
+  - Compute importance :math:`i_j` for feature :math:`f_j` defined as:
+
+    .. math:: i_j = s - \frac{1}{K} \sum_{k=1}^{K} s_{k,j}
 
 Relation to impurity-based importance in trees
 ----------------------------------------------
