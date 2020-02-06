@@ -21,7 +21,7 @@ from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
-from sklearn.covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
+from sklearn.covariance import ledoit_wolf
 
 from sklearn.covariance import ShrunkCovariance
 from sklearn.covariance import LedoitWolf
