@@ -36,6 +36,7 @@ def generate_data(n_samples, n_features):
         X = np.hstack([X, np.random.randn(n_samples, n_features - 1)])
     return X, y
 
+
 acc_clf1, acc_clf2, acc_clf3 = [], [], []
 n_features_range = range(1, n_features_max + 1, step)
 for n_features in n_features_range:
@@ -46,7 +47,8 @@ for n_features in n_features_range:
         clf1 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto').fit(X, y)
         clf2 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage=None).fit(X, y)
         oa = OAS(store_precision=False, assume_centered=False)
-        clf3 = LinearDiscriminantAnalysis(solver='lsqr', covariance_estimator=oa).fit(X, y)
+        clf3 = LinearDiscriminantAnalysis(solver='lsqr',
+                                          covariance_estimator=oa).fit(X, y)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
