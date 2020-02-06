@@ -589,15 +589,30 @@ class GraphicalLassoCV(GraphicalLasso):
     cv_alphas_ : list of shape (n_alphas,), dtype=float
         All penalization parameters explored.
 
+        .. deprecated:: 0.23
+            The `cv_alphas_` attribute is deprecated in version 0.23 in favor
+            of `cv_results_['alphas']` and will be removed in version 0.25
+
     grid_scores_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
-        .. deprecated:: 0.21
+        .. deprecated:: 0.23
             The `grid_scores_` attribute is deprecated in version 0.23 in favor
             of `cv_results_` and will be removed in version 0.25
 
     cv_results_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
+
+    cv_results_ : dict of numpy ndarrays
+        Dictinoary, with attributes:
+
+        alphas : ndarray of shape (n_alphas,)
+            All penalization parameters explored.
+
+        split(i)_score : ndarray of shape (n_alphas,)
+            Log-likelihood score on left-out data across `(i)`th fold.
+
+        .. versionadded:: 0.23
 
     n_iter_ : int
         Number of iterations run for the optimal alpha.
@@ -775,10 +790,14 @@ class GraphicalLassoCV(GraphicalLasso):
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                            cv=cv, n_jobs=self.n_jobs,
                                            verbose=inner_verbose))
-        self.cv_results_ = np.array(grid_scores)
+        grid_scores = np.array(grid_scores)
+        self.cv_results_ = {'alphas': np.array(alphas)}
+        for col in range(grid_scores.shape[1]):
+            key = "split{}_score".format(col)
+            self.cv_results_[key] = grid_scores[:, i]
+
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
-        self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
@@ -792,4 +811,14 @@ class GraphicalLassoCV(GraphicalLasso):
         "of cv_results_ and will be removed in version 0.25")
     @property
     def grid_scores_(self):
-        return self.cv_results_
+        n_alphas = len(self.cv_results_) - 1
+        return np.asarray(
+            [self.cv_results_["split{}_score".format(i)]
+             for i in range(n_alphas)]).T
+
+    @deprecated(
+        "The cv_alphas_ attribute is deprecated in version 0.23 in favor "
+        "of cv_results_['alpha'] and will be removed in version 0.25")
+    @property
+    def cv_alphas_(self):
+        return self.cv_results_['alphas'].tolist()

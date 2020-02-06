@@ -64,6 +64,14 @@ Changelog
   returns correct results when one of the transformer steps applies on an
   empty list of columns :pr:`15963` by `Roman Yurchak`_.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. These attributes will be removed in
+  version 0.25. :pr:`16392` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
