@@ -235,7 +235,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.23 and will be
-            removed in 0.25.
+            removed in 0.25. It has no effect.
 
     n_init : int, default=10
         Number of time the k-means algorithm will be run with different
@@ -780,7 +780,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         .. deprecated:: 0.23
             'precompute_distances' was deprecated in version 0.22 and will be
-            removed in 0.25.
+            removed in 0.25. It has no effect.
 
     verbose : int, default=0
         Verbosity mode.
@@ -934,8 +934,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 0.25.",
-                          DeprecationWarning)
+                          "0.23 and will be removed in 0.25. It has no "
+                          "effect", FutureWarning)
 
         n_init = self.n_init
         if n_init <= 0:
