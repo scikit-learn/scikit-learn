@@ -572,9 +572,9 @@ class IterativeImputer(_BaseImputer):
         # Convert min and max values to float arrays if array-like
         # Else (i.e, if scalar) broadcast it to an array of shape=num_features
         self._min_value = as_float_array(self.min_value, force_all_finite=False) if _is_arraylike(self.min_value) \
-                          else np.full(X.shape[1], self.min_value)
+                          else as_float_array(np.full(X.shape[1], self.min_value), force_all_finite=False)
         self._max_value = as_float_array(self.max_value, force_all_finite=False) if _is_arraylike(self.max_value) \
-                          else np.full(X.shape[1], self.max_value)
+                          else as_float_array(np.full(X.shape[1], self.max_value), force_all_finite=False)
         # Fill in any np.nan in min and max value arrays with -np.inf and np.inf respectively
         self._min_value[np.isnan(self._min_value)] = -np.inf
         self._max_value[np.isnan(self._max_value)] = np.inf
