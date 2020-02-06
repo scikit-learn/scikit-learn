@@ -28,7 +28,7 @@ __all__ = ['PatchExtractor',
 # From an image to a graph
 
 
-def _make_edges_3d(n_x, n_y, n_z=1):
+def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
     """Returns a list of edges for a 3D image.
 
     Parameters
@@ -39,45 +39,55 @@ def _make_edges_3d(n_x, n_y, n_z=1):
         The size of the grid in the y direction.
     n_z : integer, default=1
         The size of the grid in the z direction, defaults to 1
+    connectivity : int, default=6
+        Defines what are considered neighbors in voxel space. Current
+        options are 6 or 26 (common connectivities for 3d images).
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
+
+    edges = []
+
     edges_deep = np.vstack((vertices[:, :, :-1].ravel(),
                             vertices[:, :, 1:].ravel()))
     edges_right = np.vstack((vertices[:, :-1].ravel(),
                              vertices[:, 1:].ravel()))
     edges_down = np.vstack((vertices[:-1].ravel(), vertices[1:].ravel()))
 
-    
-    edges_right_deep = np.vstack((vertices[:, :-1, :-1].ravel(),
-                            vertices[:, 1:, 1:].ravel()))
-    edges_down_right = np.vstack((vertices[:-1, :-1, :].ravel(),
-                            vertices[1:, 1:, :].ravel()))
-    edges_down_deep = np.vstack((vertices[:-1, :, :-1].ravel(),
-                            vertices[1:, :, 1:].ravel()))
+    edges = [edges_deep, edges_right, edges_down]
 
-                      
-    edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
-                            vertices[1:, 1:, 1:].ravel()))      
+    #Add the other connections
+    if connectivity == 26:
+        edges_right_deep = np.vstack((vertices[:, :-1, :-1].ravel(),
+                                vertices[:, 1:, 1:].ravel()))
+        edges_down_right = np.vstack((vertices[:-1, :-1, :].ravel(),
+                                vertices[1:, 1:, :].ravel()))
+        edges_down_deep = np.vstack((vertices[:-1, :, :-1].ravel(),
+                                vertices[1:, :, 1:].ravel()))
 
-    edges_down_left = np.vstack((vertices[:-1, 1:, :].ravel(),
-                            vertices[1:, :-1, :].ravel()))
-    edges_down_shallow = np.vstack((vertices[:-1, :, 1:].ravel(),
-                            vertices[1:, :, :-1].ravel()))
-    edges_deep_left = np.vstack((vertices[:, 1:, :-1].ravel(),
-                            vertices[:, :-1, 1:].ravel()))
+                        
+        edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
+                                vertices[1:, 1:, 1:].ravel()))      
 
-    edges_down_left_deep = np.vstack((vertices[:-1, 1:, :-1].ravel(),
-                            vertices[1:, :-1, 1:].ravel()))
-    edges_down_right_shallow = np.vstack((vertices[:-1, :-1, 1:].ravel(),
-                            vertices[1:, 1:, :-1].ravel())) 
-    edges_down_left_shallow = np.vstack((vertices[:-1, 1:, 1:].ravel(),
-                            vertices[1:, :-1, :-1].ravel()))  
+        edges_down_left = np.vstack((vertices[:-1, 1:, :].ravel(),
+                                vertices[1:, :-1, :].ravel()))
+        edges_down_shallow = np.vstack((vertices[:-1, :, 1:].ravel(),
+                                vertices[1:, :, :-1].ravel()))
+        edges_deep_left = np.vstack((vertices[:, 1:, :-1].ravel(),
+                                vertices[:, :-1, 1:].ravel()))
 
-    edges = np.hstack((edges_deep, edges_right, edges_down,
-                    edges_right_deep, edges_down_right, edges_down_deep,
+        edges_down_left_deep = np.vstack((vertices[:-1, 1:, :-1].ravel(),
+                                vertices[1:, :-1, 1:].ravel()))
+        edges_down_right_shallow = np.vstack((vertices[:-1, :-1, 1:].ravel(),
+                                vertices[1:, 1:, :-1].ravel())) 
+        edges_down_left_shallow = np.vstack((vertices[:-1, 1:, 1:].ravel(),
+                                vertices[1:, :-1, :-1].ravel()))
+
+        edges.extend([edges_right_deep, edges_down_right, edges_down_deep,
                     edges_down_right_deep, edges_down_left,
                     edges_down_shallow, edges_deep_left, edges_down_left_deep,
-                    edges_down_right_shallow, edges_down_left_shallow))
+                    edges_down_right_shallow, edges_down_left_shallow])
+
+    edges = np.hstack(edges)
     return edges
 
 
@@ -116,10 +126,10 @@ def _mask_edges_weights(mask, edges, weights=None):
 
 
 def _to_graph(n_x, n_y, n_z, mask=None, img=None,
-              return_as=sparse.coo_matrix, dtype=None):
+              return_as=sparse.coo_matrix, dtype=None, connectivity=6):
     """Auxiliary function for img_to_graph and grid_to_graph
     """
-    edges = _make_edges_3d(n_x, n_y, n_z)
+    edges = _make_edges_3d(n_x, n_y, n_z, connectivity)
 
     if dtype is None:
         if img is None:
@@ -197,7 +207,7 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
 
 def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
-                  dtype=np.int):
+                  dtype=np.int, connectivity=6):
     """Graph of the pixel-to-pixel connections
 
     Edges exist if 2 voxels are connected.
@@ -218,6 +228,9 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
         The data of the returned sparse matrix. By default it is int
+    connectivity : int, default=6
+        Defines what are considered neighbors in voxel space. Current
+        options are 6 or 26 (common connectivities for 3d images).
 
     Notes
     -----
@@ -229,7 +242,7 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
     calls in ``np.asarray`` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
-                     dtype=dtype)
+                     dtype=dtype, connectivity=connectivity)
 
 
 ###############################################################################

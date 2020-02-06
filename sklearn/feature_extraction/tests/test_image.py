@@ -55,6 +55,18 @@ def test_grid_to_graph():
                       dtype=np.float64)
     assert A.dtype == np.float64
 
+def test_grid_to_graph_26():
+    #Check that 2x2x2 block has edges everywhere
+    size = 2
+    A = grid_to_graph(n_x=2, n_y=2, n_z=2, connectivity=26).todense()
+    B = np.ones([size**3,size**3])
+    assert np.array_equal(A,B)
+
+    #Check (some of) the connectivity of the top corner of a 3x3x3 block
+    A = grid_to_graph(n_x=3, n_y=3, n_z=3, connectivity=26).todense()[0,14:]
+    B = np.zeros([1,14])
+    assert np.array_equal(A,B)
+
 
 @ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
 def test_connect_regions():
