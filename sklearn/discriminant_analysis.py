@@ -46,13 +46,14 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         is not None.
 
     covariance_estimator : estimator, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a covariance_ attribute
+        like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
     Returns
     -------
@@ -84,8 +85,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                              "are not None. Only one of the two can be set.")
         covariance_estimator.fit(X)
         if not hasattr(covariance_estimator, 'covariance_'):
-            raise RuntimeError("%s does not have a covariance_ attribute" %
-                               covariance_estimator.__class__.__name__)
+            raise ValueError("%s does not have a covariance_ attribute" %
+                             covariance_estimator.__class__.__name__)
         s = covariance_estimator.covariance_
     return s
 
@@ -137,13 +138,14 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         Shrinkage parameter is ignored if `covariance_estimator` is not None.
 
     covariance_estimator : estimator, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a covariance_ attribute
+        like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
     Returns
     -------
@@ -179,13 +181,14 @@ def _classes_cov(X, y, shrinkage=None, covariance_estimator=None):
     is not None.
 
     covariance_estimator : estimator, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a covariance_ attribute
+        like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
     Returns
     -------
@@ -267,16 +270,17 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
 
     covariance_estimator : estimator, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a covariance_ attribute
+        like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
         Note that covariance_estimator works only with 'lsqr' and 'eigen'
         solvers.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -385,13 +389,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         not None
 
         covariance_estimator : estimator, default=None
-            The covariance estimator is a BaseEstimator with a fit
-            method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a covariance_ attribute
+            like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
-            .. versionadded:: 0.22
+            .. versionadded:: 0.23
 
         Notes
         -----
@@ -437,13 +442,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         not None
 
         covariance_estimator : estimator, default=None
-            The covariance estimator is a BaseEstimator with a fit
-            method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a covariance_ attribute
+            like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
-            .. versionadded:: 0.22
+            .. versionadded:: 0.23
 
         Notes
         -----
@@ -724,13 +730,14 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
           - 'lsqr': Least squares solution.
             Can be combined with custom covariance estimator.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
     covariance_estimator : estimator, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+        If not None, `covariance_estimator` is used to estimate
+        the covariance matrices instead of relying the empirical
+        covariance estimator (with potential shrinkage).
+        The object should have a fit method and a covariance_ attribute
+        like the estimators in sklearn.covariance.
         if None the reg_param parameter drives the estimate.
 
         Note that covariance_estimator works only with 'lsqr' solver
@@ -850,7 +857,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         The least squares solver computes a straightforward solution of the
         optimal decision rule based directly on the discriminant functions.
 
-        .. versionadded:: 0.22
+        .. versionadded:: 0.23
 
         Parameters
         ----------
@@ -865,10 +872,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
         covariance_estimator : estimator, default=None
-            The covariance estimator is a BaseEstimator with a fit
-            method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`. It is used to estimate the covariance matrix.
-
+            If not None, `covariance_estimator` is used to estimate
+            the covariance matrices instead of relying the empirical
+            covariance estimator (with potential shrinkage).
+            The object should have a fit method and a covariance_ attribute
+            like the estimators in sklearn.covariance.
             if None the reg_param parameter drives the estimate.
 
         Notes
