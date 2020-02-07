@@ -44,7 +44,7 @@ predictive::
   ...                            n_repeats=10,
   ...                            random_state=0)
   ...
-  >>> for i in importances.argsort()[::-1]:
+  >>> for i in r.importances_mean.argsort()[::-1]:
   ...     if r.importances_mean[i] > 0.05:
   ...         print("%s:\t%.3f +/- %.3f" % (diabetes.feature_names[i],
   ...                                       r.importances_mean[i],
