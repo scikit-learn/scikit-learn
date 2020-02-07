@@ -239,7 +239,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     @property
     def n_features_in_(self):
         # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() fails if the estimator isn't fitted.
+        # that hasattr() returns False the estimator isn't fitted.
         try:
             check_is_fitted(self)
         except NotFittedError as nfe:

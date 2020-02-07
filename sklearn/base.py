@@ -385,8 +385,9 @@ class BaseEstimator:
             The targets. If None, `check_array` is called on `X` and
             `check_X_y` is called otherwise.
         reset : bool, default=True
-            Whether to reset the `n_features_in_` attribute. See
-            :func:`_check_n_features`.
+            Whether to reset the `n_features_in_` attribute.
+            If False, the input will be checked for consistency with data
+            provided when reset was last True.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`.
