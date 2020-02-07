@@ -14,6 +14,7 @@ from sklearn.utils._testing import assert_array_equal
 
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import _joblib_parallel_args
+from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
 
 
@@ -55,6 +56,21 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
             _joblib_parallel_args(verbose=True)
     else:
         raise ValueError
+
+
+@pytest.mark.parametrize("dtype, val", ([object, 1],
+                                        [object, "a"],
+                                        [float, 1]))
+def test_object_dtype_isnan(dtype, val):
+    X = np.array([[val, np.nan],
+                  [np.nan, val]], dtype=dtype)
+
+    expected_mask = np.array([[False, True],
+                              [True, False]])
+
+    mask = _object_dtype_isnan(X)
+
+    assert_array_equal(mask, expected_mask)
 
 
 @pytest.mark.parametrize("low,high,base",

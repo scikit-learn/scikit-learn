@@ -23,6 +23,7 @@ import joblib
 
 from contextlib import suppress
 
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
@@ -62,7 +63,7 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
             )
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
-        if np.isnan(X).any():
+        if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
 
 
