@@ -1963,7 +1963,7 @@ function::
 
 Mean absolute percentage error
 ------------------------------
-The :func: The `mean_absolute_percentage_error` (MAPE), also known as mean absolute
+The :func:`mean_absolute_percentage_error` (MAPE), also known as mean absolute
 percentage deviation (MAPD), is a measure of prediction accuracy of a regression
 method in statistics, for example in price prediction, also used as a loss function
 for regression problems in machine learning. It is blind to global scaling of the 
