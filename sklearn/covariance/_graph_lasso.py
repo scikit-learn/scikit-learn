@@ -792,8 +792,8 @@ class GraphicalLassoCV(GraphicalLasso):
                                            verbose=inner_verbose))
         grid_scores = np.array(grid_scores)
         self.cv_results_ = {'alphas': np.array(alphas)}
-        for col in range(grid_scores.shape[1]):
-            key = "split{}_score".format(col)
+        for i in range(grid_scores.shape[1]):
+            key = "split{}_score".format(i)
             self.cv_results_[key] = grid_scores[:, i]
 
         best_alpha = alphas[best_index]
