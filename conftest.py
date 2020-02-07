@@ -6,6 +6,7 @@
 # the one from site-packages.
 
 import platform
+import sys
 from distutils.version import LooseVersion
 import os
 
@@ -60,6 +61,10 @@ def pytest_collection_modifyitems(config, items):
         elif _IS_32BIT:
             reason = ('doctest are only run when the default numpy int is '
                       '64 bits.')
+            skip_doctests = True
+        elif sys.platform.startswith("win32"):
+            reason = ("doctests are not run for Windows because numpy arrays "
+                      "repr is inconsistent across platforms.")
             skip_doctests = True
     except ImportError:
         pass

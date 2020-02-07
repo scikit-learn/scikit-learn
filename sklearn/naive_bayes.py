@@ -569,8 +569,9 @@ class _BaseDiscreteNB(_BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -621,9 +622,9 @@ class _BaseDiscreteNB(_BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -1146,21 +1147,15 @@ class CategoricalNB(_BaseDiscreteNB):
                                    sample_weight=sample_weight)
 
     def _check_X(self, X):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X = check_array(X, y, dtype='int', accept_sparse=False,
-        #                 force_all_finite=True)
-        X = check_array(X, accept_sparse=False, force_all_finite=True)
-        X = check_array(X, dtype='int')
+        X = check_array(X, dtype='int', accept_sparse=False,
+                        force_all_finite=True)
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
         return X
 
     def _check_X_y(self, X, y):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X, y = check_array(X, y, dtype='int', accept_sparse=False,
-        #                    force_all_finite=True)
-        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
-        X, y = check_X_y(X, y, dtype='int')
+        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
+                         force_all_finite=True)
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
         return X, y
@@ -1211,7 +1206,7 @@ class CategoricalNB(_BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
-                             .format(self.n_features_, X.shape[1]))
+                             % (self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             indices = X[:, i]

@@ -62,14 +62,14 @@ regression is also supported.
   binary classification tasks, for example with
   :class:`sklearn.multioutput.MultiOutputClassifier`. This approach treats
   each label independently whereas multilabel classifiers *may* treat the
-  multiple classes simultaneously, accounting for correlated behaviour amoung
+  multiple classes simultaneously, accounting for correlated behavior among
   them.
 
   For example, prediction of the topics relevant to a text document or video.
   The document or video may be about one of 'religion', 'politics', 'finance'
   or 'education', several of the topic classes or all of the topic classes.
 
-  Valid representation of :term:`multilabel` `y` is either dense (or sparse)
+  A valid representation of :term:`multilabel` `y` is an either dense or sparse
   :term:`binary` matrix of shape ``(n_samples, n_classes)``. Each column
   represents a class. The ``1``'s in each row denote the positive classes a
   sample has been labelled with. An example of a dense matrix ``y`` for 3
@@ -99,10 +99,10 @@ regression is also supported.
 
   For example, prediction of both wind speed and wind direction, in degrees,
   using data obtained at a certain location. Each sample would be data
-  obtained at one location and both wind speed and directtion would be
+  obtained at one location and both wind speed and direction would be
   output for each sample.
 
-  Valid representation of :term:`multilabel` `y` is dense matrix of shape
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
   :term:`continuous` variables. An example of ``y`` for 3 samples:
 
@@ -130,8 +130,8 @@ regression is also supported.
   image of a fruit, a label is output for both properties and each label is
   one of the possible classes of the corresponding property.
 
-  Valid representation of :term:`multilabel` `y` is dense matrix of shape
-  ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
+  A valid representation of :term:`multioutput` `y` is a dense matrix of shape
+  ``(n_samples, n_classes)`` of class labels. A column wise concatenation of 1d
   :term:`multiclass` variables. An example of ``y`` for 3 samples:
 
     >>> y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])
@@ -140,7 +140,7 @@ regression is also supported.
      ['orange' 'orange']
      ['pear' 'green']]
 
-  Note that any classifiers handling multioutput-multiclass (also known as
+  Note that all classifiers handling multioutput-multiclass (also known as
   multitask classification) tasks, support the multilabel classification task
   as a special case. Multitask classification is similar to the multioutput
   classification task with different model formulations. For more information,
