@@ -50,6 +50,9 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now converges with
+  ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
+  :user:`Erich Schubert <kno10>`.
 
 - |Efficiency| :class:`cluster.Birch` implementation of the predict method 
   avoids high memory footprint by calculating the distances matrix using 
@@ -108,6 +111,11 @@ Changelog
   :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
+
+- |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  `max_leaf_nodes` parameter if the criteria was reached at the same time as
+  the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
 
 - |Fix|  Changed the convention for `max_depth` parameter of
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -216,6 +224,11 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+- |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
+  will now accept value 'if_binary' and will drop the first category of
+  each feature with two categories. :pr:`#16245`
+  by :user:`Rushabh Vasani <rushabh-v>`.
 
 :mod:`sklearn.svm`
 ..................
