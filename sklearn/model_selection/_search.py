@@ -300,6 +300,7 @@ class ParameterSampler:
         """Number of points that will be sampled."""
         return self.n_iter
 
+
 @deprecated(
     "Function fit_grid_point has never been used anywhere in code"
     "in version 0.22"
