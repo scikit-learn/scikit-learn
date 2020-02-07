@@ -473,7 +473,10 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
+    Warning
+    -------
+    This function may not be used on more than 32 arrays because the underlying number functions do not
+    support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
