@@ -53,7 +53,7 @@ if platform.python_implementation() == 'PyPy':
     NUMPY_MIN_VERSION = '1.14.0'
 else:
     SCIPY_MIN_VERSION = '0.19.1'
-    NUMPY_MIN_VERSION = '1.13.1'
+    NUMPY_MIN_VERSION = '1.13.3'
 
 JOBLIB_MIN_VERSION = '0.11'
 

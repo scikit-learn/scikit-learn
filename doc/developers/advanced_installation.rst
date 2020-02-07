@@ -84,7 +84,7 @@ Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
 - Python (>= 3.6),
-- NumPy (>= 1.13),
+- NumPy (>= 1.13.3),
 - SciPy (>= 0.19),
 - Joblib (>= 0.11).
 

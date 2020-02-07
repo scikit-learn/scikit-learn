@@ -10,7 +10,7 @@ jobs:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3.6
-      - NUMPY_VERSION: 1.13
+      - NUMPY_VERSION: 1.13.3
       - SCIPY_VERSION: 0.19.1
       - MATPLOTLIB_VERSION: 2.1.1
       # on conda, this is the latest for python 3.5

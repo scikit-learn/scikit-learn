@@ -49,7 +49,7 @@ jobs:
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
-      # i.e. numpy 1.13 and scipy 0.19
+      # i.e. numpy 1.13.3 and scipy 0.19
       py36_ubuntu_atlas:
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.6'
@@ -59,7 +59,7 @@ jobs:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.6'
         BLAS: 'openblas'
-        NUMPY_VERSION: '1.13'
+        NUMPY_VERSION: '1.13.3'
         SCIPY_VERSION: '0.19.1'
         PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
