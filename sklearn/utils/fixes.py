@@ -173,6 +173,10 @@ else:
     from numpy.ma import MaskedArray    # noqa
 
 
+def _object_dtype_isnan(X):
+    return X != X
+
+
 # TODO: replace by copy=False, when only scipy > 1.1 is supported.
 def _astype_copy_false(X):
     """Returns the copy=False parameter for
