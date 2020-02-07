@@ -1908,7 +1908,7 @@ class PredefinedSplit(BaseCrossValidator):
 
 
 class BinnedStratifiedKFold(StratifiedKFold):
-    """Stratified K-Folds cross-validator
+    """Stratified K-Folds cross-validator for regression
 
     Provides train/test indices to split data in train/test sets.
 
