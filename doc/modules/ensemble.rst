@@ -279,6 +279,19 @@ for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
 
+.. warning::
+
+  The impurity-based feature importances computed on tree-based models suffer
+  from two flaws that can lead to misleading conclusions. First they are
+  computed on statistics derived from the training dataset and therefore **do
+  not necessarily inform us on which features are most important to make good
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
+  :ref:`permutation_importance` is an alternative to impurity-based feature
+  importance that does not suffer from these flaws. These two methods of
+  obtaining feature importance are explored in:
+  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
@@ -322,8 +335,9 @@ trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
 ** max_depth``, the maximum number of leaves in the forest.
 
-As neighboring data points are more likely to lie within the same leaf of a tree,
-the transformation performs an implicit, non-parametric density estimation.
+As neighboring data points are more likely to lie within the same leaf of a
+tree, the transformation performs an implicit, non-parametric density
+estimation.
 
 .. topic:: Examples:
 
@@ -456,7 +470,7 @@ trees.
   Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
 
   These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
@@ -540,8 +554,8 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the feature importances which can be obtained via
-the ``feature_importances_`` property.
+The plot on the right shows the impurity-based feature importances which can be
+obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -722,7 +736,7 @@ The parameter ``learning_rate`` strongly interacts with the parameter
 ``n_estimators``, the number of weak learners to fit. Smaller values
 of ``learning_rate`` require larger numbers of weak learners to maintain
 a constant training error. Empirical evidence suggests that small
-values of ``learning_rate`` favor better test error. [HTF2009]_
+values of ``learning_rate`` favor better test error. [HTF]_
 recommend to set the learning rate to a small constant
 (e.g. ``learning_rate <= 0.1``) and choose ``n_estimators`` by early
 stopping. For a more detailed discussion of the interaction between
@@ -798,7 +812,7 @@ appropriate split points. This information can be used to measure the
 importance of each feature; the basic idea is: the more often a
 feature is used in the split points of a tree the more important that
 feature is. This notion of importance can be extended to decision tree
-ensembles by simply averaging the feature importance of each tree (see
+ensembles by simply averaging the impurity-based feature importance of each tree (see
 :ref:`random_forest_feature_importance` for more details).
 
 The feature importance scores of a fit gradient boosting model can be
@@ -825,7 +839,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`_.
+`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -895,12 +909,13 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-Note that **early-stopping is enabled by default**. The early-stopping
-behaviour is controlled via the ``scoring``, ``validation_fraction``,
-``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
-using an arbitrary :term:`scorer`, or just the training or validation loss. By
-default, early-stopping is performed using the default :term:`scorer` of
-the estimator on a validation set.
+The early-stopping behaviour is controlled via the ``scoring``,
+``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
+possible to early-stop using an arbitrary :term:`scorer`, or just the
+training or validation loss. By default, early-stopping is performed using
+the default :term:`scorer` of the estimator on a validation set but it is
+also possible to perform early-stopping based on the loss value, which is
+significantly faster.
 
 Missing values support
 ----------------------
@@ -946,10 +961,8 @@ Low-level parallelism
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` have implementations that use OpenMP
-for parallelization through Cython. The number of threads that is used can
-be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
-all available cores are used. Please refer to the OpenMP documentation for
-details.
+for parallelization through Cython. For more details on how to control the
+number of threads, please refer to our :ref:`parallelism` notes.
 
 The following parts are parallelized:
 
@@ -996,10 +1009,15 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
-     Boosting System". https://arxiv.org/abs/1603.02754
-  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
-     BoostingDecision Tree"
+  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
+  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
+     package", 2007
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
+     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree" <https://papers.nips.cc/paper/
+     6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
 
 .. _voting_classifier:
 
@@ -1056,7 +1074,9 @@ The following example shows how to fit the majority rule classifier::
    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
    >>> clf3 = GaussianNB()
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='hard')
 
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
    ...     scores = cross_val_score(clf, X, y, scoring='accuracy', cv=5)
@@ -1142,7 +1162,10 @@ hyperparameters of the individual estimators::
    >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
 
    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
 
@@ -1156,13 +1179,17 @@ In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
 must support ``predict_proba`` method)::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
 
 Optionally, weights can be provided for the individual classifiers::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-   ...                         voting='soft', weights=[2, 5, 1])
-
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft', weights=[2,5,1]
+   ... )
 
 .. _voting_regressor:
 
@@ -1175,7 +1202,7 @@ Such a regressor can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 Usage
-.....
+-----
 
 The following example shows how to fit the VotingRegressor::
 
@@ -1187,7 +1214,7 @@ The following example shows how to fit the VotingRegressor::
 
    >>> # Loading some example data
    >>> X, y = load_boston(return_X_y=True)
-   
+
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
@@ -1203,3 +1230,116 @@ The following example shows how to fit the VotingRegressor::
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`
+
+.. _stacking:
+
+Stacked generalization
+======================
+
+Stacked generalization is a method for combining estimators to reduce their
+biases [W1992]_ [HTF]_. More precisely, the predictions of each individual
+estimator are stacked together and used as input to a final estimator to
+compute the prediction. This final estimator is trained through
+cross-validation.
+
+The :class:`StackingClassifier` and :class:`StackingRegressor` provide such
+strategies which can be applied to classification and regression problems.
+
+The `estimators` parameter corresponds to the list of the estimators which
+are stacked together in parallel on the input data. It should be given as a
+list of names and estimators::
+
+  >>> from sklearn.linear_model import RidgeCV, LassoCV
+  >>> from sklearn.svm import SVR
+  >>> estimators = [('ridge', RidgeCV()),
+  ...               ('lasso', LassoCV(random_state=42)),
+  ...               ('svr', SVR(C=1, gamma=1e-6))]
+
+The `final_estimator` will use the predictions of the `estimators` as input. It
+needs to be a classifier or a regressor when using :class:`StackingClassifier`
+or :class:`StackingRegressor`, respectively::
+
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> from sklearn.ensemble import StackingRegressor
+  >>> reg = StackingRegressor(
+  ...     estimators=estimators,
+  ...     final_estimator=GradientBoostingRegressor(random_state=42))
+
+To train the `estimators` and `final_estimator`, the `fit` method needs
+to be called on the training data::
+
+  >>> from sklearn.datasets import load_boston
+  >>> X, y = load_boston(return_X_y=True)
+  >>> from sklearn.model_selection import train_test_split
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+  ...                                                     random_state=42)
+  >>> reg.fit(X_train, y_train)
+  StackingRegressor(...)
+
+During training, the `estimators` are fitted on the whole training data
+`X_train`. They will be used when calling `predict` or `predict_proba`. To
+generalize and avoid over-fitting, the `final_estimator` is trained on
+out-samples using :func:`sklearn.model_selection.cross_val_predict` internally.
+
+For :class:`StackingClassifier`, note that the output of the ``estimators`` is
+controlled by the parameter `stack_method` and it is called by each estimator.
+This parameter is either a string, being estimator method names, or `'auto'`
+which will automatically identify an available method depending on the
+availability, tested in the order of preference: `predict_proba`,
+`decision_function` and `predict`.
+
+A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
+any other regressor or classifier, exposing a `predict`, `predict_proba`, and
+`decision_function` methods, e.g.::
+
+   >>> y_pred = reg.predict(X_test)
+   >>> from sklearn.metrics import r2_score
+   >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
+   R2 score: 0.81
+
+Note that it is also possible to get the output of the stacked outputs of the
+`estimators` using the `transform` method::
+
+  >>> reg.transform(X_test[:5])
+  array([[28.78..., 28.43...  , 22.62...],
+         [35.96..., 32.58..., 23.68...],
+         [14.97..., 14.05..., 16.45...],
+         [25.19..., 25.54..., 22.92...],
+         [18.93..., 19.26..., 17.03... ]])
+
+In practise, a stacking predictor predict as good as the best predictor of the
+base layer and even sometimes outputperform it by combining the different
+strength of the these predictors. However, training a stacking predictor is
+computationally expensive.
+
+.. note::
+   For :class:`StackingClassifier`, when using `stack_method_='predict_proba'`,
+   the first column is dropped when the problem is a binary classification
+   problem. Indeed, both probability columns predicted by each estimator are
+   perfectly collinear.
+
+.. note::
+   Multiple stacking layers can be achieved by assigning `final_estimator` to
+   a :class:`StackingClassifier` or :class:`StackingRegressor`::
+
+    >>> final_layer = StackingRegressor(
+    ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
+    ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
+    ...     final_estimator=RidgeCV()
+    ...     )
+    >>> multi_layer_regressor = StackingRegressor(
+    ...     estimators=[('ridge', RidgeCV()),
+    ...                 ('lasso', LassoCV(random_state=42)),
+    ...                 ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))],
+    ...     final_estimator=final_layer
+    ... )
+    >>> multi_layer_regressor.fit(X_train, y_train)
+    StackingRegressor(...)
+    >>> print('R2 score: {:.2f}'
+    ...       .format(multi_layer_regressor.score(X_test, y_test)))
+    R2 score: 0.83
+
+.. topic:: References
+
+   .. [W1992] Wolpert, David H. "Stacked generalization." Neural networks 5.2
+      (1992): 241-259.

@@ -73,16 +73,13 @@ Note: gists are git cloneable repositories and thus you can use git to
 push datafiles to them.
 
 
-.. _irc:
+.. _gitter:
 
-IRC
+Gitter
 ===
 
-Some developers like to hang out on channel ``#scikit-learn`` on
-``irc.freenode.net``.
-
-If you do not have an IRC client or are behind a firewall this web
-client works fine: https://webchat.freenode.net
+Some developers like to hang out on scikit-learn Gitter room:
+https://gitter.im/scikit-learn/scikit-learn.
 
 
 .. _documentation_resources:

@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -116,6 +116,18 @@ def test_skewed_chi2_sampler():
     Y_neg = Y.copy()
     Y_neg[0, 0] = -c * 2.
     assert_raises(ValueError, transform.transform, Y_neg)
+
+
+def test_additive_chi2_sampler_exceptions():
+    """Ensures correct error message"""
+    transformer = AdditiveChi2Sampler()
+    X_neg = X.copy()
+    X_neg[0, 0] = -1
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+        transformer.fit(X_neg)
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+        transformer.fit(X)
+        transformer.transform(X_neg)
 
 
 def test_rbf_sampler():

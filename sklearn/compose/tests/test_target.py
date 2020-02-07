@@ -7,9 +7,9 @@ from sklearn.base import TransformerMixin
 
 from sklearn.dummy import DummyRegressor
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler

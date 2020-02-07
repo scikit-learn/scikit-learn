@@ -18,11 +18,14 @@ source pypy-env/bin/activate
 python --version
 which python
 
-# XXX: numpy version pinning can be reverted once PyPy
-#      compatibility is resolved for numpy v1.6.x. For instance,
-#      when PyPy3 >6.0 is released (see numpy/numpy#12740)
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
-pip install scipy sphinx numpydoc docutils joblib pillow
+pip install -U pip
+
+# pins versions to install wheel from https://antocuni.github.io/pypy-wheels/manylinux2010
+pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy==1.18.0 scipy==1.3.2
+
+# Install Cython directly
+pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
+pip install sphinx numpydoc docutils joblib pillow pytest
 
 ccache -M 512M
 export CCACHE_COMPRESS=1

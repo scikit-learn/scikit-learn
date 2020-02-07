@@ -8,12 +8,12 @@ import pytest
 import numpy as np
 from scipy import stats
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 
 from sklearn.decomposition import FastICA, fastica, PCA
-from sklearn.decomposition.fastica_ import _gs_decorrelation
+from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -280,3 +280,22 @@ def test_fastica_errors():
     with pytest.raises(ValueError, match='Invalid algorithm.+must '
                        'be.+parallel.+or.+deflation'):
         fastica(X, algorithm='pizza')
+
+
+@pytest.mark.parametrize('whiten', [True, False])
+@pytest.mark.parametrize('return_X_mean', [True, False])
+@pytest.mark.parametrize('return_n_iter', [True, False])
+def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
+    n_features = 3
+    n_samples = 10
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+
+    expected_len = 3 + return_X_mean + return_n_iter
+
+    out = fastica(X, whiten=whiten, return_n_iter=return_n_iter,
+                  return_X_mean=return_X_mean)
+
+    assert len(out) == expected_len
+    if not whiten:
+        assert out[0] is None

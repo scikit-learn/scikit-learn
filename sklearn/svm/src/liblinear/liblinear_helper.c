@@ -135,7 +135,7 @@ struct problem * set_problem(char *X, int double_precision_X, int n_samples,
     problem->l = n_samples;
     problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
-    problem->sample_weight = (double *) sample_weight;
+    problem->W = (double *) sample_weight;
     problem->x = dense_to_sparse(X, double_precision_X, n_samples, n_features,
                         n_nonzero, bias);
     problem->bias = bias;
@@ -158,7 +158,7 @@ struct problem * csr_set_problem (char *X, int double_precision_X,
     problem->l = n_samples;
     problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
-    problem->sample_weight = (double *) sample_weight;
+    problem->W = (double *) sample_weight;
     problem->x = csr_to_sparse(X, double_precision_X, (int *) indices,
                         (int *) indptr, n_samples, n_features, n_nonzero, bias);
     problem->bias = bias;
@@ -172,7 +172,7 @@ struct problem * csr_set_problem (char *X, int double_precision_X,
 }
 
 
-/* Create a paramater struct with and return it */
+/* Create a parameter struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
                                 char *weight, int max_iter, unsigned seed, 
