@@ -1,5 +1,8 @@
 import numpy as np
 
+from . import is_scalar_nan
+from .fixes import _object_dtype_isnan
+
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == value_to_mask."""
@@ -11,6 +14,6 @@ def _get_mask(X, value_to_mask):
             return np.zeros(X.shape, dtype=bool)
         else:
             # np.isnan does not work on object dtypes.
-            return X != X
+            return _object_dtype_isnan(X)
     else:
         return X == value_to_mask
