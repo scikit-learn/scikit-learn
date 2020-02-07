@@ -39,10 +39,12 @@ def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
         The size of the grid in the y direction.
     n_z : integer, default=1
         The size of the grid in the z direction, defaults to 1
-    connectivity : int, default=6
-        Defines what are considered neighbors in voxel space. Current
-        options are 6 or 26 (common connectivities for 3d images).
+    connectivity : int in [6,18,26], default=6
+        Defines what are considered neighbors in voxel space.
     """
+    if connectivity not in [6, 18, 26]:
+        raise ValueError("Invalid value for connectivity: %r" % connectivity)
+
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
 
     edges = []
@@ -55,36 +57,36 @@ def _make_edges_3d(n_x, n_y, n_z=1, connectivity=6):
 
     edges = [edges_deep, edges_right, edges_down]
 
-    #Add the other connections
+    # Add the other connections
     if connectivity >= 18:
         edges_right_deep = np.vstack((vertices[:, :-1, :-1].ravel(),
-                                vertices[:, 1:, 1:].ravel()))
+                                      vertices[:, 1:, 1:].ravel()))
         edges_down_right = np.vstack((vertices[:-1, :-1, :].ravel(),
-                                vertices[1:, 1:, :].ravel()))
+                                      vertices[1:, 1:, :].ravel()))
         edges_down_deep = np.vstack((vertices[:-1, :, :-1].ravel(),
-                                vertices[1:, :, 1:].ravel()))
+                                     vertices[1:, :, 1:].ravel()))
         edges_down_left = np.vstack((vertices[:-1, 1:, :].ravel(),
-                                vertices[1:, :-1, :].ravel()))
+                                     vertices[1:, :-1, :].ravel()))
         edges_down_shallow = np.vstack((vertices[:-1, :, 1:].ravel(),
-                                vertices[1:, :, :-1].ravel()))
+                                        vertices[1:, :, :-1].ravel()))
         edges_deep_left = np.vstack((vertices[:, 1:, :-1].ravel(),
-                                vertices[:, :-1, 1:].ravel()))
+                                     vertices[:, :-1, 1:].ravel()))
 
         edges.extend([edges_right_deep, edges_down_right, edges_down_deep,
-                    edges_down_left, edges_down_shallow, edges_deep_left])
+                      edges_down_left, edges_down_shallow, edges_deep_left])
 
     if connectivity == 26:
         edges_down_right_deep = np.vstack((vertices[:-1, :-1, :-1].ravel(),
-                                vertices[1:, 1:, 1:].ravel())) 
+                                           vertices[1:, 1:, 1:].ravel()))
         edges_down_left_deep = np.vstack((vertices[:-1, 1:, :-1].ravel(),
-                                vertices[1:, :-1, 1:].ravel()))
+                                          vertices[1:, :-1, 1:].ravel()))
         edges_down_right_shallow = np.vstack((vertices[:-1, :-1, 1:].ravel(),
-                                vertices[1:, 1:, :-1].ravel())) 
+                                              vertices[1:, 1:, :-1].ravel()))
         edges_down_left_shallow = np.vstack((vertices[:-1, 1:, 1:].ravel(),
-                                vertices[1:, :-1, :-1].ravel()))
+                                             vertices[1:, :-1, :-1].ravel()))
 
         edges.extend([edges_down_right_deep, edges_down_left_deep,
-                    edges_down_right_shallow, edges_down_left_shallow])
+                      edges_down_right_shallow, edges_down_left_shallow])
 
     edges = np.hstack(edges)
     return edges
@@ -227,9 +229,8 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
         The data of the returned sparse matrix. By default it is int
-    connectivity : int, default=6
-        Defines what are considered neighbors in voxel space. Current
-        options are 6 or 26 (common connectivities for 3d images).
+    connectivity : int in [6, 18, 26], default=6
+        Defines what are considered neighbors in voxel space.
 
     Notes
     -----
