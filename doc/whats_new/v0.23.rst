@@ -112,6 +112,11 @@ Changelog
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
 
+- |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  `max_leaf_nodes` parameter if the criteria was reached at the same time as
+  the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
+
 - |Fix|  Changed the convention for `max_depth` parameter of
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
