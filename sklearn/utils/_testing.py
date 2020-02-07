@@ -519,10 +519,9 @@ def set_random_state(estimator, random_state=0):
     estimator : object
         The estimator
     random_state : int, RandomState instance or None, optional, default=0
-        Pseudo random number generator state.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        Pseudo random number generator state.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
