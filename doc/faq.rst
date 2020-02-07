@@ -74,14 +74,12 @@ See :ref:`model_persistence`.
 How can I create a bunch object?
 ------------------------------------------------
 
-Don't make a bunch object! They are not part of the scikit-learn API. Bunch
-objects are just a way to package some numpy arrays. As a scikit-learn user you
-only ever need numpy arrays to feed your model with data.
+:class:`~utils.Bunch` objects are used either as an output in certain functions
+and methods, or are used to store certain information in several attributes of
+objects throughout the API.
 
-For instance to train a classifier, all you need is a 2D array ``X`` for the
-input variables and a 1D array ``y`` for the target variables. The array ``X``
-holds the features as columns and samples as rows . The array ``y`` contains
-integer values to encode the class membership of each sample in ``X``.
+They should not be used as an input; therefore you almost never need to create
+a ``Bunch`` object, unless you are extending the scikit-learn's API.
 
 How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------

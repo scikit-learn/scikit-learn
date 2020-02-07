@@ -58,9 +58,12 @@ _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
-    """Container object for datasets
+    """Container object exposing keys as attributes
 
-    Dictionary-like object that exposes its keys as attributes.
+    ``Bunch`` is a dictionary-like object that exposes its keys as attributes.
+    It is either used as an output or to store certain information in
+    attributes of certain objects. Please note that this object should not be
+    used as an input parameter.
 
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
