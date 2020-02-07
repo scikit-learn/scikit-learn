@@ -17,21 +17,6 @@ as GitHub gists; to install them, click on the "Raw" button on the gist page.
 .. _TamperMonkey: https://tampermonkey.net/
 .. _GreaseMonkey: https://www.greasespot.net/
 
-
-.. _viewing_rendered_html_documentation:
-
-Viewing the rendered HTML documentation for a pull request
-----------------------------------------------------------
-
-We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, instructions are provided in the :ref:`documentation
-section of the contributor guide <contribute_documentation>`. To save you a few
-clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
-that adds a button to every PR. After installing the userscript, navigate to
-any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
-appear in the top-right area.
-
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 

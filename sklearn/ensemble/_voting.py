@@ -114,7 +114,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : array-like of shape (n_classifiers,), default=`None`
+    weights : array-like of shape (n_classifiers,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
@@ -142,7 +142,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -351,7 +351,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    weights : array-like of shape (n_regressors,), default=`None`
+    weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
@@ -371,7 +371,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -451,7 +451,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns

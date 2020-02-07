@@ -48,14 +48,14 @@ an arbitrary metric on the tree's predictions. These two methods of obtaining
 feature importance are explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
-Strongly correlated features
-----------------------------
+Misleading values on strongly correlated features
+-------------------------------------------------
 
 When two features are correlated and one of the features is permuted, the model
-will still have access to the feature through its correlated feature. This will 
+will still have access to the feature through its correlated feature. This will
 result in a lower importance for both features, where they might *actually* be
 important. One way  to handle this is to cluster features that are correlated
-and only keep one feature from each cluster. This use case is explored in: 
+and only keep one feature from each cluster. This use case is explored in:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`.
 
 .. topic:: Examples:
