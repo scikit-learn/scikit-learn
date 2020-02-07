@@ -220,6 +220,11 @@ Changelog
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
+- |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
+  will now accept value 'if_binary' and will drop the first category of
+  each feature with two categories. :pr:`#16245`
+  by :user:`Rushabh Vasani <rushabh-v>`.
+
 :mod:`sklearn.svm`
 ..................
 
