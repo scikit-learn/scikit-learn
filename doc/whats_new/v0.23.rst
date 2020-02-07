@@ -14,6 +14,14 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
+New `n_features_in_` attribute
+------------------------------
+
+Most estimators now expose a `n_features_in_` attribute. This attribute is
+equal to the number of features passed to the `fit` method. See
+`SLEP010 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+for details.
+
 
 Changed models
 --------------
