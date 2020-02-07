@@ -12,9 +12,10 @@ benefit of such a model is that it does not assume any form for the target
 function such as linearity. For comparison a linear regression is also
 presented.
 
-The plot on the right-hand side shows the model decision functions that results
-from the linear interpolation of thresholds points (asubset of the training
-data input observations and there matching isotonic predictions).
+The plot on the right-hand side shows the model prediction function that
+results from the linear interpolation of thresholds points. The thresholds
+points are a subset of the training input observations and their matching
+target values as computed by the isotonic non-parametric fit.
 
 """
 print(__doc__)
