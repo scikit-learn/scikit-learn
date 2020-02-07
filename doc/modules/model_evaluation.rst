@@ -1975,7 +1975,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
   \text{MAPE}(y, \hat{y}) = \frac{\mid{y} - \hat{y}\mid}{\text{MAX}(\epsilon, \mid{y}\mid)}
 
-Where :math:`\epsilon` is a very small number greater than zero and kept in order to avoid
+where :math:`\epsilon` is a very small number greater than zero to avoid
 the crash when y is zero.
 
 The :func:`mean_absolute_percentage_error` function supports multioutput.
