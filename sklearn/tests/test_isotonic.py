@@ -515,8 +515,8 @@ def test_make_unique_dtype():
 def test_isotonic_thresholds(increasing):
     rng = np.random.RandomState(42)
     n_samples = 30
-    y = rng.normal(size=n_samples)
     X = rng.normal(size=n_samples)
+    y = rng.normal(size=n_samples)
     ireg = IsotonicRegression(increasing=increasing).fit(X, y)
     X_thresholds, y_thresholds = ireg.X_thresholds_, ireg.y_thresholds_
     assert X_thresholds.shape == y_thresholds.shape
@@ -531,27 +531,11 @@ def test_isotonic_thresholds(increasing):
     assert y_thresholds.max() <= y.max()
     assert y_thresholds.min() >= y.min()
 
-    x_previous, y_previous = None, None
-    for x_current, y_current in zip(X_thresholds, y_thresholds):
-        if x_previous is not None:
-            # Threshold pairs are always stored in order of increasing
-            # input value.
-            assert x_current >= x_previous
-
-            # Duplicate trimming should enforce y thresholds to be
-            # strictly increasing whenever the X thresholds stays
-            # constant.
-            if increasing:
-                if x_current == x_previous:
-                    assert y_current > y_previous
-                else:
-                    assert y_current >= y_previous
-            else:
-                if x_current == x_previous:
-                    assert y_current < y_previous
-                else:
-                    assert y_current <= y_previous
-        x_previous, y_previous = x_current, y_current
+    assert all(np.diff(X_thresholds) > 0)
+    if increasing:
+        assert all(np.diff(y_thresholds) >= 0)
+    else:
+        assert all(np.diff(y_thresholds) <= 0)
 
 
 def test_pickle_load_old_version():
