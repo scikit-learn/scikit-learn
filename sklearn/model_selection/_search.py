@@ -301,10 +301,10 @@ class ParameterSampler:
         return self.n_iter
 
 
+# FIXME Remove fit_grid_point in 0.24
 @deprecated(
-    "Function fit_grid_point has never been used anywhere in code"
-    "in version 0.22"
-    "and will be removed in release 0.24"
+    "fit_grid_point is deprecated in version 0.22 "
+    "and will be removed in version 0.24"
 )
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):

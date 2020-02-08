@@ -1311,12 +1311,17 @@ def test_fit_grid_point():
     cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
+    
+    msg = (
+        "fit_grid_point is deprecated in version 0.22 "
+        "and will be removed in version 0.24")
 
     for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
         for train, test in cv.split(X, y):
-            this_scores, this_params, n_test_samples = fit_grid_point(
-                X, y, clone(svc), params, train, test,
-                scorer, verbose=False)
+            with pytest.warns(FutureWarning, match=msg):
+                this_scores, this_params, n_test_samples = fit_grid_point(
+                    X, y, clone(svc), params, train, test,
+                    scorer, verbose=False)
 
             est = clone(svc).set_params(**params)
             est.fit(X[train], y[train])
