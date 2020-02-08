@@ -785,7 +785,7 @@ class Product(KernelOperator):
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array-like of shape = (n_samples_Y, n_features) or list of object,\
+        Y : array-like of shape (n_samples_Y, n_features) or list of object,\
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             is evaluated instead.

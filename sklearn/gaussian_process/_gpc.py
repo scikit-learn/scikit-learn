@@ -116,8 +116,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     ----------
     X_train_ : array-like of shape (n_samples, n_features) or list of object
         Feature vectors or other representations of training data (also
-        required for prediction). Could either be array-like with shape =
-        (n_samples, n_features) or a list of objects.
+        required for prediction).
 
     y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
@@ -163,8 +162,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -253,8 +250,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -278,8 +273,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -338,7 +331,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : ndarray of shape = (n_kernel_params,), \
+        log_likelihood_gradient : ndarray of shape (n_kernel_params,), \
             optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
@@ -612,8 +605,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -673,8 +664,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -697,8 +686,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------

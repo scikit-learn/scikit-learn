@@ -115,8 +115,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     ----------
     X_train_ : array-like of shape (n_samples, n_features) or list of object
         Feature vectors or other representations of training data (also
-        required for prediction). Could either be array-like with shape =
-        (n_samples, n_features) or a list of objects.
+        required for prediction).
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
@@ -167,8 +166,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
@@ -283,8 +280,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         return_std : bool, default=False
             If True, the standard-deviation of the predictive distribution at
@@ -372,8 +367,6 @@ class GaussianProcessRegressor(MultiOutputMixin,
         ----------
         X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         n_samples : int, default=1
             The number of samples drawn from the Gaussian process
