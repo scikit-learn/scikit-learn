@@ -1799,7 +1799,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
-    """Build a text report showing the main classification metrics
+    """Build a text report showing the main classification metrics.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
