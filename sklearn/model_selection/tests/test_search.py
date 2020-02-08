@@ -1310,10 +1310,10 @@ def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
-    scorer = make_scorer(accuracy_score)    
+    scorer = make_scorer(accuracy_score)
     msg = (
-        "fit_grid_point is deprecated in version 0.22 "
-        "and will be removed in version 0.24")
+        "fit_grid_point is deprecated in version 0.23 "
+        "and will be removed in version 0.25")
 
     for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
         for train, test in cv.split(X, y):
