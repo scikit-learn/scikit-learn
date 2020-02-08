@@ -505,14 +505,11 @@ class CompoundKernel(Kernel):
         X : array-like of shape (n_samples_X, n_features) or list of object, \
             default=None
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape (n_samples_X, n_features) or list of object, \
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -567,8 +564,7 @@ class CompoundKernel(Kernel):
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------
@@ -712,14 +708,11 @@ class Sum(KernelOperator):
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape (n_samples_X, n_features) or list of object,\
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -753,8 +746,7 @@ class Sum(KernelOperator):
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------
@@ -792,14 +784,11 @@ class Product(KernelOperator):
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape = (n_samples_Y, n_features) or list of object,\
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -834,8 +823,7 @@ class Product(KernelOperator):
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------
@@ -950,14 +938,11 @@ class Exponentiation(Kernel):
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape (n_samples_Y, n_features) or list of object,\
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -993,8 +978,7 @@ class Exponentiation(Kernel):
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------
@@ -1054,14 +1038,11 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape (n_samples_X, n_features) or list of object, \
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -1105,8 +1086,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------
@@ -1157,14 +1137,11 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
-            Could either be array-like with shape = (n_samples_X, n_features)
-            or a list of objects.
 
         Y : array-like of shape (n_samples_X, n_features) or list of object,\
             default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            is evaluated instead. Y could either be array-like with
-            shape = (n_samples_Y, n_features) or a list of objects.
+            is evaluated instead.
 
         eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
@@ -1207,8 +1184,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples_X, n_features) or list of object
-            Argument to the kernel. Could either be array-like with
-            shape = (n_samples_X, n_features) or a list of objects.
+            Argument to the kernel.
 
         Returns
         -------

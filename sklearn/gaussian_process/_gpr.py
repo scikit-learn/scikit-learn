@@ -165,7 +165,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features) or a list of object
+        X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
             Could either be array-like with shape = (n_samples, n_features)
             or a list of objects.
