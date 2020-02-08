@@ -28,3 +28,4 @@ User Guide
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
    modules/computing.rst
+   modules/common_pitfalls.rst
