@@ -1314,28 +1314,27 @@ def test_fit_grid_point():
     msg = (
         "fit_grid_point is deprecated in version 0.23 "
         "and will be removed in version 0.25")
-
-    for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
-        for train, test in cv.split(X, y):
-            with pytest.warns(FutureWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
+        for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
+            for train, test in cv.split(X, y):
                 this_scores, this_params, n_test_samples = fit_grid_point(
                     X, y, clone(svc), params, train, test,
                     scorer, verbose=False)
 
-            est = clone(svc).set_params(**params)
-            est.fit(X[train], y[train])
-            expected_score = scorer(est, X[test], y[test])
+                est = clone(svc).set_params(**params)
+                est.fit(X[train], y[train])
+                expected_score = scorer(est, X[test], y[test])
 
-            # Test the return values of fit_grid_point
-            assert_almost_equal(this_scores, expected_score)
-            assert params == this_params
-            assert n_test_samples == test.size
+                # Test the return values of fit_grid_point
+                assert_almost_equal(this_scores, expected_score)
+                assert params == this_params
+                assert n_test_samples == test.size
 
-    # Should raise an error upon multimetric scorer
-    assert_raise_message(ValueError, "For evaluating multiple scores, use "
-                         "sklearn.model_selection.cross_validate instead.",
-                         fit_grid_point, X, y, svc, params, train, test,
-                         {'score': scorer}, verbose=True)
+        # Should raise an error upon multimetric scorer
+        assert_raise_message(ValueError, "For evaluating multiple scores, use "
+                             "sklearn.model_selection.cross_validate instead.",
+                             fit_grid_point, X, y, svc, params, train, test,
+                             {'score': scorer}, verbose=True)
 
 
 def test_pickle():
