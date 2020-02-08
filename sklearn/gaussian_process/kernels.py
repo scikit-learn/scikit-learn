@@ -1843,7 +1843,7 @@ class PairwiseKernel(Kernel):
     gamma_bounds : pair of floats >= 0, default=(1e-5, 1e5)
         The lower and upper bound on gamma
 
-    metric : {"linear", "additive_chi2", "chi2", "poly", "polynomial",
+    metric : {"linear", "additive_chi2", "chi2", "poly", "polynomial", \
               "rbf", "laplacian", "sigmoid", "cosine"} or callable, \
               default="linear"
         The metric to use when calculating kernel between instances in a
