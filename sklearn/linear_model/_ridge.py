@@ -1548,8 +1548,8 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 cv=None, gcv_mode=None, store_cv_values=False, 
+                 boundary_warning = False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1557,6 +1557,7 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.boundary_warning = boundary_warning
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with cv.
@@ -1614,6 +1615,15 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
+            if (self.alpha_ in [min(self.alphas), max(self.alphas)])*\
+                                                 self.boundary_warning :
+                warnings.warn("The optimal value for " 
+                "the regularization parameter 'alpha' was {} "
+                "which lies at a boundary of the explored range "
+                "(between {} and {}). Consider setting the 'alphas' " 
+                " parameter to explore a wider range. "
+                .format(self.alpha_,min(self.alphas),max(self.alphas)))
+
             self.best_score_ = gs.best_score_
 
         self.coef_ = estimator.coef_
@@ -1736,8 +1746,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifier : Ridge classifier
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
-
-
+    
+    
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
