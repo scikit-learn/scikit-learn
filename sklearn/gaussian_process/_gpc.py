@@ -338,7 +338,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : ndarray of shape = (n_kernel_params,), optional
+        log_likelihood_gradient : ndarray of shape = (n_kernel_params,), \
+            optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
@@ -760,7 +761,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : ndarray of shape = (n_kernel_params,), optional
+        log_likelihood_gradient : ndarray of shape (n_kernel_params,), optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
