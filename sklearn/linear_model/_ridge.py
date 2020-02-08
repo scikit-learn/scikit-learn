@@ -1548,8 +1548,8 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None, store_cv_values=False, 
-                 boundary_warning = False):
+                 cv=None, gcv_mode=None, store_cv_values=False,
+                 boundary_warning=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1615,14 +1615,14 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
-            if (self.alpha_ in [min(self.alphas), max(self.alphas)])*\
+            if (self.alpha_ in [min(self.alphas), max(self.alphas)]) * \
                                                  self.boundary_warning :
-                warnings.warn("The optimal value for " 
+                warnings.warn("The optimal value for "
                 "the regularization parameter 'alpha' was {} "
                 "which lies at a boundary of the explored range "
-                "(between {} and {}). Consider setting the 'alphas' " 
+                "(between {} and {}). Consider setting the 'alphas' "
                 " parameter to explore a wider range. "
-                .format(self.alpha_,min(self.alphas),max(self.alphas)))
+                .format(self.alpha_, min(self.alphas), max(self.alphas)))
 
             self.best_score_ = gs.best_score_
 
