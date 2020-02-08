@@ -1615,14 +1615,16 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
-            if (self.alpha_ in [min(self.alphas), max(self.alphas)]) * \
-                                                 self.boundary_warning:
-                warnings.warn("The optimal value for "
+            min_alpha = min(self.alphas)
+            max_alpha = max(self.alphas)
+            if (self.alpha_ in [min_alpha, max_alpha]) * self.boundary_warning:
+                warnings.warn(
+                    "The optimal value for "
                     "the regularization parameter 'alpha' was {} "
                     "which lies at a boundary of the explored range "
                     "(between {} and {}). Consider setting the 'alphas' "
                     "parameter to explore a wider range. "
-                    .format(self.alpha_, min(self.alphas), max(self.alphas)))
+                    .format(self.alpha_, min_alpha, max_alpha))
 
             self.best_score_ = gs.best_score_
 
@@ -1747,7 +1749,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
 
-    
+
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
