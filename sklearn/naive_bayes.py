@@ -22,11 +22,12 @@ import copy
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
+from .exceptions import NotFittedError
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils.extmath import safe_sparse_dot
-from .utils import check_X_y, check_array, deprecated, Bunch
+from .utils import check_X_y, check_array, deprecated, Bunch, _safe_indexing
 from .utils.fixes import logsumexp
 from .utils.validation import _check_sample_weight
 from .utils.metaestimators import _BaseComposition
@@ -122,7 +123,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     Read more in the :ref:`User Guide <general_naive_bayes>`.
 
-    Attributes
+    Parameters
     ----------
     # TODO
     distributions : list of tuples
@@ -145,31 +146,142 @@ boolean mask array or callable
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
+    Attributes
+    ----------
+    classes_ : ndarray of shape (n_classes,)
+        class labels known to the classifier
+
+    n_features_ : int
+        Number of features of each sample.
+
     Examples
     --------
     >>> import numpy as np
+    >>> import pandas as pd
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
+
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
     ...               [2.7, 3.8, 2.3, 1, 0],
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
+    >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
+    
     >>> clf = GeneralNB([
     >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
     >>>     ("bernoulli", BernoulliNB(), [3, 4])
     >>> ])
     >>> clf.fit(X, y)
-    >>> print(clf.predict([[1.5, 2.3, 5.7, 0, 1]]))
+    >>> print(clf.predict(X_test))
+    [1]
+    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
+    1.0
+
+    >>> df = pd.DataFrame(X)
+    >>> df.columns = list("abcde")
+    >>> df["y"] = [1, 0, 0]
+    >>> clf = GeneralNB([
+    >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
+    >>>     ("bernoulli", BernoulliNB(), ["d", "e"])
+    >>> ])
+    >>> clf.fit(df.iloc[:,:-1], df["y"])
+
+    >>> df_test = pd.DataFrame(X_test)
+    >>> df_test.columns = list("abcde")
+    >>> print(clf.predict(df_test))
     [1]
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
     """
-    # TODO check_is_fitted
     # TODO consider jll for each estimator
+    # TODO unify variable names with similar meaning 
+    #      ("distribution", "model", "nb"), ("column", "feature")
 
     def __init__(self, distributions):
         self.distributions = distributions
-        self._fits = []
+        self.classes_ = None
+        self.n_features_ = None
+        self._fits = None
+        self._columns = None
+        self._df_columns = None
         self._is_fitted = False
+
+    def fit(self, X, y):
+        """Fit Gaussian Naive Bayes according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+        """
+        self._validate_distributions(X)
+        X, y = self._check_X_y(X, y)
+
+        self.classes_ = np.unique(y)
+
+        self._fits = [
+            (nb.fit(_safe_indexing(X, features, axis=1), y), features)
+            for (_, nb, _), features
+            in zip(self.distributions, self._columns)]
+
+        self._is_fitted = True
+
+        return self
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of the samples X
+
+        Parameters
+        ----------
+        X : ndarray
+        
+        Returns
+        -------
+        jll : ndarray, shape (1, n_classes)
+
+        Raises
+        ------
+        NotFittedError
+            If estimators have not been fitted
+        """
+        if not self._is_fitted:
+            raise NotFittedError("Call the fit() method first "
+                                 "before calling predict().")
+
+        # Obtain the log priors from each fitted estimator
+        log_priors = [
+            nb.class_log_prior_
+            if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
+            for nb, _ in self._fits]
+
+        # Take any class log prior from the estimators
+        if np.allclose(*log_priors):  
+            log_prior = log_priors[0]
+        else:
+            raise ValueError("Class priors for every estimator "
+                             "must be the same.")
+
+        # Obtain the jll of each fitted estimator
+        jlls = [nb._joint_log_likelihood(
+                    np.array(_safe_indexing(X, features, axis=1)))
+                for (nb, features) in self._fits]
+
+        # Stack these jlls to give us
+        # the shape (distribution, sample, class)
+        jlls = np.hstack([jlls])
+
+        # Subtract the class log prior from all the jlls
+        # but add it back after the summation
+        jlls = jlls - log_prior
+        jll = jlls.sum(axis=0) + log_prior
+
+        return jll
 
     @property
     def distributions_(self):
@@ -188,66 +300,6 @@ boolean mask array or callable
         self._set_params('distributions_', **kwargs)
         return self
 
-    def fit(self, X, y):
-        """Fit Gaussian Naive Bayes according to X, y
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-        y : array-like, shape (n_samples,)
-            Target values.
-        distributions : list of tuples
-            A list of (NB, features) tuples, where NB is 'BernoulliNB',
-            'GaussianNB', 'MultinomialNB', 'ComplementNB' or 'CategoricalNB',
-            and features is a list of indices.
-
-        Returns
-        -------
-        self : object
-        """
-        self._validate_distributions(X)
-        X, y = check_X_y(X, y)
-        y = column_or_1d(y, warn=True)
-
-        # Should be the same after the validation
-        self.classes_ = np.unique(y)
-
-        inits = [(nb, features) for (_, nb, features) in self.distributions]
-
-        self._fits = [(nb.fit(X[:, features], y), features)
-                      for (nb, features) in inits]
-
-        return self
-
-    def _joint_log_likelihood(self, X):
-        """Calculate the posterior log probability of the samples X"""
-
-        X = np.array(X)
-
-        log_priors = [
-            nb.class_log_prior_
-            if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-            for (nb, _) in self._fits]
-
-        # Assume all class log priors are the same for all the NB's
-        # so we'll take the first one.
-        log_prior = log_priors[0]
-
-        jlls = [nb._joint_log_likelihood(X[:, features])
-                for (nb, features) in self._fits]
-
-        # jlls have the shape (distribution, sample, class)
-        jlls = np.hstack([jlls])
-
-        # Remove the class log prior from all the distributions
-        # but add it back after the summation
-        jlls = jlls - log_prior
-        jll = jlls.sum(axis=0) + log_prior
-
-        return jll
-
     def _validate_distributions(self, X):
 
         valid_modules = copy.copy(__all__)
@@ -259,6 +311,8 @@ boolean mask array or callable
 
         names, _, _ = zip(*self.distributions)
         self._validate_names(names)
+
+        self._validate_column_callables(X)
 
         # Check type
         if not isinstance(self.distributions, list):
@@ -291,8 +345,7 @@ boolean mask array or callable
                     "Distributions should be one of {}".format(valid_modules))
 
             # For checking fit_prior later
-            _class_prior = getattr(model, "prior", None) or 
-                getattr(model, "class_prior", None)
+            _class_prior = getattr(model, "prior", None) or getattr(model, "class_prior", None)
             _list_class_prior.append(_class_prior)
 
             _fit_prior = getattr(model, "fit_prior", True)
@@ -315,15 +368,70 @@ boolean mask array or callable
                              "must be the same values through out all models "
                              "if specified.")
 
-        X = np.array(X)
-        num_cols_expected = X.shape[-1]
-        num_cols = len(_dict_distribution)
-        if num_cols != num_cols_expected:
-            raise ValueError("Expected {} columns".format(num_cols_expected) +
-                             "but {} were specified.".format(num_cols))
+        n_features = X.shape[-1]
+        n_cols = len(_dict_distribution)
+        if n_cols != n_features:
+            raise ValueError("Expected {} columns".format(n_features) +
+                             " in X but {} were specified.".format(n_cols))
+        self.n_features_ = n_features
+
+    def _validate_column_callables(self, X):
+        """
+        Converts callable column specifications.
+        """
+        columns = []
+        for _, _, column in self.distributions:
+            if callable(column):
+                column = column(X)
+            columns.append(column)
+        self._columns = columns    
+    
+    def _check_X_y(self, X, y):
+        """
+        Validate data inputs.
+        
+        Parameters
+        ----------
+            X ([type]): [description]
+            y ([type]): [description]
+        
+        Returns
+        -------
+            X: array-like
+                Validated data input X
+            y: array-like
+                Validated data input y
+        """
+        if hasattr(X, "columns"):
+            self._df_columns = X.columns
+
+        return X, y
 
     def _check_X(self, X):
-        return check_array(X)
+        """
+        Checks for data. This validation will be executed
+        before calculating the joint log likelihood.
+        
+        Parameters
+        ----------
+            X : ndarray
+        
+        Returns
+        -------
+            X: ndarray
+                validated data
+        """
+        # Check pandas.DataFrame
+        if self._df_columns is not None:
+            
+            if not hasattr(X, "columns"):
+                raise TypeError("X should be a dataframe")
+            
+            if not all(self._df_columns == X.columns):
+                raise ValueError("Column names must match with "
+                                "column names of fitted data.")
+            
+        return X
 
     @property
     def named_distributions_(self):
