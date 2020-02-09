@@ -134,15 +134,15 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     Parameters
     ----------
-    distributions : list of tuples
-        List of (name, distribution, column(s)) tuples specifying the
+    models : list of tuples
+        List of (name, naive bayes estimator, column(s)) tuples specifying the
         assumptions of distribution on the features to apply
         naive Bayes on subsets of the data.
 
         name : string
             Like in Pipeline and ColumnTransformer, this allows the
             distribution and its parameters to be set using ``set_params``.
-        distribution : Estimator
+        naive bayes model : Estimator
             Estimator must support :term:`fit`, :term:`predict`
             and :term:`_joint_log_likelihood`.
         column(s) : array-like of string or int, slice
@@ -200,13 +200,13 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     """
     # TODO consider jll for each estimator
     # TODO unify variable names with similar meaning 
-    #      ("distribution", "model", "nb"), ("column", "feature")
+    #      ("column", "feature")
 
-    def __init__(self, distributions):
-        self.distributions = distributions
+    def __init__(self, models):
+        self.models = models
+        self.models_ = None
         self.classes_ = None
         self.n_features_ = None
-        self._fits = None
         self._columns = None
         self._df_columns = None
         self._is_fitted = False
@@ -226,15 +226,15 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         -------
         self : object
         """
-        self._validate_distributions(X)
+        self._validate_models(X)
         self._check_X_y(X, y)
 
         self.classes_ = np.unique(y)
 
-        self._fits = [
-            (nb.fit(_safe_indexing(X, features, axis=1), y), features)
-            for (_, nb, _), features
-            in zip(self.distributions, self._columns)]
+        self.models_ = [
+            (name, nb_model.fit(_safe_indexing(X, features, axis=1), y), features)
+            for (name, nb_model, _), features
+            in zip(self.models, self._columns)]
 
         self._is_fitted = True
 
@@ -261,25 +261,26 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                                  "before calling predict().")
 
         # Obtain the log priors from each fitted estimator
-        log_priors = [
+        all_log_priors = [
             nb.class_log_prior_
-            if hasattr(nb, 'class_log_prior_') else np.log(nb.class_prior_)
-            for nb, _ in self._fits]
+            if hasattr(nb_model, 'class_log_prior_') else np.log(nb.class_prior_)
+            for _, nb_model, _ in self.models_]
 
         # Take any class log prior from the estimators
-        if np.allclose(*log_priors):  
-            log_prior = log_priors[0]
+        all_log_priors = np.hstack(all_log_priors)
+        if np.max(np.ptp(all_log_priors, axis=1)) < 1e-8:
+            log_prior = all_log_priors[0]
         else:
             raise ValueError("Class priors for every estimator "
                              "must be the same.")
 
         # Obtain the jll of each fitted estimator
-        jlls = [nb._joint_log_likelihood(
+        jlls = [nb_model._joint_log_likelihood(
                     np.array(_safe_indexing(X, features, axis=1)))
-                for (nb, features) in self._fits]
+                for (_, nb_model, features) in self.models_]
 
         # Stack these jlls to give us
-        # the shape (distribution, sample, class)
+        # the shape (estimator, sample, class)
         jlls = np.hstack([jlls])
 
         # Subtract the class log prior from all the jlls
@@ -290,92 +291,92 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         return jll
 
     @property
-    def distributions_(self):
-        return [(name, distr) for name, distr, _ in self.distributions]
+    def models(self):
+        return self.models
 
-    @distributions_.setter
-    def distributions_(self, value):
-        self.distributions = [
-            (name, distr, col) for ((name, distr), (_, _, col))
-            in zip(value, self.distributions)]
+    @models.setter
+    def models(self, value):
+        self.models = [(name, nb_model, col)
+                       for (name, nb_model, col) in value]
+        self._is_fitted = False
 
     def get_params(self, deep=True):
-        return self._get_params('distributions_', deep=deep)
+        return self._get_params('models_', deep=deep)
 
     def set_params(self, **kwargs):
-        self._set_params('distributions_', **kwargs)
+        self._set_params('models_', **kwargs)
         return self
 
-    def _validate_distributions(self, X):
+    def _validate_models(self, X):
 
         valid_modules = copy.copy(__all__)
         valid_modules.remove("GeneralNB")
-        _dict_distribution = {}
+        _dict_model = {}
 
         _list_fit_prior = []
         _list_class_prior = []
 
-        names, _, _ = zip(*self.distributions)
+        names, _, _ = zip(*self.models)
         self._validate_names(names)
 
         self._validate_column_callables(X)
 
         # Check type
-        if not isinstance(self.distributions, list):
+        if not isinstance(self.models, list):
             raise TypeError(
-                "Expected list but got {}".format(type(self.distributions)))
+                "Expected list but got {}".format(type(self.models)))
 
-        for distribution in self.distributions:
+        for model in self.models:
 
             # Check type
-            if not isinstance(distribution, tuple):
+            if not isinstance(model, tuple):
                 raise TypeError(
                     "Expected list of tuples "
-                    "but got list of {}s".format(type(distribution)))
-            if len(distribution) != 3:
+                    "but got list of {}s".format(type(model)))
+            if len(model) != 3:
                 raise ValueError("Expected tuple to have length of 3 "
-                                 "but got {}".format(len(distribution)))
+                                 "but got {}".format(len(model)))
 
-            name, model, features = distribution
+            name, estimator, features = model
 
-            # Check naive bayes model
-            if callable(model):
+            # Check naive bayes estimator
+            if callable(estimator):
                 raise ValueError("Wrong format specified.")
-            if not (hasattr(model, "fit")
-                    or hasattr(model, "_joint_log_likelihood")):
-                raise TypeError("Naive bayes model should implement "
+            if not (hasattr(estimator, "fit")
+                    or hasattr(estimator, "_joint_log_likelihood")):
+                raise TypeError("Naive bayes estimator should implement "
                                 "the fit and _joint_log_likelihood methods. "
-                                "{} doesn't.".format(type(model)))
-            if model.__class__.__name__ not in valid_modules:
+                                "{} doesn't.".format(type(estimator)))
+            if estimator.__class__.__name__ not in valid_modules:
                 raise ValueError(
                     "Distributions should be one of {}".format(valid_modules))
 
             # For checking fit_prior later
-            _class_prior = getattr(model, "prior", None) or getattr(model, "class_prior", None)
+            _class_prior = getattr(estimator, "prior", None) or getattr(estimator, "class_prior", None)
             _list_class_prior.append(_class_prior)
 
-            _fit_prior = getattr(model, "fit_prior", True)
+            _fit_prior = getattr(estimator, "fit_prior", True)
             _list_fit_prior.append(_fit_prior)
 
             # Check the feature
             for feature in features:
-                if feature in _dict_distribution:
+                if feature in _dict_model:
                     raise ValueError("Duplicate specification of feature found.")
                 else:
-                    _dict_distribution[feature] = model.__class__.__name__.lower()
+                    _dict_model[feature] = estimator.__class__.__name__.lower()
 
         if len(set(_list_class_prior)) != 1:
             raise ValueError("The parameters 'class_prior' or 'prior' "
-                             "must be the same values throughout all models "
+                             "must be the same values throughout all estimators "
                              "if specified.")
 
         if len(set(_list_fit_prior)) != 1:
             raise ValueError("The parameter 'fit_prior' "
-                             "must be the same values through out all models "
+                             "must be the same values through out all estimators "
                              "if specified.")
 
         n_features = X.shape[-1]
-        n_cols = len(_dict_distribution)
+        n_cols = len(_dict_model)
         if n_cols != n_features:
             raise ValueError("Expected {} columns".format(n_features) +
                              " in X but {} were specified.".format(n_cols))
@@ -386,7 +387,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         Converts callable column specifications.
         """
         columns = []
-        for _, _, column in self.distributions:
+        for _, _, column in self.models:
             if callable(column):
                 column = column(X)
             columns.append(column)
@@ -410,8 +411,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         return X
             
     @property
-    def named_distributions_(self):
-        """Access the fitted models by name.
+    def named_models_(self):
+        """Access the fitted estimators by name.
 
         Read-only attribute to access any distribution by given name.
         Keys are transformer names and values are the fitted transformer
@@ -419,8 +420,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**{name: trans for name, trans, _
-                        in self.distributions})
+        return Bunch(**{name: estimator for name, estimator, _
+                        in self.models})
 
 
 
