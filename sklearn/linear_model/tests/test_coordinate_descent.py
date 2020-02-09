@@ -947,7 +947,6 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the corresponding sample
-``
     sample_weight = np.ones_like(y)
     sample_weight[-1] = 0
     reg.fit(X, y, sample_weight=sample_weight)
