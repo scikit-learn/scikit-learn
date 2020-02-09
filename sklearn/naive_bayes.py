@@ -290,16 +290,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         return jll
 
-    @property
-    def models(self):
-        return self.models
-
-    @models.setter
-    def models(self, value):
-        self.models = [(name, nb_model, col)
-                       for (name, nb_model, col) in value]
-        self._is_fitted = False
-
     def get_params(self, deep=True):
         return self._get_params('models_', deep=deep)
 
