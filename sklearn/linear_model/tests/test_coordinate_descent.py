@@ -959,7 +959,7 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
         assert_allclose(reg.intercept_, intercept1)
 
     # check that multiplying sample_weight by 2 is equivalent
-    # to repeating correspoding samples twice
+    # to repeating corresponding samples twice
     if sparse.issparse(X):
         X = X.toarray()
 
