@@ -125,24 +125,21 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     Parameters
     ----------
-    # TODO
     distributions : list of tuples
         List of (name, distribution, column(s)) tuples specifying the
-        distribution objects to be applied to subsets of the data.
+        assumptions of distribution on the features to apply
+        naive Bayes on subsets of the data.
 
         name : string
             Like in Pipeline and ColumnTransformer, this allows the
             distribution and its parameters to be set using ``set_params``.
-        distribution : estimator or {'passthrough', 'drop'}
-            Estimator must support :term:`fit` and :term:`transform`.
-            Special-cased strings 'drop' and 'passthrough' are accepted as
-            well, to indicate to drop the columns or to pass them through
-            untransformed, respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        distribution : Estimator
+            Estimator must support :term:`fit`, :term:`predict`
+            and :term:`_joint_log_likelihood`.
+        column(s) : array-like of string or int, slice
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
-            by name.  A scalar string or int should be used where
+            by name. A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
@@ -221,7 +218,7 @@ boolean mask array or callable
         self : object
         """
         self._validate_distributions(X)
-        X, y = self._check_X_y(X, y)
+        self._check_X_y(X, y)
 
         self.classes_ = np.unique(y)
 
@@ -387,40 +384,10 @@ boolean mask array or callable
         self._columns = columns    
     
     def _check_X_y(self, X, y):
-        """
-        Validate data inputs.
-        
-        Parameters
-        ----------
-            X ([type]): [description]
-            y ([type]): [description]
-        
-        Returns
-        -------
-            X: array-like
-                Validated data input X
-            y: array-like
-                Validated data input y
-        """
         if hasattr(X, "columns"):
             self._df_columns = X.columns
 
-        return X, y
-
     def _check_X(self, X):
-        """
-        Checks for data. This validation will be executed
-        before calculating the joint log likelihood.
-        
-        Parameters
-        ----------
-            X : ndarray
-        
-        Returns
-        -------
-            X: ndarray
-                validated data
-        """
         # Check pandas.DataFrame
         if self._df_columns is not None:
             
@@ -430,9 +397,9 @@ boolean mask array or callable
             if not all(self._df_columns == X.columns):
                 raise ValueError("Column names must match with "
                                 "column names of fitted data.")
-            
-        return X
 
+        return X
+            
     @property
     def named_distributions_(self):
         """Access the fitted models by name.
