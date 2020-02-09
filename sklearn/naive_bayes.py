@@ -119,7 +119,16 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
-    """General Naive Bayes
+    """General Naive Bayes for multiple probability distributions
+
+    The General Naive Bayes classifier is a metaestimator that 
+    allows for multiple distributional assumptions on the features 
+    of the data, namely the Bernoulli, Gaussian, Multinomial, and
+    Categorical distributions.
+    
+    This is made possible by composing a joint probability distribution
+    as the product of independent models or probability distributions.
+    Each constituent distribution is fitted on a subset of features.
 
     Read more in the :ref:`User Guide <general_naive_bayes>`.
 
