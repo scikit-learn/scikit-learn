@@ -207,7 +207,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self.models_ = None
         self.classes_ = None
         self.n_features_ = None
-        self._columns = None
+        self._cols = None
         self._df_columns = None
         self._is_fitted = False
 
@@ -232,9 +232,9 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self.classes_ = np.unique(y)
 
         self.models_ = [
-            (name, nb_model.fit(_safe_indexing(X, features, axis=1), y), features)
-            for (name, nb_model, _), features
-            in zip(self.models, self._columns)]
+            (name, nb_model.fit(_safe_indexing(X, cols, axis=1), y), cols)
+            for (name, nb_model, _), cols
+            in zip(self.models, self._cols)]
 
         self._is_fitted = True
 
@@ -262,13 +262,13 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         # Obtain the log priors from each fitted estimator
         all_log_priors = [
-            nb.class_log_prior_
-            if hasattr(nb_model, 'class_log_prior_') else np.log(nb.class_prior_)
+            nb_model.class_log_prior_
+            if hasattr(nb_model, 'class_log_prior_') else np.log(nb_model.class_prior_)
             for _, nb_model, _ in self.models_]
 
-        # Take any class log prior from the estimators
-        all_log_priors = np.hstack(all_log_priors)
-        if np.max(np.ptp(all_log_priors, axis=1)) < 1e-8:
+        # Ensure class log priors are the same for all estimators
+        all_log_priors = np.hstack([all_log_priors])
+        if np.max(np.ptp(all_log_priors, axis=0)) < 1e-6:
             log_prior = all_log_priors[0]
         else:
             raise ValueError("Class priors for every estimator "
@@ -276,8 +276,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         # Obtain the jll of each fitted estimator
         jlls = [nb_model._joint_log_likelihood(
-                    np.array(_safe_indexing(X, features, axis=1)))
-                for (_, nb_model, features) in self.models_]
+                    np.array(_safe_indexing(X, cols, axis=1)))
+                for (_, nb_model, cols) in self.models_]
 
         # Stack these jlls to give us
         # the shape (estimator, sample, class)
@@ -290,11 +290,21 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         return jll
 
+    @property
+    def _models(self):
+        return [(name, model) for name, model, _ in self.models]
+
+    @_models.setter
+    def _models(self, value):
+        self.models = [
+            (name, nb_model, cols) for ((name, nb_model), (_, _, cols))
+            in zip(value, self.models)]
+
     def get_params(self, deep=True):
-        return self._get_params('models_', deep=deep)
+        return self._get_params('_models', deep=deep)
 
     def set_params(self, **kwargs):
-        self._set_params('models_', **kwargs)
+        self._set_params('_models', **kwargs)
         return self
 
     def _validate_models(self, X):
@@ -327,7 +337,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(model)))
 
-            name, estimator, features = model
+            name, estimator, cols = model
 
             # Check naive bayes estimator
             if callable(estimator):
@@ -349,11 +359,11 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             _list_fit_prior.append(_fit_prior)
 
             # Check the feature
-            for feature in features:
-                if feature in _dict_model:
-                    raise ValueError("Duplicate specification of feature found.")
+            for col in cols:
+                if col in _dict_model:
+                    raise ValueError("Duplicate specification of col found.")
                 else:
-                    _dict_model[feature] = estimator.__class__.__name__.lower()
+                    _dict_model[col] = estimator.__class__.__name__.lower()
 
         if len(set(_list_class_prior)) != 1:
             raise ValueError("The parameters 'class_prior' or 'prior' "
@@ -376,12 +386,12 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         """
         Converts callable column specifications.
         """
-        columns = []
-        for _, _, column in self.models:
-            if callable(column):
-                column = column(X)
-            columns.append(column)
-        self._columns = columns    
+        cols = []
+        for _, _, col in self.models:
+            if callable(col):
+                col = col(X)
+            cols.append(col)
+        self._cols = cols   
     
     def _check_X_y(self, X, y):
         if hasattr(X, "columns"):
