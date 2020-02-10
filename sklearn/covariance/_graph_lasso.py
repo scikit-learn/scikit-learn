@@ -600,17 +600,14 @@ class GraphicalLassoCV(GraphicalLasso):
             The `grid_scores_` attribute is deprecated in version 0.23 in favor
             of `cv_results_` and will be removed in version 0.25
 
-    cv_results_ : ndarray of shape (n_alphas, n_folds)
-        Log-likelihood score on left-out data across folds.
-
     cv_results_ : dict of numpy ndarrays
         Dictinoary, with attributes:
 
         alphas : ndarray of shape (n_alphas,)
             All penalization parameters explored.
 
-        split(i)_score : ndarray of shape (n_alphas,)
-            Log-likelihood score on left-out data across `(i)`th fold.
+        splitk_score : ndarray of shape (n_alphas,)
+            Log-likelihood score on left-out data across kth fold.
 
         .. versionadded:: 0.23
 
