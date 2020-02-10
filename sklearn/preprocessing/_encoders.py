@@ -624,13 +624,6 @@ class OrdinalEncoder(_BaseEncoder):
         (in order of the features in X and corresponding with the output
         of ``transform``).
 
-    See Also
-    --------
-    sklearn.preprocessing.OneHotEncoder : Performs a one-hot encoding of
-      categorical features.
-    sklearn.preprocessing.LabelEncoder : Encodes target labels with values
-      between 0 and n_classes-1.
-
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
