@@ -1031,8 +1031,9 @@ class CategoricalNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    min_categories : int or array-like or None, (default=None)
-        Minimum number of categories per feature:
+    min_categories : int or array-like or None, default=None
+        Minimum number of categories per feature.
+
         - int : Sets the minimum number of categories per feature to
           `n_categories` for each features.
         - array-like : shape (n_features,) where `n_categories[i]` holds the
