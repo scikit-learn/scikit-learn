@@ -738,14 +738,6 @@ argument::
     def test_requiring_mpl_fixture(pyplot):
         # you can now safely use matplotlib
 
-Uncovered lines in tests
-------------------------
-
-We use `# pragma: no cover` in unit tests to mark lines that are expected never
-to be reached in the test suite. For example, exceptions that would be raised
-upon incorrect test configurations should not be reached during testing.
-Refrain from using the pragma in non-testing code.
-
 Workflow to improve test coverage
 ---------------------------------
 
