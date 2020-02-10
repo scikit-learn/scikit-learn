@@ -43,7 +43,7 @@ feature, code or documentation improvement).
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
    Github.::
 
-        git clone git://github.com/scikit-learn/scikit-learn.git
+        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
         cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -83,9 +83,9 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11),
-- SciPy (>= 0.17),
+- Python (>= 3.6),
+- NumPy (>= 1.13.3),
+- SciPy (>= 0.19),
 - Joblib (>= 0.11).
 
 Those dependencies are **automatically installed by pip** if they were missing
@@ -237,7 +237,7 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        conda-forge::compilers conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --editable .
@@ -252,7 +252,9 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list compilers llvm-openmp
+    conda list 
+
+which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
 variables::

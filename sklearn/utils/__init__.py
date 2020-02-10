@@ -476,11 +476,10 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
@@ -621,11 +620,10 @@ def shuffle(*arrays, **options):
     Other Parameters
     ----------------
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
