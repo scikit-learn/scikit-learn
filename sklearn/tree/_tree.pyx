@@ -189,8 +189,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t node_id
 
         cdef double impurity = INFINITY
-        cdef double children_lower_bound = -INFINITY
-        cdef double children_upper_bound = INFINITY
+        cdef double children_lower_bound
+        cdef double children_upper_bound
+        cdef double node_value
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
@@ -202,7 +203,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         with nogil:
             # push root node onto stack
-            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0, -INFINITY, INFINITY)
             if rc == -1:
                 # got return code -1 - out-of-memory
                 with gil:
@@ -257,16 +258,17 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
 
+                node_value = splitter.criterion.sum_total[node_id] / weighted_n_node_samples
                 if not is_leaf:
                     # Push right child on stack
                     rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features)
+                                    split.impurity_right, n_constant_features, node_value, children_upper_bound)
                     if rc == -1:
                         break
 
                     # Push left child on stack
                     rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features)
+                                    split.impurity_left, n_constant_features, children_lower_bound, node_value)
                     if rc == -1:
                         break
 
@@ -293,7 +295,8 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity,
-                         rec.impurity_left, rec.impurity_right)
+                         rec.impurity_left, rec.impurity_right,
+                         rec.children_lower_bound, rec.children_upper_bound)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -335,6 +338,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
+        cdef double children_lower_bound
+        cdef double children_upper_bound
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
@@ -359,6 +364,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             # add root to frontier
             rc = self._add_split_node(splitter, tree, 0, n_node_samples,
                                       INFINITY, IS_FIRST, IS_LEFT, NULL, 0,
+                                      -INFINITY, INFINITY,
                                       &split_node_left)
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
@@ -382,6 +388,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                 else:
                     # Node is expandable
+                    node_value = splitter.criterion.sum_total[0] / splitter.criterion.weighted_n_node_samples
 
                     # Decrement number of split nodes available
                     max_split_nodes -= 1
@@ -392,6 +399,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                               record.impurity_left,
                                               IS_NOT_FIRST, IS_LEFT, node,
                                               record.depth + 1,
+                                              record.children_lower_bound,
+                                              record.children_upper_bound,
                                               &split_node_left)
                     if rc == -1:
                         break
@@ -405,6 +414,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                               record.impurity_right,
                                               IS_NOT_FIRST, IS_NOT_LEFT, node,
                                               record.depth + 1,
+                                              record.children_lower_bound,
+                                              record.children_upper_bound,
                                               &split_node_right)
                     if rc == -1:
                         break
@@ -433,7 +444,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
-                                    SIZE_t depth,
+                                    SIZE_t depth, double children_lower_bound,
+                                    double children_upper_bound,
                                     PriorityHeapRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
@@ -486,6 +498,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         res.end = end
         res.depth = depth
         res.impurity = impurity
+        node_value = splitter.criterion.sum_total[node_id] / weighted_n_node_samples
 
         if not is_leaf:
             # is split node
@@ -502,6 +515,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
+            res.children_lower_bound = children_lower_bound if is_left else node_value
+            res.children_upper_bound = node_value if is_left else children_upper_bound
 
         return 0
 
@@ -1369,7 +1384,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
         # Push root node, using StackRecord.start as node id
-        rc = stack.push(0, 0, 0, -1, 0, 0, 0)
+        rc = stack.push(0, 0, 0, -1, 0, 0, 0, -INFINITY, INFINITY)
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
@@ -1382,12 +1397,12 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 # ... and child_r[node_idx] == _TREE_LEAF:
                 leaves_in_subtree[node_idx] = 1
             else:
-                rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0)
+                rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0, -INFINITY, INFINITY)
                 if rc == -1:
                     with gil:
                         raise MemoryError("pruning tree")
 
-                rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0)
+                rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0, -INFINITY, INFINITY)
                 if rc == -1:
                     with gil:
                         raise MemoryError("pruning tree")
@@ -1430,7 +1445,7 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                 break
 
             # stack uses only the start variable
-            rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0)
+            rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
             if rc == -1:
                 with gil:
                     raise MemoryError("pruning tree")
@@ -1448,11 +1463,11 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
 
                 if child_l[node_idx] != _TREE_LEAF:
                     # ... and child_r[node_idx] != _TREE_LEAF:
-                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0)
+                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
                     if rc == -1:
                         with gil:
                             raise MemoryError("pruning tree")
-                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0)
+                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0, -INFINITY, INFINITY)
                     if rc == -1:
                         with gil:
                             raise MemoryError("pruning tree")
@@ -1603,7 +1618,7 @@ cdef _build_pruned_tree(
 
     with nogil:
         # push root node onto stack
-        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0)
+        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0, -INFINITY, INFINITY)
         if rc == -1:
             with gil:
                 raise MemoryError("pruning tree")
@@ -1636,13 +1651,13 @@ cdef _build_pruned_tree(
             if not is_leaf:
                 # Push right child on stack
                 rc = stack.push(
-                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0)
+                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0, -INFINITY, INFINITY)
                 if rc == -1:
                     break
 
                 # push left child on stack
                 rc = stack.push(
-                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0)
+                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0, -INFINITY, INFINITY)
                 if rc == -1:
                     break
 
