@@ -595,9 +595,18 @@ def test_regressor_chain_w_fit_params():
     X, y = datasets.make_regression(n_targets=3)
     weight = rng.rand(y.shape[0])
 
-    model = RegressorChain(SGDRegressor())
+    class MySGD(SGDRegressor):
+
+        def fit(self, X, y, **fit_params):
+            self.sample_weight = fit_params['sample_weight']
+            super().fit(X, y, **fit_params)
+
+    model = RegressorChain(MySGD())
 
     # Fitting with params
     fit_param = {'sample_weight': weight}
 
     model.fit(X, y, **fit_param)
+
+    for est in model.estimators_:
+        assert_array_equal(est.sample_weight, weight)
