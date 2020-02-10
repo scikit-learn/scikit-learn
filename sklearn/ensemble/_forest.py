@@ -293,10 +293,15 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
         """
         # Validate or convert input data
+        if issparse(y):
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+            )
         X, y = self._validate_data(X, y, multi_output=True,
                                    accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
