@@ -213,6 +213,11 @@ how to set up your git repository:
        $ git clone git@github.com:YourLogin/scikit-learn.git
        $ cd scikit-learn
 
+   If you have issues downloading the complete history, you can instead clone a
+   shallow copy::
+
+       $ git clone --depth 1 git@github.com:YourLogin/scikit-learn.git
+
 4. Install the development dependencies::
 
        $ pip install cython pytest pytest-cov flake8

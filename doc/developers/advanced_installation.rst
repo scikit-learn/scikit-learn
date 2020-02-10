@@ -46,6 +46,11 @@ feature, code or documentation improvement).
         git clone git://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
 
+   If you have issues downloading the complete history, you can instead clone a
+   shallow copy::
+
+        git clone --depth 1 git://github.com/scikit-learn/scikit-learn.git
+
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
