@@ -1182,6 +1182,7 @@ class CategoricalNB(_BaseDiscreteNB):
     def _init_n_categories(self, X):
         feature_n_categories = X.max(axis=0) + 1
         if self.min_categories is not None:
+            # unsafe casting allows float to be coerced to int
             n_categories_ = np.maximum(feature_n_categories,
                                        self.min_categories,
                                        dtype=np.int,
