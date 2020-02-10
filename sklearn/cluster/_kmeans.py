@@ -186,7 +186,7 @@ def _check_normalize_sample_weight(sample_weight, X):
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
-            n_jobs=None, algorithm="auto", return_n_iter=False):
+            n_jobs='deprecated', algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -275,6 +275,10 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
         ``None`` or ``-1`` means using all processors.
 
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient, on well structured data, by
@@ -318,7 +322,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
 def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4, n_jobs=None):
+                         random_state=None, tol=1e-4, n_threads=1):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
     Parameters
@@ -368,12 +372,10 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         in the cluster centers of two consecutive iterations to declare
         convergence.
 
-    n_jobs : int, default=None
+    n_threads : int, default=1
         The number of OpenMP threads to use for the computation. Parallelism is
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
-
-        ``None`` or ``-1`` means using all processors.
 
     Returns
     -------
@@ -428,7 +430,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     for i in range(max_iter):
         elkan_iter(X, sample_weight, centers, centers_new, weight_in_clusters,
                    center_half_distances, distance_next_center, upper_bounds,
-                   lower_bounds, labels, center_shift, n_jobs)
+                   lower_bounds, labels, center_shift, n_threads)
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
@@ -454,7 +456,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
                    center_half_distances, distance_next_center, upper_bounds,
-                   lower_bounds, labels, center_shift, n_jobs,
+                   lower_bounds, labels, center_shift, n_threads,
                    update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
@@ -464,7 +466,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
 def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4, n_jobs=None):
+                         random_state=None, tol=1e-4, n_threads=1):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
     Parameters
@@ -514,12 +516,10 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         in the cluster centers of two consecutive iterations to declare
         convergence.
 
-    n_jobs : int, default=None
+    n_threads : int, default=1
         The number of OpenMP threads to use for the computation. Parallelism is
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
-
-        ``None`` or ``-1`` means using all processors.
 
     Returns
     -------
@@ -561,7 +561,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     for i in range(max_iter):
         lloyd_iter(X, sample_weight, x_squared_norms, centers, centers_new,
-                   weight_in_clusters, labels, center_shift, n_jobs)
+                   weight_in_clusters, labels, center_shift, n_threads)
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers, labels)
@@ -580,7 +580,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step so that predicted labels match cluster centers
         lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-                   weight_in_clusters, labels, center_shift, n_jobs,
+                   weight_in_clusters, labels, center_shift, n_threads,
                    update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
@@ -588,7 +588,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
+def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -608,6 +608,11 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
     centers : array, shape (n_clusters, n_features)
         The cluster centers.
 
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation. Parallelism is
+        sample-wise on the main cython loop which assigns each sample to its
+        closest center.
+
     Returns
     -------
     labels : int array of shape (n_samples,)
@@ -616,9 +621,6 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
     """
-    if n_jobs is None:
-        n_jobs = 1
-
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
 
@@ -635,7 +637,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
         _inertia = _inertia_dense
 
     _labels(X, sample_weight, x_squared_norms, centers, centers,
-            weight_in_clusters, labels, center_shift, n_jobs,
+            weight_in_clusters, labels, center_shift, n_threads,
             update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
@@ -807,6 +809,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         ``None`` or ``-1`` means using all processors.
 
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient, on well structured data, by
@@ -883,7 +889,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='deprecated',
                  verbose=0, random_state=None, copy_x=True,
-                 n_jobs=None, algorithm='auto'):
+                 n_jobs='deprecated', algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init
@@ -936,6 +942,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             warnings.warn("'precompute_distances' was deprecated in version "
                           "0.23 and will be removed in 0.25. It has no "
                           "effect", FutureWarning)
+
+        if self.n_jobs != 'deprecated':
+            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
+                          " removed in 0.25.", FutureWarning)
+            self._n_threads = self.n_jobs
+        else:
+            self._n_threads = None
+        self._n_threads = _openmp_effective_n_threads(self._n_threads)
 
         n_init = self.n_init
         if n_init <= 0:
@@ -1004,8 +1018,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # seeds for the initializations of the kmeans runs.
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
 
-        n_jobs = _openmp_effective_n_threads(self.n_jobs)
-
         # limit number of threads in second level of nested parallelism
         # (i.e. BLAS) to avoid oversubsciption.
         with threadpool_limits(limits=1, user_api="blas"):
@@ -1015,7 +1027,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                     X, sample_weight, self.n_clusters, max_iter=self.max_iter,
                     init=init, verbose=self.verbose, tol=tol,
                     x_squared_norms=x_squared_norms, random_state=seed,
-                    n_jobs=n_jobs)
+                    n_threads=self._n_threads)
                 # determine if these results are the best so far
                 if best_inertia is None or inertia < best_inertia:
                     best_labels = labels.copy()
@@ -1148,7 +1160,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         x_squared_norms = row_norms(X, squared=True)
 
         return _labels_inertia(X, sample_weight, x_squared_norms,
-                               self.cluster_centers_, self.n_jobs)[0]
+                               self.cluster_centers_, self._n_threads)[0]
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.

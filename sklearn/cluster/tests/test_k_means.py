@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
+from threadpoolctl import threadpool_limits
 
 import pytest
 
@@ -323,9 +324,10 @@ def test_k_means_new_centers():
 
 
 @if_safe_multiprocessing_with_blas
-def test_k_means_plus_plus_init_2_jobs():
-    km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
-                random_state=42).fit(X)
+def test_k_means_plus_plus_init_2_threads():
+    with threadpool_limits(limits=2, user_api="openmp"):
+        km = KMeans(
+            init="k-means++", n_clusters=n_clusters, random_state=42).fit(X)
     _check_fitted_model(km)
 
 
@@ -413,20 +415,21 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
         pytest.xfail(
             "Known failures on MacOS, See "
             "https://github.com/scikit-learn/scikit-learn/issues/12644")
-    if not (algo == 'elkan' and constructor is sp.csr_matrix):
-        rng = np.random.RandomState(seed)
 
-        X = make_blobs(n_samples=1000, n_features=10, centers=10,
-                       random_state=rng)[0].astype(dtype, copy=False)
-        X = constructor(X)
+    rng = np.random.RandomState(seed)
 
-        kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
-                        tol=tol, max_iter=max_iter, n_jobs=1)
+    X = make_blobs(n_samples=1000, n_features=10, centers=10,
+                   random_state=rng)[0].astype(dtype, copy=False)
+    X = constructor(X)
 
+    kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
+                    tol=tol, max_iter=max_iter)
+
+    with threadpool_limits(limits=1, user_api="openmp"):
         labels_1 = kmeans.fit(X).predict(X)
         labels_2 = kmeans.fit_predict(X)
 
-        assert_array_equal(labels_1, labels_2)
+    assert_array_equal(labels_1, labels_2)
 
 
 def test_mb_kmeans_verbose():
@@ -737,7 +740,7 @@ def test_fit_transform():
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
 def test_predict_equal_labels(algo):
-    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1,
+    km = KMeans(random_state=13, n_init=1, max_iter=1,
                 algorithm=algo)
     km.fit(X)
     assert_array_equal(km.predict(X), km.labels_)
@@ -1024,13 +1027,17 @@ def test_minibatch_kmeans_partial_fit_int_data():
     assert km.cluster_centers_.dtype.kind == "f"
 
 
-def test_result_of_kmeans_equal_in_diff_n_jobs():
+def test_result_of_kmeans_equal_in_diff_n_threads():
     # PR 9288
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(50, 10))
 
-    result_1 = KMeans(n_clusters=3, random_state=0, n_jobs=1).fit(X).labels_
-    result_2 = KMeans(n_clusters=3, random_state=0, n_jobs=2).fit(X).labels_
+    with threadpool_limits(limits=1, user_api="openmp"):
+        result_1 = KMeans(
+            n_clusters=3, random_state=0).fit(X).labels_
+    with threadpool_limits(limits=2, user_api="openmp"):
+        result_2 = KMeans(
+            n_clusters=3, random_state=0).fit(X).labels_
     assert_array_equal(result_1, result_2)
 
 
@@ -1042,6 +1049,19 @@ def test_precompute_distance_deprecated(precompute_distances):
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        kmeans.fit(X)
+
+
+@pytest.mark.parametrize("n_jobs", [None, 1, -1])
+def test_n_jobs_deprecated(n_jobs):
+    # FIXME: remove in 0.25
+    depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
+                "in 0.25.")
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
+                    n_jobs=n_jobs)
 
     with pytest.warns(FutureWarning, match=depr_msg):
         kmeans.fit(X)
