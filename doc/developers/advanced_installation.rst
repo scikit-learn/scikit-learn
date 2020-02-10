@@ -43,7 +43,7 @@ feature, code or documentation improvement).
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
    Github.::
 
-        git clone git://github.com/scikit-learn/scikit-learn.git
+        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
         cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
@@ -83,9 +83,9 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11),
-- SciPy (>= 0.17),
+- Python (>= 3.6),
+- NumPy (>= 1.13.3),
+- SciPy (>= 0.19),
 - Joblib (>= 0.11).
 
 Those dependencies are **automatically installed by pip** if they were missing

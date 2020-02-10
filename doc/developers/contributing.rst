@@ -210,7 +210,7 @@ how to set up your git repository:
 3. Clone your fork of the scikit-learn repo from your GitHub account to your
    local disk::
 
-       $ git clone git@github.com:YourLogin/scikit-learn.git
+       $ git clone git@github.com:YourLogin/scikit-learn.git  # add --depth 1 if your connection is slow
        $ cd scikit-learn
 
 4. Install the development dependencies::
