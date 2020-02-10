@@ -18,7 +18,9 @@ the weight matrix as a 28x28 pixel image.
 
 To make the example run faster, we use very few hidden units, and train only
 for a very short time. Training longer would result in weights with a much
-smoother spatial appearance.
+smoother spatial appearance. The example will throw a warning because it
+doesn't converge, in this case this is what we want because of CI's time
+constringements.
 """
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_openml
