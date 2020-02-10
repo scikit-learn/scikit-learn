@@ -34,7 +34,7 @@ export LOKY_MAX_CPU_COUNT="2"
 export OMP_NUM_THREADS="1"
 
 python setup.py build_ext --inplace -j 3
-pip install -e .
+pip install --no-build-isolation -e .
 
 # Check that Python implementation is PyPy
 python - << EOL

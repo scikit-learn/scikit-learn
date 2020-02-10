@@ -214,7 +214,7 @@ how to set up your git repository:
 
 5. Install scikit-learn in editable mode::
 
-       $ pip install --editable .
+       $ pip install --no-build-isolation --editable .
 
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
