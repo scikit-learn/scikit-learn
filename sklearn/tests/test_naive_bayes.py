@@ -691,6 +691,7 @@ def test_categoricalnb():
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y)
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
+    assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
     for factor in [1., 0.3, 5, 0.0001]:
         X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
@@ -699,6 +700,7 @@ def test_categoricalnb():
         clf = CategoricalNB(alpha=1, fit_prior=False)
         clf.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
+        assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
 
 def test_categoricalnb_with_min_categories():
