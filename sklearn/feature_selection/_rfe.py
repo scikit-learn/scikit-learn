@@ -8,6 +8,7 @@
 
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
+from operator import attrgetter
 
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -53,7 +54,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     ----------
     estimator : object
         A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance (e.g. `coef_`, `feature_importances_`).
+        information about feature importance
+        (e.g. `coef_`, `feature_importances_`).
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features

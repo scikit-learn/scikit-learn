@@ -130,7 +130,7 @@ def _get_importances_auto(estimator):
     elif hasattr(estimator, 'feature_importances_'):
         getter = attrgetter('feature_importances_')
     else:
-        raise ValueError("when `importance_getter=='auto'`, "
+        raise RuntimeError("when `importance_getter=='auto'`, "
                          "the underlying estimator %s should have `coef_` or "
                          "`feature_importances_` attribute. "
                          " Either pass a fitted estimator to feature selector"

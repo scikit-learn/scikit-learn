@@ -2,11 +2,11 @@
 Testing Recursive feature elimination
 """
 
+from operator import attrgetter
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
-from operator import attrgetter
 
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
@@ -17,7 +17,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
@@ -379,55 +380,43 @@ def test_rfe_cv_groups():
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
 
-
-@pytest.mark.parametrize('importance_getter',
-                         [attrgetter('regressor_.coef_'),
-                          'regressor_.coef_'])
-@pytest.mark.parametrize('model',
-                         [RFE, RFECV])
-def test_w_target_transform(importance_getter, model):
+@pytest.mark.parametrize(
+    'importance_getter',
+    [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
+@pytest.mark.parametrize('selector', [RFE, RFECV])
+def test_rfe_wrapped_estimator(importance_getter, selector):
     n_features = 10
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
     estimator = SVR(kernel="linear")
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,
                                                inverse_func=np.exp)
 
-    selector = model(log_estimator, importance_getter=importance_getter)
+    selector = selector(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
     assert sel.support_.sum() == n_features // 2
 
 
-def test_importance_getter_param_validation():
+@pytest.mark.parametrize(
+    "importance_getter, err_type",
+    [("auto", RuntimeError),
+     ("random", AttributeError),
+     (lambda x: x.importance, AttributeError),
+     ([0], ValueError)]
+)
+@pytest.mark.parametrize("Selector", [RFE, RFECV])
+def test_rfe_importance_getter_validation(importance_getter, err_type,
+                                          Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = SVR(kernel="linear")
-    log_estimator = TransformedTargetRegressor(regressor=estimator,
-                                               func=np.log,
-                                               inverse_func=np.exp)
+    log_estimator = TransformedTargetRegressor(
+        regressor=estimator, func=np.log, inverse_func=np.exp
+    )
 
-    # when auto option is infeasible for given estimator
-    assert_raises(ValueError, RFE(log_estimator).fit, X, y)
-
-    # when provided with string value other than 'auto'
-    assert_raises(AttributeError,
-                  RFE(log_estimator, importance_getter='chk_atr').fit,
-                  X, y)
-
-    # when provided with wrong callabe
-    def imp_fetcher(estimator):
-        return estimator.feature_imp
-
-    assert_raises(AttributeError,
-                  RFECV(log_estimator,
-                        importance_getter=imp_fetcher).fit,
-                  X, y)
-
-    # when provided with values other than string or callable
-    assert_raises(ValueError,
-                  RFECV(log_estimator,
-                        importance_getter=[0]).fit,
-                  X, y)
+    with pytest.raises(err_type):
+        model = Selector(log_estimator, importance_getter=importance_getter)
+        model.fit(X, y)
 
 
 @pytest.mark.parametrize("cv", [
@@ -453,13 +442,11 @@ def test_rfe_allow_nan_inf_in_x(cv):
 
 
 def test_w_pipeline_2d_coef_():
-    pipeline = Pipeline([('clf', LogisticRegression(C=0.1))])
+    pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 
-    iris = load_iris()
-    data, y = iris.data, iris.target
+    data, y = load_iris(return_X_y=True)
     sfm = RFE(pipeline, n_features_to_select=2,
-              importance_getter='named_steps.clf.coef_')
+              importance_getter='named_steps.logisticregression.coef_')
 
     sfm.fit(data, y)
-    print(sfm.estimator_['clf'].coef_.shape)
     assert sfm.transform(data).shape[1] == 2

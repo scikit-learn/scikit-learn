@@ -16,7 +16,7 @@ from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 
 
@@ -379,26 +379,20 @@ def test_allow_nan_tag_comes_from_estimator():
     model = SelectFromModel(estimator=no_nan_est)
     assert model._get_tags()['allow_nan'] is False
 
-
-def test_w_pipeline():
-    pipeline = Pipeline([('scalling', StandardScaler()),
-                         ('clf', LogisticRegression(C=0.1))])
-    model = SelectFromModel(pipeline, threshold="mean",
-                            importance_getter='named_steps.clf.coef_')
-    model.fit(data, y)
-    X_transform = model.transform(data)
-
-    assert X_transform.shape[1] == 2
+def _pca_importances(pca_estimator):
+    return np.abs(pca_estimator.explained_variance_)
 
 
-def test_w_pca():
+@pytest.mark.parametrize(
+    "estimator, importance_getter",
+    [(make_pipeline(PCA(random_state=0), LogisticRegression()),
+      'named_steps.logisticregression.coef_'),
+     (PCA(random_state=0), _pca_importances)]
+)
+def test_importance_getter(estimator, importance_getter):
+    selector = SelectFromModel(
+        estimator, threshold="mean", importance_getter=importance_getter
+    )
+    selector.fit(data, y)
+    assert selector.transform(data).shape[1] == 1
 
-    def pca_importances(estimator):
-        return np.abs(estimator.components_.ravel())
-
-    sfm = SelectFromModel(PCA(n_components=1), threshold=0.1,
-                          importance_getter=pca_importances)
-
-    sfm.fit(data, y)
-
-    assert sfm.transform(data).shape[1] == 3
