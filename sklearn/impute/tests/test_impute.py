@@ -13,8 +13,6 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 
-from sklearn.utils.validation import _is_arraylike
-
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
