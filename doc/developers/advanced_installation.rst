@@ -43,13 +43,8 @@ feature, code or documentation improvement).
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
    Github.::
 
-        git clone git://github.com/scikit-learn/scikit-learn.git
+        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
         cd scikit-learn
-
-   If you have issues downloading the complete history, you can instead clone a
-   shallow copy::
-
-        git clone --depth 1 git://github.com/scikit-learn/scikit-learn.git
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
