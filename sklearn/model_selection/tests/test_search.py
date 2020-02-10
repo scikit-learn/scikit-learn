@@ -1306,6 +1306,7 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
+# FIXME remove test_fit_grid_point as the function will be removed on 0.25
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold()
@@ -1314,22 +1315,23 @@ def test_fit_grid_point():
     msg = (
         "fit_grid_point is deprecated in version 0.23 "
         "and will be removed in version 0.25")
-    with pytest.warns(FutureWarning, match=msg):
-        for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
-            for train, test in cv.split(X, y):
+    for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
+        for train, test in cv.split(X, y):
+            with pytest.warns(FutureWarning, match=msg):
                 this_scores, this_params, n_test_samples = fit_grid_point(
                     X, y, clone(svc), params, train, test,
                     scorer, verbose=False)
 
-                est = clone(svc).set_params(**params)
-                est.fit(X[train], y[train])
-                expected_score = scorer(est, X[test], y[test])
+            est = clone(svc).set_params(**params)
+            est.fit(X[train], y[train])
+            expected_score = scorer(est, X[test], y[test])
 
-                # Test the return values of fit_grid_point
-                assert_almost_equal(this_scores, expected_score)
-                assert params == this_params
-                assert n_test_samples == test.size
+            # Test the return values of fit_grid_point
+            assert_almost_equal(this_scores, expected_score)
+            assert params == this_params
+            assert n_test_samples == test.size
 
+    with pytest.warns(FutureWarning, match=msg):
         # Should raise an error upon multimetric scorer
         assert_raise_message(ValueError, "For evaluating multiple scores, use "
                              "sklearn.model_selection.cross_validate instead.",
