@@ -133,7 +133,7 @@ def _get_importances_auto(estimator):
         raise ValueError("when `importance_getter=='auto'`, "
                          "the underlying estimator %s should have `coef_` or "
                          "`feature_importances_` attribute. "
-                         " Either pass a fitted estimator to SelectFromModel"
+                         " Either pass a fitted estimator to feature selector"
                          "  or call fit before calling transform."
                          % estimator.__class__.__name__)
     return getter

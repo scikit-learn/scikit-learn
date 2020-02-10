@@ -407,7 +407,7 @@ def test_importance_getter_param_validation():
                                                inverse_func=np.exp)
 
     # when auto option is infeasible for given estimator
-    assert_raises(RuntimeError, RFE(log_estimator).fit, X, y)
+    assert_raises(ValueError, RFE(log_estimator).fit, X, y)
 
     # when provided with string value other than 'auto'
     assert_raises(AttributeError,

@@ -21,7 +21,7 @@ from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
-from ._base import SelectorMixin
+from ._base import SelectorMixin, _get_importances_auto
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -134,7 +134,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  importance_getter='auto', verbose=0):
         self.estimator = estimator
@@ -164,18 +163,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             The target values.
         """
         return self._fit(X, y)
-
-    def _get_importances_auto(self, estimator):
-        if hasattr(estimator, 'coef_'):
-            getter = attrgetter('coef_')
-        elif hasattr(estimator, 'feature_importances_'):
-            getter = attrgetter('feature_importances_')
-        else:
-            raise RuntimeError('when `importance_getter == "auto"`, '
-                               'the estimator has to expose either '
-                               '"coef_" or "feature_importances_" '
-                               'attributes')
-        return getter
 
     def _fit(self, X, y, step_score=None):
         # Parameter step_score controls the calculation of self.scores_
@@ -222,7 +209,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             getter = self.importance_getter
             if isinstance(getter, str):
                 if getter == 'auto':
-                    getter = self._get_importances_auto(estimator)
+                    getter = _get_importances_auto(estimator)
                 else:
                     getter = attrgetter(getter)
             elif not callable(getter):
