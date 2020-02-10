@@ -229,8 +229,10 @@ to slice rows and columns.
 Universal attributes
 ^^^^^^^^^^^^^^^^^^^^
 
-Estimators that expect rectangular input should have a `n_features_in_`
-attribute indicating the number of features that the estimator expects. See
+Estimators that expect tabular input should set a `n_features_in_`
+attribute at `fit` time to indicate the number of features that the estimator
+expects for subsequent calls to `predict` or `transform`.
+See
 `SLEP010
 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
 for details.
