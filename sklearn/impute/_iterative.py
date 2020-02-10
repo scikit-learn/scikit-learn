@@ -603,9 +603,10 @@ class IterativeImputer(_BaseImputer):
 
         # Raise a ValueError if min value for any feature is >= its max value
         if not np.all(np.greater(self._max_value, self._min_value)):
-            raise ValueError("One (or more) features have min_value >= max_value")
-        # Raise a ValueError if _min_value and _max_value are not the same shape
-        # as n_features
+            raise ValueError(
+                "One (or more) features have min_value >= max_value")
+        # Raise a ValueError if _min_value and _max_value
+        # are not the same shape as n_features
         if not (self._min_value.shape[0] == X.shape[1] and
                 self._max_value.shape[0] == X.shape[1]):
             raise ValueError(
