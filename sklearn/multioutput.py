@@ -414,7 +414,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         Y : array-like, shape (n_samples, n_classes)
             The target values.
         **fit_params : dict of string -> object
-            Parameters passed to the ``estimator.fit`` method of each step.
+            Parameters passed to the `fit` method of each step.
 
         Returns
         -------
@@ -744,7 +744,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             The target values.
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``estimator.fit`` method at each step
+            Parameters passed to the `fit` method at each step
             of the regressor chain.
 
         Returns
