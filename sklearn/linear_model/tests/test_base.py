@@ -5,6 +5,8 @@
 
 import pytest
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -203,6 +205,22 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_linear_regression_pd_sparse_dataframe_warning():
+    pd = pytest.importorskip('pandas')
+    # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
+    if LooseVersion(pd.__version__) < '0.24.0':
+        pytest.skip("pandas 0.24+ required.")
+    df = pd.DataFrame()
+    for col in range(4):
+        arr = np.random.randn(10)
+        arr[:8] = 0
+        df[str(col)] = pd.arrays.SparseArray(arr, fill_value=0)
+    msg = "pandas.DataFrame with sparse columns found."
+    with pytest.warns(UserWarning, match=msg):
+        reg = LinearRegression()
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
 
 def test_preprocess_data():

@@ -39,23 +39,26 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
+
     @property
     def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
+        """Get the weights of not `None` estimators."""
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators, self.weights)
                 if est[1] not in (None, 'drop')]
 
     def _predict(self, X):
-        """Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls."""
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
-        """
-        common fit operations.
-        """
+        """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
         if (self.weights is not None and
@@ -65,9 +68,14 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf not in (None, 'drop')
+                delayed(_parallel_fit_estimator)(
+                        clone(clf), X, y,
+                        sample_weight=sample_weight,
+                        message_clsname='Voting',
+                        message=self._log_message(names[idx],
+                                                  idx + 1, len(clfs))
+                )
+                for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
             )
 
         self.named_estimators_ = Bunch()
@@ -90,7 +98,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'``
@@ -100,29 +108,33 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    voting : str, {'hard', 'soft'} (default='hard')
+    voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : array-like, shape (n_classifiers,), optional (default=`None`)
+    weights : array-like of shape (n_classifiers,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    flatten_transform : bool, optional (default=True)
+    flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes). If
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
+
+    verbose : bool, default=False
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     Attributes
     ----------
@@ -130,13 +142,17 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
 
-    classes_ : array-like, shape (n_predictions,)
+    classes_ : array-like of shape (n_predictions,)
         The classes labels.
+
+    See Also
+    --------
+    VotingRegressor: Prediction voting regressor.
 
     Examples
     --------
@@ -172,33 +188,30 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
-
-    See also
-    --------
-    VotingRegressor: Prediction voting regressor.
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
-                 flatten_transform=True):
+    def __init__(self, estimators, voting='hard', weights=None,
+                 n_jobs=None, flatten_transform=True, verbose=False):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """Fit the estimators.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -206,6 +219,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
+
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
@@ -223,19 +237,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
-        """ Predict class labels for X.
+        """Predict class labels for X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        maj : array-like, shape (n_samples,)
+        maj : array-like of shape (n_samples,)
             Predicted class labels.
         """
-
         check_is_fitted(self)
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
@@ -252,11 +265,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return maj
 
     def _collect_probas(self, X):
-        """Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
     def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting """
+        """Predict class probabilities for X in 'soft' voting."""
         check_is_fitted(self)
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
@@ -268,12 +281,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        avg : array-like, shape (n_samples, n_classes)
+        avg : array-like of shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
         if self.voting == 'hard':
@@ -286,7 +299,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -294,13 +307,13 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns array-like of shape (n_classifiers, n_samples *
+                returns ndarray of shape (n_classifiers, n_samples *
                 n_classes), being class probabilities calculated by each
                 classifier.
             If `voting='soft' and `flatten_transform=False`:
-                array-like of shape (n_classifiers, n_samples, n_classes)
+                ndarray of shape (n_classifiers, n_samples, n_classes)
             If `voting='hard'`:
-                array-like of shape (n_samples, n_classifiers), being
+                ndarray of shape (n_samples, n_classifiers), being
                 class labels predicted by each classifier.
         """
         check_is_fitted(self)
@@ -328,7 +341,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
@@ -338,15 +351,19 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
-    weights : array-like, shape (n_regressors,), optional (default=`None`)
+    weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    verbose : bool, default=False
+        If True, the time elapsed while fitting will be printed as it
+        is completed.
 
     Attributes
     ----------
@@ -354,10 +371,14 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
+
+    See Also
+    --------
+    VotingClassifier: Soft Voting/Majority Rule classifier.
 
     Examples
     --------
@@ -372,30 +393,27 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
-
-    See also
-    --------
-    VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=None):
+    def __init__(self, estimators, weights=None, n_jobs=None, verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """Fit the estimators.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -403,6 +421,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
@@ -420,7 +439,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Returns
         -------
-        y : array of shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self)
@@ -432,14 +451,13 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        predictions
-            array-like of shape (n_samples, n_classifiers), being
-            values predicted by each regressor.
+        predictions: ndarray of shape (n_samples, n_classifiers)
+            Values predicted by each regressor.
         """
         check_is_fitted(self)
         return self._predict(X)

@@ -63,7 +63,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         and `self.passthrough` is True, the output of `transform` will
         be sparse.
 
-        This helper is in charge of ensuring the preditions are 2D arrays and
+        This helper is in charge of ensuring the predictions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
         """
@@ -117,7 +117,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -148,6 +148,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
                 est_fitted_idx += 1
+            else:
+                self.named_estimators_[name_est] = 'drop'
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
@@ -308,8 +310,14 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
@@ -396,7 +404,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -553,6 +561,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -628,7 +639,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
