@@ -32,8 +32,6 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
-    DOUBLE_t children_lower_bound        # Lower bound for the node's children values for monotonicity constraints
-    DOUBLE_t children_upper_bound        # Upper bound for the node's children values for monotonicity constraints
 
 
 cdef class Tree:
@@ -60,9 +58,8 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples,
-                          double children_lower_bound,
-                          double children_upper_bound) nogil except -1
+                          double weighted_n_samples) nogil except -1
+
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 

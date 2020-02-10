@@ -70,7 +70,7 @@ cdef SIZE_t INITIAL_STACK_SIZE = 10
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples', 'children_lower_bound', 'children_upper_bound'],
+              'n_node_samples', 'weighted_n_node_samples'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
                 np.float64, np.float64, np.float64],
     'offsets': [
@@ -80,9 +80,7 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).children_lower_bound,
-        <Py_ssize_t> &(<Node*> NULL).children_upper_bound
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
     ]
 })
 
@@ -247,10 +245,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                # TODO add proper lower and upper bounds
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples, -INFINITY, INFINITY)
+                                         weighted_n_node_samples)
 
                 if node_id == SIZE_MAX:
                     rc = -1
@@ -450,8 +447,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
         cdef double imp_diff
-        cdef double children_lower_bound = parent.children_lower_bound if parent != NULL else -INFINITY
-        cdef double children_upper_bound = parent.children_upper_bound if parent != NULL else INFINITY
+        cdef double node_value
 
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
@@ -473,13 +469,12 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             is_leaf = (is_leaf or split.pos >= end or
                        split.improvement + EPSILON < min_impurity_decrease)
 
-        # TODO add proper lower and upper bounds
         node_id = tree._add_node(parent - tree.nodes
                                  if parent != NULL
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples, -INFINITY, INFINITY)
+                                 weighted_n_node_samples)
         if node_id == SIZE_MAX:
             return -1
 
@@ -737,9 +732,7 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples,
-                          double children_lower_bound,
-                          double children_upper_bound) nogil except -1:
+                          double weighted_n_node_samples) nogil except -1:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -756,8 +749,6 @@ cdef class Tree:
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
-        node.children_lower_bound = children_lower_bound
-        node.children_upper_bound = children_upper_bound
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -1631,8 +1622,7 @@ cdef _build_pruned_tree(
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature, node.threshold,
                 node.impurity, node.n_node_samples,
-                node.weighted_n_node_samples, node.children_lower_bound,
-                node.children_upper_bound)
+                node.weighted_n_node_samples)
 
             if new_node_id == SIZE_MAX:
                 rc = -1
