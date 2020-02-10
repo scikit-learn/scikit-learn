@@ -121,10 +121,8 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
-training very efficient and may result in sparser models, even when L2 penalty
-is used.
-
-.. TODO: what does sparse mean??
+training very efficient and may result in sparser models (i.e. with more zero
+coefficents), even when L2 penalty is used.
 
 Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
@@ -230,14 +228,14 @@ Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 Stochastic Gradient Descent for sparse data
 ===========================================
 
-.. TODO: what does this mean
-
 .. note:: The sparse implementation produces slightly different results
-  than the dense implementation due to a shrunk learning rate for the
-  intercept.
+  from the dense implementation, due to a shrunk learning rate for the
+  intercept. See :ref:implementation_details.
 
 There is built-in support for sparse data given in any matrix in a format
-supported by `scipy.sparse <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_. For maximum efficiency, however, use the CSR
+supported by `scipy.sparse
+<https://docs.scipy.org/doc/scipy/reference/sparse.html>`_. For maximum
+efficiency, however, use the CSR
 matrix format as defined in `scipy.sparse.csr_matrix
 <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
@@ -373,7 +371,7 @@ Popular choices for the regularization term :math:`R` include:
    - L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
      solutions.
    - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{j=1}^{n} w_j^2 +
-     (1-\rho) \sum_{j=1}^{m} |w_i|`, a convex combination of L2 and L1, where
+     (1-\rho) \sum_{j=1}^{m} |w_j|`, a convex combination of L2 and L1, where
      :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
@@ -403,7 +401,8 @@ example updates the model parameters according to the update rule given by
 
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
-without regularization.
+without regularization (and with additional decay for sparse matrices, as
+detailed in :ref:`implemtation_details`).
 
 The learning rate :math:`\eta` can be either constant or gradually decaying. For
 classification, the default learning rate schedule (``learning_rate='optimal'``)
@@ -463,6 +462,8 @@ The model parameters can be accessed through the members ``coef_`` and
    Xu, Wei
 
 
+.. _implementation_details:
+
 Implementation details
 ======================
 
@@ -470,7 +471,7 @@ The implementation of SGD is influenced by the `Stochastic Gradient SVM
 <https://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
 the weight vector is represented as the product of a scalar and a vector
 which allows an efficient weight update in the case of L2 regularization.
-In the case of sparse feature vectors, the intercept is updated with a
+In the case of sparse input `X`, the intercept is updated with a
 smaller learning rate (multiplied by 0.01) to account for the fact that
 it is updated more frequently. Training examples are picked up sequentially
 and the learning rate is lowered after each observed example. We adopted the
