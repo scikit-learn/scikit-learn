@@ -425,11 +425,14 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
                     tol=tol, max_iter=max_iter)
 
-    with threadpool_limits(limits=1, user_api="openmp"):
-        labels_1 = kmeans.fit(X).predict(X)
-        labels_2 = kmeans.fit_predict(X)
+    labels_1 = kmeans.fit(X).predict(X)
+    labels_2 = kmeans.fit_predict(X)
 
-    assert_array_equal(labels_1, labels_2)
+    # Due to randomness in the order in which chunks of data are processed when
+    # using more than one thread, the absolute values of the labels can be
+    # different between the 2 strategies but they should correspond to the same
+    # clustering.
+    assert v_measure_score(labels_1, labels_2) == 1
 
 
 def test_mb_kmeans_verbose():
