@@ -61,8 +61,8 @@ class Bunch(dict):
     """Container object exposing keys as attributes
 
     ``Bunch`` is a dictionary-like object that exposes its keys as attributes.
-    It is either used as an output or to store certain information in
-    attributes of certain objects. Please note that this object should not be
+    It is sometimes used as an output and sometimes to store certain
+    information in attributes of certain objects. This object should not be
     used as an input parameter.
 
     >>> b = Bunch(a=1, b=2)
