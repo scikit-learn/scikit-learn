@@ -265,24 +265,17 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     assert_array_equal(expected_text, text_text)
 
 
-@pytest.mark.parametrize("values_format", [None])
-def test_confusion_matrix_standard_format(pyplot, values_format):
+def test_confusion_matrix_standard_format(pyplot):
     cm = np.array([[10000000, 0], [29, 123123]])
-    plotted_text_values = ConfusionMatrixDisplay(cm, [False, True]).plot(
-                                            values_format=values_format).text_
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
     # Values should be shown as whole numbers 'd',
     # except the first number which should be shown as 1e+07
-    test = []
-    for i in plotted_text_values.ravel():
-        test.append(i.get_text())
+    test = [t.get_text() for t in plotted_text.ravel()]
     assert test == ['1e+07', '0', '29', '123123']
 
     cm = np.array([[0.1, 10], [100, 0.5]])
-    plotted_text_values = ConfusionMatrixDisplay(cm, [False, True]).plot(
-                                            values_format=values_format).text_
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
     # Values should now formatted as '.2g',
     # Values are have two dec places max, and =>100 becomes e+02.
-    test = []
-    for i in plotted_text_values.ravel():
-        test.append(i.get_text())
+    test = [t.get_text() for t in plotted_text.ravel()]
     assert test == ['0.1', '10', '1e+02', '0.5']
