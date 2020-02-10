@@ -23,7 +23,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
 
 :mod:`sklearn.compose`
-.....................
+.......................
 
 - |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
   DataFrames whose column order differs between :func:``fit`` and
@@ -47,7 +47,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.neighbors`
-......................
+........................
 
 - |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
   restored from a pickle if ``sample_weight`` had been used.
@@ -709,7 +709,7 @@ Support for Python 3.3 has been officially dropped.
 
 - |Feature| |Fix| :class:`decomposition.SparsePCA` now exposes
   ``normalize_components``. When set to True, the train and test data are
-  centered with the train mean repsectively during the fit phase and the
+  centered with the train mean respectively during the fit phase and the
   transform phase. This fixes the behavior of SparsePCA. When set to False,
   which is the default, the previous abnormal behaviour still holds. The False
   value is for backward compatibility and should not be used. :issue:`11585`

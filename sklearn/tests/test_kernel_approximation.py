@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -116,6 +116,18 @@ def test_skewed_chi2_sampler():
     Y_neg = Y.copy()
     Y_neg[0, 0] = -c * 2.
     assert_raises(ValueError, transform.transform, Y_neg)
+
+
+def test_additive_chi2_sampler_exceptions():
+    """Ensures correct error message"""
+    transformer = AdditiveChi2Sampler()
+    X_neg = X.copy()
+    X_neg[0, 0] = -1
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.fit"):
+        transformer.fit(X_neg)
+    with pytest.raises(ValueError, match="X in AdditiveChi2Sampler.transform"):
+        transformer.fit(X)
+        transformer.transform(X_neg)
 
 
 def test_rbf_sampler():
@@ -254,3 +266,24 @@ def test_nystroem_callable():
         ny = Nystroem(kernel=linear_kernel, **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(X)
+
+
+def test_nystroem_precomputed_kernel():
+    # Non-regression: test Nystroem on precomputed kernel.
+    # PR - 14706
+    rnd = np.random.RandomState(12)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=2, coef0=.1)
+    nystroem = Nystroem(kernel='precomputed', n_components=X.shape[0])
+    X_transformed = nystroem.fit_transform(K)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+    # if degree, gamma or coef0 is passed, we raise a ValueError
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel='precomputed', n_components=X.shape[0],
+                      **param)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(K)

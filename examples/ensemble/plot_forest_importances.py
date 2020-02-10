@@ -4,11 +4,17 @@ Feature importances with forests of trees
 =========================================
 
 This examples shows the use of forests of trees to evaluate the importance of
-features on an artificial classification task. The red bars are the feature
-importances of the forest, along with their inter-trees variability.
+features on an artificial classification task. The red bars are
+the impurity-based feature importances of the forest,
+along with their inter-trees variability.
 
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
+
+Warning: impurity-based feature importances can be misleading for high
+cardinality features (many unique values). See
+:func:`sklearn.inspection.permutation_importance` as an alternative.
+
 """
 print(__doc__)
 
@@ -28,7 +34,7 @@ X, y = make_classification(n_samples=1000,
                            random_state=0,
                            shuffle=False)
 
-# Build a forest and compute the feature importances
+# Build a forest and compute the impurity-based feature importances
 forest = ExtraTreesClassifier(n_estimators=250,
                               random_state=0)
 
@@ -44,11 +50,11 @@ print("Feature ranking:")
 for f in range(X.shape[1]):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
-# Plot the feature importances of the forest
+# Plot the impurity-based feature importances of the forest
 plt.figure()
 plt.title("Feature importances")
 plt.bar(range(X.shape[1]), importances[indices],
-       color="r", yerr=std[indices], align="center")
+        color="r", yerr=std[indices], align="center")
 plt.xticks(range(X.shape[1]), indices)
 plt.xlim([-1, X.shape[1]])
 plt.show()

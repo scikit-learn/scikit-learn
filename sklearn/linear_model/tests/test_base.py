@@ -5,22 +5,24 @@
 
 import pytest
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.base import _preprocess_data
-from sklearn.linear_model.base import _rescale_data
-from sklearn.linear_model.base import make_dataset
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model._base import _preprocess_data
+from sklearn.linear_model._base import _rescale_data
+from sklearn.linear_model._base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.datasets.samples_generator import make_sparse_uncorrelated
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_sparse_uncorrelated
+from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
@@ -123,10 +125,10 @@ def test_fit_intercept():
     y = np.array([1, 1])
 
     lr2_without_intercept = LinearRegression(fit_intercept=False).fit(X2, y)
-    lr2_with_intercept = LinearRegression(fit_intercept=True).fit(X2, y)
+    lr2_with_intercept = LinearRegression().fit(X2, y)
 
     lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
-    lr3_with_intercept = LinearRegression(fit_intercept=True).fit(X3, y)
+    lr3_with_intercept = LinearRegression().fit(X3, y)
 
     assert (lr2_with_intercept.coef_.shape ==
                  lr2_without_intercept.coef_.shape)
@@ -179,7 +181,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    reg = LinearRegression(fit_intercept=True)
+    reg = LinearRegression()
     reg.fit((X), Y)
     assert reg.coef_.shape == (2, n_features)
     Y_pred = reg.predict(X)
@@ -203,6 +205,22 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_linear_regression_pd_sparse_dataframe_warning():
+    pd = pytest.importorskip('pandas')
+    # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
+    if LooseVersion(pd.__version__) < '0.24.0':
+        pytest.skip("pandas 0.24+ required.")
+    df = pd.DataFrame()
+    for col in range(4):
+        arr = np.random.randn(10)
+        arr[:8] = 0
+        df[str(col)] = pd.arrays.SparseArray(arr, fill_value=0)
+    msg = "pandas.DataFrame with sparse columns found."
+    with pytest.warns(UserWarning, match=msg):
+        reg = LinearRegression()
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
 
 def test_preprocess_data():
