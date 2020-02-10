@@ -8,7 +8,6 @@
 
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
-from operator import attrgetter
 
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -54,7 +53,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     ----------
     estimator : object
         A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance.
+        information about feature importance (e.g. `coef_`, `feature_importances_`).
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
@@ -66,23 +65,23 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
+    verbose : int, (default=0)
+        Controls verbosity of output.
+
     importance_getter : string or callable, optional (default='auto')
-        If 'auto', uses the feature importance either through a ``coef_``
-        attribute or ``feature_importances_`` attribute of estimator.
+        If 'auto', uses the feature importance either through a `coef_`
+        attribute or `feature_importances_` attribute of estimator.
 
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
         For example, give `regressor_.coef_` in case of
-        `TransformedTargetRegressor`  or
+        :class:`sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        `Pipeline` with its last step named `clf`.
+        class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
-
-    verbose : int, (default=0)
-        Controls verbosity of output.
 
     Attributes
     ----------
@@ -134,8 +133,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
+
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 importance_getter='auto', verbose=0):
+                 verbose=0, importance_getter='auto'):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
@@ -205,23 +205,23 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             estimator.fit(X[:, features], y)
 
-            # Get coefs
-            getter = self.importance_getter
-            if isinstance(getter, str):
-                if getter == 'auto':
-                    getter = _get_importances_auto(estimator)
+            # Get feature importance
+            importance_getter = self.importance_getter
+            if isinstance(importance_getter, str):
+                if importance_getter == 'auto':
+                    importance_getter = _get_importances_auto(estimator)
                 else:
-                    getter = attrgetter(getter)
-            elif not callable(getter):
+                    importance_getter = attrgetter(importance_getter)
+            elif not callable(importance_getter):
                 raise ValueError('`importance_getter` has to be a string'
                                  ' or `callable`')
-            coefs = getter(estimator)
+            importance = importance_getter(estimator)
 
             # Get ranks
-            if coefs.ndim > 1:
-                ranks = np.argsort(safe_sqr(coefs).sum(axis=0))
+            if importance.ndim > 1:
+                ranks = np.argsort(safe_sqr(importance).sum(axis=0))
             else:
-                ranks = np.argsort(safe_sqr(coefs))
+                ranks = np.argsort(safe_sqr(importance))
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -384,21 +384,6 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
-    importance_getter : string or callable, optional (default='auto')
-        If 'auto', uses the feature importance either through a ``coef_``
-        attribute or ``feature_importances_`` attribute of estimator.
-
-        Also accepts a string that specifies an attribute name/path
-        for extracting feature importance (implemented with `attrgetter`).
-        For example, give `regressor_.coef_` in case of
-        `TransformedTargetRegressor`  or
-        `named_steps.clf.feature_importances_` in case of
-        `Pipeline` with its last step named `clf`.
-
-        If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
-
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -432,6 +417,21 @@ class RFECV(RFE):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    importance_getter : string or callable, optional (default='auto')
+        If 'auto', uses the feature importance either through a ``coef_``
+        attribute or ``feature_importances_`` attribute of estimator.
+
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
+        For example, give `regressor_.coef_` in case of
+        `TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        `Pipeline` with its last step named `clf`.
+
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
 
     Attributes
     ----------
@@ -495,8 +495,8 @@ class RFECV(RFE):
     """
 
     def __init__(self, estimator, step=1, min_features_to_select=1,
-                 importance_getter='auto', cv=None,
-                 scoring=None, verbose=0, n_jobs=None):
+                 cv=None, scoring=None, verbose=0, n_jobs=None,
+                 importance_getter='auto'):
         self.estimator = estimator
         self.step = step
         self.importance_getter = importance_getter

@@ -4,7 +4,8 @@
 import numpy as np
 import numbers
 
-from ._base import SelectorMixin, _get_feature_importances
+from ._base import SelectorMixin
+from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 
 from ..exceptions import NotFittedError
@@ -86,6 +87,18 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    norm_order : non-zero int, inf, -inf, default 1
+        Order of the norm used to filter the vectors of coefficients below
+        ``threshold`` in the case where the ``coef_`` attribute of the
+        estimator is of dimension 2.
+
+    max_features : int or None, optional
+        The maximum number of features selected scoring above ``threshold``.
+        To disable ``threshold`` and only select based on ``max_features``,
+        set ``threshold=-np.inf``.
+
+        .. versionadded:: 0.20
+
     importance_getter : string or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
@@ -100,18 +113,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
-
-    norm_order : non-zero int, inf, -inf, default 1
-        Order of the norm used to filter the vectors of coefficients below
-        ``threshold`` in the case where the ``coef_`` attribute of the
-        estimator is of dimension 2.
-
-    max_features : int or None, optional
-        The maximum number of features selected scoring above ``threshold``.
-        To disable ``threshold`` and only select based on ``max_features``,
-        set ``threshold=-np.inf``.
-
-        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -149,10 +150,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.48],
            [ 1.48]])
     """
-
     def __init__(self, estimator, threshold=None, prefit=False,
-                 importance_getter='auto',
-                 norm_order=1, max_features=None):
+                 norm_order=1, max_features=None,
+                 importance_getter='auto'):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
