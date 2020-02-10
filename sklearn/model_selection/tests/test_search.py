@@ -1896,7 +1896,7 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
             return self
 
     def _fit_param_callable():
-        pass  # pragma: no cover
+        pass
 
     model = SearchCV(
         _FitParamClassifier(), param_search

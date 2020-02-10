@@ -30,7 +30,7 @@ def compute_kernel_slow(Y, X, kernel, h):
     elif kernel == 'cosine':
         return norm * (np.cos(0.5 * np.pi * d / h) * (d < h)).sum(-1)
     else:
-        raise ValueError('kernel not recognized')  # pragma: no cover
+        raise ValueError('kernel not recognized')
 
 
 def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):

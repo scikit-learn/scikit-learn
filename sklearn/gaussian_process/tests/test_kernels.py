@@ -362,13 +362,13 @@ def test_warns_on_get_params_non_attribute():
             pass
 
         def __call__(self, X, Y=None, eval_gradient=False):
-            return X  # pragma: no cover
+            return X
 
         def diag(self, X):
-            return np.ones(X.shape[0])  # pragma: no cover
+            return np.ones(X.shape[0])
 
         def is_stationary(self):
-            return False  # pragma: no cover
+            return False
 
     est = MyKernel()
     with pytest.warns(FutureWarning, match='AttributeError'):

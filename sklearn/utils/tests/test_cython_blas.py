@@ -129,7 +129,7 @@ def test_rotg(dtype):
     def expected_rotg(a, b):
         roe = a if abs(a) > abs(b) else b
         if a == 0 and b == 0:
-            c, s, r, z = (1, 0, 0, 0)  # pragma: no cover
+            c, s, r, z = (1, 0, 0, 0)
         else:
             r = np.sqrt(a**2 + b**2) * (1 if roe >= 0 else -1)
             c, s = a/r, b/r

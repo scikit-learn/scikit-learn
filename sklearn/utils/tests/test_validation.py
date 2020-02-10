@@ -621,7 +621,7 @@ def test_has_fit_parameter():
     class TestClassWithDeprecatedFitMethod:
         @deprecated("Deprecated for the purpose of testing has_fit_parameter")
         def fit(self, X, y, sample_weight=None):
-            pass  # pragma: no cover
+            pass
 
     assert has_fit_parameter(TestClassWithDeprecatedFitMethod,
                              "sample_weight"), \
@@ -676,7 +676,7 @@ def test_check_is_fitted():
             check_is_fitted(ard)
         with pytest.raises(NotFittedError):
             check_is_fitted(svr)
-    except ValueError:  # pragma: no cover
+    except ValueError:
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
@@ -700,7 +700,7 @@ def test_check_is_fitted():
 def test_check_is_fitted_attributes():
     class MyEstimator():
         def fit(self, X, y):
-            return self  # pragma: no cover
+            return self
 
     msg = "not fitted"
     est = MyEstimator()
@@ -821,7 +821,7 @@ def test_check_dataframe_mixed_float_dtypes():
 
 class DummyMemory:
     def cache(self, func):
-        return func  # pragma: no cover
+        return func
 
 
 class WrongDummyMemory:

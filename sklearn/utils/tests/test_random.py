@@ -97,7 +97,7 @@ def check_sample_int_distribution(sample_without_replacement):
 
             if len(output) == n_expected:
                 break
-        else:  # pragma: no cover
+        else:
             raise AssertionError(
                 "number of combinations != number of expected (%s != %s)" %
                 (len(output), n_expected))

@@ -36,7 +36,7 @@ class MockClassifier:
         return self
 
     def predict(self, T):
-        return T.shape[0]  # pragma: no cover
+        return T.shape[0]
 
     predict_proba = predict
     decision_function = predict
@@ -49,7 +49,7 @@ class MockClassifier:
         return {'foo_param': self.foo_param}
 
     def set_params(self, **params):
-        return self  # pragma: no cover
+        return self
 
     def _get_tags(self):
         return {}

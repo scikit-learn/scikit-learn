@@ -92,10 +92,10 @@ class NoEstimator:
         pass
 
     def fit(self, X=None, y=None):
-        return self  # pragma: no cover
+        return self
 
     def predict(self, X=None):
-        return None  # pragma: no cover
+        return None
 
 
 class VargEstimator(BaseEstimator):
@@ -326,10 +326,10 @@ def test_clone_pandas_dataframe():
             self.scalar_param = scalar_param
 
         def fit(self, X, y=None):
-            pass  # pragma: no cover
+            pass
 
         def transform(self, X):
-            pass  # pragma: no cover
+            pass
 
     # build and clone estimator
     d = np.arange(10)
@@ -504,7 +504,7 @@ def test_warns_on_get_params_non_attribute():
             pass
 
         def fit(self, X, y=None):
-            return self  # pragma: no cover
+            return self
 
     est = MyEstimator()
     with pytest.warns(FutureWarning, match='AttributeError'):

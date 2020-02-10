@@ -55,7 +55,7 @@ def _test_features_list(data_id):
     sparse = data_description['format'].lower() == 'sparse_arff'
     if sparse is True:
         raise ValueError('This test is not intended for sparse data, to keep '
-                         'code relatively simple')  # pragma: no cover
+                         'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
     data_downloaded = np.array(list(data_arff['data']), dtype='O')

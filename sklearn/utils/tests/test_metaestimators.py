@@ -3,7 +3,7 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 class Prefix:
     def func(self):
-        pass  # pragma: no cover
+        pass
 
 
 class MockMetaEstimator:
@@ -13,7 +13,7 @@ class MockMetaEstimator:
     @if_delegate_has_method(delegate="a_prefix")
     def func(self):
         """This is a mock delegated function"""
-        pass  # pragma: no cover
+        pass
 
 
 def test_delegated_docstring():
@@ -33,7 +33,7 @@ class MetaEst:
 
     @if_delegate_has_method(delegate='sub_est')
     def predict(self):
-        pass  # pragma: no cover
+        pass
 
 
 class MetaEstTestTuple(MetaEst):
@@ -41,7 +41,7 @@ class MetaEstTestTuple(MetaEst):
 
     @if_delegate_has_method(delegate=('sub_est', 'better_sub_est'))
     def predict(self):
-        pass  # pragma: no cover
+        pass
 
 
 class MetaEstTestList(MetaEst):
@@ -49,19 +49,19 @@ class MetaEstTestList(MetaEst):
 
     @if_delegate_has_method(delegate=['sub_est', 'better_sub_est'])
     def predict(self):
-        pass  # pragma: no cover
+        pass
 
 
 class HasPredict:
     """A mock sub-estimator with predict method"""
 
     def predict(self):
-        pass  # pragma: no cover
+        pass
 
 
 class HasNoPredict:
     """A mock sub-estimator with no predict method"""
-    pass  # pragma: no cover
+    pass
 
 
 def test_if_delegate_has_method():

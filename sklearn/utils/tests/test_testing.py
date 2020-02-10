@@ -233,12 +233,12 @@ def test_ignore_warning():
     with pytest.raises(ValueError, match=match):
         silence_warnings_func = ignore_warnings(warning_class)(
             _warning_function)
-        silence_warnings_func()  # pragma: no cover
+        silence_warnings_func()
 
     with pytest.raises(ValueError, match=match):
         @ignore_warnings(warning_class)
         def test():
-            pass  # pragma: no cover
+            pass
 
 
 class TestWarns(unittest.TestCase):
@@ -271,19 +271,19 @@ class TestWarns(unittest.TestCase):
                 # assert_warns has a special handling of "FutureWarning" that
                 # pytest.warns does not have
                 assert_warns(UserWarning, f)
-                failed = True  # pragma: no cover
+                failed = True
             except AssertionError:
                 pass
         finally:
             sys.modules['warnings'].filters = filters
 
-        if failed:  # pragma: no cover
+        if failed:
             raise AssertionError("wrong warning caught by assert_warn")
 
 
 # Tests for docstrings:
 
-def f_ok(a, b):  # pragma: no cover
+def f_ok(a, b):
     """Function f
 
     Parameters
@@ -302,7 +302,7 @@ def f_ok(a, b):  # pragma: no cover
     return c
 
 
-def f_bad_sections(a, b):  # pragma: no cover
+def f_bad_sections(a, b):
     """Function f
 
     Parameters
@@ -321,7 +321,7 @@ def f_bad_sections(a, b):  # pragma: no cover
     return c
 
 
-def f_bad_order(b, a):  # pragma: no cover
+def f_bad_order(b, a):
     """Function f
 
     Parameters
@@ -340,7 +340,7 @@ def f_bad_order(b, a):  # pragma: no cover
     return c
 
 
-def f_too_many_param_docstring(a, b):  # pragma: no cover
+def f_too_many_param_docstring(a, b):
     """Function f
 
     Parameters
@@ -361,7 +361,7 @@ def f_too_many_param_docstring(a, b):  # pragma: no cover
     return d
 
 
-def f_missing(a, b):  # pragma: no cover
+def f_missing(a, b):
     """Function f
 
     Parameters
@@ -378,7 +378,7 @@ def f_missing(a, b):  # pragma: no cover
     return c
 
 
-def f_check_param_definition(a, b, c, d, e):  # pragma: no cover
+def f_check_param_definition(a, b, c, d, e):
     """Function f
 
     Parameters
@@ -399,7 +399,7 @@ def f_check_param_definition(a, b, c, d, e):  # pragma: no cover
 
 class Klass:
     def f_missing(self, X, y):
-        pass  # pragma: no cover
+        pass
 
     def f_bad_sections(self, X, y):
         """Function f
@@ -416,10 +416,10 @@ class Klass:
         c : list
             Parameter c
         """
-        pass  # pragma: no cover
+        pass
 
 
-class MockEst:  # pragma: no cover
+class MockEst:
     def __init__(self):
         """MockEstimator"""
     def fit(self, X, y):
@@ -435,7 +435,7 @@ class MockEst:  # pragma: no cover
         return 1.
 
 
-class MockMetaEstimator:  # pragma: no cover
+class MockMetaEstimator:
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 

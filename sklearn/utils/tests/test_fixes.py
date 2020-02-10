@@ -55,7 +55,7 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
         with pytest.raises(NotImplementedError):
             _joblib_parallel_args(verbose=True)
     else:
-        raise ValueError  # pragma: no cover
+        raise ValueError
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1],

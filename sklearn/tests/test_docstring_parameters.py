@@ -141,7 +141,7 @@ def test_tabs():
 
         if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
-            continue  # pragma: no cover
+            continue
 
         # because we don't import
         mod = importlib.import_module(modname)

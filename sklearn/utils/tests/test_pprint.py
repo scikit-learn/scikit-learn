@@ -38,7 +38,7 @@ class LogisticRegression(BaseEstimator):
         self.l1_ratio = l1_ratio
 
     def fit(self, X, y):
-        return self  # pragma: no cover
+        return self
 
 
 class StandardScaler(TransformerMixin, BaseEstimator):
@@ -48,7 +48,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def transform(self, X, copy=None):
-        return self  # pragma: no cover
+        return self
 
 
 class RFE(BaseEstimator):

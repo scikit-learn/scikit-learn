@@ -168,15 +168,15 @@ class NoSparseClassifier(BaseBadClassifier):
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
-    def fit(self, X, y):  # pragma: no cover
+    def fit(self, X, y):
         X, y = check_X_y(X, y)
         self.coef_ = np.ones(X.shape[1])
         return self
 
     def predict(self, X):
         check_is_fitted(self)
-        X = check_array(X)  # pragma: no cover
-        return np.ones(X.shape[0])  # pragma: no cover
+        X = check_array(X)
+        return np.ones(X.shape[0])
 
 
 class NoSampleWeightPandasSeriesType(BaseEstimator):
@@ -580,7 +580,7 @@ def test_check_estimator_required_parameters_skip():
         _required_parameters = ["special_parameter"]
 
         def __init__(self, special_parameter):
-            self.special_parameter = special_parameter  # pragma: no cover
+            self.special_parameter = special_parameter
 
     assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
                                   r"which requires parameters "
@@ -588,7 +588,7 @@ def test_check_estimator_required_parameters_skip():
                                   check_estimator, MyEstimator)
 
 
-def run_tests_without_pytest():  # pragma: no cover
+def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
     """
     main_module = sys.modules['__main__']
@@ -619,7 +619,7 @@ def test_all_estimators_all_public():
         assert not est.__class__.__name__.startswith("_")
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()

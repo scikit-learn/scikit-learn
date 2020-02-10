@@ -532,8 +532,7 @@ def test_symmetric_metric(name):
                             metric(y_pred_bin, y_true_bin),
                             err_msg="%s is not symmetric" % name)
         else:
-            assert False,\
-                "This case is currently unhandled"  # pragma: no cover
+            assert False, "This case is currently unhandled"
     else:
         assert_allclose(metric(y_true, y_pred),
                         metric(y_pred, y_true),
@@ -555,7 +554,7 @@ def test_not_symmetric_metric(name):
     # use context manager to supply custom error message
     with pytest.raises(AssertionError):
         assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        raise ValueError("%s seems to be symmetric" % name)  # pragma: no cover
+        raise ValueError("%s seems to be symmetric" % name)
 
 
 @pytest.mark.parametrize(
@@ -1073,8 +1072,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
         _check_averaging(metric, y_true, y_score, y_true_binarize,
                          y_score, is_multilabel)
     else:
-        raise ValueError("Metric is not recorded as having "
-                         "an average option")  # pragma: no cover
+        raise ValueError("Metric is not recorded as having an average option")
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_AVERAGING))
@@ -1170,8 +1168,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         assert_allclose(unweighted_score, weighted_score)
         raise ValueError("Unweighted and weighted scores are unexpectedly "
                          "almost equal (%s) and (%s) "
-                         "for %s" % (unweighted_score,
-                                     weighted_score, name))  # pragma: no cover
+                         "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,

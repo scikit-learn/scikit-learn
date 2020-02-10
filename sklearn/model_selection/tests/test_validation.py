@@ -97,7 +97,7 @@ class MockImprovingEstimator(BaseEstimator):
         return self
 
     def predict(self, X):
-        raise NotImplementedError  # pragma: no cover
+        raise NotImplementedError
 
     def score(self, X=None, Y=None):
         # training score becomes worse (2 -> 1), test error better (0 -> 1)
@@ -136,7 +136,7 @@ class MockEstimatorWithParameter(BaseEstimator):
         return self
 
     def predict(self, X):
-        raise NotImplementedError  # pragma: no cover
+        raise NotImplementedError
 
     def score(self, X=None, y=None):
         return self.param if self._is_training_data(X) else 1 - self.param
@@ -155,7 +155,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         return super().fit(X_subset, y_subset)
 
     def predict(self, X):
-        raise NotImplementedError  # pragma: no cover
+        raise NotImplementedError
 
 
 class MockClassifier:
@@ -1012,8 +1012,7 @@ def test_learning_curve():
                                train_sizes=np.linspace(0.1, 1.0, 10),
                                shuffle=shuffle_train, return_times=True)
         if len(w) > 0:
-            raise RuntimeError(
-                "Unexpected warning: %r" % w[0].message)  # pragma: no cover
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert train_scores.shape == (10, 3)
         assert test_scores.shape == (10, 3)
         assert fit_times.shape == (10, 3)
@@ -1037,8 +1036,7 @@ def test_learning_curve():
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
         if len(w) > 0:
-            raise RuntimeError(
-                "Unexpected warning: %r" % w[0].message)  # pragma: no cover
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_array_almost_equal(train_scores2, train_scores)
         assert_array_almost_equal(test_scores2, test_scores)
 
@@ -1230,8 +1228,7 @@ def test_validation_curve():
             param_range=param_range, cv=2
         )
     if len(w) > 0:
-        raise RuntimeError(
-            "Unexpected warning: %r" % w[0].message)  # pragma: no cover
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
@@ -1608,7 +1605,7 @@ def test_score_memmap():
             try:
                 os.unlink(tf.name)
                 break
-            except WindowsError:  # pragma: no cover
+            except WindowsError:
                 sleep(1.)
 
 

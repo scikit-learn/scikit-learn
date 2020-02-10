@@ -9,7 +9,7 @@ try:
     from sklearn import *  # noqa
     _top_import_error = None
 except Exception as e:
-    _top_import_error = e  # pragma: no cover
+    _top_import_error = e
 
 
 def test_import_skl():

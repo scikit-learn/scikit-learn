@@ -655,7 +655,7 @@ def test_is_scalar_nan(value, result):
 
 
 def dummy_func():
-    pass  # pragma: no cover
+    pass
 
 
 def test_deprecation_joblib_api(tmpdir):

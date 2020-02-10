@@ -57,7 +57,7 @@ def test_parameters_default_constructible(name, Estimator):
 
 
 def _sample_func(x, y=1):
-    pass  # pragma: no cover
+    pass
 
 
 @pytest.mark.parametrize("val, expected", [
@@ -182,7 +182,7 @@ def test_import_all_consistency():
             continue
         if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
-            continue  # pragma: no cover
+            continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
             assert hasattr(package, name),\
