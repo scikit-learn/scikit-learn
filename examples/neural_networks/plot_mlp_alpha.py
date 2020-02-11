@@ -28,6 +28,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neural_network import MLPClassifier
+from sklearn.pipeline import make_pipeline
 
 h = .02  # step size in the mesh
 
@@ -36,8 +37,13 @@ names = ['alpha ' + str(i) for i in alphas]
 
 classifiers = []
 for i in alphas:
-    classifiers.append(MLPClassifier(solver='lbfgs', alpha=i, random_state=1,
-                                     hidden_layer_sizes=[100, 100]))
+    classifiers.append(make_pipeline(
+                       StandardScaler(),
+                       MLPClassifier(solver='lbfgs', alpha=i,
+                                     random_state=1, max_iter=2000,
+                                     early_stopping=True,
+                                     hidden_layer_sizes=[100, 100])
+                       ))
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=0, n_clusters_per_class=1)

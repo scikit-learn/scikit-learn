@@ -355,16 +355,16 @@ class TreeGrower:
 
         self.n_nodes += 2
 
-        if self.max_depth is not None and depth == self.max_depth:
-            self._finalize_leaf(left_child_node)
-            self._finalize_leaf(right_child_node)
-            return left_child_node, right_child_node
-
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
             self._finalize_leaf(left_child_node)
             self._finalize_leaf(right_child_node)
             self._finalize_splittable_nodes()
+            return left_child_node, right_child_node
+
+        if self.max_depth is not None and depth == self.max_depth:
+            self._finalize_leaf(left_child_node)
+            self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
         if left_child_node.n_samples < self.min_samples_leaf * 2:

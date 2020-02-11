@@ -288,6 +288,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     Attributes
     ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
 
@@ -548,7 +551,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
-        chain orders.
+        chain order.
         In addition, it controls the random seed given at each `base_estimator`
         at each chaining iteration. Thus, it is only used when `base_estimator`
         exposes a `random_state`.
@@ -709,7 +712,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
-        chain orders.
+        chain order.
         In addition, it controls the random seed given at each `base_estimator`
         at each chaining iteration. Thus, it is only used when `base_estimator`
         exposes a `random_state`.
