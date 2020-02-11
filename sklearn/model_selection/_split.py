@@ -592,7 +592,7 @@ class StratifiedKFold(_BaseKFold):
         indices, which controls the randomness of each fold for each class.
         Otherwise, leave `random_state` as `None`.
         Pass an int for reproducible output across multiple function calls.
-        See term:`Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
