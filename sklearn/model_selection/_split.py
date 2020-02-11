@@ -1091,8 +1091,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Passes `random_state` to the arbitrary repeating cross validator. Pass
-        an int for reproducible output across multiple function calls.
+        Passes `random_state` to the arbitrary repeating cross validator.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
@@ -1195,8 +1195,7 @@ class RepeatedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Random state used to control the randomness of each repeated
-        cross-validation instance.
+        Controls the randomness of each repeated cross-validation instance.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -1249,7 +1248,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Random state to be used to generate random state for each repetition.
+        Controls the generation of the random states for each repetition.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
