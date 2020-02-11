@@ -302,7 +302,8 @@ class OneHotEncoder(_BaseEncoder):
 
     infrequent_indices_ : list of shape (n_features,)
         Defined when `min_frequency` or `max_categories` is set to a
-        non-default value. `infrequent_indices_[i]` is an array of indices corresponding to `categories_[i]` of the infrequent categories.
+        non-default value. `infrequent_indices_[i]` is an array of indices
+        corresponding to `categories_[i]` of the infrequent categories.
         `infrequent_indices_[i]` is None if the ith input feature has no
         infrequent categories.
 
