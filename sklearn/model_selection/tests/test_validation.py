@@ -211,7 +211,6 @@ class MockClassifier:
 
     def predict(self, T):
         if self.allow_nd:
-            # XXX unreached code as of v0.22
             T = T.reshape(len(T), -1)
         return T[:, 0]
 

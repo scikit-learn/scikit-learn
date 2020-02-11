@@ -102,8 +102,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
         assert data_by_id.target_names == target_column
-    # TODO Use expected_data_dtype here?
-    assert data_by_id.data.dtype == np.float64
+    assert data_by_id.data.dtype == expected_data_dtype
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
@@ -737,7 +736,7 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -756,7 +755,7 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=True)
 
 
@@ -781,7 +780,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -799,7 +798,7 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=True)
 
 
