@@ -202,6 +202,31 @@ def test_transformer_dtypes_casting(dtype_in, dtype_out):
                        random_state=42)
     Xt = rbm.fit_transform(X)
 
-    # dtype_in and dtype_out consistent
+    # dtype_in and dtype_out should be consistent
     assert Xt.dtype == dtype_out, ('transform dtype: {} - original dtype: {}'
                                    .format(Xt.dtype, X.dtype))
+
+
+def test_convergence_dtype_consistency():
+    # float 64 transformer
+    X_64 = Xdigits[:100].astype(np.float64)
+    rbm_64 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                          random_state=42)
+    Xt_64 = rbm_64.fit_transform(X_64)
+
+    # float 32 transformer
+    X_32 = Xdigits[:100].astype(np.float32)
+    rbm_32 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                          random_state=42)
+    Xt_32 = rbm_32.fit_transform(X_32)
+
+    # results and attributes should be close enough in 32 bit and 64 bit
+    assert_almost_equal(Xt_64, Xt_32, 6)
+    assert_almost_equal(rbm_64.intercept_hidden_,
+                        rbm_32.intercept_hidden_,
+                        6)
+    assert_almost_equal(rbm_64.intercept_visible_,
+                        rbm_32.intercept_visible_,
+                        6)
+    assert_almost_equal(rbm_64.components_, rbm_32.components_, 6)
+    assert_almost_equal(rbm_64.h_samples_, rbm_32.h_samples_, 0)
