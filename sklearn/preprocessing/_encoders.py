@@ -220,7 +220,7 @@ class OneHotEncoder(_BaseEncoder):
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression. Drop is not
-        support when `min_frequency` or `max_levels` is set to combine
+        support when `min_frequency` or `max_categories` is set to combine
         infrequent categories.
 
         - None : retain all features (the default).
@@ -275,9 +275,9 @@ class OneHotEncoder(_BaseEncoder):
 
         .. versionadded:: 0.23
 
-    max_levels : int, default=None
+    max_categories : int, default=None
         Specifies an upper limit to the number of output features for each
-        input feature when considering infrequent categories. `max_levels`
+        input feature when considering infrequent categories. `max_categories`
         includes the feature that combines infrequent categories. If `None`
         there is no limit to the number of output features.
 
@@ -301,10 +301,10 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
     infrequent_indices_ : list of shape (n_features,)
-        Defined when `min_frequency` or `max_levels` is set to a non-default
-        value. `infrequent_indices_[i]` is an array of indices corresponding to
-        `categories_[i]` of the infrequent categories. `infrequent_indices_[i]`
-        is None if the ith input feature has no infrequent categories.
+        Defined when `min_frequency` or `max_categories` is set to a
+        non-default value. `infrequent_indices_[i]` is an array of indices corresponding to `categories_[i]` of the infrequent categories.
+        `infrequent_indices_[i]` is None if the ith input feature has no
+        infrequent categories.
 
     See Also
     --------
@@ -364,14 +364,14 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error',
-                 min_frequency=1, max_levels=None):
+                 min_frequency=1, max_categories=None):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
         self.min_frequency = min_frequency
-        self.max_levels = max_levels
+        self.max_categories = max_categories
 
     def _validate_keywords(self):
 
@@ -402,8 +402,8 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError("infrequent categories are only supported "
                                  "when handle_unknown is 'error' or 'auto'")
 
-        if self.max_levels is not None and self.max_levels <= 1:
-            raise ValueError("max_levels must be greater than 1")
+        if self.max_categories is not None and self.max_categories <= 1:
+            raise ValueError("max_categories must be greater than 1")
 
         if isinstance(self.min_frequency, numbers.Integral):
             if not self.min_frequency >= 1:
@@ -464,14 +464,14 @@ class OneHotEncoder(_BaseEncoder):
     @property
     def _infrequent_enabled(self):
         """Infrequent category is enabled."""
-        return (self.max_levels is not None and self.max_levels > 1 or
+        return (self.max_categories is not None and self.max_categories > 1 or
                 (isinstance(self.min_frequency, numbers.Integral)
                     and self.min_frequency > 1) or
                 (isinstance(self.min_frequency, numbers.Real)
                     and 0.0 < self.min_frequency < 1.0))
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
-        """Compute the infrequent indicies based on max_levels and
+        """Compute the infrequent indicies based on max_categories and
         min_frequency.
 
         Parameters
@@ -504,11 +504,11 @@ class OneHotEncoder(_BaseEncoder):
                 category_mask = category_count < min_frequency_abs
                 infrequent_mask |= category_mask
 
-        if (self.max_levels is not None and self.max_levels > 1
-                and self.max_levels < category_count.size):
+        if (self.max_categories is not None and self.max_categories > 1
+                and self.max_categories < category_count.size):
             # stable sort to preserve original count order
             smallest_levels = np.argsort(category_count, kind='mergesort'
-                                         )[:-self.max_levels + 1]
+                                         )[:-self.max_categories + 1]
             infrequent_mask[smallest_levels] = True
 
         output = np.flatnonzero(infrequent_mask)
@@ -525,8 +525,6 @@ class OneHotEncoder(_BaseEncoder):
             1. infrequent_indices_ to be the categories that are infrequent.
             2. _default_to_infrequent_mappings to be the mapping from the
                default mapping provided by _encode to the infrequent categories
-            3. _largest_infreq_indices to be the indices of the most frequent
-               infrequent category
 
         Parameters
         ----------
@@ -542,14 +540,12 @@ class OneHotEncoder(_BaseEncoder):
 
         # compute mapping from default mapping to infrequent mapping
         default_to_infrequent_mappings = []
-        largest_infreq_idxs = []
 
         for category_count, infreq_idx in zip(category_counts,
                                               self.infrequent_indices_):
             # no infrequent categories
             if infreq_idx is None:
                 default_to_infrequent_mappings.append(None)
-                largest_infreq_idxs.append(None)
                 continue
 
             # infrequent indicies exist
@@ -565,12 +561,8 @@ class OneHotEncoder(_BaseEncoder):
 
             default_to_infrequent_mappings.append(mapping)
 
-            # compute infrequent category with the largest cardinality
-            largest_infreq_idx = np.argmax(category_count[infreq_idx])
-            largest_infreq_idxs.append(infreq_idx[largest_infreq_idx])
-
         self._default_to_infrequent_mappings = default_to_infrequent_mappings
-        self._largest_infreq_indices = largest_infreq_idxs
+        # self._largest_infreq_indices = largest_infreq_idxs
 
     def _map_to_infrequent_categories(self, X_int):
         """Map categories to infrequent categories.
@@ -635,8 +627,9 @@ class OneHotEncoder(_BaseEncoder):
         """Compute the transformed categories used for column `i`.
 
         1. Dropped columns are removed.
-        2. If there are infrequent categories, the infrequent category with
-        the largest cardinality is placed at the end.
+        2. If there are infrequent categories, the category is named
+        'infrequent'. If 'infrequent' is already a category, then then new
+        category is called 'infrequent_sklearn'.
         """
         cats = self.categories_[i]
 
@@ -654,11 +647,14 @@ class OneHotEncoder(_BaseEncoder):
         if infreq_idx is None:
             return cats
 
-        largest_infreq_idx = self._largest_infreq_indices[i]
-        largest_infreq_cat = cats[largest_infreq_idx]
         frequent_indices = np.setdiff1d(np.arange(len(cats)), infreq_idx)
 
-        return np.r_[cats[frequent_indices], [largest_infreq_cat]]
+        if cats.dtype.kind in 'US' and 'infrequent' in cats:
+            infrequent_cat = 'infrequent_sklearn'
+        else:
+            infrequent_cat = 'infrequent'
+        return np.r_[cats[frequent_indices],
+                     np.array([infrequent_cat], dtype=object)]
 
     @property
     def _n_transformed_features(self):
@@ -812,8 +808,9 @@ class OneHotEncoder(_BaseEncoder):
         In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
 
-        For a given input feature, if there is an infrequent category, the most
-        frequent infrequent category will be used to represent this category.
+        For a given input feature, if there is an infrequent category,
+        'infrequent' will be used to represent the category. If 'infrequent'
+        is already a category, 'infrequent_sklearn' will be used instead.
 
         Parameters
         ----------
@@ -839,7 +836,8 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.find_common_type([cat.dtype
+                                  for cat in self._transformed_categories], [])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -899,7 +897,8 @@ class OneHotEncoder(_BaseEncoder):
         Return feature names for output features.
 
         For a given input feature, if there is an infrequent category, the most
-        frequent infrequent category will be used as a feature name.
+        'infrequent' will be used as a feature name. If 'infrequent' is already
+        a category, 'infrequent_sklearn' will be used instead.
 
         Parameters
         ----------
