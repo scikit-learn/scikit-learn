@@ -311,24 +311,23 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         valid_modules = copy.copy(__all__)
         valid_modules.remove("GeneralNB")
-        _dict_model = {}
 
-        _list_fit_prior = []
-        _list_class_prior = []
-
-        names, _, _ = zip(*self.models)
-        self._validate_names(names)
-
-        self._validate_column_callables(X)
+        self._cols = []
+        dict_col2model = {}
+        all_fit_priors = []
+        all_class_priors = []
 
         # Check type
         if not isinstance(self.models, list):
             raise TypeError(
                 "Expected list but got {}".format(type(self.models)))
 
+        names, _, _ = zip(*self.models)
+        self._validate_names(names)
+
         for model in self.models:
 
-            # Check type
+            # Check type of each entry in list
             if not isinstance(model, tuple):
                 raise TypeError(
                     "Expected list of tuples "
@@ -337,9 +336,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(model)))
 
-            name, estimator, cols = model
+            _, estimator, cols = model
 
-            # Check naive bayes estimator
+            # Check naive bayes estimator for format
+            # `fit` and `_joint_log_likelihood` attributes
             if callable(estimator):
                 raise ValueError("Wrong format specified.")
             if not (hasattr(estimator, "fit")
@@ -351,32 +351,39 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise ValueError(
                     "Distributions should be one of {}".format(valid_modules))
 
-            # For checking fit_prior later
-            _class_prior = getattr(estimator, "prior", None) or getattr(estimator, "class_prior", None)
-            _list_class_prior.append(_class_prior)
+            # Check naive bayes estimator for attributes
+            # `prior` and `fit_prior`
+            class_prior = getattr(estimator, "prior", None) or getattr(estimator, "class_prior", None)
+            fit_prior = getattr(estimator, "fit_prior", True)
+            all_class_priors.append(class_prior)
+            all_fit_priors.append(fit_prior)
 
-            _fit_prior = getattr(estimator, "fit_prior", True)
-            _list_fit_prior.append(_fit_prior)
-
-            # Check the feature
+            # Check the columns for duplicate models
+            # and convert to list if callable
+            if callable(cols):
+                cols = cols(X)
             for col in cols:
-                if col in _dict_model:
+                if col in dict_col2model:
                     raise ValueError("Duplicate specification of col found.")
                 else:
-                    _dict_model[col] = estimator.__class__.__name__.lower()
+                    dict_col2model[col] = estimator.__class__.__name__.lower()
+            self._cols.append(cols)
 
-        if len(set(_list_class_prior)) != 1:
+        # Check if class priors are the same throughout all estimators
+        if len(set(all_class_priors)) != 1:
             raise ValueError("The parameters 'class_prior' or 'prior' "
                              "must be the same values throughout all estimators "
                              "if specified.")
 
-        if len(set(_list_fit_prior)) != 1:
+        # FIXME really?
+        # Check if class priors are the same throughout all estimators
+        if len(set(all_fit_priors)) != 1:
             raise ValueError("The parameter 'fit_prior' "
                              "must be the same values through out all estimators "
                              "if specified.")
 
         n_features = X.shape[-1]
-        n_cols = len(_dict_model)
+        n_cols = len(dict_col2model)
         if n_cols != n_features:
             raise ValueError("Expected {} columns".format(n_features) +
                              " in X but {} were specified.".format(n_cols))
@@ -384,7 +391,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     def _validate_column_callables(self, X):
         """
-        Converts callable column specifications.
+        Preprocess callable column specifications for later use
         """
         self._cols = []
         for _, _, cols in self.models:
@@ -393,6 +400,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             self._cols.append(cols)
     
     def _check_X_y(self, X, y):
+        # Delay further checks on X y to the respective estimators
         if hasattr(X, "columns"):
             self._df_cols = X.columns
 
