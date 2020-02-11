@@ -641,7 +641,8 @@ class OneHotEncoder(_BaseEncoder):
         cats = self.categories_[i]
 
         if self.drop is not None:
-            # early exit because infrequent categories and drop is forbidden
+            if self.drop_idx_[i] == -1:
+                return cats
             return np.delete(cats, self.drop_idx_[i])
 
         # drop is None
@@ -663,12 +664,13 @@ class OneHotEncoder(_BaseEncoder):
     def _n_transformed_features(self):
         """Number of transformed features."""
         if self.drop is not None:
-            if self.drop == 'first':
-                return [len(cats) - 1 for cats in self.categories_]
-
-            # drop == 'if_binary
-            return [1 if len(cats) == 2 else len(cats)
-                    for cats in self.categories_]
+            output = []
+            for i, cats in enumerate(self.categories_):
+                if self.drop_idx_[i] == -1:
+                    output.append(len(cats))
+                else:
+                    output.append(len(cats) - 1)
+            return output
 
         # drop is None
         output = [len(cats) for cats in self.categories_]
