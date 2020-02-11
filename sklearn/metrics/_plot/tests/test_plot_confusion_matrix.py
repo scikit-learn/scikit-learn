@@ -266,12 +266,12 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
 
 
 def test_confusion_matrix_standard_format(pyplot):
-    cm = np.array([[10000000, 0], [29, 123123]])
+    cm = np.array([[10000000, 0], [1234567, 12345678]])
     plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
     # Values should be shown as whole numbers 'd',
     # except the first number which should be shown as 1e+07
     test = [t.get_text() for t in plotted_text.ravel()]
-    assert test == ['1e+07', '0', '29', '123123']
+    assert test == ['1e+07', '0', '1234567', '1.2e+07']
 
     cm = np.array([[0.1, 10], [100, 0.5]])
     plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
