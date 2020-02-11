@@ -208,7 +208,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self.classes_ = None
         self.n_features_ = None
         self._cols = None
-        self._df_columns = None
+        self._df_cols = None
         self._is_fitted = False
 
     def fit(self, X, y):
@@ -386,25 +386,24 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         """
         Converts callable column specifications.
         """
-        cols = []
-        for _, _, col in self.models:
-            if callable(col):
-                col = col(X)
-            cols.append(col)
-        self._cols = cols   
+        self._cols = []
+        for _, _, cols in self.models:
+            if callable(cols):
+                cols = cols(X)
+            self._cols.append(cols)
     
     def _check_X_y(self, X, y):
         if hasattr(X, "columns"):
-            self._df_columns = X.columns
+            self._df_cols = X.columns
 
     def _check_X(self, X):
         # Check pandas.DataFrame
-        if self._df_columns is not None:
+        if self._df_cols is not None:
             
             if not hasattr(X, "columns"):
                 raise TypeError("X should be a dataframe")
             
-            if not all(self._df_columns == X.columns):
+            if not all(self._df_cols == X.columns):
                 raise ValueError("Column names must match with "
                                 "column names of fitted data.")
 
