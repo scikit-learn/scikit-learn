@@ -327,7 +327,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         all_fit_priors = []
         all_class_priors = []
 
-        # Check type
+        # Check type of `models` parameter
         if not isinstance(self.models, list):
             raise TypeError(
                 "Expected list but got {}".format(type(self.models)))
@@ -398,16 +398,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             raise ValueError("Expected {} columns".format(n_features) +
                              " in X but {} were specified.".format(n_cols))
         self.n_features_ = n_features
-
-    def _validate_column_callables(self, X):
-        """
-        Preprocess callable column specifications for later use
-        """
-        self._cols = []
-        for _, _, cols in self.models:
-            if callable(cols):
-                cols = cols(X)
-            self._cols.append(cols)
     
     def _check_X_y(self, X, y):
         # Delay further checks on X y to the respective estimators
