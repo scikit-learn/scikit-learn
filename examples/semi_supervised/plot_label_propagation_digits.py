@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 
 from sklearn.metrics import confusion_matrix, classification_report
 
@@ -52,7 +52,7 @@ y_train[unlabeled_set] = -1
 
 # #############################################################################
 # Learn with LabelSpreading
-lp_model = label_propagation.LabelSpreading(gamma=.25, max_iter=20)
+lp_model = LabelSpreading(gamma=.25, max_iter=20)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = y[unlabeled_set]
