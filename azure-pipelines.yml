@@ -67,6 +67,7 @@ jobs:
         PYTEST_VERSION: '5.2'
         PILLOW_VERSION: '4.2.1'
         MATPLOTLIB_VERSION: '2.1.1'
+        SCIKIT_IMAGE_VERSION: '*'
         # latest version of joblib available in conda for Python 3.6
         JOBLIB_VERSION: '0.13.2'
         COVERAGE: 'true'
