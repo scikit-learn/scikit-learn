@@ -474,24 +474,6 @@ def test_safe_indexing_container_axis_0_unsupported_type():
         _safe_indexing(array, indices, axis=0)
 
 
-def test_safe_indexing_copy_warning():
-    pd = pytest.importorskip('pandas')
-    X = pd.DataFrame(X_toy, columns=["a", "b", "c"])
-
-    def add_new_column(X_, column_name, value):
-        X_.loc[:, column_name] = value
-
-    assert_no_warnings(add_new_column, X, "d", 15)
-
-    # indexing columns
-    X_columns = _safe_indexing(X, [1, 2], axis=1)
-    assert_no_warnings(add_new_column, X_columns, "e", 10)
-
-    # indexing rows
-    X_rows = _safe_indexing(X, [1, 2], axis=0)
-    assert_no_warnings(add_new_column, X_rows, "e", 10)
-
-
 @pytest.mark.parametrize(
     "key, err_msg",
     [(10, r"all features must be in \[0, 2\]"),

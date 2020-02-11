@@ -176,7 +176,7 @@ def _array_indexing(array, key, key_dtype, axis):
 
 
 def _pandas_indexing(X, key, key_dtype, axis):
-    """Index a pandas DataFrame or a Series."""
+    """Index a pandas dataframe or a series."""
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
         # FIXME: solved in pandas 0.25
@@ -186,11 +186,7 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = list(key)
     # check whether we should index with loc or iloc
     indexer = X.iloc if key_dtype == 'int' else X.loc
-    sliced_X = indexer[:, key] if axis else indexer[key]
-    # quick hack to silent redundant pandas SettingWithCopyWarning
-    if hasattr(sliced_X, "_is_copy"):
-        sliced_X._is_copy = None
-    return sliced_X
+    return indexer[:, key] if axis else indexer[key]
 
 
 def _list_indexing(X, key, key_dtype):
