@@ -1067,7 +1067,7 @@ class CategoricalNB(_BaseDiscreteNB):
         Number of features of each sample.
 
     n_categories_ : ndarray (n_features,)
-        Number of categories for each feature. This value is provided
+        Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
 
     Examples
