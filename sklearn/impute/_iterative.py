@@ -117,7 +117,7 @@ class IterativeImputer(_BaseImputer):
         each feature. Default of ``None`` will set minimum to negative infinity
         for all features.
 
-    max_value : float or array-like, default=None
+    max_value : float or array-like of shape (n_features,), default=None
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. Expects shape (n_features,) if array-like, one max value for
         each feature. Default of ``None`` will set maximum to positive infinity
