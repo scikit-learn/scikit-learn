@@ -519,10 +519,9 @@ def set_random_state(estimator, random_state=0):
     estimator : object
         The estimator
     random_state : int, RandomState instance or None, optional, default=0
-        Pseudo random number generator state.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        Pseudo random number generator state.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
@@ -564,21 +563,6 @@ try:
             reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
-
-
-def clean_warning_registry():
-    """Clean Python warning registry for easier testing of warning messages.
-
-    When changing warning filters this function is not necessary with
-    Python3.5+, as __warningregistry__ will be re-set internally.
-    See https://bugs.python.org/issue4180 and
-    https://bugs.python.org/issue21724 for more details.
-
-    """
-    for mod in sys.modules.values():
-        registry = getattr(mod, "__warningregistry__", None)
-        if registry is not None:
-            registry.clear()
 
 
 def check_skip_network():

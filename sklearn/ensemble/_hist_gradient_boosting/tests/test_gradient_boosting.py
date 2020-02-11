@@ -445,3 +445,17 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
+
+
+def test_max_depth_max_leaf_nodes():
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16179
+    # there was a bug when the max_depth and the max_leaf_nodes criteria were
+    # met at the same time, which would lead to max_leaf_nodes not being
+    # respected.
+    X, y = make_classification(random_state=0)
+    est = HistGradientBoostingClassifier(max_depth=2, max_leaf_nodes=3,
+                                         max_iter=1).fit(X, y)
+    tree = est._predictors[0][0]
+    assert tree.get_max_depth() == 2
+    assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix
