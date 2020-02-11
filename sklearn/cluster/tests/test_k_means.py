@@ -149,13 +149,10 @@ def test_elkan_results(distribution, tol):
 
     km_full.fit(X)
     km_elkan.fit(X)
-    assert_array_almost_equal(km_elkan.cluster_centers_,
-                              km_full.cluster_centers_)
+    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
 
-    # The number of iterations and inertia should be close but not
-    # necessarily exactly the same because of rounding errors.
-    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    assert km_elkan.n_iter_ == km_full.n_iter_
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 

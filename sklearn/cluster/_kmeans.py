@@ -19,7 +19,7 @@ from threadpoolctl import threadpool_limits
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.extmath import row_norms, stable_cumsum, squared_norm
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _num_samples
@@ -166,6 +166,21 @@ def _tolerance(X, tol):
     else:
         variances = np.var(X, axis=0)
     return np.mean(variances) * tol
+
+
+def _tolerance_adjusted(tol, centers, centers_new):
+    """Return a tolerance which takes rounding errors into account
+
+    Mostly useful when tol == 0, in which case the norm of the difference
+    between centers_new and centers might never be exactly 0 due to rounding
+    errors.
+    """
+    # The rounding error of for the computation of ||x-y||² is bounded by
+    # 2 * eps * (||x||² + ||y||²) where eps is the machine precision.
+    centers_norm = squared_norm(centers)
+    centers_new_norm = squared_norm(centers_new)
+    eps = np.finfo(centers.dtype).eps
+    return tol + 2 * eps * (centers_norm + centers_new_norm)
 
 
 def _check_normalize_sample_weight(sample_weight, X):
@@ -443,6 +458,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
+        tol = _tolerance_adjusted(tol, centers, centers_new)
         if center_shift_tot <= tol:
             if verbose:
                 print("Converged at iteration {0}: "
@@ -568,6 +584,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
+        tol = _tolerance_adjusted(tol, centers, centers_new)
         if center_shift_tot <= tol:
             if verbose:
                 print("Converged at iteration {0}: "
