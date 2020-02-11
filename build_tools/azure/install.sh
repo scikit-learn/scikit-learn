@@ -11,6 +11,18 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
+setup_ccache() {
+    mkdir ./ccache_bin/
+    which ccache
+    ln -s ccache ./ccache_bin/gcc
+    ln -s ccache ./ccache_bin/g++
+    ln -s ccache ./ccache_bin/cc
+    ln -s ccache ./ccache_bin/c++
+    export PATH="./ccache_bin/:${PATH}"
+    ccache -M 1024M
+}
+
+
 version_ge() {
     # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
@@ -24,7 +36,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
-                blas[build=$BLAS]"
+                blas[build=$BLAS] ccache"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
@@ -65,6 +77,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 	make_conda $TO_INSTALL
 
+    setup_ccache
+
     if [[ "$PYTEST_VERSION" == "*" ]]; then
         python -m pip install pytest
     else
@@ -78,13 +92,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv
+    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv ccache
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
+    setup_ccache
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv ccache
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
@@ -92,7 +107,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
-    make_conda "python=$PYTHON_VERSION"
+    make_conda "ccache python=$PYTHON_VERSION"
+    setup_ccache
     python -m pip install -U pip
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg scikit-image
@@ -136,3 +152,5 @@ else
     python setup.py build_ext --inplace -j 3
     python setup.py develop
 fi
+
+ccache -s
