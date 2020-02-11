@@ -60,6 +60,15 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
   :user:`Alex Shacked <alexshacked>`.
 
+- |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
+  :class:`cluster.SpectralCoclustering` and
+  :class:`cluster.SpectralBiclustering` is deprecated. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
+  deprecated. It has no effect. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 

@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+import warnings
 
 import numpy as np
 
@@ -88,7 +89,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -115,6 +116,10 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         y : Ignored
 
         """
+        if self.n_jobs != 'deprecated':
+            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
+                          " removed in 0.25.", FutureWarning)
+
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
@@ -166,8 +171,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                                     random_state=self.random_state)
         else:
             model = KMeans(n_clusters, init=self.init,
-                           n_init=self.n_init, n_jobs=self.n_jobs,
-                           random_state=self.random_state)
+                           n_init=self.n_init, random_state=self.random_state)
         model.fit(data)
         centroid = model.cluster_centers_
         labels = model.labels_
@@ -233,6 +237,10 @@ class SpectralCoclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
@@ -277,7 +285,7 @@ class SpectralCoclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,
@@ -380,6 +388,10 @@ class SpectralBiclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
     random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
@@ -425,7 +437,7 @@ class SpectralBiclustering(BaseSpectral):
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,
