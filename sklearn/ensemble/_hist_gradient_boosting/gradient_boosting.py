@@ -952,7 +952,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     --------
     >>> # To use this experimental feature, we need to explicitly ask for it:
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> from sklearn.ensemble import HistGradientBoostingRegressor
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> from sklearn.datasets import load_iris
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = HistGradientBoostingClassifier().fit(X, y)
