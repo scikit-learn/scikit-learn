@@ -383,8 +383,8 @@ class KFold(_BaseKFold):
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
-        parameter has no effect. Pass an int for reproducible output across
-        multiple function calls.
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -590,8 +590,8 @@ class StratifiedKFold(_BaseKFold):
     random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold for each class.
-        Otherwise, leave `random_state` as `None`. Pass an int for reproducible
-        output across multiple function calls.
+        Otherwise, leave `random_state` as `None`.
+        Pass an int for reproducible output across multiple function calls.
         See term:`Glossary <random_state>`.
 
     Examples
@@ -1196,8 +1196,8 @@ class RepeatedKFold(_RepeatedSplits):
 
     random_state : int or RandomState instance, default=None
         Random state used to control the randomness of each repeated
-        cross-validation instance. Pass an int for reproducible output across
-        multiple function calls.
+        cross-validation instance.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1603,8 +1603,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     random_state : int or RandomState instance, default=None
         Controls the randomness of the training and testing indices produced.
-        Pass an int for reproducible output across multiple
-        function calls.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
