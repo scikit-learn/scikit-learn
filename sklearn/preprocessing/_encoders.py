@@ -281,7 +281,7 @@ class OneHotEncoder(_BaseEncoder):
     array([[0., 0., 0.],
            [1., 1., 0.]])
 
-    Or only drop a column for feature having only 2 categories:
+    Or drop a column for feature only having 2 categories:
 
     >>> drop_binary_enc = OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()

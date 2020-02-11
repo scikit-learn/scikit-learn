@@ -560,7 +560,7 @@ This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
 since co-linearity would cause the covariance matrix to be non-invertible.
-When this paramenter is not None, ``handle_unknown`` must be set to
+When this parameter is not None, ``handle_unknown`` must be set to
 ``error``::
 
     >>> X = [['male', 'from US', 'uses Safari'],
@@ -572,15 +572,15 @@ When this paramenter is not None, ``handle_unknown`` must be set to
     array([[1., 1., 1.],
            [0., 0., 0.]])
 
-One might want to only drop one of the column only for feature with only 2
-categories. In this case, you can set the parameter `drop='if_binary'`.
+One might want to drop one of the column only for feature with 2 categories.
+In this case, you can set the parameter `drop='if_binary'`.
 
-    >>> X = [['male', 'from US', 'uses Safari'],
-    ...      ['female', 'from Europe', 'uses Firefox'],
-    ...      ['female', 'from Asia', 'uses Chrome']]
+    >>> X = [['male', 'US', 'Safari'],
+    ...      ['female', 'Europe', 'Firefox'],
+    ...      ['female', 'Asia', 'Chrome']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['from Asia', 'from Europe', 'from US'], dtype=object), array(['uses Chrome', 'uses Firefox', 'uses Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 0., 0., 1., 0., 0., 1.],
            [0., 0., 1., 0., 0., 1., 0.],
