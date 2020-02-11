@@ -33,8 +33,7 @@ X_regression, y_regression = make_regression(random_state=0)
      ({'max_iter': 0}, 'max_iter=0 must not be smaller than 1'),
      ({'max_leaf_nodes': 0}, 'max_leaf_nodes=0 should not be smaller than 2'),
      ({'max_leaf_nodes': 1}, 'max_leaf_nodes=1 should not be smaller than 2'),
-     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 2'),
-     ({'max_depth': 1}, 'max_depth=1 should not be smaller than 2'),
+     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 1'),
      ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
      ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
      ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
@@ -606,3 +605,17 @@ def test_sum_hessians_are_sample_weight(loss_name):
         for bin_idx in range(bin_mapper.n_bins):
             assert histograms[feature_idx][bin_idx]['sum_hessians'] == (
                 pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
+
+
+def test_max_depth_max_leaf_nodes():
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16179
+    # there was a bug when the max_depth and the max_leaf_nodes criteria were
+    # met at the same time, which would lead to max_leaf_nodes not being
+    # respected.
+    X, y = make_classification(random_state=0)
+    est = HistGradientBoostingClassifier(max_depth=2, max_leaf_nodes=3,
+                                         max_iter=1).fit(X, y)
+    tree = est._predictors[0][0]
+    assert tree.get_max_depth() == 2
+    assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix

@@ -265,6 +265,15 @@ def test_one_hot_encoder_inverse(sparse_, drop):
         enc.inverse_transform(X_tr)
 
 
+def test_one_hot_encoder_inverse_if_binary():
+    X = np.array([['Male', 1],
+                  ['Female', 3],
+                  ['Female', 2]], dtype=object)
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    X_tr = ohe.fit_transform(X)
+    assert_array_equal(ohe.inverse_transform(X_tr), X)
+
+
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
 @pytest.mark.parametrize("X", [
     [1, 2],
@@ -396,6 +405,36 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     feature_names = ohe.get_feature_names()
     assert isinstance(feature_names, np.ndarray)
     assert_array_equal(expected_names, feature_names)
+
+
+def test_one_hot_encoder_drop_equals_if_binary():
+    # Canonical case
+    X = [[10, 'yes'],
+         [20, 'no'],
+         [30, 'yes']]
+    expected = np.array([[1., 0., 0., 1.],
+                         [0., 1., 0., 0.],
+                         [0., 0., 1., 1.]])
+    expected_drop_idx = np.array([-1, 0])
+
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
+
+    # with only one cat, the behaviour is equivalent to drop=None
+    X = [['true', 'a'],
+         ['false', 'a'],
+         ['false', 'a']]
+    expected = np.array([[1., 1.],
+                         [0., 1.],
+                         [0., 1.]])
+    expected_drop_idx = np.array([0, -1])
+
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,

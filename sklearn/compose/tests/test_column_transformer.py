@@ -1266,3 +1266,23 @@ def test_make_column_selector_pickle():
     selector_picked = pickle.loads(pickle.dumps(selector))
 
     assert_array_equal(selector(X_df), selector_picked(X_df))
+
+
+@pytest.mark.parametrize(
+    'empty_col', [[], np.array([], dtype=np.int), lambda x: []],
+    ids=['list', 'array', 'callable']
+)
+def test_feature_names_empty_columns(empty_col):
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({"col1": ["a", "a", "b"], "col2": ["z", "z", "z"]})
+
+    ct = ColumnTransformer(
+        transformers=[
+            ("ohe", OneHotEncoder(), ["col1", "col2"]),
+            ("empty_features", OneHotEncoder(), empty_col),
+        ],
+    )
+
+    ct.fit(df)
+    assert ct.get_feature_names() == ['ohe__x0_a', 'ohe__x0_b', 'ohe__x1_z']

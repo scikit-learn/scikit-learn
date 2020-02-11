@@ -26,7 +26,7 @@ The result is a mixture with a larger number of active components that is
 similar to the first model where we arbitrarily decided to fix the number of
 components to 10.
 
-Which model is the best is a matter of subjective judgement: do we want to
+Which model is the best is a matter of subjective judgment: do we want to
 favor models that only capture the big picture to summarize and explain most of
 the structure of the data while ignoring the details or do we prefer models
 that closely follow the high density regions of the signal?
