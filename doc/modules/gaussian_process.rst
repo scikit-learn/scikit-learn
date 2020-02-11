@@ -478,6 +478,9 @@ and combines them via :math:`k_{product}(X, Y) = k_1(X, Y) * k_2(X, Y)`.
 The :class:`Exponentiation` kernel takes one base kernel and a scalar parameter
 :math:`p` and combines them via
 :math:`k_{exp}(X, Y) = k(X, Y)^p`.
+Note that magic methods ``__add__``, ``__mul___`` and ``__pow__`` are
+overridden on the Kernel objects, so one can use e.g. ``RBF() + RBF()`` as
+a shortcut for ``Sum(RBF(), RBF())``.
 
 Radial-basis function (RBF) kernel
 ----------------------------------

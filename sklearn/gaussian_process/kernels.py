@@ -691,13 +691,9 @@ class Sum(KernelOperator):
     .. math::
         k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)
 
-    Using the Sum-kernel is equivalent to using the + operator::
-
-        RBF() + RBF()
-
-    is the same as::
-
-        Sum(RBF(), RBF())
+    Note that the `__add__` magic method is overridden, so
+    `Sum(RBF(), RBF())` is equivalent to using the + operator
+    with `RBF() + RBF()`.
 
 
     Read more in the :ref:`User Guide <gp_kernels>`.
