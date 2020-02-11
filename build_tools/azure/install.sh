@@ -90,7 +90,6 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # conda is still used as a convenient way to install Python and pip.
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
-    python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
     # do not install dependencies for lightgbm since it requires scikit-learn
@@ -121,7 +120,15 @@ except ImportError:
 "
 python -m pip list
 
-# Use setup.py instead of `pip install -e .` to be able to pass the -j flag
-# to speed-up the building multicore CI machines.
-python setup.py build_ext --inplace -j 3
-python setup.py develop
+if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Check that pip can automatically install the build dependencies from
+    # pyproject.toml using an isolated build environment:
+    pip install --verbose --editable .
+else
+    # Use the pre-installed build dependencies and build directly in the
+    # current environment.
+    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+    # to speed-up the building multicore CI machines.
+    python setup.py build_ext --inplace -j 3
+    python setup.py develop
+fi

@@ -219,7 +219,7 @@ how to set up your git repository:
 
 5. Install scikit-learn in editable mode::
 
-       $ pip install --editable .
+       $ pip install --no-build-isolation --editable .
 
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
@@ -266,8 +266,13 @@ modifying code and submitting a PR:
 
 .. note::
 
-  If you are modifying a Cython module, you have to re-run step 5 after modifications
-  and before testing them.
+    If you are modifying a Cython module, you have to re-compile after
+    modifications and before testing them::
+
+        pip install --no-build-isolation -e .
+
+    Use the ``--no-build-isolation`` flag to avoid compiling the whole project
+    each time, only the files you have modified.
 
 It is often helpful to keep your local feature branch synchronized with the
 latest changes of the main scikit-learn repository::
