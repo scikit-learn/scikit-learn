@@ -165,12 +165,18 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
+    >>> from sklearn.compose import make_column_selector
 
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
-    ...               [2.7, 3.8, 2.3, 1, 0],
-    ...               [1.7, 0.1, 4.5, 1, 0]])
+    >>>               [2.7, 3.8, 2.3, 1, 0],
+    >>>               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
     >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
+    >>> df = pd.DataFrame(X)
+    >>> df.columns = list("abcde")
+    >>> df["y"] = [1, 0, 0]
+    >>> df_test = pd.DataFrame(X_test)
+    >>> df_test.columns = list("abcde")
     
     >>> clf = GeneralNB([
     >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
@@ -182,17 +188,21 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
     1.0
 
-    >>> df = pd.DataFrame(X)
-    >>> df.columns = list("abcde")
-    >>> df["y"] = [1, 0, 0]
     >>> clf = GeneralNB([
     >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
     >>>     ("bernoulli", BernoulliNB(), ["d", "e"])
     >>> ])
     >>> clf.fit(df.iloc[:,:-1], df["y"])
+    >>> print(clf.predict(df_test))
+    [1]
+    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
+    1.0
 
-    >>> df_test = pd.DataFrame(X_test)
-    >>> df_test.columns = list("abcde")
+    >>> clf = GeneralNB([
+    >>>     ("gaussian", GaussianNB(), make_column_selector(pattern=r"[abc]")),
+    >>>     ("bernoulli", BernoulliNB(), make_column_selector(pattern=r"[de]"))
+    >>> ])
+    >>> clf.fit(df.iloc[:,:-1], df["y"])
     >>> print(clf.predict(df_test))
     [1]
     >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
