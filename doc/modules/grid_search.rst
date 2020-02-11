@@ -191,7 +191,7 @@ until the last iteration. These are the candidates that have consistently been
 part of the best candidates across all iterations. Each iteration is allocated
 an increasing amount of resources, here the number of samples.
 
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_successive_halving_iterations_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
    :target: ../auto_examples/model_selection/plot_successive_halving_iterations.html
    :align: center
 
@@ -460,8 +460,8 @@ min_resources = 20``.
 
 .. _successive_halving_cv_results:
 
-Analysing results with the cv_results_ attribute
-------------------------------------------------
+Analysing results with the `cv_results_` attribute
+--------------------------------------------------
 
 The ``cv_results_`` attribute contains useful information for analysing the
 results of a search. It can be converted to a pandas dataframe with ``df =
