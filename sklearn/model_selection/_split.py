@@ -381,12 +381,11 @@ class KFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance, default=None
-        When ``shuffle`` is True, `random_state` affects the ordering of the
-        indices, which controls the randomness of each fold.
-        When ``shuffle`` is False, this parameter has no effect.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect. Pass an int for reproducible output across
+        multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -413,7 +412,7 @@ class KFold(_BaseKFold):
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting `random state`
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -588,12 +587,11 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance, default=None
-        When ``shuffle`` is True, `random_state` affects the ordering of the
+    random_state : int or RandomState instance, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold for each class.
-        When ``shuffle`` is False, leave as None.
-        Pass an int for reproducible output across multiple
-        function calls.
+        Otherwise, leave `random_state` as `None`. Pass an int for reproducible
+        output across multiple function calls.
         See term:`Glossary <random_state>`.
 
     Examples
@@ -728,7 +726,7 @@ class StratifiedKFold(_BaseKFold):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting `random state`
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -1093,10 +1091,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Passes random_state to the arbitrary repeating cross validator.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        Passes `random_state` to the arbitrary repeating cross validator. Pass
+        an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1199,10 +1196,9 @@ class RepeatedKFold(_RepeatedSplits):
 
     random_state : int or RandomState instance, default=None
         Random state used to control the randomness of each repeated
-        cross-validation instance.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        cross-validation instance. Pass an int for reproducible output across
+        multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1224,7 +1220,7 @@ class RepeatedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting `random state`
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -1253,11 +1249,9 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Random state to be used to generate random state for each
-        repetition.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        Random state to be used to generate random state for each repetition.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1280,7 +1274,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting `random state`
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -1330,7 +1324,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting `random state`
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         X, y, groups = indexable(X, y, groups)
@@ -1397,9 +1391,8 @@ class ShuffleSplit(BaseShuffleSplit):
 
     random_state : int or RandomState instance, default=None
         Controls the randomness of the training and testing indices produced.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1498,9 +1491,8 @@ class GroupShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState instance, default=None
         Controls the randomness of the training and testing indices produced.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1570,7 +1562,7 @@ class GroupShuffleSplit(ShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting `random state`
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         return super().split(X, y, groups)
@@ -1613,7 +1605,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple
         function calls.
-        See term:`Glossary <random_state>`.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1738,7 +1730,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting `random state`
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -2054,9 +2046,8 @@ def train_test_split(*arrays, **options):
 
     random_state : int or RandomState instance, default=None
         Controls the shuffling applied to the data before applying the split.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See term:`Glossary <random_state>`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
 
     shuffle : bool, default=True
