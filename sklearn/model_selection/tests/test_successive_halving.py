@@ -63,7 +63,8 @@ def test_aggressive_elimination(
 
     sh = klass(base_estimator, parameters,
                aggressive_elimination=aggressive_elimination,
-               max_resources=max_resources, ratio=3)
+               max_resources=max_resources, ratio=3,
+               force_exhaust_resources=False)
 
     if klass is HalvingRandomSearchCV:
         sh.set_params(n_candidates=2 * 30)  # same number as with the grid
@@ -98,8 +99,8 @@ def test_force_exhaust_resources_false(
         expected_n_required_iterations, expected_n_possible_iterations,
         expected_r_i_list):
     # Test the force_exhaust_resources parameter when it's false or ignored.
-    # This is the default case: we start at the beginning no matter what since
-    # we do not overwrite min_resources_
+    # We start at the beginning no matter what since we do not overwrite
+    # min_resources_
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
@@ -176,7 +177,8 @@ def test_n_iterations(klass, max_resources, n_iterations,
     ratio = 2
 
     sh = klass(base_estimator, parameters, cv=2, ratio=ratio,
-               max_resources=max_resources, min_resources=4)
+               max_resources=max_resources, min_resources=4,
+               force_exhaust_resources=False)
     if klass is HalvingRandomSearchCV:
         sh.set_params(n_candidates=20)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
@@ -238,7 +240,8 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
     sh = HalvingRandomSearchCV(base_estimator, parameters,
                                n_candidates=n_candidates, cv=2,
                                max_resources=max_resources, ratio=2,
-                               min_resources=4)
+                               min_resources=4,
+                               force_exhaust_resources=False)
     sh.fit(X, y)
     assert sh.n_candidates_[0] == expected_n_candidates_
     if n_candidates == 'auto':
@@ -283,7 +286,8 @@ def test_groups_not_supported(klass):
      'min_resources must be set to auto if '),
     ({'max_resources': 'auto', 'resource': 'b'},
      "max_resources can only be 'auto' if resource='n_samples'"),
-    ({'min_resources': 15, 'max_resources': 14},
+    ({'min_resources': 15, 'max_resources': 14,
+      'force_exhaust_resources': False},
      "min_resources_=15 is greater than max_resources_=14"),
 ])
 def test_input_errors(klass, params, expected_error_message):

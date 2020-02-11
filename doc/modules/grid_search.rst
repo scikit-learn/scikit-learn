@@ -182,9 +182,9 @@ search a parameter space using successive halving [1]_ [2]_. Successive
 halving is an iterative selection process where all candidates (the
 parameter combinations) are evaluated with a small amount of resources at
 the first iteration. Only some of these candidates are selected for the next
-iteration, which will be allocated more resources. What defines a resource
-is typically the number of samples to train on, or the number of iterations
-in iterative algorithms like gradient boosting.
+iteration, which will be allocated more resources. What defines a resource is
+typically the number of samples to train on, but it can also be an arbitrary
+numeric parameter such as `n_estimators` in a random forest.
 
 As illustrated in the figure below, only a small subset of candidates 'survive'
 until the last iteration. These are the candidates that have consistently been
@@ -215,16 +215,17 @@ iteration for each candidate. The number of candidates is specified directly
 in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
 parameter of :class:`HalvingGridSearchCV`.
 
-Consider a case where we have 1000 samples. With ``min_resources=10`` and
-``ratio=2`` we are able to run 7 iterations, with the following number of
-samples: ``[10, 20, 40, 80, 160, 320, 640]``.
+Consider a case where the resource is the number of samples, and where we
+have 1000 samples. With ``min_resources=10`` and ``ratio=2`` we are able to
+run 7 iterations, with the following number of samples: ``[10, 20, 40, 80,
+160, 320, 640]``.
 
 If we start with a high number of candidates, we might end up with a lot of
 candidates at the last iteration. On the other hand if we start with a small
 number of candidates, the last iteration might use less than 640 samples
 which is a waste of resources.
 
-In the case of :class:`HalvingGridSearchCV`, the number of candidates is set
+In the case of :class:`HalvingRandomSearchCV`, the number of candidates is set
 by default such that the maximum amount of resources is used at the last
 iteration.
 
@@ -235,23 +236,16 @@ candidates.
 Another consideration when choosing ``min_resources`` is whether or not it
 is easy to discriminate between good and bad candidates with a small amount
 of resources. For example, if you need a lot of samples to distinguish
-between good and bad parameters, a high ``min_resources`` (possibly with the
-use of ``aggressive_elimination=True``) is recommended. On the other hand if
-the distinction is clear even with a small amount of samples, then a small
-``min_resources`` may be preferable since it would speed up the computation.
+between good and bad parameters, a high ``min_resources`` is recommended. On
+the other hand if the distinction is clear even with a small amount of
+samples, then a small ``min_resources`` may be preferable since it would
+speed up the computation.
 
-By default, ``min_resources`` is set to a small value (see docstrings for
-details) that depends on the number of folds, and the number of classes for
-classification problems. Depending on the setting, the default value of
-``min_resources`` might not be ideal.
-
-.. note::
-  Notice in the example above that the last iteration does not use the
-  maximum amount of resources available: 1000 samples are available, yet
-  only 640 are used. Using ``force_exhaust_resources=True`` will set
-  ``min_resources`` to a specific value such that the last iteration uses as
-  many samples as possible. Please see :ref:`exhausting_the_resources` for
-  details.
+Notice in the example above that the last iteration does not use the maximum
+amount of resources available: 1000 samples are available, yet only 640 are
+used, at most. By default, ``min_resources`` is set to a specific value such
+that the last iteration uses as many samples as possible. Please see
+:ref:`exhausting_the_resources` for details.
 
 .. _amount_of_resource_and_number_of_candidates:
 
@@ -282,21 +276,21 @@ is identified at the iteration that is evaluating `ratio` or less candidates
 Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
 70 candidates:
 
-+-------------+-----------------------+
++-----------------------+-----------------------+
 | ``resource_iter``     | ``n_candidates_at_i`` |
-+=============+=======================+
-| 3 (=min_resources)  | 70 (=n_candidates)    |
-+-------------+-----------------------+
-| 3 * 2 = 6   | 70 // 2 = 35          |
-+-------------+-----------------------+
-| 6 * 2 = 12  | 35 // 2 = 17          |
-+-------------+-----------------------+
-| 12 * 2 = 24 | 17 // 2 = 8           |
-+-------------+-----------------------+
-| 24 * 2 = 48 | 8 // 2 = 4            |
-+-------------+-----------------------+
-| 48 * 2 = 96 | 4 // 2 = 2            |
-+-------------+-----------------------+
++=======================+=======================+
+| 3 (=min_resources)    | 70 (=n_candidates)    |
++-----------------------+-----------------------+
+| 3 * 2 = 6             | 70 // 2 = 35          |
++-----------------------+-----------------------+
+| 6 * 2 = 12            | 35 // 2 = 17          |
++-----------------------+-----------------------+
+| 12 * 2 = 24           | 17 // 2 = 8           |
++-----------------------+-----------------------+
+| 24 * 2 = 48           | 8 // 2 = 4            |
++-----------------------+-----------------------+
+| 48 * 2 = 96           | 4 // 2 = 2            |
++-----------------------+-----------------------+
 
 We can note that:
 
@@ -304,7 +298,8 @@ We can note that:
   candidates: the best candidate is the best out of these 2 candidates. It
   is not necessary to run an additional iteration, since it would only
   evaluate one candidate (namely the best one, which we have already
-  identified).
+  identified). For this reason, in general, we want the last iteration to run
+  at most `ratio` candidates.
 - each ``resource_iter`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
@@ -313,13 +308,13 @@ the `cv_results_` attribute after converting it to a dataframe:
 `results.groupby('iter')['resource_iter'].unique()`, as done e.g. in
 :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
-Choosing a resource to budget
------------------------------
+Choosing a resource
+-------------------
 
-By default, the budget is defined in terms of number of samples. That is,
+By default, the resource is defined in terms of number of samples. That is,
 each iteration will use an increasing amount of samples to train on. You can
-however manually specify a parameter to use as the budget with the
-``resource`` parameter. Here is an example where the budget is defined in
+however manually specify a parameter to use as the resource with the
+``resource`` parameter. Here is an example where the resource is defined in
 terms of the number of estimators of a random forest::
 
     >>> from sklearn.datasets import make_classification
@@ -335,7 +330,7 @@ terms of the number of estimators of a random forest::
     ...                          ratio=2, resource='n_estimators',
     ...                          max_resources=30, random_state=0).fit(X, y)
     >>> sh.best_estimator_
-    RandomForestClassifier(max_depth=5, n_estimators=8, random_state=0)
+    RandomForestClassifier(max_depth=5, n_estimators=24, random_state=0)
 
 Note that it is not possible to budget on a parameter that is part of the
 parameter grid.
@@ -345,9 +340,10 @@ parameter grid.
 Exhausting the available resources
 ----------------------------------
 
-As mentioned above, the first iteration uses ``min_resources`` resources. If
-you have a lot of resources available, some of them might be wasted (not
-used)::
+As mentioned above, the number of resources that is used at each iteration
+depends on the `min_resources` parameter.
+If you have a lot of resources available but start with a low number of
+resources, some of them might be wasted (i.e. not used)::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
@@ -358,7 +354,8 @@ used)::
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2).fit(X, y)
+    ...                          ratio=2, min_resources=20,
+    ...                          force_exhaust_resources=False).fit(X, y)
     >>> results = pd.DataFrame(sh.cv_results_)
     >>> results.groupby('iter')['resource_iter'].unique()
     iter
@@ -368,14 +365,18 @@ used)::
     Name: resource_iter, dtype: object
 
 The search process will only use 80 resources at most, while our maximum
-amount of available resources is ``n_samples=1000``. Note in this case that
-``min_resources = r_0 = 20``. In order for the last iteration to use as many
-resources as possible, you can use the ``force_exhaust_resources``
-parameter.::
+amount of available resources is ``n_samples=1000``. Here, we have
+``min_resources = r_0 = 20``.
+
+By default, the `force_exhaust_resources` parameter is True and the
+`min_resources` parameter is 'auto'. This means that `min_resources` is
+automatically set such that the last iteration can use as many resources as
+possible, within the `max_resources` limit::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                            ratio=2, force_exhaust_resources=True,
-    ...                            ).fit(X, y)
+    ...                          ratio=2, min_resources='auto',
+    ...                          force_exhaust_resources=True
+    ...                          ).fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter')['resource_iter'].unique()
     iter
@@ -385,9 +386,11 @@ parameter.::
     Name: resource_iter, dtype: object
 
 `min_resources` was here automatically set to 250, which results in the last
-iteration using all the resources. Since ``force_exhaust_resources`` chooses an
-appropriate ``min_resources`` to start with, ``min_resources`` must be set
-to 'auto' (default).
+iteration using all the resources. In general, this leads to a better final
+candidate parameter, and is slightly more time-intensive.
+
+Since ``force_exhaust_resources`` chooses an appropriate ``min_resources`` to
+start with, ``min_resources`` must be set to 'auto' (which is the default).
 
 Aggressive elimination of candidates
 ------------------------------------

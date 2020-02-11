@@ -411,14 +411,14 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
-        default, this is set to:
+        default, this is set to the highest possible value
+        satisfying the constraint `force_exhaust_resources=True` (which is
+        the default). Otherwise this is set to:
 
         - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
           problem
         - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
           regression problem
-        - The highest possible value satisfying the constraint
-          ``force_exhaust_resources=True``.
         - ``1`` when ``resource!='n_samples'``
 
         Note that the amount of resources used at each iteration is always a
@@ -444,11 +444,16 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_resources : bool, default=False
-        If True, then ``min_resources`` is set to a specific value such that
-        the last iteration uses as much resources as possible. Namely, the
-        last iteration uses the highest value smaller than ``max_resources``
-        that is a multiple of both ``min_resources`` and ``ratio``.
+    force_exhaust_resources : bool, default=True
+        When True, ``min_resources`` (which must be 'auto') is set to a
+        specific value such that the last iteration uses as much resources as
+        possible. Namely, the last iteration uses the highest value smaller
+        than ``max_resources`` that is a multiple of both ``min_resources``
+        and ``ratio``. When False, the last iteration may not exhaust the
+        total number of resources, since the first iteration will rely on the
+        value passed as the `min_resource` parameter. In general,
+        `force_exhaust_resources=True` leads to a more accurate estimator,
+        but is slightly more time consuming.
 
     Attributes
     ----------
@@ -572,7 +577,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                  error_score=np.nan, return_train_score=True,
                  max_resources='auto', min_resources='auto',
                  resource='n_samples', ratio=3, aggressive_elimination=False,
-                 force_exhaust_resources=False):
+                 force_exhaust_resources=True):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
@@ -698,14 +703,14 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         The minimum amount of resource that any candidate is allowed to use for
         a given iteration. Equivalently, this defines the amount of resources
         that are allocated for each candidate at the first iteration. By
-        default, this is set to:
+        default, this is set to the highest possible value
+        satisfying the constraint `force_exhaust_resources=True` (which is
+        the default). Otherwise this is set to:
 
         - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
           problem
         - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
           regression problem
-        - The highest possible value satisfying the constraint
-          ``force_exhaust_resources=True``.
         - ``1`` when ``resource!='n_samples'``
 
         Note that the amount of resources used at each iteration is always a
@@ -731,11 +736,16 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         ``False`` by default, which means that the last iteration may evaluate
         more than ``ratio`` candidates.
 
-    force_exhaust_resources : bool, default=False
-        If True, then ``min_resources`` is set to a specific value such that
-        the last iteration uses as much resources as possible. Namely, the
-        last iteration uses the highest value smaller than ``max_resources``
-        that is a multiple of both ``min_resources`` and ``ratio``.
+    force_exhaust_resources : bool, default=True
+        When True, ``min_resources`` (which must be 'auto') is set to a
+        specific value such that the last iteration uses as much resources as
+        possible. Namely, the last iteration uses the highest value smaller
+        than ``max_resources`` that is a multiple of both ``min_resources``
+        and ``ratio``. When False, the last iteration may not exhaust the
+        total number of resources, since the first iteration will rely on the
+        value passed as the `min_resource` parameter. In general,
+        `force_exhaust_resources=True` leads to a more accurate estimator,
+        but is slightly more time consuming.
 
     Attributes
     ----------
@@ -861,7 +871,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
                  random_state=None, error_score=np.nan,
                  return_train_score=True, max_resources='auto',
                  min_resources='auto', resource='n_samples', ratio=3,
-                 aggressive_elimination=False, force_exhaust_resources=False):
+                 aggressive_elimination=False, force_exhaust_resources=True):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
