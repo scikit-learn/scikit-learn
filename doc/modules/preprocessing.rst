@@ -572,8 +572,8 @@ When this parameter is not None, ``handle_unknown`` must be set to
     array([[1., 1., 1.],
            [0., 0., 0.]])
 
-One might want to drop one of the two columns only for features with 2 categories.
-In this case, you can set the parameter `drop='if_binary'`.
+One might want to drop one of the two columns only for features with 2
+categories. In this case, you can set the parameter `drop='if_binary'`.
 
     >>> X = [['male', 'US', 'Safari'],
     ...      ['female', 'Europe', 'Firefox'],
