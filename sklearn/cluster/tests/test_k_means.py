@@ -1054,7 +1054,7 @@ def test_precompute_distance_deprecated(precompute_distances):
         kmeans.fit(X)
 
 
-@pytest.mark.parametrize("n_jobs", [None, 1, -1])
+@pytest.mark.parametrize("n_jobs", [None, 1])
 def test_n_jobs_deprecated(n_jobs):
     # FIXME: remove in 0.25
     depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
