@@ -53,8 +53,8 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "assert_true",
-           "assert_false", "assert_almost_equal", "assert_array_equal",
+           "assert_raises_regexp",
+           "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
@@ -84,16 +84,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-deprecation_message = "'assert_true' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
-
-deprecation_message = "'assert_false' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -460,7 +450,7 @@ def all_estimators(type_filter=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual type of the class.
     """
     def is_abstract(c):
         if not(hasattr(c, '__abstractmethods__')):
@@ -476,7 +466,7 @@ def all_estimators(type_filter=None):
             path=path, prefix='sklearn.', onerror=lambda x: None):
         if ".tests." in modname or "externals" in modname:
             continue
-        if IS_PYPY and ('_svmlight_format' in modname or
+        if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
@@ -529,10 +519,9 @@ def set_random_state(estimator, random_state=0):
     estimator : object
         The estimator
     random_state : int, RandomState instance or None, optional, default=0
-        Pseudo random number generator state.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        Pseudo random number generator state.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
@@ -574,21 +563,6 @@ try:
             reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
-
-
-def clean_warning_registry():
-    """Clean Python warning registry for easier testing of warning messages.
-
-    When changing warning filters this function is not necessary with
-    Python3.5+, as __warningregistry__ will be re-set internally.
-    See https://bugs.python.org/issue4180 and
-    https://bugs.python.org/issue21724 for more details.
-
-    """
-    for mod in sys.modules.values():
-        registry = getattr(mod, "__warningregistry__", None)
-        if registry is not None:
-            registry.clear()
 
 
 def check_skip_network():

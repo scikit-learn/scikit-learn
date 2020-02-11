@@ -21,6 +21,8 @@ from inspect import signature, isclass, Parameter
 from numpy.core.numeric import ComplexWarning
 import joblib
 
+from contextlib import suppress
+
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
@@ -212,6 +214,26 @@ def check_consistent_length(*arrays):
                          " samples: %r" % [int(l) for l in lengths])
 
 
+def _make_indexable(iterable):
+    """Ensure iterable supports indexing or convert to an indexable variant.
+
+    Convert sparse matrices to csr and other non-indexable iterable to arrays.
+    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+
+    Parameters
+    ----------
+    iterable : {list, dataframe, array, sparse} or None
+        Object to be converted to an indexable iterable.
+    """
+    if sp.issparse(iterable):
+        return iterable.tocsr()
+    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+        return iterable
+    elif iterable is None:
+        return iterable
+    return np.array(iterable)
+
+
 def indexable(*iterables):
     """Make arrays indexable for cross-validation.
 
@@ -224,16 +246,7 @@ def indexable(*iterables):
     *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
-    result = []
-    for X in iterables:
-        if sp.issparse(X):
-            result.append(X.tocsr())
-        elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
-            result.append(X)
-        elif X is None:
-            result.append(X)
-        else:
-            result.append(np.array(X))
+    result = [_make_indexable(X) for X in iterables]
     check_consistent_length(*result)
     return result
 
@@ -438,6 +451,15 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
+        # throw warning if pandas dataframe is sparse
+        with suppress(ImportError):
+            from pandas.api.types import is_sparse
+            if array.dtypes.apply(is_sparse).any():
+                warnings.warn(
+                    "pandas.DataFrame with sparse columns found."
+                    "It will be converted to a dense numpy array."
+                )
+
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
@@ -743,7 +765,9 @@ def column_or_1d(y, warn=False):
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
-    raise ValueError("bad input shape {0}".format(shape))
+    raise ValueError(
+        "y should be a 1d array, "
+        "got an array of shape {} instead.".format(shape))
 
 
 def check_random_state(seed):
@@ -850,17 +874,28 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, msg=None):
+def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
     fitted attributes (ending with a trailing underscore) and otherwise
     raises a NotFittedError with the given message.
 
+    This utility is meant to be used internally by estimators themselves,
+    typically in their own predict / transform methods.
+
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
+
+    attributes : str, list or tuple of str, default=None
+        Attribute name(s) given as string or a list/tuple of strings
+        Eg.: ``["coef_", "estimator_", ...], "coef_"``
+
+        If `None`, `estimator` is considered fitted if there exist an
+        attribute that ends with a underscore and does not start with double
+        underscore.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -871,6 +906,9 @@ def check_is_fitted(estimator, msg=None):
         it is substituted for the estimator name.
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
+
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
 
     Returns
     -------
@@ -890,9 +928,13 @@ def check_is_fitted(estimator, msg=None):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator)
-             if (v.endswith("_") or v.startswith("_"))
-             and not v.startswith("__")]
+    if attributes is not None:
+        if not isinstance(attributes, (list, tuple)):
+            attributes = [attributes]
+        attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
+    else:
+        attrs = [v for v in vars(estimator)
+                 if v.endswith("_") and not v.startswith("__")]
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
@@ -1163,12 +1205,10 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=dtype)
-        else:
-            sample_weight = np.full(n_samples, sample_weight,
-                                    dtype=dtype)
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=dtype)
+    elif isinstance(sample_weight, numbers.Number):
+        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
@@ -1257,3 +1297,41 @@ def _deprecate_positional_args(f):
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
+
+
+def _check_fit_params(X, fit_params, indices=None):
+    """Check and validate the parameters passed during `fit`.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data array.
+
+    fit_params : dict
+        Dictionary containing the parameters passed at fit.
+
+    indices : array-like of shape (n_samples,), default=None
+        Indices to be selected if the parameter has the same size as `X`.
+
+    Returns
+    -------
+    fit_params_validated : dict
+        Validated parameters. We ensure that the values support indexing.
+    """
+    from . import _safe_indexing
+    fit_params_validated = {}
+    for param_key, param_value in fit_params.items():
+        if (not _is_arraylike(param_value) or
+                _num_samples(param_value) != _num_samples(X)):
+            # Non-indexable pass-through (for now for backward-compatibility).
+            # https://github.com/scikit-learn/scikit-learn/issues/15805
+            fit_params_validated[param_key] = param_value
+        else:
+            # Any other fit_params should support indexing
+            # (e.g. for cross-validation).
+            fit_params_validated[param_key] = _make_indexable(param_value)
+            fit_params_validated[param_key] = _safe_indexing(
+                fit_params_validated[param_key], indices
+            )
+
+    return fit_params_validated

@@ -51,6 +51,7 @@ numpydoc_class_members_toctree = False
 if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
     imgmath_image_format = 'svg'
+    mathjax_path = ''
 else:
     extensions.append('sphinx.ext.mathjax')
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
@@ -87,6 +88,7 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 # The short X.Y version.
 import sklearn
 version = parse(sklearn.__version__).base_version
+version = ".".join(version.split(".")[:2])
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 

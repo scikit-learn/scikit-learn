@@ -30,10 +30,8 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils._testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry,
                                    SkipTest, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
@@ -389,7 +387,6 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
@@ -1099,6 +1096,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
     assert_raise_message(
             ValueError, message, vec.fit_transform, "hello world!")
     assert_raise_message(ValueError, message, vec.fit, "hello world!")
+    vec.fit(["some text", "some other text"])
     assert_raise_message(ValueError, message, vec.transform, "hello world!")
 
 
@@ -1293,12 +1291,8 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
 @pytest.mark.parametrize('input_type', ['file', 'filename'])
 def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     data = ['this is text, not file or filename']
-    warn_msg = 'Since v0.21, vectorizer'
     with pytest.raises((FileNotFoundError, AttributeError)):
-        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
-            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
-    assert len(records) == 1
-    assert warn_msg in str(records[0])
+        Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
 
 
 @pytest.mark.parametrize(

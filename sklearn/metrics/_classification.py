@@ -232,7 +232,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix.
+        Confusion matrix whose i-th row and j-th
+        column entry indicates the number of
+        samples with true label being i-th class
+        and prediced label being j-th class.
 
     References
     ----------
@@ -282,6 +285,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         sample_weight = np.asarray(sample_weight)
 
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
 
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
@@ -1792,7 +1799,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
-    """Build a text report showing the main classification metrics
+    """Build a text report showing the main classification metrics.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
@@ -1960,7 +1967,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
-            average=average, sample_weight=sample_weight)
+            average=average, sample_weight=sample_weight,
+            zero_division=zero_division)
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
@@ -1986,7 +1994,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
+def hamming_loss(y_true, y_pred, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -2000,17 +2008,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
-
-    labels : array, shape = [n_labels], optional (default='deprecated')
-        Integer array of labels. If not provided, labels will be inferred
-        from y_true and y_pred.
-
-        .. versionadded:: 0.18
-        .. deprecated:: 0.21
-           This parameter ``labels`` is deprecated in version 0.21 and will
-           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
-           for the number of labels when y_true is binary label indicators,
-           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2071,12 +2068,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is not None:
-        warnings.warn("The labels parameter is unused. It was"
-                      " deprecated in version 0.21 and"
-                      " will be removed in version 0.23",
-                      FutureWarning)
-
     if sample_weight is None:
         weight_average = 1.
     else:
@@ -2100,8 +2091,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
-    log-likelihood of the true labels given a probabilistic classifier's
-    predictions. The log loss is only defined for two or more labels.
+    log-likelihood of a logistic model that returns ``y_pred`` probabilities
+    for its training data ``y_true``.
+    The log loss is only defined for two or more labels.
     For a single sample with true label yt in {0,1} and
     estimated probability yp that yt = 1, the log loss is
 
@@ -2341,6 +2333,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
+
     The smaller the Brier score, the better, hence the naming with "loss".
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned
