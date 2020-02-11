@@ -96,7 +96,7 @@ class ConfusionMatrixDisplay:
 
                 fmt = values_format
                 if values_format is None:
-                    if cm.dtype.kind == "f" or cm[i, j] >= 1e7:
+                    if cm.dtype.kind == "f" or cm[i, j] >= 1e6:
                         fmt = '.2g'
                     else:
                         fmt = 'd'
