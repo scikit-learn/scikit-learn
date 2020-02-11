@@ -156,7 +156,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         tags = self._get_tags()
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True))
+                         force_all_finite=not tags.get('allow_nan', True),
+                         multi_output=True)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -489,8 +490,10 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2,
-                         force_all_finite=False)
+        tags = self._get_tags()
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
+                         force_all_finite=not tags.get('allow_nan', True),
+                         multi_output=True)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))

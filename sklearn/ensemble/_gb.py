@@ -662,6 +662,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : array, shape (n_features,)
@@ -985,6 +989,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
         The improvement in loss (= deviance) on the out-of-bag samples
@@ -1463,6 +1471,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_improvement_ : ndarray of shape (n_estimators,)
         The improvement in loss (= deviance) on the out-of-bag samples

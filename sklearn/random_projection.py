@@ -176,11 +176,10 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
         Dimensionality of the original source space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the matrix
+        at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -243,11 +242,10 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         Achlioptas, 2001.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the matrix
+        at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -462,11 +460,10 @@ class GaussianRandomProjection(BaseRandomProjection):
         dimensions (n_components) in the target projection space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -584,11 +581,10 @@ class SparseRandomProjection(BaseRandomProjection):
         the input is sparse.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
