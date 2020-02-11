@@ -380,7 +380,7 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         When `shuffle` is True, `random_state` affects the ordering of the
         indices, which controls the randomness of each fold. Otherwise, this
         parameter has no effect. Pass an int for reproducible output across
