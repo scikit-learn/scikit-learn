@@ -214,7 +214,8 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    drop : 'first' or a array-like of shape (n_features,), default=None
+    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+            default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
@@ -225,6 +226,9 @@ class OneHotEncoder(_BaseEncoder):
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
+        - 'if_binary' : drop the first category in each feature with two
+          categories. Features with 1 or more than 2 categories are
+          left intact.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
@@ -289,8 +293,12 @@ class OneHotEncoder(_BaseEncoder):
 
     drop_idx_ : array of shape (n_features,)
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
-        be dropped for each feature. None if all the transformed features will
-        be retained.
+        be dropped for each feature.
+        ``drop_idx_[i] = -1`` if no category is to be dropped from the feature
+        with index ``i``, e.g. when `drop='if_binary'` and the feature isn't
+        binary
+
+        ``drop_idx_ = None`` if all the transformed features will be retained.
 
     infrequent_indices_ : list of shape (n_features,)
         Defined when `min_frequency` or `max_levels` is set to a non-default
@@ -318,6 +326,9 @@ class OneHotEncoder(_BaseEncoder):
     values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
+
+    One can discard categories not seen during `fit`:
+
     >>> enc = OneHotEncoder(handle_unknown='auto')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
@@ -333,12 +344,22 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.get_feature_names(['gender', 'group'])
     array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
       dtype=object)
+
+    One can always drop the first column for each feature:
+
     >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 0., 0.],
            [1., 1., 0.]])
+
+    Or drop a column for feature only having 2 categories:
+
+    >>> drop_binary_enc = OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()
+    array([[0., 1., 0., 0.],
+           [1., 0., 1., 0.]])
     """
 
     def __init__(self, categories='auto', drop=None, sparse=True,
@@ -398,15 +419,28 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, str) and self.drop == 'first'):
-            return np.zeros(len(self.categories_), dtype=np.int_)
-        elif not isinstance(self.drop, str):
+        elif isinstance(self.drop, str):
+            if self.drop == 'first':
+                return np.zeros(len(self.categories_), dtype=np.int_)
+            elif self.drop == 'if_binary':
+                return np.array([0 if len(cats) == 2 else -1
+                                for cats in self.categories_], dtype=np.int_)
+            else:
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
+                raise ValueError(msg.format(type(self.drop)))
+
+        else:
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
                 droplen = len(self.drop)
             except (ValueError, TypeError):
-                msg = ("Wrong input for parameter `drop`. Expected "
-                       "'first', None or array of objects, got {}")
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
                 raise ValueError(msg.format(type(self.drop)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
@@ -426,10 +460,6 @@ class OneHotEncoder(_BaseEncoder):
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
                              zip(self.drop, self.categories_)], dtype=np.int_)
-        else:
-            msg = ("Wrong input for parameter `drop`. Expected "
-                   "'first', None or array of objects, got {}")
-            raise ValueError(msg.format(type(self.drop)))
 
     @property
     def _infrequent_enabled(self):
@@ -633,8 +663,12 @@ class OneHotEncoder(_BaseEncoder):
     def _n_transformed_features(self):
         """Number of transformed features."""
         if self.drop is not None:
-            # early exit because drop and infreqeunt are forbidden
-            return [len(cats) - 1 for cats in self.categories_]
+            if self.drop == 'first':
+                return [len(cats) - 1 for cats in self.categories_]
+
+            # drop == 'if_binary
+            return [1 if len(cats) == 2 else len(cats)
+                    for cats in self.categories_]
 
         # drop is None
         output = [len(cats) for cats in self.categories_]
@@ -735,14 +769,19 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, n_features = X_int.shape
 
         if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1)
-
+            to_drop = self.drop_idx_.copy()
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
-
             keep_cells = X_int != to_drop
-            X_mask &= keep_cells
+            for i, cats in enumerate(self.categories_):
+                # drop='if_binary' but feature isn't binary
+                if to_drop[i] == -1:
+                    # set to cardinality to not drop from X_int
+                    to_drop[i] = len(cats)
+
+            to_drop = to_drop.reshape(1, -1)
             X_int[X_int > to_drop] -= 1
+            X_mask &= keep_cells
 
         n_values = self._n_transformed_features
 
