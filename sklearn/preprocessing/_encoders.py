@@ -665,8 +665,8 @@ class OneHotEncoder(_BaseEncoder):
         """Number of transformed features."""
         if self.drop is not None:
             output = []
-            for i, cats in enumerate(self.categories_):
-                if self.drop_idx_[i] == -1:
+            for drop_idx, cats in zip(self.drop_idx_, self.categories_):
+                if drop_idx == -1:
                     output.append(len(cats))
                 else:
                     output.append(len(cats) - 1)
