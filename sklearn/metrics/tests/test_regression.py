@@ -56,6 +56,18 @@ def test_regression_metrics(n_samples=50):
                         np.sum(1 / y_true) / (4 * n))
 
 
+def test_mean_squared_error_multioutput_raw_value_squared():
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/pull/16323
+    mse1 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=True
+    )
+    mse2 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=False
+    )
+    assert np.sqrt(mse1) == pytest.approx(mse2)
+
+
 def test_multioutput_regression():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])

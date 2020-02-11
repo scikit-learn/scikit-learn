@@ -58,9 +58,12 @@ _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
-    """Container object for datasets
+    """Container object exposing keys as attributes
 
-    Dictionary-like object that exposes its keys as attributes.
+    Bunch objects are sometimes used as an output for functions and methods.
+    They extend dictionaries by enabling values to be accessed by key,
+    `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
+
 
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
@@ -476,11 +479,10 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
@@ -621,11 +623,10 @@ def shuffle(*arrays, **options):
     Other Parameters
     ----------------
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
