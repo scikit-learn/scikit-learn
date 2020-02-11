@@ -74,9 +74,9 @@ See :ref:`model_persistence`.
 How can I create a bunch object?
 ------------------------------------------------
 
-:class:`~utils.Bunch` objects are sometimes used as an output in certain
-functions and methods, and also sometimes used to store certain information in
-several attributes of objects throughout the API.
+Bunch objects are sometimes used as an output for functions and methods. They
+extend dictionaries by enabling values to be accessed by key,
+`bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
 They should not be used as an input; therefore you almost never need to create
 a ``Bunch`` object, unless you are extending the scikit-learn's API.
