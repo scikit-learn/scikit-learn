@@ -1307,20 +1307,18 @@ def test_grid_search_correct_score_results():
 
 
 # FIXME remove test_fit_grid_point as the function will be removed on 0.25
+@ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
-    msg = (
-        "fit_grid_point is deprecated in version 0.23 "
-        "and will be removed in version 0.25")
+
     for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
         for train, test in cv.split(X, y):
-            with pytest.warns(FutureWarning, match=msg):
-                this_scores, this_params, n_test_samples = fit_grid_point(
-                    X, y, clone(svc), params, train, test,
-                    scorer, verbose=False)
+            this_scores, this_params, n_test_samples = fit_grid_point(
+                X, y, clone(svc), params, train, test,
+                scorer, verbose=False)
 
             est = clone(svc).set_params(**params)
             est.fit(X[train], y[train])
@@ -1331,12 +1329,30 @@ def test_fit_grid_point():
             assert params == this_params
             assert n_test_samples == test.size
 
+    # Should raise an error upon multimetric scorer
+    assert_raise_message(ValueError, "For evaluating multiple scores, use "
+                         "sklearn.model_selection.cross_validate instead.",
+                         fit_grid_point, X, y, svc, params, train, test,
+                         {'score': scorer}, verbose=True)
+
+
+# FIXME remove test_fit_grid_point_deprecated as
+# fit_grid_point will be removed on 0.25
+def test_fit_grid_point_deprecated():
+    X, y = make_classification(random_state=0)
+    cv = StratifiedKFold()
+    svc = LinearSVC(random_state=0)
+    scorer = make_scorer(accuracy_score)
+    msg = (
+        "fit_grid_point is deprecated in version 0.23 "
+        "and will be removed in version 0.25")
+    params = {'C': 0.1}
+    train, test = next(cv.split(X, y))
+
     with pytest.warns(FutureWarning, match=msg):
-        # Should raise an error upon multimetric scorer
-        assert_raise_message(ValueError, "For evaluating multiple scores, use "
-                             "sklearn.model_selection.cross_validate instead.",
-                             fit_grid_point, X, y, svc, params, train, test,
-                             {'score': scorer}, verbose=True)
+        fit_grid_point(
+                X, y, svc, params, train, test,
+                scorer, verbose=False)
 
 
 def test_pickle():
