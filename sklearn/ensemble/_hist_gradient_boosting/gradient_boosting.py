@@ -28,8 +28,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 warm_start, scoring, validation_fraction, n_iter_no_change,
-                 tol, verbose, random_state):
+                 warm_start, early_stopping, scoring, validation_fraction,
+                 n_iter_no_change, tol, verbose, random_state):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -39,6 +39,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
         self.warm_start = warm_start
+        self.early_stopping = early_stopping
         self.scoring = scoring
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
@@ -64,7 +65,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.max_iter < 1:
             raise ValueError('max_iter={} must not be smaller '
                              'than 1.'.format(self.max_iter))
-        if self.n_iter_no_change is not None and self.n_iter_no_change < 0:
+        if self.n_iter_no_change < 0:
             raise ValueError('n_iter_no_change={} must be '
                              'positive.'.format(self.n_iter_no_change))
         if (self.validation_fraction is not None and
@@ -114,7 +115,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-        self.n_features_ = X.shape[1]  # used for validation in predict()
+        n_samples, self.n_features_ = X.shape  # used for validation in predict
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -127,9 +128,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._in_fit = True
 
         self.loss_ = self._get_loss()
-
-        self.do_early_stopping_ = (self.n_iter_no_change is not None and
-                                   self.n_iter_no_change > 0)
+        if self.early_stopping == 'auto':
+            self.do_early_stopping_ = n_samples > 10000
+        else:
+            self.do_early_stopping_ = self.early_stopping
 
         # create validation data if needed
         self._use_validation_data = self.validation_fraction is not None
@@ -710,21 +712,25 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    scoring : str or callable or None, optional (default=None)
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        10000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
+    scoring : str or callable or None, optional (default='loss')
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
-        Only used if ``n_iter_no_change`` is not None.
+        Only used if early stopping is performed.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data. Only used if ``n_iter_no_change`` is not None.
-    n_iter_no_change : int or None, optional (default=None)
+        the training data. Only used if early stopping is performed.
+    n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. If None or 0, no early-stopping is done.
+        tolerance. Only used if early stopping is performed.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
@@ -744,8 +750,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     Attributes
     ----------
     n_iter_ : int
-        The number of iterations as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+        The number of iterations as selected by early stopping, depending on
+        the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
@@ -778,16 +784,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
-                 warm_start=False, scoring=None, validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-7, verbose=0,
-                 random_state=None):
+                 warm_start=False, early_stopping='auto', scoring='loss',
+                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
+                 verbose=0, random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, scoring=scoring,
-            validation_fraction=validation_fraction,
+            warm_start=warm_start, early_stopping=early_stopping,
+            scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 
@@ -894,21 +900,25 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    scoring : str or callable or None, optional (default=None)
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        10000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
+    scoring : str or callable or None, optional (default='loss')
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
+        w.r.t the loss value. Only used if early stopping is performed.
     validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
-        the training data.
-    n_iter_no_change : int or None, optional (default=None)
+        the training data. Only used if early stopping is performed.
+    n_iter_no_change : int, optional (default=10)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
-        tolerance. If None or 0, no early-stopping is done.
+        tolerance. Only used if early stopping is performed.
     tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
@@ -930,8 +940,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     classes_ : array, shape = (n_classes,)
         Class labels.
     n_iter_ : int
-        The number of estimators as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+        The number of iterations as selected by early stopping, depending on
+        the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
@@ -966,15 +976,16 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, warm_start=False,
-                 scoring=None, validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-7, verbose=0, random_state=None):
+                 early_stopping='auto', scoring='loss',
+                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
+                 verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, scoring=scoring,
-            validation_fraction=validation_fraction,
+            warm_start=warm_start, early_stopping=early_stopping,
+            scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 

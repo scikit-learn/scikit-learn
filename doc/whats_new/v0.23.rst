@@ -124,6 +124,14 @@ Changelog
   Stumps (trees with one split) are now allowed.
   :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
+- |Feature| Early stopping in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is now determined with a
+  new `early_stopping` parameter instead of `n_iter_no_change`. Default value
+  is 'auto', which enables early stopping if there are at least 10,000
+  samples in the training set. :pr:`14516` by :user:`Johann Faouzi
+  <johannfaouzi>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
