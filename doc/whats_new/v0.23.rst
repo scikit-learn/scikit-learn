@@ -67,6 +67,12 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.NMF` now preserves float32 dtype.
+:pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .................................
 
