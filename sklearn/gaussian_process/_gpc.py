@@ -49,7 +49,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Parameters
     ----------
-    kernel : Kernel, default=None
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
@@ -124,7 +124,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    kernel_ : Kernel
+    kernel_ : kernl instance
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
@@ -332,10 +332,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             Log-marginal likelihood of theta for training data.
 
         log_likelihood_gradient : ndarray of shape (n_kernel_params,), \
-            optional
+                optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
-            Only returned when eval_gradient is True.
+            Only returned when `eval_gradient` is True.
         """
         if theta is None:
             if eval_gradient:
@@ -469,7 +469,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    kernel : Kernel, default=None
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
@@ -551,7 +551,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    kernel_ : Kernel
+    kernel_ : kernel instance
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter
         but with optimized hyperparameters. In case of multi-class
@@ -751,7 +751,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         log_likelihood_gradient : ndarray of shape (n_kernel_params,), optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
-            Only returned when eval_gradient is True.
+            Only returned when `eval_gradient` is True.
         """
         check_is_fitted(self)
 

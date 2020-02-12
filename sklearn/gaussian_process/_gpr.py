@@ -42,7 +42,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     Parameters
     ----------
-    kernel : Kernel, default=None
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
@@ -120,7 +120,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
 
-    kernel_ : Kernel
+    kernel_ : kernel instance
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
@@ -296,11 +296,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.
-            Only returned when return_std is True.
+            Only returned when `return_std` is True.
 
         y_cov : ndarray of shape (n_samples, n_samples), optional
             Covariance of joint predictive distribution a query points.
-            Only returned when return_cov is True.
+            Only returned when `return_cov` is True.
         """
         if return_std and return_cov:
             raise RuntimeError(
