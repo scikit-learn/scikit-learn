@@ -236,9 +236,9 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self._average_coef = np.zeros(self.coef_.shape,
                                           dtype=np.float64,
                                           order="C")
-            self._average_intercept = np.zeros(
-                self._standard_intercept.shape,
-                dtype=np.float64, order="C")
+            self._average_intercept = np.zeros(self._standard_intercept.shape,
+                                               dtype=np.float64,
+                                               order="C")
 
     def _make_validation_split(self, y):
         """Split the dataset between training set and validation set.
