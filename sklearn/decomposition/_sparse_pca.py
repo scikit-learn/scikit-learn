@@ -57,12 +57,14 @@ def _get_explained_variance(X, components, ridge_alpha):
 
     References
     ----------
-    .. [1] Hui Zou, Trevor Hastie, Robert Tibshirani ; Journal of Computational
-        and Graphical Statistics, Volume 15, Number 2, Pages 265–286.
+    .. [1] Hui Zou, Trevor Hastie, Robert Tibshirani "Sparse Principal
+        Component Analysis", Journal of Computational and Graphical
+        Statistics, Volume 15, Number 2, Pages 265–286.
         DOI: 10.1198/106186006X113430
-    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach ; Proceedings
-        of the Thirteenth International Conference on Artificial Intelligence
-        and Statistics (AISTATS), PMLR 9:366-373, 2010.
+    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach, "Structured
+        sparse principal component analysis", Proceedings of the Thirteenth
+        International Conference on Artificial Intelligence and Statistics
+        (AISTATS), PMLR 9:366-373, 2010.
     """
     # Transform input
     t_spca = ridge_regression(components.T, X.T, ridge_alpha,
@@ -195,12 +197,14 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] Hui Zou, Trevor Hastie, Robert Tibshirani ; Journal of Computational
-        and Graphical Statistics, Volume 15, Number 2, Pages 265–286.
+    .. [1] Hui Zou, Trevor Hastie, Robert Tibshirani "Sparse Principal
+        Component Analysis", Journal of Computational and Graphical
+        Statistics, Volume 15, Number 2, Pages 265–286.
         DOI: 10.1198/106186006X113430
-    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach ; Proceedings
-        of the Thirteenth International Conference on Artificial Intelligence
-        and Statistics (AISTATS), PMLR 9:366-373, 2010.
+    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach, "Structured
+        sparse principal component analysis", Proceedings of the Thirteenth
+        International Conference on Artificial Intelligence and Statistics
+        (AISTATS), PMLR 9:366-373, 2010.
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
