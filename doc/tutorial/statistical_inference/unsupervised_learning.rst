@@ -192,12 +192,14 @@ clustering an image.
     ... )
     >>> X = np.reshape(rescaled_coins, (-1, 1))
 
-    >>> # We need a vectorized version of the image. 'rescaled_coins' is a
-    >>> # down-scaled version of the coins image to speed up the process.
+We need a vectorized version of the image. `'rescaled_coins'` is a down-scaled
+version of the coins image to speed up the process::
+
     >>> from sklearn.feature_extraction import grid_to_graph
     >>> connectivity = grid_to_graph(*rescaled_coins.shape)
-    >>> # Define the graph structure of the data. Pixels connected to their
-    >>> # neighbors
+
+Define the graph structure of the data. Pixels connected to their neighbors::
+
     >>> n_clusters = 27  # number of regions
 
     >>> from sklearn.cluster import AgglomerativeClustering
