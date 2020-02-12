@@ -159,7 +159,7 @@ onto the linear subspace :math:`H_L` which maximizes the variance of the
 transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 ``n_components`` parameter used in the
 :func:`~discriminant_analysis.LinearDiscriminantAnalysis.transform` method. See
-[#1]_ for more details.
+[1]_ for more details.
 
 Shrinkage
 =========
