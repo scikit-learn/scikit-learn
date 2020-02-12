@@ -186,7 +186,8 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    drop : 'first' or a array-like of shape (n_features,), default=None
+    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+            default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
@@ -252,6 +253,9 @@ class OneHotEncoder(_BaseEncoder):
     values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
+
+    One can discard categories not seen during `fit`:
+
     >>> enc = OneHotEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
@@ -267,12 +271,22 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.get_feature_names(['gender', 'group'])
     array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
       dtype=object)
+
+    One can always drop the first column for each feature:
+
     >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 0., 0.],
            [1., 1., 0.]])
+
+    Or drop a column for feature only having 2 categories:
+
+    >>> drop_binary_enc = OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()
+    array([[0., 1., 0., 0.],
+           [1., 0., 1., 0.]])
     """
 
     def __init__(self, categories='auto', drop=None, sparse=True,
