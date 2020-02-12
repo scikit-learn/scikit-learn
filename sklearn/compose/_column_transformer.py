@@ -63,8 +63,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
-        columns : str, array-like of str, int, array-like of int, \
-            array-like of bool, slice or callable \
+        columns :  str, array-like of str, int, array-like of int, \
+                array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -500,7 +500,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Returns
         -------
         X_t : {array-like, sparse matrix} of \
-            shape (n_samples, sum_n_components)
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -552,7 +552,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         Returns
         -------
         X_t : {array-like, sparse matrix} of \
-            shape (n_samples, sum_n_components)
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -681,7 +681,7 @@ def make_column_transformer(*transformers, **kwargs):
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
         columns : str,  array-like of str, int, array-like of int, slice, \
-            array-like of bool or callable
+                array-like of bool or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name. A scalar string or int should be used where
