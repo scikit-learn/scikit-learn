@@ -264,3 +264,20 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     text_text = np.array([
         t.get_text() for t in disp.text_.ravel()])
     assert_array_equal(expected_text, text_text)
+
+
+def test_confusion_matrix_standard_format(pyplot):
+    cm = np.array([[10000000, 0], [1234567, 12345678]])
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
+    # Values should be shown as whole numbers 'd',
+    # except the first number which should be shown as 1e+07
+    # and the last number will be showns as 1.2e+07
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['1e+07', '0', '1234567', '1.2e+07']
+
+    cm = np.array([[0.1, 10], [100, 0.5]])
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
+    # Values should now formatted as '.2g', since there's a float in
+    # Values are have two dec places max, (e.g 100 becomes 1e+02)
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['0.1', '10', '1e+02', '0.5']
