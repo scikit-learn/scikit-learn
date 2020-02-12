@@ -1,14 +1,13 @@
 from math import ceil, floor, log
 from abc import abstractmethod
-from collections import OrderedDict
 from numbers import Integral
 
 import numpy as np
 from ._search import _check_param_grid
 from ._search import BaseSearchCV
 from . import ParameterGrid, ParameterSampler
-from ..utils import check_random_state
-from ..utils.validation import _num_samples
+from ..utils import check_random_state, _safe_indexing
+from ..utils.validation import _num_samples, _check_fit_params
 from ..base import is_classifier
 from ._split import check_cv
 from ..utils import resample
@@ -260,15 +259,13 @@ class BaseSuccessiveHalving(BaseSearchCV):
             if self.resource == 'n_samples':
                 # Subsample X and y as well as fit_params
                 stratify = y if is_classifier(self.estimator) else None
-                fit_params = OrderedDict(fit_params)
-                X_iter, y_iter, *fit_params_iter_list = resample(
-                    X, y, *fit_params.values(), replace=False,
-                    random_state=rng, stratify=stratify,
-                    n_samples=resource_iter)
-                fit_params_iter = {
-                    key: fit_params_iter_list[i]
-                    for (i, key) in enumerate(fit_params.keys())
-                }
+                indices = resample(np.arange(X.shape[0]), replace=False,
+                                   random_state=rng, stratify=stratify,
+                                   n_samples=resource_iter)
+                X_iter = _safe_indexing(X, indices)
+                y_iter = _safe_indexing(y, indices)
+                fit_params_iter = _check_fit_params(X, fit_params, indices)
+
             else:
                 # Need copy so that the resource_iter of next iteration does
                 # not overwrite
