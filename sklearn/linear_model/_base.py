@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr
+from ..utils.fixes import sparse_lsqr, _astype_copy_false
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -217,7 +217,7 @@ def _rescale_data(X, y, sample_weight, order=None):
         if sparse_X:
             # As of scipy 1.1.0, new argument copy=False by default.
             # This is what we want.
-            X = X.asformat(sparse_format)
+            X = X.asformat(sparse_format, **_astype_copy_false(X))
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
