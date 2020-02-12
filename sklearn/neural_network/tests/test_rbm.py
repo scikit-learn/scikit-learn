@@ -4,7 +4,8 @@ import pytest
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils._testing import (assert_almost_equal, assert_array_equal)
+from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
+                                    assert_allclose)
 
 from sklearn.datasets import load_digits
 from io import StringIO
@@ -221,12 +222,12 @@ def test_convergence_dtype_consistency():
     Xt_32 = rbm_32.fit_transform(X_32)
 
     # results and attributes should be close enough in 32 bit and 64 bit
-    assert_almost_equal(Xt_64, Xt_32, 6)
-    assert_almost_equal(rbm_64.intercept_hidden_,
-                        rbm_32.intercept_hidden_,
-                        6)
-    assert_almost_equal(rbm_64.intercept_visible_,
-                        rbm_32.intercept_visible_,
-                        6)
-    assert_almost_equal(rbm_64.components_, rbm_32.components_, 6)
-    assert_almost_equal(rbm_64.h_samples_, rbm_32.h_samples_, 0)
+    assert_allclose(Xt_64, Xt_32,
+                    rtol=1e-06, atol=0)
+    assert_allclose(rbm_64.intercept_hidden_, rbm_32.intercept_hidden_,
+                    rtol=1e-06, atol=0)
+    assert_allclose(rbm_64.intercept_visible_, rbm_32.intercept_visible_,
+                    rtol=1e-05, atol=0)
+    assert_allclose(rbm_64.components_, rbm_32.components_,
+                    rtol=1e-03, atol=0)
+    assert_allclose(rbm_64.h_samples_, rbm_32.h_samples_)

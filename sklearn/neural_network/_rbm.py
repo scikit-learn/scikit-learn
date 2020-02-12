@@ -146,10 +146,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         h : ndarray of shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
-
         p = safe_sparse_dot(v, self.components_.T)
         p += self.intercept_hidden_
-
         return expit(p, out=p)
 
     def _sample_hiddens(self, v, rng):
