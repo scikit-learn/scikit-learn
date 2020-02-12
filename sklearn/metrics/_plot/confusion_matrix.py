@@ -103,6 +103,7 @@ class ConfusionMatrixDisplay:
                         fmt = '.2g'
                     else:
                         fmt = 'd'
+
                 self.text_[i, j] = ax.text(
                     j, i, format(cm[i, j], fmt),
                     ha="center", va="center",
