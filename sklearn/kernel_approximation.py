@@ -19,6 +19,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
+from .utils.validation import check_non_negative
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
@@ -43,6 +44,18 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    random_offset_ : ndarray of shape (n_components,), dtype=float64
+        Random offset used to compute the projection in the `n_components`
+        dimensions of the feature space.
+
+    random_weights_ : ndarray of shape (n_features, n_components),\
+        dtype=float64
+        Random projection directions drawn from the Fourier transform
+        of the RBF kernel.
+
 
     Examples
     --------
@@ -324,7 +337,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr')
+        check_non_negative(X, 'X in AdditiveChi2Sampler.fit')
+
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -359,11 +374,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
+        check_non_negative(X, 'X in AdditiveChi2Sampler.transform')
         sparse = sp.issparse(X)
 
-        # check if X has negative values. Doesn't play well with np.log.
-        if ((X.data if sparse else X) < 0).any():
-            raise ValueError("Entries of X must be non-negative.")
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
@@ -426,7 +439,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return sp.hstack(X_new)
 
     def _more_tags(self):
-        return {'stateless': True}
+        return {'stateless': True,
+                'requires_positive_X': True}
 
 
 class Nystroem(TransformerMixin, BaseEstimator):

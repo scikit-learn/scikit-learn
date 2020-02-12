@@ -42,12 +42,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     Parameters
     ----------
-    kernel : kernel object
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float or array-like, optional (default: 1e-10)
+    alpha : float or array-like of shape (n_samples), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
         Larger values correspond to increased noise level in the observations.
         This can also prevent a potential numerical issue during fitting, by
@@ -58,7 +58,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         Allowing to specify the noise level directly as a parameter is mainly
         for convenience and for consistency with Ridge.
 
-    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+    optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -83,7 +83,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer : int, optional (default: 0)
+    n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -92,7 +92,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y : boolean, optional (default: False)
+    normalize_y : bool, default=False
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
         True if the target values' mean is expected to differ considerable from
@@ -100,28 +100,27 @@ class GaussianProcessRegressor(MultiOutputMixin,
         prior based on the data, which contradicts the likelihood principle;
         normalization is thus disabled per default.
 
-    copy_X_train : bool, optional (default: True)
+    copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
-    X_train_ : sequence of length n_samples
+    X_train_ : array-like of shape (n_samples, n_features) or list of object
         Feature vectors or other representations of training data (also
-        required for prediction). Could either be array-like with shape =
-        (n_samples, n_features) or a list of objects.
+        required for prediction).
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
 
-    kernel_ : kernel object
+    kernel_ : kernel instance
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
@@ -165,10 +164,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
@@ -281,31 +278,29 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
-        return_std : bool, default: False
+        return_std : bool, default=False
             If True, the standard-deviation of the predictive distribution at
             the query points is returned along with the mean.
 
-        return_cov : bool, default: False
+        return_cov : bool, default=False
             If True, the covariance of the joint predictive distribution at
             the query points is returned along with the mean
 
         Returns
         -------
-        y_mean : array, shape = (n_samples, [n_output_dims])
+        y_mean : ndarray of shape (n_samples, [n_output_dims])
             Mean of predictive distribution a query points
 
-        y_std : array, shape = (n_samples,), optional
+        y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.
-            Only returned when return_std is True.
+            Only returned when `return_std` is True.
 
-        y_cov : array, shape = (n_samples, n_samples), optional
+        y_cov : ndarray of shape (n_samples, n_samples), optional
             Covariance of joint predictive distribution a query points.
-            Only returned when return_cov is True.
+            Only returned when `return_cov` is True.
         """
         if return_std and return_cov:
             raise RuntimeError(
@@ -370,15 +365,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
-        n_samples : int, default: 1
+        n_samples : int, default=1
             The number of samples drawn from the Gaussian process
 
-        random_state : int, RandomState instance, default=0
+        random_state : int, RandomState, default=0
             Determines random number generation to randomly draw samples.
             Pass an int for reproducible results across multiple function
             calls.
@@ -386,7 +379,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Returns
         -------
-        y_samples : array, shape = (n_samples_X, [n_output_dims], n_samples)
+        y_samples : ndarray of shape (n_samples_X, [n_output_dims], n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
         """
@@ -409,12 +402,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        theta : array-like of shape (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) default=None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
 
-        eval_gradient : bool, default: False
+        eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
@@ -428,7 +421,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
+        log_likelihood_gradient : ndarray of shape (n_kernel_params,), optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
             Only returned when eval_gradient is True.

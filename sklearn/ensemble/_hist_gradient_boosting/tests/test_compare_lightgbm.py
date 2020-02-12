@@ -66,7 +66,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
@@ -119,7 +119,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
@@ -181,7 +181,7 @@ def test_same_predictions_multiclass_classification(
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=lr,
-        n_iter_no_change=None,
+        early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
