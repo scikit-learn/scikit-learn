@@ -13,7 +13,7 @@ from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import (check_array, check_random_state, _safe_indexing,
                      as_float_array, is_scalar_nan)
-from ..utils.validation import FLOAT_DTYPES, check_is_fitted, _is_arraylike
+from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils._mask import _get_mask
 
 from ._base import _BaseImputer
