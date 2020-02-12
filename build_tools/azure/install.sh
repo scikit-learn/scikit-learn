@@ -12,13 +12,14 @@ make_conda() {
 }
 
 setup_ccache() {
-    mkdir ./ccache_bin/
+    echo "Setting up ccache"
+    mkdir /tmp/ccache/
     which ccache
-    ln -s ccache ./ccache_bin/gcc
-    ln -s ccache ./ccache_bin/g++
-    ln -s ccache ./ccache_bin/cc
-    ln -s ccache ./ccache_bin/c++
-    export PATH="./ccache_bin/:${PATH}"
+    ln -s $(which ccache) /tmp/ccache/gcc
+    ln -s $(which ccache) /tmp/ccache/g++
+    ln -s $(which ccache) /tmp/ccache/cc
+    ln -s $(which ccache) /tmp/ccache/c++
+    export PATH="/tmp/ccache/:${PATH}"
     ccache -M 1024M
 }
 
