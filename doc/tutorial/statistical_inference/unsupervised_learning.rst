@@ -21,7 +21,18 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is :ref:`k_means`::
+algorithms. The simplest clustering algorithm is :ref:`k_means`.
+
+.. |kmeans_iris| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
+    :target: ../../auto_examples/cluster/plot_cluster_iris.html
+    :scale: 70
+    :align: right
+
+.. rst-class:: centered
+
+   |kmeans_iris|
+
+::
 
     >>> from sklearn import cluster, datasets
     >>> X_iris, y_iris = datasets.load_iris(return_X_y=True)
@@ -35,11 +46,6 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`::
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
 We can visualize the output with a scatter plot.
-
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
-    :target: ../../auto_examples/cluster/plot_cluster_iris.html
-    :scale: 70
-    :align: right
 
 .. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
@@ -170,7 +176,18 @@ With agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
-also referred to as connected components) when clustering an image::
+also referred to as connected components) when clustering an image.
+
+.. |ward_clustering| image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
+    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
+    :scale: 40
+    :align: right
+
+.. rst-class:: centered
+
+   |ward_clustering|
+
+::
 
     >>> from skimage.data import coins
     >>> from scipy.ndimage.filters import gaussian_filter
@@ -198,13 +215,6 @@ Define the graph structure of the data. Pixels connected to their neighbors::
     AgglomerativeClustering(connectivity=..., n_clusters=27)
     >>> label = np.reshape(ward.labels_, rescaled_coins.shape)
 
-It produce a segmentation as shown below:
-
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
-    :scale: 40
-    :align: right
-
 Feature agglomeration
 ......................
 
@@ -215,10 +225,14 @@ features: **feature agglomeration**. This approach can be implemented by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
+.. |feature_agglomeration| image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
     :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
     :align: right
     :scale: 57
+
+.. rst-class:: centered
+
+   |feature_agglomeration|
 
 ::
 
