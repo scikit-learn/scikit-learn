@@ -328,4 +328,4 @@ def test_32_equal_64(input_dtype, encode):
     kbd_64.fit(X_input)
     Xt_64 = kbd_64.transform(X_input)
 
-    assert_allclose_dense_sparse(Xt_32, Xt_64, rtol=1e-2, atol=0)
+    assert_allclose_dense_sparse(Xt_32, Xt_64)
