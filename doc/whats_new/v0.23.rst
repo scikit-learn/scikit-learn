@@ -167,6 +167,14 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`,
+  `average_coef_`, and `average_intercept_` in
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
+
 - |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
   iteration when `solver='newton-cg'` by checking for inferior or equal instead
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
