@@ -67,16 +67,6 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
                                                            **kw)
 
 
-def PassiveAggressiveClassifier(**kwargs):
-    _update_kwargs(kwargs)
-    return linear_model.PassiveAggressiveClassifier
-
-
-def PassiveAggressiveRegressor(**kwargs):
-    _update_kwargs(kwargs)
-    return linear_model.PassiveAggressiveRegressor
-
-
 def SGDClassifier(**kwargs):
     _update_kwargs(kwargs)
     return linear_model.SGDClassifier(**kwargs)
