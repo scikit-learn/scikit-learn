@@ -32,7 +32,7 @@ jobs:
       condition: startsWith(variables['DISTRIB'], 'conda')
     - task: Cache@2
       inputs:
-        key: 'ccache | "$(Agent.OS)" | "${{ variables.PYTHON_VERSION }}"'
+        key: 'ccache | "$(Agent.OS)"'
         path: $(CCACHE_DIR)
       displayName: ccache
     - script: |
