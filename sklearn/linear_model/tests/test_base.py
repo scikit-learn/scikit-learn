@@ -451,9 +451,8 @@ def test_dtype_preprocess_data():
             assert_array_almost_equal(X_norm_32, X_norm_64)
 
 
-@pytest.mark.parametrize('order', [None, 'C', 'F'])
 @pytest.mark.parametrize('n_targets', [None, 2])
-def test_rescale_data_dense(order, n_targets):
+def test_rescale_data_dense(n_targets):
     n_samples = 200
     n_features = 2
 
@@ -463,13 +462,7 @@ def test_rescale_data_dense(order, n_targets):
         y = rng.rand(n_samples)
     else:
         y = rng.rand(n_samples, n_targets)
-    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight, order=order)
-    if order == 'C':
-        assert rescaled_X.flags['C_CONTIGUOUS']
-        assert rescaled_y.flags['C_CONTIGUOUS']
-    elif order == 'F':
-        assert rescaled_X.flags['F_CONTIGUOUS']
-        assert rescaled_y.flags['F_CONTIGUOUS']
+    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
     rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
     if n_targets is None:
         rescaled_y2 = y * np.sqrt(sample_weight)
@@ -477,39 +470,6 @@ def test_rescale_data_dense(order, n_targets):
         rescaled_y2 = y * np.sqrt(sample_weight)[:, np.newaxis]
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
-
-
-@pytest.mark.parametrize('order', [None, 'C', 'F'])
-def test_rescale_data_sparse(order):
-    n_samples = 200
-    n_features = 2
-    n_targets = 2
-
-    sample_weight = 1.0 + rng.rand(n_samples)
-    X = sparse.coo_matrix(rng.rand(n_samples, n_features))
-    y = sparse.coo_matrix(rng.rand(n_samples, n_targets))
-    rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight, order=order)
-    if order == 'C':
-        assert sparse.isspmatrix_csr(rescaled_X)
-        assert sparse.isspmatrix_csr(rescaled_y)
-    elif order == 'F':
-        assert sparse.isspmatrix_csc(rescaled_X)
-        assert sparse.isspmatrix_csc(rescaled_y)
-    rescaled_X2 = X.toarray() * np.sqrt(sample_weight)[:, np.newaxis]
-    rescaled_y2 = y.toarray() * np.sqrt(sample_weight)[:, np.newaxis]
-    assert_array_almost_equal(rescaled_X.toarray(), rescaled_X2)
-    assert_array_almost_equal(rescaled_y.toarray(), rescaled_y2)
-
-
-@pytest.mark.parametrize('order', ['', 'f', 2])
-def test_rescale_data_order(order):
-    """Test valid order argument in _rescale_data"""
-    n_samples, n_feature = 3, 2
-    X = np.arange(n_samples, n_feature)
-    y = np.arange(n_samples)
-    sw = np.arange(n_samples)
-    with pytest.raises(ValueError, match="Unknown value for order*"):
-        _rescale_data(X, y, sw, order=order)
 
 
 def test_fused_types_make_dataset():

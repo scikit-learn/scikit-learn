@@ -25,7 +25,45 @@ from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_dense(order, input_order):
+    """Check that _set_order returns arrays with promised order."""
+    X = np.array([[0], [0], [0]], order=input_order)
+    y = np.array([0, 0, 0], order=input_order)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert X2.flags['C_CONTIGUOUS']
+        assert y2.flags['C_CONTIGUOUS']
+    elif order == 'F':
+        assert X2.flags['F_CONTIGUOUS']
+        assert y2.flags['F_CONTIGUOUS']
+
+    if order == input_order:
+        assert X is X2
+        assert y is y2
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_sparse(order, input_order):
+    """Check that _set_order returns sparse matrices in promised format."""
+    X = sparse.coo_matrix(np.array([[0], [0], [0]]))
+    y = sparse.coo_matrix(np.array([0, 0, 0]))
+    sparse_format = "csc" if input_order == "F" else "csr"
+    X = X.asformat(sparse_format)
+    y = X.asformat(sparse_format)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert sparse.isspmatrix_csr(X2)
+        assert sparse.isspmatrix_csr(y2)
+    elif order == 'F':
+        assert sparse.isspmatrix_csc(X2)
+        assert sparse.isspmatrix_csc(y2)
 
 
 def test_lasso_zero():

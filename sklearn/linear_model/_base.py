@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr, _astype_copy_false
+from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -180,15 +180,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 # Currently, the fact that sag implements its own way to deal with
 # sample_weight makes the refactoring tricky.
 
-def _rescale_data(X, y, sample_weight, order=None):
+def _rescale_data(X, y, sample_weight):
     """Rescale data sample-wise by square root of sample_weight.
 
     For many linear models, this enables easy support for sample_weight.
-
-    Parameters
-    ----------
-    order : 'F', 'C' or None, default=None
-        Whether an array will be forced to be fortran or c-style.
 
     Returns
     -------
@@ -196,12 +191,7 @@ def _rescale_data(X, y, sample_weight, order=None):
 
     y_rescaled : {array-like, sparse matrix}
     """
-    if order not in [None, 'C', 'F']:
-        raise ValueError("Unknown value for order. Got {} instead of "
-                         "None, 'C' or 'F'.".format(order))
     n_samples = X.shape[0]
-    sparse_X = sparse.issparse(X)
-    sparse_y = sparse.issparse(y)
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight,
@@ -211,20 +201,6 @@ def _rescale_data(X, y, sample_weight, order=None):
                                   shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
-
-    if order is not None:
-        sparse_format = "csc" if order == "F" else "csr"
-        if sparse_X:
-            # As of scipy 1.1.0, new argument copy=False by default.
-            # This is what we want.
-            X = X.asformat(sparse_format, **_astype_copy_false(X))
-        else:
-            X = np.asarray(X, order=order)
-        if sparse_y:
-            y = y.asformat(sparse_format)
-        else:
-            y = np.asarray(y, order=order)
-
     return X, y
 
 
@@ -574,7 +550,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
-             check_input=True, sample_weight=None, order=None):
+             check_input=True, sample_weight=None):
     """Aux function used at beginning of fit in linear models
 
     Parameters
@@ -597,7 +573,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
-        X, y = _rescale_data(X, y, sample_weight=sample_weight, order=order)
+        X, y = _rescale_data(X, y, sample_weight=sample_weight)
     if hasattr(precompute, '__array__') and (
         fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):

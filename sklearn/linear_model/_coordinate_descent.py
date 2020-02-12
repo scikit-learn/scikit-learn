@@ -21,11 +21,55 @@ from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _joblib_parallel_args
+from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 
 from . import _cd_fast as cd_fast
+
+
+def _set_order(X, y, order='C'):
+    """Change the order of X and y if necessary.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data.
+
+    y : ndarray of shape (n_samples,)
+        Target values.
+
+    order : {None, 'C', 'F'}
+        If 'C', dense arrays are returned as C-ordered, sparse matrices in csr
+        format. If 'F', dense arrays are return as F-ordered, sparse matrices
+        in csc format.
+
+    Returns
+    -------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data with guaranteed order.
+
+    y : ndarray of shape (n_samples,)
+        Target values with guaranteed order.
+    """
+    if order not in [None, 'C', 'F']:
+        raise ValueError("Unknown value for order. Got {} instead of "
+                         "None, 'C' or 'F'.".format(order))
+    sparse_X = sparse.issparse(X)
+    sparse_y = sparse.issparse(y)
+    if order is not None:
+        sparse_format = "csc" if order == "F" else "csr"
+        if sparse_X:
+            # As of scipy 1.1.0, new argument copy=False by default.
+            # This is what we want.
+            X = X.asformat(sparse_format, **_astype_copy_false(X))
+        else:
+            X = np.asarray(X, order=order)
+        if sparse_y:
+            y = y.asformat(sparse_format)
+        else:
+            y = np.asarray(y, order=order)
+    return X, y
 
 
 ###############################################################################
@@ -746,8 +790,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=should_copy,
-                     check_input=check_input, sample_weight=sample_weight,
-                     order='F')
+                     check_input=check_input, sample_weight=sample_weight)
+        # coordinate descent needs F-ordered arrays and _pre_fit might have
+        # called _rescale_data
+        if check_input or sample_weight is not None:
+            X, y = _set_order(X, y, order='F')
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
