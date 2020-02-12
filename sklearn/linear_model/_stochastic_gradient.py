@@ -1323,10 +1323,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                             self.eta0, self.power_t, self.t_,
                             intercept_decay, self.average)
 
-            self._average_intercept = np.atleast_1d(
-                self._average_intercept)
-            self._standard_intercept = np.atleast_1d(
-                self._standard_intercept)
+            self._average_intercept = np.atleast_1d(self._average_intercept)
+            self._standard_intercept = np.atleast_1d(self._standard_intercept)
             self.t_ += self.n_iter_ * X.shape[0]
 
             if self.average <= self.t_ - 1.0:
