@@ -3,6 +3,7 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
+import sys
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -46,6 +47,9 @@ non_fixed_kernels = [kernel for kernel in kernels
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_gpr_interpolation(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test the interpolating property for different kernels.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
@@ -70,6 +74,9 @@ def test_gpr_interpolation_structured():
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
@@ -175,6 +182,9 @@ def test_no_optimizer():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
