@@ -21,16 +21,7 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is
-:ref:`k_means`.
-
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
-    :target: ../../auto_examples/cluster/plot_cluster_iris.html
-    :scale: 70
-    :align: right
-
-
-::
+algorithms. The simplest clustering algorithm is :ref:`k_means`::
 
     >>> from sklearn import cluster, datasets
     >>> X_iris, y_iris = datasets.load_iris(return_X_y=True)
@@ -42,6 +33,13 @@ algorithms. The simplest clustering algorithm is
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
+
+We can visualize the output with a scatter plot.
+
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
+    :target: ../../auto_examples/cluster/plot_cluster_iris.html
+    :scale: 70
+    :align: right
 
 .. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
@@ -172,16 +170,7 @@ With agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
-also referred to as connected components) when
-clustering an image.
-
-
-.. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
-    :scale: 40
-    :align: right
-
-::
+also referred to as connected components) when clustering an image::
 
     >>> from skimage.data import coins
     >>> from scipy.ndimage.filters import gaussian_filter
@@ -208,6 +197,13 @@ Define the graph structure of the data. Pixels connected to their neighbors::
     >>> ward.fit(X)
     AgglomerativeClustering(connectivity=..., n_clusters=27)
     >>> label = np.reshape(ward.labels_, rescaled_coins.shape)
+
+It produce a segmentation as shown below:
+
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
+    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
+    :scale: 40
+    :align: right
 
 Feature agglomeration
 ......................
