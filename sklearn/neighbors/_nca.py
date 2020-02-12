@@ -113,7 +113,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         A pseudo random number generator object or a seed for it if int. If
         ``init='random'``, ``random_state`` is used to initialize the random
         transformation. If ``init='pca'``, ``random_state`` is passed as an
-        argument to PCA when initializing the transformation.
+        argument to PCA when initializing the transformation. Pass an int
+        for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------

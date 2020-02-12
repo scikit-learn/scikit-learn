@@ -48,11 +48,10 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -195,11 +194,10 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -311,11 +309,10 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:

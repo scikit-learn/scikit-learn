@@ -131,6 +131,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
+        # Initializion of the random number instance that will be used to
+        # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
 
         for iboost in range(self.n_estimators):
@@ -237,8 +239,16 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """The impurity-based feature importances.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
         Returns
         -------
@@ -321,11 +331,12 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -335,21 +346,26 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int
         The number of classes.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Classification error for each estimator in the boosted
         ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     See Also
     --------
@@ -387,8 +403,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
     AdaBoostClassifier(n_estimators=100, random_state=0)
-    >>> clf.feature_importances_
-    array([0.28..., 0.42..., 0.14..., 0.16...])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
@@ -477,7 +491,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The current sample weights.
 
         random_state : RandomState
-            The current random number generator
+            The RandomState instance used if the base estimator accepts a
+            `random_state` attribute.
 
         Returns
         -------
@@ -897,11 +912,14 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Controls the random seed given at each `base_estimator` at each
+        boosting iteration.
+        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        In addition, it controls the bootstrap of the weights used to train the
+        `base_estimator` at each boosting iteration.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -911,14 +929,19 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Regression error for each estimator in the boosted ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     Examples
     --------
@@ -929,8 +952,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
-    >>> regr.feature_importances_
-    array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
     >>> regr.predict([[0, 0, 0, 0]])
     array([4.7972...])
     >>> regr.score(X, y)
@@ -1020,7 +1041,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The current sample weights.
 
         random_state : RandomState
-            The current random number generator
+            The RandomState instance used if the base estimator accepts a
+            `random_state` attribute.
+            Controls also the bootstrap of the weights used to train the weak
+            learner.
+            replacement.
 
         Returns
         -------

@@ -256,8 +256,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
@@ -618,8 +619,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
@@ -773,8 +775,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to false, no
@@ -1636,8 +1639,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`.
         If using generalized cross-validation, alphas must be positive.
 
     fit_intercept : bool, default=True
@@ -1752,8 +1756,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
