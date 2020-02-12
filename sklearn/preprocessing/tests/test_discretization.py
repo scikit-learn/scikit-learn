@@ -9,7 +9,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
-    assert_warns_message
+    assert_warns_message,
+    assert_allclose_dense_sparse
 )
 
 X = [[-2, 1.5, -4, -1],
@@ -283,19 +284,48 @@ def test_percentile_numeric_stability():
     assert_array_almost_equal(kbd.transform(X), Xt)
 
 
-@pytest.mark.parametrize("input_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("output_dtype", [None, np.float32, np.float64])
+@pytest.mark.parametrize("in_dtype", [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("out_dtype", [None, np.float16, np.float32,
+                                       np.float64])
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
-def test_dtype(input_dtype, output_dtype, encode):
-    # test dtype parameter to properly cast output dtype (output_dtype if
-    # specified or consistent with input_dtype instead).
-    kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=output_dtype)
-    kbd.fit(X)
+def test_consistent_dtype(in_dtype, out_dtype, encode):
+    X_input = np.array(X, dtype=in_dtype)
+    kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+
+    # a error is raised if a wrong dtype is define for the model
+    if out_dtype not in [None, np.float32, np.float64]:
+        with pytest.raises(ValueError, match="Valid options for 'dtype' are"):
+            kbd.fit(X_input)
+    else:
+        kbd.fit(X_input)
+
+        # test output dtype
+        if out_dtype is not None:
+            expected_dtype = out_dtype
+        elif out_dtype is None and X_input.dtype == np.float16:
+            # wrong numeric input dtype are cast in np.float64
+            expected_dtype = np.float64
+        else:
+            expected_dtype = X_input.dtype
+        Xt = kbd.transform(X_input)
+        assert Xt.dtype == expected_dtype
+
+
+@pytest.mark.parametrize('input_dtype', [np.float16, np.float32, np.float64])
+@pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
+def test_32_equal_64(input_dtype, encode):
+    # TODO this check is redundant with common checks and can be removed
+    #  once #16290 is merged
     X_input = np.array(X, dtype=input_dtype)
-    output_dtype_ = output_dtype if output_dtype is not None else X_input.dtype
-    # wrong input_dtype are cast in np.float64 by default so the expected
-    # output_dtype will be 64 bit.
-    if input_dtype == np.float16 and output_dtype is None:
-        output_dtype_ = np.float64
-    Xt = kbd.transform(X_input)
-    assert Xt.dtype == output_dtype_
+
+    # 32 bit output
+    kbd_32 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float32)
+    kbd_32.fit(X_input)
+    Xt_32 = kbd_32.transform(X_input)
+
+    # 64 bit output
+    kbd_64 = KBinsDiscretizer(n_bins=3, encode=encode, dtype=np.float64)
+    kbd_64.fit(X_input)
+    Xt_64 = kbd_64.transform(X_input)
+
+    assert_allclose_dense_sparse(Xt_32, Xt_64, rtol=1e-2, atol=0)
