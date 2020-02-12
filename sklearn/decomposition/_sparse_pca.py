@@ -46,6 +46,10 @@ def _get_explained_variance(X, components, ridge_alpha):
     components : array, shape (n_components, n_features)
         The principal components. [1]
 
+    ridge_alpha : float,
+        Amount of ridge shrinkage to apply in order to improve
+        conditioning when calling the transform method.
+
     Notes
     -----
     Orthogonality is enforced in this case. Other variants exist that don't
