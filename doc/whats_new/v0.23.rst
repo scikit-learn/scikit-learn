@@ -235,6 +235,10 @@ Changelog
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
 
+- |Enhancement| Prevent the transformer from converting float32 to float64 in
+  :class:`neural_network.BernoulliRBM`.
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
