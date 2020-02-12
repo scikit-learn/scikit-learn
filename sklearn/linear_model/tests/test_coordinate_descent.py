@@ -942,9 +942,8 @@ def test_multi_task_lasso_cv_dtype():
 @pytest.mark.parametrize('alpha', [0.01])
 @pytest.mark.parametrize('normalize', [False, True])
 @pytest.mark.parametrize('precompute', [False, True])
-@pytest.mark.parametrize('sparseX', [False])
 def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
-                                        precompute, sparseX):
+                                        precompute):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
@@ -953,9 +952,6 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
     y = rng.rand(n_samples)
     params = dict(alpha=alpha, fit_intercept=fit_intercept,
                   precompute=precompute, tol=1e-6, l1_ratio=0.5)
-
-    if sparseX:
-        X = sparse.csc_matrix(X)
 
     reg = ElasticNet(**params).fit(X, y)
     coef = reg.coef_.copy()
@@ -1005,9 +1001,6 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
     y2 = np.concatenate([y, y[:n_samples//2]])
     sample_weight_1 = np.ones(len(y))
     sample_weight_1[:n_samples//2] = 2
-    if sparseX:
-        X = sparse.csc_matrix(X)
-        X2 = sparse.csc_matrix(X2)
 
     reg1 = ElasticNet(**params).fit(
             X, y, sample_weight=sample_weight_1
