@@ -61,7 +61,7 @@ class ConfusionMatrixDisplay:
 
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
-            the format specification is '.2g'.
+            the format specification is 'd' or '.2g' whichever is shorter.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -83,22 +83,31 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
-            if values_format is None:
-                values_format = '.2g'
 
             # print text with appropriate color depending on background
             thresh = (cm.max() + cm.min()) / 2.0
+
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
-                self.text_[i, j] = ax.text(j, i,
-                                           format(cm[i, j], values_format),
-                                           ha="center", va="center",
-                                           color=color)
+
+                fmt = values_format
+                if values_format is None:
+                    if cm.dtype.kind == 'f':
+                        fmt = '.2g'
+                    elif len(format(cm[i, j], '.2g')) < len(format(
+                                                        cm[i, j], 'd')):
+                        fmt = '.2g'
+                    else:
+                        fmt = 'd'
+
+                self.text_[i, j] = ax.text(
+                    j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color=color)
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
@@ -164,7 +173,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
-        the format specification is '.2g'.
+        the format specification is 'd' or '.2g' whichever is shorter.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
