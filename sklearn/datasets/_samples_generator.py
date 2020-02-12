@@ -731,7 +731,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
 
 def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=None):
+               center_box=(-10.0, 10.0), shuffle=True, random_state=None,
+               return_centers=False):
     """Generate isotropic Gaussian blobs for clustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -769,6 +770,11 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    return_centers : bool, optional (default=False)
+        If True, then return the centers of each cluster
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     X : array of shape [n_samples, n_features]
@@ -776,6 +782,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
 
     y : array of shape [n_samples]
         The integer labels for cluster membership of each sample.
+
+    centers : array, shape [n_centers, n_features]
+        The centers of each cluster. Only returned if
+        ``return_centers=True``.
 
     Examples
     --------
@@ -869,7 +879,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         X = X[indices]
         y = y[indices]
 
-    return X, y
+    if return_centers:
+        return X, y, centers
+    else:
+        return X, y
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):

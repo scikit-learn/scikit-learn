@@ -21,6 +21,7 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
 
+
 @pytest.fixture(scope="module")
 def n_classes():
     return 5
@@ -224,8 +225,6 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[0, 1].get_color(), max_color)
     assert_allclose(disp.text_[1, 0].get_color(), max_color)
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
-
-
 
 
 @pytest.mark.parametrize(

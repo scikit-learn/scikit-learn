@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -1545,6 +1546,7 @@ Plotting
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
