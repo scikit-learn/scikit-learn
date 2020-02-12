@@ -32,9 +32,9 @@ jobs:
       condition: startsWith(variables['DISTRIB'], 'conda')
     - task: Cache@2
       inputs:
-        key: 'ccache | "$(Agent.OS)"'
+        key: 'ccache | "$(Agent.OS)" | ${{ parameters.name }}'
         path: $(CCACHE_DIR)
-      displayName: ccachei
+      displayName: ccache
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
