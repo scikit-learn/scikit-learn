@@ -111,17 +111,15 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float or array-like of shape (n_features,), default=None
+    min_value : float or array-like of shape (n_features,), default=None.
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. Expects shape (n_features,) if array-like, one min value for
-        each feature. Default of ``None`` will set minimum to negative infinity
-        for all features.
+        each feature. Default of None is converted to -np.inf.
 
-    max_value : float or array-like of shape (n_features,), default=None
+    max_value : float or array-like of shape (n_features,), default=None.
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. Expects shape (n_features,) if array-like, one max value for
-        each feature. Default of ``None`` will set maximum to positive infinity
-        for all features.
+        each feature.Default of None is converted to np.inf.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -582,35 +580,36 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        # Convert min and max values to float arrays if array-like
-        # Else (i.e, if scalar) broadcast it to an array of shape=n_features
-        self._min_value = (
-            as_float_array(self.min_value, force_all_finite=False)
-            if _is_arraylike(self.min_value)
-            else as_float_array(np.full(X.shape[1], self.min_value),
-                                force_all_finite=False)
-        )
-        self._max_value = (
-            as_float_array(self.max_value, force_all_finite=False)
-            if _is_arraylike(self.max_value)
-            else as_float_array(np.full(X.shape[1], self.max_value),
-                                force_all_finite=False)
-        )
-        # Fill in any np.nan in min and max value arrays
-        # with -np.inf and np.inf respectively
+        # If min or max value are (scalar) None, convert them to - or + inf
+        self._min_value = -np.inf if self.min_value is None else self.min_value
+        self._max_value = np.inf if self.max_value is None else self.max_value
+        # Convert min and max values to shape=(n_features,) if they are scalars
+        if np.isscalar(self._min_value):
+            self._min_value = np.full(X.shape[1], self._min_value)
+        if np.isscalar(self._max_value):
+            self._max_value = np.full(X.shape[1], self._max_value)
+        # If there were any None values in above arrays, convert them to np.nan
+        self._min_value = as_float_array(self._min_value,
+                                         force_all_finite=False)
+        self._max_value = as_float_array(self._max_value,
+                                         force_all_finite=False)
+        # And finally, convert all np.nan to - or + inf
         self._min_value[np.isnan(self._min_value)] = -np.inf
         self._max_value[np.isnan(self._max_value)] = np.inf
 
-        # Raise a ValueError if min value for any feature is >= its max value
+        if not (self._min_value.shape[0] == X.shape[1]):
+            raise ValueError(
+                f"'min_value' should be of shape ({X.shape[1]},)"
+                "when an array-like is provided"
+                f"Got {self._min_value.shape}, instead.")
+        if not (self._max_value.shape[0] == X.shape[1]):
+            raise ValueError(
+                f"'max_value' should be of shape ({X.shape[1]},)"
+                "when an array-like is provided"
+                f"Got {self._max_value.shape}, instead.")
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError(
-                "One (or more) features have min_value >= max_value")
-        # Raise a ValueError if _min_value and _max_value
-        # are not the same shape as n_features
-        if not (self._min_value.shape[0] == X.shape[1] and
-                self._max_value.shape[0] == X.shape[1]):
-            raise ValueError(
-                "Number of min/max values not equal to number of features")
+                "One (or more) features have min_value >= max_value.")
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)

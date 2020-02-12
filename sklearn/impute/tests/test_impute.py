@@ -972,36 +972,38 @@ def test_iterative_imputer_catch_warning():
 
 
 @pytest.mark.parametrize("min_value, max_value, correct_output",
-                         [(0,
+                         [(0,  # scalars cast to the correct arrays?
                            100,
                            np.array([[0] * 3, [100] * 3])),
-                          (None,
+                          ([0, 0, 0],  # vectors cast to the same
+                           [100, 100, 100],  # correct arrays?
+                           np.array([[0] * 3, [100] * 3])),
+                          (None,  # None cast to vector of inf?
                            None,
                            np.array([[-np.inf] * 3, [np.inf] * 3])),
-                          (-np.inf,
+                          (-np.inf,  # inf cast to vector of inf?
                            np.inf,
                            np.array([[-np.inf] * 3, [np.inf] * 3])),
-                          ([-5, 5, 10],
+                          ([-5, 5, 10],  # vectors processed properly?
                            [100, 200, 300],
                            np.array([[-5, 5, 10], [100, 200, 300]])),
-                          ([-5, None, 10],
-                           [100, 200, None],
+                          ([-5, None, 10],  # vectors of numbers+None
+                           [100, 200, None],  # cast correctly?
                            np.array([[-5, -np.inf, 10], [100, 200, np.inf]]))])
-def test_iterative_imputer_min_max_completion(min_value,
+def test_iterative_imputer_min_max_array_like(min_value,
                                               max_value,
                                               correct_output):
-    # Test for issue #16349 which adds the capability
-    # to specify different min and max values for all features.
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
     X = np.random.random((10, 3))
     imputer = IterativeImputer(min_value=min_value, max_value=max_value)
     imputer.fit(X)
-    # Check if min_value and max_value have been cast to np arrays of
-    # shape = n_features
+
     assert (isinstance(imputer._min_value, np.ndarray) and
-            (imputer._min_value.shape[0] == X.shape[1]))
-    assert (isinstance(imputer._max_value, np.ndarray) and
+            isinstance(imputer._max_value, np.ndarray))
+    assert ((imputer._min_value.shape[0] == X.shape[1]) and
             (imputer._max_value.shape[0] == X.shape[1]))
-    # Check if the imputer has correctly processed the min and max values
+
     assert_array_equal(correct_output[0, :], imputer._min_value)
     assert_array_equal(correct_output[1, :], imputer._max_value)
 
@@ -1010,8 +1012,8 @@ def test_iterative_imputer_min_max_completion(min_value,
                          [(100, 0), (np.inf, -np.inf),
                           ([-5, 5], [100, 200, 0])])
 def test_iterative_imputer_catch_min_max_error(min_value, max_value):
-    # Test for issue #16349 which adds the capability
-    # to specify different min and max values for all features.
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
     # Test checks 1.) if an exception is raised if min_value >= max_value
     # and 2.) an exception is raised if shape of min_value or max_value is
     # not equal to the number of features
