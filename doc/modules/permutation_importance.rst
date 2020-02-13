@@ -101,7 +101,7 @@ Relation to impurity-based importance in trees
 Tree-based models provide an alternative measure of :ref:`feature importances
 based on the mean decrease in impurity <random_forest_feature_importance>`
 (MDI). Impurity is quantified by the splitting criterion of the decision trees
-(Gini, Entropy or Mean Squared Error). However this method can give high
+(Gini, Entropy or Mean Squared Error). However, this method can give high
 importance to features that may not be predictive on unseen data when the model
 is overfitting. Permutation-based feature importance, on the other hand, avoids
 this issue, since it can be computed on unseen data.
@@ -128,7 +128,7 @@ will still have access to the feature through its correlated feature. This will
 result in a lower importance value for both features, where they might
 *actually* be important.
 
-One way  to handle this is to cluster features that are correlated and only
+One way to handle this is to cluster features that are correlated and only
 keep one feature from each cluster. This strategy is explored in the following
 example:
 :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance_multicollinear.py`.
