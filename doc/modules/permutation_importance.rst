@@ -41,19 +41,19 @@ predictive::
 
   >>> from sklearn.inspection import permutation_importance
   >>> r = permutation_importance(model, X_val, y_val,
-  ...                            n_repeats=10,
+  ...                            n_repeats=30,
   ...                            random_state=0)
   ...
   >>> for i in r.importances_mean.argsort()[::-1]:
-  ...     if r.importances_mean[i] > 0.05:
-  ...         print("%s:\t%.3f +/- %.3f" % (diabetes.feature_names[i],
-  ...                                       r.importances_mean[i],
-  ...                                       r.importances_std[i]))
+  ...     if r.importances_mean[i] - 2 * r.importances_std[i] > 0:
+  ...         print(f"{diabetes.feature_names[i]:<8}"
+  ...               f"{r.importances_mean[i]:.3f}"
+  ...               f" +/- {r.importances_std[i]:.3f}")
   ...
-  s5:   0.194 +/- 0.054
-  bmi:	0.170 +/- 0.068
-  bp:   0.101 +/- 0.028
-  sex:	0.060 +/- 0.024
+  s5      0.204 +/- 0.050
+  bmi     0.176 +/- 0.048
+  bp      0.088 +/- 0.033
+  sex     0.056 +/- 0.023
 
 Note that the importance values for the top features represent a large
 fraction of the reference score of 0.356.
