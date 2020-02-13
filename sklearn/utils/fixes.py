@@ -173,16 +173,8 @@ else:
     from numpy.ma import MaskedArray    # noqa
 
 
-# Fix for behavior inconsistency on numpy.equal for object dtypes.
-# For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
-# instead of equality. This fix returns the mask of NaNs in an array of
-# numerical or object values for all numpy versions.
-if np_version < (1, 13):
-    def _object_dtype_isnan(X):
-        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
-else:
-    def _object_dtype_isnan(X):
-        return X != X
+def _object_dtype_isnan(X):
+    return X != X
 
 
 # TODO: replace by copy=False, when only scipy > 1.1 is supported.
