@@ -1340,19 +1340,15 @@ def test_fit_grid_point():
 # fit_grid_point will be removed on 0.25
 def test_fit_grid_point_deprecated():
     X, y = make_classification(random_state=0)
-    cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
-    msg = (
-        "fit_grid_point is deprecated in version 0.23 "
-        "and will be removed in version 0.25")
+    msg = ("fit_grid_point is deprecated in version 0.23 "
+            "and will be removed in version 0.25")
     params = {'C': 0.1}
-    train, test = next(cv.split(X, y))
+    train, test = next(StratifiedKFold().split(X, y))
 
     with pytest.warns(FutureWarning, match=msg):
-        fit_grid_point(
-                X, y, svc, params, train, test,
-                scorer, verbose=False)
+        fit_grid_point(X, y, svc, params, train, test, scorer, verbose=False)
 
 
 def test_pickle():
