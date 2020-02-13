@@ -787,14 +787,9 @@ class Product(KernelOperator):
     .. math::
         k_{prod}(X, Y) = k_1(X, Y) * k_2(X, Y)
 
-    Using the Product-kernel is equivalent to multiplying two kernels::
-
-        RBF() * RBF()
-
-    is the same as::
-
-        Product(RBF(), RBF())
-
+    Note that the `__mul__` magic method is overridden, so
+    `Product(RBF(), RBF())` is equivalent to using the * operator
+    with `RBF() * RBF()`.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
@@ -890,6 +885,10 @@ class Exponentiation(Kernel):
 
     .. math::
         k_{exp}(X, Y) = k(X, Y) ^p
+
+    Note that the `__pow__` magic method is overridden, so
+    `Exponentiation(RBF(), 2)` is equivalent to using the ** operator
+    with `RBF() ** 2`.
 
 
     Read more in the :ref:`User Guide <gp_kernels>`.
