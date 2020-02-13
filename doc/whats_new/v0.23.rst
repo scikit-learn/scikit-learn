@@ -102,6 +102,10 @@ Changelog
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
+- |Enhancement| :class:`decomposition.NMF` and
+  :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
+  :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
