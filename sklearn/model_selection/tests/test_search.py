@@ -1343,7 +1343,7 @@ def test_fit_grid_point_deprecated():
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
     msg = ("fit_grid_point is deprecated in version 0.23 "
-            "and will be removed in version 0.25")
+           "and will be removed in version 0.25")
     params = {'C': 0.1}
     train, test = next(StratifiedKFold().split(X, y))
 
