@@ -20,12 +20,13 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, ::1] HHt,
         Py_ssize_t i, s, t
         int num_threads = _openmp_effective_n_threads()
 
-    for s in range(n_components):
-        t = permutation[s]
+    with nogil:
+        for s in range(n_components):
+            t = permutation[s]
 
-        for i in prange(n_samples, num_threads=num_threads, nogil=True):
-            violation += _update_cdnmf_sample(
-                n_components, &HHt[t, 0], &W[i, 0], XHt[i, t], t)
+            for i in prange(n_samples, num_threads=2):
+                violation += _update_cdnmf_sample(
+                    n_components, &HHt[t, 0], &W[i, 0], XHt[i, t], t)
 
     return violation
 
