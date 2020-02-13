@@ -133,7 +133,7 @@ def test_relocate_empty_clusters(representation):
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-@pytest.mark.parametrize('tol', [0, 1e-2, 1e-4, 1e-8])
+@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
 def test_elkan_results(distribution, tol):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
@@ -154,6 +154,18 @@ def test_elkan_results(distribution, tol):
 
     assert km_elkan.n_iter_ == km_full.n_iter_
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
+
+
+@pytest.mark.parametrize('algorithm', ['full', 'elkan'])
+def test_kmeans_convergence(algorithm):
+    # Check that KMeans stops when convergence is reached when tol=0. (#16075)
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(5000, 10))
+
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0, n_init=1,
+                tol=0, max_iter=300).fit(X)
+
+    assert km.n_iter_ < 300
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
