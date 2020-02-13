@@ -439,7 +439,14 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         try:
-            column_indices = [all_columns.get_loc(col) for col in columns]
+            column_indices = []
+            for col in columns:
+                col_idx = all_columns.get_loc(col)
+                if not isinstance(col_idx, int):
+                    raise ValueError("Selected columns, {}, are not unique "
+                                     "in dataframe".format(columns))
+                column_indices.append(col_idx)
+
         except KeyError as e:
             raise ValueError(
                 "A given column is not a column of the dataframe"
