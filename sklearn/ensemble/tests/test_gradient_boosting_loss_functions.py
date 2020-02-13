@@ -5,7 +5,6 @@ Testing for the gradient boosting loss functions and initial estimators.
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
-from numpy.testing import assert_equal
 import pytest
 
 from sklearn.utils import check_random_state
@@ -27,7 +26,7 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert_equal(bd(np.array([0.0]), np.array([0.0])),
+    assert (bd(np.array([0.0]), np.array([0.0])) ==
                  bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
@@ -93,12 +92,12 @@ def test_sample_weight_init_estimators():
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         out = loss.get_init_raw_predictions(X, init_est)
-        assert_equal(out.shape, (y.shape[0], 1))
+        assert out.shape == (y.shape[0], 1)
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
         sw_out = loss.get_init_raw_predictions(X, sw_init_est)
-        assert_equal(sw_out.shape, (y.shape[0], 1))
+        assert sw_out.shape == (y.shape[0], 1)
 
         # check if predictions match
         assert_allclose(out, sw_out, rtol=1e-2)

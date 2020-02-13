@@ -3,6 +3,7 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
+import sys
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -13,10 +14,11 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 
-from sklearn.utils.testing \
-    import (assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal, assert_raise_message,
+from sklearn.utils._testing \
+    import (assert_array_less,
+            assert_almost_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)
 
 
@@ -45,6 +47,9 @@ non_fixed_kernels = [kernel for kernel in kernels
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_gpr_interpolation(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test the interpolating property for different kernels.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
@@ -53,20 +58,47 @@ def test_gpr_interpolation(kernel):
     assert_almost_equal(np.diag(y_cov), 0.)
 
 
+def test_gpr_interpolation_structured():
+    # Test the interpolating property for different kernels.
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
+    X = ['A', 'B', 'C']
+    y = np.array([1, 2, 3])
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(kernel(X, eval_gradient=True)[1].ravel(),
+                        (1 - np.eye(len(X))).ravel())
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
-                   gpr.log_marginal_likelihood(kernel.theta))
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
+            gpr.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
-                 gpr.log_marginal_likelihood())
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
+            gpr.log_marginal_likelihood())
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that lml of optimized kernel is stored correctly.
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpr.kernel_.theta.shape, dtype=np.float64)
+
+    gpr.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpr.kernel_.theta, input_theta, 7)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -145,11 +177,14 @@ def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert_equal(np.exp(gpr.kernel_.theta), 1.0)
+    assert np.exp(gpr.kernel_.theta) == 1.0
 
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
@@ -168,8 +203,8 @@ def test_anisotropic_kernel():
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(np.exp(gpr.kernel_.theta[1]),
-                   np.exp(gpr.kernel_.theta[0]) * 5)
+    assert (np.exp(gpr.kernel_.theta[1]) >
+            np.exp(gpr.kernel_.theta[0]) * 5)
 
 
 def test_random_starts():
@@ -191,7 +226,7 @@ def test_random_starts():
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
-        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
 
@@ -286,8 +321,8 @@ def test_custom_optimizer(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
-                   gpr.log_marginal_likelihood(gpr.kernel.theta))
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
+            gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 
 def test_gpr_correct_error_message():

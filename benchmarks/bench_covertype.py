@@ -101,7 +101,7 @@ ESTIMATORS = {
     'ExtraTrees': ExtraTreesClassifier(n_estimators=20),
     'RandomForest': RandomForestClassifier(n_estimators=20),
     'CART': DecisionTreeClassifier(min_samples_split=5),
-    'SGD': SGDClassifier(alpha=0.001, max_iter=1000, tol=1e-3),
+    'SGD': SGDClassifier(alpha=0.001),
     'GaussianNB': GaussianNB(),
     'liblinear': LinearSVC(loss="l2", penalty="l2", C=1000, dual=False,
                            tol=1e-3),

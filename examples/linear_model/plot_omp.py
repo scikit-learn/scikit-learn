@@ -60,7 +60,7 @@ plt.title("Recovered signal from noisy measurements")
 plt.stem(idx_r, coef[idx_r], use_line_collection=True)
 
 # plot the noisy reconstruction with number of non-zeros set by CV
-omp_cv = OrthogonalMatchingPursuitCV(cv=5)
+omp_cv = OrthogonalMatchingPursuitCV()
 omp_cv.fit(X, y_noisy)
 coef = omp_cv.coef_
 idx_r, = coef.nonzero()

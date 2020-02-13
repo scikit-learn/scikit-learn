@@ -15,10 +15,10 @@ from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_raises, assert_equal,
+from sklearn.utils._testing import (assert_raises,
                                    assert_raise_message, assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
-from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
 
 
@@ -509,7 +509,7 @@ def test_expected_transformation_shape():
     cb = transformation_storer.callback
     nca = NeighborhoodComponentsAnalysis(max_iter=5, callback=cb)
     nca.fit(X, y)
-    assert_equal(transformation_storer.transformation.size, X.shape[1]**2)
+    assert transformation_storer.transformation.size == X.shape[1]**2
 
 
 def test_convergence_warning():
