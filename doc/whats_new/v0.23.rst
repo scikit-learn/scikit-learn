@@ -159,7 +159,8 @@ Changelog
 .....................
 
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
-  ``max_value`` and ``min_value``. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+  ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
+  for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -202,7 +203,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
