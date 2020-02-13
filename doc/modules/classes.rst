@@ -1607,10 +1607,5 @@ To be removed in 0.24
    :toctree: generated/
    :template: deprecated_function.rst
 
-   utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   model_selection.fit_grid_point
+	model_selection.fit_grid_point
+	utils.safe_indexing
