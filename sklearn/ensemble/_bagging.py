@@ -43,12 +43,12 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     return indices
 
 
-def _generate_bagging_indices(random_state, bootstrap_features,
+def _generate_bagging_indices(seed, bootstrap_features,
                               bootstrap_samples, n_features, n_samples,
                               max_features, max_samples):
     """Randomly draw feature and sample indices."""
     # Get valid random state
-    random_state = check_random_state(random_state)
+    random_state = np.random.RandomState(seed)
 
     # Draw indices
     feature_indices = _generate_indices(random_state, bootstrap_features,
@@ -87,7 +87,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                              random_state=random_state)
 
         # Draw random feature, sample indices
-        features, indices = _generate_bagging_indices(random_state,
+        features, indices = _generate_bagging_indices(seeds[i],
                                                       bootstrap_features,
                                                       bootstrap, n_features,
                                                       n_samples, max_features,
@@ -405,9 +405,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(
-                random_state, self.bootstrap_features, self.bootstrap,
+                seed, self.bootstrap_features, self.bootstrap,
                 self.n_features_, self._n_samples, self._max_features,
                 self._max_samples)
 
