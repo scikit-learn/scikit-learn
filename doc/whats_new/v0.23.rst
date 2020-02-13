@@ -108,7 +108,8 @@ Changelog
 
 - |Efficiency| Improved efficiency of :class:`manifold.NMF` when
   `solver="cd"` by computing the updates of `W` and `H` in parallel.
-  :pr:`16439` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+  :pr:`16439` by :user:`<macg0406>` and
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.ensemble`
 .......................
