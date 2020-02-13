@@ -519,7 +519,8 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
             break
 
         if verbose:
-            print("iter:%d, violation:%f " % (n_iter, violation / violation_init) )
+            print("iter: {}, violation: {}"
+                  .format(n_iter, violation / violation_init))
 
         if violation / violation_init <= tol:
             if verbose:
