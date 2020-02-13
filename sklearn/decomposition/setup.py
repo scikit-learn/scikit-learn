@@ -18,8 +18,6 @@ def configuration(parent_package="", top_path=None):
     config.add_extension('_cdnmf_fast',
                          sources=['_cdnmf_fast.pyx'],
                          include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp', '-O3'],
-                         extra_link_args=['-fopenmp', '-O3'],
                          libraries=libraries)
 
     config.add_subpackage("tests")
