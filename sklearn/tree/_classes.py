@@ -567,6 +567,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         reduction of the criterion brought by that feature.
         It is also known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
@@ -736,10 +740,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         or a list of arrays of class labels (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     max_features_ : int
         The inferred value of max_features.
@@ -1096,6 +1105,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1398,8 +1411,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         output (for multi-output problems).
 
     feature_importances_ : ndarray of shape (n_features,)
-        Return the feature importances (the higher, the more important the
-        feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1597,6 +1617,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_features_ : int
         The number of features when ``fit`` is performed.
+
+    feature_importances_ : ndarray of shape (n_features,)
+        Return impurity-based feature importances (the higher, the more
+        important the feature).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
