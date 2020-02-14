@@ -274,6 +274,9 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+    elif len(y_true) == 0:
+        n_labels = len(labels)
+        return np.zeros((n_labels, n_labels), dtype=np.int)
     else:
         labels = np.asarray(labels)
         if np.all([l not in y_true for l in labels]):
