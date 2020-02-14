@@ -921,7 +921,7 @@ def test_confusion_matrix_multiclass_subset_labels():
 def test_confusion_matrix_on_zero_length_input(labels):
     labels = [] if not labels else labels
     n_classes = len(labels)
-    expected = np.zeros((n_classes, n_classes))
+    expected = np.zeros((n_classes, n_classes), dtype=np.int)
     cm = confusion_matrix([], [], labels)
     assert_array_equal(cm, expected)
 
