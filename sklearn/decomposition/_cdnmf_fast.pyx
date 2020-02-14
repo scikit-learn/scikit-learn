@@ -24,7 +24,7 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, ::1] HHt,
         for s in range(n_components):
             t = permutation[s]
 
-            for i in prange(n_samples, num_threads=2):
+            for i in prange(n_samples, num_threads=num_threads):
                 violation += _update_cdnmf_sample(
                     n_components, &HHt[t, 0], &W[i, 0], XHt[i, t], t)
 
