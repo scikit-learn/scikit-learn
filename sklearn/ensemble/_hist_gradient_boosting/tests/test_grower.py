@@ -257,7 +257,14 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         assert len(grower.finalized_leaves) == 1
 
 
-@pytest.mark.parametrize('max_depth', [2, 3])
+def assert_is_stump(grower):
+    # To assert that stumps are created when max_depth=1
+    for leaf in (grower.root.left_child, grower.root.right_child):
+        assert leaf.left_child is None
+        assert leaf.right_child is None
+
+
+@pytest.mark.parametrize('max_depth', [1, 2, 3])
 def test_max_depth(max_depth):
     # Make sure max_depth parameter works as expected
     rng = np.random.RandomState(seed=0)
@@ -278,6 +285,9 @@ def test_max_depth(max_depth):
 
     depth = max(leaf.depth for leaf in grower.finalized_leaves)
     assert depth == max_depth
+
+    if max_depth == 1:
+        assert_is_stump(grower)
 
 
 def test_input_validation():

@@ -61,8 +61,7 @@ class ConfusionMatrixDisplay:
 
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
-            the format specification is '.2f' for a normalized matrix, and
-            'd' for a unnormalized matrix.
+            the format specification is '.2g'.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -165,8 +164,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
-        the format specification is '.2f' for a normalized matrix, and
-        'd' for a unnormalized matrix.
+        the format specification is '.2g'.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
@@ -178,6 +176,22 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.metrics import plot_confusion_matrix
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.svm import SVC
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...         X, y, random_state=0)
+    >>> clf = SVC(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
+    >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
     """
     check_matplotlib_support("plot_confusion_matrix")
 
@@ -197,4 +211,5 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=display_labels)
     return disp.plot(include_values=include_values,
-                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation)
+                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
+                     values_format=values_format)

@@ -40,7 +40,7 @@ jobs:
         -e OMP_NUM_THREADS=$OMP_NUM_THREADS
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        i386/ubuntu:16.04
+        i386/ubuntu:18.04
         sleep 1000000
       displayName: 'Start container'
     - script: >
