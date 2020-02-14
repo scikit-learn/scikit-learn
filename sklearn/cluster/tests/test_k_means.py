@@ -1031,7 +1031,8 @@ def test_minibatch_kmeans_partial_fit_int_data():
 
 
 def test_result_of_kmeans_equal_in_diff_n_threads():
-    # PR 9288
+    # Check that KMeans gives the same results in parallel mode than in
+    # sequential mode.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(50, 10))
 
