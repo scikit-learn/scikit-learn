@@ -59,8 +59,7 @@ def test_fetch_rcv1():
     s2 = data2.sample_id
 
     # test return_X_y option
-    fetch_func = partial(_fetch_data, shuffle=False, subset='train',
-                         download_if_missing=False)
+    fetch_func = partial(_fetch_data, shuffle=False, subset='train')
     check_return_X_y(data2, fetch_func)
 
     # The first 23149 samples are the training samples
