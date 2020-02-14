@@ -2,7 +2,7 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 
-import os
+from os import environ
 import pytest
 
 from sklearn.datasets import fetch_california_housing
@@ -11,16 +11,14 @@ from functools import partial
 
 
 def fetch(*args, **kwargs):
-    return fetch_california_housing(*args, download_if_missing=False, **kwargs)
+    return fetch_california_housing(*args, **kwargs)
 
 
 def _is_california_housing_dataset_not_available():
     # Do not download data, unless explicitly requested via environment var
-    download_if_missing = False
-    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
-        download_if_missing = True
+    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
     try:
-        fetch_california_housing(download_if_missing=download_if_missing)
+        fetch(download_if_missing=download_if_missing)
         return False
     except IOError:
         return True

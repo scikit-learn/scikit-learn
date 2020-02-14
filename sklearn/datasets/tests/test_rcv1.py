@@ -2,8 +2,8 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 
-import errno
-import os
+from os import environ
+import pytest
 import scipy.sparse as sp
 import numpy as np
 from functools import partial
@@ -11,21 +11,22 @@ from sklearn.datasets import fetch_rcv1
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import SkipTest
 
 
-def test_fetch_rcv1():
+def _fetch_data(*args, **kwargs):
     # Do not download data, unless explicitly requested via environment var
-    download_if_missing = False
-    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
-        download_if_missing = True
+    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
     try:
-        data1 = fetch_rcv1(shuffle=False,
-                           download_if_missing=download_if_missing)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            raise SkipTest("Download RCV1 dataset to run this test.")
+        return fetch_rcv1(*args, download_if_missing=download_if_missing,
+                          **kwargs)
+    except IOError:
+        return None
 
+
+@pytest.mark.skipif(_fetch_data() is None,
+                    reason="Download RCV1 to run this test")
+def test_fetch_rcv1():
+    data1 = _fetch_data(shuffle=False)
     X1, Y1 = data1.data, data1.target
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
@@ -53,13 +54,12 @@ def test_fetch_rcv1():
         assert num == Y1[:, j].data.size
 
     # test shuffling and subset
-    data2 = fetch_rcv1(shuffle=True, subset='train', random_state=77,
-                       download_if_missing=False)
+    data2 = _fetch_data(shuffle=True, subset='train', random_state=77)
     X2, Y2 = data2.data, data2.target
     s2 = data2.sample_id
 
     # test return_X_y option
-    fetch_func = partial(fetch_rcv1, shuffle=False, subset='train',
+    fetch_func = partial(_fetch_data, shuffle=False, subset='train',
                          download_if_missing=False)
     check_return_X_y(data2, fetch_func)
 

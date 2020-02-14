@@ -2,32 +2,40 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
-import os
+from os import environ
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import SkipTest, assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn import datasets
 from sklearn.preprocessing import normalize
 
 
-def test_20news():
+def _fetch_20newsgroups(vectorized=False, *args, **kwargs):
     # Do not download data, unless explicitly requested via environment var
-    download_if_missing = False
-    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 1)) == 0:
-        download_if_missing = True
+    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
     try:
-        data = datasets.fetch_20newsgroups(
-            subset='all', download_if_missing=download_if_missing,
-            shuffle=False)
+        if vectorized:
+            return datasets.fetch_20newsgroups_vectorized(
+                *args, download_if_missing=download_if_missing, **kwargs)
+        else:
+            return datasets.fetch_20newsgroups(
+                *args, download_if_missing=download_if_missing, **kwargs)
     except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
+        return None
+
+
+@pytest.mark.skipif(_fetch_20newsgroups() is None,
+                    reason="Download 20 newsgroups to run this test")
+def test_20news():
+    data = _fetch_20newsgroups(subset='all', shuffle=False)
 
     # Extract a reduced dataset
-    data2cats = datasets.fetch_20newsgroups(
+    data2cats = _fetch_20newsgroups(
         subset='all', categories=data.target_names[-1:-3:-1], shuffle=False)
     # Check that the ordering of the target_names is the same
     # as the ordering in the full dataset
@@ -48,72 +56,61 @@ def test_20news():
     assert entry1 == entry2
 
     # check that return_X_y option
-    X, y = datasets.fetch_20newsgroups(
+    X, y = _fetch_20newsgroups(
         subset='all', shuffle=False, return_X_y=True
     )
     assert len(X) == len(data.data)
     assert y.shape == data.target.shape
 
 
+@pytest.mark.skipif(_fetch_20newsgroups() is None,
+                    reason="Download 20 newsgroups to run this test")
 def test_20news_length_consistency():
     """Checks the length consistencies within the bunch
 
     This is a non-regression test for a bug present in 0.16.1.
     """
-    try:
-        data = datasets.fetch_20newsgroups(
-            subset='all', download_if_missing=False, shuffle=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
     # Extract the full dataset
-    data = datasets.fetch_20newsgroups(subset='all')
+    data = _fetch_20newsgroups(subset='all')
     assert len(data['data']) == len(data.data)
     assert len(data['target']) == len(data.target)
     assert len(data['filenames']) == len(data.filenames)
 
 
+@pytest.mark.skipif(_fetch_20newsgroups(vectorized=True) is None,
+                    reason="Download 20 news vectorized to run this test")
 def test_20news_vectorized():
-    try:
-        datasets.fetch_20newsgroups(subset='all',
-                                    download_if_missing=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
-
     # test subset = train
-    bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
+    bunch = _fetch_20newsgroups(vectorized=True, subset="train")
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (11314, 130107)
     assert bunch.target.shape[0] == 11314
     assert bunch.data.dtype == np.float64
 
     # test subset = test
-    bunch = datasets.fetch_20newsgroups_vectorized(subset="test")
+    bunch = _fetch_20newsgroups(vectorized=True, subset="test")
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (7532, 130107)
     assert bunch.target.shape[0] == 7532
     assert bunch.data.dtype == np.float64
 
     # test return_X_y option
-    fetch_func = partial(datasets.fetch_20newsgroups_vectorized, subset='test')
+    fetch_func = partial(_fetch_20newsgroups, vectorized=True, subset='test')
     check_return_X_y(bunch, fetch_func)
 
     # test subset = all
-    bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
+    bunch = _fetch_20newsgroups(vectorized=True, subset='all')
     assert sp.isspmatrix_csr(bunch.data)
     assert bunch.data.shape == (11314 + 7532, 130107)
     assert bunch.target.shape[0] == 11314 + 7532
     assert bunch.data.dtype == np.float64
 
 
+@pytest.mark.skipif(_fetch_20newsgroups(vectorized=True) is None,
+                    reason="Download 20 news vectorized to run this test")
 def test_20news_normalization():
-    try:
-        X = datasets.fetch_20newsgroups_vectorized(normalize=False,
-                                                   download_if_missing=False)
-        X_ = datasets.fetch_20newsgroups_vectorized(normalize=True,
-                                                    download_if_missing=False)
-    except IOError:
-        raise SkipTest("Download 20 newsgroups to run this test")
-
+    X = _fetch_20newsgroups(vectorized=True, normalize=False)
+    X_ = _fetch_20newsgroups(vectorized=True, normalize=True)
     X_norm = X_['data'][:100]
     X = X['data'][:100]
 
