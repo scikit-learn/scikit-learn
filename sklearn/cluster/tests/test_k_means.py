@@ -332,14 +332,6 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-@if_safe_multiprocessing_with_blas
-def test_k_means_plus_plus_init_2_threads():
-    with threadpool_limits(limits=2, user_api="openmp"):
-        km = KMeans(
-            init="k-means++", n_clusters=n_clusters, random_state=42).fit(X)
-    _check_fitted_model(km)
-
-
 @pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
 def test_k_means_init(data, init):
