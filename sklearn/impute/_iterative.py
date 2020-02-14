@@ -552,8 +552,8 @@ class IterativeImputer(_BaseImputer):
         )
         if not limit.shape[0] == n_features:
             raise ValueError(
-                f"'{limit_type}_value' should be of"
-                f"shape ({n_features},) when an array-like"
+                f"'{limit_type}_value' should be of "
+                f"shape ({n_features},) when an array-like "
                 f"is provided. Got {limit.shape}, instead."
             )
         return limit
@@ -612,8 +612,10 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = _validate_limit(self.min_value, "min", X.shape[1])
-        self._max_value = _validate_limit(self.max_value, "max", X.shape[1])
+        self._min_value = IterativeImputer._validate_limit(
+            self.min_value, "min", X.shape[1])
+        self._max_value = IterativeImputer._validate_limit(
+            self.max_value, "max", X.shape[1])
 
         if not np.all(np.greater(self._max_value, self._min_value)):
             raise ValueError(

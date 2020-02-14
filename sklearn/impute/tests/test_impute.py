@@ -971,25 +971,15 @@ def test_iterative_imputer_catch_warning():
     assert not np.any(np.isnan(X_fill))
 
 
-@pytest.mark.parametrize("min_value, max_value, correct_output",
-                         [(0,  # scalars cast to the correct arrays?
-                           100,
-                           np.array([[0] * 3, [100] * 3])),
-                          ([0, 0, 0],  # vectors cast to the same
-                           [100, 100, 100],  # correct arrays?
-                           np.array([[0] * 3, [100] * 3])),
-                          (None,  # None cast to vector of inf?
-                           None,
-                           np.array([[-np.inf] * 3, [np.inf] * 3])),
-                          (-np.inf,  # inf cast to vector of inf?
-                           np.inf,
-                           np.array([[-np.inf] * 3, [np.inf] * 3])),
-                          ([-5, 5, 10],  # vectors processed properly?
-                           [100, 200, 300],
-                           np.array([[-5, 5, 10], [100, 200, 300]])),
-                          ([-5, None, 10],  # vectors of numbers+None
-                           [100, 200, None],  # cast correctly?
-                           np.array([[-5, -np.inf, 10], [100, 200, np.inf]]))])
+@pytest.mark.parametrize(
+    "min_value, max_value, correct_output",
+    [(0, 100, np.array([[0] * 3, [100] * 3])),
+     (None, None, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     (-np.inf, np.inf, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     ([-5, 5, 10], [100, 200, 300], np.array([[-5, 5, 10], [100, 200, 300]])),
+     ([-5, -np.inf, 10], [100, 200, np.inf],
+      np.array([[-5, -np.inf, 10], [100, 200, np.inf]]))],
+    ids=["scalars", "None-default", "inf", "lists", "lists-with-inf"])
 def test_iterative_imputer_min_max_array_like(min_value,
                                               max_value,
                                               correct_output):
@@ -1004,22 +994,19 @@ def test_iterative_imputer_min_max_array_like(min_value,
     assert ((imputer._min_value.shape[0] == X.shape[1]) and
             (imputer._max_value.shape[0] == X.shape[1]))
 
-    assert_array_equal(correct_output[0, :], imputer._min_value)
-    assert_array_equal(correct_output[1, :], imputer._max_value)
+    assert_allclose(correct_output[0, :], imputer._min_value)
+    assert_allclose(correct_output[1, :], imputer._max_value)
 
 
-@pytest.mark.parametrize("min_value, max_value",
-                         [(100, 0), (np.inf, -np.inf),
-                          ([-5, 5], [100, 200, 0])])
-def test_iterative_imputer_catch_min_max_error(min_value, max_value):
-    # check that passing scalar or array-like
-    # for min_value and max_value in IterativeImputer works
-    # Test checks 1.) if an exception is raised if min_value >= max_value
-    # and 2.) an exception is raised if shape of min_value or max_value is
-    # not equal to the number of features
+@pytest.mark.parametrize(
+    "min_value, max_value, err_msg",
+    [(100, 0, "min_value >= max_value."),
+     (np.inf, -np.inf, "min_value >= max_value."),
+     ([-5, 5], [100, 200, 0], "_value' should be of shape")])
+def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
     X = np.random.random((10, 3))
     imputer = IterativeImputer(min_value=min_value, max_value=max_value)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=err_msg):
         imputer.fit(X)
 
 
