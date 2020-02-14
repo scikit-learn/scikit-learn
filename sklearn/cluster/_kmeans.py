@@ -213,8 +213,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose n_clusters observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -283,12 +283,12 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient, on well structured data, by
+        The "elkan" variation is more efficient on well structured data, by
         using the triangle inequality. However it's more memory intensive due
         to the allocation of an extra array of shape (n_samples, n_clusters).
 
-        For now "auto" chooses "elkan" but it might change in the future for a
-        better heuristic.
+        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        might change in the future for a better heuristic.
 
     return_n_iter : bool, optional
         Whether or not to return the number of iterations.
@@ -349,8 +349,8 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose n_clusters observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -495,8 +495,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose n_clusters observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -752,8 +752,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose n_clusters observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
@@ -823,12 +823,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient, on well structured data, by
+        The "elkan" variation is more efficient on well structured data, by
         using the triangle inequality. However it's more memory intensive due
         to the allocation of an extra array of shape (n_samples, n_clusters).
 
-        For now "auto" chooses "elkan" but it might change in the future for a
-        better heuristic.
+        For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
+        might change in the future for a better heuristic.
 
     Attributes
     ----------
@@ -931,6 +931,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory
             copy if the given data is not C-contiguous.
+            If a sparse matrix is passed, a copy will be made if it's not in
+            CSR format.
 
         y : Ignored
             Not used, present here for API consistency by convention.

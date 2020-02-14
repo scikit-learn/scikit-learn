@@ -25,12 +25,12 @@ from ._k_means_fast cimport _center_shift
 np.import_array()
 
 
-cpdef _init_bounds_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                         floating[:, ::1] centers,
-                         floating[:, ::1] center_half_distances,
-                         int[::1] labels,
-                         floating[::1] upper_bounds,
-                         floating[:, ::1] lower_bounds):
+def _init_bounds_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                       floating[:, ::1] centers,
+                       floating[:, ::1] center_half_distances,
+                       int[::1] labels,
+                       floating[::1] upper_bounds,
+                       floating[:, ::1] lower_bounds):
     """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -94,12 +94,12 @@ shape (n_clusters, n_clusters)
         upper_bounds[i] = min_dist
 
 
-cpdef _init_bounds_sparse(X,
-                          floating[:, ::1] centers,
-                          floating[:, ::1] center_half_distances,
-                          int[::1] labels,
-                          floating[::1] upper_bounds,
-                          floating[:, ::1] lower_bounds):
+def _init_bounds_sparse(X,
+                        floating[:, ::1] centers,
+                        floating[:, ::1] center_half_distances,
+                        int[::1] labels,
+                        floating[::1] upper_bounds,
+                        floating[:, ::1] lower_bounds):
     """Initialize upper and lower bounds for each sample for sparse input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -174,19 +174,19 @@ shape (n_clusters, n_clusters)
         upper_bounds[i] = min_dist
 
 
-cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                                     floating[::1] sample_weight,
-                                     floating[:, ::1] centers_old,
-                                     floating[:, ::1] centers_new,
-                                     floating[::1] weight_in_clusters,
-                                     floating[:, ::1] center_half_distances,
-                                     floating[::1] distance_next_center,
-                                     floating[::1] upper_bounds,
-                                     floating[:, ::1] lower_bounds,
-                                     int[::1] labels,
-                                     floating[::1] center_shift,
-                                     int n_threads,
-                                     bint update_centers=True):
+def void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                                   floating[::1] sample_weight,
+                                   floating[:, ::1] centers_old,
+                                   floating[:, ::1] centers_new,
+                                   floating[::1] weight_in_clusters,
+                                   floating[:, ::1] center_half_distances,
+                                   floating[::1] distance_next_center,
+                                   floating[::1] upper_bounds,
+                                   floating[:, ::1] lower_bounds,
+                                   int[::1] labels,
+                                   floating[::1] center_shift,
+                                   int n_threads,
+                                   bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -394,19 +394,19 @@ cdef void _update_chunk_dense(floating *X,
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-cpdef void _elkan_iter_chunked_sparse(X,
-                                      floating[::1] sample_weight,
-                                      floating[:, ::1] centers_old,
-                                      floating[:, ::1] centers_new,
-                                      floating[::1] weight_in_clusters,
-                                      floating[:, ::1] center_half_distances,
-                                      floating[::1] distance_next_center,
-                                      floating[::1] upper_bounds,
-                                      floating[:, ::1] lower_bounds,
-                                      int[::1] labels,
-                                      floating[::1] center_shift,
-                                      int n_threads,
-                                      bint update_centers=True):
+def void _elkan_iter_chunked_sparse(X,
+                                    floating[::1] sample_weight,
+                                    floating[:, ::1] centers_old,
+                                    floating[:, ::1] centers_new,
+                                    floating[::1] weight_in_clusters,
+                                    floating[:, ::1] center_half_distances,
+                                    floating[::1] distance_next_center,
+                                    floating[::1] upper_bounds,
+                                    floating[:, ::1] lower_bounds,
+                                    int[::1] labels,
+                                    floating[::1] center_shift,
+                                    int n_threads,
+                                    bint update_centers=True):
     """Single iteration of K-means Elkan algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
