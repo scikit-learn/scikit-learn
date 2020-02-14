@@ -559,5 +559,5 @@ def test_csr_row_norms(dtype):
     scipy_norms = sp.linalg.norm(X, axis=1)**2
     norms = csr_row_norms(X)
 
-    assert norms.dtype.type is dtype
-    assert_array_almost_equal(norms, scipy_norms)
+    assert norms.dtype == dtype
+    assert_allclose(norms, scipy_norms)
