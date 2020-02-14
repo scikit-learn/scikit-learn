@@ -28,7 +28,6 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, ::1] HHt,
             for i in prange(n_samples, num_threads=num_threads):
                 # np.dot(W[i, :], HHt[t, :]) - XHt[i, t]
                 grad = _dot(n_components, &HHt[t, 0], 1, &W[i, 0], 1) - XHt[i, t]
-                # grad = grad - XHt[i, t]  # "-=" is interpreted as reduction
 
                 pg = min(grad, 0) if W[i, t] == 0 else grad
                 violation += fabs(pg)
