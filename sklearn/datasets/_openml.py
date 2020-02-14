@@ -452,8 +452,7 @@ def _get_num_samples(data_qualities):
 
 def _load_arff_response(url, data_home, return_type, encode_nominal,
                         parse_arff):
-    """Load arff data with url and parses arff file with parse_arfsf
-    """
+    """Load arff data with url and parses arff response with parse_arff"""
     response = _open_openml_url(url, data_home)
 
     with closing(response):
