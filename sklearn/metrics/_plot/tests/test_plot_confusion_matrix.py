@@ -225,7 +225,14 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 0].get_color(), max_color)
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
+    # Non-regression test for #16442
+    cm = np.array([[0, 0], [0, 0]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
 
+    disp.plot(cmap=pyplot.cm.Blues)
+    min_color = pyplot.cm.Blues(0)
+    for text in disp.text_.ravel():
+        assert_allclose(text.get_color(), min_color)
 
 
 @pytest.mark.parametrize(
