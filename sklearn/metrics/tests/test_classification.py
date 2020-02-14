@@ -914,6 +914,18 @@ def test_confusion_matrix_multiclass_subset_labels():
                          labels=[extra_label, extra_label + 1])
 
 
+@pytest.mark.parametrize(
+    'labels', (None, [0, 1], [0, 1, 2]),
+    ids=['labels None', 'binary classification', 'three way classification']
+)
+def test_confusion_matrix_on_zero_length_input(labels):
+    labels = [] if not labels else labels
+    n_classes = len(labels)
+    expected = np.zeros((n_classes, n_classes))
+    cm = confusion_matrix([], [], labels)
+    assert_array_equal(cm, expected)
+
+
 def test_confusion_matrix_dtype():
     y = [0, 1, 1]
     weight = np.ones(len(y))
