@@ -879,6 +879,7 @@ def test_bagging_small_max_features():
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
 
+
 def test_bagging_get_estimators_indices():
     # Check that Bagging estimator can generate sample indices properly
 
@@ -889,7 +890,9 @@ def test_bagging_get_estimators_indices():
         def fit(self, X, y):
             self.sample_indices = y
 
-    clf = BaggingRegressor(base_estimator=MyEstimator(), n_estimators=1, random_state=0)
+    clf = BaggingRegressor(base_estimator=MyEstimator(),
+                           n_estimators=1, random_state=0)
     clf.fit(X, y)
 
-    assert_array_equal(clf.estimators_[0].sample_indices, clf.estimators_samples_[0])
+    assert_array_equal(clf.estimators_[0].sample_indices,
+                       clf.estimators_samples_[0])
