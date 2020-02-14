@@ -2,6 +2,7 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 
+import builtins
 from os import environ
 import pytest
 
@@ -52,18 +53,28 @@ def test_fetch_asframe():
     assert isinstance(bunch.target, pd.DataFrame)
 
 
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """ Pretend pandas was not installed. """
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == 'pandas':
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', mocked_import)
+
+
 @pytest.mark.skipif(
     _is_california_housing_dataset_not_available(),
     reason='Download California Housing dataset to run this test'
 )
+@pytest.mark.usefixtures('hide_available_pandas')
 def test_pandas_dependency_message():
-    try:
-        import pandas  # noqa
-        pytest.skip("This test requires pandas to be not installed")
-    except ImportError:
-        # Check that pandas is imported lazily and that an informative error
-        # message is raised when pandas is missing:
-        expected_msg = ('fetch_california_housing with as_frame=True'
-                        ' requires pandas')
-        with pytest.raises(ImportError, match=expected_msg):
-            fetch_california_housing(as_frame=True)
+    # Check that pandas is imported lazily and that an informative error
+    # message is raised when pandas is missing:
+    expected_msg = ('fetch_california_housing with as_frame=True'
+                    ' requires pandas')
+    with pytest.raises(ImportError, match=expected_msg):
+        fetch_california_housing(as_frame=True)
