@@ -21,16 +21,16 @@ from ._k_means_fast cimport _average_centers, _center_shift
 np.import_array()
 
 
-def void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                                   floating[::1] sample_weight,
-                                   floating[::1] x_squared_norms,
-                                   floating[:, ::1] centers_old,
-                                   floating[:, ::1] centers_new,
-                                   floating[::1] weight_in_clusters,
-                                   int[::1] labels,
-                                   floating[::1] center_shift,
-                                   int n_threads,
-                                   bint update_centers=True):
+def _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                              floating[::1] sample_weight,
+                              floating[::1] x_squared_norms,
+                              floating[:, ::1] centers_old,
+                              floating[:, ::1] centers_new,
+                              floating[::1] weight_in_clusters,
+                              int[::1] labels,
+                              floating[::1] center_shift,
+                              int n_threads,
+                              bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -112,7 +112,7 @@ def void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
         pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
 
-        for chunk_idx in prange(n_chunks):
+        for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * n_samples_chunk
             if chunk_idx == n_chunks - 1 and n_samples_rem > 0:
                 end = start + n_samples_rem
@@ -208,16 +208,16 @@ cdef void _update_chunk_dense(floating *X,
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def void _lloyd_iter_chunked_sparse(X,
-                                    floating[::1] sample_weight,
-                                    floating[::1] x_squared_norms,
-                                    floating[:, ::1] centers_old,
-                                    floating[:, ::1] centers_new,
-                                    floating[::1] weight_in_clusters,
-                                    int[::1] labels,
-                                    floating[::1] center_shift,
-                                    int n_threads,
-                                    bint update_centers=True):
+def _lloyd_iter_chunked_sparse(X,
+                               floating[::1] sample_weight,
+                               floating[::1] x_squared_norms,
+                               floating[:, ::1] centers_old,
+                               floating[:, ::1] centers_new,
+                               floating[::1] weight_in_clusters,
+                               int[::1] labels,
+                               floating[::1] center_shift,
+                               int n_threads,
+                               bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -302,7 +302,7 @@ def void _lloyd_iter_chunked_sparse(X,
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
 
-        for chunk_idx in prange(n_chunks):
+        for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * n_samples_chunk
             if chunk_idx == n_chunks - 1 and n_samples_rem > 0:
                 end = start + n_samples_rem

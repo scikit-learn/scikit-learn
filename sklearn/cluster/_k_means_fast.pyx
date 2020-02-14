@@ -56,7 +56,7 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
                                       bint squared) nogil:
     """Euclidean distance between a sparse and b dense"""
     cdef:
-        int nnz = len(a_indices)
+        int nnz = a_indices.shape[0]
         int i
         floating tmp = 0.0
         floating result = 0.0
