@@ -1097,7 +1097,8 @@ def test_error_wrong_algorithm():
                          ids=['dense', 'sparse'])
 @pytest.mark.parametrize("algo", ['full', 'elkan'])
 def test_k_means_1_iteration(array_constr, algo):
-    # check k_means results for a single iteration (EME) vs pure python implem.
+    # check the results after a single iteration (E-step M-step E-step) by
+    # comparing against a pure python implementation.
     X = np.random.RandomState(0).uniform(size=(100, 5))
     init_centers = X[:5]
     X = array_constr(X)
