@@ -48,7 +48,7 @@ def _generate_bagging_indices(seed, bootstrap_features,
                               max_features, max_samples):
     """Randomly draw feature and sample indices."""
     # Get valid random state
-    random_state = np.random.RandomState(seed)
+    random_state = check_random_state(seed)
 
     # Draw indices
     feature_indices = _generate_indices(random_state, bootstrap_features,
@@ -82,12 +82,12 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run "
                   "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
-        random_state = np.random.RandomState(seeds[i])
+        random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False,
                                              random_state=random_state)
 
         # Draw random feature, sample indices
-        features, indices = _generate_bagging_indices(seeds[i],
+        features, indices = _generate_bagging_indices(random_state,
                                                       bootstrap_features,
                                                       bootstrap, n_features,
                                                       n_samples, max_features,
