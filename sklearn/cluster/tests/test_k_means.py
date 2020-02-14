@@ -13,7 +13,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
