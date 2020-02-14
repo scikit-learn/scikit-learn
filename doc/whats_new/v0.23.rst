@@ -215,8 +215,9 @@ Changelog
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
 
-- |Fix| deprecate :func: `fit_grid_point`on 0.23, to be removed on 0.25.
-  :pr: `16401` by :user: `Arie Pratama Sutiono <ariepratama>`
+- |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
+  be removed in 0.25. :pr: `16401` by
+  :user:`Arie Pratama Sutiono <ariepratama>`
 
 :mod:`sklearn.naive_bayes`
 .............................
