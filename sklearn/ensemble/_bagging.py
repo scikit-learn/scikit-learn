@@ -43,12 +43,12 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     return indices
 
 
-def _generate_bagging_indices(seed, bootstrap_features,
+def _generate_bagging_indices(random_state, bootstrap_features,
                               bootstrap_samples, n_features, n_samples,
                               max_features, max_samples):
     """Randomly draw feature and sample indices."""
     # Get valid random state
-    random_state = check_random_state(seed)
+    random_state = check_random_state(random_state)
 
     # Draw indices
     feature_indices = _generate_indices(random_state, bootstrap_features,
