@@ -15,6 +15,7 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, ::1] HHt,
                        floating[:, ::1] XHt, Py_ssize_t[::1] permutation):
     cdef:
         floating violation = 0
+        floating pg, grad, hess
         Py_ssize_t n_components = W.shape[1]
         Py_ssize_t n_samples = W.shape[0]  # n_features for H update
         Py_ssize_t i, s, t
@@ -25,28 +26,15 @@ def _update_cdnmf_fast(floating[:, ::1] W, floating[:, ::1] HHt,
             t = permutation[s]
 
             for i in prange(n_samples, num_threads=num_threads):
-                violation += _update_cdnmf_sample(
-                    n_components, &HHt[t, 0], &W[i, 0], XHt[i, t], t)
+                # np.dot(W[i, :], HHt[t, :]) - XHt[i, t]
+                grad = _dot(n_components, &HHt[t, 0], 1, &W[i, 0], 1) - XHt[i, t]
+                # grad = grad - XHt[i, t]  # "-=" is interpreted as reduction
 
-    return violation
+                pg = min(grad, 0) if W[i, t] == 0 else grad
+                violation += fabs(pg)
 
-
-cdef floating _update_cdnmf_sample(Py_ssize_t n_components,
-                                   floating* HHt,
-                                   floating* W,
-                                   floating xht,
-                                   Py_ssize_t t) nogil:
-    cdef:
-        floating hess = HHt[t]
-        floating grad, pg, violation
-
-    # np.dot(W[i, :], HHt[t, :]) - XHt[i, t]
-    grad = _dot(n_components, HHt, 1, W, 1) - xht
-
-    pg = min(grad, 0) if W[t] == 0 else grad
-    violation = fabs(pg)
-
-    if hess != 0:
-        W[t] = max(W[t] - grad / hess, 0)
+                hess = HHt[t, t]
+                if hess != 0:
+                    W[i, t] = max(W[i, t] - grad / hess, 0)
 
     return violation
