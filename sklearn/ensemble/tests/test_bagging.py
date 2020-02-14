@@ -878,3 +878,18 @@ def test_bagging_small_max_features():
     bagging = BaggingClassifier(LogisticRegression(),
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
+
+def test_bagging_get_estimators_indices():
+    # Check that Bagging estimator can generate sample indices properly
+
+    X = np.zeros((13, 1))
+    y = np.arange(13)
+
+    class MyEstimator(DecisionTreeRegressor):
+        def fit(self, X, y):
+            self.sample_indices = y
+
+    clf = BaggingRegressor(base_estimator=MyEstimator(), n_estimators=1, random_state=0)
+    clf.fit(X, y)
+
+    assert_array_equal(clf.estimators_[0].sample_indices, clf.estimators_samples_[0])
