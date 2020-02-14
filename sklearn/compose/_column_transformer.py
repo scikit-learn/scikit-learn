@@ -605,7 +605,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        Xs : List of {array-like, sparse matrix, dataframe}
+        Xs : list of {array-like, sparse matrix, dataframe}
         """
         if self.sparse_output_:
             try:
