@@ -171,7 +171,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                                     random_state=self.random_state)
         else:
             model = KMeans(n_clusters, init=self.init,
-                           n_init=self.n_init, random_state=self.random_state)
+                           n_init=self.n_init, n_jobs=self.n_jobs,
+                           random_state=self.random_state)
         model.fit(data)
         centroid = model.cluster_centers_
         labels = model.labels_
