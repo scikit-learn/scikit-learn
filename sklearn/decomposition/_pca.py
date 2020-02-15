@@ -28,7 +28,7 @@ from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features,
-                       spectrum_cutoff=None):
+                       spectrum_threshold=None):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
@@ -62,8 +62,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
-    if spectrum_cutoff is None:
-        spectrum_cutoff = np.finfo(type(spectrum[0])).eps
+    if spectrum_threshold is None:
+        spectrum_threshold = np.finfo(type(spectrum[0])).eps
 
     pu = -rank * log(2.)
     for i in range(rank):
@@ -78,7 +78,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
-        if spectrum_cutoff > v:
+        if spectrum_threshold > v:
             return -np.inf
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
@@ -89,7 +89,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
-        if spectrum_[i] < spectrum_cutoff:
+        if spectrum_[i] < spectrum_threshold:
             break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
