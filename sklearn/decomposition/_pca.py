@@ -37,7 +37,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
     Parameters
     ----------
     spectrum : array of shape (n)
-        Data spectrum (of type float).
+        Data spectrum.
     rank : int
         Tested rank value.
     n_samples : int
