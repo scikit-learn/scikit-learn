@@ -16,7 +16,8 @@ def _fit_mask(X, value_to_mask):
             # np.isnan does not work on object dtypes.
             Xt = _object_dtype_isnan(X)
     else:
-        Xt == value_to_mask
+        Xt = X == value_to_mask
+
     return Xt
 
 
@@ -38,12 +39,15 @@ def _get_mask(X, value_to_mask, reconstruct_sparse=False):
                          mask matrix is created.
                          If False, a dense mask matrix is returned of the same
                          shape as X.
-                         
+
     """
     if not (sparse.issparse(X) and reconstruct_sparse):
-        Xt = _fit_mask(X.data, value_to_mask)
-    else:
         return _fit_mask(X, value_to_mask)
+
+    if not sparse.issparse(X):
+        raise ValueError("Cannot reconstruct sparse mask as passed"
+                         " input is not sparse.")
+    Xt = _fit_mask(X.data, value_to_mask)
 
     # following code will execute only when we need to reconstruct sparse
     sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
