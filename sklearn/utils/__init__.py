@@ -64,18 +64,19 @@ class Bunch(dict):
     They extend dictionaries by enabling values to be accessed by key,
     `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-
-    >>> b = Bunch(a=1, b=2)
-    >>> b['b']
-    2
-    >>> b.b
-    2
-    >>> b.a = 3
-    >>> b['a']
-    3
-    >>> b.c = 6
-    >>> b['c']
-    6
+    Examples
+    --------
+        >>> b = Bunch(a=1, b=2)
+        >>> b['b']
+        2
+        >>> b.b
+        2
+        >>> b.a = 3
+        >>> b['a']
+        3
+        >>> b.c = 6
+        >>> b['c']
+        6
 
     """
 
