@@ -34,7 +34,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
-    'preserves_32bit_dtype': True
+    'preserves_dtype': [np.float64, np.float32]
 }
 
 

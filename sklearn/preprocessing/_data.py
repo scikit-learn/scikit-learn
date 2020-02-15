@@ -850,7 +850,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'allow_nan': True,
-                'preserves_32bit_dtype': True}
+                'preserves_dtype': [np.float64, np.float32]}
 
 
 class MaxAbsScaler(TransformerMixin, BaseEstimator):

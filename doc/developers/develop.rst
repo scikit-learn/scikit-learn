@@ -521,8 +521,9 @@ poor_score (default=``False``)
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-preserves_32bit_dtype (default=``False``)
-    whether an estimator preserves `np.float32` if given as input.
+preserves_dtype (default=``[np.float64]``)
+    whether an estimator preserves the specified dtypes if given as input. Possible
+    options are a combination of `np.flaot16`, `np.float32` and `np.float64`.
 
 multioutput_only (default=``False``)
     whether estimator supports only multi-output classification or regression.

@@ -33,7 +33,8 @@ from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
+                    MetaEstimatorMixin)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -45,12 +46,13 @@ from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances,
+                                pairwise_kernels)
 
 from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
-from ..preprocessing import StandardScaler
+from ..preprocessing import (StandardScaler, KernelCenterer)
 from ..datasets import (load_iris, load_boston, make_blobs,
                         make_multilabel_classification, make_regression,
                         make_classification)
@@ -202,7 +204,7 @@ def _yield_transformer_checks(name, transformer):
     yield check_transformer_general
     # it's not possible to preserve dtypes in transform with clustering
     if (not isinstance(transformer, ClusterMixin) and
-            _safe_tags(transformer, "preserves_32bit_dtype")):
+            _safe_tags(transformer, "preserves_dtype")):
         yield check_estimators_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not _safe_tags(transformer, "stateless"):
@@ -1349,23 +1351,29 @@ def check_estimators_dtypes(name, estimator_orig):
 def check_estimators_preserve_dtypes(name, estimator_orig):
 
     #X = np.random.RandomState(0).randn(50, 5).astype(np.float32)
-    if is_classifier(estimator_orig):
+    if isinstance(estimator_orig, MetaEstimatorMixin):
+        if hasattr(estimator_orig, 'estimator'):
+            base_estimator = estimator_orig.estimator
+        elif hasattr(estimator_orig, 'base_estimator'):
+            base_estimator = estimator_orig.base_estimator
+    else:
+        base_estimator = estimator_orig
+    if is_classifier(base_estimator):
         X, y = make_classification(n_samples=50, n_features=5)
     else:
         X, y = make_regression(n_samples=50, n_features=5)
-    if _safe_tags(estimator_orig, "requires_positive_X"):
+    if _safe_tags(base_estimator, "requires_positive_X"):
         X = np.absolute(X)
-    if _safe_tags(estimator_orig, "requires_positive_y"):
+    if _safe_tags(base_estimator, "requires_positive_y"):
         y = np.absolute(y)
+    if isinstance(estimator_orig, KernelCenterer):
+        X = pairwise_kernels(X)
     X = X.astype(np.float32)
     #y = np.random.RandomState(0).randn(50).astype(np.float32)
-
     Xts = []
-    in_out_types = [(np.float64, np.float64),
-                    (np.float32, np.float32),
-                    (np.float16, np.float64)]
-    for dtype_in, dtype_out in in_out_types:
-        X_cast = X.astype(dtype_in)
+    in_out_types = _safe_tags(estimator_orig, 'preserves_dtype')
+    for dtype in in_out_types:
+        X_cast = X.astype(dtype)
         estimator = clone(estimator_orig)
         set_random_state(estimator)
         if hasattr(estimator, 'fit_transform'):
@@ -1377,18 +1385,18 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         # FIXME: should we check that the dtype of some attributes are the
         # same than dtype and check that the value of attributes
         # between 32bit and 64bit are close
-        #assert X_trans.dtype == dtype_out, \
+        #assert X_trans.dtype == dtype, \
         #    ('Estimator transform dtype: {} - orginal/expected dtype: {}'
-        #     .format(X_trans.dtype, dtype_out.__name__))
+        #     .format(X_trans.dtype, dtype.__name__))
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
         Xts.append(X_trans)
     
-    # We assume float64 input is correct and compare all the others
-    # against them.
+    # We assume the transformer is on float64 input correct and
+    # compare all other inputs against them.
     for i in range(1, len(Xts)):
-        assert_allclose(Xts[1], Xts[0], rtol=1e-4,
-                        err_msg='dtype_in: {} dtype_out: {}\n'.format(in_out_types[i][0].__name__, in_out_types[i][1].__name__))
+        assert_allclose(Xts[i], Xts[0], rtol=1e-4,
+                        err_msg='dtype_in: {} dtype_ground_truth: {}\n'.format(in_out_types[i].__name__, in_out_types[0].__name__))
 
 
 

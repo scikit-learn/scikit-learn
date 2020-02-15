@@ -619,4 +619,4 @@ class Nystroem(TransformerMixin, BaseEstimator):
         return params
 
     def _more_tags(self):
-        return {'preserves_32bit_dtype': True}
+        return {'preserves_dtype': [np.float64, np.float32]}
