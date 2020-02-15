@@ -144,6 +144,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
+        For more information, see :class:`sklearn.utils.Bunch`:
+
 
         .. versionadded:: 0.20
 
@@ -373,6 +375,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     named_estimators_ : Bunch
         Attribute to access any fitted sub-estimators by name.
+        For more information, see :class:`sklearn.utils.Bunch`:
 
         .. versionadded:: 0.20
 
