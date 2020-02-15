@@ -189,8 +189,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
                'VotingRegressor'}
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
-        pytest.xfail(
-            reason="Classifier cannot be fit easily to test fit attributes")
+        pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
     est = Estimator()
 
@@ -216,6 +215,9 @@ def test_fit_docstring_attributes(name, Estimator):
 
     for attr in attributes:
         desc = ' '.join(attr.desc).lower()
+        # As certain attributes are present "only" if a certain parameter is
+        # provided, this checks if the word "only" is present in the attribute
+        # description, and if not the attribute is required to be present.
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
