@@ -160,7 +160,8 @@ def fetch_species_distributions(data_home=None,
         For more information, see :class:`sklearn.utils.Bunch`:
 
         coverages : array, shape = [14, 1592, 1212]
-            These represent the 14 features measured at each point of the map grid.
+            These represent the 14 features measured
+            at each point of the map grid.
             The latitude/longitude values for the grid are discussed below.
             Missing data is represented by the value -9999.
         train : record array, shape = (1624,)

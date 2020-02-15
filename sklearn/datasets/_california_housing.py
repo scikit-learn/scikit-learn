@@ -95,7 +95,8 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
             Each row corresponding to the 8 feature values in order.
             If ``as_frame`` is True, ``data`` is a pandas object.
         target : numpy array of shape (20640,)
-            Each value corresponds to the average house value in units of 100,000.
+            Each value corresponds to the average
+            house value in units of 100,000.
             If ``as_frame`` is True, ``target`` is a pandas object.
         feature_names : array of length 8
             Array of ordered feature names used in the dataset.
