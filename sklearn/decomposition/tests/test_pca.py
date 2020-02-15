@@ -610,7 +610,7 @@ def test_assess_dimension_small_eigenvalues():
 
 
 def test_infer_dim_mle():
-    # Test small eigenvalues when 'mle' with pathelogical 'X' dataset
+    # Test small eigenvalues when 'mle' with pathological 'X' dataset
     X, _ = datasets.make_classification(n_informative=1, n_repeated=18,
                                         n_redundant=1, n_clusters_per_class=1,
                                         random_state=42)
