@@ -21,13 +21,27 @@ def _fit_mask(X, value_to_mask):
 
 
 def _get_mask(X, value_to_mask, reconstruct_sparse=False):
-    """Compute the boolean mask X == missing_values."""
-    # We get entire sparse matrix when reconstruct is True
-    # Otherwise we get X.data if X is sparse, and X when X is dense
-    if sparse.issparse(X) and reconstruct_sparse:
+    """Compute the boolean mask X == value_to_mask.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Input data, where ``n_samples`` is the number of samples and
+        ``n_features`` is the number of features.
+
+    value_to_mask : {int, float, nan}
+                    The values for which should be maked in X.
+
+    reconstruct_sparse : bool, default=False
+                         Whether or not we need to reconstruct sparse matrix.
+                         If True, X is considered considered sparse and sparse
+                         mask matrix is created.
+                         If False, a dense mask matrix is returned of the same
+                         shape as X.
+                         
+    """
+    if not (sparse.issparse(X) and reconstruct_sparse):
         Xt = _fit_mask(X.data, value_to_mask)
-    # if we need not reconstruct sparse or X is dense we can directly
-    # convert to mask
     else:
         return _fit_mask(X, value_to_mask)
 
