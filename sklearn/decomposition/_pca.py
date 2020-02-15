@@ -27,8 +27,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension(spectrum, rank, n_samples, n_features,
-                       spectrum_threshold=None):
+def _assess_dimension(spectrum, rank, n_samples, n_features):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
@@ -47,7 +46,7 @@ def _assess_dimension(spectrum, rank, n_samples, n_features,
     spectrum_threshold : float, default=None
         Cut-off for values in `spectrum`. Any value lower than this
         will be ignored (`default=epsilon of spectrum`). By default (`None`),
-        it corresponds to the machine epsilon of the `dtype` of `spectrum`. 
+        it corresponds to the machine epsilon of the `dtype` of `spectrum`.
 
     Returns
     -------
@@ -62,8 +61,8 @@ def _assess_dimension(spectrum, rank, n_samples, n_features,
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
-    if spectrum_threshold is None:
-        spectrum_threshold = np.finfo(type(spectrum[0])).eps
+
+    spectrum_threshold = np.finfo(type(spectrum[0])).eps
 
     pu = -rank * log(2.)
     for i in range(rank):
