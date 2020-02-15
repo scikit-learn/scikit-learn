@@ -9,7 +9,7 @@ from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
 from sklearn.decomposition._pca import _assess_dimension_
-from sklearn.decomposition._pca import _infer_dimension_
+from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']
@@ -348,7 +348,7 @@ def test_infer_dim_2():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    assert _infer_dimension_(spect, n, p) > 1
+    assert _infer_dimension(spect, n, p) > 1
 
 
 def test_infer_dim_3():
@@ -361,7 +361,7 @@ def test_infer_dim_3():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    assert _infer_dimension_(spect, n, p) > 2
+    assert _infer_dimension(spect, n, p) > 2
 
 
 @pytest.mark.parametrize(
@@ -575,7 +575,7 @@ def test_infer_dim_bad_spec():
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
     n_samples = 10
     n_features = 5
-    ret = _infer_dimension_(spectrum, n_samples, n_features)
+    ret = _infer_dimension(spectrum, n_samples, n_features)
     assert ret == 0
 
 

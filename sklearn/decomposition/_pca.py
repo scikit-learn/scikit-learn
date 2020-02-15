@@ -27,7 +27,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features,
+def _assess_dimension(spectrum, rank, n_samples, n_features,
                        spectrum_threshold=None):
     """Compute the likelihood of a rank ``rank`` dataset.
 
@@ -100,7 +100,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
     return ll
 
 
-def _infer_dimension_(spectrum, n_samples, n_features):
+def _infer_dimension(spectrum, n_samples, n_features):
     """Infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
@@ -108,7 +108,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
     n_spectrum = len(spectrum)
     ll = np.empty(n_spectrum)
     for rank in range(n_spectrum):
-        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
+        ll[rank] = _assess_dimension(spectrum, rank, n_samples, n_features)
     return ll.argmax()
 
 
@@ -469,7 +469,7 @@ class PCA(_BasePCA):
         # Postprocess the number of components required
         if n_components == 'mle':
             n_components = \
-                _infer_dimension_(explained_variance_, n_samples, n_features)
+                _infer_dimension(explained_variance_, n_samples, n_features)
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
