@@ -127,7 +127,7 @@ boolean mask array or callable
     named_transformers_ : Bunch object, a dictionary with attribute access
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
-        objects.
+        objects. For more information, see :class:`sklearn.utils.Bunch`.
 
     sparse_output_ : boolean
         Boolean flag indicating whether the output of ``transform`` is a
