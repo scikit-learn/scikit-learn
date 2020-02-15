@@ -44,7 +44,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features,
         Number of samples.
     n_features : int
         Number of features.
-    spectrum_cutoff : None
+    spectrum_threshold : float, default=None
         Cut-off for values in `spectrum`. Any value lower than this
         will be ignored (`default=epsilon of spectrum`). By default (`None`),
         it corresponds to the machine epsilon of the `dtype` of `spectrum`. 
