@@ -131,11 +131,11 @@ def test_fit_intercept():
     lr3_with_intercept = LinearRegression().fit(X3, y)
 
     assert (lr2_with_intercept.coef_.shape ==
-                 lr2_without_intercept.coef_.shape)
+            lr2_without_intercept.coef_.shape)
     assert (lr3_with_intercept.coef_.shape ==
-                 lr3_without_intercept.coef_.shape)
+            lr3_without_intercept.coef_.shape)
     assert (lr2_without_intercept.coef_.ndim ==
-                 lr3_without_intercept.coef_.ndim)
+            lr3_without_intercept.coef_.ndim)
 
 
 def test_linear_regression_sparse(random_state=0):
@@ -451,16 +451,23 @@ def test_dtype_preprocess_data():
             assert_array_almost_equal(X_norm_32, X_norm_64)
 
 
-def test_rescale_data():
+@pytest.mark.parametrize('n_targets', [None, 2])
+def test_rescale_data_dense(n_targets):
     n_samples = 200
     n_features = 2
 
     sample_weight = 1.0 + rng.rand(n_samples)
     X = rng.rand(n_samples, n_features)
-    y = rng.rand(n_samples)
+    if n_targets is None:
+        y = rng.rand(n_samples)
+    else:
+        y = rng.rand(n_samples, n_targets)
     rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
     rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
-    rescaled_y2 = y * np.sqrt(sample_weight)
+    if n_targets is None:
+        rescaled_y2 = y * np.sqrt(sample_weight)
+    else:
+        rescaled_y2 = y * np.sqrt(sample_weight)[:, np.newaxis]
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
 

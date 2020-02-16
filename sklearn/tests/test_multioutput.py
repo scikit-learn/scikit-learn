@@ -17,6 +17,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
@@ -103,7 +104,7 @@ def test_multi_target_sample_weights_api():
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [0.8, 0.6]
 
-    rgr = MultiOutputRegressor(Lasso())
+    rgr = MultiOutputRegressor(OrthogonalMatchingPursuit())
     assert_raises_regex(ValueError, "does not support sample weights",
                         rgr.fit, X, y, w)
 

@@ -54,10 +54,10 @@ Changelog
   ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
   :user:`Erich Schubert <kno10>`.
 
-- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
-  avoids high memory footprint by calculating the distances matrix using 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method
+  avoids high memory footprint by calculating the distances matrix using
   a chunked scheme.
-  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.compose`
@@ -70,7 +70,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| Added ``return_centers`` parameter  in  
+- |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
   :pr:`15709` by :user:`<shivamgargsya>` and
@@ -154,9 +154,13 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
+  :class:`linear_model:Lasso` for dense feature matrix `X`.
+  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
@@ -196,7 +200,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
@@ -230,10 +234,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
