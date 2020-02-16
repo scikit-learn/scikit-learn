@@ -1026,7 +1026,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         k(x_1, x_2) = constant_value
 
     constant_value_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
-        The lower and upper bound on constant_value, default=(1e-5, 1e5)
+        The lower and upper bound on `constant_value`.
         If set to "fixed", constant_value cannot be changed during
         hyperparameter tuning.
 
