@@ -201,16 +201,13 @@ def test_project_and_cluster():
                         [0, 1],
                         [0, 0]])
     for mat in (data, csr_matrix(data)):
-        labels = model._project_and_cluster(data, vectors,
+        labels = model._project_and_cluster(mat, vectors,
                                             n_clusters=2)
         assert_almost_equal(v_measure_score(labels, [0, 0, 1, 1]), 1.0)
 
 
 def test_perfect_checkerboard():
-    # XXX test always skipped
-    raise SkipTest("This test is failing on the buildbot, but cannot"
-                   " reproduce. Temporarily disabling it until it can be"
-                   " reproduced and  fixed.")
+    # XXX Previously failed on build bot (not reproducible)
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
 
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0,

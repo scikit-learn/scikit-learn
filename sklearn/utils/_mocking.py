@@ -163,4 +163,4 @@ class NoSampleWeightWrapper(BaseEstimator):
         return self.est.predict_proba(X)
 
     def _more_tags(self):
-        return {'_skip_test': True}  # pragma: no cover
+        return {'_skip_test': True}

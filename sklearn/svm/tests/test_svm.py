@@ -690,11 +690,8 @@ def test_unicode_kernel():
 def test_sparse_precomputed():
     clf = svm.SVC(kernel='precomputed')
     sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
-    try:
+    with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
-        assert not "reached"
-    except TypeError as e:
-        assert "Sparse precomputed" in str(e)
 
 
 def test_sparse_fit_support_vectors_empty():

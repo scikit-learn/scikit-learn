@@ -523,7 +523,8 @@ def test_column_transformer_invalid_transformer():
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError, "All estimators should implement fit",
+    assert_raise_message(TypeError,
+                         "All estimators should implement fit and transform",
                          ct.fit, X_array)
 
 

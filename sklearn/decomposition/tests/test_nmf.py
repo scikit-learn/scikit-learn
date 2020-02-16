@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sp
-import numbers
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
@@ -10,7 +9,6 @@ from scipy.sparse import csc_matrix
 import pytest
 
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -247,11 +245,6 @@ def _beta_divergence_dense(X, W, H, beta):
 
     Used as a reference for testing nmf._beta_divergence.
     """
-    if isinstance(X, numbers.Number):
-        W = np.array([[W]])
-        H = np.array([[H]])
-        X = np.array([[X]])
-
     WH = np.dot(W, H)
 
     if beta == 2:

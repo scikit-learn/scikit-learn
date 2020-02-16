@@ -14,12 +14,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
-
-
 def test_one_hot_encoder_sparse_dense():
     # check that sparse and dense will give the same results
 

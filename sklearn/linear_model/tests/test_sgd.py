@@ -62,6 +62,7 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
         return linear_model.SGDRegressor.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
+        # XXX untested as of v0.22
         X = sp.csr_matrix(X)
         return linear_model.SGDRegressor.decision_function(self, X, *args,
                                                            **kw)
@@ -1576,11 +1577,6 @@ def test_multi_core_gridsearch_and_early_stopping():
     assert search.best_score_ > 0.8
 
 
-@pytest.mark.skipif(
-    not hasattr(sp, "random"),
-    reason="this test uses scipy.random, that was introduced in version  "
-           "0.17. This skip condition can be dropped as soon as we drop "
-           "support for scipy versions older than 0.17")
 @pytest.mark.parametrize("backend",
                          ["loky", "multiprocessing", "threading"])
 def test_SGDClassifier_fit_for_all_backends(backend):

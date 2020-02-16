@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 
+# XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]

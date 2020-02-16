@@ -297,6 +297,7 @@ def test_check_array():
             X_checked = check_array(X, dtype=dtype,
                                     accept_sparse=accept_sparse, copy=copy)
         if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            # XXX unreached code as of v0.22
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]

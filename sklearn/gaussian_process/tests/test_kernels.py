@@ -250,6 +250,7 @@ def test_kernel_clone_after_set_params(kernel):
                                                    isotropic_kernels):
         length_scale = params['length_scale']
         if np.iterable(length_scale):
+            # XXX unreached code as of v0.22
             params['length_scale'] = length_scale[0]
             params['length_scale_bounds'] = bounds
         else:
