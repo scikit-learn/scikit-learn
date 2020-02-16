@@ -264,7 +264,39 @@ of feature :math:`i`.
 General Naive Bayes
 -------------------
 
-[WIP]
+:class:`GeneralNB` implements multiple naive Bayes algorithms across the
+features in the dataset. Unlike other naive Bayes algorithms in this module,
+:class:`GeneralNB` can assume different distributions for different features.
+The naive Bayes algorithms correspond to the probability distributions
+that the respective features are assumed to follow.
+
+A use case for this metaestimator is when the dataset consists of obvious
+distributions like the categorical and Gaussian distributions. We assume
+that the features are independent of each other and some features follow
+the categorical distributions, while the rest follow Gaussian.
+
+The posterior distribution is the same, except that the features come from
+the different distributions:
+
+.. math::
+
+   p(y|x_1, x_2, x_3) = p(y|x_1) p(y|x_2) p(y|x_3)
+
+where
+
+.. math::
+
+   X_1 ~ Categorical(p)
+   X_2 ~ N(0,1)
+   X_3 ~ Categorical(4)
+
+Specifying the different naive Bayes models is similar to that of
+ColumnTransformer - you specify a name, the naive Bayes model and the
+columns (features) that follow this model.
+
+As :class:`GeneralNB` is a metaestimator, it follows that the data
+requirements of each feature depend on the requirements imposed
+by the naive Bayes estimators specified.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
