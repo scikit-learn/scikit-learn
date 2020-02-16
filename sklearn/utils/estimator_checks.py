@@ -35,6 +35,8 @@ from ..linear_model import Ridge
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
                     MetaEstimatorMixin)
+from ..impute import MissingIndicator
+from ..kernel_approximation import SkewedChi2Sampler
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -203,7 +205,8 @@ def _yield_transformer_checks(name, transformer):
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     # it's not possible to preserve dtypes in transform with clustering
-    if (not isinstance(transformer, ClusterMixin) and
+    # same for MissingIndicator
+    if (not isinstance(transformer, (ClusterMixin, MissingIndicator)) and
             _safe_tags(transformer, "preserves_dtype")):
         yield check_estimators_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
@@ -1358,16 +1361,16 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
             base_estimator = estimator_orig.base_estimator
     else:
         base_estimator = estimator_orig
-    if is_classifier(base_estimator):
-        X, y = make_classification(n_samples=50, n_features=5)
-    else:
+    if is_regressor(base_estimator):
         X, y = make_regression(n_samples=50, n_features=5)
-    if _safe_tags(base_estimator, "requires_positive_X"):
+    else:
+        X, y = make_classification(n_samples=50, n_features=5)
+    # SkewedChi2Sampler requires values values larger than -skewedness
+    if (_safe_tags(base_estimator, "requires_positive_X") or
+       isinstance(base_estimator, SkewedChi2Sampler)):
         X = np.absolute(X)
-    if _safe_tags(base_estimator, "requires_positive_y"):
-        y = np.absolute(y)
-    if isinstance(estimator_orig, KernelCenterer):
-        X = pairwise_kernels(X)
+    y = _enforce_estimator_tags_y(base_estimator, y) 
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     X = X.astype(np.float32)
     #y = np.random.RandomState(0).randn(50).astype(np.float32)
     Xts = []
@@ -1385,9 +1388,9 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         # FIXME: should we check that the dtype of some attributes are the
         # same than dtype and check that the value of attributes
         # between 32bit and 64bit are close
-        #assert X_trans.dtype == dtype, \
-        #    ('Estimator transform dtype: {} - orginal/expected dtype: {}'
-        #     .format(X_trans.dtype, dtype.__name__))
+        assert X_trans.dtype == dtype, \
+            ('Estimator transform dtype: {} - orginal/expected dtype: {}'
+             .format(X_trans.dtype, dtype.__name__))
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
         Xts.append(X_trans)
