@@ -914,12 +914,8 @@ def test_monotonic_likelihood():
             # training log likelihood increases after each iteration.
             for _ in range(600):
                 prev_log_likelihood = current_log_likelihood
-                try:
-                    current_log_likelihood = gmm.fit(X).score(X)
-                except ConvergenceWarning:
-                    pass
-                assert (current_log_likelihood >=
-                                     prev_log_likelihood)
+                current_log_likelihood = gmm.fit(X).score(X)
+                assert current_log_likelihood >= prev_log_likelihood
 
                 if gmm.converged_:
                     break
