@@ -119,8 +119,7 @@ plt.ylabel('Deviance')
 # Plot impurity-based feature importance
 # -------------------------------------
 #
-# Next we will plot the impurity-based feature importance.
-# Warning: impurity-based feature importances can be misleading for
+# Careful, impurity-based feature importances can be misleading for
 # high cardinality features (many unique values). See
 # :func:`sklearn.inspection.permutation_importance` as an alternative.
 
