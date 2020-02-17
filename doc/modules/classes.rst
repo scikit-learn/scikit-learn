@@ -1182,12 +1182,6 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
 
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
-
 Model validation
 ----------------
 
@@ -1549,6 +1543,7 @@ Plotting
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1616,4 +1611,5 @@ To be removed in 0.24
    :toctree: generated/
    :template: deprecated_function.rst
 
+   model_selection.fit_grid_point
    utils.safe_indexing

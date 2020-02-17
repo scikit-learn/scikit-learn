@@ -554,7 +554,9 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
     import matplotlib.pyplot as plt  # noqa
 
     # set target_idx for multi-class estimators
-    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
+    if (is_classifier(estimator) and
+            hasattr(estimator, 'classes_') and
+            np.size(estimator.classes_) > 2):
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(estimator.classes_, target)
