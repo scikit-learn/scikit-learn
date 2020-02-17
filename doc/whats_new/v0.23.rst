@@ -258,6 +258,11 @@ Changelog
   each feature with two categories. :pr:`#16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Fix| Fix an undesirable integer division leading to potential division by
+  zero and a variance equal to `np.nan` in
+  :class:`preprocessing.StandardScaler`.
+  :pr:``
+
 :mod:`sklearn.svm`
 ..................
 

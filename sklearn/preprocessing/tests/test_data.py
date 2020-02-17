@@ -2471,3 +2471,41 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
+
+def test_standard_scaler_sparse_finite_variance():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16448
+    # check that we don't have implicit integer casting leading to division by
+    # zero and therefore to NaN
+    arr0 = sparse.coo_matrix(
+        np.array([[-0.33333334],
+                  [ 0.33333334],
+                  [ 0.        ],
+                  [-0.6666667 ],
+                  [ 1.        ],
+                  [-0.33333334],
+                  [ 0.        ],
+                  [ 0.2       ],
+                  [-0.2       ]], dtype=np.float32)
+    )
+    arr1 = sparse.coo_matrix(
+        np.array([[-0.5272109 ],
+                  [ 0.1904762 ],
+                  [ 0.21428572],
+                  [ 0.12244898],
+                  [-0.08333334],
+                  [-0.16666667],
+                  [ 0.25      ],
+                  [ 0.        ],
+                  [-0.21428572],
+                  [-0.5714286 ],
+                  [ 1.0714285 ],
+                  [-0.2857143 ],
+                  [-0.07142857],
+                  [ 0.        ],
+                  [ 0.16666667],
+                  [-0.0952381 ]], dtype=np.float32)
+    )
+    scaler = StandardScaler(with_mean=False)
+    scaler.fit(arr0).partial_fit(arr1)
+    assert np.isfinite(scaler.var_[0])

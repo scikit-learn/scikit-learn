@@ -335,7 +335,7 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
     # Next passes
     for i in range(n_features):
         updated_n[i] = last_n[i] + new_n[i]
-        last_over_new_n[i] = last_n[i] / new_n[i]
+        last_over_new_n[i] = dtype(last_n[i]) / dtype(new_n[i])
 
     # Unnormalized stats
     for i in range(n_features):
