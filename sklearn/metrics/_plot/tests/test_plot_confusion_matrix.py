@@ -273,7 +273,6 @@ def test_confusion_matrix_standard_format(pyplot):
     # and the last number will be showns as 1.2e+07
     test = [t.get_text() for t in plotted_text.ravel()]
     assert test == ['1e+07', '0', '1234567', '1.2e+07']
-
     cm = np.array([[0.1, 10], [100, 0.5]])
     plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
     # Values should now formatted as '.2g', since there's a float in
