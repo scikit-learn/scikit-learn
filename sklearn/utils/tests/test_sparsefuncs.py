@@ -161,7 +161,7 @@ def test_incr_mean_variance_axis_var_nan():
     # initialize the statistics
     X = sp.random(5, 1, density=0.8).tocsr()
     last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
-    last_n = np.zeros(X.shape[1], dtype=int)
+    last_n = np.zeros(X.shape[1], dtype=np.int64)
     update_mean, update_var, update_n = incr_mean_variance_axis(
         X, axis, last_mean, last_var, last_n
     )
