@@ -686,7 +686,8 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
         display = PartialDependenceDisplay(
             pd_results, features, feature_names, target_idx, pdp_lim, deciles
         )
-        return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw)
+        return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
+                            contour_kw=contour_kw)
     else:
         # 'ice'
         display = IndividualConditionalExpectationDisplay(
