@@ -35,6 +35,7 @@ from sklearn.ensemble import VotingRegressor
 ##############################################################################
 # Training classifiers
 # --------------------------------
+#
 # First, we are going to load diabetes dataset and initiate gradient boosting
 # regressor, random forest regressor and linear regression. Next, we are going
 # to use each of them to build the voting regressor:
@@ -56,19 +57,23 @@ ereg.fit(X, y)
 ##############################################################################
 # Making predictions
 # --------------------------------
-# Now we will use each of the regressors to make predictions about the
+#
+# Now we will use each of the regressors to make 20 first predictions about the
 # diabetes dataset.
 
-pred1 = reg1.predict(X)
-pred2 = reg2.predict(X)
-pred3 = reg3.predict(X)
-pred4 = ereg.predict(X)
+xt = X[:20]
+
+pred1 = reg1.predict(xt)
+pred2 = reg2.predict(xt)
+pred3 = reg3.predict(xt)
+pred4 = ereg.predict(xt)
 
 ##############################################################################
 # Plot the results
 # --------------------------------
-# Finally, we will calculate each prediction, plot them and visualize first 20
-# predictions. The red stars show the average prediction
+#
+# Finally, we will visualize the 20 predictions. The red stars show the average
+# prediction
 
 plt.figure()
 plt.plot(pred1, 'gd', label='GradientBoostingRegressor')
