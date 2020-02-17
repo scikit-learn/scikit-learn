@@ -520,7 +520,7 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        verbose : int, default=0
+    verbose : int, default=0
         Verbose output during partial dependence computations.
 
     fig : Matplotlib figure object, default=None
