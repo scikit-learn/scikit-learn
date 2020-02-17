@@ -2,33 +2,16 @@
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 
-from os import environ
-import pytest
 import numpy as np
 
-from sklearn import datasets
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.utils._testing import assert_array_equal
 
 
-def _is_olivetti_faces_not_available():
-    # Do not download data, unless explicitly requested via environment var
-    download_if_missing = environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '0'
-    try:
-        datasets.fetch_olivetti_faces(download_if_missing=download_if_missing)
-        return False
-    except IOError:
-        return True
-
-
-@pytest.mark.skipif(
-    _is_olivetti_faces_not_available(),
-    reason='Download Olivetti faces dataset to run this test'
-)
-def test_olivetti_faces():
-    data = datasets.fetch_olivetti_faces(shuffle=True, random_state=0)
+def test_olivetti_faces(fetch_olivetti_faces):
+    data = fetch_olivetti_faces(shuffle=True, random_state=0)
 
     assert isinstance(data, Bunch)
     for expected_keys in ('data', 'images', 'target', 'DESCR'):
@@ -40,4 +23,4 @@ def test_olivetti_faces():
     assert_array_equal(np.unique(np.sort(data.target)), np.arange(40))
 
     # test the return_X_y option
-    check_return_X_y(data, datasets.fetch_olivetti_faces)
+    check_return_X_y(data, fetch_olivetti_faces)
