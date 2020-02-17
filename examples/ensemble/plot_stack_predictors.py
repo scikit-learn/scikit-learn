@@ -137,6 +137,7 @@ import time
 import numpy as np
 from sklearn.model_selection import cross_validate, cross_val_predict
 
+
 X, y = load_ames_housing()
 X = X[:250]
 y = y[:250]
