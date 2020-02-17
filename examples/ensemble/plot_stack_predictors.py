@@ -130,12 +130,16 @@ def load_ames_housing():
 ###############################################################################
 # Now we can use Ames dataset to make the predictions. We check the performance
 # of each individual predictor as well as the stack of the regressors.
+# To speed up the calculations we will use only part of the dataset, however
+# feel free to take all the data-points and see if the result changes.
 
 import time
 import numpy as np
 from sklearn.model_selection import cross_validate, cross_val_predict
 
 X, y = load_ames_housing()
+X = X[:250]
+y = y[:250]
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
