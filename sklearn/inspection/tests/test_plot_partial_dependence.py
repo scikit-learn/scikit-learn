@@ -15,6 +15,12 @@ from sklearn.utils._testing import _convert_container
 from sklearn.inspection import plot_partial_dependence
 
 
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
+
+
 @pytest.fixture(scope="module")
 def boston():
     return load_boston()
@@ -216,26 +222,31 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     assert len(disp2.axes_[0, 1].get_lines()) == 2
 
 
+@pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
-                                                    boston):
-    grid_resolution = 25
-    fig, (ax1, ax2, ax3) = pyplot.subplots(1, 3)
+                                                    boston, nrows, ncols):
+    grid_resolution = 5
+    fig, axes = pyplot.subplots(nrows, ncols)
+    axes_formats = [list(axes.ravel()), tuple(axes.ravel()), axes]
 
-    msg = r"Expected len\(ax\) == len\(features\), got len\(ax\) = 3"
-    with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_boston, boston.data,
-                                ['CRIM', ('CRIM', 'ZN')],
-                                grid_resolution=grid_resolution,
-                                feature_names=boston.feature_names,
-                                ax=[ax1, ax2, ax3])
+    msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
 
     disp = plot_partial_dependence(clf_boston, boston.data,
-                                   ['CRIM', ('CRIM', 'ZN')],
+                                   ['CRIM', 'ZN'],
                                    grid_resolution=grid_resolution,
                                    feature_names=boston.feature_names)
 
-    with pytest.raises(ValueError, match=msg):
-        disp.plot(ax=[ax1, ax2, ax3])
+    for ax_format in axes_formats:
+        with pytest.raises(ValueError, match=msg):
+            plot_partial_dependence(clf_boston, boston.data,
+                                    ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=boston.feature_names,
+                                    ax=ax_format)
+
+        # with axes object
+        with pytest.raises(ValueError, match=msg):
+            disp.plot(ax=ax_format)
 
 
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):

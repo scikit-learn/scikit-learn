@@ -35,6 +35,8 @@ import  numpy as np
 cimport numpy as np
 from libc.stdlib cimport free
 
+include "_libsvm.pxi"
+
 cdef extern from *:
     ctypedef struct svm_parameter:
         pass

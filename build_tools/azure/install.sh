@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 UNAMESTR=`uname`
 
@@ -11,9 +12,9 @@ make_conda() {
 }
 
 version_ge() {
-    # The two version numbers are seperated with a new line is piped to sort
+    # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
-    # decending order. If the first argument is the top element of the sort, it
+    # descending order. If the first argument is the top element of the sort, it
     # is greater than or equal to the second argument.
     test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
@@ -22,13 +23,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
+                blas[build=$BLAS]"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
@@ -42,6 +38,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
+    if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL scikit-image=$SCIKIT_IMAGE_VERSION"
+    fi
+
     if [[ -n "$MATPLOTLIB_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
@@ -49,7 +49,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4 \
                         conda-forge::llvm-openmp"
         fi
     fi
@@ -78,13 +78,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
     sudo apt-get update
-    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
+    sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
-    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
+    apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
@@ -94,9 +94,10 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # conda is still used as a convenient way to install Python and pip.
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
-    python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
-    python -m pip install pandas matplotlib pyamg
+    python -m pip install pandas matplotlib pyamg scikit-image
+    # do not install dependencies for lightgbm since it requires scikit-learn
+    python -m pip install lightgbm --no-deps
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -123,7 +124,15 @@ except ImportError:
 "
 python -m pip list
 
-# Use setup.py instead of `pip install -e .` to be able to pass the -j flag
-# to speed-up the building multicore CI machines.
-python setup.py build_ext --inplace -j 3
-python setup.py develop
+if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Check that pip can automatically install the build dependencies from
+    # pyproject.toml using an isolated build environment:
+    pip install --verbose --editable .
+else
+    # Use the pre-installed build dependencies and build directly in the
+    # current environment.
+    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+    # to speed-up the building multicore CI machines.
+    python setup.py build_ext --inplace -j 3
+    python setup.py develop
+fi
