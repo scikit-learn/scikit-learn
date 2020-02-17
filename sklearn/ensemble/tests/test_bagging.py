@@ -885,16 +885,18 @@ def test_bagging_get_estimators_indices():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16436
 
-    X = np.zeros((13, 1))
+    rng = np.random.RandomState(0)
+    X = np.zeros((13, 4))
     y = np.arange(13)
 
     class MyEstimator(DecisionTreeRegressor):
+        """An estimator which will y indices information at fit."""
         def fit(self, X, y):
-            self.sample_indices = y
+            self._sample_indices = y
 
     clf = BaggingRegressor(base_estimator=MyEstimator(),
                            n_estimators=1, random_state=0)
     clf.fit(X, y)
 
-    assert_array_equal(clf.estimators_[0].sample_indices,
+    assert_array_equal(clf.estimators_[0]._sample_indices,
                        clf.estimators_samples_[0])
