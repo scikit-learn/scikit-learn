@@ -89,7 +89,7 @@ clf = ensemble.GradientBoostingRegressor(**params)
 clf.fit(X_train, y_train)
 
 mse = mean_squared_error(y_test, clf.predict(X_test))
-print("The mean squared error (MSE): {:.4f}".format(mse))
+print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
 ##############################################################################
 # Plot training deviance
