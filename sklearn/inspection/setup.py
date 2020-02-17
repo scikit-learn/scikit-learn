@@ -1,5 +1,3 @@
-import os
-
 from numpy.distutils.misc_util import Configuration
 
 
