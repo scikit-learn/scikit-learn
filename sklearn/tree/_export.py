@@ -574,7 +574,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree, ax=None):
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
-        import re as re
 
         if ax is None:
             ax = plt.gca()
@@ -620,36 +619,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
                                                 scale_y / max_height)
             for ann in anns:
                 ann.set_fontsize(size)
-
-        # If max_depth == 1 change the x position.
-        # Else the decision box will overlap the two edges.
-        if decision_tree.max_depth == 1:
-            x = anns[1].get_bbox_patch().get_window_extent().bounds[0]
-        else:
-            x = anns[1].get_position()[0]
-
-        # Remove the decision line from the first node, and
-        # add it as a new attribute to the nex bbox.
-        text_first_decision = anns[0].get_text().split('\n')[0]
-        anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
-
-        # Take the average of bbox root node and first left node for
-        # first decision
-        mu_position = np.add(
-                list(anns[0].get_bbox_patch().get_window_extent().bounds),
-                list(anns[1].get_bbox_patch().get_window_extent().bounds))//2
-
-        # Insert the new text to the plot.
-        anns.insert(1, ax.annotate(
-            text_first_decision,
-            (x, (anns[0].get_position()[1] + anns[1].get_position()[1])//2),
-            bbox={'fc': 'white', 'color': 'white'},
-            zorder=100, xycoords='axes pixels',
-            fontsize=anns[0].get_fontsize()
-            ))
-
-        # Set the final bbox_position
-        anns[1].get_bbox_patch().get_window_extent().set_points(mu_position)
 
         return anns
 
