@@ -16,6 +16,7 @@ stacking strategy. Stacking slightly improves the overall performance.
 print(__doc__)
 
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+#          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
 ###############################################################################
@@ -77,6 +78,26 @@ stacking_regressor = StackingRegressor(
     estimators=estimators, final_estimator=RidgeCV()
 )
 
+from sklearn.datasets import fetch_openml
+# Load Ames Housing Prices dataset
+
+def load_ames_housing():
+    import pandas as pd
+    df = fetch_openml(data_id=42165, as_frame=True)
+    X = df.data
+    y = df.target
+
+    # we cannot use string values and so we will replace all the string values
+    # with numerical values
+    o_columns = X.columns[X.dtypes == 'O']
+    for column in o_columns:
+        string_value = X[column].unique()
+        string_dict = dict(zip(string_value, range(len(string_value))))
+        X = X.replace({column: string_dict})
+    X = np.asarray(X)
+    y = np.asarray(y)
+
+    return X, y
 
 ###############################################################################
 # We used the diabetes data set (prediction of the disease progression from the
@@ -85,10 +106,15 @@ stacking_regressor = StackingRegressor(
 
 import time
 import numpy as np
-from sklearn.datasets import load_diabetes
+#from sklearn.datasets import load_diabetes
 from sklearn.model_selection import cross_validate, cross_val_predict
 
-X, y = load_diabetes(return_X_y=True)
+#X, y = load_diabetes(return_X_y=True)
+#from sklearn.datasets import fetch_openml
+#ml_data = fetch_openml(data_id=42165, as_frame=True) #'house_prices')
+#X = ml_data.data
+#y = ml_data.target
+X, y = load_ames_housing()
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
