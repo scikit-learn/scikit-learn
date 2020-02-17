@@ -1217,6 +1217,13 @@ def individual_conditional_expectation(estimator, X, features,
     ...       percentiles=(0, 1), grid_resolution=2) # doctest: +SKIP
     (array([[[2.19017313e-05, 5.16319395e-01],
         [4.83680605e-01, 9.99978098e-01]]]), [array([0., 1.])])
+
+    References
+    ----------
+    .. Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
+       the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation. (2015) Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
     """
     X, response_method, _ = _validate_parameters(estimator, X, features,
                                                  response_method, 'brute')
