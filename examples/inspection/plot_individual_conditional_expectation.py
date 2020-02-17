@@ -97,33 +97,9 @@ features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 print('Computing ICE plots...')
 plot_individual_conditional_expectation(est, X_train_sample, features,
                                         n_jobs=3, grid_resolution=20,
-                                        fixed_start_point=False,
                                         line_kw={'linewidth': 0.5})
 fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features')
-fig.subplots_adjust(hspace=0.3)
-
-
-##############################################################################
-# As the ICE curves do not have the same origin, sometimes it can be hard to
-# see the differences between ICE curves. The ICE curves can be made to have
-# same origin with ``fixed_start_point`` parameter set to `True`.
-
-
-##############################################################################
-# Centered ICE computation
-# ------------------------
-#
-# Let's now compute the ICE plots with ``fixed_start_point`` parameter set to
-# `True`.
-
-print('Computing centered ICE plots...')
-plot_individual_conditional_expectation(est, X_train_sample, features,
-                                        n_jobs=3, grid_resolution=20,
-                                        fixed_start_point=True,
-                                        line_kw={'linewidth': 0.5})
-fig = plt.gcf()
-fig.suptitle('Centered ICE of house value on non-location features')
 fig.subplots_adjust(hspace=0.3)
 
 
