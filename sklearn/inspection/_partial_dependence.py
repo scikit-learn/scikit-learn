@@ -277,7 +277,7 @@ def _validate_parameters(estimator, X, features, response_method, method):
 
 def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', **kwargs):
+                       method='auto'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -360,9 +360,6 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    kwargs : dict
-        Ignored.
-
     Returns
     -------
     averaged_predictions : ndarray, \
@@ -425,17 +422,17 @@ def partial_dependence(estimator, X, features, response_method='auto',
     return averaged_predictions, values
 
 
-def _plot(estimator, X, features, calc_method, display_class,
-          feature_names=None, target=None, response_method='auto', n_cols=3,
-          grid_resolution=100, percentiles=(0.05, 0.95), method='auto',
-          n_jobs=None, verbose=0, fig=None, line_kw=None, ax=None, **kwargs):
+def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
+          response_method='auto', n_cols=3, grid_resolution=100,
+          percentiles=(0.05, 0.95), method='auto', n_jobs=None, verbose=0,
+          fig=None, line_kw=None, contour_kw=None, ax=None):
     """This is a helper function invoked by :func:`plot_partial_dependence`
     and :func:`plot_individual_conditional_expectation` methods. The
     functionality includes,
     1. validation of input parameters
-    2. calculation of PDP or ICE values using ``calc_method``
+    2. calculation of PDP or ICE values
     3. calculation of axis limits and deciles
-    4. displaying the PDP or ICE plots using ``display_class``
+    4. displaying the PDP or ICE plots
 
     Parameters
     ----------
@@ -453,12 +450,8 @@ def _plot(estimator, X, features, calc_method, display_class,
         The target features for which to create the PDP/ICEs.
         if any entry is a string, then it must be in ``feature_names``.
 
-    calc_method : partial_dependence or individual_conditional_expectation
-        The function to calculate values for the PDP/ICE plot
-
-    display_class : PartialDependenceDisplay or
-        IndividualConditionalExpectationDisplay
-        The display class to be used for plotting the PDP/ICE curves
+    plot_type : {'pdp', 'ice'}
+        Whether to plot PDP/ICE plots
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
@@ -538,6 +531,10 @@ def _plot(estimator, X, features, calc_method, display_class,
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For ICEs and one-way PDPs.
 
+    contour_kw : dict, optional
+        Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
+        Only for two-way partial dependence plots.
+
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
             and a grid of PDP/ICEs will be drawn within these bounds.
@@ -546,12 +543,6 @@ def _plot(estimator, X, features, calc_method, display_class,
             directly into these axes.
         - If `None`, a figure and a bounding axes is created and treated
             as the single axes case.
-
-    kwargs : dict
-        Additional keyword arguments passed to the ``calc_method`` and the
-        ``plot`` method of ``display_class``.
-        For ICEs, parameter ``fixed_start_point`` will be included in kwargs.
-        For PDPs, parameter ``contour_kw`` will be included in kwargs.
 
     Returns
     -------
@@ -635,12 +626,22 @@ def _plot(estimator, X, features, calc_method, display_class,
                              .format(len(feature_names), i))
 
     # compute predictions
-    pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(calc_method)(estimator, X, fxs,
-                             response_method=response_method, method=method,
-                             grid_resolution=grid_resolution,
-                             percentiles=percentiles, **kwargs)
-        for fxs in features)
+    if plot_type == 'pdp':
+        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(partial_dependence)(
+                estimator, X, fxs, response_method=response_method,
+                method=method, grid_resolution=grid_resolution,
+                percentiles=percentiles
+            )
+            for fxs in features)
+    else:
+        # 'ice'
+        pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            delayed(individual_conditional_expectation)(
+                estimator, X, fxs, response_method=response_method,
+                grid_resolution=grid_resolution, percentiles=percentiles
+            )
+            for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
     # now that we have the predictions.
@@ -681,9 +682,17 @@ def _plot(estimator, X, features, calc_method, display_class,
         fig.clear()
         ax = fig.gca()
 
-    display = display_class(pd_results, features, feature_names, target_idx,
-                            pdp_lim, deciles)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, **kwargs)
+    if plot_type == 'pdp':
+        display = PartialDependenceDisplay(
+            pd_results, features, feature_names, target_idx, pdp_lim, deciles
+        )
+        return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw, contour_kw=contour_kw)
+    else:
+        # 'ice'
+        display = IndividualConditionalExpectationDisplay(
+            pd_results, features, feature_names, target_idx, pdp_lim, deciles
+        )
+        return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw)
 
 
 def plot_partial_dependence(estimator, X, features, feature_names=None,
@@ -865,8 +874,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     sklearn.inspection.partial_dependence: Return raw partial
       dependence values
     """
-    return _plot(estimator, X, features, partial_dependence,
-                 PartialDependenceDisplay, feature_names=feature_names,
+    return _plot(estimator, X, features, 'pdp', feature_names=feature_names,
                  target=target, response_method=response_method,
                  n_cols=n_cols, grid_resolution=grid_resolution,
                  percentiles=percentiles, method=method, n_jobs=n_jobs,
@@ -1140,8 +1148,7 @@ def individual_conditional_expectation(estimator, X, features,
                                        response_method='auto',
                                        percentiles=(0.05, 0.95),
                                        grid_resolution=100,
-                                       fixed_start_point=True,
-                                       **kwargs):
+                                       fixed_start_point=True):
     """Individual Conditional Expectation (ICE) of ``features``.
 
     ICE of a feature (or a set of features) corresponds to the responses of an
@@ -1182,9 +1189,6 @@ def individual_conditional_expectation(estimator, X, features,
 
     fixed_start_point : bool, optional (default=True)
         Whether to use a fixes starting point for all the ICE curves.
-
-    kwargs : dict
-        Ignored.
 
     Returns
     -------
@@ -1379,13 +1383,11 @@ def plot_individual_conditional_expectation(estimator, X, features,
         if not isinstance(feature, (numbers.Integral, str)):
             raise ValueError('Each entry in features must be either an int or'
                              ' a string.')
-    return _plot(estimator, X, features, individual_conditional_expectation,
-                 IndividualConditionalExpectationDisplay,
-                 feature_names=feature_names, target=target,
-                 response_method=response_method, n_cols=n_cols,
-                 grid_resolution=grid_resolution, percentiles=percentiles,
-                 n_jobs=n_jobs, verbose=verbose, line_kw=line_kw, ax=ax,
-                 fixed_start_point=fixed_start_point)
+    return _plot(estimator, X, features, 'ice', feature_names=feature_names,
+                 target=target, response_method=response_method,
+                 n_cols=n_cols, grid_resolution=grid_resolution,
+                 percentiles=percentiles, n_jobs=n_jobs, verbose=verbose,
+                 line_kw=line_kw, ax=ax)
 
 
 class IndividualConditionalExpectationDisplay:
@@ -1463,7 +1465,7 @@ class IndividualConditionalExpectationDisplay:
         self.ice_lim = ice_lim
         self.deciles = deciles
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, **kwargs):
+    def plot(self, ax=None, n_cols=3, line_kw=None):
         """Plot ICE plots.
 
         Parameters
@@ -1484,9 +1486,6 @@ class IndividualConditionalExpectationDisplay:
 
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
-
-        kwargs : dict
-            Ignored.
 
         Returns
         -------
