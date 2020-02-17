@@ -320,8 +320,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -330,15 +330,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
 
-    method : str, optional (default='auto')
+    method : str, default='auto'
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for some tree-based estimators (namely
@@ -459,7 +459,7 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
-    target : int, optional (default=None)
+    target : int, default=None
         - In a multiclass setting, specifies the class for which the PDP/ICEs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
@@ -468,8 +468,8 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
 
         Ignored in binary classification or classical regression settings.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -478,19 +478,19 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    n_cols : int, optional (default=3)
+    n_cols : int, default=3
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP/ICE axes. Must be in [0, 1].
 
-    method : str, optional (default='auto')
+    method : str, default='auto'
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for some tree-based estimators (namely
@@ -514,16 +514,16 @@ def _plot(estimator, X, features, plot_type, feature_names=None, target=None,
 
         Note: Ignored by ICE calculation at the moment and 'brute' is used.
 
-    n_jobs : int, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        verbose : int, optional (default=0)
+        verbose : int, default=0
         Verbose output during partial dependence computations.
 
-    fig : Matplotlib figure object, optional (default=None)
+    fig : Matplotlib figure object, default=None
         A figure object onto which the plots will be drawn, after the figure
         has been cleared. By default, a new one is created.
 
@@ -768,7 +768,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
-    target : int, optional (default=None)
+    target : int, default=None
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
@@ -777,8 +777,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         Ignored in binary classification or classical regression settings.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -787,19 +787,19 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    n_cols : int, optional (default=3)
+    n_cols : int, default=3
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
 
-    method : str, optional (default='auto')
+    method : str, default='auto'
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for some tree-based estimators (namely
@@ -821,16 +821,16 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    n_jobs : int, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbose output during PD computations.
 
-    fig : Matplotlib figure object, optional (default=None)
+    fig : Matplotlib figure object, default=None
         A figure object onto which the plots will be drawn, after the figure
         has been cleared. By default, a new one is created.
 
@@ -1171,23 +1171,23 @@ def individual_conditional_expectation(estimator, X, features,
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the ICE should be computed.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
 
-    fixed_start_point : bool, optional (default=True)
+    fixed_start_point : bool, default=True
         Whether to use a fixes starting point for all the ICE curves.
 
     Returns
@@ -1299,23 +1299,23 @@ def plot_individual_conditional_expectation(estimator, X, features,
         The target features for which to create the ICEs.
         if any entry is a string, then it must be in ``feature_names``.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba' or 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the ICE axes. Must be in [0, 1].
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    fixed_start_point : bool, optional (default=True)
+    fixed_start_point : bool, default=True
         Whether to use a fixed starting point for all the ICE curves.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
@@ -1324,7 +1324,7 @@ def plot_individual_conditional_expectation(estimator, X, features,
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
-    target : int, optional (default=None)
+    target : int, default=None
         - In a multiclass setting, specifies the class for which the ICEs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
@@ -1333,17 +1333,17 @@ def plot_individual_conditional_expectation(estimator, X, features,
 
         Ignored in binary classification or classical regression settings.
 
-    n_cols : int, optional (default=3)
+    n_cols : int, default=3
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
 
-    n_jobs : int, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to compute the ICEs.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbose output during ICE computations.
 
     line_kw : dict, optional
