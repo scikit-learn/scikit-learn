@@ -473,7 +473,7 @@ def test_count_nonzero():
             count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
 
     # Check dtypes with large sparse matrices too
-    # XXX: test fails on Appveyor (python3.5 32bit)
+    # XXX: test fails on 32bit (Windows/Linux)
     try:
         X_csr.indices = X_csr.indices.astype(np.int64)
         X_csr.indptr = X_csr.indptr.astype(np.int64)
@@ -484,11 +484,8 @@ def test_count_nonzero():
                 count_nonzero(X_csr, axis=1,
                               sample_weight=sample_weight).dtype)
     except TypeError as e:
-        if ("according to the rule 'safe'" in e.args[0] and
-                np.intp().nbytes < 8):
-            pass
-        else:
-            raise
+        assert ("according to the rule 'safe'" in e.args[0]
+                and np.intp().nbytes < 8), e
 
 
 def test_csc_row_median():

@@ -50,11 +50,14 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now converges with
+  ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
+  :user:`Erich Schubert <kno10>`.
 
-- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
-  avoids high memory footprint by calculating the distances matrix using 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method
+  avoids high memory footprint by calculating the distances matrix using
   a chunked scheme.
-  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.compose`
@@ -67,7 +70,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| Added ``return_centers`` parameter  in  
+- |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
   :pr:`15709` by :user:`<shivamgargsya>` and
@@ -99,6 +102,10 @@ Changelog
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
+- |Enhancement| :class:`decomposition.NMF` and
+  :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
+  :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -109,12 +116,25 @@ Changelog
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
 
+- |API| Fixed a bug in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegrerssor` that would not respect the
+  `max_leaf_nodes` parameter if the criteria was reached at the same time as
+  the `max_depth` criteria. :pr:`16183` by `Nicolas Hug`_.
+
 - |Fix|  Changed the convention for `max_depth` parameter of
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
   the number of edges to go from the root to the deepest leaf.
   Stumps (trees with one split) are now allowed.
   :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
+
+- |Feature| Early stopping in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is now determined with a
+  new `early_stopping` parameter instead of `n_iter_no_change`. Default value
+  is 'auto', which enables early stopping if there are at least 10,000
+  samples in the training set. :pr:`14516` by :user:`Johann Faouzi
+  <johannfaouzi>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -134,9 +154,13 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
-  
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
+  :class:`linear_model:Lasso` for dense feature matrix `X`.
+  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
@@ -159,6 +183,14 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`,
+  `average_coef_`, and `average_intercept_` in
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
+
 - |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
   iteration when `solver='newton-cg'` by checking for inferior or equal instead
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
@@ -168,7 +200,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
@@ -187,6 +219,10 @@ Changelog
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
 
+- |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
+  be removed in 0.25. :pr:`16401` by
+  :user:`Arie Pratama Sutiono <ariepratama>`
+
 :mod:`sklearn.naive_bayes`
 .............................
 
@@ -198,10 +234,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
@@ -216,6 +252,11 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+- |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
+  will now accept value 'if_binary' and will drop the first category of
+  each feature with two categories. :pr:`#16245`
+  by :user:`Rushabh Vasani <rushabh-v>`.
 
 :mod:`sklearn.svm`
 ..................
