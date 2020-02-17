@@ -37,7 +37,7 @@ from sklearn.ensemble import VotingRegressor
 # --------------------------------
 # First, we are going to load diabetes dataset and initiate gradient boosting
 # regressor, random forest regressor and linear regression. Next, we are going
-# to use each of them o build the voting regressor:
+# to use each of them to build the voting regressor:
 
 X, y = datasets.load_diabetes(return_X_y=True)
 
