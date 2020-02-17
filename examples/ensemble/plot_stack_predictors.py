@@ -79,6 +79,7 @@ stacking_regressor = StackingRegressor(
 )
 
 from sklearn.datasets import fetch_openml
+from sklearn.impute import SimpleImputer
 # Load Ames Housing Prices dataset
 
 def load_ames_housing():
@@ -94,8 +95,16 @@ def load_ames_housing():
         string_value = X[column].unique()
         string_dict = dict(zip(string_value, range(len(string_value))))
         X = X.replace({column: string_dict})
+
+    imp = SimpleImputer(strategy="most_frequent")
+    X = imp.fit_transform(X)
+
     X = np.asarray(X)
     y = np.asarray(y)
+
+    
+    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imp.fit(X)
 
     return X, y
 
