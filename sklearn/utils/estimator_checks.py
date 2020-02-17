@@ -48,17 +48,15 @@ from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances,
-                                pairwise_kernels)
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
-from ..preprocessing import (StandardScaler, KernelCenterer)
+from ..preprocessing import StandardScaler
 from ..datasets import (load_iris, load_boston, make_blobs,
                         make_multilabel_classification, make_regression,
                         make_classification)
-
 
 
 BOSTON = None
@@ -1353,7 +1351,6 @@ def check_estimators_dtypes(name, estimator_orig):
 
 def check_estimators_preserve_dtypes(name, estimator_orig):
 
-    #X = np.random.RandomState(0).randn(50, 5).astype(np.float32)
     if isinstance(estimator_orig, MetaEstimatorMixin):
         if hasattr(estimator_orig, 'estimator'):
             base_estimator = estimator_orig.estimator
@@ -1369,10 +1366,10 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
     if (_safe_tags(base_estimator, "requires_positive_X") or
        isinstance(base_estimator, SkewedChi2Sampler)):
         X = np.absolute(X)
-    y = _enforce_estimator_tags_y(base_estimator, y) 
+    y = _enforce_estimator_tags_y(base_estimator, y)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X = X.astype(np.float32)
-    #y = np.random.RandomState(0).randn(50).astype(np.float32)
+
     Xts = []
     in_out_types = _safe_tags(estimator_orig, 'preserves_dtype')
     for dtype in in_out_types:
@@ -1385,22 +1382,27 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
             estimator.fit(X_cast, y)
             X_trans = estimator.transform(X_cast)
 
+        if sparse.issparse(X_trans):
+            X_trans = X_trans.toarray()
+        # Cross Decompostion returns a tuple of (x_scores, y_scores)
+        # when given y with fit_transform
+        if isinstance(X_trans, tuple):
+            X_trans = X_trans[0]
         # FIXME: should we check that the dtype of some attributes are the
         # same than dtype and check that the value of attributes
         # between 32bit and 64bit are close
         assert X_trans.dtype == dtype, \
             ('Estimator transform dtype: {} - orginal/expected dtype: {}'
              .format(X_trans.dtype, dtype.__name__))
-        if sparse.issparse(X_trans):
-            X_trans = X_trans.toarray()
         Xts.append(X_trans)
-    
+
     # We assume the transformer is on float64 input correct and
     # compare all other inputs against them.
     for i in range(1, len(Xts)):
         assert_allclose(Xts[i], Xts[0], rtol=1e-4,
-                        err_msg='dtype_in: {} dtype_ground_truth: {}\n'.format(in_out_types[i].__name__, in_out_types[0].__name__))
-
+                        err_msg='dtype_in: {} dtype_ground_truth: {}\n'
+                        .format(in_out_types[i].__name__,
+                        in_out_types[0].__name__))
 
 
 @ignore_warnings(category=FutureWarning)
