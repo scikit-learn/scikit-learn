@@ -47,7 +47,7 @@ def test_fetch_asframe():
     assert hasattr(bunch, 'frame') is True
     assert frame.shape == (20640, 9)
     assert isinstance(bunch.data, pd.DataFrame)
-    assert isinstance(bunch.target, pd.DataFrame)
+    assert isinstance(bunch.target, pd.Series)
 
 
 @pytest.mark.skipif(

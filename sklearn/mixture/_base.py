@@ -137,7 +137,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape  (n_samples, n_features)
 
         random_state : RandomState
-            A random number generator instance.
+            A random number generator instance that controls the random seed
+            used for the method chosen to initialize the parameters.
         """
         n_samples, _ = X.shape
 
