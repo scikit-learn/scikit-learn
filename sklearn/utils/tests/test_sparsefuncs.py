@@ -150,6 +150,30 @@ def test_incr_mean_variance_axis():
                 assert_array_equal(X.shape[axis], n_incr)
 
 
+def test_incr_mean_variance_axis_var_nan():
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16448
+    # check that we don't have implicit integer casting leading to division by
+    # zero and therefore variance which is NaN. It only happened when the sum
+    # of sample from t=0 to t=i-1 is smaller than the number of sample at time
+    # i
+    axis = 0
+    # initialize the statistics
+    X = sp.random(5, 1, density=0.8).tocsr()
+    last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
+    last_n = np.zeros(X.shape[1], dtype=int)
+    update_mean, update_var, update_n = incr_mean_variance_axis(
+        X, axis, last_mean, last_var, last_n
+    )
+    X = sp.random(10, 1, density=0.8).tocsr()
+    update_mean, update_var, update_n = incr_mean_variance_axis(
+        X, axis, update_mean, update_var, update_n
+    )
+    assert np.isfinite(update_mean[0])
+    assert np.isfinite(update_var[0])
+    assert update_n[0] == 15
+
+
 @pytest.mark.parametrize("axis", [0, 1])
 @pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
 def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
