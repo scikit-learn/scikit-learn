@@ -179,7 +179,7 @@ Changelog
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.cluster`
-....................
+......................
 
 - |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
   distance matrix is not square and `affinity=precomputed`. 
