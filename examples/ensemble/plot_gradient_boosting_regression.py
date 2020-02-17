@@ -3,10 +3,17 @@
 Gradient Boosting regression
 ============================
 
+<<<<<<< HEAD
 This example demonstrate Gradient Boosting which will produce a prediction
 model from ensemble of weak prediction models. Gradient boosting can be used
 for regression and classification problems. Here, we will train a model to
 tackle a breast cancer classification task.
+=======
+This example demonstrate Gradient Boosting to produce a predictive
+model from an ensemble of weak predictive models. Gradient boosting can be used
+for regression and classification problems. Here, we will use breast cancer
+(classification) datasets.
+>>>>>>> 90544530fadabf270a668a4e7a4ef2a1b12bc7a2
 
 We will obtain the results from
 :class:`~sklearn.ensemble.GradientBoostingRegressor` with least squares loss
@@ -32,8 +39,8 @@ from sklearn.model_selection import train_test_split
 # Load the data
 # -------------------------------------
 #
-# First we need to load the data. We will work on both datasets
-# simultaneously. We set random state to be consistent with the result.
+# First we need to load the data. We set random state to be consistent with the
+# result.
 
 cancer = datasets.load_breast_cancer()
 X, y = cancer.data, cancer.target
