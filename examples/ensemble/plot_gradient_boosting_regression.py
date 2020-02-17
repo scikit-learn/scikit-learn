@@ -67,8 +67,6 @@ X, y = cancer.data, cancer.target
 #     there are many other options (check
 #     :class:`~sklearn.ensemble.GradientBoostingRegressor` to see what are
 #     other possibilities)
-# In this example we will use the same parameters for both datasets even if
-# they might not be the most optimal
 
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     test_size=0.1,
