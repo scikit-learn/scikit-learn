@@ -4,7 +4,7 @@ Gradient Boosting regression
 ============================
 
 This example demonstrate Gradient Boosting to produce a predictive
-model from ensemble of weak prediction models. Gradient boosting can be used
+model from an ensemble of weak predictive models. Gradient boosting can be used
 for regression and classification problems. Here, we will use breast cancer
 (classification) datasets.
 
