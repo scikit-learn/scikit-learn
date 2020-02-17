@@ -882,6 +882,8 @@ def test_bagging_small_max_features():
 
 def test_bagging_get_estimators_indices():
     # Check that Bagging estimator can generate sample indices properly
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16436
 
     X = np.zeros((13, 1))
     y = np.arange(13)
