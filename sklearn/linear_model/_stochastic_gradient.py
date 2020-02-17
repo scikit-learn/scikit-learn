@@ -33,6 +33,7 @@ from ._sgd_fast import Huber
 from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
 from ..utils.fixes import _joblib_parallel_args
+from ..utils import deprecated
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "adaptive": 4, "pa1": 5, "pa2": 6}
@@ -230,12 +231,12 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
         # initialize average parameters
         if self.average > 0:
-            self.standard_coef_ = self.coef_
-            self.standard_intercept_ = self.intercept_
-            self.average_coef_ = np.zeros(self.coef_.shape,
+            self._standard_coef = self.coef_
+            self._standard_intercept = self.intercept_
+            self._average_coef = np.zeros(self.coef_.shape,
                                           dtype=np.float64,
                                           order="C")
-            self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
+            self._average_intercept = np.zeros(self._standard_intercept.shape,
                                                dtype=np.float64,
                                                order="C")
 
@@ -286,6 +287,30 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
 
+    @deprecated("Attribute standard_coef_ was deprecated "
+                "in version 0.23 and will be removed in 0.25.")
+    @property
+    def standard_coef_(self):
+        return self._standard_coef
+
+    @deprecated("Attribute standard_intercept_ was deprecated "
+                "in version 0.23 and will be removed in 0.25.")
+    @property
+    def standard_intercept_(self):
+        return self._standard_intercept
+
+    @deprecated("Attribute average_coef_ was deprecated "
+                "in version 0.23 and will be removed in 0.25.")
+    @property
+    def average_coef_(self):
+        return self._average_coef
+
+    @deprecated("Attribute average_intercept_ was deprecated "
+                "in version 0.23 and will be removed in 0.25.")
+    @property
+    def average_intercept_(self):
+        return self._average_intercept
+
 
 def _prepare_fit_binary(est, y, i):
     """Initialization for fit_binary.
@@ -302,19 +327,19 @@ def _prepare_fit_binary(est, y, i):
             coef = est.coef_.ravel()
             intercept = est.intercept_[0]
         else:
-            coef = est.standard_coef_.ravel()
-            intercept = est.standard_intercept_[0]
-            average_coef = est.average_coef_.ravel()
-            average_intercept = est.average_intercept_[0]
+            coef = est._standard_coef.ravel()
+            intercept = est._standard_intercept[0]
+            average_coef = est._average_coef.ravel()
+            average_intercept = est._average_intercept[0]
     else:
         if not est.average:
             coef = est.coef_[i]
             intercept = est.intercept_[i]
         else:
-            coef = est.standard_coef_[i]
-            intercept = est.standard_intercept_[i]
-            average_coef = est.average_coef_[i]
-            average_intercept = est.average_intercept_[i]
+            coef = est._standard_coef[i]
+            intercept = est._standard_intercept[i]
+            average_coef = est._average_coef[i]
+            average_intercept = est._average_intercept[i]
 
     return y_i, coef, intercept, average_coef, average_intercept
 
@@ -423,9 +448,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                                   est.average)
 
         if len(est.classes_) == 2:
-            est.average_intercept_[0] = average_intercept
+            est._average_intercept[0] = average_intercept
         else:
-            est.average_intercept_[i] = average_intercept
+            est._average_intercept[i] = average_intercept
 
         result = standard_coef, standard_intercept, n_iter_
 
@@ -538,10 +563,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             self.intercept_ = None
 
         if self.average > 0:
-            self.standard_coef_ = self.coef_
-            self.standard_intercept_ = self.intercept_
-            self.average_coef_ = None
-            self.average_intercept_ = None
+            self._standard_coef = self.coef_
+            self._standard_intercept = self.intercept_
+            self._average_coef = None
+            self._average_intercept = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
@@ -573,12 +598,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         # need to be 2d
         if self.average > 0:
             if self.average <= self.t_ - 1:
-                self.coef_ = self.average_coef_.reshape(1, -1)
-                self.intercept_ = self.average_intercept_
+                self.coef_ = self._average_coef.reshape(1, -1)
+                self.intercept_ = self._average_intercept
             else:
-                self.coef_ = self.standard_coef_.reshape(1, -1)
-                self.standard_intercept_ = np.atleast_1d(intercept)
-                self.intercept_ = self.standard_intercept_
+                self.coef_ = self._standard_coef.reshape(1, -1)
+                self._standard_intercept = np.atleast_1d(intercept)
+                self.intercept_ = self._standard_intercept
         else:
             self.coef_ = coef.reshape(1, -1)
             # intercept is a float, need to convert it to an array of length 1
@@ -621,12 +646,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         if self.average > 0:
             if self.average <= self.t_ - 1.0:
-                self.coef_ = self.average_coef_
-                self.intercept_ = self.average_intercept_
+                self.coef_ = self._average_coef
+                self.intercept_ = self._average_intercept
             else:
-                self.coef_ = self.standard_coef_
-                self.standard_intercept_ = np.atleast_1d(self.intercept_)
-                self.intercept_ = self.standard_intercept_
+                self.coef_ = self._standard_coef
+                self._standard_intercept = np.atleast_1d(self.intercept_)
+                self.intercept_ = self._standard_intercept
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Perform one epoch of stochastic gradient descent on given samples.
@@ -1110,11 +1135,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
-        if self.average > 0 and getattr(self, "average_coef_", None) is None:
-            self.average_coef_ = np.zeros(n_features,
+        if self.average > 0 and getattr(self, "_average_coef", None) is None:
+            self._average_coef = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
-            self.average_intercept_ = np.zeros(1, dtype=np.float64, order="C")
+            self._average_intercept = np.zeros(1, dtype=np.float64, order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, max_iter)
@@ -1165,10 +1190,10 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             self.intercept_ = None
 
         if self.average > 0:
-            self.standard_intercept_ = self.intercept_
-            self.standard_coef_ = self.coef_
-            self.average_coef_ = None
-            self.average_intercept_ = None
+            self._standard_intercept = self.intercept_
+            self._standard_coef = self.coef_
+            self._average_coef = None
+            self._average_intercept = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
@@ -1274,12 +1299,12 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         tol = self.tol if self.tol is not None else -np.inf
 
         if self.average > 0:
-            self.standard_coef_, self.standard_intercept_, \
-                self.average_coef_, self.average_intercept_, self.n_iter_ =\
-                average_sgd(self.standard_coef_,
-                            self.standard_intercept_[0],
-                            self.average_coef_,
-                            self.average_intercept_[0],
+            self._standard_coef, self._standard_intercept, \
+                self._average_coef, self._average_intercept, self.n_iter_ =\
+                average_sgd(self._standard_coef,
+                            self._standard_intercept[0],
+                            self._average_coef,
+                            self._average_intercept[0],
                             loss_function,
                             penalty_type,
                             alpha, C,
@@ -1298,16 +1323,16 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                             self.eta0, self.power_t, self.t_,
                             intercept_decay, self.average)
 
-            self.average_intercept_ = np.atleast_1d(self.average_intercept_)
-            self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
+            self._average_intercept = np.atleast_1d(self._average_intercept)
+            self._standard_intercept = np.atleast_1d(self._standard_intercept)
             self.t_ += self.n_iter_ * X.shape[0]
 
             if self.average <= self.t_ - 1.0:
-                self.coef_ = self.average_coef_
-                self.intercept_ = self.average_intercept_
+                self.coef_ = self._average_coef
+                self.intercept_ = self._average_intercept
             else:
-                self.coef_ = self.standard_coef_
-                self.intercept_ = self.standard_intercept_
+                self.coef_ = self._standard_coef
+                self.intercept_ = self._standard_intercept
 
         else:
             self.coef_, self.intercept_, self.n_iter_ = \
@@ -1494,8 +1519,16 @@ class SGDRegressor(BaseSGDRegressor):
     average_coef_ : ndarray of shape (n_features,)
         Averaged weights assigned to the features.
 
+        .. deprecated:: 0.23
+            Attribute ``average_coef_`` was deprecated
+            in version 0.23 and will be removed in 0.25.
+
     average_intercept_ : ndarray of shape (1,)
         The averaged intercept term.
+
+        .. deprecated:: 0.23
+            Attribute ``average_intercept_`` was deprecated
+            in version 0.23 and will be removed in 0.25.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.

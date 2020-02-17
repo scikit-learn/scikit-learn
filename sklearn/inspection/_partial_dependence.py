@@ -25,7 +25,6 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
-from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
@@ -592,7 +591,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
-    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
+    if (is_classifier(estimator) and
+            hasattr(estimator, 'classes_') and
+            np.size(estimator.classes_) > 2):
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(estimator.classes_, target)

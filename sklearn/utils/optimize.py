@@ -182,7 +182,7 @@ def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        if np.max(absgrad) < tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)
