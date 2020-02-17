@@ -84,18 +84,20 @@ stacking_regressor = StackingRegressor(
 ###############################################################################
 #
 # We will be using Ames housing dataset. The objective is to predict the price
-# of the residential homes in Ames, Iowa. This dataset was first compiled by
-# Dean De Cock http://jse.amstat.org/v19n3/decock.pdf and became better known
-# after it was used for the Kaggle challenge
-# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
+# of the residential homes in Ames, Iowa. `This dataset`_ was first compiled by
+# Dean De Cock and became better known after it was used for the `Kaggle
+# challenge`_.
 #
 # Ames housing dataset is not part of the Sklearn and therefore we will fetch
-# it from OpenML https://www.openml.org
-# It consists of multiple features characterizing the houses. Some of those
-# features are not numeric values and therefore we will first replace them with
-# numbers. Next, we need to impute all the missing values (here we will use
-# 'most_frequent' strategy). Now our dataset can be transformed to an array and
-# used by the predictors
+# it from `OpenML`_. It consists of multiple features characterizing the
+# houses. Some of those features are not numeric values and therefore we will
+# first replace them with numbers. Next, we need to impute all the missing
+# values (here we will use 'most_frequent' strategy).
+#
+# .. _`This dataset`: http://jse.amstat.org/v19n3/decock.pdf
+# .. _`Kaggle challenge`:
+# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
+# .. _`OpenML`: https://www.openml.org
 
 from sklearn.datasets import fetch_openml
 from sklearn.impute import SimpleImputer
@@ -123,21 +125,15 @@ def load_ames_housing():
 
     return X, y
 
+
 ###############################################################################
-# We used the diabetes data set (prediction of the disease progression from the
-# baseline). We check the performance of each individual predictor as well as
-# the stack of the regressors.
+# Now we can use Ames dataset to make the predictions. We check the performance
+# of each individual predictor as well as the stack of the regressors.
 
 import time
 import numpy as np
-#from sklearn.datasets import load_diabetes
 from sklearn.model_selection import cross_validate, cross_val_predict
 
-#X, y = load_diabetes(return_X_y=True)
-#from sklearn.datasets import fetch_openml
-#ml_data = fetch_openml(data_id=42165, as_frame=True) #'house_prices')
-#X = ml_data.data
-#y = ml_data.target
 X, y = load_ames_housing()
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
