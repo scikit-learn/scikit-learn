@@ -886,7 +886,7 @@ def test_bagging_get_estimators_indices():
     # https://github.com/scikit-learn/scikit-learn/issues/16436
 
     rng = np.random.RandomState(0)
-    X = np.zeros((13, 4))
+    X = rng.randn(13, 4)
     y = np.arange(13)
 
     class MyEstimator(DecisionTreeRegressor):
