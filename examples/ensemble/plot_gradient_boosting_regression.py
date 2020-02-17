@@ -49,7 +49,7 @@ X, y = cancer.data, cancer.target
 # Data preprocessing
 # -------------------------------------
 #
-# Next, we will split our dataset to 90% for training and leave the rest for
+# Next, we will split our dataset to use 90% for training and leave the rest for
 # testing. We will also prepare the parameters we want to use to fit our
 # regression model. You can play with those parameters to see how the
 # results change:
