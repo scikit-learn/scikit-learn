@@ -341,7 +341,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             if not isinstance(model, tuple):
                 raise TypeError(
                     "Expected list of tuples "
-                    "but got list of {}s".format(type(model)))
+                    "but got list of {}".format(type(model)))
             if len(model) != 3:
                 raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(model)))
@@ -351,7 +351,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             # Check naive bayes estimator for format
             # `fit` and `_joint_log_likelihood` attributes
             if callable(estimator):
-                raise ValueError("Wrong format specified.")
+                raise ValueError("Estimator should be a callable specified.")
             if not (hasattr(estimator, "fit")
                     or hasattr(estimator, "_joint_log_likelihood")):
                 raise TypeError("Naive bayes estimator should implement "
@@ -363,7 +363,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
             # Check naive bayes estimator for attributes
             # `prior` and `fit_prior`
-            class_prior = getattr(estimator, "prior", None) or getattr(estimator, "class_prior", None)
+            class_prior = getattr(estimator, "priors", None) or getattr(estimator, "class_prior", None)
             fit_prior = getattr(estimator, "fit_prior", True)
             all_class_priors.append(class_prior)
             all_fit_priors.append(fit_prior)
@@ -374,7 +374,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 cols = cols(X)
             for col in cols:
                 if col in dict_col2model:
-                    raise ValueError("Duplicate specification of col found.")
+                    raise ValueError("Duplicate specification of column found.")
                 else:
                     dict_col2model[col] = estimator.__class__.__name__.lower()
             self._cols.append(cols)
