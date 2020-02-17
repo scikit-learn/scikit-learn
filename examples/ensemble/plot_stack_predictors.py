@@ -25,6 +25,7 @@ print(__doc__)
 
 import matplotlib.pyplot as plt
 
+
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     """Scatter plot of the predicted vs true targets."""
     ax.plot([y_true.min(), y_true.max()],
@@ -97,13 +98,13 @@ stacking_regressor = StackingRegressor(
 # .. _`This dataset`: http://jse.amstat.org/v19n3/decock.pdf
 # .. _`Kaggle challenge`:
 # https://www.kaggle.com/c/house-prices-advanced-regression-techniques
-# .. _`OpenML`: https://www.openml.org
+# .. _`OpenML`: https://www.openml.org/d/42165
 
 from sklearn.datasets import fetch_openml
 from sklearn.impute import SimpleImputer
 
+
 def load_ames_housing():
-    import pandas as pd
     df = fetch_openml(data_id=42165, as_frame=True)
     X = df.data
     y = df.target
