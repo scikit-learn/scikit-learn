@@ -25,7 +25,6 @@ print(__doc__)
 
 import matplotlib.pyplot as plt
 
-
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     """Scatter plot of the predicted vs true targets."""
     ax.plot([y_true.min(), y_true.max()],
@@ -53,6 +52,7 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
 ###############################################################################
 # Stack of predictors on a single data set
 ###############################################################################
+#
 # It is sometimes tedious to find the model which will best perform on a given
 # dataset. Stacking provide an alternative by combining the outputs of several
 # learners, without the need to choose a model specifically. The performance of
@@ -78,9 +78,27 @@ stacking_regressor = StackingRegressor(
     estimators=estimators, final_estimator=RidgeCV()
 )
 
+
+###############################################################################
+# Load dataset
+###############################################################################
+#
+# We will be using Ames housing dataset. The objective is to predict the price
+# of the residential homes in Ames, Iowa. This dataset was first compiled by
+# Dean De Cock http://jse.amstat.org/v19n3/decock.pdf and became better known
+# after it was used for the Kaggle challenge
+# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
+#
+# Ames housing dataset is not part of the Sklearn and therefore we will fetch
+# it from OpenML https://www.openml.org
+# It consists of multiple features characterizing the houses. Some of those
+# features are not numeric values and therefore we will first replace them with
+# numbers. Next, we need to impute all the missing values (here we will use
+# 'most_frequent' strategy). Now our dataset can be transformed to an array and
+# used by the predictors
+
 from sklearn.datasets import fetch_openml
 from sklearn.impute import SimpleImputer
-# Load Ames Housing Prices dataset
 
 def load_ames_housing():
     import pandas as pd
@@ -88,8 +106,6 @@ def load_ames_housing():
     X = df.data
     y = df.target
 
-    # we cannot use string values and so we will replace all the string values
-    # with numerical values
     o_columns = X.columns[X.dtypes == 'O']
     for column in o_columns:
         string_value = X[column].unique()
@@ -102,7 +118,6 @@ def load_ames_housing():
     X = np.asarray(X)
     y = np.asarray(y)
 
-    
     imp = SimpleImputer(missing_values=np.nan, strategy='mean')
     imp.fit(X)
 
