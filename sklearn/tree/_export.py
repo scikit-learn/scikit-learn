@@ -617,35 +617,63 @@ class _MPLTreeExporter(_BaseTreeExporter):
             for ann in anns:
                 ann.set_fontsize(size)
 
+        # We sort the bbox list to get the correct order
+        # of the nodes so we can get x,y values correctly.
+        anns2 = sorted(anns,
+                       key=lambda x: x.get_bbox_patch().
+                       get_window_extent().bounds[1],
+                       reverse=True)
+
         # If max_depth == 1 change the x position.
         # Else the decision box will overlap the two edges.
         if decision_tree.max_depth == 1:
-            x = anns[1].get_bbox_patch().get_window_extent().bounds[0]
+            x_l = anns2[1].get_bbox_patch().get_window_extent().bounds[0]
+            x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
         else:
-            x = anns[1].get_position()[0]
+            x_l = anns2[1].get_position()[0]
+            x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
 
-        # Remove the decision line from the first node, and
-        # add it as a new attribute to the nex bbox.
+        # Remove the decision threshold from the first node, and
+        # add it as a the decision criteria on the edge.
         text_first_decision = anns[0].get_text().split('\n')[0]
+        equalizer = text_first_decision.split(' ')[1]
         anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
 
-        # Take the average of bbox root node and first left node for
-        # first decision
-        mu_position = np.add(
-                list(anns[0].get_bbox_patch().get_window_extent().bounds),
-                list(anns[1].get_bbox_patch().get_window_extent().bounds))//2
+        # Define this function to switch the equal sign.
+        def opposite_equalizer(x):
+            if x == "<=":
+                return ">"
+            if x == "=>":
+                return "<"
 
-        # Insert the new text to the plot.
+        # Take the average position for bbox root and bbox left
+        box_left = np.add(
+                list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+                list(anns2[1].get_bbox_patch().get_window_extent().bounds))//2
+        # Take the average position for bbox root and bbox right
+        box_right = np.add(
+                list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+                list(anns2[2].get_bbox_patch().get_window_extent().bounds))//2
+
+        # Insert new text to left.
         anns.insert(1, ax.annotate(
             text_first_decision,
-            (x, (anns[0].get_position()[1] + anns[1].get_position()[1])//2),
+            (x_l, (anns2[0].get_position()[1]+anns2[1].get_position()[1])//2),
             bbox={'fc': 'white', 'color': 'white'},
             zorder=100, xycoords='axes pixels',
-            fontsize=anns[0].get_fontsize()
-            ))
+            fontsize=anns2[0].get_fontsize()))
+        anns2[1].get_bbox_patch().get_window_extent().set_points(box_left)
 
-        # Set the final bbox_position
-        anns[1].get_bbox_patch().get_window_extent().set_points(mu_position)
+        # Insert new text to right.
+        anns.insert(2, ax.annotate(
+            text_first_decision.split(' ')[0] +
+            " " + opposite_equalizer(equalizer) + " " +
+            text_first_decision.split(' ')[2],
+            (x_r, (anns2[0].get_position()[1]+anns2[2].get_position()[1])//2),
+            bbox={'fc': 'white', 'color': 'white'},
+            zorder=100, xycoords='axes pixels',
+            fontsize=anns2[0].get_fontsize()))
+        anns2[1].get_bbox_patch().get_window_extent().set_points(box_right)
 
         return anns
 
