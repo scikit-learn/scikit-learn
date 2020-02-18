@@ -3,21 +3,22 @@
 Column Transformer with Mixed Types
 ===================================
 
-This example illustrates how to apply different preprocessing and
-feature extraction pipelines to different subsets of features,
-using :class:`sklearn.compose.ColumnTransformer`.
-This is particularly handy for the case of datasets that contain
-heterogeneous data types, since we may want to scale the
-numeric features and one-hot encode the categorical ones.
+This example illustrates how to apply different preprocessing and feature
+extraction pipelines to different subsets of features, using
+:class:`sklearn.compose.ColumnTransformer`. This is particularly handy for the
+case of datasets that contain heterogeneous data types, since we may want to
+scale the numeric features and one-hot encode the categorical ones.
 
-In this example, the numeric data is standard-scaled after
-mean-imputation, while the categorical data is one-hot
-encoded after imputing missing values with a new category
-(``'missing'``).
+In this example, the numeric data is standard-scaled after mean-imputation,
+while the categorical data is one-hot encoded after imputing missing values
+with a new category (``'missing'``).
 
-Finally, the preprocessing pipeline is integrated in a
-full prediction pipeline using :class:`sklearn.pipeline.Pipeline`,
-together with a simple classification model.
+In addition, we show two different ways to dispatch the columns to the
+particular pre-processor: by column names and by column data types.
+
+Finally, the preprocessing pipeline is integrated in a full prediction pipeline
+using :class:`sklearn.pipeline.Pipeline`, together with a simple classification
+model.
 """
 
 # Author: Pedro Morales <part.morales@gmail.com>
@@ -43,6 +44,9 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # X = titanic.frame.drop('survived', axis=1)
 # y = titanic.frame['survived']
 
+###############################################################################
+# Use ``ColumnTransformer`` by selecting column by names
+###############################################################################
 # We will train our classifier with the following features:
 # Numeric Features:
 # - age: float.
@@ -51,8 +55,8 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # - embarked: categories encoded as strings {'C', 'S', 'Q'}.
 # - sex: categories encoded as strings {'female', 'male'}.
 # - pclass: ordinal integers {1, 2, 3}.
-
 # We create the preprocessing pipelines for both numeric and categorical data.
+
 numeric_features = ['age', 'fare']
 numeric_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
@@ -78,6 +82,46 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
+###############################################################################
+# Use ``ColumnTransformer`` by selecting column by data types
+###############################################################################
+# When dealing with cleaned dataset, the preprocessing can be automatic by
+# using the data types of the column to decide whether to treat a column as a
+# numerical or categorical features.
+# :func:`sklearn.compose.make_column_selector` gives this possibility.
+# First, let's only select a subset of columns to ease the simplify our
+# example.
+
+subset_feature = ['embarked', 'sex', 'pclass', 'age', 'fare']
+X = X[subset_feature]
+
+###############################################################################
+# Then, we introspect the information regarding each column data type.
+
+print(X.info())
+
+###############################################################################
+# We can observe that the "embarked" and "sex" columns were tagged as
+# "categorical" columns when calling ``fetch_openml``. Therefore, we can use
+# this information to dispatch the categorical columns to the
+# ``categorical_transformer`` and the remaining columns to the
+# ``numerical_transformer``.
+# Note that in practise, it is hope to you to affect the "categorical" dtype
+# to some specific columns.
+
+from sklearn.compose import make_column_selector as selector
+from pandas.api.types import CategoricalDtype
+
+preprocessor = ColumnTransformer(transformers=[
+    ('num', numeric_transformer, selector(dtype_exclude=CategoricalDtype)),
+    ('cat', categorical_transformer, selector(dtype_include=CategoricalDtype))
+])
+
+# Reproduce the identical fit/score process
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+clf.fit(X_train, y_train)
+print("model score: %.3f" % clf.score(X_test, y_test))
 
 ###############################################################################
 # Using the prediction pipeline in a grid search
@@ -88,7 +132,6 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 # We will search for both the imputer strategy of the numeric preprocessing
 # and the regularization parameter of the logistic regression using
 # :class:`sklearn.model_selection.GridSearchCV`.
-
 
 param_grid = {
     'preprocessor__num__imputer__strategy': ['mean', 'median'],
