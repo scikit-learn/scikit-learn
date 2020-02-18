@@ -7,7 +7,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
-from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
@@ -371,6 +370,7 @@ def test_allow_nan_tag_comes_from_estimator():
     model = SelectFromModel(estimator=no_nan_est)
     assert model._get_tags()['allow_nan'] is False
 
+
 def _pca_importances(pca_estimator):
     return np.abs(pca_estimator.explained_variance_)
 
@@ -387,4 +387,3 @@ def test_importance_getter(estimator, importance_getter):
     )
     selector.fit(data, y)
     assert selector.transform(data).shape[1] == 1
-
