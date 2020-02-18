@@ -70,6 +70,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.impute import SimpleImputer
@@ -97,13 +98,21 @@ def load_ames_housing():
 X, y = load_ames_housing()
 X = X[:250]
 y = y[:250]
+cat_cols = X.columns[X.dtypes == 'O']
+num_cols = X.columns[X.dtypes == 'float64']
 
+categorical_proc_tree = Pipeline(steps=[
+    ('imputer_nan', SimpleImputer(strategy='constant', fill_value='missing')),
+    ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
+    ('encoder', OrdinalEncoder())
+    ])
+# only remove the missing values
+numerical_proc_tree = Pipeline(steps=[
+    ('imputer_nan', SimpleImputer(fill_value='mean'))])
 
-categorical_proc_tree = make_pipeline(
-    SimpleImputer(strategy='constant', fill_value='missing'),
-    OrdinalEncoder()
-)
-
+#categorical_proc_tree.fit(X[cat_cols],y)
+#categorical_proc_tree.transform(X[cat_cols])
+#import pdb; pdb.set_trace()
 categorical_proc_lin = make_pipeline(
     SimpleImputer(strategy='constant', fill_value='missing'),
     OneHotEncoder()
@@ -111,12 +120,10 @@ categorical_proc_lin = make_pipeline(
 
 numerical_proc = make_pipeline(
     StandardScaler(),
-    SimpleImputer(strategy='mean'),
+    SimpleImputer(missing_values=None, strategy='mean'),
     OneHotEncoder()
 )
 
-cat_cols = X.columns[X.dtypes == 'O']
-num_cols = X.columns[X.dtypes == 'float64']
 #import pdb; pdb.set_trace()
 #estimators = [
 #    ('Random Forest', RandomForestRegressor(random_state=42)),
@@ -127,6 +134,7 @@ num_cols = X.columns[X.dtypes == 'float64']
 # transformation to use for decision tree based estimators
 processor_tree = make_column_transformer(
                               (categorical_proc_tree, cat_cols),
+                              (numerical_proc_tree, num_cols),
                               remainder = 'passthrough')
 
 # transformation to use for linear estimators
@@ -146,6 +154,13 @@ rf_pip = make_pipeline(processor_tree,
 estimators = [('Random Forest', rf_pip)] #, 
 estimators = [('Lasso', lasso_pip)]
 stacking_regressor = StackingRegressor(estimators = estimators, final_estimator=RidgeCV())
+
+#from sklearn.linear_model import LogisticRegression
+
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+rf_pip.fit(X, y)
+
 ###############################################################################
 # Load dataset
 ###############################################################################
