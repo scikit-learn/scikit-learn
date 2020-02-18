@@ -1034,7 +1034,7 @@ def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
                                 random_state=0)
     imputer2 = IterativeImputer(min_value=min_max_2[0],
                                 max_value=min_max_2[1],
-                                random_state=rng)
+                                random_state=0)
     X_test_imputed1 = imputer1.fit(X_train).transform(X_test)
     X_test_imputed2 = imputer2.fit(X_train).transform(X_test)
     assert_allclose(X_test_imputed1[:, 0], X_test_imputed2[:, 0])
