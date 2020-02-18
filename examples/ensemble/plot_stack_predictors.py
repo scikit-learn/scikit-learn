@@ -102,7 +102,7 @@ cat_cols = X.columns[X.dtypes == 'O']
 num_cols = X.columns[X.dtypes == 'float64']
 
 categorical_proc_tree = Pipeline(steps=[
-    ('imputer_nan', SimpleImputer(strategy='constant', fill_value='missing')),
+    #('imputer_nan', SimpleImputer(strategy='constant', fill_value='missing')),
     ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
     ('encoder', OrdinalEncoder())
     ])
@@ -112,16 +112,18 @@ numerical_proc_tree = Pipeline(steps=[
 
 #categorical_proc_tree.fit(X[cat_cols],y)
 #categorical_proc_tree.transform(X[cat_cols])
-#import pdb; pdb.set_trace()
+#numerical_proc_tree.fit(X[num_cols],y)
+#numerical_proc_tree.transform(X[num_cols])
+
 categorical_proc_lin = make_pipeline(
-    SimpleImputer(strategy='constant', fill_value='missing'),
-    OneHotEncoder()
+    SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
+    OneHotEncoder(handle_unknown='ignore')
 )
 
 numerical_proc = make_pipeline(
     StandardScaler(),
-    SimpleImputer(missing_values=None, strategy='mean'),
-    OneHotEncoder()
+    SimpleImputer(strategy='mean'),
+    OneHotEncoder(handle_unknown='ignore')
 )
 
 #import pdb; pdb.set_trace()
@@ -148,18 +150,23 @@ lasso_pip = make_pipeline(processor_lin,
 
 rf_pip = make_pipeline(processor_tree,
                         RandomForestRegressor(random_state=42))
+
+ridge_pip = make_pipeline(processor_lin,
+                          RidgeCV())
 #stacking_regressor = StackingRegressor(
 #    estimators=estimators, final_estimator=RidgeCV()
 #)
-estimators = [('Random Forest', rf_pip)] #, 
-estimators = [('Lasso', lasso_pip)]
-stacking_regressor = StackingRegressor(estimators = estimators, final_estimator=RidgeCV())
+estimators = [('Random Forest', rf_pip)] #,
+#estimators = [('Lasso', lasso_pip)]
+stacking_regressor = StackingRegressor(estimators = estimators,
+                                       final_estimator=ridge_pip)
 
 #from sklearn.linear_model import LogisticRegression
 
 #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-rf_pip.fit(X, y)
+ridge_pip.fit(X, y)
+import pdb;pdb.set_trace()
 
 ###############################################################################
 # Load dataset
@@ -234,8 +241,8 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                            n_jobs=-1, verbose=0)
     elapsed_time = time.time() - start_time
 
-    #y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
-    """
+    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+
     plot_regression_results(
         ax, y, y_pred,
         name,
@@ -245,7 +252,7 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                 -np.mean(score['test_neg_mean_absolute_error']),
                 np.std(score['test_neg_mean_absolute_error'])),
         elapsed_time)
-    """
+
 
 plt.suptitle('Single predictors versus stacked predictors')
 plt.tight_layout()
