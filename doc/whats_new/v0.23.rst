@@ -165,6 +165,10 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
+  :class:`linear_model:Lasso` for dense feature matrix `X`.
+  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
   the wrapped `base_estimator` during the fitting of the final model.
@@ -221,6 +225,10 @@ Changelog
 - |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+
+- |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
+  be removed in 0.25. :pr:`16401` by
+  :user:`Arie Pratama Sutiono <ariepratama>`
 
 :mod:`sklearn.naive_bayes`
 .............................
@@ -294,3 +302,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
+  distance matrix is not square and `affinity=precomputed`. 
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.

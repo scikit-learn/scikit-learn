@@ -177,6 +177,7 @@ def test_imputation_mean_median():
             X[:, j] = np.hstack((v, z, p))
 
             if 0 == test_missing_values:
+                # XXX unreached code as of v0.22
                 X_true[:, j] = np.hstack((v,
                                           np.repeat(
                                               true_statistics[j],
@@ -706,7 +707,6 @@ def test_iterative_imputer_truncated_normal_posterior():
     #  note that starting from the wrong random seed will make this test fail
     #  because random sampling doesn't occur at all when the imputation
     #  is outside of the (min_value, max_value) range
-    pytest.importorskip("scipy", minversion="0.17.0")
     rng = np.random.RandomState(42)
 
     X = rng.normal(size=(5, 5))
@@ -763,7 +763,6 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
 
 def test_iterative_imputer_transform_stochasticity():
-    pytest.importorskip("scipy", minversion="0.17.0")
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(1)
     n = 100
