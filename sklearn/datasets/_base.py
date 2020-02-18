@@ -164,7 +164,7 @@ def load_files(container_path, description=None, categories=None,
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : list of str
@@ -305,7 +305,7 @@ def load_wine(return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (178, 13)
@@ -420,7 +420,7 @@ def load_iris(return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (150, 4)
@@ -533,7 +533,7 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (569, 30)
@@ -658,7 +658,7 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (1797, 64)
@@ -773,7 +773,7 @@ def load_diabetes(return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (442, 10)
@@ -868,7 +868,7 @@ def load_linnerud(return_X_y=False, as_frame=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (20, 3)
@@ -959,7 +959,7 @@ def load_boston(return_X_y=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray of shape (506, 13)
@@ -1034,7 +1034,7 @@ def load_sample_images():
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         images : list of ndarray of shape (427, 640, 3)

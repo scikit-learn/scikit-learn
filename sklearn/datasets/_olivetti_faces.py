@@ -78,7 +78,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data: ndarray, shape (400, 4096)

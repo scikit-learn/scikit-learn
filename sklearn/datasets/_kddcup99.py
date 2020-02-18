@@ -97,7 +97,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray of shape (494021, 41)
@@ -196,7 +196,7 @@ def _fetch_brute_kddcup99(data_home=None,
     Returns
     -------
     dataset : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : numpy array of shape (494021, 41)

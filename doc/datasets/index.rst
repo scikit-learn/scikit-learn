@@ -30,8 +30,9 @@ described in the :ref:`toy_datasets` section.
 **The dataset fetchers.** They can be used to download and load larger datasets,
 described in the :ref:`real_world_datasets` section.
 
-Both loaders and fetchers functions return a Bunch object holding
-at least two items: an array of shape ``n_samples`` * ``n_features`` with
+Both loaders and fetchers functions return a :class:`sklearn.utils.Bunch`
+object holding at least two items:
+an array of shape ``n_samples`` * ``n_features`` with
 key ``data`` (except for 20newsgroups) and a numpy array of
 length ``n_samples``, containing the target values, with key ``target``.
 

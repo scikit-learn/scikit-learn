@@ -88,7 +88,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     Returns
     -------
     dataset : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray, shape (20640, 8)

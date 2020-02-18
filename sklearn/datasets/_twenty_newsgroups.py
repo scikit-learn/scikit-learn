@@ -215,7 +215,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     Returns
     -------
     bunch : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data : list, length [n_samples]
@@ -392,7 +392,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     Returns
     -------
     bunch : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         data: sparse matrix, shape [n_samples, n_features]

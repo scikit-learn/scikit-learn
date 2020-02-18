@@ -156,7 +156,7 @@ def fetch_species_distributions(data_home=None,
     Returns
     -------
     data : Bunch
-        Dictionary-like object, with attributes.
+        Dictionary-like object, with the following attributes.
         For more information, see :class:`sklearn.utils.Bunch`:
 
         coverages : array, shape = [14, 1592, 1212]
