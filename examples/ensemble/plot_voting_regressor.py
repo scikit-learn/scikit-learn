@@ -85,7 +85,6 @@ plt.tick_params(axis='x', which='both', bottom=False, top=False,
                 labelbottom=False)
 plt.ylabel('predicted')
 plt.xlabel('training samples')
-plt.xlim([-0.5, 20.5])
 plt.legend(loc="best")
 plt.title('Regressor predictions and their average')
 
