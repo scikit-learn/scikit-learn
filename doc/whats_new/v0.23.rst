@@ -258,10 +258,8 @@ Changelog
   each feature with two categories. :pr:`#16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
-- |Fix| Fix a bug in :class:`preprocessing.StandardScaler` reporting a variance
-  equal to `np.nan` with sparse matrices as input. It was only the case when
-  the number of samples during a `partial_fit` call would be greater than the
-  total number of samples seen in the previous call.
+- |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was computing
+  falsely statistics when calling `partial_fit` on sparse inputs.
   :pr:`16466` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.svm`

@@ -150,28 +150,60 @@ def test_incr_mean_variance_axis():
                 assert_array_equal(X.shape[axis], n_incr)
 
 
-def test_incr_mean_variance_axis_var_nan():
+@pytest.mark.parametrize(
+    "X1, X2",
+    [
+        (sp.random(5, 2, density=0.8, random_state=0).tocsr(),
+         sp.random(13, 2, density=0.8, random_state=0).tocsr()),
+        (sp.random(5, 2, density=0.8, random_state=0).tocsr(),
+         sp.hstack([sp.csr_matrix(np.full((13, 1), fill_value=np.nan)),
+                    sp.random(13, 1, density=0.8, random_state=42)],
+                   format="csr"))
+    ]
+)
+def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/16448
-    # check that we don't have implicit integer casting leading to division by
-    # zero and therefore variance which is NaN. It only happened when the sum
-    # of sample from t=0 to t=i-1 is smaller than the number of sample at time
-    # i
+    # check that computing the incremental mean and variance is equivalent to
+    # computing the mean and variance on the stacked dataset.
     axis = 0
-    # initialize the statistics
-    X = sp.random(5, 1, density=0.8).tocsr()
-    last_mean, last_var = np.zeros(X.shape[1]), np.zeros(X.shape[1])
-    last_n = np.zeros(X.shape[1], dtype=np.int64)
-    update_mean, update_var, update_n = incr_mean_variance_axis(
-        X, axis, last_mean, last_var, last_n
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X1, axis, last_mean, last_var, last_n
     )
-    X = sp.random(10, 1, density=0.8).tocsr()
-    update_mean, update_var, update_n = incr_mean_variance_axis(
-        X, axis, update_mean, update_var, update_n
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis, updated_mean, updated_var, updated_n
     )
-    assert np.isfinite(update_mean[0])
-    assert np.isfinite(update_var[0])
-    assert update_n[0] == 15
+    X = sp.vstack([X1, X2])
+    assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
+    assert_allclose(updated_var, np.nanvar(X.A, axis=axis))
+    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
+
+
+@pytest.mark.parametrize(
+    "X2",
+    [sp.random(0, 1, density=0.8, random_state=0).tocsr(),
+     sp.csr_matrix(np.full((3, 1), fill_value=np.nan))],
+    ids=["empty", "full nan"]
+)
+def test_incr_mean_variance_no_new_n(X2):
+    # check the behaviour when we update the variance with an empty
+    # (or only NaN) column
+    axis = 0
+    X1 = sp.random(5, 1, density=0.8, random_state=0).tocsr()
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    last_mean, last_var, last_n = incr_mean_variance_axis(
+        X1, axis, last_mean, last_var, last_n
+    )
+    # update statistic with a column which should ignored
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis, last_mean, last_var, last_n
+    )
+    assert_allclose(updated_mean, last_mean)
+    assert_allclose(updated_var, last_var)
+    assert_allclose(updated_n, last_n)
 
 
 @pytest.mark.parametrize("axis", [0, 1])
