@@ -110,11 +110,10 @@ print(X.info())
 # to some specific columns.
 
 from sklearn.compose import make_column_selector as selector
-from pandas.api.types import CategoricalDtype
 
 preprocessor = ColumnTransformer(transformers=[
-    ('num', numeric_transformer, selector(dtype_exclude=CategoricalDtype)),
-    ('cat', categorical_transformer, selector(dtype_include='category'))
+    ('num', numeric_transformer, selector(dtype_exclude="category")),
+    ('cat', categorical_transformer, selector(dtype_include="category"))
 ])
 
 # Reproduce the identical fit/score process
