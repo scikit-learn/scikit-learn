@@ -27,7 +27,6 @@ from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import FLOAT_DTYPES
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
@@ -912,7 +911,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self.algorithm = algorithm
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                        order='C', accept_large_sparse=False)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -973,7 +973,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             )
 
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', copy=self.copy_x)
+                        order='C', copy=self.copy_x, accept_large_sparse=False)
         # verify that the number of samples given is larger than k
         if _num_samples(X) < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
