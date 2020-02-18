@@ -17,12 +17,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_raises
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -380,6 +379,7 @@ def test_rfe_cv_groups():
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
 
+
 @pytest.mark.parametrize(
     'importance_getter',
     [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
@@ -440,6 +440,7 @@ def test_rfe_allow_nan_inf_in_x(cv):
     rfe.fit(X, y)
     rfe.transform(X)
 
+
 def test_w_pipeline_2d_coef_():
     pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 
@@ -449,6 +450,7 @@ def test_w_pipeline_2d_coef_():
 
     sfm.fit(data, y)
     assert sfm.transform(data).shape[1] == 2
+
 
 @pytest.mark.parametrize('ClsRFE', [
     RFE,
