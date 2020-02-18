@@ -114,7 +114,7 @@ from pandas.api.types import CategoricalDtype
 
 preprocessor = ColumnTransformer(transformers=[
     ('num', numeric_transformer, selector(dtype_exclude=CategoricalDtype)),
-    ('cat', categorical_transformer, selector(dtype_include=CategoricalDtype))
+    ('cat', categorical_transformer, selector(dtype_include='category'))
 ])
 
 # Reproduce the identical fit/score process
