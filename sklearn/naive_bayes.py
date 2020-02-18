@@ -1031,14 +1031,14 @@ class CategoricalNB(_BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    min_categories : int or array-like or None, default=None
+    min_categories : int or array-like of shape (n_features,), default=None
         Minimum number of categories per feature.
 
-        - int : Sets the minimum number of categories per feature to
+        - integer: Sets the minimum number of categories per feature to
           `n_categories` for each features.
-        - array-like : shape (n_features,) where `n_categories[i]` holds the
+        - array-like: shape (n_features,) where `n_categories[i]` holds the
           minimum number of categories for the ith column of the input.
-        - None : Determines the number of categories automatically from the
+        - None (default): Determines the number of categories automatically from the
           training data.
 
     Attributes
@@ -1066,7 +1066,7 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-    n_categories_ : ndarray (n_features,)
+    n_categories_ : ndarray of shape (n_features,), dtype=int
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
 
@@ -1188,7 +1188,7 @@ class CategoricalNB(_BaseDiscreteNB):
                                        self.min_categories,
                                        dtype=np.int,
                                        casting='unsafe')
-            if np.shape(n_categories_) != feature_n_categories.shape:
+            if n_categories_.shape != feature_n_categories.shape:
                 raise ValueError('min_categories must be scalar, array-like '
                                  'of shape (n_features,), or None.')
             self.n_categories_ = n_categories_

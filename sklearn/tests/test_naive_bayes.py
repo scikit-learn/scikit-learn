@@ -704,7 +704,6 @@ def test_categoricalnb():
 
 
 def test_categoricalnb_with_min_categories():
-    # None as n_categories is checked by default in test_categoricalnb
 
     X_n_categories = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y_n_categories = np.array([1, 1, 2, 2])
