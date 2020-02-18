@@ -733,6 +733,12 @@ def test_categoricalnb_with_min_categories():
     # check min_categories with min less than actual
     clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=1)
     clf.fit(X_n_categories, y_n_categories)
+    X1_count, X2_count = clf.category_count_
+    assert_array_equal(X1_count, np.array([[2, 0], [1, 1]]))
+    assert_array_equal(X2_count, np.array([[1, 1], [1, 1]]))
+    new_X = np.array([[0, 1]])
+    predictions = clf.predict(new_X)
+    assert_array_equal(predictions, np.array([1]))
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
 
