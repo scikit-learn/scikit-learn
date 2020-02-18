@@ -240,7 +240,7 @@ class BinaryCrossEntropy(BaseLoss):
                 " classification with n_classes=%d, use"
                 " loss='categorical_crossentropy' instead" % prediction_dim)
         proba_positive_class = np.mean(y_train)
-        eps = np.finfo(y_train.dtype).eps
+        eps = np.finfo(proba_positive_class.dtype).eps
         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
         # log(x / 1 - x) is the anti function of sigmoid, or the link function
         # of the Binomial model.
@@ -288,7 +288,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
     def get_baseline_prediction(self, y_train, prediction_dim):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
-        eps = np.finfo(y_train.dtype).eps
+        eps = np.finfo(init_value.dtype).eps
         for k in range(prediction_dim):
             proba_kth_class = np.mean(y_train == k)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)

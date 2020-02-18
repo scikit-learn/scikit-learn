@@ -14,6 +14,7 @@ from libc.math cimport exp
 
 from .common cimport Y_DTYPE_C
 from .common cimport G_H_DTYPE_C
+from .common cimport Y_CLF_DTYPE_C
 
 
 def _update_gradients_least_squares(
@@ -48,7 +49,7 @@ def _update_gradients_least_absolute_deviation(
 def _update_gradients_hessians_binary_crossentropy(
         G_H_DTYPE_C [::1] gradients,  # OUT
         G_H_DTYPE_C [::1] hessians,  # OUT
-        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_CLF_DTYPE_C [::1] y_true,  # IN
         const Y_DTYPE_C [::1] raw_predictions):  # IN
     cdef:
         int n_samples
@@ -65,7 +66,7 @@ def _update_gradients_hessians_binary_crossentropy(
 def _update_gradients_hessians_categorical_crossentropy(
         G_H_DTYPE_C [:, ::1] gradients,  # OUT
         G_H_DTYPE_C [:, ::1] hessians,  # OUT
-        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_CLF_DTYPE_C [::1] y_true,  # IN
         const Y_DTYPE_C [:, ::1] raw_predictions):  # IN
     cdef:
         int prediction_dim = raw_predictions.shape[0]

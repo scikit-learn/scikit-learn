@@ -4,6 +4,7 @@ import numpy as np
 # dtype for leaf values, gains, and sums of gradients / hessians. The gradients
 # and hessians arrays are stored as floats to avoid using too much memory.
 Y_DTYPE = np.float64
+Y_CLF_DTYPE = np.int32
 X_DTYPE = np.float64
 X_BINNED_DTYPE = np.uint8  # hence max_bins == 256
 # dtype for gradients and hessians arrays

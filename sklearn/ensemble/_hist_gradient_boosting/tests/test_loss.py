@@ -8,6 +8,7 @@ import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import Y_CLF_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 
@@ -62,8 +63,11 @@ def test_derivatives(loss, x0, y_true):
     # using Halley's method with the first and second order derivatives
     # computed by the Loss instance.
 
+    if loss.endswith('crossentropy'):
+        y_dtype = Y_CLF_DTYPE
+
     loss = _LOSSES[loss]()
-    y_true = np.array([y_true], dtype=Y_DTYPE)
+    y_true = np.array([y_true], dtype=y_dtype)
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
@@ -101,7 +105,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     if loss in ('least_squares', 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     else:
-        y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
+        y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_CLF_DTYPE)
     raw_predictions = rng.normal(
         size=(prediction_dim, n_samples)
     ).astype(Y_DTYPE)

@@ -15,7 +15,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE, Y_CLF_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
@@ -1055,7 +1055,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
         self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
-        encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
+        encoded_y = encoded_y.astype(Y_CLF_DTYPE, copy=False)
         return encoded_y
 
     def _get_loss(self):
