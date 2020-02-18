@@ -132,7 +132,7 @@ Changelog
 ..............................
 
 -|Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
-for `fit`.
+for `base_estimator` during `fit`.
 :pr:`16111` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.naive_bayes`
