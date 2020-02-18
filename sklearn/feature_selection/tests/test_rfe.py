@@ -400,7 +400,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector):
 
 @pytest.mark.parametrize(
     "importance_getter, err_type",
-    [("auto", RuntimeError),
+    [("auto", ValueError),
      ("random", AttributeError),
      (lambda x: x.importance, AttributeError),
      ([0], ValueError)]
