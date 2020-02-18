@@ -169,7 +169,7 @@ gradient_pip = make_pipeline(processor_tree,
 estimators = [('Random Forest', rf_pip)] #,
 #estimators = [('Lasso', lasso_pip)]
 stacking_regressor = StackingRegressor(estimators = estimators,
-                                       final_estimator=ridge_pip)
+                                       final_estimator=RidgeCV())
 
 #from sklearn.linear_model import LogisticRegression
 
@@ -245,7 +245,7 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                            scoring=['r2', 'neg_mean_absolute_error'],
                            n_jobs=-1, verbose=0)
     elapsed_time = time.time() - start_time
-
+    import pdb; pdb.set_trace()
     y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
 
     plot_regression_results(
