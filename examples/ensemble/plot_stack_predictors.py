@@ -101,14 +101,22 @@ y = y[:250]
 cat_cols = X.columns[X.dtypes == 'O']
 num_cols = X.columns[X.dtypes == 'float64']
 
+#
+categories = [
+    X[column].unique() for column in X[cat_cols]]
+
+for cat in categories:
+    cat[cat == None] = 'missing'
+
 categorical_proc_tree = Pipeline(steps=[
     #('imputer_nan', SimpleImputer(strategy='constant', fill_value='missing')),
     ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
-    ('encoder', OrdinalEncoder())
+    ('encoder', OrdinalEncoder(categories=categories))
     ])
+
 # only remove the missing values
 numerical_proc_tree = Pipeline(steps=[
-    ('imputer_nan', SimpleImputer(fill_value='mean'))])
+    ('imputer_nan', SimpleImputer(strategy='mean'))])
 
 #categorical_proc_tree.fit(X[cat_cols],y)
 #categorical_proc_tree.transform(X[cat_cols])
@@ -117,13 +125,12 @@ numerical_proc_tree = Pipeline(steps=[
 
 categorical_proc_lin = make_pipeline(
     SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
-    OneHotEncoder(handle_unknown='ignore')
+    OneHotEncoder(categories=categories)
 )
 
-numerical_proc = make_pipeline(
+numerical_proc_lin = make_pipeline(
     StandardScaler(),
     SimpleImputer(strategy='mean'),
-    OneHotEncoder(handle_unknown='ignore')
 )
 
 #import pdb; pdb.set_trace()
@@ -142,7 +149,7 @@ processor_tree = make_column_transformer(
 # transformation to use for linear estimators
 processor_lin = make_column_transformer(
                               (categorical_proc_lin, cat_cols),
-                              (numerical_proc, num_cols),
+                              (numerical_proc_lin, num_cols),
                               remainder = 'passthrough')
 #import pdb; pdb.set_trace()
 lasso_pip = make_pipeline(processor_lin,
@@ -153,6 +160,9 @@ rf_pip = make_pipeline(processor_tree,
 
 ridge_pip = make_pipeline(processor_lin,
                           RidgeCV())
+
+gradient_pip = make_pipeline(processor_tree,
+                            HistGradientBoostingRegressor(random_state=0))
 #stacking_regressor = StackingRegressor(
 #    estimators=estimators, final_estimator=RidgeCV()
 #)
@@ -165,8 +175,9 @@ stacking_regressor = StackingRegressor(estimators = estimators,
 
 #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-ridge_pip.fit(X, y)
-import pdb;pdb.set_trace()
+#ridge_pip.fit(X, y)
+#lasso_pip.fit(X,y)
+#import pdb;pdb.set_trace()
 
 ###############################################################################
 # Load dataset
@@ -227,14 +238,8 @@ axs = np.ravel(axs)
 
 for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                                                stacking_regressor)]):
-    #import pdb; pdb.set_trace()
     start_time = time.time()
 
-    #cross_validate()
-    #make_pipeline(SimpleImputer(strategy='constant', fill_value='missing'),
-    #              cross_validate(est, X, y,
-    #                       scoring=['r2', 'neg_mean_absolute_error'],
-    #                       n_jobs=-1, verbose=0))
     print(name)
     score = cross_validate(est, X, y,
                            scoring=['r2', 'neg_mean_absolute_error'],
