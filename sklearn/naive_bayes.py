@@ -1038,8 +1038,8 @@ class CategoricalNB(_BaseDiscreteNB):
           `n_categories` for each features.
         - array-like: shape (n_features,) where `n_categories[i]` holds the
           minimum number of categories for the ith column of the input.
-        - None (default): Determines the number of categories automatically from the
-          training data.
+        - None (default): Determines the number of categories automatically
+          from the training data.
 
     Attributes
     ----------
@@ -1184,17 +1184,21 @@ class CategoricalNB(_BaseDiscreteNB):
     def _validate_n_categories(X, min_categories):
         # rely on max for n_categories categories are encoded between 0...n-1
         n_categories_X = X.max(axis=0) + 1
+        min_categories_ = np.array(min_categories)
         if min_categories is not None:
-            # unsafe casting allows float to be coerced to int
+            if not np.issubdtype(min_categories_.dtype, np.int):
+                raise ValueError(
+                    f"'min_categories' should have integral type. Got "
+                    f"{min_categories_.dtype} instead."
+                )
             n_categories_ = np.maximum(n_categories_X,
-                                       min_categories,
-                                       dtype=np.int,
-                                       casting='unsafe')
+                                       min_categories_,
+                                       dtype=np.int)
             if n_categories_.shape != n_categories_X.shape:
                 raise ValueError(
                     f"'min_categories' should have shape ({X.shape[1]},"
                     f") when an array-like is provided. Got"
-                    f" {np.shape(min_categories)} instead."
+                    f" {min_categories_.shape} instead."
                 )
             return n_categories_
         else:
