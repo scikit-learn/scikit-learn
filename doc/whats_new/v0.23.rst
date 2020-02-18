@@ -69,6 +69,15 @@ Changelog
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
+  optimized implementation. Parallelism is now over the data instead of over
+  initializations allowing better scalability. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`cluster.KMeans` now supports sparse data when
+  `solver = "elkan"`. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
