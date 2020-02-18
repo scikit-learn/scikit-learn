@@ -69,17 +69,83 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 
-estimators = [
-    ('Random Forest', RandomForestRegressor(random_state=42)),
-    ('Lasso', LassoCV()),
-    ('Gradient Boosting', HistGradientBoostingRegressor(random_state=0))
-]
-stacking_regressor = StackingRegressor(
-    estimators=estimators, final_estimator=RidgeCV()
+from sklearn.compose import make_column_transformer
+
+#TODO: add ridge encoder
+
+# The data we are going to use is going to be downloaded from the OpenMl, and
+# therefore it still need to be prepared for our use. FIrst, we have some
+# categorical columns, second there are plenty of missing values in the
+# dataset. Therefore we wil start from making a pipelines, one for our linear
+# estimators and the other one for decision trees
+
+from sklearn.datasets import fetch_openml
+
+def load_ames_housing():
+    df = fetch_openml(data_id=42165, as_frame=True)
+    X = df.data
+    y = df.target
+
+    return X, y
+
+X, y = load_ames_housing()
+X = X[:250]
+y = y[:250]
+
+
+categorical_proc_tree = make_pipeline(
+    SimpleImputer(strategy='constant', fill_value='missing'),
+    OrdinalEncoder()
 )
 
+categorical_proc_lin = make_pipeline(
+    SimpleImputer(strategy='constant', fill_value='missing'),
+    OneHotEncoder()
+)
 
+numerical_proc = make_pipeline(
+    StandardScaler(),
+    SimpleImputer(strategy='mean'),
+    OneHotEncoder()
+)
+
+cat_cols = X.columns[X.dtypes == 'O']
+num_cols = X.columns[X.dtypes == 'float64']
+#import pdb; pdb.set_trace()
+#estimators = [
+#    ('Random Forest', RandomForestRegressor(random_state=42)),
+#    ('Lasso', LassoCV()),
+#    ('Gradient Boosting', HistGradientBoostingRegressor(random_state=0))
+#]
+
+# transformation to use for decision tree based estimators
+processor_tree = make_column_transformer(
+                              (categorical_proc_tree, cat_cols),
+                              remainder = 'passthrough')
+
+# transformation to use for linear estimators
+processor_lin = make_column_transformer(
+                              (categorical_proc_lin, cat_cols),
+                              (numerical_proc, num_cols),
+                              remainder = 'passthrough')
+#import pdb; pdb.set_trace()
+lasso_pip = make_pipeline(processor_lin,
+                            LassoCV())
+
+rf_pip = make_pipeline(processor_tree,
+                        RandomForestRegressor(random_state=42))
+#stacking_regressor = StackingRegressor(
+#    estimators=estimators, final_estimator=RidgeCV()
+#)
+estimators = [('Random Forest', rf_pip)] #, 
+estimators = [('Lasso', lasso_pip)]
+stacking_regressor = StackingRegressor(estimators = estimators, final_estimator=RidgeCV())
 ###############################################################################
 # Load dataset
 ###############################################################################
@@ -100,15 +166,8 @@ stacking_regressor = StackingRegressor(
 # https://www.kaggle.com/c/house-prices-advanced-regression-techniques
 # .. _`OpenML`: https://www.openml.org/d/42165
 
-from sklearn.datasets import fetch_openml
-from sklearn.impute import SimpleImputer
 
-
-def load_ames_housing():
-    df = fetch_openml(data_id=42165, as_frame=True)
-    X = df.data
-    y = df.target
-
+'''
     o_columns = X.columns[X.dtypes == 'O']
     for column in o_columns:
         string_value = X[column].unique()
@@ -125,6 +184,7 @@ def load_ames_housing():
     imp.fit(X)
 
     return X, y
+    '''
 
 
 ###############################################################################
@@ -138,22 +198,29 @@ import numpy as np
 from sklearn.model_selection import cross_validate, cross_val_predict
 
 
-X, y = load_ames_housing()
-X = X[:250]
-y = y[:250]
+
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
 for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                                                stacking_regressor)]):
+    #import pdb; pdb.set_trace()
     start_time = time.time()
+
+    #cross_validate()
+    #make_pipeline(SimpleImputer(strategy='constant', fill_value='missing'),
+    #              cross_validate(est, X, y,
+    #                       scoring=['r2', 'neg_mean_absolute_error'],
+    #                       n_jobs=-1, verbose=0))
+    print(name)
     score = cross_validate(est, X, y,
                            scoring=['r2', 'neg_mean_absolute_error'],
                            n_jobs=-1, verbose=0)
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    #y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    """
     plot_regression_results(
         ax, y, y_pred,
         name,
@@ -163,6 +230,7 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                 -np.mean(score['test_neg_mean_absolute_error']),
                 np.std(score['test_neg_mean_absolute_error'])),
         elapsed_time)
+    """
 
 plt.suptitle('Single predictors versus stacked predictors')
 plt.tight_layout()
