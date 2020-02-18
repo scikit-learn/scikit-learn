@@ -58,12 +58,13 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
     cdef:
         int nnz = a_indices.shape[0]
         int i
-        floating tmp = 0.0
+        floating tmp, bi
         floating result = 0.0
 
     for i in range(nnz):
-        tmp = a_data[i] - b[a_indices[i]]
-        result += tmp * tmp - b[a_indices[i]] * b[a_indices[i]]
+        bi = b[a_indices[i]]
+        tmp = a_data[i] - bi
+        result += tmp * tmp - bi * bi
 
     result += b_squared_norm
 
