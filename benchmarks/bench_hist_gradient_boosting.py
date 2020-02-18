@@ -79,7 +79,7 @@ def one_run(n_samples):
                     max_iter=n_trees,
                     max_bins=max_bins,
                     max_leaf_nodes=n_leaf_nodes,
-                    early_stopping=False,
+                    n_iter_no_change=None,
                     random_state=0,
                     verbose=0)
     loss = args.loss
