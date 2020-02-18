@@ -132,14 +132,16 @@ If you must install scikit-learn and its dependencies with pip, you can install
 it as ``scikit-learn[alldeps]``.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
-and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
-examples Matplotlib >= 1.5.1 is required. A few examples require
-scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
+and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
+examples Matplotlib >= 2.1.1 is required. A few examples require
+scikit-image >= 0.13, a few examples require pandas >= 0.18.0.
 
 .. warning::
 
     Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
-    Scikit-learn now requires Python 3.5 or newer.
+    Scikit-learn 0.21 supported Python 3.5-3.7.
+    Scikit-learn 0.22 supported Python 3.5-3.8.
+    Scikit-learn now requires Python 3.6 or newer.
 
 
 .. note::
