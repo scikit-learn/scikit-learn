@@ -43,10 +43,10 @@ def check_clusterings(labels_true, labels_pred):
         The predicted labels.
     """
     labels_true = check_array(
-        labels_true, ensure_2d=False, ensure_min_samples=0
+        labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
     labels_pred = check_array(
-        labels_pred, ensure_2d=False, ensure_min_samples=0
+        labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
 
     # input checks
@@ -645,7 +645,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
-    return mi.sum()
+    return np.clip(mi.sum(), 0.0, None)
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred,

@@ -117,7 +117,7 @@ def _yield_checks(name, estimator):
 def _yield_classifier_checks(name, classifier):
     tags = _safe_tags(classifier)
 
-    # test classifiers can handle non-array data
+    # test classifiers can handle non-array data and pandas objects
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
@@ -128,6 +128,8 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
+    yield partial(check_classifiers_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
@@ -174,6 +176,8 @@ def _yield_regressor_checks(name, regressor):
     # basic testing
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
+    yield partial(check_regressors_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     if tags["multioutput"]:
@@ -311,8 +315,8 @@ def _set_check_estimator_ids(obj):
         if not obj.keywords:
             return obj.func.__name__
 
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in obj.keywords.items()])
+        kwstring = ",".join(["{}={}".format(k, v)
+                             for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
@@ -478,9 +482,6 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
-
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 2
 
     if name == 'TruncatedSVD':
         # TruncatedSVD doesn't run with n_components = n_features
@@ -1714,8 +1715,10 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
+def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
+                            X_dtype='float64'):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
+    X_m = X_m.astype(X_dtype)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
@@ -2166,8 +2169,10 @@ def check_regressors_int(name, regressor_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_regressors_train(name, regressor_orig, readonly_memmap=False):
+def check_regressors_train(name, regressor_orig, readonly_memmap=False,
+                           X_dtype=np.float64):
     X, y = _boston_subset()
+    X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
@@ -2450,7 +2455,9 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2458,11 +2465,13 @@ def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_data_not_an_array(name, estimator_orig, X, y):
+def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
@@ -2473,8 +2482,28 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
-    y_ = _NotAnArray(np.asarray(y))
-    X_ = _NotAnArray(np.asarray(X))
+    if obj_type not in ["NotAnArray", 'PandasDataframe']:
+        raise ValueError("Data type {0} not supported".format(obj_type))
+
+    if obj_type == "NotAnArray":
+        y_ = _NotAnArray(np.asarray(y))
+        X_ = _NotAnArray(np.asarray(X))
+    else:
+        # Here pandas objects (Series and DataFrame) are tested explicitly
+        # because some estimators may handle them (especially their indexing)
+        # specially.
+        try:
+            import pandas as pd
+            y_ = np.asarray(y)
+            if y_.ndim == 1:
+                y_ = pd.Series(y_)
+            else:
+                y_ = pd.DataFrame(y_)
+            X_ = pd.DataFrame(np.asarray(X))
+
+        except ImportError:
+            raise SkipTest("pandas is not installed: not checking estimators "
+                           "for pandas objects.")
 
     # fit
     estimator_1.fit(X_, y_)

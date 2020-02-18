@@ -31,8 +31,7 @@ X_regression, y_regression = make_regression(random_state=0)
      ({'max_iter': 0}, 'max_iter=0 must not be smaller than 1'),
      ({'max_leaf_nodes': 0}, 'max_leaf_nodes=0 should not be smaller than 2'),
      ({'max_leaf_nodes': 1}, 'max_leaf_nodes=1 should not be smaller than 2'),
-     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 2'),
-     ({'max_depth': 1}, 'max_depth=1 should not be smaller than 2'),
+     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 1'),
      ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
      ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
      ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
@@ -413,7 +412,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())
@@ -446,3 +445,17 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
+
+
+def test_max_depth_max_leaf_nodes():
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16179
+    # there was a bug when the max_depth and the max_leaf_nodes criteria were
+    # met at the same time, which would lead to max_leaf_nodes not being
+    # respected.
+    X, y = make_classification(random_state=0)
+    est = HistGradientBoostingClassifier(max_depth=2, max_leaf_nodes=3,
+                                         max_iter=1).fit(X, y)
+    tree = est._predictors[0][0]
+    assert tree.get_max_depth() == 2
+    assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix

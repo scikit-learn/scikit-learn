@@ -328,6 +328,14 @@ scikit-learn seeks to achieve.
 You can find more information about addition of gpu support at
 `Will you add GPU support?`_.
 
+Note that scikit-learn currently implements a simple multilayer perceptron
+in `sklearn.neural_network`. We will only accept bug fixes for this module.
+If you want to implement more complex deep learning models, please turn to
+popular deep learning frameworks such as
+`tensorflow <https://www.tensorflow.org/>`_,
+`keras <https://keras.io/>`_
+and `pytorch <https://pytorch.org/>`_.
+
 Why is my pull request not getting any attention?
 -------------------------------------------------
 
@@ -385,3 +393,23 @@ efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
+
+Do you plan to implement transform for target y in a pipeline?
+----------------------------------------------------------------------------
+Currently transform only works for features X in a pipeline. 
+There's a long-standing discussion about 
+not being able to transform y in a pipeline.
+Follow on github issue
+`#4143 <https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
+Meanwhile check out
+:class:`sklearn.compose.TransformedTargetRegressor`,
+`pipegraph <https://github.com/mcasl/PipeGraph>`_,
+`imbalanced-learn <https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
+Note that Scikit-learn solved for the case where y 
+has an invertible transformation applied before training 
+and inverted after prediction. Scikit-learn intends to solve for
+use cases where y should be transformed at training time 
+and not at test time, for resampling and similar uses, 
+like at imbalanced learn. 
+In general, these use cases can be solved 
+with a custom meta estimator rather than a Pipeline

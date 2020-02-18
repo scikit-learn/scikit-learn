@@ -440,7 +440,6 @@ def test_rfe_allow_nan_inf_in_x(cv):
     rfe.fit(X, y)
     rfe.transform(X)
 
-
 def test_w_pipeline_2d_coef_():
     pipeline = make_pipeline(StandardScaler(), LogisticRegression())
 
@@ -450,3 +449,14 @@ def test_w_pipeline_2d_coef_():
 
     sfm.fit(data, y)
     assert sfm.transform(data).shape[1] == 2
+
+@pytest.mark.parametrize('ClsRFE', [
+    RFE,
+    RFECV
+    ])
+def test_multioutput(ClsRFE):
+    X = np.random.normal(size=(10, 3))
+    y = np.random.randint(2, size=(10, 2))
+    clf = RandomForestClassifier(n_estimators=5)
+    rfe_test = ClsRFE(clf)
+    rfe_test.fit(X, y)
