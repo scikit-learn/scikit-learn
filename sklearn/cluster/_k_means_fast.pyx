@@ -92,7 +92,7 @@ cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     for i in range(n_samples):
         j = labels[i]
         sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
-                                         n_features, True)
+                                         n_features, squared=True)
         inertia += sq_dist * sample_weight[i]
 
     return inertia
@@ -125,7 +125,7 @@ cpdef floating _inertia_sparse(X,
         sq_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers[j], centers_squared_norms[j], True)
+            centers[j], centers_squared_norms[j], squared=True)
         inertia += sq_dist * sample_weight[i]
 
     return inertia
@@ -201,7 +201,7 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         distances[i] = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers_old[j], centers_squared_norms[j], True)
+            centers_old[j], centers_squared_norms[j], squared=True)
 
     cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
@@ -253,7 +253,7 @@ cdef void _center_shift(floating[:, ::1] centers_old,
 
     for j in range(n_clusters):
         center_shift[j] = _euclidean_dense_dense(
-            &centers_new[j, 0], &centers_old[j, 0], n_features, False)
+            &centers_new[j, 0], &centers_old[j, 0], n_features, squared=False)
 
 
 def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,

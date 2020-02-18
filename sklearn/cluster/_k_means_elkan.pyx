@@ -80,12 +80,12 @@ shape (n_clusters, n_clusters)
     for i in range(n_samples):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
-                                          n_features, False)
+                                          n_features, squared=False)
         lower_bounds[i, 0] = min_dist
         for j in range(1, n_clusters):
             if min_dist > center_half_distances[best_cluster, j]:
                 dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
-                                              n_features, False)
+                                              n_features, squared=False)
                 lower_bounds[i, j] = dist
                 if dist < min_dist:
                     min_dist = dist
@@ -157,7 +157,7 @@ shape (n_clusters, n_clusters)
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers[0], centers_squared_norms[0], False)
+            centers[0], centers_squared_norms[0], squared=False)
 
         lower_bounds[i, 0] = min_dist
         for j in range(1, n_clusters):
@@ -165,7 +165,7 @@ shape (n_clusters, n_clusters)
                 dist = _euclidean_sparse_dense(
                     X_data[X_indptr[i]: X_indptr[i + 1]],
                     X_indices[X_indptr[i]: X_indptr[i + 1]],
-                    centers[j], centers_squared_norms[j], False)
+                    centers[j], centers_squared_norms[j], squared=False)
                 lower_bounds[i, j] = dist
                 if dist < min_dist:
                     min_dist = dist
@@ -368,7 +368,7 @@ cdef void _update_chunk_dense(floating *X,
                     # between the sample and its current assigned center.
                     if not bounds_tight:
                         upper_bound = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[label, 0], n_features, False)
+                            X + i * n_features, &centers_old[label, 0], n_features, squared=False)
                         lower_bounds[i, label] = upper_bound
                         bounds_tight = 1
 
@@ -379,7 +379,7 @@ cdef void _update_chunk_dense(floating *X,
                         or (upper_bound > center_half_distances[label, j])):
 
                         distance = _euclidean_dense_dense(
-                            X + i * n_features, &centers_old[j, 0], n_features, False)
+                            X + i * n_features, &centers_old[j, 0], n_features, squared=False)
                         lower_bounds[i, j] = distance
                         if distance < upper_bound:
                             label = j
@@ -601,7 +601,8 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                         upper_bound = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],
-                            centers_old[label], centers_squared_norms[label], False)
+                            centers_old[label], centers_squared_norms[label],
+                            squared=False)
                         lower_bounds[i, label] = upper_bound
                         bounds_tight = 1
 
@@ -613,7 +614,8 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                         distance = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],
-                            centers_old[j], centers_squared_norms[j], False)
+                            centers_old[j], centers_squared_norms[j],
+                            squared=False)
                         lower_bounds[i, j] = distance
                         if distance < upper_bound:
                             label = j
