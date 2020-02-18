@@ -735,19 +735,24 @@ def test_categoricalnb_with_min_categories():
     clf.fit(X_n_categories, y_n_categories)
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
-    # does not accept string
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories='bad_arg')
-    assert_raises(ValueError, clf.fit, X_n_categories, y_n_categories)
 
-    # gives error for min_categories with wrong shape
+@pytest.mark.parametrize(
+    "min_categories, error_msg",
+    [
+        ('bad_arg', "'min_categories' should have integral"),
+        ([[3, 2], [2, 4]], "'min_categories' should have shape"),
+        (1., "'min_categories' should have integral"),
+     ]
+)
+def test_categoricalnb_min_categories_errors(min_categories, error_msg):
+
+    X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y = np.array([1, 1, 2, 2])
+
     clf = CategoricalNB(alpha=1, fit_prior=False,
-                        min_categories=[[3, 2], [2, 4]])
-    assert_raise_message(ValueError, "'min_categories' should have shape",
-                         clf.fit, X_n_categories, y_n_categories)
-
-    clf = CategoricalNB(alpha=1, fit_prior=False, min_categories=1.)
-    assert_raise_message(ValueError, "'min_categories' should have integral",
-                         clf.fit, X_n_categories, y_n_categories)
+                        min_categories=min_categories)
+    with pytest.raises(ValueError, match=error_msg):
+        clf.fit(X, y)
 
 
 def test_alpha():
