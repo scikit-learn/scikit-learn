@@ -295,3 +295,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
+  distance matrix is not square and `affinity=precomputed`. 
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
