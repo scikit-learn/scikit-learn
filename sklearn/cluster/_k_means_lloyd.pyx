@@ -265,6 +265,7 @@ def _lloyd_iter_chunked_sparse(X,
           the algorithm. This is useful especially when calling predict on a
           fitted model.
     """
+    # print(X.indices.dtype)
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
