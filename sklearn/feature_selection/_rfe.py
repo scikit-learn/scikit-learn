@@ -421,7 +421,7 @@ class RFECV(RFE):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    importance_getter : string or callable, optional (default='auto')
+    importance_getter : str or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
 
