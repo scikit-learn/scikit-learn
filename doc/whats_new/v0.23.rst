@@ -137,6 +137,14 @@ Changelog
   :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`.
   :pr:`16103` by :user:`Divyaprabha M <divyaprabha123>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
+ :class:`feature_selection.SelectFromModel` now also accepts a string that specifies 
+ an attribute name/path or
+ a `callable` for extracting feature importance.
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
