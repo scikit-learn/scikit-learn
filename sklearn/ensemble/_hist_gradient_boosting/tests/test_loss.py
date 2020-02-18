@@ -63,8 +63,7 @@ def test_derivatives(loss, x0, y_true):
     # using Halley's method with the first and second order derivatives
     # computed by the Loss instance.
 
-    if loss.endswith('crossentropy'):
-        y_dtype = Y_CLF_DTYPE
+    y_dtype = Y_CLF_DTYPE if loss.endswith('crossentropy') else Y_DTYPE
 
     loss = _LOSSES[loss]()
     y_true = np.array([y_true], dtype=y_dtype)
