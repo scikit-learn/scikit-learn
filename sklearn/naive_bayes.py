@@ -1180,20 +1180,25 @@ class CategoricalNB(_BaseDiscreteNB):
         self.category_count_ = [np.zeros((n_effective_classes, 0))
                                 for _ in range(n_features)]
 
-    def _init_n_categories(self, X):
-        feature_n_categories = X.max(axis=0) + 1
-        if self.min_categories is not None:
+    @staticmethod
+    def _validate_n_categories(X, min_categories):
+        # rely on max for n_categories categories are encoded between 0...n-1
+        n_categories_X = X.max(axis=0) + 1
+        if min_categories is not None:
             # unsafe casting allows float to be coerced to int
-            n_categories_ = np.maximum(feature_n_categories,
-                                       self.min_categories,
+            n_categories_ = np.maximum(n_categories_X,
+                                       min_categories,
                                        dtype=np.int,
                                        casting='unsafe')
-            if n_categories_.shape != feature_n_categories.shape:
-                raise ValueError('min_categories must be scalar, array-like '
-                                 'of shape (n_features,), or None.')
-            self.n_categories_ = n_categories_
+            if n_categories_.shape != n_categories_X.shape:
+                raise ValueError(
+                    f"'min_categories' should have shape ({X.shape[1]},"
+                    f") when an array-like is provided. Got"
+                    f" {np.shape(min_categories)} instead."
+                )
+            return n_categories_
         else:
-            self.n_categories_ = feature_n_categories
+            return n_categories_X
 
     def _count(self, X, Y):
         def _update_cat_count_dims(cat_count, highest_feature):
@@ -1215,7 +1220,8 @@ class CategoricalNB(_BaseDiscreteNB):
                 cat_count[j, indices] += counts[indices]
 
         self.class_count_ += Y.sum(axis=0)
-        self._init_n_categories(X)
+        self.n_categories_ = self._validate_n_categories(
+            X, self.min_categories)
         for i in range(self.n_features_):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(

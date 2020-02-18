@@ -742,8 +742,8 @@ def test_categoricalnb_with_min_categories():
     # gives error for min_categories with wrong shape
     clf = CategoricalNB(alpha=1, fit_prior=False,
                         min_categories=[[3, 2], [2, 4]])
-    assert_raise_message(ValueError, 'min_categories must be', clf.fit,
-                         X_n_categories, y_n_categories)
+    assert_raise_message(ValueError, "'min_categories' should have shape",
+                         clf.fit, X_n_categories, y_n_categories)
 
 
 def test_alpha():
