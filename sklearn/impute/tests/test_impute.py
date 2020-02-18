@@ -1031,7 +1031,7 @@ def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
         [np.nan, 1, 10, 1]])
     imputer1 = IterativeImputer(min_value=min_max_1[0],
                                 max_value=min_max_1[1],
-                                random_state=rng)
+                                random_state=0)
     imputer2 = IterativeImputer(min_value=min_max_2[0],
                                 max_value=min_max_2[1],
                                 random_state=rng)
