@@ -599,7 +599,7 @@ def test_regressor_chain_w_fit_params():
     class MySGD(SGDRegressor):
 
         def fit(self, X, y, **fit_params):
-            self.sample_weight = fit_params['sample_weight']
+            self.sample_weight_ = fit_params['sample_weight']
             super().fit(X, y, **fit_params)
 
     model = RegressorChain(MySGD())
@@ -609,4 +609,4 @@ def test_regressor_chain_w_fit_params():
     model.fit(X, y, **fit_param)
 
     for est in model.estimators_:
-        assert est.sample_weight is weight
+        assert est.sample_weight_ is weight
