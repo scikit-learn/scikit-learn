@@ -217,13 +217,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             elif not callable(importance_getter):
                 raise ValueError('`importance_getter` has to be a string'
                                  ' or `callable`')
-            importance = importance_getter(estimator)
+            importances = importance_getter(estimator)
 
             # Get ranks
-            if importance.ndim > 1:
-                ranks = np.argsort(safe_sqr(importance).sum(axis=0))
+            if importances.ndim > 1:
+                ranks = np.argsort(safe_sqr(importances).sum(axis=0))
             else:
-                ranks = np.argsort(safe_sqr(importance))
+                ranks = np.argsort(safe_sqr(importances))
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -427,9 +427,9 @@ class RFECV(RFE):
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
         For example, give `regressor_.coef_` in case of
-        `TransformedTargetRegressor`  or
+        :class:`sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        `Pipeline` with its last step named `clf`.
+        :class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should

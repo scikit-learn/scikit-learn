@@ -99,7 +99,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         .. versionadded:: 0.20
 
-    importance_getter : string or callable, optional (default='auto')
+    importance_getter : str or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
 

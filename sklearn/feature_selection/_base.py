@@ -130,12 +130,14 @@ def _get_importances_auto(estimator):
     elif hasattr(estimator, 'feature_importances_'):
         getter = attrgetter('feature_importances_')
     else:
-        raise RuntimeError("when `importance_getter=='auto'`, "
-                         "the underlying estimator %s should have `coef_` or "
-                         "`feature_importances_` attribute. "
-                         " Either pass a fitted estimator to feature selector"
-                         "  or call fit before calling transform."
-                         % estimator.__class__.__name__)
+        raise RuntimeError(
+            f"when `importance_getter=='auto'`, the underlying estimator "
+            f"{estimator.__class__.__name__} should have `coef_` or "
+            f"`feature_importances_` attribute. Either pass a fitted "
+            f"estimator to SelectFromModel or call fit before calling "
+            f"transform."
+        )
+
     return getter
 
 
@@ -154,7 +156,6 @@ def _get_feature_importances(estimator, getter,
 
     if importances.ndim == 1:
         importances = np.abs(importances)
-
     else:
         importances = np.linalg.norm(importances, axis=0,
                                      ord=norm_order)
