@@ -153,9 +153,9 @@ def test_incr_mean_variance_axis():
 @pytest.mark.parametrize(
     "X1, X2",
     [
-        (sp.random(5, 2, density=0.8, random_state=0).tocsr(),
-         sp.random(13, 2, density=0.8, random_state=0).tocsr()),
-        (sp.random(5, 2, density=0.8, random_state=0).tocsr(),
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
+         sp.random(13, 2, density=0.8, format='csr', random_state=0)),
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
          sp.hstack([sp.csr_matrix(np.full((13, 1), fill_value=np.nan)),
                     sp.random(13, 1, density=0.8, random_state=42)],
                    format="csr"))
