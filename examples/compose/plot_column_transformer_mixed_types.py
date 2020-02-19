@@ -50,10 +50,12 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # We will train our classifier with the following features:
 #
 # Numeric Features:
+#
 # * ``age``: float;
 # * ``fare``: float.
 #
 # Categorical Features:
+#
 # * ``embarked``: categories encoded as strings ``{'C', 'S', 'Q'}``;
 # * ``sex``: categories encoded as strings ``{'female', 'male'}``;
 # * ``pclass``: ordinal integers ``{1, 2, 3}``.
