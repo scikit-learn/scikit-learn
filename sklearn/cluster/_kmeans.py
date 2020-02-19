@@ -49,21 +49,21 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Parameters
     ----------
-    X : array or sparse matrix of shape (n_samples, n_features)
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
     n_clusters : int
         The number of seeds to choose
 
-    x_squared_norms : array of shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
     random_state : RandomState instance
         The generator used to initialize the centers.
         See :term:`Glossary <random_state>`.
 
-    n_local_trials : integer or None, default=None
+    n_local_trials : int, default=None
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
@@ -192,7 +192,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     Parameters
     ----------
-    X : array-like or sparse matrix of shape (n_samples, n_features)
+    X : {array-like, sparse} matrix of shape (n_samples, n_features)
         The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
         if the given data is not C-contiguous.
@@ -290,15 +290,15 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
-    return_n_iter : bool, optional
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
     -------
-    centroid : float ndarray of shape (n_clusters, n_features)
+    centroid : ndarray of shape (n_clusters, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray of shape (n_samples,)
+    label : ndarray of shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
@@ -329,8 +329,8 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
     Parameters
     ----------
-    X : array-like or CSR matrix of shape (n_samples, n_features)
-        The observations to cluster.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The observations to cluster. If sparse matrix, must be in CSR format.
 
     sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
@@ -361,7 +361,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     verbose : bool, default=False
         Verbosity mode
 
-    x_squared_norms : array-like or None, default=None
+    x_squared_norms : array-like, default=None
         Precomputed x_squared_norms.
 
     random_state : int, RandomState instance, default=None
@@ -383,10 +383,10 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
     Returns
     -------
-    centroid : float ndarray of shape (n_clusters, n_features)
+    centroid : ndarray of shape (n_clusters, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray of shape (n_samples,)
+    label : ndarray of shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
@@ -475,10 +475,10 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     Parameters
     ----------
-    X : array-like or CSR matrix of shape (n_samples, n_features)
-        The observations to cluster.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The observations to cluster. If sparse matrix, must be in CSR format.
 
-    sample_weight : array-like of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
     n_clusters : int
@@ -507,7 +507,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     verbose : bool, default=False
         Verbosity mode
 
-    x_squared_norms : array-like or None, default=None
+    x_squared_norms : ndarray of shape(n_samples,), default=None
         Precomputed x_squared_norms.
 
     random_state : int, RandomState instance or None, default=None
@@ -529,10 +529,10 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
     Returns
     -------
-    centroid : float ndarra of shape (n_clusters, n_features)
+    centroid : ndarray of shape (n_clusters, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray of shape (n_samples,)
+    label : ndarray of shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
@@ -601,17 +601,18 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
     Parameters
     ----------
-    X : array-like or CSR sparse matrix of shape (n_samples, n_features)
-        The input samples to assign to the labels.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The input samples to assign to the labels. If sparse matrix, must be in
+        CSR format.
 
     sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array of shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers : array, shape (n_clusters, n_features)
+    centers : ndarray, shape (n_clusters, n_features)
         The cluster centers.
 
     n_threads : int, default=1
@@ -621,7 +622,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
 
     Returns
     -------
-    labels : int array of shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
         The resulting assignment
 
     inertia : float
@@ -658,7 +659,7 @@ def _init_centroids(X, n_clusters=8, init="k-means++", random_state=None,
     Parameters
     ----------
 
-    X : array of shape (n_samples, n_features)
+    X : {ndarray, spare matrix} of shape (n_samples, n_features)
         The input samples.
 
     n_clusters : int, default=8
@@ -672,7 +673,7 @@ def _init_centroids(X, n_clusters=8, init="k-means++", random_state=None,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    x_squared_norms : array of shape (n_samples,), default=None
+    x_squared_norms : ndarray of shape (n_samples,), default=None
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
@@ -1086,7 +1087,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : array of shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
@@ -1133,7 +1134,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array of shape (n_samples, n_clusters)
+        X_new : ndarray of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
         check_is_fitted(self)
@@ -1163,7 +1164,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : array of shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
