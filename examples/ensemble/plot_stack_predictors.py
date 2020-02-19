@@ -24,28 +24,19 @@ print(__doc__)
 # Download the dataset
 ###############################################################################
 #
-# We will use Ames Housing dataset which is a set of 1460 residential homes
-# in Ames, Iowa. Each of them is described by 80 features and the task is to
-# predict the final price of the houses. Here, we select only 20 most
-# intersting features chosen using GradientBoostingRegressor
-# (TODO: add link, check correct
-# https://github.com/scikit-learn/scikit-learn/pull/16400).
-# https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_regression.html
-#
-# Ames Housing dataset is not a part of Sklearn and we will download it from OpenML (TODO:
-# link: https://www.openml.org/d/42165).
-# We will be using Ames housing dataset. The objective is to predict the price
-# of the residential homes in Ames, Iowa. `This dataset`_ was first compiled by
-# Dean De Cock and became better known after it was used for the `Kaggle
-# challenge`_.
+# We will use `Ames Housing`_ dataset which was first compiled by
+# Dean De Cock and became better known after it was used in `Kaggle
+# challenge`_. It is a set of 1460 residential homes in Ames, Iowa, each
+# described by 80 features. The task is to predict the final price of the
+# houses. In this example we will use only 20 most intersting features chosen
+# using GradientBoostingRegressor() (here we don't show how to select most
+# interesting features, however please refer to:
+# :doc:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
 # Ames housing dataset is not part of the Sklearn and therefore we will fetch
-# it from `OpenML`_. It consists of multiple features characterizing the
-# houses. Some of those features are not numeric values and therefore we will
-# first replace them with numbers. Next, we need to impute all the missing
-# values (here we will use 'most_frequent' strategy).
+# it from `OpenML`_.
 #
-# .. _`This dataset`: http://jse.amstat.org/v19n3/decock.pdf
+# .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
 # .. _`Kaggle challenge`:
 # https://www.kaggle.com/c/house-prices-advanced-regression-techniques
 # .. _`OpenML`: https://www.openml.org/d/42165
