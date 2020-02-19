@@ -160,6 +160,11 @@ processor_lin = make_column_transformer(
 #
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
+#
+# Note: although for the 3 learners we will make new pipelines
+# with the processors which we wrote in the previous section, the
+# final estimator RidgeCV() will be fed with the already preprocessed output from
+# the 3 learners and therefore we will not be creating a pipeline for it.
 
 
 from sklearn.experimental import enable_hist_gradient_boosting
@@ -176,33 +181,16 @@ lasso_pip = make_pipeline(processor_lin,
 rf_pip = make_pipeline(processor_tree,
                         RandomForestRegressor(random_state=42))
 
-ridge_pip = make_pipeline(processor_lin,
-                          RidgeCV())
-
 gradient_pip = make_pipeline(processor_tree,
                             HistGradientBoostingRegressor(random_state=0))
-#stacking_regressor = StackingRegressor(
-#    estimators=estimators, final_estimator=RidgeCV()
-#)
+
 estimators = [('Random Forest', rf_pip),
               ('Lasso', lasso_pip),
               ('Gradient Boosting', gradient_pip)]
+
 stacking_regressor = StackingRegressor(estimators = estimators,
                                        final_estimator=RidgeCV())
 
-
-  # noqa
-
-
-
-from sklearn.pipeline import Pipeline
-#from sklearn.linear_model import LogisticRegression
-
-#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
-#ridge_pip.fit(X, y)
-#lasso_pip.fit(X,y)
-#import pdb;pdb.set_trace()
 
 ###############################################################################
 # Load dataset
