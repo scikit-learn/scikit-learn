@@ -388,16 +388,22 @@ trailing ``_`` is used to check if the estimator has been fitted.
 
 Cloning
 -------
-For use with the :mod:`model_selection` module,
-an estimator must support the ``base.clone`` function to replicate an estimator.
-This can be done by providing a ``get_params`` method.
-If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
-``type(estimator)`` on which ``set_params`` has been called with clones of
-the result of ``estimator.get_params()``.
+For use with the :mod:`model_selection` module, an estimator must support the
+:func:`base.clone` function to replicate an estimator. This can be done by
+providing a ``get_params`` method. If ``get_params`` is present, then
+``clone(estimator)`` will be an instance of ``type(estimator)`` on which
+``set_params`` has been called with clones of the result of
+``estimator.get_params()``.
 
-Objects that do not provide this method will be deep-copied
-(using the Python standard function ``copy.deepcopy``)
-if ``safe=False`` is passed to ``clone``.
+Objects that do not provide this method will either:
+
+* be deep-copied (using the Python standard function ``copy.deepcopy``) if
+``safe=False`` is passed to :func:`base.clone`.
+* be reassigned if the object is an estimator parameter declared to be
+  immutable using the estimator tag `immutable_params` (refer to
+  :ref:`estimator_tags` below). This behavior is interesting when a parameter
+  is known to be constant (i.e. not be changed during `fit`) and that a
+  deepcopy will be memory or computationally expensive.
 
 Pipeline compatibility
 ----------------------
@@ -490,8 +496,8 @@ binary_only (default=``False``)
 
 immutable_params (default=None)
     list of estimator parameters which are declared to be immutable. These
-    parameters will not be deep copied when calling :func:`sklearn.base.clone`
-    but only reassigned.
+    parameters will not be deep copied when calling :func:`base.clone` but only
+    reassigned.
 
 multilabel (default=``False``)
     whether the estimator supports multilabel output
