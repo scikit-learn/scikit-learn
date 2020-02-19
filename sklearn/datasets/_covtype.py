@@ -81,7 +81,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Returns
     -------
-    dataset :
+    dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
         data : numpy array of shape (581012, 54)

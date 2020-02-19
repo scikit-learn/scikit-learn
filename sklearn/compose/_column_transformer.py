@@ -124,10 +124,11 @@ boolean mask array or callable
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-    named_transformers_ : Bunch object, a dictionary with attribute access
+    named_transformers_ : :class:`~sklearn.utils.Bunch` object,
+        a dictionary with attribute access
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
-        objects. For more information, see :class:`sklearn.utils.Bunch`.
+        objects.
 
     sparse_output_ : boolean
         Boolean flag indicating whether the output of ``transform`` is a
