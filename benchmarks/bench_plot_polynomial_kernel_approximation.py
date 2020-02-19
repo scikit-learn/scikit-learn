@@ -37,8 +37,6 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (http://www.vldb.org/pvldb/1/1454225.pdf)
 
 """
-# print(__doc__)
-
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause
 
