@@ -34,7 +34,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
-    'mutable_params': None,
+    'immutable_params': None,
 }
 
 
@@ -45,9 +45,9 @@ def clone(estimator, safe=True, deepcopy=True):
     copying attached data. It yields a new estimator with the same parameters
     that has not been fit on any data.
 
-    In case an estimator declared some parameters to be mutable (via the
-    `'mutable_params'` tag), these paremeters will not be deep copied but only
-    reassigned.
+    In case an estimator declared some parameters to be immutable (via the
+    `'immutable_params'` tag), these paremeters will not be deep copied but
+    only reassigned.
 
     Parameters
     ----------
@@ -64,13 +64,15 @@ def clone(estimator, safe=True, deepcopy=True):
         Whether or not to trigger a deep copy of object which are not
         estimator.
     """
+    if not safe and not deepcopy:
+        return estimator
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
-            return copy.deepcopy(estimator) if deepcopy else estimator
+            return copy.deepcopy(estimator)
         else:
             if isinstance(estimator, type):
                 raise TypeError(
@@ -86,10 +88,13 @@ def clone(estimator, safe=True, deepcopy=True):
                 )
 
     klass = estimator.__class__
-    mutable_params = estimator._get_tags().get('mutable_params', None)
     new_object_params = estimator.get_params(deep=False)
+    tag = "immutable_params"
+    immutable_params = getattr(
+        estimator, "_get_tags", lambda: _DEFAULT_TAGS)().get(
+            tag, _DEFAULT_TAGS[tag])
     for name, param in new_object_params.items():
-        if mutable_params is not None and name in mutable_params:
+        if immutable_params is not None and name in immutable_params:
             new_object_params[name] = clone(param, safe=False, deepcopy=False)
         else:
             new_object_params[name] = clone(param, safe=False, deepcopy=True)

@@ -104,6 +104,25 @@ class VargEstimator(BaseEstimator):
         pass
 
 
+class EstimatorImmutableParams(BaseEstimator):
+    """Estimator which will declare parameters as immutable."""
+    def __init__(self, mutable_list, mutable_dict, mutable_estimator,
+                 immutable_list, immutable_dict, immutable_estimator):
+        self.mutable_list = mutable_list
+        self.mutable_dict = mutable_dict
+        self.mutable_estimator = mutable_estimator
+
+        self.immutable_list = immutable_list
+        self.immutable_dict = immutable_dict
+        self.immutable_estimator = immutable_estimator
+
+    def _more_tags(self):
+        return {
+            "immutable_params":
+            ["immutable_list", "immutable_dict", "immutable_estimator"]
+        }
+
+
 #############################################################################
 # The tests
 
@@ -202,6 +221,31 @@ def test_clone_class_rather_than_instance():
     msg = "You should provide an instance of scikit-learn estimator"
     with pytest.raises(TypeError, match=msg):
         clone(MyEstimator)
+
+
+def test_clone_immutable_params():
+    estimator = EstimatorImmutableParams(
+        mutable_list=[0, 1, 2],
+        mutable_dict={'a': 0, 'b': 1, 'c': 2},
+        mutable_estimator=MyEstimator(),
+        immutable_list=[0, 1, 2],
+        immutable_dict={'a': 0, 'b': 1, 'c': 2},
+        immutable_estimator=MyEstimator(),
+    )
+    estimator_2 = clone(estimator)
+
+    mutable_params_name = list(
+        set(estimator.get_params(deep=False).keys()) -
+        set(estimator._get_tags()["immutable_params"])
+    )
+    immutable_params_name = estimator._get_tags()["immutable_params"]
+
+    # no copy should be done for the declared immutable params
+    for param in immutable_params_name:
+        assert getattr(estimator, param) is getattr(estimator_2, param)
+    # otherwise we should take a copy or deep copy
+    for param in mutable_params_name:
+        assert getattr(estimator, param) is not getattr(estimator_2, param)
 
 
 def test_repr():
