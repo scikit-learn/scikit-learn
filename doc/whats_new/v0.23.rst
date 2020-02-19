@@ -60,6 +60,10 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
+- |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
+  could not have a `np.int64` type. :pr:`16484`
+  by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
