@@ -875,8 +875,18 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         return dictionary.T
 
 
-class SparseCodingMixin(TransformerMixin):
-    """Sparse coding mixin"""
+class _BaseSparseCoding(TransformerMixin):
+    """Base class from SparseCoder and DictionaryLearning algorithms."""
+    def __init__(self, transform_algorithm, transform_n_nonzero_coefs,
+                 transform_alpha, split_sign, n_jobs, positive_code,
+                 transform_max_iter):
+        self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
+        self.transform_max_iter = transform_max_iter
+        self.split_sign = split_sign
+        self.n_jobs = n_jobs
+        self.positive_code = positive_code
 
     def _transform(self, X, dictionary):
         """Private method allowing to accomodate both DictionaryLearning and
@@ -920,21 +930,7 @@ class SparseCodingMixin(TransformerMixin):
         return self._transform(X, self.components_)
 
 
-class _BaseSparseCoding:
-    """Base class to set shared parameters of sparse coding classes."""
-    def __init__(self, transform_algorithm, transform_n_nonzero_coefs,
-                 transform_alpha, split_sign, n_jobs, positive_code,
-                 transform_max_iter):
-        self.transform_algorithm = transform_algorithm
-        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
-        self.transform_alpha = transform_alpha
-        self.transform_max_iter = transform_max_iter
-        self.split_sign = split_sign
-        self.n_jobs = n_jobs
-        self.positive_code = positive_code
-
-
-class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
+class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -1078,7 +1074,7 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         return {"requires_fit": False}
 
 
-class DictionaryLearning(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
+class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1277,8 +1273,7 @@ class DictionaryLearning(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         return self
 
 
-class MiniBatchDictionaryLearning(_BaseSparseCoding, SparseCodingMixin,
-                                  BaseEstimator):
+class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
