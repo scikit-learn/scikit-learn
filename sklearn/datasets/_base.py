@@ -163,9 +163,8 @@ def load_files(container_path, description=None, categories=None,
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : list of str
             Only present when `load_content=True`.
@@ -304,9 +303,8 @@ def load_wine(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (178, 13)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -419,9 +417,8 @@ def load_iris(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (150, 4)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -532,9 +529,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -657,9 +653,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (1797, 64)
             The flattened data matrix. If `as_frame=True`, `data` will be
@@ -772,9 +767,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (442, 10)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -867,9 +861,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : {ndarray, dataframe} of shape (20, 3)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -958,9 +951,8 @@ def load_boston(return_X_y=False):
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray of shape (506, 13)
             The data matrix.
@@ -1033,9 +1025,8 @@ def load_sample_images():
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         images : list of ndarray of shape (427, 640, 3)
             The two sample image.

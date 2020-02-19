@@ -83,7 +83,6 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     -------
     dataset :
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : numpy array of shape (581012, 54)
             Each row corresponds to the 54 features in the dataset.

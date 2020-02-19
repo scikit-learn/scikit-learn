@@ -272,9 +272,8 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     Returns
     -------
-    dataset : Bunch
+    dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : numpy array of shape (13233, 2914)
             Each row corresponds to a ravelled face image
@@ -446,9 +445,8 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray of shape (2200, 5828). Shape depends on ``subset``.
             Each row corresponds to 2 ravel'd face images

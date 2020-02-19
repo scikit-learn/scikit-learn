@@ -96,9 +96,8 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : ndarray of shape (494021, 41)
             The data matrix to learn.
@@ -195,9 +194,8 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Returns
     -------
-    dataset : Bunch
+    dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : numpy array of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.

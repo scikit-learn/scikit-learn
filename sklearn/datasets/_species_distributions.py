@@ -155,9 +155,8 @@ def fetch_species_distributions(data_home=None,
 
     Returns
     -------
-    data : Bunch
+    data : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         coverages : array, shape = [14, 1592, 1212]
             These represent the 14 features measured

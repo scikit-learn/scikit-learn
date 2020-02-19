@@ -127,9 +127,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     Returns
     -------
-    dataset : Bunch
+    dataset : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
-        For more information, see :class:`sklearn.utils.Bunch`:
 
         data : scipy csr array, dtype np.float64, shape (804414, 47236)
             The array has 0.16% of non zero values.
