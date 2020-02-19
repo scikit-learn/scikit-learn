@@ -28,10 +28,11 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
-cdef floating _euclidean_dense_dense(floating* a,
-                                     floating* b,
-                                     int n_features,
-                                     bint squared) nogil:
+cdef floating _euclidean_dense_dense(
+        floating* a,  # IN
+        floating* b,  # IN
+        int n_features,
+        bint squared) nogil:
     """Euclidean distance between a dense and b dense"""
     cdef:
         int i
@@ -53,11 +54,12 @@ cdef floating _euclidean_dense_dense(floating* a,
     return result if squared else sqrt(result)
 
 
-cdef floating _euclidean_sparse_dense(floating[::1] a_data,
-                                      int[::1] a_indices,
-                                      floating[::1] b,
-                                      floating b_squared_norm,
-                                      bint squared) nogil:
+cdef floating _euclidean_sparse_dense(
+        floating[::1] a_data,  # IN
+        int[::1] a_indices,    # IN
+        floating[::1] b,       # IN
+        floating b_squared_norm,
+        bint squared) nogil:
     """Euclidean distance between a sparse and b dense"""
     cdef:
         int nnz = a_indices.shape[0]
@@ -77,10 +79,11 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
     return result if squared else sqrt(result)
 
 
-cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                              floating[::1] sample_weight,
-                              floating[:, ::1] centers,
-                              int[::1] labels):
+cpdef floating _inertia_dense(
+        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
+        floating[::1] sample_weight,               # IN
+        floating[:, ::1] centers,                  # IN
+        int[::1] labels):                          # IN
     """Compute inertia for dense input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -102,10 +105,11 @@ cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
     return inertia
 
 
-cpdef floating _inertia_sparse(X,
-                               floating[::1] sample_weight,
-                               floating[:, ::1] centers,
-                               int[::1] labels):
+cpdef floating _inertia_sparse(
+        X,                            # IN
+        floating[::1] sample_weight,  # IN
+        floating[:, ::1] centers,     # IN
+        int[::1] labels):             # IN
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -135,12 +139,13 @@ cpdef floating _inertia_sparse(X,
     return inertia
 
 
-cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                                          floating[::1] sample_weight,
-                                          floating[:, ::1] centers_old,
-                                          floating[:, ::1] centers_new,
-                                          floating[::1] weight_in_clusters,
-                                          int[::1] labels):
+cpdef void _relocate_empty_clusters_dense(
+        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
+        floating[::1] sample_weight,               # IN
+        floating[:, ::1] centers_old,              # IN
+        floating[:, ::1] centers_new,              # INOUT
+        floating[::1] weight_in_clusters,          # INOUT
+        int[::1] labels):                          # IN
     """Relocate centers which have no sample assigned to them."""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
@@ -175,14 +180,15 @@ cpdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c']
         weight_in_clusters[old_cluster_id] -= weight
 
 
-cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
-                                          int[::1] X_indices,
-                                          int[::1] X_indptr,
-                                          floating[::1] sample_weight,
-                                          floating[:, ::1] centers_old,
-                                          floating[:, ::1] centers_new,
-                                          floating[::1] weight_in_clusters,
-                                          int[::1] labels):
+cpdef void _relocate_empty_clusters_sparse(
+        floating[::1] X_data,              # IN
+        int[::1] X_indices,                # IN
+        int[::1] X_indptr,                 # IN
+        floating[::1] sample_weight,       # IN
+        floating[:, ::1] centers_old,      # IN
+        floating[:, ::1] centers_new,      # INOUT
+        floating[::1] weight_in_clusters,  # INOUT
+        int[::1] labels):                  # IN
     """Relocate centers which have no sample assigned to them."""
     cdef:
         int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
@@ -230,8 +236,9 @@ cpdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         weight_in_clusters[old_cluster_id] -= weight
 
 
-cdef void _average_centers(floating[:, ::1] centers,
-                           floating[::1] weight_in_clusters):
+cdef void _average_centers(
+        floating[:, ::1] centers,           # INOUT
+        floating[::1] weight_in_clusters):  # IN
     """Average new centers wrt weights."""
     cdef:
         int n_clusters = centers.shape[0]
@@ -246,9 +253,10 @@ cdef void _average_centers(floating[:, ::1] centers,
                 centers[j, k] *= alpha
 
 
-cdef void _center_shift(floating[:, ::1] centers_old,
-                        floating[:, ::1] centers_new,
-                        floating[::1] center_shift):
+cdef void _center_shift(
+        floating[:, ::1] centers_old,  # IN
+        floating[:, ::1] centers_new,  # IN
+        floating[::1] center_shift):   # OUT
     """Compute shift between old and new centers."""
     cdef:
         int n_clusters = centers_old.shape[0]

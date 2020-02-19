@@ -25,16 +25,17 @@ from ._k_means_fast cimport _average_centers, _center_shift
 np.import_array()
 
 
-def _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                              floating[::1] sample_weight,
-                              floating[::1] x_squared_norms,
-                              floating[:, ::1] centers_old,
-                              floating[:, ::1] centers_new,
-                              floating[::1] weight_in_clusters,
-                              int[::1] labels,
-                              floating[::1] center_shift,
-                              int n_threads,
-                              bint update_centers=True):
+def _lloyd_iter_chunked_dense(
+        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
+        floating[::1] sample_weight,               # IN
+        floating[::1] x_squared_norms,             # IN
+        floating[:, ::1] centers_old,              # IN
+        floating[:, ::1] centers_new,              # OUT
+        floating[::1] weight_in_clusters,          # OUT
+        int[::1] labels,                           # OUT
+        floating[::1] center_shift,                # OUT
+        int n_threads,
+        bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -156,19 +157,20 @@ def _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         _center_shift(centers_old, centers_new, center_shift)
 
 
-cdef void _update_chunk_dense(floating *X,
-                              # expecting C alinged 2D array. XXX: Can be
-                              # replaced by const memoryview when cython min
-                              # version is >= 0.3
-                              floating[::1] sample_weight,
-                              floating[::1] x_squared_norms,
-                              floating[:, ::1] centers_old,
-                              floating[::1] centers_squared_norms,
-                              int[::1] labels,
-                              floating *centers_new,
-                              floating *weight_in_clusters,
-                              floating *pairwise_distances,
-                              bint update_centers) nogil:
+cdef void _update_chunk_dense(
+        floating *X,                          # IN
+        # expecting C alinged 2D array. XXX: Can be
+        # replaced by const memoryview when cython min
+        # version is >= 0.3
+        floating[::1] sample_weight,          # IN
+        floating[::1] x_squared_norms,        # IN
+        floating[:, ::1] centers_old,         # IN
+        floating[::1] centers_squared_norms,  # IN
+        int[::1] labels,                      # OUT
+        floating *centers_new,                # OUT
+        floating *weight_in_clusters,         # OUT
+        floating *pairwise_distances,         # OUT
+        bint update_centers) nogil:
     """K-means combined EM step for one dense data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
@@ -212,16 +214,17 @@ cdef void _update_chunk_dense(floating *X,
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _lloyd_iter_chunked_sparse(X,
-                               floating[::1] sample_weight,
-                               floating[::1] x_squared_norms,
-                               floating[:, ::1] centers_old,
-                               floating[:, ::1] centers_new,
-                               floating[::1] weight_in_clusters,
-                               int[::1] labels,
-                               floating[::1] center_shift,
-                               int n_threads,
-                               bint update_centers=True):
+def _lloyd_iter_chunked_sparse(
+        X,                                 # IN
+        floating[::1] sample_weight,       # IN
+        floating[::1] x_squared_norms,     # IN
+        floating[:, ::1] centers_old,      # IN
+        floating[:, ::1] centers_new,      # OUT
+        floating[::1] weight_in_clusters,  # OUT
+        int[::1] labels,                   # OUT
+        floating[::1] center_shift,        # OUT
+        int n_threads,
+        bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -348,17 +351,18 @@ def _lloyd_iter_chunked_sparse(X,
         _center_shift(centers_old, centers_new, center_shift)
 
 
-cdef void _update_chunk_sparse(floating[::1] X_data,
-                               int[::1] X_indices,
-                               int[::1] X_indptr,
-                               floating[::1] sample_weight,
-                               floating[::1] x_squared_norms,
-                               floating[:, ::1] centers_old,
-                               floating[::1] centers_squared_norms,
-                               int[::1] labels,
-                               floating *centers_new,
-                               floating *weight_in_clusters,
-                               bint update_centers) nogil:
+cdef void _update_chunk_sparse(
+        floating[::1] X_data,                 # IN
+        int[::1] X_indices,                   # IN
+        int[::1] X_indptr,                    # IN
+        floating[::1] sample_weight,          # IN
+        floating[::1] x_squared_norms,        # IN
+        floating[:, ::1] centers_old,         # IN
+        floating[::1] centers_squared_norms,  # IN
+        int[::1] labels,                      # OUT
+        floating *centers_new,                # OUT
+        floating *weight_in_clusters,         # OUT
+        bint update_centers) nogil:
     """K-means combined EM step for one sparse data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
