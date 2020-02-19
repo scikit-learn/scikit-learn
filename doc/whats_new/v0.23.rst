@@ -223,6 +223,13 @@ Changelog
   be removed in 0.25. :pr:`16401` by
   :user:`Arie Pratama Sutiono <ariepratama>`
 
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
+  for `base_estimator` during `fit`.
+  :pr:`16111` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.naive_bayes`
 .............................
 
