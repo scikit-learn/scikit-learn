@@ -139,10 +139,10 @@ processor_lin = make_column_transformer(
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
 #
-# Note: although for the 3 learners we will make new pipelines
-# with the processors which we wrote in the previous section, the
-# final estimator RidgeCV() will be fed with the already preprocessed output from
-# the 3 learners and therefore we will not be creating a pipeline for it.
+# Note: although we will make new pipelines with the processors which we wrote
+# in the previous section for the 3 learners, the final estimator RidgeCV()
+# does not need preprocessing of the data as it will be fed with the already
+# preprocessed output from the 3 learners.
 
 
 from sklearn.experimental import enable_hist_gradient_boosting
