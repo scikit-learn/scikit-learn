@@ -407,7 +407,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
 
     @abstractmethod
-    def fit(self, X, Y):
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -416,6 +416,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The input data.
         Y : array-like, shape (n_samples, n_classes)
             The target values.
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step.
 
         Returns
         -------
@@ -457,7 +459,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         for chain_idx, estimator in enumerate(self.estimators_):
             y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
+            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
+                          **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -734,7 +737,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         chaining.
 
     """
-    def fit(self, X, Y):
+
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -744,11 +748,15 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Y : array-like, shape (n_samples, n_classes)
             The target values.
 
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method at each step
+            of the regressor chain.
+
         Returns
         -------
         self : object
         """
-        super().fit(X, Y)
+        super().fit(X, Y, **fit_params)
         return self
 
     def _more_tags(self):
