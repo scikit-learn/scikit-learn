@@ -181,17 +181,11 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
     assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
 
 
-@pytest.mark.parametrize(
-    "X2",
-    [sp.random(0, 1, density=0.8, random_state=0).tocsr(),
-     sp.csr_matrix(np.full((3, 1), fill_value=np.nan))],
-    ids=["empty", "full nan"]
-)
-def test_incr_mean_variance_no_new_n(X2):
-    # check the behaviour when we update the variance with an empty
-    # (or only NaN) column
+def test_incr_mean_variance_no_new_n():
+    # check the behaviour when we update the variance with an empty matrix
     axis = 0
     X1 = sp.random(5, 1, density=0.8, random_state=0).tocsr()
+    X2 = sp.random(0, 1, density=0.8, random_state=0).tocsr()
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
     last_mean, last_var, last_n = incr_mean_variance_axis(
