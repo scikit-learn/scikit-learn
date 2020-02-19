@@ -19,36 +19,6 @@ print(__doc__)
 #          Maria Telenczuk    <https://github.com/maikia>
 # License: BSD 3 clause
 
-###############################################################################
-# The function ``plot_regression_results`` is used to plot the predicted and
-# true targets.
-
-import matplotlib.pyplot as plt
-
-
-def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
-    """Scatter plot of the predicted vs true targets."""
-    ax.plot([y_true.min(), y_true.max()],
-            [y_true.min(), y_true.max()],
-            '--r', linewidth=2)
-    ax.scatter(y_true, y_pred, alpha=0.2)
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
-    ax.spines['left'].set_position(('outward', 10))
-    ax.spines['bottom'].set_position(('outward', 10))
-    ax.set_xlim([y_true.min(), y_true.max()])
-    ax.set_ylim([y_true.min(), y_true.max()])
-    ax.set_xlabel('Measured')
-    ax.set_ylabel('Predicted')
-    extra = plt.Rectangle((0, 0), 0, 0, fc="w", fill=False,
-                          edgecolor='none', linewidth=0)
-    ax.legend([extra], [scores], loc='upper left')
-    title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
-    ax.set_title(title)
-
 
 ###############################################################################
 # Download the dataset
@@ -117,13 +87,13 @@ categories = [
 for cat in categories:
     cat[cat == None] = 'missing'
 
-cat_proc_tree = make_pipeline(
+cat_proc_nlin = make_pipeline(
     SimpleImputer(missing_values=None, strategy='constant',
                   fill_value='missing'),
     OrdinalEncoder(categories=categories)
     )
 
-num_proc_tree = make_pipeline(SimpleImputer(strategy='mean'))
+num_proc_nlin = make_pipeline(SimpleImputer(strategy='mean'))
 
 cat_proc_lin = make_pipeline(
     SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
@@ -136,9 +106,9 @@ num_proc_lin = make_pipeline(
 )
 
 # transformation to use for non-linear estimators
-processor_tree = make_column_transformer(
-                              (cat_proc_tree, cat_cols),
-                              (num_proc_tree, num_cols),
+processor_nlin = make_column_transformer(
+                              (cat_proc_nlin, cat_cols),
+                              (num_proc_nlin, num_cols),
                               remainder = 'passthrough')
 
 # transformation to use for linear estimators
@@ -175,23 +145,52 @@ from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
 
 
-lasso_pip = make_pipeline(processor_lin,
+lasso_pipe = make_pipeline(processor_lin,
                             LassoCV())
 
-rf_pip = make_pipeline(processor_tree,
+rf_pipe = make_pipeline(processor_nlin,
                         RandomForestRegressor(random_state=42))
 
-gradient_pip = make_pipeline(processor_tree,
+gradient_pipe = make_pipeline(processor_nlin,
                             HistGradientBoostingRegressor(random_state=0))
 
-estimators = [('Random Forest', rf_pip),
-              ('Lasso', lasso_pip),
-              ('Gradient Boosting', gradient_pip)]
+estimators = [('Random Forest', rf_pipe),
+              ('Lasso', lasso_pipe),
+              ('Gradient Boosting', gradient_pipe)]
 
 stacking_regressor = StackingRegressor(estimators = estimators,
                                        final_estimator=RidgeCV())
 
 
+###############################################################################
+# The function ``plot_regression_results`` is used to plot the predicted and
+# true targets.
+
+import matplotlib.pyplot as plt
+
+
+def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
+    """Scatter plot of the predicted vs true targets."""
+    ax.plot([y_true.min(), y_true.max()],
+            [y_true.min(), y_true.max()],
+            '--r', linewidth=2)
+    ax.scatter(y_true, y_pred, alpha=0.2)
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    ax.spines['left'].set_position(('outward', 10))
+    ax.spines['bottom'].set_position(('outward', 10))
+    ax.set_xlim([y_true.min(), y_true.max()])
+    ax.set_ylim([y_true.min(), y_true.max()])
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
+    extra = plt.Rectangle((0, 0), 0, 0, fc="w", fill=False,
+                          edgecolor='none', linewidth=0)
+    ax.legend([extra], [scores], loc='upper left')
+    title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
+    ax.set_title(title)
 ###############################################################################
 # Load dataset
 ###############################################################################
@@ -230,7 +229,24 @@ stacking_regressor = StackingRegressor(estimators = estimators,
     imp.fit(X)
 
     return X, y
+    o_columns = X.columns[X.dtypes == 'O']
+    for column in o_columns:
+        string_value = X[column].unique()
+        string_dict = dict(zip(string_value, range(len(string_value))))
+        X = X.replace({column: string_dict})
+
+    imp = SimpleImputer(strategy="most_frequent")
+    X = imp.fit_transform(X)
+
+    X = np.asarray(X)
+    y = np.asarray(y)
+
+    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imp.fit(X)
+
+    return X, y
     '''
+
 
 
 ###############################################################################
