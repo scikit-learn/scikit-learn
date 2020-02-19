@@ -34,6 +34,21 @@ print(__doc__)
 #
 # Ames Housing dataset is not a part of Sklearn and we will download it from OpenML (TODO:
 # link: https://www.openml.org/d/42165).
+# We will be using Ames housing dataset. The objective is to predict the price
+# of the residential homes in Ames, Iowa. `This dataset`_ was first compiled by
+# Dean De Cock and became better known after it was used for the `Kaggle
+# challenge`_.
+#
+# Ames housing dataset is not part of the Sklearn and therefore we will fetch
+# it from `OpenML`_. It consists of multiple features characterizing the
+# houses. Some of those features are not numeric values and therefore we will
+# first replace them with numbers. Next, we need to impute all the missing
+# values (here we will use 'most_frequent' strategy).
+#
+# .. _`This dataset`: http://jse.amstat.org/v19n3/decock.pdf
+# .. _`Kaggle challenge`:
+# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
+# .. _`OpenML`: https://www.openml.org/d/42165
 
 
 from sklearn.datasets import fetch_openml
@@ -163,10 +178,19 @@ stacking_regressor = StackingRegressor(estimators = estimators,
 
 
 ###############################################################################
+# Measure and plot the results
+###############################################################################
+# Now we can use Ames Housing dataset to make the predictions. We check the performance
+# of each individual predictor as well as of the stack of the regressors.
+#
 # The function ``plot_regression_results`` is used to plot the predicted and
 # true targets.
 
+
+import time
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import cross_validate, cross_val_predict
 
 
 def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
@@ -191,75 +215,6 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     ax.legend([extra], [scores], loc='upper left')
     title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
     ax.set_title(title)
-###############################################################################
-# Load dataset
-###############################################################################
-#
-# We will be using Ames housing dataset. The objective is to predict the price
-# of the residential homes in Ames, Iowa. `This dataset`_ was first compiled by
-# Dean De Cock and became better known after it was used for the `Kaggle
-# challenge`_.
-#
-# Ames housing dataset is not part of the Sklearn and therefore we will fetch
-# it from `OpenML`_. It consists of multiple features characterizing the
-# houses. Some of those features are not numeric values and therefore we will
-# first replace them with numbers. Next, we need to impute all the missing
-# values (here we will use 'most_frequent' strategy).
-#
-# .. _`This dataset`: http://jse.amstat.org/v19n3/decock.pdf
-# .. _`Kaggle challenge`:
-# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
-# .. _`OpenML`: https://www.openml.org/d/42165
-
-
-'''
-    o_columns = X.columns[X.dtypes == 'O']
-    for column in o_columns:
-        string_value = X[column].unique()
-        string_dict = dict(zip(string_value, range(len(string_value))))
-        X = X.replace({column: string_dict})
-
-    imp = SimpleImputer(strategy="most_frequent")
-    X = imp.fit_transform(X)
-
-    X = np.asarray(X)
-    y = np.asarray(y)
-
-    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-    imp.fit(X)
-
-    return X, y
-    o_columns = X.columns[X.dtypes == 'O']
-    for column in o_columns:
-        string_value = X[column].unique()
-        string_dict = dict(zip(string_value, range(len(string_value))))
-        X = X.replace({column: string_dict})
-
-    imp = SimpleImputer(strategy="most_frequent")
-    X = imp.fit_transform(X)
-
-    X = np.asarray(X)
-    y = np.asarray(y)
-
-    imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-    imp.fit(X)
-
-    return X, y
-    '''
-
-
-
-###############################################################################
-# Now we can use Ames dataset to make the predictions. We check the performance
-# of each individual predictor as well as the stack of the regressors.
-# To speed up the calculations we will use only part of the dataset, however
-# feel free to take all the data-points and see if the result changes.
-
-import time
-import numpy as np
-from sklearn.model_selection import cross_validate, cross_val_predict
-
-
 
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
