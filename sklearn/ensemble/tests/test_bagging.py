@@ -890,7 +890,7 @@ def test_bagging_get_estimators_indices():
     y = np.arange(13)
 
     class MyEstimator(DecisionTreeRegressor):
-        """An estimator which will y indices information at fit."""
+        """An estimator which stores y indices information at fit."""
         def fit(self, X, y):
             self._sample_indices = y
 

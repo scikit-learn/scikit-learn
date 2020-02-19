@@ -23,7 +23,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- list models here
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -136,11 +136,11 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Fix| Fixed a bug in :class:`ensemble._bagging.BaseBagging` method
-  ``_get_estimators_indices`` that does not generate indices properly. Both
-  this method and :func:`_parallel_build_estimators` are changed to use a seed
-  instead of a `RandomState` object. :pr: `16437` by :user:`Jin-Hwan CHO
-  <chofchof>`.
+- |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
+  where the property `estimators_samples_` did not generate the proper indices
+  used during `fit`.
+  :pr: `16437` by :user:`Jin-Hwan CHO <chofchof>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
