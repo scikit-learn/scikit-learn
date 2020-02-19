@@ -63,6 +63,64 @@ def clone(estimator, safe=True, deepcopy=True):
     deepcopy : bool, default=True
         Whether or not to trigger a deep copy of object which are not
         estimator.
+
+    Returns
+    -------
+    new_object : estimator object
+        A new unfitted estimator.
+
+    Examples
+    --------
+    >>> from sklearn.base import clone
+    >>> from sklearn.exceptions import NotFittedError
+    >>> from sklearn.utils.validation import check_is_fitted
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = make_classification(random_state=42)
+
+    We create a logistic regression and train it on some data. Once trained,
+    we can check that the classifier is fitted and that he has an attribute
+    `coef_`.
+
+    >>> clf = LogisticRegression().fit(X, y)
+    >>> check_is_fitted(clf)
+    >>> hasattr(clf, "coef_")
+    True
+
+    Now, we create a clone of this classifier. The role :func:`~clone` is
+    to make a copy of `clf`, removing all attributes which have been created
+    during `fit`.
+
+    >>> clf_clone = clone(clf)
+
+    In addition, `clf_clone` and its parameters will be copied from the
+    original `clf`.
+
+    >>> clf_clone is clf
+    False
+    >>> try:
+    ...     check_is_fitted(clf_clone)
+    ... except NotFittedError as e:
+    ...     print(e)
+    This LogisticRegression instance is not fitted yet. Call 'fit' with
+    appropriate arguments before using this estimator.
+
+    To avoid making a copy of the parameter estimator which are immutable
+    parameters, you can use the estimator tag `immutable_params`. For instance,
+    :class:`sklearn.feature_extraction.textTfidfVectorizer` declared the
+    parameter `vocabulary` to be immutable. Thus, this parameter will not be
+    copied when calling :func:`~clone`:
+
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> vectorizer = TfidfVectorizer(
+    ...    vocabulary={'g': 0, 'a': 1, 't': 2, 'c': 3},
+    ...    stop_words=["and", "maybe"]
+    ... )
+    >>> vectorizer_clone = clone(vectorizer)
+    >>> vectorizer_clone.vocabulary is vectorizer.vocabulary
+    True
+    >>> vectorizer_clone.stop_words is vectorizer.stop_words
+    False
     """
     if not safe and not deepcopy:
         return estimator

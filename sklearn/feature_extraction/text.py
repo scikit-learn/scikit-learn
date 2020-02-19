@@ -1296,7 +1296,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                                      key=itemgetter(1))]
 
     def _more_tags(self):
-        return {'X_types': ['string']}
+        return {'X_types': ['string'], 'immutable_params': ['vocabulary']}
 
 
 def _make_int_array():

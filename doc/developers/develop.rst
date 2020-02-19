@@ -5,9 +5,9 @@ Developing scikit-learn estimators
 ==================================
 
 Whether you are proposing an estimator for inclusion in scikit-learn,
-developing a separate package compatible with scikit-learn, or 
-implementing custom components for your own projects, this chapter 
-details how to develop objects that safely interact with scikit-learn 
+developing a separate package compatible with scikit-learn, or
+implementing custom components for your own projects, this chapter
+details how to develop objects that safely interact with scikit-learn
 Pipelines and model selection tools.
 
 .. currentmodule:: sklearn
@@ -266,7 +266,7 @@ the name of the underlying estimator and check in the test name. This allows
 `pytest -k` to be used to specify which tests to run.
 
 .. code-block: bash
-   
+
    pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
@@ -488,6 +488,11 @@ binary_only (default=``False``)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
+immutable_params (default=None)
+    list of estimator parameters which are declared to be immutable. These
+    parameters will not be deep copied when calling :func:`sklearn.base.clone`
+    but only reassigned.
+
 multilabel (default=``False``)
     whether the estimator supports multilabel output
 
@@ -567,10 +572,10 @@ closed-form solutions.
 Coding guidelines
 =================
 
-The following are some guidelines on how new code should be written for 
-inclusion in scikit-learn, and which may be appropriate to adopt in external 
-projects. Of course, there are special cases and there will be exceptions to 
-these rules. However, following these rules when submitting new code makes 
+The following are some guidelines on how new code should be written for
+inclusion in scikit-learn, and which may be appropriate to adopt in external
+projects. Of course, there are special cases and there will be exceptions to
+these rules. However, following these rules when submitting new code makes
 the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
