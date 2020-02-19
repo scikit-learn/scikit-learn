@@ -984,7 +984,7 @@ def test_iterative_imputer_min_max_array_like(min_value,
                                               correct_output):
     # check that passing scalar or array-like
     # for min_value and max_value in IterativeImputer works
-    X = np.random.RandomState(0).randn((10, 3))
+    X = np.random.RandomState(0).randn(10, 3)
     imputer = IterativeImputer(min_value=min_value, max_value=max_value)
     imputer.fit(X)
 
