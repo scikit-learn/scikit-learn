@@ -51,7 +51,7 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
 
 
 ###############################################################################
-# Download and prepare the dataset
+# Download the dataset
 ###############################################################################
 #
 # We will use Ames Housing dataset which is a set of 1460 residential homes
@@ -68,7 +68,6 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
 
 from sklearn.datasets import fetch_openml
 
-
 def load_ames_housing():
     df = fetch_openml(data_id=42165, as_frame=True)
     X = df.data
@@ -84,14 +83,66 @@ def load_ames_housing():
 
 X, y = load_ames_housing()
 
-from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
+
+###############################################################################
+# Make pipeline to preprocess the data
+###############################################################################
+#
+# The dataset has many missing values. To impute them, we will exchange
+# categorical missing values with the new category 'missing' while the
+# numerical missing values we will exchange for the 'mean' of the column. We
+# will also encode the categories with either OrdinalEncoder (TODO: link) or
+# OneHotEncoder depending for which type of model we will use them (decision
+# tree based or linear model). To falicitate this preprocessing we will make
+# two pipelines
+
+
+from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import make_column_transformer
 
+
+cat_cols = X.columns[X.dtypes == 'O']
+num_cols = X.columns[X.dtypes == 'float64']
+
+categories = [
+    X[column].unique() for column in X[cat_cols]]
+
+for cat in categories:
+    cat[cat == None] = 'missing'
+
+cat_proc_tree = make_pipeline(
+    SimpleImputer(missing_values=None, strategy='constant',
+                  fill_value='missing'),
+    OrdinalEncoder(categories=categories)
+    )
+
+num_proc_tree = make_pipeline(SimpleImputer(strategy='mean'))
+
+cat_proc_lin = make_pipeline(
+    SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
+    OneHotEncoder(categories=categories)
+)
+
+num_proc_lin = make_pipeline(
+    StandardScaler(),
+    SimpleImputer(strategy='mean'),
+)
+
+# transformation to use for decision tree based estimators
+processor_tree = make_column_transformer(
+                              (cat_proc_tree, cat_cols),
+                              (num_proc_tree, num_cols),
+                              remainder = 'passthrough')
+
+# transformation to use for linear estimators
+processor_lin = make_column_transformer(
+                              (cat_proc_lin, cat_cols),
+                              (num_proc_lin, num_cols),
+                              remainder = 'passthrough')
 
 ###############################################################################
 # Stack of predictors on a single data set
@@ -112,16 +163,13 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
-from sklearn.pipeline import make_pipeline
+
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
 
-from sklearn.compose import make_column_transformer
 
-#TODO: add ridge encoder
+
+
+
 
 # The data we are going to use is going to be downloaded from the OpenMl, and
 # therefore it still need to be preprocessed for our use. First, we have some
@@ -133,43 +181,6 @@ from sklearn.compose import make_column_transformer
 
 
 
-#X = X[:500]
-#y = y[:500]
-
-cat_cols = X.columns[X.dtypes == 'O']
-num_cols = X.columns[X.dtypes == 'float64']
-
-#
-categories = [
-    X[column].unique() for column in X[cat_cols]]
-
-for cat in categories:
-    cat[cat == None] = 'missing'
-
-categorical_proc_tree = Pipeline(steps=[
-    ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
-    ('encoder', OrdinalEncoder(categories=categories))
-    ])
-
-# only remove the missing values
-numerical_proc_tree = Pipeline(steps=[
-    ('imputer_nan', SimpleImputer(strategy='mean'))])
-
-#categorical_proc_tree.fit(X[cat_cols],y)
-#categorical_proc_tree.transform(X[cat_cols])
-#numerical_proc_tree.fit(X[num_cols],y)
-#numerical_proc_tree.transform(X[num_cols])
-
-categorical_proc_lin = make_pipeline(
-    SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
-    OneHotEncoder(categories=categories)
-)
-
-numerical_proc_lin = make_pipeline(
-    StandardScaler(),
-    SimpleImputer(strategy='mean'),
-)
-
 #import pdb; pdb.set_trace()
 #estimators = [
 #    ('Random Forest', RandomForestRegressor(random_state=42)),
@@ -177,17 +188,7 @@ numerical_proc_lin = make_pipeline(
 #    ('Gradient Boosting', HistGradientBoostingRegressor(random_state=0))
 #]
 
-# transformation to use for decision tree based estimators
-processor_tree = make_column_transformer(
-                              (categorical_proc_tree, cat_cols),
-                              (numerical_proc_tree, num_cols),
-                              remainder = 'passthrough')
 
-# transformation to use for linear estimators
-processor_lin = make_column_transformer(
-                              (categorical_proc_lin, cat_cols),
-                              (numerical_proc_lin, num_cols),
-                              remainder = 'passthrough')
 #import pdb; pdb.set_trace()
 lasso_pip = make_pipeline(processor_lin,
                             LassoCV())
