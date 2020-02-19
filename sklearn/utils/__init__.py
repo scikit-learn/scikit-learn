@@ -66,18 +66,17 @@ class Bunch(dict):
 
     Examples
     --------
-        >>> b = Bunch(a=1, b=2)
-        >>> b['b']
-        2
-        >>> b.b
-        2
-        >>> b.a = 3
-        >>> b['a']
-        3
-        >>> b.c = 6
-        >>> b['c']
-        6
-
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
     """
 
     def __init__(self, **kwargs):
