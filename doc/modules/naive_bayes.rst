@@ -268,7 +268,14 @@ General Naive Bayes
 features in the dataset. Unlike other naive Bayes algorithms in this module,
 :class:`GeneralNB` can assume different distributions for different features.
 The naive Bayes algorithms correspond to the probability distributions
-that the respective features are assumed to follow.
+that the respective features are assumed to follow. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
+
+.. math::
+
+   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
+                                    {P(x_1, \dots, x_n)}
 
 A use case for this metaestimator is when the dataset consists of obvious
 distributions like the categorical and Gaussian distributions. We assume
