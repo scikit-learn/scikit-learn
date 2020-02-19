@@ -445,7 +445,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X=None, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -454,23 +454,47 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             New data, where n_samples is the number of samples
             and n_components is the number of pls components.
 
+        Y : array-like of shape (n_samples, n_targets)
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
+
         Returns
         -------
         x_reconstructed : array-like of shape (n_samples, n_features)
+        y_reconstructed : array-like of shape (n_samples, n_targets)
 
         Notes
         -----
         This transformation will only be exact if n_components=n_features
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=FLOAT_DTYPES)
-        # From pls space to original space
-        X_reconstructed = np.matmul(X, self.x_loadings_.T)
 
-        # Denormalize
-        X_reconstructed *= self.x_std_
-        X_reconstructed += self.x_mean_
-        return X_reconstructed
+        if X is not None:
+            X = check_array(X, dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            X_reconstructed = np.matmul(X, self.x_loadings_.T)
+
+            # Denormalize
+            X_reconstructed *= self.x_std_
+            X_reconstructed += self.x_mean_
+
+        if Y is not None:
+            Y = check_array(Y, dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
+
+            # Denormalize
+            Y_reconstructed *= self.y_std_
+            Y_reconstructed += self.y_mean_
+
+        if X is not None and Y is not None:
+            return X_reconstructed, Y_reconstructed
+
+        if X is not None and Y is None:
+            return X_reconstructed
+
+        if Y is not None and X is None:
+            return Y_reconstructed
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
