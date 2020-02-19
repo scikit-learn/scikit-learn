@@ -53,23 +53,24 @@ def _init_bounds_dense(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features), dtype=floating
         The input data.
 
-    centers : ndarray of shape (n_clusters, n_features)
+    centers : ndarray of shape (n_clusters, n_features), dtype=floating
         The cluster centers.
 
-    center_half_distances : ndarray of shape (n_clusters, n_clusters)
+    center_half_distances : ndarray of shape (n_clusters, n_clusters), \
+            dtype=floating
         The half of the distance between any 2 clusters centers.
 
-    labels : ndarray of shape(n_samples), dtype=np.int32
+    labels : ndarray of shape(n_samples), dtype=int
         The label for each sample. This array is modified in place.
 
-    upper_bounds : ndarray of shape(n_samples,)
+    upper_bounds : ndarray of shape(n_samples,), dtype=floating
         The upper bound on the distance between each sample and its closest
         cluster center. This array is modified in place.
 
-    lower_bounds : ndarray, of shape(n_samples, n_clusters)
+    lower_bounds : ndarray, of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
     """
@@ -122,23 +123,24 @@ def _init_bounds_sparse(
 
     Parameters
     ----------
-    X : csr_matrix of shape (n_samples, n_features)
-        The input data.
+    X : sparse matrix of shape (n_samples, n_features), dtype=floating
+        The input data. Must be in CSR format.
 
-    centers : ndarray of shape (n_clusters, n_features)
+    centers : ndarray of shape (n_clusters, n_features), dtype=floating
         The cluster centers.
 
-    center_half_distances : ndarray of shape (n_clusters, n_clusters)
+    center_half_distances : ndarray of shape (n_clusters, n_clusters), \
+            dtype=floating
         The half of the distance between any 2 clusters centers.
 
-    labels : ndarray of shape(n_samples), dtype=np.int32
+    labels : ndarray of shape(n_samples), dtype=int
         The label for each sample. This array is modified in place.
 
-    upper_bounds : ndarray of shape(n_samples,)
+    upper_bounds : ndarray of shape(n_samples,), dtype=floating
         The upper bound on the distance between each sample and its closest
         cluster center. This array is modified in place.
 
-    lower_bounds : ndarray of shape(n_samples, n_clusters)
+    lower_bounds : ndarray of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
     """
@@ -199,42 +201,43 @@ def _elkan_iter_chunked_dense(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features), dtype=floating
         The observations to cluster.
 
-    sample_weight : ndarray of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    centers_old : ndarray of shape (n_clusters, n_features)
+    centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
-    centers_new : ndarray of shape (n_clusters, n_features)
+    centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
         computed during this iteration.
 
-    weight_in_clusters : ndarray of shape (n_clusters,)
+    weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
-    center_half_distances : ndarray of shape (n_clusters, n_clusters)
+    center_half_distances : ndarray of shape (n_clusters, n_clusters), \
+            dtype=floating
         Half pairwise distances between centers.
 
-    distance_next_center : ndarray of shape (n_clusters,)
+    distance_next_center : ndarray of shape (n_clusters,), dtype=floating
         Distance between each center its closest center.
 
-    upper_bounds : ndarray of shape (n_samples,)
+    upper_bounds : ndarray of shape (n_samples,), dtype=floating
         Upper bound for the distance between each sample and its center,
         updated inplace.
 
-    lower_bounds : ndarray of shape (n_samples, n_clusters)
+    lower_bounds : ndarray of shape (n_samples, n_clusters), dtype=floating
         Lower bound for the distance between each sample and each center,
         updated inplace.
 
-    labels : ndarray of shape (n_samples,), dtype=np.int32
+    labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    center_shift : ndarray of shape (n_clusters,)
+    center_shift : ndarray of shape (n_clusters,), dtype=floating
         Distance between old and new centers.
 
     n_threads : int
@@ -420,42 +423,43 @@ def _elkan_iter_chunked_sparse(
 
     Parameters
     ----------
-    X : CSR matrix of shape (n_samples, n_features)
-        The observations to cluster.
+    X : sparse matrix of shape (n_samples, n_features)
+        The observations to cluster. Must be in CSR format.
 
-    sample_weight : ndarray of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    centers_old : ndarray of shape (n_clusters, n_features)
+    centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
-    centers_new : ndarray of shape (n_clusters, n_features)
+    centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
         computed during this iteration.
 
-    weight_in_clusters : ndarray of shape (n_clusters,)
+    weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
-    center_half_distances : ndarray of shape (n_clusters, n_clusters)
+    center_half_distances : ndarray of shape (n_clusters, n_clusters), \
+            dtype=floating
         Half pairwise distances between centers.
 
-    distance_next_center : ndarray of shape (n_clusters,)
+    distance_next_center : ndarray of shape (n_clusters,), dtype=floating
         Distance between each center its closest center.
 
-    upper_bounds : ndarray of shape (n_samples,)
+    upper_bounds : ndarray of shape (n_samples,), dtype=floating
         Upper bound for the distance between each sample and its center,
         updated inplace.
 
-    lower_bounds : ndarray of shape (n_samples, n_clusters)
+    lower_bounds : ndarray of shape (n_samples, n_clusters), dtype=floating
         Lower bound for the distance between each sample and each center,
         updated inplace.
 
-    labels : int array-like, shape (n_samples,)
+    labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    center_shift : ndarray of shape (n_clusters,)
+    center_shift : ndarray of shape (n_clusters,), dtype=floating
         Distance between old and new centers.
 
     n_threads : int

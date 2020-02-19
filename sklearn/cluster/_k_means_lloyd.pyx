@@ -43,34 +43,34 @@ def _lloyd_iter_chunked_dense(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features), dtype=floating
         The observations to cluster.
 
-    sample_weight : ndarray of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,), dtype=floating
         Squared L2 norm of X.
 
-    centers_old : ndarray of shape (n_clusters, n_features)
+    centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
-    centers_new : ndarray of shape (n_clusters, n_features)
+    centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
         computed during this iteration.
 
-    centers_squared_norms : ndarray of shape (n_clusters,)
+    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
         Squared L2 norm of the centers.
 
-    weight_in_clusters : ndarray of shape (n_clusters,)
+    weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
-    labels : ndarray of shape (n_samples,), dtype=np.int32
+    labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    center_shift : ndarray of shape (n_clusters,)
+    center_shift : ndarray of shape (n_clusters,), dtype=floating
         Distance between old and new centers.
 
     n_threads : int
@@ -232,34 +232,34 @@ def _lloyd_iter_chunked_sparse(
 
     Parameters
     ----------
-    X : CSR matrix of shape (n_samples, n_features)
-        The observations to cluster.
+    X : sparse matrix of shape (n_samples, n_features), dtype=floating
+        The observations to cluster. Must be in CSR format.
 
-    sample_weight : ndarray of shape (n_samples,)
+    sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,), dtype=floating
         Squared L2 norm of X.
 
-    centers_old : ndarray of shape (n_clusters, n_features)
+    centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
-    centers_new : ndarray of shape (n_clusters, n_features)
+    centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
         computed during this iteration.
 
-    centers_squared_norms : ndarray of shape (n_clusters,)
+    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
         Squared L2 norm of the centers.
 
-    weight_in_clusters : ndarray of shape (n_clusters,)
+    weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
         to each center.
 
-    labels : ndarray of shape (n_samples,), dtype=np.int32
+    labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
-    center_shift : ndarray of shape (n_clusters,)
+    center_shift : ndarray of shape (n_clusters,), dtype=floating
         Distance between old and new centers.
 
     n_threads : int
