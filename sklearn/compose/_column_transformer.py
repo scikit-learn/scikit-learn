@@ -471,7 +471,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Input data, of which specified subsets are used to fit the
             transformers.
 
-        y : array-like of shape (n_samples,), default=None
+        y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
         Returns
