@@ -17,7 +17,7 @@ print(__doc__)
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -26,15 +26,15 @@ from sklearn.inspection import plot_partial_dependence
 
 
 ##############################################################################
-# Train models on the boston housing price dataset
+# Train models on the diabetes dataset
 # ================================================
 #
-# First, we train a decision tree and a multi-layer perceptron on the boston
-# housing price dataset.
+# First, we train a decision tree and a multi-layer perceptron on the diabetes
+# dataset.
 
-boston = load_boston()
-X = pd.DataFrame(boston.data, columns=boston.feature_names)
-y = boston.target
+diabetes = load_diabetes()
+X = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
+y = diabetes.target
 
 tree = DecisionTreeRegressor()
 mlp = make_pipeline(StandardScaler(),
@@ -43,19 +43,18 @@ mlp = make_pipeline(StandardScaler(),
 tree.fit(X, y)
 mlp.fit(X, y)
 
-
 ##############################################################################
 # Plotting partial dependence for two features
 # ============================================
 #
-# We plot partial dependence curves for features "LSTAT" and "RM" for
-# the decision tree. With two features,
+# We plot partial dependence curves for features "age" and "bmi" (body mass
+# index) for the decision tree. With two features,
 # :func:`~sklearn.inspection.plot_partial_dependence` expects to plot two
 # curves. Here the plot function place a grid of two plots using the space
 # defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"], ax=ax)
+tree_disp = plot_partial_dependence(tree, X, ["age", "bmi"], ax=ax)
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
@@ -64,7 +63,7 @@ tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"], ax=ax)
 # the curve.
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
-mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT", "RM"], ax=ax,
+mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
                                    line_kw={"c": "red"})
 
 ##############################################################################
@@ -124,14 +123,13 @@ tree_disp.axes_[0, 0].legend()
 tree_disp.axes_[0, 1].legend()
 plt.show()
 
-
 ##############################################################################
 # Plotting partial dependence for one feature
 # ===========================================
 #
-# Here, we plot the partial dependence curves for a single feature, "LSTAT", on
+# Here, we plot the partial dependence curves for a single feature, "age", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
-tree_disp = plot_partial_dependence(tree, X, ["LSTAT"])
-mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT"],
+tree_disp = plot_partial_dependence(tree, X, ["age"])
+mlp_disp = plot_partial_dependence(mlp, X, ["age"],
                                    ax=tree_disp.axes_, line_kw={"c": "red"})
