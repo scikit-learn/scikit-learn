@@ -173,8 +173,10 @@ stacking_regressor = StackingRegressor(estimators = estimators,
 ###############################################################################
 # Measure and plot the results
 ###############################################################################
-# Now we can use Ames Housing dataset to make the predictions. We check the performance
-# of each individual predictor as well as of the stack of the regressors.
+#
+# Now we can use Ames Housing dataset to make the predictions. We check the
+# performance of each individual predictor as well as of the stack of the
+# regressors.
 #
 # The function ``plot_regression_results`` is used to plot the predicted and
 # true targets.
