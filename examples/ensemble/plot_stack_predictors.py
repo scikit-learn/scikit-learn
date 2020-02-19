@@ -217,6 +217,7 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
     ax.set_title(title)
 
+
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
