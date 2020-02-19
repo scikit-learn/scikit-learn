@@ -119,13 +119,13 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
-    """General Naive Bayes for multiple probability distributions
+    """Naive Bayes metaclassifier for multiple naive Bayes models
 
-    The General Naive Bayes classifier is a metaestimator that 
-    allows for multiple distributional assumptions on the features 
-    of the data, namely the Bernoulli, Gaussian, Multinomial, and
-    Categorical distributions.
-    
+    The General Naive Bayes classifier is a metaestimator that
+    allows for multiple distributional assumptions on the features
+    of the data like the Bernoulli, Gaussian, multinomial, and
+    categorical distributions.
+
     This is made possible by composing a joint probability distribution
     as the product of independent models or probability distributions.
     Each constituent distribution is fitted on a subset of features.
@@ -142,10 +142,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         name : string
             Like in Pipeline and ColumnTransformer, this allows the
             distribution and its parameters to be set using ``set_params``.
-        naive bayes model : Estimator
+        naive Bayes model : Estimator
             Estimator must support :term:`fit`, :term:`predict`
             and :term:`_joint_log_likelihood`.
-        column(s) : array-like of string or int, slice
+        column(s) : array-like of string or int, slicec
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name. A scalar string or int should be used where
@@ -154,8 +154,12 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     Attributes
     ----------
+    models_ : list of tuples
+        Verified list of (name, naive bayes estimator, column(s))
+        based on `self.models`.
+
     classes_ : ndarray of shape (n_classes,)
-        class labels known to the classifier
+        Class labels known to the classifier.
 
     n_features_ : int
         Number of features of each sample.
@@ -163,54 +167,19 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> import pandas as pd
-    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-    >>> from sklearn.compose import make_column_selector
-
+    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, Categorical
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
-    >>>               [2.7, 3.8, 2.3, 1, 0],
-    >>>               [1.7, 0.1, 4.5, 1, 0]])
+    ...               [2.7, 3.8, 2.3, 1, 0],
+    ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
-    >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
-    >>> df = pd.DataFrame(X)
-    >>> df.columns = list("abcde")
-    >>> df["y"] = [1, 0, 0]
-    >>> df_test = pd.DataFrame(X_test)
-    >>> df_test.columns = list("abcde")
-    
     >>> clf = GeneralNB([
-    >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
-    >>>     ("bernoulli", BernoulliNB(), [3, 4])
+    ...     ("gaussian", GaussianNB(), [0, 1, 2]),
+    ...     ("categorical", CategoricalNB(), [3, 4])
     >>> ])
     >>> clf.fit(X, y)
-    >>> print(clf.predict(X_test))
+    >>> clf.predict(X[0])
     [1]
-    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
-    1.0
-
-    >>> clf = GeneralNB([
-    >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
-    >>>     ("bernoulli", BernoulliNB(), ["d", "e"])
-    >>> ])
-    >>> clf.fit(df.iloc[:,:-1], df["y"])
-    >>> print(clf.predict(df_test))
-    [1]
-    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
-    1.0
-
-    >>> clf = GeneralNB([
-    >>>     ("gaussian", GaussianNB(), make_column_selector(pattern=r"[abc]")),
-    >>>     ("bernoulli", BernoulliNB(), make_column_selector(pattern=r"[de]"))
-    >>> ])
-    >>> clf.fit(df.iloc[:,:-1], df["y"])
-    >>> print(clf.predict(df_test))
-    [1]
-    >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
-    1.0
     """
-    # TODO consider jll for each estimator
-    # TODO unify variable names with similar meaning 
-    #      ("column", "feature")
 
     def __init__(self, models):
         self.models = models
@@ -222,13 +191,13 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Fit Gaussian Naive Bayes according to X, y
+        """Fit X and y to the specified naive Bayes estimators.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training sample, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
         y : array-like, shape (n_samples,)
             Target values.
 
@@ -251,15 +220,18 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         return self
 
     def _joint_log_likelihood(self, X):
-        """Calculate the posterior log probability of the samples X
+        """Calculate the posterior log probability of sample X
 
         Parameters
         ----------
-        X : ndarray
-        
+        X : array-like, shape (n_samples, n_features)
+            Training sample, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
         Returns
         -------
         jll : ndarray, shape (1, n_classes)
+            Posterior log probability.
 
         Raises
         ------
@@ -273,7 +245,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         # Obtain the log priors from each fitted estimator
         all_log_priors = [
             nb_model.class_log_prior_
-            if hasattr(nb_model, 'class_log_prior_') else np.log(nb_model.class_prior_)
+            if hasattr(nb_model, 'class_log_prior_')
+            else np.log(nb_model.class_prior_)
             for _, nb_model, _ in self.models_]
 
         # Ensure class log priors are the same for all estimators
@@ -302,6 +275,12 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     @property
     def _models(self):
+        """
+        Internal list of models only containing the name and
+        estimator, dropping the columns. This is for the implementation
+        of get_params via BaseComposition._get_params which expects lists
+        of tuples of length 2.
+        """
         return [(name, model) for name, model, _ in self.models]
 
     @_models.setter
@@ -327,7 +306,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         all_fit_priors = []
         all_class_priors = []
 
-        # Check type of `models` parameter
         if not isinstance(self.models, list):
             raise TypeError(
                 "Expected list but got {}".format(type(self.models)))
@@ -362,34 +340,40 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                     "Distributions should be one of {}".format(valid_modules))
 
             # Check naive bayes estimator for attributes
-            # `prior` and `fit_prior`
-            class_prior = getattr(estimator, "priors", None) or getattr(estimator, "class_prior", None)
+            # like `priors`, `class_prior` and `fit_prior`
+            class_prior = getattr(estimator, "priors", None) or \
+                getattr(estimator, "class_prior", None)
             fit_prior = getattr(estimator, "fit_prior", True)
             all_class_priors.append(class_prior)
             all_fit_priors.append(fit_prior)
 
-            # Check the columns for duplicate models
-            # and convert to list if callable
+            # Check the columns for duplicate models and
+            # convert to feature if callable
             if callable(cols):
                 cols = cols(X)
             for col in cols:
                 if col in dict_col2model:
-                    raise ValueError("Duplicate specification of column found.")
+                    raise ValueError("Duplicate specification of "
+                                     "column found.")
                 else:
                     dict_col2model[col] = estimator.__class__.__name__.lower()
             self._cols.append(cols)
 
         # Check if class priors are the same throughout all estimators
-        if len(set(all_class_priors)) != 1:
-            raise ValueError("The parameters 'class_prior' or 'prior' "
-                             "must be the same values throughout all estimators "
-                             "if specified.")
+        if not all(prior is None for prior in all_class_priors):
+            raise ValueError("The parameters 'class_prior' or 'priors' "
+                             "must be the same values throughout all "
+                             "estimators if specified.")
+        if all(prior is not None for prior in all_class_priors):
+            if np.max(np.ptp(all_class_priors, axis=0)) < 1e-6:
+                raise ValueError("The parameters 'class_prior' or 'priors' "
+                                "must be the same values throughout all "
+                                "estimators if specified.")
 
-        # FIXME really?
-        # Check if class priors are the same throughout all estimators
-        if len(set(all_fit_priors)) != 1:
-            raise ValueError("The parameter 'fit_prior' "
-                             "must be the same values through out all estimators "
+        # Check if `fit_prior`s are the same throughout all estimators
+        if not all(all_fit_priors):
+            raise ValueError("The parameter 'fit_prior' must be "
+                             "the same values through out all estimators "
                              "if specified.")
 
         n_features = X.shape[-1]
@@ -398,38 +382,38 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             raise ValueError("Expected {} columns".format(n_features) +
                              " in X but {} were specified.".format(n_cols))
         self.n_features_ = n_features
-    
+
     def _check_X_y(self, X, y):
-        # Delay further checks on X y to the respective estimators
+        # Delay any further checks on X and y to the respective estimators
+        # Only checks if X is pandas dataframe
         if hasattr(X, "columns"):
             self._df_cols = X.columns
 
     def _check_X(self, X):
-        # Check pandas.DataFrame
+        # Check if X should be a pandas dataframe
         if self._df_cols is not None:
-            
+
             if not hasattr(X, "columns"):
                 raise TypeError("X should be a dataframe")
-            
+
             if not all(self._df_cols == X.columns):
                 raise ValueError("Column names must match with "
-                                "column names of fitted data.")
+                                 "column names of fitted data.")
 
         return X
-            
+
     @property
     def named_models_(self):
         """Access the fitted estimators by name.
 
         Read-only attribute to access any distribution by given name.
-        Keys are transformer names and values are the fitted transformer
+        Keys are model names and values are the fitted estimator
         objects.
 
         """
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: estimator for name, estimator, _
                         in self.models})
-
 
 
 class GaussianNB(_BaseNB):
