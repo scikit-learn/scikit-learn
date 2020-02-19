@@ -44,18 +44,21 @@ print(__doc__)
 
 from sklearn.datasets import fetch_openml
 
+
 def load_ames_housing():
     df = fetch_openml(data_id=42165, as_frame=True)
     X = df.data
     y = df.target
 
     features = ['YrSold', 'HeatingQC', 'Street', 'YearRemodAdd', 'Heating',
-       'MasVnrType', 'BsmtUnfSF', 'Foundation', 'MasVnrArea', 'MSSubClass',
-       'ExterQual', 'Condition2', 'GarageCars', 'GarageType', 'OverallQual',
-       'TotalBsmtSF', 'BsmtFinSF1', 'HouseStyle', 'MiscFeature', 'MoSold']
+                'MasVnrType', 'BsmtUnfSF', 'Foundation', 'MasVnrArea',
+                'MSSubClass', 'ExterQual', 'Condition2', 'GarageCars',
+                'GarageType', 'OverallQual', 'TotalBsmtSF', 'BsmtFinSF1',
+                'HouseStyle', 'MiscFeature', 'MoSold']
 
     X = X[features]
     return X, y
+
 
 X, y = load_ames_housing()
 
@@ -92,6 +95,7 @@ num_cols = X.columns[X.dtypes == 'float64']
 categories = [
     X[column].unique() for column in X[cat_cols]]
 
+
 for cat in categories:
     cat[cat == None] = 'missing'
 
@@ -104,7 +108,9 @@ cat_proc_nlin = make_pipeline(
 num_proc_nlin = make_pipeline(SimpleImputer(strategy='mean'))
 
 cat_proc_lin = make_pipeline(
-    SimpleImputer(missing_values=None, strategy='constant', fill_value='missing'),
+    SimpleImputer(missing_values=None,
+                  strategy='constant',
+                  fill_value='missing'),
     OneHotEncoder(categories=categories)
 )
 
@@ -117,13 +123,13 @@ num_proc_lin = make_pipeline(
 processor_nlin = make_column_transformer(
                               (cat_proc_nlin, cat_cols),
                               (num_proc_nlin, num_cols),
-                              remainder = 'passthrough')
+                              remainder='passthrough')
 
 # transformation to use for linear estimators
 processor_lin = make_column_transformer(
                               (cat_proc_lin, cat_cols),
                               (num_proc_lin, num_cols),
-                              remainder = 'passthrough')
+                              remainder='passthrough')
 
 
 ###############################################################################
@@ -154,19 +160,19 @@ from sklearn.linear_model import RidgeCV
 
 
 lasso_pipe = make_pipeline(processor_lin,
-                            LassoCV())
+                           LassoCV())
 
 rf_pipe = make_pipeline(processor_nlin,
                         RandomForestRegressor(random_state=42))
 
 gradient_pipe = make_pipeline(processor_nlin,
-                            HistGradientBoostingRegressor(random_state=0))
+                              HistGradientBoostingRegressor(random_state=0))
 
 estimators = [('Random Forest', rf_pipe),
               ('Lasso', lasso_pipe),
               ('Gradient Boosting', gradient_pipe)]
 
-stacking_regressor = StackingRegressor(estimators = estimators,
+stacking_regressor = StackingRegressor(estimators=estimators,
                                        final_estimator=RidgeCV())
 
 
@@ -218,8 +224,6 @@ axs = np.ravel(axs)
 for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                                                stacking_regressor)]):
     start_time = time.time()
-
-    print(name)
     score = cross_validate(est, X, y,
                            scoring=['r2', 'neg_mean_absolute_error'],
                            n_jobs=-1, verbose=0)
