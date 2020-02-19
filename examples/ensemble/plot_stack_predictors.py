@@ -217,7 +217,6 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
     ax.set_title(title)
 
-
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
 
@@ -240,7 +239,6 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                 -np.mean(score['test_neg_mean_absolute_error']),
                 np.std(score['test_neg_mean_absolute_error'])),
         elapsed_time)
-
 
 plt.suptitle('Single predictors versus stacked predictors')
 plt.tight_layout()
