@@ -1197,8 +1197,9 @@ def check_pairwise_estimator_tag(name, estimator_orig):
     attributes_to_check = ['metric', 'affinity', 'kernel']
 
     # Check if _pairwise attribute is present
-    has_pairwise_tag = hasattr(estimator_orig, '_pairwise')
-
+    has_pairwise_tag = (False
+        if getattr(estimator_orig, '_pairwise', None) is None
+        else True)
     # Using iris as sample data
     X, y_ = load_iris(return_X_y=True)
     distance_matrix = pairwise_distances(X)
@@ -1221,21 +1222,22 @@ def check_pairwise_estimator_tag(name, estimator_orig):
             # Estimators may validate parameters in fit if not in set_params
             estimator2.fit(distance_matrix, y_)
         except Exception:
-            # Estimator that does not support 'precomputed' 
+            # Estimator that does not support 'precomputed'
             # as attribute value will continue
-            continue 
+            continue
 
-        # If does not have _pairwise tag check if 
+        # If does not have _pairwise tag check if
         # non-square distance matrix raises an error
         try:
             non_square_distance = distance_matrix[:, :-1]
-            if hasattr(estimator2, 'fit_predict'):
+            if getattr(estimator2, 'fit_predict', None) is not None:
                 estimator2.fit_predict(non_square_distance, y_)
-            elif hasattr(estimator2, 'fit_transform'):
+            elif (getattr(estimator2, 'fit_transform', None)
+                    is not None):
                 estimator2.fit_transform(non_square_distance, y_)
-            elif hasattr(estimator2, 'fit'):
+            elif getattr(estimator2, 'fit', None) is not None:
                 estimator2.fit(non_square_distance, y_)
-                if hasattr(estimator2, 'predict'):
+                if getattr(estimator2, 'predict', None) is not None:
                     estimator2.predict(X)
         except ValueError:
             error_message = ("{0} implements {1}='precomputed' but does"
