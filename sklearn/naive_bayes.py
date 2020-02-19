@@ -1186,7 +1186,7 @@ class CategoricalNB(_BaseDiscreteNB):
         n_categories_X = X.max(axis=0) + 1
         min_categories_ = np.array(min_categories)
         if min_categories is not None:
-            if not np.issubdtype(min_categories_.dtype, np.int):
+            if not np.issubdtype(min_categories_.dtype, np.signedinteger):
                 raise ValueError(
                     f"'min_categories' should have integral type. Got "
                     f"{min_categories_.dtype} instead."
