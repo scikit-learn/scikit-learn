@@ -88,13 +88,16 @@ X, y = load_ames_housing()
 # Make pipeline to preprocess the data
 ###############################################################################
 #
-# The dataset has many missing values. To impute them, we will exchange
+# Before we can use Ames dataset we still need to do some preprocessing to it.
+# First, the dataset has many missing values. To impute them, we will exchange
 # categorical missing values with the new category 'missing' while the
 # numerical missing values we will exchange for the 'mean' of the column. We
-# will also encode the categories with either OrdinalEncoder (TODO: link) or
-# OneHotEncoder depending for which type of model we will use them (decision
-# tree based or linear model). To falicitate this preprocessing we will make
-# two pipelines
+# will also encode the categories with either OneHotEncoder or OrdinalEncoder
+# (TODO: link) depending for which type of model we will use them (linear or
+# non-linear model). To falicitate this preprocessing we will make two
+# pipelines.
+# You can skip this section if your data is ready to use and does
+# not need preprocessing
 
 
 from sklearn.compose import make_column_transformer
@@ -128,11 +131,11 @@ cat_proc_lin = make_pipeline(
 )
 
 num_proc_lin = make_pipeline(
-    StandardScaler(),
     SimpleImputer(strategy='mean'),
+    StandardScaler()
 )
 
-# transformation to use for decision tree based estimators
+# transformation to use for non-linear estimators
 processor_tree = make_column_transformer(
                               (cat_proc_tree, cat_cols),
                               (num_proc_tree, num_cols),
@@ -143,6 +146,7 @@ processor_lin = make_column_transformer(
                               (cat_proc_lin, cat_cols),
                               (num_proc_lin, num_cols),
                               remainder = 'passthrough')
+
 
 ###############################################################################
 # Stack of predictors on a single data set
@@ -157,39 +161,15 @@ processor_lin = make_column_transformer(
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
 
-from sklearn.ensemble import StackingRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
+from sklearn.experimental import enable_hist_gradient_boosting
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import StackingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
 
-from sklearn.pipeline import Pipeline
 
-
-
-
-
-
-# The data we are going to use is going to be downloaded from the OpenMl, and
-# therefore it still need to be preprocessed for our use. First, we have some
-# categorical columns, second there are plenty of missing values in the
-# dataset. Therefore we wil start from making a pipelines, one for our linear
-# estimators and the other one for decision trees
-
-
-
-
-
-#import pdb; pdb.set_trace()
-#estimators = [
-#    ('Random Forest', RandomForestRegressor(random_state=42)),
-#    ('Lasso', LassoCV()),
-#    ('Gradient Boosting', HistGradientBoostingRegressor(random_state=0))
-#]
-
-
-#import pdb; pdb.set_trace()
 lasso_pip = make_pipeline(processor_lin,
                             LassoCV())
 
@@ -210,6 +190,12 @@ estimators = [('Random Forest', rf_pip),
 stacking_regressor = StackingRegressor(estimators = estimators,
                                        final_estimator=RidgeCV())
 
+
+  # noqa
+
+
+
+from sklearn.pipeline import Pipeline
 #from sklearn.linear_model import LogisticRegression
 
 #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
