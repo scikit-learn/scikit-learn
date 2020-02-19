@@ -98,7 +98,7 @@ X = X[subset_feature]
 ###############################################################################
 # Then, we introspect the information regarding each column data type.
 
-print(X.info())
+X.info()
 
 ###############################################################################
 # We can observe that the "embarked" and "sex" columns were tagged as
