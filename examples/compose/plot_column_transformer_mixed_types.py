@@ -101,13 +101,18 @@ X = X[subset_feature]
 X.info()
 
 ###############################################################################
-# We can observe that the "embarked" and "sex" columns were tagged as
-# "categorical" columns when calling ``fetch_openml``. Therefore, we can use
-# this information to dispatch the categorical columns to the
+# We can observe that the `embarked` and `sex` columns were tagged as
+# `category` columns when lading the data with ``fetch_openml``. Therefore, we
+# can use this information to dispatch the categorical columns to the
 # ``categorical_transformer`` and the remaining columns to the
 # ``numerical_transformer``.
-# Note that in practise, it is hope to you to affect the "categorical" dtype
-# to some specific columns.
+
+###############################################################################
+# .. note:: In practise, you will have to handle yourself the column data type.
+# If you want some columnw to be considered as `category`, you will have to
+# convert them into categorical columns. If you are using pandas, you can refer
+# to their documentation regarding `Categorical data
+# <https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html>`_.
 
 from sklearn.compose import make_column_selector as selector
 
