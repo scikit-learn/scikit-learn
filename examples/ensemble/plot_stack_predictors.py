@@ -51,6 +51,87 @@ def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
 
 
 ###############################################################################
+# Download and prepare the dataset
+###############################################################################
+#
+# We will use Ames dataset which is a set of 1460 residential homes
+# in Ames, Iowa. Each of them is described by 80 features and the task is to
+# predict the final price of the houses.
+# This dataset is not part of Sklearn and we will download it from OpenML (TODO:
+# link: https://www.openml.org/d/42165). We will only use the X most relevant
+# features which we caluclated using the same method as described: TODO: add
+# link, check correct,
+# https://github.com/scikit-learn/scikit-learn/pull/16400).
+# To reduce number of features we calculated the most important ones using
+# ExtraTreesClassifier() (TODO: look at https://scikit-learn.org/stable/auto_examples/ensemble/plot_gradient_boosting_regression.html#sphx-glr-auto-examples-ensemble-plot-gradient-boosting-regression-py)
+
+from sklearn.datasets import fetch_openml
+from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
+
+def load_Ames():
+    df = fetch_openml(data_id=42165, as_frame=True)
+    X = df.data
+    y = df.target
+
+    cat_cols = X.columns[X.dtypes == 'O']
+    num_cols = X.columns[X.dtypes == 'float64']
+
+    categories = [
+        X[column].unique() for column in X[cat_cols]]
+
+    for cat in categories:
+        cat[cat == None] = 'missing'
+
+    categorical_proc_tree = Pipeline(steps=[
+        ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
+        ('encoder', OrdinalEncoder(categories=categories))
+        ])
+
+    # only remove the missing values
+    numerical_proc_tree = Pipeline(steps=[
+        ('imputer_nan', SimpleImputer(strategy='mean'))])
+
+    processor_tree = make_column_transformer(
+                              (categorical_proc_tree, cat_cols),
+                              (numerical_proc_tree, num_cols),
+                              remainder = 'passthrough')
+
+    params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
+          'learning_rate': 0.01, 'loss': 'ls'}
+
+    gradient_pip = make_pipeline(processor_tree,
+                GradientBoostingRegressor(**params, random_state=0))
+    #from sklearn.ensemble import ExtraTreesClassifier
+    #gradient_pip = make_pipeline(processor_tree,
+    #            ExtraTreesClassifier(random_state=0))
+
+    gradient_pip.fit(X, y)
+    feature_importances = gradient_pip[-1].feature_importances_
+    import numpy as np
+    print(np.argsort(feature_importances)[:20])
+
+    #most_important_features = [ 5,6, 38,  1, 10, 14, 58, 26, 74, 65, 77, 40, 28,  7, 36]#,  2, 61, 35, 37, 31]
+    most_important_features = [77, 40,  5, 20, 39, 25, 37, 29, 26, 1, 27, 14, 61, 58, 17, 38, 34, 16, 74, 76]
+    most_important_features = X.columns[most_important_features]
+
+    #import pdb; pdb.set_trace()
+    return most_important_features
+most_important_features = load_Ames()
+#for column in o_columns:
+#    string_value = X[column].unique()
+#    string_dict = dict(zip(string_value, range(len(string_value))))
+#    X = X.replace({column: string_dict})
+
+
+
+
+###############################################################################
 # Stack of predictors on a single data set
 ###############################################################################
 #
@@ -86,7 +167,7 @@ from sklearn.compose import make_column_transformer
 # dataset. Therefore we wil start from making a pipelines, one for our linear
 # estimators and the other one for decision trees
 
-from sklearn.datasets import fetch_openml
+
 
 def load_ames_housing():
     df = fetch_openml(data_id=42165, as_frame=True)
@@ -96,8 +177,10 @@ def load_ames_housing():
     return X, y
 
 X, y = load_ames_housing()
-X = X[:250]
-y = y[:250]
+X = X[most_important_features]
+#X = X[:500]
+#y = y[:500]
+
 cat_cols = X.columns[X.dtypes == 'O']
 num_cols = X.columns[X.dtypes == 'float64']
 
@@ -109,7 +192,6 @@ for cat in categories:
     cat[cat == None] = 'missing'
 
 categorical_proc_tree = Pipeline(steps=[
-    #('imputer_nan', SimpleImputer(strategy='constant', fill_value='missing')),
     ('imputer_none', SimpleImputer(missing_values=None, strategy='constant', fill_value='missing')),
     ('encoder', OrdinalEncoder(categories=categories))
     ])
@@ -166,8 +248,9 @@ gradient_pip = make_pipeline(processor_tree,
 #stacking_regressor = StackingRegressor(
 #    estimators=estimators, final_estimator=RidgeCV()
 #)
-estimators = [('Random Forest', rf_pip)] #,
-#estimators = [('Lasso', lasso_pip)]
+estimators = [('Random Forest', rf_pip),
+              ('Lasso', lasso_pip),
+              ('Gradient Boosting', gradient_pip)]
 stacking_regressor = StackingRegressor(estimators = estimators,
                                        final_estimator=RidgeCV())
 
@@ -245,7 +328,7 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                            scoring=['r2', 'neg_mean_absolute_error'],
                            n_jobs=-1, verbose=0)
     elapsed_time = time.time() - start_time
-    import pdb; pdb.set_trace()
+
     y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
 
     plot_regression_results(
