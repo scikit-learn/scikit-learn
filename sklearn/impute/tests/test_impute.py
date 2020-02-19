@@ -1019,13 +1019,13 @@ def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
 def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
     # Test that None/inf and scalar/vector give the same imputation
     X_train = np.array([
-        [5, 2, 2, 1],
-        [10, 1, 2, 7],
-        [3, 1, 1, 1],
-        [8, 4, 2, 2]])
+        [np.nan, 2, 2, 1],
+        [10, np.nan, np.nan, 7],
+        [3, 1, np.nan, 1],
+        [np.nan, 4, 2, np.nan]])
     X_test = np.array([
-        [np.nan, 2, 4, 5],
-        [np.nan, 4, 1, 2],
+        [np.nan, 2, np.nan, 5],
+        [2, 4, np.nan, np.nan],
         [np.nan, 1, 10, 1]])
     imputer1 = IterativeImputer(min_value=min_max_1[0],
                                 max_value=min_max_1[1],
