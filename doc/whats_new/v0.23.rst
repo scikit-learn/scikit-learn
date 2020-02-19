@@ -62,7 +62,9 @@ Changelog
 
 - |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
   :class:`cluster.SpectralCoclustering` and
-  :class:`cluster.SpectralBiclustering` is deprecated. :pr:`11950` by
+  :class:`cluster.SpectralBiclustering` is deprecated. They now use OpenMP
+  based parallelism. For more details on how to control the number of threads,
+  please refer to our :ref:`parallelism` notes. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
