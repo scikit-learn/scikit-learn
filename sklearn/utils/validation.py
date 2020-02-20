@@ -467,6 +467,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
             elif dtype_iter.name.startswith("Int"):  # pandas IntegerArray
+                # This should be an int if there are no pd.NA in the array
+                # but this is expensive to check
                 dtypes_orig[i] = float
                 has_pd_interger_array = True
 
