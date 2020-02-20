@@ -589,3 +589,25 @@ def test_multioutput_estimator_with_fit_params(estimator, dataset):
     estimator.fit(X, y, some_param=some_param)
     for dummy_estimator in estimator.estimators_:
         assert 'some_param' in dummy_estimator._fit_params
+
+
+def test_regressor_chain_w_fit_params():
+    # Make sure fit_params are properly propagated to the sub-estimators
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(n_targets=3)
+    weight = rng.rand(y.shape[0])
+
+    class MySGD(SGDRegressor):
+
+        def fit(self, X, y, **fit_params):
+            self.sample_weight_ = fit_params['sample_weight']
+            super().fit(X, y, **fit_params)
+
+    model = RegressorChain(MySGD())
+
+    # Fitting with params
+    fit_param = {'sample_weight': weight}
+    model.fit(X, y, **fit_param)
+
+    for est in model.estimators_:
+        assert est.sample_weight_ is weight

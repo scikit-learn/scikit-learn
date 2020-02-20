@@ -16,7 +16,8 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        count_nonzero, csc_median_axis_0)
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
-                                            inplace_csr_row_normalize_l2)
+                                            inplace_csr_row_normalize_l2,
+                                            csr_row_norms)
 from sklearn.utils._testing import assert_allclose
 
 
@@ -544,3 +545,16 @@ def test_inplace_normalize():
                 if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
                     X_csr.data **= 2
                 assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_csr_row_norms(dtype):
+    # checks that csr_row_norms returns the same output as
+    # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
+    X = sp.random(100, 10, format='csr', dtype=dtype)
+
+    scipy_norms = sp.linalg.norm(X, axis=1)**2
+    norms = csr_row_norms(X)
+
+    assert norms.dtype == dtype
+    assert_allclose(norms, scipy_norms)
