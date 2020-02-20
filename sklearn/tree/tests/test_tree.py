@@ -50,7 +50,7 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
-CLF_CRITERIONS = ("gini", "entropy")
+CLF_CRITERIONS = ("gini", "entropy", "hellinger")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
 CLF_TREES = {
