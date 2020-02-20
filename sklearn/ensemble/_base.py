@@ -15,12 +15,13 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import Bunch
+from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
+                            message_clsname=None, message=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
@@ -33,7 +34,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
                 ) from exc
             raise
     else:
-        estimator.fit(X, y)
+        with _print_elapsed_time(message_clsname, message):
+            estimator.fit(X, y)
     return estimator
 
 
@@ -49,7 +51,7 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -83,13 +85,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, default=None
+    base_estimator : object
         The base estimator from which the ensemble is built.
 
-    n_estimators : int
+    n_estimators : int, default=10
         The number of estimators in the ensemble.
 
-    estimator_params : list of str
+    estimator_params : list of str, default=tuple()
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 

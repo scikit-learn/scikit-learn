@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
@@ -24,7 +25,45 @@ from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_dense(order, input_order):
+    """Check that _set_order returns arrays with promised order."""
+    X = np.array([[0], [0], [0]], order=input_order)
+    y = np.array([0, 0, 0], order=input_order)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert X2.flags['C_CONTIGUOUS']
+        assert y2.flags['C_CONTIGUOUS']
+    elif order == 'F':
+        assert X2.flags['F_CONTIGUOUS']
+        assert y2.flags['F_CONTIGUOUS']
+
+    if order == input_order:
+        assert X is X2
+        assert y is y2
+
+
+@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('input_order', ['C', 'F'])
+def test_set_order_sparse(order, input_order):
+    """Check that _set_order returns sparse matrices in promised format."""
+    X = sparse.coo_matrix(np.array([[0], [0], [0]]))
+    y = sparse.coo_matrix(np.array([0, 0, 0]))
+    sparse_format = "csc" if input_order == "F" else "csr"
+    X = X.asformat(sparse_format)
+    y = X.asformat(sparse_format)
+    X2, y2 = _set_order(X, y, order=order)
+    if order == 'C':
+        assert sparse.isspmatrix_csr(X2)
+        assert sparse.isspmatrix_csr(y2)
+    elif order == 'F':
+        assert sparse.isspmatrix_csc(X2)
+        assert sparse.isspmatrix_csc(y2)
 
 
 def test_lasso_zero():
@@ -173,7 +212,7 @@ def test_lasso_cv():
 def test_lasso_cv_with_some_model_selection():
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
-    from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
     from sklearn.linear_model import LassoCV
 
@@ -183,7 +222,7 @@ def test_lasso_cv_with_some_model_selection():
 
     pipe = make_pipeline(
         StandardScaler(),
-        LassoCV(cv=StratifiedKFold())
+        LassoCV(cv=ShuffleSplit(random_state=0))
     )
     pipe.fit(X, y)
 
@@ -897,3 +936,87 @@ def test_multi_task_lasso_cv_dtype():
     y = X[:, [0, 0]].copy()
     est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
+
+
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('alpha', [0.01])
+@pytest.mark.parametrize('normalize', [False, True])
+@pytest.mark.parametrize('precompute', [False, True])
+def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
+                                        precompute):
+    """Test that the impact of sample_weight is consistent."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    params = dict(alpha=alpha, fit_intercept=fit_intercept,
+                  precompute=precompute, tol=1e-6, l1_ratio=0.5)
+
+    reg = ElasticNet(**params).fit(X, y)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # sample_weight=None should be equivalent to sample_weight = number
+    sample_weight = 123.
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = 2 * np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # setting one element of sample_weight to 0 is equivalent to removing
+    # the corresponding sample
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 0
+    reg.fit(X, y, sample_weight=sample_weight)
+    coef1 = reg.coef_.copy()
+    if fit_intercept:
+        intercept1 = reg.intercept_
+    reg.fit(X[:-1], y[:-1])
+    assert_allclose(reg.coef_, coef1, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept1)
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating corresponding samples twice
+    if sparse.issparse(X):
+        X = X.toarray()
+
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+
+    reg1 = ElasticNet(**params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    reg2 = ElasticNet(**params).fit(
+            X2, y2, sample_weight=None
+    )
+    assert_allclose(reg1.coef_, reg2.coef_)
+
+
+def test_enet_sample_weight_sparse():
+    reg = ElasticNet()
+    X = sparse.csc_matrix(np.zeros((3, 2)))
+    y = np.array([-1, 0, 1])
+    sw = np.array([1, 2, 3])
+    with pytest.raises(ValueError, match="Sample weights do not.*support "
+                                         "sparse matrices"):
+        reg.fit(X, y, sample_weight=sw, check_input=True)
