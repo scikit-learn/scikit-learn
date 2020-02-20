@@ -398,7 +398,8 @@ providing a ``get_params`` method. If ``get_params`` is present, then
 Objects that do not provide this method will either:
 
 * be deep-copied (using the Python standard function ``copy.deepcopy``) if
-``safe=False`` is passed to :func:`base.clone`.
+  ``safe=False`` is passed to :func:`base.clone`.
+
 * be reassigned if the object is an estimator parameter declared to be
   immutable using the estimator tag `immutable_params` (refer to
   :ref:`estimator_tags` below). This behavior is interesting when a parameter
