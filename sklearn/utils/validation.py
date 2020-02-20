@@ -450,6 +450,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
+    has_pd_interger_array = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if pandas dataframe is sparse
         with suppress(ImportError):
@@ -465,6 +466,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
+            elif dtype_iter.name.startswith("Int"):  # pandas IntegerArray
+                dtypes_orig[i] = float
+                has_pd_interger_array = True
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
@@ -523,6 +527,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                                            msg_dtype=dtype)
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
+                    # Need to call astype first for pandas IntegerArray
+                    if has_pd_interger_array:
+                        array = array.astype(dtype)
                     array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"

@@ -3,6 +3,7 @@
 import warnings
 import os
 
+from distutils.version import LooseVersion
 from tempfile import NamedTemporaryFile
 from itertools import product
 from operator import itemgetter
@@ -347,6 +348,30 @@ def test_check_array():
     for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
         with pytest.warns(FutureWarning, match=expected_warn_regex):
             check_array(X, dtype="numeric")
+
+
+@pytest.mark.parametrize("dtype", ["Int8", "Int16", "Int32"])
+def test_check_array_pandas_na_support(dtype):
+    # Test pandas IntegerArray with pd.NA
+    pd = pytest.importorskip('pandas')
+
+    if LooseVersion(pd.__version__) < "1.0.0":
+        pytest.skip("pd.NA request >= 1.0.0")
+
+    X_np = np.array([[1, 2, 3, np.nan, np.nan],
+                     [np.nan, np.nan, 8, 4, 6],
+                     [1, 2, 3, 4, 5]]).T
+
+    # Creates dataframe with IntegerArrays with pd.NA
+    X = pd.DataFrame(X_np, dtype=dtype, columns=['a', 'b', 'c'])
+    X['c'] = X['c'].astype('int')
+    X_checked = check_array(X, force_all_finite='allow-nan')
+
+    assert_allclose(X_checked, X_np)
+
+    msg = "Input contains NaN, infinity"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X)
 
 
 def test_check_array_pandas_dtype_object_conversion():
