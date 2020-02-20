@@ -27,6 +27,7 @@ from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
+from .utils.validation import _deprecate_positional_args
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
@@ -98,7 +99,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -275,7 +277,8 @@ class _CalibratedClassifier:
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid', classes=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
