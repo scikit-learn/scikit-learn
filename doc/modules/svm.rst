@@ -456,13 +456,13 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
+  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`, where
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`, where :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
+  * sigmoid :math:`\tanh(\gamma \langle x,x'\rangle + r)`,
     where :math:`r` is specified by ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::

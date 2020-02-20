@@ -1799,7 +1799,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
-    """Build a text report showing the main classification metrics
+    """Build a text report showing the main classification metrics.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
@@ -2091,8 +2091,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
-    log-likelihood of the true labels given a probabilistic classifier's
-    predictions. The log loss is only defined for two or more labels.
+    log-likelihood of a logistic model that returns ``y_pred`` probabilities
+    for its training data ``y_true``.
+    The log loss is only defined for two or more labels.
     For a single sample with true label yt in {0,1} and
     estimated probability yp that yt = 1, the log loss is
 
@@ -2332,6 +2333,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
+
     The smaller the Brier score, the better, hence the naming with "loss".
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned

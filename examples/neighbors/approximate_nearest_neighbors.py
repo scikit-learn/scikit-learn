@@ -209,9 +209,9 @@ def test_transformers():
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml(data_id=41063)
-    X, y = shuffle(mnist.data, mnist.target, random_state=42)
-    return X[:n_samples], y[:n_samples]
+    mnist = fetch_openml("mnist_784")
+    X, y = shuffle(mnist.data, mnist.target, random_state=2)
+    return X[:n_samples] / 255, y[:n_samples]
 
 
 def run_benchmark():
@@ -278,8 +278,8 @@ def run_benchmark():
             # plot TSNE embedding which should be very similar across methods
             if 'TSNE' in transformer_name:
                 axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
-                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
-                                   cmap=plt.cm.viridis)
+                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y.astype(np.int32),
+                                   alpha=0.2, cmap=plt.cm.viridis)
                 axes[i_ax].xaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].yaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].axis('tight')

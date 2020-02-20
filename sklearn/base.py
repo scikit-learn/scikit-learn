@@ -48,7 +48,7 @@ def clone(estimator, safe=True):
     estimator : estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
 
-    safe : boolean, optional
+    safe : bool, default=True
         If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
@@ -61,10 +61,17 @@ def clone(estimator, safe=True):
         if not safe:
             return copy.deepcopy(estimator)
         else:
-            raise TypeError("Cannot clone object '%s' (type %s): "
-                            "it does not seem to be a scikit-learn estimator "
-                            "as it does not implement a 'get_params' methods."
-                            % (repr(estimator), type(estimator)))
+            if isinstance(estimator, type):
+                raise TypeError("Cannot clone object. " +
+                                "You should provide an instance of " +
+                                "scikit-learn estimator instead of a class.")
+            else:
+                raise TypeError("Cannot clone object '%s' (type %s): "
+                                "it does not seem to be a scikit-learn "
+                                "estimator as it does not implement a "
+                                "'get_params' method."
+                                % (repr(estimator), type(estimator)))
+
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
     for name, param in new_object_params.items():
@@ -100,10 +107,10 @@ def _pprint(params, offset=0, printer=repr):
     params : dict
         The dictionary to pretty print
 
-    offset : int
+    offset : int, default=0
         The offset in characters to add at the begin of each line.
 
-    printer : callable
+    printer : callable, default=repr
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -552,7 +559,7 @@ class ClusterMixin:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -560,7 +567,7 @@ class ClusterMixin:
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         # non-optimized default implementation; override when a better
@@ -592,9 +599,9 @@ class BiclusterMixin:
 
         Returns
         -------
-        row_ind : np.array, dtype=np.intp
+        row_ind : ndarray, dtype=np.intp
             Indices of rows in the dataset that belong to the bicluster.
-        col_ind : np.array, dtype=np.intp
+        col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
 
         """
@@ -625,12 +632,12 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array
+        data : array-like
             The data.
 
         Returns
         -------
-        submatrix : array
+        submatrix : ndarray
             The submatrix corresponding to bicluster i.
 
         Notes
@@ -656,10 +663,10 @@ class TransformerMixin:
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : ndarray of shape (n_samples, n_features)
             Training set.
 
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,), default=None
             Target values.
 
         **fit_params : dict
@@ -667,7 +674,7 @@ class TransformerMixin:
 
         Returns
         -------
-        X_new : numpy array of shape [n_samples, n_features_new]
+        X_new : ndarray array of shape (n_samples, n_features_new)
             Transformed array.
         """
         # non-optimized default implementation; override when a better
@@ -691,6 +698,9 @@ class DensityMixin:
         ----------
         X : array-like of shape (n_samples, n_features)
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         score : float
@@ -709,7 +719,7 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -717,7 +727,7 @@ class OutlierMixin:
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor

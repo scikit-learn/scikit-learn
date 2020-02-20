@@ -236,7 +236,9 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Verbosity mode.
 
     tol : float, optional
-        The relative increment in the results before declaring convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
@@ -681,7 +683,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to inertia to declare convergence.
+        Relative tolerance with regards to Frobenius norm of the difference
+        in the cluster centers of two consecutive iterations to declare
+        convergence.
 
     precompute_distances : 'auto' or bool, default='auto'
         Precompute distances (faster but takes more memory).

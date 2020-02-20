@@ -310,8 +310,14 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
@@ -554,6 +560,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         training data for `final_estimator`. When True, the
         `final_estimator` is trained on the predictions as well as the
         original training data.
+
+    verbose : int, default=0
+        Verbosity level.
 
     Attributes
     ----------
