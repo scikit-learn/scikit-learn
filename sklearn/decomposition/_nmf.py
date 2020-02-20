@@ -1079,13 +1079,9 @@ def non_negative_factorization(X, W=None, H=None,  A=None, B=None,
             avg = np.sqrt(X.mean() / n_components)
             W = np.full((n_samples, n_components), avg, dtype=X.dtype)
         else:
-<<<<<<< HEAD
-            W = np.zeros((n_samples, n_components))
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
         A = None
         B = None
-=======
-            W = np.zeros((n_samples, n_components), dtype=X.dtype)
->>>>>>> master
     else:
         W, H, A, B = _initialize_nmf(X, n_components, init=init,
                                      random_state=random_state)
