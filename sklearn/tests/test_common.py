@@ -21,7 +21,7 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, _safe_tags
 
 import sklearn
 from sklearn.base import BiclusterMixin
@@ -95,12 +95,13 @@ def test_estimators(estimator, check, request):
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
 
-        args = {}
-        if "request" in signature(check).parameters:
-            # pass the pytest request fixture, so that we can mark the
-            # check as XFAIL when necessary.
-            args['request'] = request
-        check(estimator, **args)
+        xfail_checks = _safe_tags(estimator, '_xfail_test')
+        check_name = _set_check_estimator_ids(check)
+        if xfail_checks:
+            if check_name in xfail_checks:
+                msg = xfail_checks[check_name]
+                request.applymarker(pytest.mark.xfail(reason=msg))
+        check(estimator)
 
 
 def test_check_estimator_generate_only():

@@ -72,33 +72,6 @@ def _safe_tags(estimator, key=None):
     return _DEFAULT_TAGS
 
 
-def _raise_xfail(reason, request=None):
-    """Mark a check as a known failure
-
-    If pytest function request is not provided, the SkipTest exception will
-    be raised instead.
-
-    Parameters
-    ----------
-    reason : str
-        reason for the known failure
-    request: default=None
-        result of the pytest request fixture, or None. This parameter
-        should be not None to call pytest.xfail.
-    """
-    if request is None:
-        # if a pytest request context is not provided raise SkipTest
-        raise SkipTest('XFAIL ' + str(reason))
-    try:
-        import pytest
-
-        # mark test as XFAIL and continue excecution to see if it will
-        # actually fail.
-        request.applymarker(pytest.mark.xfail(reason=reason))
-    except ImportError:
-        raise SkipTest('XFAIL ' + str(reason))
-
-
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_no_attributes_set_in_init
@@ -336,6 +309,7 @@ def _set_check_estimator_ids(obj):
     check_estimator
     """
     if callable(obj):
+
         if not isinstance(obj, partial):
             return obj.__name__
 
@@ -1059,13 +1033,6 @@ def check_methods_subset_invariance(name, estimator_orig, request=None):
 
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
-        # TODO remove cases when corrected
-        if (name, method) in [('NuSVC', 'decision_function'),
-                              ('SparsePCA', 'transform'),
-                              ('MiniBatchSparsePCA', 'transform'),
-                              ('DummyClassifier', 'predict'),
-                              ('BernoulliRBM', 'score_samples')]:
-            _raise_xfail(msg, request)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2270,10 +2237,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig, request=None):
-    if name == "NuSVC":
-        # the sparse version has a parameter that doesn't do anything
-        _raise_xfail("Not testing NuSVC class weight as it is ignored.",
-                     request)
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
