@@ -5,7 +5,7 @@ Learn from imbalanced datasets
 
 This example illustrates the problem induced by learning on datasets having
 imbalanced classes. Subsequently, we compare different approaches alleviating
-these negative effects using scikit-learn.
+these negative effects using other estimators.
 
 """
 
@@ -62,8 +62,11 @@ y_res.value_counts()
 
 ###############################################################################
 # For the rest of the notebook, we will make a single split to get training
-# and testing data. Note that you should use cross-validation to have an
-# estimate of the performance variation in practice.
+# and testing data. Note that in practise, you should always use
+# cross-validation to have an estimate of the performance variation. You can
+# refer to the following example showing how to use a scikit-learn pipeline
+# within a grid-search:
+# :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
 from sklearn.model_selection import train_test_split
 
@@ -79,7 +82,7 @@ from sklearn.dummy import DummyClassifier
 
 dummy_clf = DummyClassifier(strategy="most_frequent")
 score = dummy_clf.fit(X_train, y_train).score(X_test, y_test)
-print("Accuracy score of a dummy classifier: {:.3f}".format(score))
+print(f"Accuracy score of a dummy classifier: {score:.3f}")
 
 ##############################################################################
 # Instead of using the accuracy, we can use the balanced accuracy which will
@@ -89,7 +92,7 @@ from sklearn.metrics import balanced_accuracy_score
 
 y_pred = dummy_clf.predict(X_test)
 score = balanced_accuracy_score(y_test, y_pred)
-print("Balanced accuracy score of a dummy classifier: {:.3f}".format(score))
+print(f"Balanced accuracy score of a dummy classifier: {score:.3f}")
 
 ###############################################################################
 # Strategies to learn from an imbalanced dataset
@@ -127,8 +130,9 @@ df_scores = pd.DataFrame()
 # Dummy baseline
 # ..............
 #
-# Before to train a real machine learning model, we can store the results
-# obtained with our :class:`sklearn.dummy.DummyClassifier`.
+# Before to train a real machine learning model, we put the
+# :class:`sklearn.dummy.DummyClassifier`'s results in the dataframe as a
+# baseline.
 
 evaluate_classifier(dummy_clf)
 df_scores
@@ -143,7 +147,9 @@ df_scores
 # numerical columns before to inject the data into the
 # :class:`sklearn.linear_model.LogisticRegression` classifier.
 #
-# First, we define our numerical and categorical pipelines.
+# First, we preprocess the data using imputation of the missing values and
+# one-hot encoding for the categorical features and a standard scaler for the
+# numerical ones.
 
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
@@ -163,13 +169,12 @@ cat_pipe = make_pipeline(
 # columns to the categorical pipeline and the numerical columns to the
 # numerical pipeline
 
-from pandas.api.types import CategoricalDtype
 from sklearn.compose import ColumnTransformer
 from sklearn.compose import make_column_selector as selector
 
 preprocessor_linear = ColumnTransformer(
     [("num-pipe", num_pipe, selector(dtype_include=np.number)),
-     ("cat-pipe", cat_pipe, selector(dtype_include=CategoricalDtype))],
+     ("cat-pipe", cat_pipe, selector(dtype_include="category"))],
     n_jobs=2
 )
 
@@ -190,9 +195,11 @@ df_scores
 # baseline. However, it is impacted by the class imbalance.
 #
 # We can verify that something similar is happening with a tree-based model
-# such as :class:`sklearn.ensemble.RandomForestClassifier`. With this type of
-# classifier, we will not need to scale the numerical data, and we will only
-# need to ordinal encode the categorical data.
+# such as :class:`sklearn.ensemble.RandomForestClassifier`. Note that we don't
+# need to scale the data for the tree-based models. We also use an ordinal
+# encoder instead of a one-hot enconder. This encoding is more efficient since
+# it will not create extra columns scanned during the search of the best split
+# by the trees.
 
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.ensemble import RandomForestClassifier
@@ -203,8 +210,8 @@ cat_pipe = make_pipeline(
 )
 
 preprocessor_tree = ColumnTransformer(
-    [("num-pipe", num_pipe, selector(dtype_include=np.number)),
-     ("cat-pipe", cat_pipe, selector(dtype_include=CategoricalDtype))],
+    [("cat-pipe", cat_pipe, selector(dtype_include="category"))],
+    remainder="passthrough",
     n_jobs=2
 )
 
@@ -250,7 +257,7 @@ df_scores
 ###############################################################################
 # However, the same weighting strategy is not efficient with random forest.
 # Indeed, the chosen criteria (e.g. entropy) is known to be sensitive to class
-# imbalanced.
+# imbalance.
 
 ###############################################################################
 # From a random-forest toward a balanced random-forest
@@ -262,7 +269,7 @@ df_scores
 #
 # The :class:`sklearn.ensemble.RandomForestClassifier` provide an option
 # `class_weight="balanced_bootstrap"` such that each tree will learn from a
-# bootstrap sample with equal number of samples for each classes. This
+# bootstrap sample with equal number of samples for each class. This
 # algorithm is also known as a balanced random-forest.
 
 rf_clf.set_params(randomforestclassifier__class_weight="balanced_bootstrap")

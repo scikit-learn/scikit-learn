@@ -118,7 +118,7 @@ def _get_class_distribution(y):
 
     Parameters
     ----------
-    y : ndarray of shape (n_samples,)
+    y : array-like of shape (n_samples,)
         Targets.
 
     Returns
@@ -126,6 +126,7 @@ def _get_class_distribution(y):
     class_indices : dict
         Dictionary where the key is the class name and the value is an array
         of the class indices.
+
     class_counts : dict
         Dictionary where the key is the class name and the value is the counts.
     """
@@ -133,7 +134,7 @@ def _get_class_distribution(y):
         y = column_or_1d(y)
     except ValueError:
         raise NotImplementedError(
-            "Balanced random-forest not implemented for multi-output"
+            "Balanced random-forest not yet implemented for multi-output"
         )
 
     classes = np.unique(y)
@@ -158,7 +159,7 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap,
         The maximum number of samples required in the bootstrap sample.
     balanced_bootstrap : bool
         Whether or not the class counts should be balanced in the bootstrap
-    y : ndarray of shape (n_samples,) or (n_samples, 1)
+    y : array-like of shape (n_samples,) or (n_samples, 1)
         The array of targets used when a balanced bootstrap is requested.
 
     Returns
@@ -1091,8 +1092,8 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-        .. versionadded:: 0.23
-           The option `"balanced_bootstrap` was added in 0.23
+        .. versionchanged:: 0.23
+           The option `"balanced_bootstrap"` was added in 0.23
 
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1670,7 +1671,7 @@ class ExtraTreesClassifier(ForestClassifier):
         new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
-            None, optional (default=None)
+            None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
