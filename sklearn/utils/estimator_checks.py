@@ -80,7 +80,8 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
-    yield check_sample_weights_invariance
+    yield check_sample_weights_invariance_ones
+    yield check_sample_weights_invariance_zeros
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -765,7 +766,7 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig):
+def check_sample_weights_invariance_ones(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
@@ -775,10 +776,49 @@ def check_sample_weights_invariance(name, estimator_orig):
 
         estimator1 = clone(estimator_orig)
         estimator2 = clone(estimator_orig)
-        estimator3 = clone(estimator_orig)
         set_random_state(estimator1, random_state=0)
         set_random_state(estimator2, random_state=0)
-        set_random_state(estimator3, random_state=0)
+
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
+
+        X2 = np.vstack([X, X])
+        y2 = np.hstack([y, 3 - y])
+        y = _enforce_estimator_tags_y(estimator1, y)
+
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
+
+        for method in ["predict", "predict_proba",
+                       "decision_function", "transform"]:
+            if hasattr(estimator_orig, method):
+                X_pred1 = getattr(estimator1, method)(X)
+                X_pred2 = getattr(estimator2, method)(X)
+                if sparse.issparse(X_pred1):
+                    X_pred1 = X_pred1.toarray()
+                    X_pred2 = X_pred2.toarray()
+                assert_allclose(X_pred1, X_pred2,
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
+
+@ignore_warnings(category=FutureWarning)
+def check_sample_weights_invariance_zeros(name, estimator_orig):
+    # check that the estimators yield same results for
+    # unit weights and no weights
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        # We skip pairwise because the data is not pairwise
+
+        estimator1 = clone(estimator_orig)
+        estimator2 = clone(estimator_orig)
+        set_random_state(estimator1, random_state=0)
+        set_random_state(estimator2, random_state=0)
 
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
@@ -790,35 +830,29 @@ def check_sample_weights_invariance(name, estimator_orig):
         X2 = np.vstack([X, X])
         y2 = np.hstack([y, 3 - y])
         y = _enforce_estimator_tags_y(estimator1, y)
-        y2 = _enforce_estimator_tags_y(estimator3, y2)
+        y2 = _enforce_estimator_tags_y(estimator2, y2)
         weights = np.ones(shape=len(y) * 2)
         weights[len(y):] = 0
         X2, y2, weights = shuffle(X2, y2, weights, random_state=0)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
-        estimator2.fit(X, y=y, sample_weight=None)
-        estimator3.fit(X2, y=y2, sample_weight=weights)
+        estimator2.fit(X2, y=y2, sample_weight=weights)
 
         for method in ["predict", "predict_proba",
                        "decision_function", "transform"]:
             if hasattr(estimator_orig, method):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
-                X_pred3 = getattr(estimator3, method)(X)
+
                 if sparse.issparse(X_pred1):
                     X_pred1 = X_pred1.toarray()
                     X_pred2 = X_pred2.toarray()
-                    X_pred3 = X_pred3.toarray()
-                assert_allclose(X_pred1, X_pred2,
-                                err_msg="For %s sample_weight=None is not"
-                                        " equivalent to sample_weight=ones"
-                                        % name)
+
                 assert_allclose(
-                    X_pred1, X_pred3,
+                    X_pred1, X_pred2,
                     err_msg="For %s sample_weight is not"
                             " equivalent to removing samples"
                             % name)
-
 
 
 

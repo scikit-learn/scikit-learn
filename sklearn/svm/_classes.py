@@ -240,7 +240,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -419,7 +419,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -644,7 +644,7 @@ class SVC(BaseSVC):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -858,7 +858,7 @@ class NuSVC(BaseSVC):
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.',
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1015,7 +1015,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1148,7 +1148,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
@@ -1365,7 +1365,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }

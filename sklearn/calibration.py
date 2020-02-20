@@ -236,7 +236,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance':
+                'check_sample_weights_invariance_zeros':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
