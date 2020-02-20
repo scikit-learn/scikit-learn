@@ -1373,7 +1373,7 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
-        if metric==mean_absolute_percentage_error:
+        if metric == mean_absolute_percentage_error:
             assert np.isfinite(current_score)
             assert current_score > 1e6
         else:
