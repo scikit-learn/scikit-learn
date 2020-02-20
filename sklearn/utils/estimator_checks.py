@@ -309,7 +309,6 @@ def _set_check_estimator_ids(obj):
     check_estimator
     """
     if callable(obj):
-
         if not isinstance(obj, partial):
             return obj.__name__
 
@@ -1008,7 +1007,7 @@ def _apply_on_subsets(func, X):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_methods_subset_invariance(name, estimator_orig, request=None):
+def check_methods_subset_invariance(name, estimator_orig):
     # check that method gives invariant results if applied
     # on mini batches or the whole set
     rnd = np.random.RandomState(0)
@@ -2236,7 +2235,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_class_weight_classifiers(name, classifier_orig, request=None):
+def check_class_weight_classifiers(name, classifier_orig):
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
