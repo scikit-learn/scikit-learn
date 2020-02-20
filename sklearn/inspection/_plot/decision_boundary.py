@@ -200,7 +200,7 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
 
     pred_func = _check_boundary_response_method(estimator, response_method)
 
-    x0, x1 = _safe_indexing(X, 0), _safe_indexing(X, 1)
+    x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
     x0_min, x0_max = x0.min() - eps, x0.max() + eps
     x1_min, x1_max = x1.min() - eps, x1.max() + eps
