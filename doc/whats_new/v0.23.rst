@@ -159,6 +159,13 @@ Changelog
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
+  ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
+  for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
