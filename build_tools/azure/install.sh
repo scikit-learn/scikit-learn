@@ -15,10 +15,9 @@ setup_ccache() {
     echo "Setting up ccache"
     mkdir /tmp/ccache/
     which ccache
-    ln -s $(which ccache) /tmp/ccache/gcc
-    ln -s $(which ccache) /tmp/ccache/g++
-    ln -s $(which ccache) /tmp/ccache/cc
-    ln -s $(which ccache) /tmp/ccache/c++
+    for name in gcc g++ cc c++ x86_64-linux-gnu-gcc x86_64-linux-gnu-c++; do
+      ln -s $(which ccache) "/tmp/ccache/${name}"
+    done
     export PATH="/tmp/ccache/:${PATH}"
     ccache -M 1024M
 }
