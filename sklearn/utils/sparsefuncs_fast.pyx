@@ -25,6 +25,7 @@ ctypedef fused integral:
 
 ctypedef np.float64_t DOUBLE
 
+
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
@@ -38,19 +39,18 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    np.ndarray[integral, ndim=1, mode="c"] X_indptr):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
-        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
-
-        np.npy_intp i, j
+        unsigned long long i
+        integral j
         double sum_
 
-    norms = np.zeros(n_samples, dtype=np.float64)
+    norms = np.empty(n_samples, dtype=X_data.dtype)
+    cdef floating[::1] norms_view = norms
 
     for i in range(n_samples):
         sum_ = 0.0
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
-        norms[i] = sum_
+        norms_view[i] = sum_
 
     return norms
 
