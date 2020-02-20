@@ -1984,10 +1984,10 @@ Here is a small example of usage of the :func:`mean_absolute_percentage_error`
 function::
 
   >>> from sklearn.metrics import mean_absolute_percentage_error
-  >>> y_true = [3, -0.5, 2, 7]
-  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> y_true = [1, 10, 1e6]
+  >>> y_pred = [0.9, 15, 1.2e6]
   >>> mean_absolute_percentage_error(y_true, y_pred)
-  32.73... 
+  26.66...
 
 .. _median_absolute_error:
 
