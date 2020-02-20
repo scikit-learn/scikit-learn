@@ -16,9 +16,9 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs
 
-import numpy as np
 cimport numpy as np
 np.import_array()
+cdef double INFINITY = np.inf
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
@@ -590,8 +590,7 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class HellingerDistance(ClassificationCriterion):
-    """Hellinger distance criterion.
-
+    r"""Hellinger distance criterion.
 
     """
 
