@@ -96,10 +96,9 @@ def test_estimators(estimator, check, request):
 
         xfail_checks = _safe_tags(estimator, '_xfail_test')
         check_name = _set_check_estimator_ids(check)
-        if xfail_checks:
-            if check_name in xfail_checks:
-                msg = xfail_checks[check_name]
-                request.applymarker(pytest.mark.xfail(reason=msg))
+        if xfail_checks and check_name in xfail_checks:
+            msg = xfail_checks[check_name]
+            request.applymarker(pytest.mark.xfail(reason=msg))
         check(estimator)
 
 

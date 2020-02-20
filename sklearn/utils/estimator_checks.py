@@ -418,6 +418,7 @@ def check_estimator(Estimator, generate_only=False):
     if isinstance(Estimator, type):
         # got a class
         checks_generator = _generate_class_checks(Estimator)
+        estimator = _construct_instance(Estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -427,7 +428,15 @@ def check_estimator(Estimator, generate_only=False):
     if generate_only:
         return checks_generator
 
+    xfail_checks = _safe_tags(estimator, '_xfail_test')
+
     for estimator, check in checks_generator:
+        check_name = _set_check_estimator_ids(check)
+        if xfail_checks and check_name in xfail_checks:
+            # skip tests marked as a known failure and raise a warning
+            msg = xfail_checks[check_name]
+            warnings.warn(f'Skipping {check_name}: {msg}', SkipTestWarning)
+            continue
         try:
             check(estimator)
         except SkipTest as exception:
