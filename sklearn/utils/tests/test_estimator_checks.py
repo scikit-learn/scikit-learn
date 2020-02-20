@@ -10,9 +10,9 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
-                                   ignore_warnings,
-                                   assert_warns, assert_raises,
-                                   SkipTest)
+                                    ignore_warnings,
+                                    assert_warns, assert_raises,
+                                    SkipTest)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -260,9 +260,8 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
                     raise ValueError(
                         "Estimator doesn't support 64-bit indices")
             elif X.getformat() in ["csc", "csr"]:
-                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
-                    raise ValueError(
-                        "Estimator doesn't support 64-bit indices")
+                assert "int64" not in (X.indices.dtype, X.indptr.dtype),\
+                    "Estimator doesn't support 64-bit indices"
 
         return self
 
