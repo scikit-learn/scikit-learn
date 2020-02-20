@@ -49,7 +49,7 @@ y = f(X).ravel()
 # its MSE
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
-# Instanciate a Gaussian Process model
+# Instantiate a Gaussian Process model
 kernel = C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2))
 gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
 
@@ -62,9 +62,9 @@ y_pred, sigma = gp.predict(x, return_std=True)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 plt.figure()
-plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-plt.plot(X, y, 'r.', markersize=10, label=u'Observations')
-plt.plot(x, y_pred, 'b-', label=u'Prediction')
+plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
+plt.plot(X, y, 'r.', markersize=10, label='Observations')
+plt.plot(x, y_pred, 'b-', label='Prediction')
 plt.fill(np.concatenate([x, x[::-1]]),
          np.concatenate([y_pred - 1.9600 * sigma,
                         (y_pred + 1.9600 * sigma)[::-1]]),
@@ -98,9 +98,9 @@ y_pred, sigma = gp.predict(x, return_std=True)
 # Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 plt.figure()
-plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
-plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
-plt.plot(x, y_pred, 'b-', label=u'Prediction')
+plt.plot(x, f(x), 'r:', label=r'$f(x) = x\,\sin(x)$')
+plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label='Observations')
+plt.plot(x, y_pred, 'b-', label='Prediction')
 plt.fill(np.concatenate([x, x[::-1]]),
          np.concatenate([y_pred - 1.9600 * sigma,
                         (y_pred + 1.9600 * sigma)[::-1]]),

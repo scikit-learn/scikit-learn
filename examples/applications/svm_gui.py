@@ -13,7 +13,6 @@ negative examples click the right button.
 If all examples are from the same class, it uses a one-class SVM.
 
 """
-from __future__ import division, print_function
 
 print(__doc__)
 
@@ -23,30 +22,29 @@ print(__doc__)
 
 import matplotlib
 matplotlib.use('TkAgg')
-
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
+try:
+    from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+except ImportError:
+    # NavigationToolbar2TkAgg was deprecated in matplotlib 2.2
+    from matplotlib.backends.backend_tkagg import (
+        NavigationToolbar2TkAgg as NavigationToolbar2Tk
+    )
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
-try:
-    import tkinter as Tk
-except ImportError:
-    # Backward compat for Python 2
-    import Tkinter as Tk
-
 import sys
 import numpy as np
+import tkinter as Tk
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file
-from sklearn.externals.six.moves import xrange
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
 
 
-class Model(object):
+class Model:
     """The Model which hold the data. It implements the
     observable in the observer pattern and notifies the
     registered observers on change event.
@@ -78,7 +76,7 @@ class Model(object):
         dump_svmlight_file(X, y, file)
 
 
-class Controller(object):
+class Controller:
     def __init__(self, model):
         self.model = model
         self.kernel = Tk.IntVar()
@@ -141,7 +139,7 @@ class Controller(object):
             self.fit()
 
 
-class View(object):
+class View:
     """Test docstring. """
     def __init__(self, root, controller):
         f = Figure()
@@ -151,11 +149,15 @@ class View(object):
         ax.set_xlim((x_min, x_max))
         ax.set_ylim((y_min, y_max))
         canvas = FigureCanvasTkAgg(f, master=root)
-        canvas.show()
+        try:
+            canvas.draw()
+        except AttributeError:
+            # support for matplotlib (1.*)
+            canvas.show()
         canvas.get_tk_widget().pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
         canvas.mpl_connect('button_press_event', self.onclick)
-        toolbar = NavigationToolbar2TkAgg(canvas, root)
+        toolbar = NavigationToolbar2Tk(canvas, root)
         toolbar.update()
         self.controllbar = ControllBar(root, controller)
         self.f = f
@@ -168,8 +170,8 @@ class View(object):
 
     def plot_kernels(self):
         self.ax.text(-50, -60, "Linear: $u^T v$")
-        self.ax.text(-20, -60, "RBF: $\exp (-\gamma \| u-v \|^2)$")
-        self.ax.text(10, -60, "Poly: $(\gamma \, u^T v + r)^d$")
+        self.ax.text(-20, -60, r"RBF: $\exp (-\gamma \| u-v \|^2)$")
+        self.ax.text(10, -60, r"Poly: $(\gamma \, u^T v + r)^d$")
 
     def onclick(self, event):
         if event.xdata and event.ydata:
@@ -188,7 +190,7 @@ class View(object):
 
     def update(self, event, model):
         if event == "examples_loaded":
-            for i in xrange(len(model.data)):
+            for i in range(len(model.data)):
                 self.update_example(model, i)
 
         if event == "example_added":
@@ -247,7 +249,7 @@ class View(object):
             raise ValueError("surface type unknown")
 
 
-class ControllBar(object):
+class ControllBar:
     def __init__(self, root, controller):
         fm = Tk.Frame(root)
         kernel_group = Tk.Frame(fm)

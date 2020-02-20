@@ -25,10 +25,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
 
 # Load the faces datasets
-data = fetch_olivetti_faces()
-targets = data.target
+data, targets = fetch_olivetti_faces(return_X_y=True)
 
-data = data.images.reshape((len(data.images), -1))
 train = data[targets < 30]
 test = data[targets >= 30]  # Test on independent people
 
