@@ -23,7 +23,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- list models here
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
+  and :class:`ensemble.IsolationForest`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -139,6 +140,12 @@ Changelog
   is 'auto', which enables early stopping if there are at least 10,000
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
+  where the attribute `estimators_samples_` did not generate the proper indices
+  used during `fit`.
+  :pr:`16437` by :user:`Jin-Hwan CHO <chofchof>`.
 
 :mod:`sklearn.feature_extraction`
 .................................

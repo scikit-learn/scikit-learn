@@ -878,3 +878,25 @@ def test_bagging_small_max_features():
     bagging = BaggingClassifier(LogisticRegression(),
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
+
+
+def test_bagging_get_estimators_indices():
+    # Check that Bagging estimator can generate sample indices properly
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16436
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(13, 4)
+    y = np.arange(13)
+
+    class MyEstimator(DecisionTreeRegressor):
+        """An estimator which stores y indices information at fit."""
+        def fit(self, X, y):
+            self._sample_indices = y
+
+    clf = BaggingRegressor(base_estimator=MyEstimator(),
+                           n_estimators=1, random_state=0)
+    clf.fit(X, y)
+
+    assert_array_equal(clf.estimators_[0]._sample_indices,
+                       clf.estimators_samples_[0])
