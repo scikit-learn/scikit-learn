@@ -245,23 +245,6 @@ class _PropsRequest:
             pass
         return res
 
-    def _get_props_from_objs(self, objs):
-        props_request = {}
-        for obj in objs:
-            try:
-                step_props = obj.get_props_request()
-                for method in step_props:
-                    m_props = obj._get_props_request_mapping(method).values()
-                    if method not in props_request:
-                        props_request[method] = []
-                    props_request[method].extend(m_props)
-                    props_request[method] = list(set(props_request[method]))
-            except AttributeError:
-                warnings.warn("{} doesn't implement "
-                              "prop_request API".format(obj), UserWarning)
-                pass
-        return props_request
-
 
 class BaseEstimator(_PropsRequest):
     """Base class for all estimators in scikit-learn

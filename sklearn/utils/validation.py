@@ -1338,6 +1338,24 @@ def _check_fit_params(X, fit_params, indices=None):
 
 
 def _validate_required_props(obj, given_props, method):
+    """Checks if all the required props are given.
+
+    Parameters
+    ----------
+    obj: estimator, scorer, or a CV splitter
+        If ``obj`` does not provide a ``_get_expected_method_props`` method,
+        the required props is assumed to be an empty set.
+
+    given_props: dict
+        A ``dict`` with keys as required properties.
+
+    method: str
+        The method for which the given props is validated.
+
+    Returns
+    -------
+    None
+    """
     try:
         required_props = obj._get_expected_method_props(method)
     except AttributeError:
@@ -1351,6 +1369,29 @@ def _validate_required_props(obj, given_props, method):
 
 
 def _check_method_props(obj, props, method, validate=True):
+    """Maps the given props to what ``obj``'s ``method`` needs.
+
+    Parameters
+    ----------
+    obj: estimator, scorer, or a CV splitter
+        If ``obj`` does not provide a ``_get_expected_method_props`` method,
+        the required props is assumed to be an empty set.
+
+    props: dict
+        A dictionary with required props as keys and provided ones as values.
+
+    method: str
+        The method for which this mapping is done.
+
+    validate: bool, default=True
+        If ``True``, it'll make sure all required props are provided and
+        nothing more.
+
+    Returns
+    -------
+    mapping: dict
+        A mapping with keys as required props and values as provided ones.
+    """
     props = {key: value for key, value in props.items() if value is not None}
     if validate:
         _validate_required_props(obj, props, method)
@@ -1361,3 +1402,21 @@ def _check_method_props(obj, props, method, validate=True):
     res = {key: props[value] for key, value
            in required_props.items()}
     return res
+
+
+def _get_props_from_objs(self, objs):
+    props_request = {}
+    for obj in objs:
+        try:
+            step_props = obj.get_props_request()
+            for method in step_props:
+                m_props = obj._get_props_request_mapping(method).values()
+                if method not in props_request:
+                    props_request[method] = []
+                props_request[method].extend(m_props)
+                props_request[method] = list(set(props_request[method]))
+        except AttributeError:
+            warnings.warn("{} doesn't implement "
+                            "prop_request API".format(obj), UserWarning)
+            pass
+    return props_request
