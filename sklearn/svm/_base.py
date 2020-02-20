@@ -75,7 +75,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, self._impl))
 
@@ -200,7 +200,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._gamma = self.gamma
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        if self.verbose:  # pragma: no cover
+        if self.verbose:
             print('[LibSVM]', end='')
 
         seed = rnd.randint(np.iinfo('i').max)

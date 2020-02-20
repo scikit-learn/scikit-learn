@@ -555,11 +555,10 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the confusion matrix
-with each row corresponding to the true class
-<https://en.wikipedia.org/wiki/Confusion_matrix>`_.
-(Wikipedia and other references may use different convention for axes.)
-
+classification accuracy by computing the `confusion matrix
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
+to the true class (Wikipedia and other references may use different convention
+for axes).
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -1699,7 +1698,7 @@ Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
 (NDCG) are ranking metrics; they compare a predicted order to ground-truth
 scores, such as the relevance of answers to a query.
 
-from the Wikipedia page for Discounted Cumulative Gain:
+From the Wikipedia page for Discounted Cumulative Gain:
 
 "Discounted cumulative gain (DCG) is a measure of ranking quality. In
 information retrieval, it is often used to measure effectiveness of web search
@@ -1735,8 +1734,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
 
 .. topic:: References:
 
-  * Wikipedia entry for Discounted Cumulative Gain:
-    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+  * `Wikipedia entry for Discounted Cumulative Gain
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
 
   * Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
