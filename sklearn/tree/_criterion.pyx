@@ -20,7 +20,7 @@ from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
-from libc.math cimport fabs
+from libc.math cimport fabs, sqrt, pow, abs
 
 cimport numpy as np
 np.import_array()
