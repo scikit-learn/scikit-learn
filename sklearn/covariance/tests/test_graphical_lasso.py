@@ -168,7 +168,8 @@ def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
 
     total_alphas = n_refinements * n_alphas + 1
     msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
-           r"favor of cv_results_ and will be removed in version 0\.25")
+           r"favor of cv_results_ and will be removed in version 0\.25"
+    )
     with pytest.warns(FutureWarning, match=msg):
         assert cov.grid_scores_.shape == (total_alphas, splits)
 

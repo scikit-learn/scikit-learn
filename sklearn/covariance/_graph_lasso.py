@@ -600,14 +600,20 @@ class GraphicalLassoCV(GraphicalLasso):
             The `grid_scores_` attribute is deprecated in version 0.23 in favor
             of `cv_results_` and will be removed in version 0.25
 
-    cv_results_ : dict of numpy ndarrays
-        Dictinoary, with attributes:
+    cv_results_ : dict of ndarrays
+        A dict with keys:
 
         alphas : ndarray of shape (n_alphas,)
             All penalization parameters explored.
 
-        splitk_score : ndarray of shape (n_alphas,)
-            Log-likelihood score on left-out data across kth fold.
+        split(k)_score : ndarray of shape (n_alphas,)
+            Log-likelihood score on left-out data across (k)th fold.
+
+        mean_test_score : ndarray of shape (n_alphas,)
+            Mean of scores over the folds.
+
+        std_test_score : ndarray of shape (n_alphas,)
+            Standard deviation of scores over the folds.
 
         .. versionadded:: 0.23
 
@@ -808,7 +814,8 @@ class GraphicalLassoCV(GraphicalLasso):
 
     @deprecated(
         "The grid_scores_ attribute is deprecated in version 0.23 in favor "
-        "of cv_results_ and will be removed in version 0.25")
+        "of cv_results_ and will be removed in version 0.25"
+    )
     @property
     def grid_scores_(self):
         n_alphas = len(self.cv_results_) - 1
@@ -818,7 +825,8 @@ class GraphicalLassoCV(GraphicalLasso):
 
     @deprecated(
         "The cv_alphas_ attribute is deprecated in version 0.23 in favor "
-        "of cv_results_['alpha'] and will be removed in version 0.25")
+        "of cv_results_['alpha'] and will be removed in version 0.25"
+    )
     @property
     def cv_alphas_(self):
         return self.cv_results_['alphas'].tolist()
