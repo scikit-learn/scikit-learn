@@ -166,7 +166,7 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     check_matplotlib_support('plot_roc_curve')
 
     classification_error = (
-        f"{estimator.__class__.__name__} should be a binary classifer"
+        "{} should be a binary classifier".format(estimator.__class__.__name__)
     )
     if not is_classifier(estimator):
         raise ValueError(classification_error)

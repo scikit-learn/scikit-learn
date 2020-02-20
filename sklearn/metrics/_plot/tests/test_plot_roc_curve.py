@@ -36,7 +36,7 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifer"
+    msg = "DecisionTreeClassifier should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
         plot_roc_curve(clf, X, y)
 
