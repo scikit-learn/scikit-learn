@@ -217,6 +217,12 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
+- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
+  the associated scorer for regression problems. :issue:`10708` fixed with the
+  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
+  some practical test cases were taken from PR :pr:`10711` by
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
