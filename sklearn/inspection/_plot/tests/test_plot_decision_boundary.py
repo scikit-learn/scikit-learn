@@ -144,8 +144,8 @@ def test_plot_decision_boundary(pyplot, fitted_clf, data,
               "is not defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function', 'predict', or 'auto'")])
-def test_error_bad_response(pyplot, response_method, msg):
-    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+def test_error_bad_response(pyplot, response_method, msg, data):
+    X, y = data
 
     class MyClassifier(BaseEstimator, ClassifierMixin):
         def fit(self, X, y):
@@ -157,3 +157,27 @@ def test_error_bad_response(pyplot, response_method, msg):
 
     with pytest.raises(ValueError, match=msg):
         plot_decision_boundary(clf, X, response_method=response_method)
+
+
+def test_dataframe_labels_used(pyplot, data, fitted_clf):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(data[0], columns=['col_x', 'col_y'])
+
+    # pandas column names are used by default
+    _, ax = pyplot.subplots()
+    disp = plot_decision_boundary(fitted_clf, df, ax=ax)
+    assert ax.get_xlabel() == "col_x"
+    assert ax.get_ylabel() == "col_y"
+
+    # second call to plot will have the names
+    fig, ax = pyplot.subplots()
+    disp.plot(ax=ax)
+    assert ax.get_xlabel() == "col_x"
+    assert ax.get_ylabel() == "col_y"
+
+    # axes with a label will not get overridden
+    fig, ax = pyplot.subplots()
+    ax.set(xlabel="hello", ylabel="world")
+    disp.plot(ax=ax)
+    assert ax.get_xlabel() == "hello"
+    assert ax.get_ylabel() == "world"

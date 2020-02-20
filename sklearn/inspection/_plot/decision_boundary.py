@@ -1,5 +1,6 @@
 import numpy as np
 from ...utils import check_matplotlib_support
+from ...utils import _safe_indexing
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -65,6 +66,12 @@ class DecisionBoundaryDisplay:
     response : ndarray of shape (grid_resolution, grid_resolution)
         Values of the response function.
 
+    xlabel : str, default=""
+        Default label to place on x axis.
+
+    ylabel : str, default=""
+        DEfault label to place on y axis.
+
     Attributes
     ----------
     surface_ : matplotlib `QuadContourSet` or `QuadMesh`
@@ -79,10 +86,12 @@ class DecisionBoundaryDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
     """
-    def __init__(self, xx0, xx1, response):
+    def __init__(self, xx0, xx1, response, xlabel=None, ylabel=None):
         self.xx0 = xx0
         self.xx1 = xx1
         self.response = response
+        self.xlabel = xlabel
+        self.ylabel = ylabel
 
     def plot(self, plot_method='contourf', ax=None, **kwargs):
         """Plot visualization.
@@ -119,6 +128,12 @@ class DecisionBoundaryDisplay:
 
         plot_func = getattr(ax, plot_method)
         self.surface_ = plot_func(self.xx0, self.xx1, self.response, **kwargs)
+
+        if not ax.get_xlabel():
+            ax.set_xlabel(self.xlabel)
+        if not ax.get_ylabel():
+            ax.set_ylabel(self.ylabel)
+
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
@@ -136,7 +151,7 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
     estimator : estimator instance
         Trained estimator.
 
-    X : array-like of shape (n_samples, 2)
+    X : ndarray or pandas dataframe of shape (n_samples, 2)
         Input values.
 
     grid_resolution : int, default=100
@@ -185,7 +200,7 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
 
     pred_func = _check_boundary_response_method(estimator, response_method)
 
-    x0, x1 = X[:, 0], X[:, 1]
+    x0, x1 = _safe_indexing(X, 0), _safe_indexing(X, 1)
 
     x0_min, x0_max = x0.min() - eps, x0.max() + eps
     x1_min, x1_max = x1.min() - eps, x1.max() + eps
@@ -200,6 +215,12 @@ def plot_decision_boundary(estimator, X, grid_resolution=100, eps=1.0,
                              "response_method='predict'")
         response = response[:, 1]
 
+    if hasattr(X, "columns"):
+        xlabel, ylabel = X.columns[0], X.columns[1]
+    else:
+        xlabel, ylabel = "", ""
+
     display = DecisionBoundaryDisplay(xx0=xx0, xx1=xx1,
-                                      response=response.reshape(xx0.shape))
+                                      response=response.reshape(xx0.shape),
+                                      xlabel=xlabel, ylabel=ylabel)
     return display.plot(ax=ax, plot_method=plot_method, **kwargs)
