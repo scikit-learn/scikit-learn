@@ -12,8 +12,8 @@ from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.extmath import row_norms
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 
@@ -133,7 +133,7 @@ class _CFNode:
         view of ``init_sq_norm_``.
 
     """
-    def __init__(self, threshold, branching_factor, is_leaf, n_features):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
@@ -274,7 +274,7 @@ class _CFSubcluster:
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
-    def __init__(self, linear_sum=None):
+    def __init__(self, *, linear_sum=None):
         if linear_sum is None:
             self.n_samples_ = 0
             self.squared_sum_ = 0.0
@@ -430,8 +430,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
     """
-
-    def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
+    @_deprecate_positional_args
+    def __init__(self, *, threshold=0.5, branching_factor=50, n_clusters=3,
                  compute_labels=True, copy=True):
         self.threshold = threshold
         self.branching_factor = branching_factor

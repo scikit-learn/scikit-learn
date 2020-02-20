@@ -23,7 +23,7 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, _deprecate_positional_args
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
@@ -792,8 +792,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     array([[10.,  2.],
            [ 1.,  2.]])
     """
-
-    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=None, algorithm='auto'):
@@ -1470,8 +1470,8 @@ class MiniBatchKMeans(KMeans):
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
     """
-
-    def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01):
