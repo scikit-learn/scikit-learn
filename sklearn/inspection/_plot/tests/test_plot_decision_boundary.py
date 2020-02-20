@@ -18,7 +18,8 @@ pytestmark = pytest.mark.filterwarnings(
 @pytest.fixture(scope="module")
 def data():
     X, y = make_classification(n_informative=1, n_redundant=1,
-                               n_clusters_per_class=1, n_features=2)
+                               n_clusters_per_class=1, n_features=2,
+                               random_state=42)
     return X, y
 
 
