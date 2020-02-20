@@ -111,12 +111,12 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float, default=None
-        Minimum possible imputed value. Default of ``None`` will set minimum
+    min_value : float, default=-np.inf
+        Minimum possible imputed value. Default will set minimum
         to negative infinity.
 
-    max_value : float, default=None
-        Maximum possible imputed value. Default of ``None`` will set maximum
+    max_value : float, default=np.inf
+        Maximum possible imputed value. Default will set maximum
         to positive infinity.
 
     verbose : int, default=0
@@ -217,8 +217,8 @@ class IterativeImputer(_BaseImputer):
                  initial_strategy="mean",
                  imputation_order='ascending',
                  skip_complete=False,
-                 min_value=None,
-                 max_value=None,
+                 min_value=-np.inf,
+                 max_value=np.inf,
                  verbose=0,
                  random_state=None,
                  add_indicator=False):
@@ -564,9 +564,6 @@ class IterativeImputer(_BaseImputer):
             self._estimator.random_state = self.random_state_
 
         self.imputation_sequence_ = []
-
-        self._min_value = -np.inf if self.min_value is None else self.min_value
-        self._max_value = np.inf if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
         super()._fit_indicator(X)
