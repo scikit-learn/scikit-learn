@@ -799,13 +799,13 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
             sw2[len(y):] = 0
             X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
 
-            err_msg=(f"For {name} sample_weight is not equivalent "
-                     f"to removing samples")
+            err_msg = (f"For {name} sample_weight is not equivalent "
+                       f"to removing samples")
         else:
             raise ValueError
 
         y = _enforce_estimator_tags_y(estimator1, y)
-        y2 = _enforce_estimator_tags_y(estimator1, y2)
+        y2 = _enforce_estimator_tags_y(estimator2, y2)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
         estimator2.fit(X2, y=y2, sample_weight=sw2)
