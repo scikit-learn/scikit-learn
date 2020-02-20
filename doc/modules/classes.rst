@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -1178,12 +1179,6 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
 
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
-
 Model validation
 ----------------
 
@@ -1545,6 +1540,7 @@ Plotting
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1605,30 +1601,12 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.24
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
+   model_selection.fit_grid_point
    utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence

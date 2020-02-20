@@ -22,8 +22,7 @@ from . import get_data_home
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
-from ._base import _refresh_cache
-from ._svmlight_format import load_svmlight_files
+from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
@@ -111,7 +110,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -190,10 +189,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
             f.close()
             remove(f.name)
     else:
-        X, sample_id = _refresh_cache([samples_path, sample_id_path], 9)
-        # TODO: Revert to the following two lines in v0.23
-        # X = joblib.load(samples_path)
-        # sample_id = joblib.load(sample_id_path)
+        X = joblib.load(samples_path)
+        sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -246,10 +243,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
     else:
-        y, categories = _refresh_cache([sample_topics_path, topics_path], 9)
-        # TODO: Revert to the following two lines in v0.23
-        # y = joblib.load(sample_topics_path)
-        # categories = joblib.load(topics_path)
+        y = joblib.load(sample_topics_path)
+        categories = joblib.load(topics_path)
 
     if subset == 'all':
         pass

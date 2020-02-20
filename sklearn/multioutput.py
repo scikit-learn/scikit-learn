@@ -24,7 +24,8 @@ from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.validation import (check_is_fitted, has_fit_parameter,
+                               _check_fit_params)
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
@@ -32,12 +33,12 @@ __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
 
 
-def _fit_estimator(estimator, X, y, sample_weight=None):
+def _fit_estimator(estimator, X, y, sample_weight=None, **fit_params):
     estimator = clone(estimator)
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight, **fit_params)
     else:
-        estimator.fit(X, y)
+        estimator.fit(X, y, **fit_params)
     return estimator
 
 
@@ -121,7 +122,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """ Fit the model to data.
         Fit a separate model for each output variable.
 
@@ -138,6 +139,9 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``estimator.fit`` method of each step.
 
         Returns
         -------
@@ -164,9 +168,12 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        fit_params_validated = _check_fit_params(X, fit_params)
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
-                self.estimator, X, y[:, i], sample_weight)
+                self.estimator, X, y[:, i], sample_weight,
+                **fit_params_validated)
             for i in range(y.shape[1]))
         return self
 
@@ -258,44 +265,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
-    # XXX Remove this method in 0.23
-    def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
-
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the regression
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
-
-        Notes
-        -----
-        R^2 is calculated by weighting all the targets equally using
-        `multioutput='uniform_average'`.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Test samples.
-
-        y : array-like, shape (n_samples) or (n_samples, n_outputs)
-            True values for X.
-
-        sample_weight : array-like, shape [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            R^2 of self.predict(X) wrt. y.
-        """
-        # XXX remove in 0.19 when r2_score default for multioutput changes
-        from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight,
-                        multioutput='uniform_average')
-
 
 class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """Multi target classification
@@ -319,6 +288,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     Attributes
     ----------
+    classes_ : array, shape = (n_classes,)
+        Class labels.
+
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
 
@@ -338,7 +310,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     def __init__(self, estimator, n_jobs=None):
         super().__init__(estimator, n_jobs)
 
-    def fit(self, X, Y, sample_weight=None):
+    def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -351,12 +323,14 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying classifier supports sample
             weights.
+        **fit_params : dict of string -> object
+            Parameters passed to the ``estimator.fit`` method of each step.
 
         Returns
         -------
         self : object
         """
-        super().fit(X, Y, sample_weight)
+        super().fit(X, Y, sample_weight, **fit_params)
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
@@ -433,7 +407,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         self.random_state = random_state
 
     @abstractmethod
-    def fit(self, X, Y):
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -442,6 +416,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The input data.
         Y : array-like, shape (n_samples, n_classes)
             The target values.
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step.
 
         Returns
         -------
@@ -483,7 +459,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         for chain_idx, estimator in enumerate(self.estimators_):
             y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
+            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
+                          **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -576,12 +553,13 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+        If ``order='random'``, determines random number generation for the
+        chain order.
+        In addition, it controls the random seed given at each `base_estimator`
+        at each chaining iteration. Thus, it is only used when `base_estimator`
+        exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -736,12 +714,13 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
+        If ``order='random'``, determines random number generation for the
+        chain order.
+        In addition, it controls the random seed given at each `base_estimator`
+        at each chaining iteration. Thus, it is only used when `base_estimator`
+        exposes a `random_state`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -758,7 +737,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         chaining.
 
     """
-    def fit(self, X, Y):
+
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -768,11 +748,15 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Y : array-like, shape (n_samples, n_classes)
             The target values.
 
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method at each step
+            of the regressor chain.
+
         Returns
         -------
         self : object
         """
-        super().fit(X, Y)
+        super().fit(X, Y, **fit_params)
         return self
 
     def _more_tags(self):

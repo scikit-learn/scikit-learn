@@ -27,7 +27,7 @@ from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
@@ -36,6 +36,7 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -218,33 +219,25 @@ def test_grid_search_pipeline_steps():
     assert not hasattr(param_grid['regressor'][1], 'coef_')
 
 
-def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_SearchCV_with_fit_params(SearchCV):
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
-    searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
+    searcher = SearchCV(
+        clf, {'foo_param': [1, 2, 3]}, cv=2, error_score="raise"
+    )
 
     # The CheckingClassifier generates an assertion error if
     # a parameter is missing or has length != len(X).
-    assert_raise_message(AssertionError,
-                         "Expected fit parameter(s) ['eggs'] not seen.",
-                         searcher.fit, X, y, spam=np.ones(10))
-    assert_raise_message(
-        ValueError,
-        "Found input variables with inconsistent numbers of samples: [",
-        searcher.fit, X, y, spam=np.ones(1),
-        eggs=np.zeros(10))
+    err_msg = r"Expected fit parameter\(s\) \['eggs'\] not seen."
+    with pytest.raises(AssertionError, match=err_msg):
+        searcher.fit(X, y, spam=np.ones(10))
+
+    err_msg = "Fit parameter spam has length 1; expected"
+    with pytest.raises(AssertionError, match=err_msg):
+        searcher.fit(X, y, spam=np.ones(1), eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
-
-
-def test_grid_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(GridSearchCV,
-                                                  error_score='raise')
-
-
-def test_random_search_with_fit_params():
-    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1,
-                                                  error_score='raise')
 
 
 @ignore_warnings
@@ -1126,7 +1119,6 @@ def test_random_search_cv_results_multimetric():
 
     n_splits = 3
     n_search_iter = 30
-    scoring = ('accuracy', 'recall')
 
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
     params = dict(C=np.logspace(-4, 1, 3),
@@ -1152,9 +1144,8 @@ def test_random_search_cv_results_multimetric():
 
             compare_cv_results_multimetric_with_single(*random_searches,
                                                        iid=iid)
-            if refit:
-                compare_refit_methods_when_refit_with_acc(
-                    random_searches[0], random_searches[1], refit)
+            compare_refit_methods_when_refit_with_acc(
+                random_searches[0], random_searches[1], refit)
 
 
 @pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
@@ -1191,11 +1182,12 @@ def compare_cv_results_multimetric_with_single(
 
 def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     """Compare refit multi-metric search methods with single metric methods"""
+    assert search_acc.refit == refit
     if refit:
         assert search_multi.refit == 'accuracy'
     else:
         assert not search_multi.refit
-    assert search_acc.refit == refit
+        return  # search cannot predict/score without refit
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
     for method in ('predict', 'predict_proba', 'predict_log_proba'):
@@ -1313,6 +1305,8 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
+# FIXME remove test_fit_grid_point as the function will be removed on 0.25
+@ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold()
@@ -1341,6 +1335,21 @@ def test_fit_grid_point():
                          {'score': scorer}, verbose=True)
 
 
+# FIXME remove test_fit_grid_point_deprecated as
+# fit_grid_point will be removed on 0.25
+def test_fit_grid_point_deprecated():
+    X, y = make_classification(random_state=0)
+    svc = LinearSVC(random_state=0)
+    scorer = make_scorer(accuracy_score)
+    msg = ("fit_grid_point is deprecated in version 0.23 "
+           "and will be removed in version 0.25")
+    params = {'C': 0.1}
+    train, test = next(StratifiedKFold().split(X, y))
+
+    with pytest.warns(FutureWarning, match=msg):
+        fit_grid_point(X, y, svc, params, train, test, scorer, verbose=False)
+
+
 def test_pickle():
     # Test that a fit search can be pickled
     clf = MockClassifier()
@@ -1358,7 +1367,6 @@ def test_pickle():
                               random_search_pickled.predict(X))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
@@ -1847,3 +1855,78 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
 
     attr_message = "GridSearchCV not identical with precomputed metric"
     assert (preds_original == preds_precomputed).all(), attr_message
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [(GridSearchCV, {'a': [0.1, 0.01]}),
+     (RandomizedSearchCV, {'a': uniform(1, 3)})]
+)
+def test_scalar_fit_param(SearchCV, param_search):
+    # unofficially sanctioned tolerance for scalar values in fit_params
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15805
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def __init__(self, a=None):
+            self.a = a
+
+        def fit(self, X, y, r=None):
+            self.r_ = r
+
+        def predict(self, X):
+            return np.zeros(shape=(len(X)))
+
+    model = SearchCV(TestEstimator(), param_search)
+    X, y = make_classification(random_state=42)
+    model.fit(X, y, r=42)
+    assert model.best_estimator_.r_ == 42
+
+
+@pytest.mark.parametrize(
+    "SearchCV, param_search",
+    [(GridSearchCV, {'alpha': [0.1, 0.01]}),
+     (RandomizedSearchCV, {'alpha': uniform(0.01, 0.1)})]
+)
+def test_scalar_fit_param_compat(SearchCV, param_search):
+    # check support for scalar values in fit_params, for instance in LightGBM
+    # that do not exactly respect the scikit-learn API contract but that we do
+    # not want to break without an explicit deprecation cycle and API
+    # recommendations for implementing early stopping with a user provided
+    # validation set. non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15805
+    X_train, X_valid, y_train, y_valid = train_test_split(
+        *make_classification(random_state=42), random_state=42
+    )
+
+    class _FitParamClassifier(SGDClassifier):
+
+        def fit(self, X, y, sample_weight=None, tuple_of_arrays=None,
+                scalar_param=None, callable_param=None):
+            super().fit(X, y, sample_weight=sample_weight)
+            assert scalar_param > 0
+            assert callable(callable_param)
+
+            # The tuple of arrays should be preserved as tuple.
+            assert isinstance(tuple_of_arrays, tuple)
+            assert tuple_of_arrays[0].ndim == 2
+            assert tuple_of_arrays[1].ndim == 1
+            return self
+
+    def _fit_param_callable():
+        pass
+
+    model = SearchCV(
+        _FitParamClassifier(), param_search
+    )
+
+    # NOTE: `fit_params` should be data dependent (e.g. `sample_weight`) which
+    # is not the case for the following parameters. But this abuse is common in
+    # popular third-party libraries and we should tolerate this behavior for
+    # now and be careful not to break support for those without following
+    # proper deprecation cycle.
+    fit_params = {
+        'tuple_of_arrays': (X_valid, y_valid),
+        'callable_param': _fit_param_callable,
+        'scalar_param': 42,
+    }
+    model.fit(X_train, y_train, **fit_params)

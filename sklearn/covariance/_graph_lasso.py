@@ -58,16 +58,14 @@ def alpha_max(emp_cov):
 
     Parameters
     ----------
-    emp_cov : 2D array, (n_features, n_features)
-        The sample covariance matrix
+    emp_cov : ndarray of shape (n_features, n_features)
+        The sample covariance matrix.
 
     Notes
     -----
-
     This results from the bound for the all the Lasso that are solved
     in GraphicalLasso: each time, the row of cov corresponds to Xy. As the
     bound for alpha is given by `max(abs(Xy))`, the result follows.
-
     """
     A = np.copy(emp_cov)
     A.flat[::A.shape[0] + 1] = 0
@@ -86,56 +84,57 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     Parameters
     ----------
-    emp_cov : 2D ndarray, shape (n_features, n_features)
+    emp_cov : ndarray of shape (n_features, n_features)
         Empirical covariance from which to compute the covariance estimate.
 
-    alpha : positive float
+    alpha : float
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
+        Range is (0, inf].
 
-    cov_init : 2D array (n_features, n_features), optional
+    cov_init : array of shape (n_features, n_features), default=None
         The initial guess for the covariance.
 
-    mode : {'cd', 'lars'}
+    mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : positive float, optional
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf].
 
-    enet_tol : positive float, optional
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
-    max_iter : integer, optional
+    max_iter : int, default=100
         The maximum number of iterations.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If verbose is True, the objective function and dual gap are
         printed at each iteration.
 
-    return_costs : boolean, optional
+    return_costs : bool, default=Flase
         If return_costs is True, the objective function and dual gap
         at each iteration are returned.
 
-    eps : float, optional
+    eps : float, default=eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. Default is `np.finfo(np.float64).eps`.
 
-    return_n_iter : bool, optional
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
     -------
-    covariance : 2D ndarray, shape (n_features, n_features)
+    covariance : ndarray of shape (n_features, n_features)
         The estimated covariance matrix.
 
-    precision : 2D ndarray, shape (n_features, n_features)
+    precision : ndarray of shape (n_features, n_features)
         The estimated (sparse) precision matrix.
 
     costs : list of (objective, dual_gap) pairs
@@ -157,7 +156,6 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     One possible difference with the `glasso` R package is that the
     diagonal coefficients are not penalized.
-
     """
     _, n_features = emp_cov.shape
     if alpha == 0:
@@ -285,33 +283,34 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Parameters
     ----------
-    alpha : positive float, default 0.01
+    alpha : float, default=0.01
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
+        Range is (0, inf].
 
-    mode : {'cd', 'lars'}, default 'cd'
+    mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : positive float, default 1e-4
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf].
 
-    enet_tol : positive float, optional
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
-    max_iter : integer, default 100
+    max_iter : int, default=100
         The maximum number of iterations.
 
-    verbose : boolean, default False
+    verbose : bool, default=False
         If verbose is True, the objective function and dual gap are
         plotted at each iteration.
 
-    assume_centered : boolean, default False
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -319,13 +318,13 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : ndarray of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
     n_iter_ : int
@@ -372,9 +371,15 @@ class GraphicalLasso(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data from which to compute the covariance estimate
-        y : (ignored)
+
+        y : Ignored
+            Not used, present for API consistence purpose.
+
+        Returns
+        -------
+        self : object
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
@@ -402,49 +407,53 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Parameters
     ----------
-    X : 2D ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data from which to compute the covariance estimate.
 
-    alphas : list of positive floats
+    alphas : array-like of shape (n_alphas,)
         The list of regularization parameters, decreasing order.
 
-    cov_init : 2D array (n_features, n_features), optional
+    cov_init : array of shape (n_features, n_features), default=None
         The initial guess for the covariance.
 
-    X_test : 2D array, shape (n_test_samples, n_features), optional
+    X_test : array of shape (n_test_samples, n_features), default=None
         Optional test matrix to measure generalisation error.
 
-    mode : {'cd', 'lars'}
+    mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : positive float, optional
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. The tolerance must be a positive
+        number.
 
-    enet_tol : positive float, optional
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. The tolerance must be a positive number.
 
-    max_iter : integer, optional
-        The maximum number of iterations.
+    max_iter : int, default=100
+        The maximum number of iterations. This parameter should be a strictly
+        positive integer.
 
-    verbose : integer, optional
+    verbose : int or bool, default=False
         The higher the verbosity flag, the more information is printed
         during the fitting.
 
     Returns
     -------
-    covariances_ : List of 2D ndarray, shape (n_features, n_features)
+    covariances_ : list of shape (n_alphas,) of ndarray of shape \
+            (n_features, n_features)
         The estimated covariance matrices.
 
-    precisions_ : List of 2D ndarray, shape (n_features, n_features)
+    precisions_ : list of shape (n_alphas,) of ndarray of shape \
+            (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    scores_ : List of float
+    scores_ : list of shape (n_alphas,), dtype=float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
@@ -500,17 +509,17 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Parameters
     ----------
-    alphas : integer, or list positive float, optional
+    alphas : int or array-like of shape (n_alphas,), dtype=float, default=4
         If an integer is given, it fixes the number of points on the
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
-        more details.
+        more details. Range is (0, inf] when floats given.
 
-    n_refinements : strictly positive integer
+    n_refinements : int, default=4
         The number of times the grid is refined. Not used if explicit
-        values of alphas are passed.
+        values of alphas are passed. Range is [1, inf).
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -527,36 +536,36 @@ class GraphicalLassoCV(GraphicalLasso):
         .. versionchanged:: 0.20
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    tol : positive float, optional
+    tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
-        this value, iterations are stopped.
+        this value, iterations are stopped. Range is (0, inf].
 
-    enet_tol : positive float, optional
+    enet_tol : float, default=1e-4
         The tolerance for the elastic net solver used to calculate the descent
         direction. This parameter controls the accuracy of the search direction
         for a given column update, not of the overall parameter estimate. Only
-        used for mode='cd'.
+        used for mode='cd'. Range is (0, inf].
 
-    max_iter : integer, optional
+    max_iter : int, default=100
         Maximum number of iterations.
 
-    mode : {'cd', 'lars'}
+    mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where number of features is greater
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
 
-    assume_centered : boolean
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -564,22 +573,22 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : ndarray of shape (n_features,)
         Estimated location, i.e. the estimated mean.
 
-    covariance_ : numpy.ndarray, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
 
-    precision_ : numpy.ndarray, shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
 
     alpha_ : float
         Penalization parameter selected.
 
-    cv_alphas_ : list of float
+    cv_alphas_ : list of shape (n_alphas,), dtype=float
         All penalization parameters explored.
 
-    grid_scores_ : 2D numpy.ndarray (n_alphas, n_folds)
+    grid_scores_ : ndarray of shape (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
     n_iter_ : int
@@ -639,9 +648,15 @@ class GraphicalLassoCV(GraphicalLasso):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data from which to compute the covariance estimate
-        y : (ignored)
+
+        y : Ignored
+            Not used, present for API consistence purpose.
+
+        Returns
+        -------
+        self : object
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, estimator=self)
