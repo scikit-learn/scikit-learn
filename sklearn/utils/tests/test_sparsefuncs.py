@@ -16,7 +16,8 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        count_nonzero, csc_median_axis_0)
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
-                                            inplace_csr_row_normalize_l2)
+                                            inplace_csr_row_normalize_l2,
+                                            csr_row_norms)
 from sklearn.utils._testing import assert_allclose
 
 
@@ -473,7 +474,7 @@ def test_count_nonzero():
             count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
 
     # Check dtypes with large sparse matrices too
-    # XXX: test fails on Appveyor (python3.5 32bit)
+    # XXX: test fails on 32bit (Windows/Linux)
     try:
         X_csr.indices = X_csr.indices.astype(np.int64)
         X_csr.indptr = X_csr.indptr.astype(np.int64)
@@ -484,11 +485,8 @@ def test_count_nonzero():
                 count_nonzero(X_csr, axis=1,
                               sample_weight=sample_weight).dtype)
     except TypeError as e:
-        if ("according to the rule 'safe'" in e.args[0] and
-                np.intp().nbytes < 8):
-            pass
-        else:
-            raise
+        assert ("according to the rule 'safe'" in e.args[0]
+                and np.intp().nbytes < 8), e
 
 
 def test_csc_row_median():
@@ -547,3 +545,16 @@ def test_inplace_normalize():
                 if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
                     X_csr.data **= 2
                 assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_csr_row_norms(dtype):
+    # checks that csr_row_norms returns the same output as
+    # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
+    X = sp.random(100, 10, format='csr', dtype=dtype)
+
+    scipy_norms = sp.linalg.norm(X, axis=1)**2
+    norms = csr_row_norms(X)
+
+    assert norms.dtype == dtype
+    assert_allclose(norms, scipy_norms)
