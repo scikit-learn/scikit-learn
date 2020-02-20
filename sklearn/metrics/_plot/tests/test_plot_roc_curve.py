@@ -131,6 +131,7 @@ def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
         plot_roc_curve(clf, X, y)
     clf.fit(X, y)
     disp = plot_roc_curve(clf, X, y)
+    assert clf.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == clf.__class__.__name__
 
 

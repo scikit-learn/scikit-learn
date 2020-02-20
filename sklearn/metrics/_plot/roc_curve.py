@@ -186,6 +186,7 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
+    name = estimator.__class__.__name__ if name is None else name
     viz = RocCurveDisplay(
         fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
     )
