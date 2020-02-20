@@ -13,7 +13,6 @@ import re
 import pkgutil
 from inspect import isgenerator
 from functools import partial
-from inspect import signature
 
 import pytest
 
