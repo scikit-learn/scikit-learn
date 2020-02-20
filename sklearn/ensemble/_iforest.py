@@ -472,7 +472,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     def _more_tags(self):
         return {
             '_xfail_test': {
-                'check_sample_weights_invariance_zeros':
+                'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
