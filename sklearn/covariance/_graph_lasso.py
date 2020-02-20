@@ -609,10 +609,10 @@ class GraphicalLassoCV(GraphicalLasso):
         split(k)_score : ndarray of shape (n_alphas,)
             Log-likelihood score on left-out data across (k)th fold.
 
-        mean_test_score : ndarray of shape (n_alphas,)
+        mean_score : ndarray of shape (n_alphas,)
             Mean of scores over the folds.
 
-        std_test_score : ndarray of shape (n_alphas,)
+        std_score : ndarray of shape (n_alphas,)
             Standard deviation of scores over the folds.
 
         .. versionadded:: 0.23
@@ -799,8 +799,8 @@ class GraphicalLassoCV(GraphicalLasso):
             key = "split{}_score".format(i)
             self.cv_results_[key] = grid_scores[:, i]
 
-        self.cv_results_["mean_test_score"] = np.mean(grid_scores, axis=1)
-        self.cv_results_["std_test_score"] = np.std(grid_scores, axis=1)
+        self.cv_results_["mean_score"] = np.mean(grid_scores, axis=1)
+        self.cv_results_["std_score"] = np.std(grid_scores, axis=1)
 
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
@@ -818,7 +818,8 @@ class GraphicalLassoCV(GraphicalLasso):
     )
     @property
     def grid_scores_(self):
-        n_alphas = len(self.cv_results_) - 1
+        # remove 3 for mean_score, std_score, and alphas
+        n_alphas = len(self.cv_results_) - 3
         return np.asarray(
             [self.cv_results_["split{}_score".format(i)]
              for i in range(n_alphas)]).T
