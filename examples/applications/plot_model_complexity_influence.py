@@ -16,7 +16,8 @@ performance (latency) and predictive power (MSE or Hamming Loss).
 
 print(__doc__)
 
-# Author: Eustache Diemert <eustache@diemert.fr>
+# Authors: Eustache Diemert <eustache@diemert.fr>
+#          Maria Telenczuk <https://github.com/maikia>
 # License: BSD 3 clause
 
 import time
@@ -45,7 +46,7 @@ np.random.seed(0)
 def generate_data(case, sparse=False):
     """Generate regression/classification data."""
     if case == 'regression':
-        X, y = datasets.load_boston(return_X_y=True)
+        X, y = datasets.load_diabetes(return_X_y=True)
     elif case == 'classification':
         X, y = datasets.fetch_20newsgroups_vectorized(subset='all',
                                                       return_X_y=True)
