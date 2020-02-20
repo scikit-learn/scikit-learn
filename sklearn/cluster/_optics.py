@@ -205,9 +205,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
     array([0, 0, 0, 1, 1, 1])
     """
     @_deprecate_positional_args
-    def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
-                 metric_params=None, cluster_method='xi', eps=None, xi=0.05,
-                 predecessor_correction=True, min_cluster_size=None,
+    def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
+                 p=2, metric_params=None, cluster_method='xi', eps=None,
+                 xi=0.05, predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
         self.max_eps = max_eps
         self.min_samples = min_samples
