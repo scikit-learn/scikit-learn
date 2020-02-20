@@ -828,6 +828,15 @@ class NuSVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state)
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_class_weight_classifiers': 'class_weight is ignored.'
+            }
+        }
+
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.

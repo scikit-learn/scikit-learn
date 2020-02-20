@@ -86,6 +86,8 @@ Other `pytest` options that may become useful include:
   - ``-s`` so that pytest does not capture the output of ``print()``
     statements
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
+    errors.
 
 Since our continuous integration tests will error if
 ``FutureWarning`` isn't properly caught,
