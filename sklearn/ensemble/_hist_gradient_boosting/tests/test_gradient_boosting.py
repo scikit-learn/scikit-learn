@@ -19,6 +19,14 @@ X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
 
 
+def _make_dumb_dataset(n_samples):
+    """Make a dumb dataset to test early stopping."""
+    rng = np.random.RandomState(42)
+    X_dumb = rng.randn(n_samples, 1)
+    y_dumb = (X_dumb[:, 0] > 0).astype('int64')
+    return X_dumb, y_dumb
+
+
 @pytest.mark.parametrize('GradientBoosting, X, y', [
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
@@ -31,8 +39,7 @@ X_regression, y_regression = make_regression(random_state=0)
      ({'max_iter': 0}, 'max_iter=0 must not be smaller than 1'),
      ({'max_leaf_nodes': 0}, 'max_leaf_nodes=0 should not be smaller than 2'),
      ({'max_leaf_nodes': 1}, 'max_leaf_nodes=1 should not be smaller than 2'),
-     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 2'),
-     ({'max_depth': 1}, 'max_depth=1 should not be smaller than 2'),
+     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 1'),
      ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
      ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
      ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
@@ -58,17 +65,17 @@ def test_invalid_classification_loss():
 
 
 @pytest.mark.parametrize(
-    'scoring, validation_fraction, n_iter_no_change, tol', [
-        ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
-        ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on train data
-        (None, .1, 5, 1e-7),  # same with default scorer
-        (None, None, 5, 1e-1),
-        ('loss', .1, 5, 1e-7),  # use loss
-        ('loss', None, 5, 1e-1),  # use loss on training data
-        (None, None, None, None),  # no early stopping
+    'scoring, validation_fraction, early_stopping, n_iter_no_change, tol', [
+        ('neg_mean_squared_error', .1, True, 5, 1e-7),  # use scorer
+        ('neg_mean_squared_error', None, True, 5, 1e-1),  # use scorer on train
+        (None, .1, True, 5, 1e-7),  # same with default scorer
+        (None, None, True, 5, 1e-1),
+        ('loss', .1, True, 5, 1e-7),  # use loss
+        ('loss', None, True, 5, 1e-1),  # use loss on training data
+        (None, None, False, 5, None),  # no early stopping
         ])
 def test_early_stopping_regression(scoring, validation_fraction,
-                                   n_iter_no_change, tol):
+                                   early_stopping, n_iter_no_change, tol):
 
     max_iter = 200
 
@@ -79,6 +86,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
+        early_stopping=early_stopping,
         validation_fraction=validation_fraction,
         max_iter=max_iter,
         n_iter_no_change=n_iter_no_change,
@@ -86,7 +94,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
     )
     gb.fit(X, y)
 
-    if n_iter_no_change is not None:
+    if early_stopping:
         assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
         assert gb.n_iter_ == max_iter
@@ -98,17 +106,17 @@ def test_early_stopping_regression(scoring, validation_fraction,
                         random_state=0)
 ))
 @pytest.mark.parametrize(
-    'scoring, validation_fraction, n_iter_no_change, tol', [
-        ('accuracy', .1, 5, 1e-7),  # use scorer
-        ('accuracy', None, 5, 1e-1),  # use scorer on training data
-        (None, .1, 5, 1e-7),  # same with default scorerscor
-        (None, None, 5, 1e-1),
-        ('loss', .1, 5, 1e-7),  # use loss
-        ('loss', None, 5, 1e-1),  # use loss on training data
-        (None, None, None, None),  # no early stopping
+    'scoring, validation_fraction, early_stopping, n_iter_no_change, tol', [
+        ('accuracy', .1, True, 5, 1e-7),  # use scorer
+        ('accuracy', None, True, 5, 1e-1),  # use scorer on training data
+        (None, .1, True, 5, 1e-7),  # same with default scorer
+        (None, None, True, 5, 1e-1),
+        ('loss', .1, True, 5, 1e-7),  # use loss
+        ('loss', None, True, 5, 1e-1),  # use loss on training data
+        (None, None, False, 5, None),  # no early stopping
         ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
-                                       n_iter_no_change, tol):
+                                       early_stopping, n_iter_no_change, tol):
 
     max_iter = 50
 
@@ -119,6 +127,7 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
+        early_stopping=early_stopping,
         validation_fraction=validation_fraction,
         max_iter=max_iter,
         n_iter_no_change=n_iter_no_change,
@@ -126,10 +135,27 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
     )
     gb.fit(X, y)
 
-    if n_iter_no_change is not None:
+    if early_stopping is True:
         assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
         assert gb.n_iter_ == max_iter
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, *_make_dumb_dataset(10000)),
+    (HistGradientBoostingClassifier, *_make_dumb_dataset(10001)),
+    (HistGradientBoostingRegressor, *_make_dumb_dataset(10000)),
+    (HistGradientBoostingRegressor, *_make_dumb_dataset(10001))
+])
+def test_early_stopping_default(GradientBoosting, X, y):
+    # Test that early stopping is enabled by default if and only if there
+    # are more than 10000 samples
+    gb = GradientBoosting(max_iter=10, n_iter_no_change=2, tol=1e-1)
+    gb.fit(X, y)
+    if X.shape[0] > 10000:
+        assert gb.n_iter_ < gb.max_iter
+    else:
+        assert gb.n_iter_ == gb.max_iter
 
 
 @pytest.mark.parametrize(
@@ -171,7 +197,7 @@ def test_binning_train_validation_are_separated():
     rng = np.random.RandomState(0)
     validation_fraction = .2
     gb = HistGradientBoostingClassifier(
-        n_iter_no_change=5,
+        early_stopping=True,
         validation_fraction=validation_fraction,
         random_state=rng
     )
@@ -413,7 +439,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())
@@ -446,3 +472,17 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
+
+
+def test_max_depth_max_leaf_nodes():
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16179
+    # there was a bug when the max_depth and the max_leaf_nodes criteria were
+    # met at the same time, which would lead to max_leaf_nodes not being
+    # respected.
+    X, y = make_classification(random_state=0)
+    est = HistGradientBoostingClassifier(max_depth=2, max_leaf_nodes=3,
+                                         max_iter=1).fit(X, y)
+    tree = est._predictors[0][0]
+    assert tree.get_max_depth() == 2
+    assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix

@@ -7,9 +7,9 @@ neighbors.
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.pipeline import make_pipeline
 from sklearn.base import clone
 

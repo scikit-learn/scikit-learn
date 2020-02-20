@@ -8,12 +8,12 @@ from math import log
 import numpy as np
 from scipy.linalg import pinvh
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import check_random_state
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
 from sklearn.utils.extmath import fast_logdet
@@ -209,7 +209,7 @@ def test_ard_accuracy_on_easy_problem():
     X = np.random.RandomState(seed=seed).normal(size=(250, 3))
     y = X[:, 1]
 
-    regressor = ARDRegression()
+    regressor = ARDRegression(n_iter=600)
     regressor.fit(X, y)
 
     abs_coef_error = np.abs(1 - regressor.coef_[1])
