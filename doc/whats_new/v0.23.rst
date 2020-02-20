@@ -65,6 +65,26 @@ Changelog
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
+  :class:`cluster.SpectralCoclustering` and
+  :class:`cluster.SpectralBiclustering` is deprecated. They now use OpenMP
+  based parallelism. For more details on how to control the number of threads,
+  please refer to our :ref:`parallelism` notes. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
+  deprecated. It has no effect. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
+  optimized implementation. Parallelism is now over the data instead of over
+  initializations allowing better scalability. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`cluster.KMeans` now supports sparse data when
+  `solver = "elkan"`. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
