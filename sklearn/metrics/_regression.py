@@ -219,7 +219,6 @@ def mean_absolute_percentage_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -247,7 +246,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
-    epsilon = np.finfo(float).eps
+    epsilon = np.finfo(y_true.dtype).eps
     mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
     output_errors = np.average(mape,
                                weights=sample_weight, axis=0) * 100.0
