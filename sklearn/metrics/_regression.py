@@ -20,6 +20,7 @@ the lower the better
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
+#          Ashutosh Hathidara <ashutoshhathidara98@gmail.com>
 # License: BSD 3 clause
 
 
