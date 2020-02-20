@@ -132,3 +132,25 @@ def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
     clf.fit(X, y)
     disp = plot_roc_curve(clf, X, y)
     assert disp.estimator_name == clf.__class__.__name__
+
+
+@pytest.mark.parametrize(
+    "clf", [LogisticRegression(),
+            make_pipeline(StandardScaler(), LogisticRegression()),
+            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
+                          LogisticRegression())])
+def test_roc_curve_estimator_name_multiple_calls(pyplot, data_binary, clf):
+    # non-regression test checking that the `name` used when calling
+    # `plot_roc_curve` is used as well when calling `disp.plot()`
+    X, y = data_binary
+    clf_name = "my hand-crafted name"
+    clf.fit(X, y)
+    disp = plot_roc_curve(clf, X, y, name=clf_name)
+    assert disp.estimator_name == clf_name
+    pyplot.close("all")
+    disp.plot()
+    assert clf_name in disp.line_.get_label()
+    pyplot.close("all")
+    clf_name = "another_name"
+    disp.plot(name=clf_name)
+    assert clf_name in disp.line_.get_label()
