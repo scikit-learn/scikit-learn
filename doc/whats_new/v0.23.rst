@@ -249,7 +249,7 @@ Changelog
   :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
   results in a different plot when calling
   :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
-  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
