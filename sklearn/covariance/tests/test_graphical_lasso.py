@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from scipy import linalg
 
+from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_less
 
@@ -193,10 +194,17 @@ def test_graphical_lasso_cv_scores():
 
     cv_results = cov.cv_results_
     # alpha and one for each split
-    assert len(cv_results) == 1 + splits
 
     total_alphas = n_refinements * n_alphas + 1
-    keys = ['alphas'] + ['split{}_score'.format(i) for i in range(splits)]
-    for key in keys:
+    keys = ['alphas']
+    split_keys = ['split{}_score'.format(i) for i in range(splits)]
+    for key in keys + split_keys:
         assert key in cv_results
         assert len(cv_results[key]) == total_alphas
+
+    cv_scores = np.asarray([cov.cv_results_[key] for key in split_keys])
+    expected_mean = cv_scores.mean(axis=0)
+    expected_std = cv_scores.std(axis=0)
+
+    assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(cov.cv_results_["std_test_score"], expected_std)

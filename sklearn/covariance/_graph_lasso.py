@@ -793,6 +793,9 @@ class GraphicalLassoCV(GraphicalLasso):
             key = "split{}_score".format(i)
             self.cv_results_[key] = grid_scores[:, i]
 
+        self.cv_results_["mean_test_score"] = np.mean(grid_scores, axis=1)
+        self.cv_results_["std_test_score"] = np.std(grid_scores, axis=1)
+
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
 
