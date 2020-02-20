@@ -35,7 +35,7 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     mape = mean_absolute_percentage_error(y_true, y_pred)
     assert np.isfinite(mape)
-    assert mape>1e6
+    assert mape > 1e6
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
@@ -93,7 +93,7 @@ def test_multioutput_regression():
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
                       decimals=2)
     assert np.isfinite(error)
-    assert error>1e6
+    assert error > 1e6
     error = median_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 1.) / 4.)
 
