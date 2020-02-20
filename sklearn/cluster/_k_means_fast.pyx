@@ -54,6 +54,12 @@ cdef floating _euclidean_dense_dense(
     return result if squared else sqrt(result)
 
 
+def _euclidean_dense_dense_wrapper(floating[::1] a, floating[::1] b,
+                                   bint squared):
+    """Wrapper of _euclidean_dense_dense for testing purpose"""
+    return _euclidean_dense_dense(&a[0], &b[0], a.shape[0], squared)
+
+
 cdef floating _euclidean_sparse_dense(
         floating[::1] a_data,  # IN
         int[::1] a_indices,    # IN
@@ -77,6 +83,17 @@ cdef floating _euclidean_sparse_dense(
     if result < 0: result = 0.0
 
     return result if squared else sqrt(result)
+
+
+def _euclidean_sparse_dense_wrapper(
+        floating[::1] a_data,
+        int[::1] a_indices,
+        floating[::1] b,
+        floating b_squared_norm,
+        bint squared):
+    """Wrapper of _euclidean_sparse_dense for testing purpose"""
+    return _euclidean_sparse_dense(
+        a_data, a_indices, b, b_squared_norm, squared)
 
 
 cpdef floating _inertia_dense(

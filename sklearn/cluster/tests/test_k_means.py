@@ -27,6 +27,10 @@ from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
 from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
+from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
+from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
+from sklearn.cluster._k_means_fast import _inertia_dense
+from sklearn.cluster._k_means_fast import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
@@ -1120,3 +1124,46 @@ def test_k_means_1_iteration(array_constr, algo):
 
     assert_array_equal(py_labels, cy_labels)
     assert_allclose(py_centers, cy_centers)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("squared", [True, False])
+def test_euclidean_distance(dtype, squared):
+    rng = np.random.RandomState(0)
+    a_sparse = sp.random(1, 100, density=0.5, format="csr", random_state=rng,
+                         dtype=dtype)
+    a_dense = a_sparse.toarray().reshape(-1)
+    b = rng.randn(100).astype(dtype, copy=False)
+    b_squared_norm = (b**2).sum()
+
+    expected = ((a_dense - b)**2).sum()
+    expected = expected if squared else np.sqrt(expected)
+
+    distance_dense_dense = _euclidean_dense_dense_wrapper(a_dense, b, squared)
+    distance_sparse_dense = _euclidean_sparse_dense_wrapper(
+        a_sparse.data, a_sparse.indices, b, b_squared_norm, squared)
+
+    assert_allclose(distance_dense_dense, distance_sparse_dense, rtol=1e-6)
+    assert_allclose(distance_dense_dense, expected, rtol=1e-6)
+    assert_allclose(distance_sparse_dense, expected, rtol=1e-6)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_inertia(dtype):
+    rng = np.random.RandomState(0)
+    X_sparse = sp.random(100, 10, density=0.5, format="csr", random_state=rng,
+                         dtype=dtype)
+    X_dense = X_sparse.toarray()
+    sample_weight = rng.randn(100).astype(dtype, copy=False)
+    centers = rng.randn(5, 10).astype(dtype, copy=False)
+    labels = rng.randint(5, size=100, dtype=np.int32)
+
+    distances = ((X_dense - centers[labels])**2).sum(axis=1)
+    expected = np.sum(distances * sample_weight)
+
+    inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels)
+    inertia_sparse = _inertia_sparse(X_sparse, sample_weight, centers, labels)
+
+    assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
+    assert_allclose(inertia_dense, expected, rtol=1e-6)
+    assert_allclose(inertia_sparse, expected, rtol=1e-6)
