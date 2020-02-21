@@ -13,7 +13,7 @@ Housing dataset for which the target is the median house value for California
 districts.
 
 Neither of those datasets has missing values. We will remove some of the
-values and compare the results of RandomForestRegressor TODO: add link on the
+values and compare the results of RandomForestRegressor on the
 full data and the data with the missing values imputed by different techniques.
 
 """
@@ -26,12 +26,11 @@ print(__doc__)
 # Download the data and make missing values sets
 ###############################################################################
 #
-# First we are downloading the two datasets. Diabets dataset is shipped with
+# First we download the two datasets. Diabets dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
 # dataset is much larger with 20640 entires and 8 features and we will need to
-# fetch it using fetch_california_housing TODO:link function. We will only use
-# the first 500 entries here for sake of speeding up the calculations but feel
-# free to use the whole dataset.
+# fetch it. We will only use the first 500 entries here for sake of speeding up
+# the calculations but feel free to use the whole dataset.
 #
 
 import numpy as np
@@ -76,9 +75,8 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
 ###############################################################################
 # Impute the missing data and score
 ###############################################################################
-# Now we will write a function which will impute the data given type of
-# imputer, perform RandomForestRegresssor TODO: link on it and calculate the
-# negative mean squared error
+# Now we will write a function which will score the results on the differently
+# prepared data. Let's look at each imputer one by on
 #
 
 rng = np.random.RandomState(0)
@@ -116,8 +114,8 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
-# Let's get a score for performing RandomForestRegresssor on a full data
-# Estimate the score on the entire dataset, with no missing values
+# First, we will calculate the score on the original data sets
+#
 
 def get_full_score(X_full, y_full):
     full_scores = cross_val_score(REGRESSOR, X_full, y_full,
@@ -129,21 +127,19 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
                                                         y_california)
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
-# The median is a more robust estimator for data with high magnitude variables
-# which could dominate results (otherwise known as a 'long tail').
+# Now we will estimate the score after replacing missing values by 0
 #
 
-
 def get_impute_zero_score(X_missing, y_missing):
-    # Estimate the score after replacing missing values by 0
+
     imputer = SimpleImputer(missing_values=0,
                             strategy='constant',
                             fill_value=0)
     zero_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return zero_impute_scores.mean(), zero_impute_scores.std()
 
-mses_california[1], stds_california[1] = get_impute_zero_score(X_miss_california,
-                                                               y_miss_california)
+mses_california[1], stds_california[1] = get_impute_zero_score(
+    X_miss_california, y_miss_california)
 mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
@@ -157,8 +153,8 @@ def get_impute_KNN_score(X_missing, y_missing):
     knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return knn_impute_scores.mean(), knn_impute_scores.std()
 
-mses_california[2], stds_california[2] = get_impute_KNN_score(X_miss_california,
-                                                              y_miss_california)
+mses_california[2], stds_california[2] = get_impute_KNN_score(
+    X_miss_california, y_miss_california)
 mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
@@ -255,3 +251,8 @@ ax2.invert_yaxis()
 ax2.set_yticklabels([''] * n_bars)
 
 plt.show()
+
+# The median is a more robust estimator for data with high magnitude variables
+# which could dominate results (otherwise known as a 'long tail').
+#
+
