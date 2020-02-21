@@ -302,7 +302,8 @@ def _convert_arff_data_dataframe(arff, columns, features_dict):
 
     Returns
     -------
-    dataframe : pandas DataFrame
+    result : tuple
+        tuple with the resulting dataframe
     """
     pd = check_pandas_support('fetch_openml with as_frame=True')
 
