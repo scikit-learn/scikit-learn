@@ -325,7 +325,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     Parameters
     ----------
-    estimator : BaseEstimator
+    estimator : estimator object
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
@@ -455,7 +455,7 @@ def individual_conditional_expectation(estimator, X, features,
 
     Parameters
     ----------
-    estimator : BaseEstimator
+    estimator : estimator object
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
