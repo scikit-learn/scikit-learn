@@ -112,29 +112,10 @@ expectation function rather than the plots, you can use functions
 :func:`individual_conditional_expectation`::
 
     >>> from sklearn.inspection import partial_dependence
-    >>> from sklearn.inspection import individual_conditional_expectation
 
     >>> pdp, axes = partial_dependence(clf, X, [0])
     >>> pdp
     array([[ 2.466...,  2.466..., ...
-    >>> axes
-    [array([-1.624..., -1.592..., ...
-
-    >>> ice, axes = individual_conditional_expectation(clf, X, [0])
-    >>> ice
-    array([[[0.9983247 , 0.9983247 , 0.9983247 , ..., 0.99461002,
-             0.99890308, 0.99890308],
-            [0.23127816, 0.23127816, 0.23127816, ..., 0.08522466,
-             0.31495788, 0.31495788],
-            [0.99836689, 0.99836689, 0.99836689, ..., 0.99474525,
-             0.99893072, 0.99893072],
-            ...,
-            [0.18632824, 0.18632824, 0.18632824, ..., 0.06621577,
-             0.25922884, 0.25922884],
-            [0.92358666, 0.92358666, 0.92358666, ..., 0.78915304,
-             0.94864021, 0.94864021],
-            [0.99704493, 0.99704493, 0.99704493, ..., 0.99051952,
-             0.99806429, 0.99806429]]])
     >>> axes
     [array([-1.624..., -1.592..., ...
 
