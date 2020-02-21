@@ -33,7 +33,7 @@ print(__doc__)
 # interesting features, however please refer to:
 # :doc:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
-# Ames housing dataset is not part of the Sklearn and therefore we will fetch
+# The Ames housing dataset is not shipped with scikit-learn and therefore we will fetch
 # it from `OpenML`_.
 #
 # .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
