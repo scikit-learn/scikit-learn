@@ -971,6 +971,74 @@ def test_iterative_imputer_catch_warning():
 
 
 @pytest.mark.parametrize(
+    "min_value, max_value, correct_output",
+    [(0, 100, np.array([[0] * 3, [100] * 3])),
+     (None, None, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     (-np.inf, np.inf, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     ([-5, 5, 10], [100, 200, 300], np.array([[-5, 5, 10], [100, 200, 300]])),
+     ([-5, -np.inf, 10], [100, 200, np.inf],
+      np.array([[-5, -np.inf, 10], [100, 200, np.inf]]))],
+    ids=["scalars", "None-default", "inf", "lists", "lists-with-inf"])
+def test_iterative_imputer_min_max_array_like(min_value,
+                                              max_value,
+                                              correct_output):
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
+    X = np.random.RandomState(0).randn(10, 3)
+    imputer = IterativeImputer(min_value=min_value, max_value=max_value)
+    imputer.fit(X)
+
+    assert (isinstance(imputer._min_value, np.ndarray) and
+            isinstance(imputer._max_value, np.ndarray))
+    assert ((imputer._min_value.shape[0] == X.shape[1]) and
+            (imputer._max_value.shape[0] == X.shape[1]))
+
+    assert_allclose(correct_output[0, :], imputer._min_value)
+    assert_allclose(correct_output[1, :], imputer._max_value)
+
+
+@pytest.mark.parametrize(
+    "min_value, max_value, err_msg",
+    [(100, 0, "min_value >= max_value."),
+     (np.inf, -np.inf, "min_value >= max_value."),
+     ([-5, 5], [100, 200, 0], "_value' should be of shape")])
+def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
+    X = np.random.random((10, 3))
+    imputer = IterativeImputer(min_value=min_value, max_value=max_value)
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit(X)
+
+
+@pytest.mark.parametrize(
+    "min_max_1, min_max_2",
+    [([None, None], [-np.inf, np.inf]),
+     ([-10, 10], [[-10] * 4, [10] * 4])],
+    ids=["None-vs-inf", "Scalar-vs-vector"])
+def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
+    # Test that None/inf and scalar/vector give the same imputation
+    X_train = np.array([
+        [np.nan, 2, 2, 1],
+        [10, np.nan, np.nan, 7],
+        [3, 1, np.nan, 1],
+        [np.nan, 4, 2, np.nan]])
+    X_test = np.array([
+        [np.nan, 2, np.nan, 5],
+        [2, 4, np.nan, np.nan],
+        [np.nan, 1, 10, 1]])
+    imputer1 = IterativeImputer(min_value=min_max_1[0],
+                                max_value=min_max_1[1],
+                                random_state=0)
+    imputer2 = IterativeImputer(min_value=min_max_2[0],
+                                max_value=min_max_2[1],
+                                random_state=0)
+    X_test_imputed1 = imputer1.fit(X_train).transform(X_test)
+    X_test_imputed2 = imputer2.fit(X_train).transform(X_test)
+    assert_allclose(X_test_imputed1[:, 0], X_test_imputed2[:, 0])
+
+
+@pytest.mark.parametrize(
     "skip_complete", [True, False]
 )
 def test_iterative_imputer_skip_non_missing(skip_complete):
