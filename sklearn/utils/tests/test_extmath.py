@@ -7,6 +7,7 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
+from scipy.sparse.linalg import aslinearoperator
 from scipy import stats
 from scipy.special import expit
 
@@ -720,3 +721,23 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+    
+def test_safe_sparse_dot_operator():
+    rng = np.random.RandomState(0)
+
+    # LinearOperator @ ndarray
+    A = rng.random_sample((10, 20))
+    B = rng.random_sample((20, 30))
+    expected = np.dot(A, B)
+    A = aslinearoperator(A)
+    actual = safe_sparse_dot(A, B)
+    assert_allclose(actual, expected)
+
+    # ndarray @ LinearOperator
+    A = rng.random_sample((10, 20))
+    B = rng.random_sample((20, 30))
+    expected = np.dot(A, B)
+    B = aslinearoperator(B)
+    actual = safe_sparse_dot(A, B)
+    assert_allclose(actual, expected)
+

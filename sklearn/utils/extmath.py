@@ -168,7 +168,7 @@ def randomized_range_finder(A, size, n_iter,
     Parameters
     ----------
     A : 2D array
-        The input data matrix
+        The input data matrix or LinearOperator
 
     size : integer
         Size of the return array
@@ -251,7 +251,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     Parameters
     ----------
-    M : ndarray or sparse matrix
+    M : ndarray or sparse matrix or LinearOperator
         Matrix to decompose
 
     n_components : int
