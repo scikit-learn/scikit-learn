@@ -175,7 +175,7 @@ def load_files(container_path, description=None, categories=None,
             The names of target classes.
         DESCR : str
             The full description of the dataset.
-        filenames:
+        filenames: ndarray
             The filenames holding the dataset.
     """
     target = []
@@ -959,8 +959,7 @@ def load_boston(return_X_y=False):
         target : ndarray of shape (506, )
             The regression target.
         filename : str
-            The physical location of boston csv
-            dataset.
+            The physical location of boston csv dataset.
 
             .. versionadded:: 0.20
         DESCR : str
