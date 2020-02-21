@@ -7,7 +7,7 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy.sparse.linalg import aslinearoperator
+from scipy.sparse.linalg import LinearOperator
 from scipy import stats
 from scipy.special import expit
 
@@ -722,6 +722,16 @@ def test_safe_sparse_dot_dense_output(dense_output):
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
 
+class TestingLinearOperator(LinearOperator):
+    def __init__(self, M):
+        self.M = M
+        super(TestingLinearOperator, self).__init__(M.dtype, M.shape)
+
+    def _matvec(self, x):
+        return self.M @ x
+
+    def _adjoint(self):
+        return TestingLinearOperator(self.M.T)
 
 def test_safe_sparse_dot_operator():
     rng = np.random.RandomState(0)
@@ -730,15 +740,15 @@ def test_safe_sparse_dot_operator():
     A = rng.random_sample((10, 20))
     B = rng.random_sample((20, 30))
     expected = np.dot(A, B)
-    A = aslinearoperator(A)
-    actual = safe_sparse_dot(A, B)
+    op = TestingLinearOperator(A)
+    actual = safe_sparse_dot(op, B)
     assert_allclose(actual, expected)
 
     # ndarray @ LinearOperator
-    pytest.importorskip("scipy", minversion="1.4.0")
     A = rng.random_sample((10, 20))
     B = rng.random_sample((20, 30))
     expected = np.dot(A, B)
-    B = aslinearoperator(B)
-    actual = safe_sparse_dot(A, B)
+
+    op = TestingLinearOperator(B)
+    actual = safe_sparse_dot(A, op)
     assert_allclose(actual, expected)
