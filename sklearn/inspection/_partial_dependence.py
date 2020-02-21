@@ -109,8 +109,8 @@ def _validate_parameters(estimator, X, features, response_method, method):
 
         if response_method != 'decision_function':
             raise ValueError(
-                "With the 'recursion' method, the response_method must be "
-                "'decision_function'. Got {}.".format(response_method)
+                f"With the 'recursion' method, the response_method must be "
+                f"'decision_function'. Got {response_method}."
             )
 
     if _determine_key_type(features, accept_slice=False) == 'int':
