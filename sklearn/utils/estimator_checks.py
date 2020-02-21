@@ -364,16 +364,15 @@ def _check_tags_to_skip(check):
     def wrapper(name, estimator_orig):
         xfail_checks = _safe_tags(estimator_orig, '_xfail_test')
         check_name = _set_check_estimator_ids(check).split("(", maxsplit=1)[0]
-        if xfail_checks:
-            try:
-                msg = xfail_checks[check_name]
-            except KeyError:
-                return check(name, estimator_orig)
+        if xfail_checks and check_name in xfail_checks:
+            msg = xfail_checks[check_name]
             try:
                 import pytest
                 pytest.xfail(msg)
             except ImportError:
                 raise SkipTest(msg)
+        else:
+            return check(name, estimator_orig)
 
     return wrapper
 

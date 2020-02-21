@@ -633,8 +633,8 @@ def test_check_to_skip():
 
     wrapped_check = _check_tags_to_skip(check_things)
 
-    assert_raises(SkipTest, 'This check is bad', wrapped_check,
-                  'checkestimator', CheckEstimator)
+    assert_raises_regex(SkipTest, 'This check is bad', wrapped_check,
+                        'checkestimator', CheckEstimator())
 
 
 if __name__ == '__main__':
