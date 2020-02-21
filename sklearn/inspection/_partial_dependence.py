@@ -554,6 +554,7 @@ def individual_conditional_expectation(estimator, X, features,
     # reshape predictions to
     # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
     predictions = predictions.reshape(
-        -1, X.shape[0], *[val.shape[0] for val in values])
+        -1, X.shape[0], *[val.shape[0] for val in values]
+    )
 
     return predictions, values
