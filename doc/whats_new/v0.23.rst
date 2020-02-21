@@ -341,7 +341,8 @@ Changelog
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
-- |Feature| :func:`utils.extmath.randomized_svd` now accepts 
+- |Feature| :func:`utils.extmath.randomized_svd` and 
+  :func:`utils.extmath.safe_dot_product` now accepts 
   :class:`scipy.sparse.linalg.LinearOperator` as argument. 
   :pr:`#16463` by :user:`Pavel V. Stishenko <Mazay0>`.
 

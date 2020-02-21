@@ -7,7 +7,7 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy.sparse.linalg import aslinearoperator
+from scipy.sparse.linalg import LinearOperator
 from scipy import stats
 from scipy.special import expit
 
@@ -730,14 +730,15 @@ def test_safe_sparse_dot_operator():
     A = rng.random_sample((10, 20))
     B = rng.random_sample((20, 30))
     expected = np.dot(A, B)
-    A = aslinearoperator(A)
-    actual = safe_sparse_dot(A, B)
+    op = LinearOperator(A.shape, matvec=lambda x: np.dot(A, x))
+    actual = safe_sparse_dot(op, B)
     assert_allclose(actual, expected)
 
     # ndarray @ LinearOperator
     A = rng.random_sample((10, 20))
     B = rng.random_sample((20, 30))
     expected = np.dot(A, B)
-    B = aslinearoperator(B)
-    actual = safe_sparse_dot(A, B)
+    op = LinearOperator(B.shape, matvec=lambda x: np.dot(B, x),
+                        rmatvec=lambda x: np.dot(B.T, x))
+    actual = safe_sparse_dot(A, op)
     assert_allclose(actual, expected)
