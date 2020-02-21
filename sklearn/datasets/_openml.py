@@ -329,7 +329,7 @@ def _convert_arff_data_dataframe(arff, columns, features_dict):
         if dtype == 'category':
             dtype = pd.api.types.CategoricalDtype(attributes[column])
         df[column] = df[column].astype(dtype, copy=False)
-    return df
+    return (df, )
 
 
 def _get_data_info_by_name(name, version, data_home):
@@ -499,25 +499,21 @@ def _download_data_to_bunch(url, sparse, data_home, *,
     else:
         return_type = _arff.DENSE_GEN
 
-    download = _retry_with_clean_cache(url, data_home)(
-        partial(_load_arff_response, url, data_home,
-                return_type=return_type,
-                encode_nominal=not as_frame))
-
     frame = nominal_attributes = None
     if as_frame:
         columns = data_columns + target_columns
         parse_arff = partial(_convert_arff_data_dataframe, columns=columns,
                              features_dict=features_dict)
-        frame = download(parse_arff=parse_arff)
 
-        X = frame[data_columns]
-        if len(target_columns) >= 2:
-            y = frame[target_columns]
-        elif len(target_columns) == 1:
-            y = frame[target_columns[0]]
-        else:
-            y = None
+        def postprocess(frame):
+            X = frame[data_columns]
+            if len(target_columns) >= 2:
+                y = frame[target_columns]
+            elif len(target_columns) == 1:
+                y = frame[target_columns[0]]
+            else:
+                y = None
+            return X, y, frame, nominal_attributes
     else:
         def parse_arff(arff):
             X, y = _convert_arff_data(arff, col_slice_x, col_slice_y, shape)
@@ -530,31 +526,38 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                                   k in data_columns + target_columns}
             return X, y, nominal_attributes
 
-        X, y, nominal_attributes = download(parse_arff=parse_arff)
+        def postprocess(X, y, nominal_attributes):
+            is_classification = {col_name in nominal_attributes
+                                 for col_name in target_columns}
+            if not is_classification:
+                # No target
+                pass
+            elif all(is_classification):
+                y = np.hstack([
+                    np.take(
+                        np.asarray(nominal_attributes.pop(col_name),
+                                   dtype='O'),
+                        y[:, i:i + 1].astype(int, copy=False))
+                    for i, col_name in enumerate(target_columns)
+                ])
+            elif any(is_classification):
+                raise ValueError('Mix of nominal and non-nominal targets is '
+                                 'not currently supported')
 
-        is_classification = {col_name in nominal_attributes
-                             for col_name in target_columns}
-        if not is_classification:
-            # No target
-            pass
-        elif all(is_classification):
-            y = np.hstack([
-                np.take(
-                    np.asarray(nominal_attributes.pop(col_name),
-                               dtype='O'),
-                    y[:, i:i + 1].astype(int, copy=False))
-                for i, col_name in enumerate(target_columns)
-            ])
-        elif any(is_classification):
-            raise ValueError('Mix of nominal and non-nominal targets is '
-                             'not currently supported')
+            # reshape y back to 1-D array, if there is only 1 target column;
+            # back to None if there are not target columns
+            if y.shape[1] == 1:
+                y = y.reshape((-1,))
+            elif y.shape[1] == 0:
+                y = None
+            return X, y, frame, nominal_attributes
 
-        # reshape y back to 1-D array, if there is only 1 target column;
-        # back to None if there are not target columns
-        if y.shape[1] == 1:
-            y = y.reshape((-1,))
-        elif y.shape[1] == 0:
-            y = None
+    out = _retry_with_clean_cache(url, data_home)(
+        _load_arff_response)(url, data_home,
+                             return_type=return_type,
+                             encode_nominal=not as_frame,
+                             parse_arff=parse_arff)
+    X, y, frame, nominal_attributes = postprocess(*out)
 
     return Bunch(data=X, target=y, frame=frame,
                  categories=nominal_attributes,
