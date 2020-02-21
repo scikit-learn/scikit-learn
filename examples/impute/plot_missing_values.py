@@ -5,40 +5,24 @@ Imputing missing values before building an estimator
 
 Missing values can be replaced by the mean, the median or the most frequent
 value using the basic :class:`sklearn.impute.SimpleImputer`.
-The median is a more robust estimator for data with high magnitude variables
-which could dominate results (otherwise known as a 'long tail').
 
-With ``KNNImputer``, missing values can be imputed using the weighted
-or unweighted mean of the desired number of nearest neighbors.
+In this example we will investigate different imputation techniques on two
+datasets: Diabetes dataset which is the set of parameteres collected from the
+diabetes patients and California Housing dataset for which the target is the
+median house value for California districts.
 
-Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
-round-robin linear regression, treating every variable as an output in
-turn. The version implemented assumes Gaussian (output) variables. If your
-features are obviously non-Normal, consider transforming them to look more
-Normal so as to potentially improve performance.
-
-In addition of using an imputing method, we can also keep an indication of the
-missing information using :func:`sklearn.impute.MissingIndicator` which might
-carry some information.
 """
 print(__doc__)
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
 # License: BSD 3 clause
 
-import numpy as np
-import matplotlib.pyplot as plt
 
-# To use the experimental IterativeImputer, we need to explicitly ask for it:
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.datasets import load_diabetes
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import make_pipeline, make_union
-from sklearn.impute import (
-    SimpleImputer, KNNImputer, IterativeImputer, MissingIndicator)
-from sklearn.model_selection import cross_val_score
+import numpy as np
 
 rng = np.random.RandomState(0)
+from sklearn.ensemble import RandomForestRegressor
+
 
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
@@ -47,6 +31,12 @@ REGRESSOR = RandomForestRegressor(random_state=0)
 #
 ###############################################################################
 #
+
+from sklearn.impute import MissingIndicator
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline, make_union
+
+
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
@@ -60,7 +50,33 @@ def get_scores_for_imputer(imputer, X_missing, y_missing):
 ###############################################################################
 #
 ###############################################################################
+#The median is a more robust estimator for data with high magnitude variables
+#which could dominate results (otherwise known as a 'long tail').
 #
+#With ``KNNImputer``, missing values can be imputed using the weighted
+#or unweighted mean of the desired number of nearest neighbors.
+#
+# Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
+# round-robin linear regression, treating every variable as an output in
+# turn. The version implemented assumes Gaussian (output) variables. If your
+# features are obviously non-Normal, consider transforming them to look more
+# Normal so as to potentially improve performance.
+#
+# In addition of using an imputing method, we can also keep an indication of the
+# missing information using :func:`sklearn.impute.MissingIndicator` which might
+#carry some information.
+#
+
+import matplotlib.pyplot as plt
+
+# To use the experimental IterativeImputer, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.datasets import load_diabetes
+
+
+from sklearn.impute import (
+    SimpleImputer, KNNImputer, IterativeImputer)
+
 
 def get_results(dataset):
     X_full, y_full = dataset.data, dataset.target
