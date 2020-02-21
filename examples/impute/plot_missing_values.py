@@ -113,7 +113,7 @@ stds_diabetes = np.zeros(5)
 # Let's get a score for performing RandomForestRegresssor on a full data
 # Estimate the score on the entire dataset, with no missing values
 
-def get_full_score(X_full, y_full)
+def get_full_score(X_full, y_full):
     full_scores = cross_val_score(REGRESSOR, X_full, y_full,
                                   scoring='neg_mean_squared_error',
                                   cv=N_SPLITS)
@@ -135,20 +135,27 @@ def get_impute_zero_score(X_missing, y_missing):
                             strategy='constant',
                             fill_value=0)
     zero_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
+    return zero_impute_scores.mean(), zero_impute_scores.std()
 
-mses_california[1], stds_california[1] = get_impute_zero_score(X_missing,
-                                                               y_missing)
-mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_missing,
-                                                           y_missing)
+mses_california[1], stds_california[1] = get_impute_zero_score(X_miss_california,
+                                                               y_miss_california)
+mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
+                                                           y_miss_diabetes)
 
 # With ``KNNImputer``, missing values can be imputed using the weighted
 # or unweighted mean of the desired number of nearest neighbors.
 #
 # Estimate the score after kNN-imputation of the missing values
 
+def get_impute_KNN_score(X_missing, y_missing):
+    imputer = KNNImputer(missing_values=0)
+    knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
+    return knn_impute_scores.mean(), knn_impute_scores.std()
 
-imputer = KNNImputer(missing_values=0)
-knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
+mses_california[2], stds_california[2] = get_impute_KNN_score(X_miss_california,
+                                                              y_miss_california)
+mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
+                                                          y_miss_diabetes)
 
 
 # Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
@@ -158,22 +165,34 @@ knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 # Normal so as to potentially improve performance.
 #
 # Estimate the score after imputation (mean strategy) of the missing values
-imputer = SimpleImputer(missing_values=0, strategy="mean")
-mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
+def get_impute_mean(X_missing, y_missing):
+    imputer = SimpleImputer(missing_values=0, strategy="mean")
+    mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
+    return mean_impute_scores.mean(), mean_impute_scores.std()
 
+mses_california[3], stds_california[3] = get_impute_mean(X_miss_california,
+                                                         y_miss_california)
+mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
+                                                     y_miss_diabetes)
 # In addition of using an imputing method, we can also keep an indication of the
 # missing information using :func:`sklearn.impute.MissingIndicator` which might
 #carry some information.
 #
 # Estimate the score after iterative imputation of the missing values
-imputer = IterativeImputer(missing_values=0,
+
+def get_impute_iterative(X_missing, y_missing):
+    imputer = IterativeImputer(missing_values=0,
                            random_state=0,
                            n_nearest_features=5,
                            sample_posterior=True)
-iterative_impute_scores = get_scores_for_imputer(imputer,
+    iterative_impute_scores = get_scores_for_imputer(imputer,
                                                  X_missing,
                                                  y_missing)
+mses_california[4], stds_california[4] = get_impute_iterative(X_miss_california,
+                                                         y_miss_california)
+mses_diabetes[4], stds_diabetes[4] = get_impute_iterative(X_miss_diabetes,
+                                                     y_miss_diabetes)
 
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
