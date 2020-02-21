@@ -13,8 +13,8 @@ Housing dataset for which the target is the median house value for California
 districts.
 
 Neither of those datasets has missing values. We will remove some of the
-values and compare the results of RandomForestRegressor on the
-full data and the data with the missing values imputed by different techniques.
+values and compare the results of RandomForestRegressor on the full data and
+the data with the missing values imputed by different techniques.
 
 """
 print(__doc__)
@@ -76,7 +76,7 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
 # Impute the missing data and score
 ###############################################################################
 # Now we will write a function which will score the results on the differently
-# prepared data. Let's look at each imputer one by on
+# prepared data. Let's look at each imputer separately
 #
 
 rng = np.random.RandomState(0)
@@ -93,6 +93,11 @@ from sklearn.pipeline import make_pipeline, make_union
 
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
+
+# In addition of using an imputing method, we can also keep an indication of
+# the missing information using :func:`sklearn.impute.MissingIndicator` which
+# might carry some information.
+#
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
@@ -114,7 +119,7 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
-# First, we will calculate the score on the original data sets
+# Now, we will calculate the score on the original data sets
 #
 
 def get_full_score(X_full, y_full):
@@ -127,7 +132,7 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
                                                         y_california)
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
-# Now we will estimate the score after replacing missing values by 0
+# Next, we will estimate the score after replacing missing values by 0
 #
 
 def get_impute_zero_score(X_missing, y_missing):
@@ -143,10 +148,11 @@ mses_california[1], stds_california[1] = get_impute_zero_score(
 mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
+# Estimate the score after kNN-imputation of the missing values
+#
 # With ``KNNImputer``, missing values can be imputed using the weighted
 # or unweighted mean of the desired number of nearest neighbors.
 #
-# Estimate the score after kNN-imputation of the missing values
 
 def get_impute_KNN_score(X_missing, y_missing):
     imputer = KNNImputer(missing_values=0)
@@ -158,14 +164,8 @@ mses_california[2], stds_california[2] = get_impute_KNN_score(
 mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
-
-# Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
-# round-robin linear regression, treating every variable as an output in
-# turn. The version implemented assumes Gaussian (output) variables. If your
-# features are obviously non-Normal, consider transforming them to look more
-# Normal so as to potentially improve performance.
-#
 # Estimate the score after imputation (mean strategy) of the missing values
+#
 
 def get_impute_mean(X_missing, y_missing):
     imputer = SimpleImputer(missing_values=0, strategy="mean")
@@ -176,11 +176,16 @@ mses_california[3], stds_california[3] = get_impute_mean(X_miss_california,
                                                          y_miss_california)
 mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
-# In addition of using an imputing method, we can also keep an indication of the
-# missing information using :func:`sklearn.impute.MissingIndicator` which might
-#carry some information.
-#
+
 # Estimate the score after iterative imputation of the missing values
+#
+# Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
+# round-robin linear regression, treating every variable as an output in
+# turn.
+# The version implemented assumes Gaussian (output) variables. If your
+# features are obviously non-Normal, consider transforming them to look more
+# Normal so as to potentially improve performance.
+#
 
 def get_impute_iterative(X_missing, y_missing):
     imputer = IterativeImputer(missing_values=0,
@@ -196,31 +201,24 @@ mses_california[4], stds_california[4] = get_impute_iterative(X_miss_california,
                                                          y_miss_california)
 mses_diabetes[4], stds_diabetes[4] = get_impute_iterative(X_miss_diabetes,
                                                      y_miss_diabetes)
-'''
-
-    return ((full_scores.mean(), full_scores.std()),
-            (zero_impute_scores.mean(), zero_impute_scores.std()),
-            (mean_impute_scores.mean(), mean_impute_scores.std()),
-            (knn_impute_scores.mean(), knn_impute_scores.std()),
-            (iterative_impute_scores.mean(), iterative_impute_scores.std()))
-'''
 
 mses_diabetes = mses_diabetes * -1
 mses_california = mses_california * -1
-
 
 ###############################################################################
 # Plot the results
 ###############################################################################
 #
+# Finally we are going to visualize the score
+
+import matplotlib.pyplot as plt
+
 
 n_bars = len(mses_diabetes)
 xval = np.arange(n_bars)
 
-
 colors = ['r', 'g', 'b', 'orange', 'black']
 
-import matplotlib.pyplot as plt
 # plot diabetes results
 plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(121)
@@ -252,7 +250,8 @@ ax2.set_yticklabels([''] * n_bars)
 
 plt.show()
 
-# The median is a more robust estimator for data with high magnitude variables
-# which could dominate results (otherwise known as a 'long tail').
+# You can also try different techniques. For instance, the median is a more
+# robust estimator for data with high magnitude variables which could dominate
+# results (otherwise known as a 'long tail').
 #
 
