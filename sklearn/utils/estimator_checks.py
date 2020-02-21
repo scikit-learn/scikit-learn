@@ -781,7 +781,7 @@ def check_sample_weights_shape(name, estimator_orig):
         assert_raises(ValueError, estimator.fit, X, y,
                       sample_weight=np.ones(2*len(y)))
 
-        
+
 @ignore_warnings(category=(FutureWarning, UserWarning))
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for

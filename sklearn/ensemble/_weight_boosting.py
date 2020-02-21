@@ -123,13 +123,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if np.any(sample_weight < 0):
             raise ValueError("sample_weight cannot contain negative weights")
 
-        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes: "
-                             "%r vs %r\n"
-                             "Note: Sparse matrices cannot be indexed w/"
-                             "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))
-
         # Check parameters
         self._validate_estimator()
 

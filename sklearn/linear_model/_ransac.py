@@ -322,15 +322,6 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        if sample_weight is not None and estimator_fit_has_sample_weight:
-            if (sample_weight.shape[0] > 0 and
-                    sample_weight.shape[0] != X.shape[0]):
-                raise ValueError("sample_weight and X have incompatible "
-                                 " shapes: %r vs %r\n"
-                                 "Note: Sparse matrices cannot be indexed w/"
-                                 "boolean masks (use `indices=True` in CV)."
-                                 % (sample_weight.shape, X.shape))
-
         n_inliers_best = 1
         score_best = -np.inf
         inlier_mask_best = None
