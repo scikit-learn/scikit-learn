@@ -769,7 +769,9 @@ def check_sample_weights_list(name, estimator_orig):
 def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
-    if has_fit_parameter(estimator_orig, "sample_weight"):
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
         estimator = clone(estimator_orig)
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                       [2, 1], [2, 2], [2, 3], [2, 4]])
@@ -783,6 +785,7 @@ def check_sample_weights_shape(name, estimator_orig):
 
         assert_raises(ValueError, estimator.fit, X, y,
                       sample_weight=np.ones((len(y), 2)))
+
 
 @ignore_warnings(category=FutureWarning)
 def check_sample_weights_invariance(name, estimator_orig):
