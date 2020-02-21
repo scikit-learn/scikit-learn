@@ -50,10 +50,12 @@ def _split_node(node, threshold, branching_factor):
     new_subcluster1 = _CFSubcluster()
     new_subcluster2 = _CFSubcluster()
     new_node1 = _CFNode(
-        threshold, branching_factor, is_leaf=node.is_leaf,
+        threshold=threshold, branching_factor=branching_factor,
+        is_leaf=node.is_leaf,
         n_features=node.n_features)
     new_node2 = _CFNode(
-        threshold, branching_factor, is_leaf=node.is_leaf,
+        threshold=threshold, branching_factor=branching_factor,
+        is_leaf=node.is_leaf,
         n_features=node.n_features)
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -475,11 +477,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         has_root = getattr(self, 'root_', None)
         if getattr(self, 'fit_') or (partial_fit and not has_root):
             # The first root is the leaf. Manipulate this object throughout.
-            self.root_ = _CFNode(threshold, branching_factor, is_leaf=True,
+            self.root_ = _CFNode(threshold=threshold,
+                                 branching_factor=branching_factor,
+                                 is_leaf=True,
                                  n_features=n_features)
 
             # To enable getting back subclusters.
-            self.dummy_leaf_ = _CFNode(threshold, branching_factor,
+            self.dummy_leaf_ = _CFNode(threshold=threshold,
+                                       branching_factor=branching_factor,
                                        is_leaf=True, n_features=n_features)
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
@@ -498,7 +503,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 new_subcluster1, new_subcluster2 = _split_node(
                     self.root_, threshold, branching_factor)
                 del self.root_
-                self.root_ = _CFNode(threshold, branching_factor,
+                self.root_ = _CFNode(threshold=threshold,
+                                     branching_factor=branching_factor,
                                      is_leaf=False,
                                      n_features=n_features)
                 self.root_.append_subcluster(new_subcluster1)
