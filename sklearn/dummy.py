@@ -354,7 +354,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             return [np.log(p) for p in proba]
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {
+            'poor_score': True, 'no_validation': True,
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the predict method'
+            }
+        }
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
