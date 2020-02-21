@@ -92,6 +92,14 @@ Changelog
   returns correct results when one of the transformer steps applies on an
   empty list of columns :pr:`15963` by `Roman Yurchak`_.
 
+- |Efficiency| :class:`compose.ColumnTransformer` is now faster when working
+  with dataframes and strings are used to specific subsets of data for
+  transformers. :pr:`16431` by `Thomas Fan`_.
+
+- |Fix| :func:`compose.ColumnTransformer.fit` will error when selecting
+  a column name that is not unique in the dataframe. :pr:`16431` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
