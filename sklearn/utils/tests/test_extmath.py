@@ -721,7 +721,8 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
-    
+
+
 def test_safe_sparse_dot_operator():
     rng = np.random.RandomState(0)
 
@@ -740,4 +741,3 @@ def test_safe_sparse_dot_operator():
     B = aslinearoperator(B)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
-
