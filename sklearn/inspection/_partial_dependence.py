@@ -534,7 +534,7 @@ def individual_conditional_expectation(estimator, X, features,
 
     predictions = _get_predictions(estimator, grid, features_indices, X,
                                    response_method)
-    instances = X.shape[0]
+    n_samples = X.shape[0]
 
     # reshape to (n_targets, n_instances, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
@@ -544,12 +544,12 @@ def individual_conditional_expectation(estimator, X, features,
     predictions = np.array(predictions).T
     if is_regressor(estimator) and predictions.ndim == 2:
         # non-multioutput regression, shape is (n_instances, n_points,)
-        predictions = predictions.reshape(instances, -1)
+        predictions = predictions.reshape(n_samples, -1)
     elif is_classifier(estimator) and predictions.shape[0] == 2:
         # Binary classification, shape is (2, n_instances, n_points).
         # we output the effect of **positive** class
         predictions = predictions[1]
-        predictions = predictions.reshape(instances, -1)
+        predictions = predictions.reshape(n_samples, -1)
 
     # reshape predictions to
     # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
