@@ -33,8 +33,8 @@ print(__doc__)
 # interesting features, however please refer to:
 # :doc:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
-# The Ames housing dataset is not shipped with scikit-learn and therefore we will fetch
-# it from `OpenML`_.
+# The Ames housing dataset is not shipped with scikit-learn and therefore we
+# will fetch it from `OpenML`_.
 #
 # .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
 # .. _`Kaggle challenge`:
@@ -159,13 +159,14 @@ from sklearn.linear_model import RidgeCV
 
 
 lasso_pipeline = make_pipeline(processor_lin,
-                           LassoCV())
+                               LassoCV())
 
 rf_pipeline = make_pipeline(processor_nlin,
-                        RandomForestRegressor(random_state=42))
+                            RandomForestRegressor(random_state=42))
 
-gradient_pipeline = make_pipeline(processor_nlin,
-                              HistGradientBoostingRegressor(random_state=0))
+gradient_pipeline = make_pipeline(
+    processor_nlin,
+    HistGradientBoostingRegressor(random_state=0))
 
 estimators = [('Random Forest', rf_pipeline),
               ('Lasso', lasso_pipeline),
