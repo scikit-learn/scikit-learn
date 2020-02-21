@@ -6,12 +6,13 @@ Model Complexity Influence
 Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
-The dataset is the Boston Housing dataset (resp. 20 Newsgroups) for
-regression (resp. classification).
+Here we will use two datasets:
+Diabetes dataset for regerssion and 20 Newsgroups dataset for classification.
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters and measure the influence on both computational
 performance (latency) and predictive power (MSE or Hamming Loss).
+
 """
 
 print(__doc__)
@@ -41,6 +42,12 @@ from sklearn.metrics import hamming_loss
 
 # Initialize random generator
 np.random.seed(0)
+
+##############################################################################
+# Load the data
+# --------------------------------
+#
+# First we will load and prepare the data
 
 
 def generate_data(case, sparse=False):
