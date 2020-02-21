@@ -63,8 +63,9 @@ def _validate_parameters(estimator, X, features, response_method, method):
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
     if response_method not in accepted_responses:
         raise ValueError(
-            'response_method {} is invalid. Accepted response_method names '
-            'are {}.'.format(response_method, ', '.join(accepted_responses)))
+            f'response_method {response_method} is invalid. Accepted '
+            f'"response_method" names are {", ".join(accepted_responses)}.'
+        )
 
     if is_regressor(estimator) and response_method != 'auto':
         raise ValueError(
@@ -75,8 +76,9 @@ def _validate_parameters(estimator, X, features, response_method, method):
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
         raise ValueError(
-            'method {} is invalid. Accepted method names are {}.'.format(
-                method, ', '.join(accepted_methods)))
+            f'The method {method} is invalid. Accepted "method" names are '
+            f'{", ".join(accepted_methods)} method.'
+        )
 
     if method == 'auto':
         if (isinstance(estimator, BaseGradientBoosting) and
