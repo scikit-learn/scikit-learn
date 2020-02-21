@@ -171,7 +171,8 @@ def _get_predictions(estimator, grid, features_indices, X, response_method):
             predictions.append(prediction_method(X_eval))
         except NotFittedError:
             raise ValueError(
-                "'estimator' parameter must be a fitted estimator")
+                "'estimator' parameter must be a fitted estimator"
+            )
 
     return predictions
 
