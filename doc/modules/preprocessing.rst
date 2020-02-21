@@ -599,21 +599,22 @@ Infrequent categories
 ---------------------
 
 :class:`OneHotEncoder` supports outputing a feature that combines infrequent
-categories in the training data. For each input feature that has a infrequent
+categories in the training data. For each input feature that has an infrequent
 category a new column is formed to represent it. The parameters to enable the
 gathering of infrequent categories are `min_frequency` and `max_categories`.
 
-1. `min_frequency` can be a integer greater or equal to 1, or a float in
-`(0.0, 1.0)`. If `min_frequency` is an integer, categories with a cardinality
-smaller than `min_frequency * n_samples`  will be considered infrequent.
-If `min_frequency` is a float, categories with a cardinality smaller than this
-fraction of the total number of samples will be considered infrequent.
+1. `min_frequency` is either an  integer greater or equal to 1, or a float in
+the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a
+cardinality smaller than `min_frequency * n_samples`  will be considered
+infrequent. If `min_frequency` is a float, categories with a cardinality smaller
+than this fraction of the total number of samples will be considered infrequent.
 
-2. `max_categories` can be `None` or any integer greater than 1. This parameter
-sets an upper limit to the number of output features for each input feature.
-`max_categories` includes the feature that combines infrequent categories.
+2. `max_categories` is either `None` or any integer greater than 1. This
+parameter sets an upper limit to the number of output features for each input
+feature. `max_categories` includes the feature that combines infrequent
+categories.
 
-In the following example, the categories, `'dog', 'snake'`, are considered
+In the following example, the categories, `'dog', 'snake'` are considered
 infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 + 
@@ -638,9 +639,9 @@ feature name::
    >>> enc.get_feature_names()
    array(['x0_cat', 'x0_rabbit', 'x0_infrequent'], dtype=object)
 
-`min_frequency` and `max_categories` can be used together to filter out
-infrequent categories. In the following example, setting `max_categories` to 2
-limits the number of output features::
+Infrequent categories can be filtered out using `min_frequency` and
+`max_categories`. In the following example, we set `max_categories=2` to
+limit the number of features in the output::
 
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, max_categories=2,
    ...                                   handle_unknown='auto').fit(X)

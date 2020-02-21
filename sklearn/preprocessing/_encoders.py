@@ -252,25 +252,29 @@ class OneHotEncoder(_BaseEncoder):
             1. If there was no infrequent category during training, the
             resulting one-hot encoded columns for this feature will be all
             zeros. In the inverse transform, an unknown category will be
-            denoted as None.
+            denoted as `None`.
 
             2. If there is an infrequent category during training, the unknown
             category will be considered infrequent. In the inverse transform,
-            an unknown category will be the most frequent infrequent category
+            'infrequent' will be used to represent the infrequent category. If
+            'infrequent' is already a category, 'infrequent_sklearn' will be
+            used instead.
 
         .. versionadded:: 0.23
-            'auto' was added to automatically handle unknown categories
+            `'auto'` was added to automatically handle unknown categories
+            and infrequent categories.
 
         .. deprecated:: 0.23
-            'ignore' is deprecated in favor of 'auto'
+            `'ignore'` is deprecated in favor of `'auto'`. This option will be
+            removed in 0.25.
 
     min_frequency : int or float, default=1
         Specifies the categories to be considered infrequent.
 
-            1. If int, categories with a cardinality smaller will be considered
+            1. If int, categories with a smaller cardinality will be considered
             infrequent.
 
-            2. If float, categories with a cardinality smaller than
+            2. If float, categories with a smaller cardinality than
             `min_frequency * n_samples`  will be considered infrequent.
 
         .. versionadded:: 0.23
@@ -377,8 +381,8 @@ class OneHotEncoder(_BaseEncoder):
     def _validate_keywords(self):
 
         if self.handle_unknown not in ('error', 'ignore', 'auto'):
-            msg = ("handle_unknown should be either 'error', 'ignore', 'auto'"
-                   "got {0}.".format(self.handle_unknown))
+            msg = (f"handle_unknown should be either 'error', 'ignore', 'auto'"
+                   f"got {self.handle_unknown}.")
             raise ValueError(msg)
         # If we have both dropped columns and ignored unknown
         # values, there will be ambiguous cells. This creates difficulties
@@ -810,8 +814,9 @@ class OneHotEncoder(_BaseEncoder):
         one-hot encoding), ``None`` is used to represent this category.
 
         For a given input feature, if there is an infrequent category,
-        'infrequent' will be used to represent the category. If 'infrequent'
-        is already a category, 'infrequent_sklearn' will be used instead.
+        'infrequent' will be used to represent the infrequent category. If
+        'infrequent' is already a category, 'infrequent_sklearn' will be used
+        instead.
 
         Parameters
         ----------
