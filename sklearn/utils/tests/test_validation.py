@@ -3,7 +3,6 @@
 import warnings
 import os
 
-from distutils.version import LooseVersion
 from tempfile import NamedTemporaryFile
 from itertools import product
 from operator import itemgetter
@@ -353,10 +352,7 @@ def test_check_array():
 @pytest.mark.parametrize("dtype", ["Int8", "Int16", "Int32"])
 def test_check_array_pandas_na_support(dtype):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip('pandas')
-
-    if LooseVersion(pd.__version__) < "1.0.0":
-        pytest.skip("pd.NA request >= 1.0.0")
+    pd = pytest.importorskip('pandas', minversion="1.0")
 
     X_np = np.array([[1, 2, 3, np.nan, np.nan],
                      [np.nan, np.nan, 8, 4, 6],

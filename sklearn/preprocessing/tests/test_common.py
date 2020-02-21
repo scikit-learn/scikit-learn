@@ -1,5 +1,4 @@
 import warnings
-from distutils.version import LooseVersion
 
 import pytest
 import numpy as np
@@ -143,10 +142,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
 )
 def test_missing_value_pandas_na_support(est, func):
     # Test pandas IntegerArray with pd.NA
-    pd = pytest.importorskip('pandas')
-
-    if LooseVersion(pd.__version__) < "1.0.0":
-        pytest.skip("pd.NA request >= 1.0.0")
+    pd = pytest.importorskip('pandas', minversion="1.0")
 
     X = np.array([[1, 2, 3, np.nan, np.nan, 4, 5, 1],
                   [np.nan, np.nan, 8, 4, 6, np.nan, np.nan, 8],
