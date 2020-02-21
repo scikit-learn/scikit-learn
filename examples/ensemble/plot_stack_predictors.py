@@ -29,7 +29,7 @@ print(__doc__)
 # challenge`_. It is a set of 1460 residential homes in Ames, Iowa, each
 # described by 80 features. The task is to predict the final price of the
 # houses. In this example we will use only 20 most intersting features chosen
-# using GradientBoostingRegressor() (here we don't show how to select most
+# using GradientBoostingRegressor() and limit number of entries to 750 (here we don't show how to select most
 # interesting features, however please refer to:
 # :ref:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
@@ -57,6 +57,8 @@ def load_ames_housing():
                 'HouseStyle', 'MiscFeature', 'MoSold']
 
     X = X[features]
+    X = X[:500]
+    y = y[:500]
     return X, y
 
 
@@ -74,7 +76,7 @@ X, y = load_ames_housing()
 # the categories with either :class:`sklearn.preprocessing.OneHotEncoder
 # <sklearn.preprocessing.OneHotEncoder>` or
 # :class:`sklearn.preprocessing.OrdinalEncoder
-# <sklearn.preprocessing.OrdinalEncoder> depending for which type of model we
+# <sklearn.preprocessing.OrdinalEncoder>` depending for which type of model we
 # will use them (linear or non-linear model). To falicitate this preprocessing
 # we will make two pipelines.
 # You can skip this section if your data is ready to use and does
