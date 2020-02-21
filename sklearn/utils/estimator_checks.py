@@ -765,7 +765,7 @@ def check_sample_weights_list(name, estimator_orig):
         estimator.fit(X, y, sample_weight=sample_weight)
 
 
-@ignore_warnings(category=(FutureWarning, UserWarning))
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_shape(name, estimator_orig):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
@@ -782,7 +782,7 @@ def check_sample_weights_shape(name, estimator_orig):
                       sample_weight=np.ones(2*len(y)))
 
 
-@ignore_warnings(category=(FutureWarning, UserWarning))
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
