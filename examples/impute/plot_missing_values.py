@@ -32,7 +32,6 @@ import matplotlib.pyplot as plt
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.impute import (
@@ -134,17 +133,9 @@ results_diabetes = np.array(get_results(load_diabetes()))
 mses_diabetes = results_diabetes[:, 0] * -1
 stds_diabetes = results_diabetes[:, 1]
 
-results_boston = np.array(get_results(load_boston()))
-mses_boston = results_boston[:, 0] * -1
-stds_boston = results_boston[:, 1]
-
-from sklearn.datasets import fetch_openml
-
-import pdb; pdb.set_trace()
-
 results_california = np.array(get_results(fetch_california_housing()))
-mses_california = results_boston[:, 0] * -1
-stds_california = results_boston[:, 1]
+mses_california = results_california[:, 0] * -1
+stds_california = results_california[:, 1]
 
 n_bars = len(mses_diabetes)
 xval = np.arange(n_bars)
@@ -171,15 +162,15 @@ ax1.set_xlabel('MSE')
 ax1.invert_yaxis()
 ax1.set_yticklabels(x_labels)
 
-# plot boston results
+# plot california results
 ax2 = plt.subplot(122)
 for j in xval:
-    ax2.barh(j, mses_boston[j], xerr=stds_boston[j],
+    ax2.barh(j, mses_california[j], xerr=stds_california[j],
              color=colors[j], alpha=0.6, align='center')
 
 # plot Ames results
 
-ax2.set_title('Imputation Techniques with Ames Data')
+ax2.set_title('Imputation Techniques with California Data')
 ax2.set_yticks(xval)
 ax2.set_xlabel('MSE')
 ax2.invert_yaxis()
