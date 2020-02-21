@@ -96,7 +96,7 @@ categories = [
     X[column].unique() for column in X[cat_cols]]
 
 for cat in categories:
-    cat[cat == None] = 'missing'
+    cat[cat == None] = 'missing'  # noqa
 
 cat_proc_nlin = make_pipeline(
     SimpleImputer(missing_values=None, strategy='constant',
@@ -150,7 +150,7 @@ processor_lin = make_column_transformer(
 # preprocessed output from the 3 learners.
 
 
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import StackingRegressor
