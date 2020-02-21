@@ -99,9 +99,10 @@ def _validate_parameters(estimator, X, features, response_method, method):
                 'HistGradientBoostingRegressor',
             )
             raise ValueError(
-                "Only the following estimators support the 'recursion' "
-                "method: {}. Try using method='brute'."
-                .format(', '.join(supported_classes_recursion)))
+                f"Only the following estimators support the 'recursion' "
+                f"method: {', '.join(supported_classes_recursion)}. Try using "
+                f"method='brute'."
+            )
         if response_method == 'auto':
             response_method = 'decision_function'
 
