@@ -374,7 +374,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       "'recursion' method, the response_method must be 'decision_function'"),
      (GradientBoostingClassifier(random_state=0),
       {'features': [0], 'response_method': 'blahblah'},
-      'response_method blahblah is invalid. Accepted response_method'),
+      'response_method blahblah is invalid. Accepted "response_method"'),
      (NoPredictProbaNoDecisionFunction(),
       {'features': [0], 'response_method': 'auto'},
       'The estimator has no predict_proba and no decision_function method'),
@@ -386,7 +386,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       'The estimator has no decision_function method.'),
      (LinearRegression(),
       {'features': [0], 'method': 'blahblah'},
-      'blahblah is invalid. Accepted method names are brute, recursion, auto'),
+      'blahblah is invalid. Accepted "method" names are brute, recursion, auto'),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
       "Only the following estimators support the 'recursion' method:")]
