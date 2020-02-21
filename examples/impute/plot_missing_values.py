@@ -8,15 +8,19 @@ value using the basic :class:`sklearn.impute.SimpleImputer`.
 
 In this example we will investigate different imputation techniques on two
 datasets: Diabetes dataset which is the set of parameteres collected from the
-diabetes patients and California Housing dataset for which the target is the
-median house value for California districts.
+diabetes patients with aim to predict disease progression and California
+Housing dataset for which the target is the median house value for California
+districts.
+
+Neither of those datasets has missing values. We will remove some of the values
+and compare how will the results change if we use original data and the data
+with imputed missing data by means of different techniques.
 
 """
 print(__doc__)
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
 # License: BSD 3 clause
-
 
 import numpy as np
 
@@ -28,9 +32,11 @@ N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
 
 ###############################################################################
-#
+# Calculate the error
 ###############################################################################
 #
+# We are going to calculate the score for the imputers using negative mean
+# square error. 
 
 from sklearn.impute import MissingIndicator
 from sklearn.model_selection import cross_val_score
