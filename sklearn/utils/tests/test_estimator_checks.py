@@ -23,6 +23,7 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import _check_tags_to_skip
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.fixes import _parse_version
@@ -617,6 +618,23 @@ def test_all_estimators_all_public():
     estimators = all_estimators()
     for est in estimators:
         assert not est.__class__.__name__.startswith("_")
+
+
+def test_check_to_skip():
+    class CheckEstimator(BaseEstimator):
+
+        def _more_tags(self):
+            return {
+                '_xfail_test': {'check_things': 'This check is bad'}
+            }
+
+    def check_things(name, estimator_orig):
+        pass
+
+    wrapped_check = _check_tags_to_skip(check_things)
+
+    assert_raises(SkipTest, 'This check is bad', wrapped_check,
+                  'checkestimator', CheckEstimator)
 
 
 if __name__ == '__main__':

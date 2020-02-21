@@ -6,6 +6,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from functools import wraps
 from itertools import chain
 from inspect import signature
 
@@ -343,7 +344,8 @@ def _construct_instance(Estimator):
 
 def _generate_instance_checks(name, estimator):
     """Generate instance checks."""
-    yield from ((estimator, partial(check, name))
+    yield from ((estimator,
+                 partial(_check_tags_to_skip(check), name))
                 for check in _yield_all_checks(name, estimator))
 
 
@@ -353,6 +355,27 @@ def _generate_class_checks(Estimator):
     yield (Estimator, partial(check_parameters_default_constructible, name))
     estimator = _construct_instance(Estimator)
     yield from _generate_instance_checks(name, estimator)
+
+
+def _check_tags_to_skip(check):
+    """Wrap check and xfail or skip test based on estimator tag: _xfail_test"""
+
+    @wraps(check)
+    def wrapper(name, estimator_orig):
+        xfail_checks = _safe_tags(estimator_orig, '_xfail_test')
+        check_name = _set_check_estimator_ids(check).split("(", maxsplit=1)[0]
+        if xfail_checks:
+            try:
+                msg = xfail_checks[check_name]
+            except KeyError:
+                return check(name, estimator_orig)
+            try:
+                import pytest
+                pytest.xfail(msg)
+            except ImportError:
+                raise SkipTest(msg)
+
+    return wrapper
 
 
 def parametrize_with_checks(estimators):
