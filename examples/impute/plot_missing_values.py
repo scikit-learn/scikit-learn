@@ -24,7 +24,7 @@ carry some information.
 print(__doc__)
 
 # Authors: Maria Telenczuk  <https://github.com/maikia>
-
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -44,6 +44,10 @@ rng = np.random.RandomState(0)
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
 
+###############################################################################
+#
+###############################################################################
+#
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
@@ -54,9 +58,21 @@ def get_scores_for_imputer(imputer, X_missing, y_missing):
                                     cv=N_SPLITS)
     return impute_scores
 
+###############################################################################
+#
+###############################################################################
+#
 
 def get_results(dataset):
     X_full, y_full = dataset.data, dataset.target
+
+    # As California dataset is quite large [(20640, 8)] to speed up the
+    # calculations we will limit number of entries of both datasets to 440,
+    # however feel free to use the whole datasets
+
+    X_full = X_full[:440]
+    y_full = y_full[:440]
+
     n_samples = X_full.shape[0]
     n_features = X_full.shape[1]
 
@@ -108,6 +124,12 @@ def get_results(dataset):
             (iterative_impute_scores.mean(), iterative_impute_scores.std()))
 
 
+###############################################################################
+# Download the data
+###############################################################################
+#
+from sklearn.datasets import fetch_california_housing
+
 results_diabetes = np.array(get_results(load_diabetes()))
 mses_diabetes = results_diabetes[:, 0] * -1
 stds_diabetes = results_diabetes[:, 1]
@@ -116,8 +138,13 @@ results_boston = np.array(get_results(load_boston()))
 mses_boston = results_boston[:, 0] * -1
 stds_boston = results_boston[:, 1]
 
-# TODO: load Ames instead
+from sklearn.datasets import fetch_openml
 
+import pdb; pdb.set_trace()
+
+results_california = np.array(get_results(fetch_california_housing()))
+mses_california = results_boston[:, 0] * -1
+stds_california = results_boston[:, 1]
 
 n_bars = len(mses_diabetes)
 xval = np.arange(n_bars)
