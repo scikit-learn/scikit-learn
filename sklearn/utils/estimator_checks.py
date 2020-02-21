@@ -773,9 +773,12 @@ def check_sample_weights_shape(name, estimator_orig):
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
         estimator = clone(estimator_orig)
-        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
-                      [2, 1], [2, 2], [2, 3], [2, 4]])
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2])
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2])
         y = _enforce_estimator_tags_y(estimator, y)
 
         estimator.fit(X, y, sample_weight=np.ones(len(y)))
