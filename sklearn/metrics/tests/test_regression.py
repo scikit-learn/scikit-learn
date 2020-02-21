@@ -323,3 +323,10 @@ def test_tweedie_deviance_continuity():
     assert_allclose(mean_tweedie_deviance(y_true, y_pred, power=2 + 1e-10),
                     mean_tweedie_deviance(y_true, y_pred, power=2),
                     atol=1e-6)
+
+
+def test_mean_absolute_percentage_error():
+    random_number_generator = np.random.RandomState(42)
+    y_true = random_number_generator.exponential(size=100)
+    y_pred = 1.2 * y_true
+    assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(20.)

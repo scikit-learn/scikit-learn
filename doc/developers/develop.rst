@@ -527,6 +527,11 @@ _skip_test (default=``False``)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
+_xfail_test (default=``False``)
+    dictionary ``{check_name : reason}`` of common checks to mark as a
+    known failure, with the associated reason. Don't use this unless you have a
+    *very good* reason.
+
 stateless (default=``False``)
     whether the estimator needs access to data for fitting. Even though an
     estimator is stateless, it might still need a call to ``fit`` for

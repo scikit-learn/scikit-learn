@@ -229,6 +229,8 @@ def mean_absolute_percentage_error(y_true, y_pred,
         weighted average of all output errors is returned.
 
         MAPE output is non-negative floating point. The best value is 0.0.
+        But note the fact that bad predictions can lead to arbitarily large
+        MAPE values, especially if some y_true values are very close to zero.
 
     Examples
     --------

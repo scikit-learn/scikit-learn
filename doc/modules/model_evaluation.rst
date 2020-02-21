@@ -1975,8 +1975,8 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
   \text{MAPE}(y, \hat{y}) = \frac{\mid y - \hat{y} \mid}{\text{MAX}(\epsilon, \mid y \mid)}
 
-where :math:`\epsilon` is a very small number greater than zero to avoid
-the crash when y is zero.
+where :math:`\epsilon` is an arbitrary small yet strictly positive number to
+avoid undefined results when y is zero.
 
 The :func:`mean_absolute_percentage_error` function supports multioutput.
 
@@ -1988,6 +1988,11 @@ function::
   >>> y_pred = [0.9, 15, 1.2e6]
   >>> mean_absolute_percentage_error(y_true, y_pred)
   26.66...
+
+In above example, if we had used `mean_absolute_error`, it would have ignored
+the small magnitude values and only reflected the error in prediction of highest
+magnitude value. But that problem is resolved in case of MAPE because it calculates
+relative percentage error with respect to actual output.
 
 .. _median_absolute_error:
 

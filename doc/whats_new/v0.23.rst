@@ -23,7 +23,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- list models here
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
+  and :class:`ensemble.IsolationForest`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -63,6 +64,26 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
+  :class:`cluster.SpectralCoclustering` and
+  :class:`cluster.SpectralBiclustering` is deprecated. They now use OpenMP
+  based parallelism. For more details on how to control the number of threads,
+  please refer to our :ref:`parallelism` notes. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
+  deprecated. It has no effect. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
+  optimized implementation. Parallelism is now over the data instead of over
+  initializations allowing better scalability. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`cluster.KMeans` now supports sparse data when
+  `solver = "elkan"`. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -140,6 +161,12 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
+- |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
+  where the attribute `estimators_samples_` did not generate the proper indices
+  used during `fit`.
+  :pr:`16437` by :user:`Jin-Hwan CHO <chofchof>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -210,18 +237,18 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
+  the associated scorer for regression problems. :issue:`10708` fixed with the
+  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
+  some practical test cases were taken from PR :pr:`10711` by
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
-
-- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
-  the associated scorer for regression problems. :issue:`10708` fixed with the
-  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
-  some practical test cases were taken from PR :pr:`10711` by
-  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 :mod:`sklearn.model_selection`
 ..............................

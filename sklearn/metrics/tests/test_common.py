@@ -1376,6 +1376,10 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         if metric == mean_absolute_percentage_error:
             assert np.isfinite(current_score)
             assert current_score > 1e6
+            # Here we are not comparing the values in case of MAPE because
+            # whenever y_true value is exactly zero, the MAPE value doesn't
+            # signify anything. Thus, in this case we are just expecting
+            # very large finite value.
         else:
             assert_almost_equal(score, current_score)
 
