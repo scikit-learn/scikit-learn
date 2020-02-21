@@ -53,7 +53,7 @@ module:model_selection:
 - sklearn/model_selection/**/*
 
 module:naive_bayes:
-- sklearn/naive_bayes
+- sklearn/naive_bayes.py
 
 module:neighbors:
 - sklearn/neighbors/**/*
@@ -61,11 +61,8 @@ module:neighbors:
 module:neural_network:
 - sklearn/neural_network/**/*
 
-module:neural_network:
-- sklearn/neural_network/**/*
-
 module:pipeline:
-- sklearn/pipeline
+- sklearn/pipeline.py
 
 module:preprocessing:
 - sklearn/preprocessing/**/*
