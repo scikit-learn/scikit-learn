@@ -1032,13 +1032,6 @@ def check_methods_subset_invariance(name, estimator_orig):
 
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
-        # TODO remove cases when corrected
-        if (name, method) in [('NuSVC', 'decision_function'),
-                              ('SparsePCA', 'transform'),
-                              ('MiniBatchSparsePCA', 'transform'),
-                              ('DummyClassifier', 'predict'),
-                              ('BernoulliRBM', 'score_samples')]:
-            raise SkipTest(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2243,13 +2236,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-    if name == "NuSVC":
-        # the sparse version has a parameter that doesn't do anything
-        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
-    if name.endswith("NB"):
-        # NaiveBayes classifiers have a somewhat different interface.
-        # FIXME SOON!
-        raise SkipTest
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
