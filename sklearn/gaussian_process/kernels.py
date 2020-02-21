@@ -1096,12 +1096,10 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         The constant value which defines the covariance:
         k(x_1, x_2) = constant_value
 
-
     constant_value_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
         The lower and upper bound on `constant_value`.
         If set to "fixed", `constant_value` cannot be changed during
         hyperparameter tuning.
-
 
     Examples
     --------
@@ -1221,7 +1219,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
         The lower and upper bound on 'noise_level'.
         If set to "fixed", 'noise_level' cannot be changed during
         hyperparameter tuning.
-
 
     Examples
     --------
@@ -1346,7 +1343,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
-
 
     length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
         The lower and upper bound on 'length_scale'.
@@ -1850,7 +1846,6 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         If set to "fixed", 'periodicity' cannot be changed during
         hyperparameter tuning.
 
-
     Examples
     --------
     >>> from sklearn.datasets import make_friedman2
@@ -2128,7 +2123,6 @@ class PairwiseKernel(Kernel):
         The lower and upper bound on 'gamma'.
         If set to "fixed", 'gamma' cannot be changed during
         hyperparameter tuning.
-
 
     metric : {"linear", "additive_chi2", "chi2", "poly", "polynomial", \
               "rbf", "laplacian", "sigmoid", "cosine"} or callable, \
