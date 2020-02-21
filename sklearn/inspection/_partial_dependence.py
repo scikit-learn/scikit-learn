@@ -330,7 +330,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : {array-like or dataframe} of shape (n_samples, n_features)
+    X : {array-like, dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
