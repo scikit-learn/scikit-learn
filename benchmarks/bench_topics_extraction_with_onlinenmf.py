@@ -28,16 +28,16 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+import zipfile as zp
+from bs4 import BeautifulSoup
+
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF
-from sklearn.datasets import fetch_20newsgroups
 
-n_samples = range(1000, 1000, 1000)
+n_samples = range(500, 2500, 1000)
 n_features = range(500, 2500, 1000)
-batch_size = 1000
+batch_size = 500
 n_components = 10
-n_top_words = 20
-
 
 def print_top_words(model, feature_names, n_top_words):
     for topic_idx, topic in enumerate(model.components_):
@@ -48,23 +48,36 @@ def print_top_words(model, feature_names, n_top_words):
     print()
 
 
-# Load the 20 newsgroups dataset and vectorize it. We use a few heuristics
-# to filter out useless terms early on: the posts are stripped of headers,
-# footers and quoted replies, and common English words, words occurring in
-# only one document or in at least 95% of the documents are removed.
+# Load the The Blog Authorship Corpus dataset and vectorize it.
 
 print("Loading dataset...")
 t0 = time()
-data, _ = fetch_20newsgroups(shuffle=True, random_state=1,
-                             remove=('headers', 'footers', 'quotes'),
-                             return_X_y=True)
+with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
+    info = myzip.infolist()
+    data = []
+    for zipfile in info:
+        if not (zipfile.is_dir()):
+            filename = zipfile.filename
+            myzip.extract(filename)
+            with open(filename, encoding='LATIN-1') as fp:
+                soup = BeautifulSoup(fp, "lxml")
+                text = ""
+                for post in soup.descendants:
+                    if post.name == "post":
+                        text += post.contents[0].strip("\n").strip("\t")
+            data.append(text)
 print("done in %0.3fs." % (time() - t0))
 
-ax1 = plt.subplot(221, ylabel = "time")
-ax2 = plt.subplot(222, xlabel = "n_samples", ylabel = "time", sharex = ax1)
-ax3 = plt.subplot(223, sharex = ax1, sharey = ax1)
-ax3 = plt.subplot(224, xlabel = "n_samples", sharex = ax1, sharey = ax1)
-
+ax1 = plt.subplot(221, ylabel = "time - Frobenius norm",
+                  title = "standard NMF algorithm")
+ax1.tick_params(labelbottom=False)
+ax2 = plt.subplot(222, sharey = ax1,
+                  title = "online NMF algorithm")
+ax2.tick_params(labelbottom=False, labelleft=False)
+ax3 = plt.subplot(223, ylabel = "time - generalized KL divergence",
+                  xlabel = "n_samples", sharex = ax1)
+ax4 = plt.subplot(224, xlabel = "n_samples", sharex = ax2, sharey = ax3)
+ax4.tick_params(labelleft=False)
 
 for j in range(len(n_features)):
   timesFr = np.zeros(len(n_samples))
@@ -110,13 +123,14 @@ for j in range(len(n_features)):
           % (n_samples[i], n_features[j]))
     t0 = time()
     nmf = NMF(n_components=n_components, random_state=1,
-              beta_loss='kullback-leibler', solver='mu', max_iter=1000, alpha=.1,
-              l1_ratio=.5).fit(tfidf)
+              beta_loss='kullback-leibler', solver='mu', max_iter=1000,
+              alpha=.1, l1_ratio=.5).fit(tfidf)
     timesKL[i] = time() - t0
     print("done in %0.3fs." % (timesKL[i]))
 
     # Fit the NMF model
-    print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
+    print("Fitting the online NMF model (generalized Kullback-Leibler "
+          "divergence) with "
           "tf-idf features, n_samples=%d and n_features=%d..."
           % (n_samples[i], n_features[j]))
     t0 = time()
@@ -127,12 +141,13 @@ for j in range(len(n_features)):
     timesmbKL[i] = time() - t0
     print("done in %0.3fs." % (timesmbKL[i]))
 
-  str1 = "Features " + str(n_features[j]) 
+  str1 = "n_Ftrs " + str(n_features[j]) 
   ax1.plot(n_samples, timesFr)
-  ax2.plot(n_samples, timesKL)
-  ax3.plot(n_samples, timesmbFr, label = str1 )
+  ax2.plot(n_samples, timesmbFr)
+  ax3.plot(n_samples, timesKL)
+  ax4.plot(n_samples, timesmbKL, label = str1)
 
-ax3.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+ax4.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 
 plt.subplots_adjust(wspace=0, hspace=0)
 plt.show()
