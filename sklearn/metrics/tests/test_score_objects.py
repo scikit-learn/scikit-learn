@@ -41,7 +41,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
 
-REGRESSION_SCORERS = ['explained_variance', 'r2',
+REGRESSION_SCORERS = ['explained_variance', 'r2_score',
                       'neg_mean_absolute_error', 'neg_mean_squared_error',
                       'neg_mean_absolute_percentage_error',
                       'neg_mean_squared_log_error',
@@ -350,7 +350,7 @@ def test_regression_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = Ridge()
     clf.fit(X_train, y_train)
-    score1 = get_scorer('r2')(clf, X_test, y_test)
+    score1 = get_scorer('r2_score')(clf, X_test, y_test)
     score2 = r2_score(y_test, clf.predict(X_test))
     assert_almost_equal(score1, score2)
 
