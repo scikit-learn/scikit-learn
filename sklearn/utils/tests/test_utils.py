@@ -490,8 +490,10 @@ def test_get_column_indices_error(key, err_msg):
         _get_column_indices(X_df, key)
 
 
-@pytest.mark.parametrize("key", [
-    ['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col2'], ['col2', 'col3']])
+@pytest.mark.parametrize(
+    "key",
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
+)
 def test_get_column_indices_pandas_nonunique_columns_error(key):
     pd = pytest.importorskip('pandas')
     toy = np.zeros((1, 5), dtype=int)

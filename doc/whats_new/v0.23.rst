@@ -96,6 +96,10 @@ Changelog
   with dataframes and strings are used to specific subsets of data for
   transformers. :pr:`16431` by `Thomas Fan`_.
 
+- |Fix| :func:`compose.ColumnTransformer.fit` will error when selecting
+  a column name that is not unique in the dataframe. :pr:`16431` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
