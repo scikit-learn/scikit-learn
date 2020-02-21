@@ -1125,14 +1125,6 @@ def test_sample_weight_invalid():
     with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
-    sample_weight = np.ones(101)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(99)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
 
 def check_class_weights(name):
     """Check class_weights resemble sample_weights behavior."""
