@@ -371,7 +371,7 @@ def test_cross_validate():
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
         mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2')
+        r2_scorer = check_scoring(est, 'r2_score')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -661,7 +661,7 @@ def test_cross_val_score_with_score_func_regression():
 
     # R2 score (aka. determination coefficient) - should be the
     # same as the default estimator score
-    r2_scores = cross_val_score(reg, X, y, scoring="r2")
+    r2_scores = cross_val_score(reg, X, y, scoring="r2_score")
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
