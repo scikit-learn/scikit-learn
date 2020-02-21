@@ -565,6 +565,9 @@ class IterativeImputer(_BaseImputer):
 
         self.imputation_sequence_ = []
 
+        self._min_value = self.min_value
+        self._max_value = self.max_value
+
         self.initial_imputer_ = None
         super()._fit_indicator(X)
         X_indicator = super()._transform_indicator(X)
