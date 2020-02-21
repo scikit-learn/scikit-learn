@@ -466,11 +466,17 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
-            elif dtype_iter.name.startswith("Int"):  # pandas IntegerArray
-                # This should be an int if there are no pd.NA in the array
-                # but this is expensive to check
-                dtypes_orig[i] = float
-                has_pd_interger_array = True
+            elif dtype_iter.name.startswith("Int"):
+                # actually check for dtype
+                with suppress(ImportError):
+                    from pandas import (Int8Dtype, Int16Dtype,
+                                        Int32Dtype, Int64Dtype)
+                    if isinstance(dtype_iter, (Int8Dtype, Int16Dtype,
+                                               Int32Dtype, Int64Dtype)):
+                        # This should be an int if there are no pd.NA in the
+                        # array but this is expensive to check
+                        dtypes_orig[i] = float
+                        has_pd_interger_array = True
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
