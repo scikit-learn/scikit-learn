@@ -1830,10 +1830,10 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     Parameters
     ----------
 
-    length_scale : float > 0, default: 1.0
+    length_scale : float > 0, default=1.0
         The length scale of the kernel.
 
-    periodicity : float > 0, default: 1.0
+    periodicity : float > 0, default=1.0
         The periodicity of the kernel.
 
     length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
