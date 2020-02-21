@@ -593,7 +593,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
+def _labels_inertia(X, sample_weight, x_squared_norms, centers,
+                    n_threads=None):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -614,7 +615,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     centers : ndarray, shape (n_clusters, n_features)
         The cluster centers.
 
-    n_threads : int, default=1
+    n_threads : int, default=None
         The number of OpenMP threads to use for the computation. Parallelism is
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
@@ -629,6 +630,8 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
+
+    n_threads = _openmp_effective_n_threads(n_threads)
 
     sample_weight = _check_normalize_sample_weight(sample_weight, X)
     labels = np.full(n_samples, -1, dtype=np.int32)
