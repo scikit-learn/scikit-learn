@@ -31,14 +31,14 @@ print(__doc__)
 # houses. In this example we will use only 20 most intersting features chosen
 # using GradientBoostingRegressor() (here we don't show how to select most
 # interesting features, however please refer to:
-# :doc:`~examples.ensemble.plot_gradient_boosting_regression`).
+# :ref:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
 # The Ames housing dataset is not shipped with scikit-learn and therefore we
 # will fetch it from `OpenML`_.
 #
 # .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
-# .. _`Kaggle challenge`:
-# https://www.kaggle.com/c/house-prices-advanced-regression-techniques
+# .. _`Kaggle challenge`: <https://www.kaggle.com/c/house-prices-advanced-
+# regression-techniques>
 # .. _`OpenML`: https://www.openml.org/d/42165
 
 
