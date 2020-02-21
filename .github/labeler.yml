@@ -61,9 +61,6 @@ module:neighbors:
 module:neural_network:
 - sklearn/neural_network/**/*
 
-module:neural_network:
-- sklearn/neural_network/**/*
-
 module:pipeline:
 - sklearn/pipeline.py
 
