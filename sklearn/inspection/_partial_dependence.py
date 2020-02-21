@@ -103,6 +103,7 @@ def _validate_parameters(estimator, X, features, response_method, method):
                 f"method: {', '.join(supported_classes_recursion)}. Try using "
                 f"method='brute'."
             )
+
         if response_method == 'auto':
             response_method = 'decision_function'
 
