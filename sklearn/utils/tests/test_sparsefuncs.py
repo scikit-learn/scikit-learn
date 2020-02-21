@@ -549,9 +549,10 @@ def test_inplace_normalize():
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_csr_row_norms(dtype):
+    rng = np.random.RandomState(42)
     # checks that csr_row_norms returns the same output as
     # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
-    X = sp.random(100, 10, format='csr', dtype=dtype)
+    X = sp.random(100, 10, format='csr', dtype=dtype, random_state=rng)
 
     scipy_norms = sp.linalg.norm(X, axis=1)**2
     norms = csr_row_norms(X)
