@@ -8,7 +8,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_almost_equal,
                                    assert_array_equal,
                                    assert_raises, ignore_warnings)
@@ -320,7 +320,7 @@ def test_calibration_less_classes():
                                  proba[:, i + 1:]]))
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):

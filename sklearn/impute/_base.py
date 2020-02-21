@@ -2,10 +2,8 @@
 #          Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
-
-import warnings
 import numbers
+import warnings
 
 import numpy as np
 import numpy.ma as ma
@@ -16,7 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.fixes import _object_dtype_isnan
+from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
 
@@ -28,23 +26,6 @@ def _check_inputs_dtype(X, missing_values):
                          " both numerical. Got X.dtype={} and "
                          " type(missing_values)={}."
                          .format(X.dtype, type(missing_values)))
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if is_scalar_nan(value_to_mask):
-        if X.dtype.kind == "f":
-            return np.isnan(X)
-        elif X.dtype.kind in ("i", "u"):
-            # can't have NaNs in integer array.
-            return np.zeros(X.shape, dtype=bool)
-        else:
-            # np.isnan does not work on object dtypes.
-            return _object_dtype_isnan(X)
-    else:
-        # X == value_to_mask with object dytpes does not always perform
-        # element-wise for old versions of numpy
-        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -81,10 +62,67 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class SimpleImputer(BaseEstimator, TransformerMixin):
+class _BaseImputer(TransformerMixin, BaseEstimator):
+    """Base class for all imputers.
+
+    It adds automatically support for `add_indicator`.
+    """
+
+    def __init__(self, missing_values=np.nan, add_indicator=False):
+        self.missing_values = missing_values
+        self.add_indicator = add_indicator
+
+    def _fit_indicator(self, X):
+        """Fit a MissingIndicator."""
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values, error_on_new=False
+            )
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
+
+    def _transform_indicator(self, X):
+        """Compute the indicator mask.'
+
+        Note that X must be the original data as passed to the imputer before
+        any imputation, since imputation may be done inplace in some cases.
+        """
+        if self.add_indicator:
+            if not hasattr(self, 'indicator_'):
+                raise ValueError(
+                    "Make sure to call _fit_indicator before "
+                    "_transform_indicator"
+                )
+            return self.indicator_.transform(X)
+
+    def _concatenate_indicator(self, X_imputed, X_indicator):
+        """Concatenate indicator mask with the imputed data."""
+        if not self.add_indicator:
+            return X_imputed
+
+        hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
+        if X_indicator is None:
+            raise ValueError(
+                "Data from the missing indicator are not provided. Call "
+                "_fit_indicator and _transform_indicator in the imputer "
+                "implementation."
+                )
+
+        return hstack((X_imputed, X_indicator))
+
+    def _more_tags(self):
+        return {'allow_nan': is_scalar_nan(self.missing_values)}
+
+
+class SimpleImputer(_BaseImputer):
     """Imputation transformer for completing missing values.
 
     Read more in the :ref:`User Guide <impute>`.
+
+    .. versionadded:: 0.20
+       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
+       estimator which is now removed.
 
     Parameters
     ----------
@@ -92,7 +130,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed.
 
-    strategy : string, optional (default="mean")
+    strategy : string, default='mean'
         The imputation strategy.
 
         - If "mean", then replace missing values using the mean along
@@ -107,16 +145,16 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.20
            strategy="constant" for fixed value imputation.
 
-    fill_value : string or numerical value, optional (default=None)
+    fill_value : string or numerical value, default=None
         When strategy == "constant", fill_value is used to replace all
         occurrences of missing_values.
         If left to the default, fill_value will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
-    verbose : integer, optional (default=0)
+    verbose : integer, default=0
         Controls the verbosity of the imputer.
 
-    copy : boolean, optional (default=True)
+    copy : boolean, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
@@ -125,8 +163,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If X is encoded as a CSR matrix;
         - If add_indicator=True.
 
-    add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack onto output
+    add_indicator : boolean, default=False
+        If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on
@@ -138,7 +176,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
         Computing statistics can result in `np.nan` values.
-        During `transform`, features corresponding to `np.nan`
+        During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
@@ -164,18 +202,20 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    Columns which only contained missing values at `fit` are discarded upon
-    `transform` if strategy is not "constant".
+    Columns which only contained missing values at :meth:`fit` are discarded
+    upon :meth:`transform` if strategy is not "constant".
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
-        self.missing_values = missing_values
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
-        self.add_indicator = add_indicator
 
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
@@ -199,9 +239,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                             force_all_finite=force_all_finite, copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
-                raise ValueError("Cannot use {0} strategy with non-numeric "
-                                 "data. Received datatype :{1}."
-                                 "".format(self.strategy, X.dtype.kind))
+                new_ve = ValueError("Cannot use {} strategy with non-numeric "
+                                    "data:\n{}".format(self.strategy, ve))
+                raise new_ve from None
             else:
                 raise ve
 
@@ -230,6 +270,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         self : SimpleImputer
         """
         X = self._validate_input(X)
+        super()._fit_indicator(X)
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -266,14 +307,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
-
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False)
-            self.indicator_.fit(X)
-        else:
-            self.indicator_ = None
-
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -338,10 +371,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         # Most frequent
         elif strategy == "most_frequent":
-            # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if its frequency
-            # is equal to the frequency of the most frequent valid element
-            # See https://github.com/scipy/scipy/issues/2636
+            # Avoid use of scipy.stats.mstats.mode due to the required
+            # additional overhead and slow benchmarking performance.
+            # See Issue 14325 and PR 14399 for full discussion.
 
             # To be able access the elements by columns
             X = X.transpose()
@@ -373,18 +405,16 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self)
 
         X = self._validate_input(X)
+        X_indicator = super()._transform_indicator(X)
 
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
-
-        if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(X)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -411,8 +441,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                  "array instead.")
             else:
                 mask = _get_mask(X.data, self.missing_values)
-                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                    np.diff(X.indptr))[mask]
+                indexes = np.repeat(
+                    np.arange(len(X.indptr) - 1, dtype=np.int),
+                    np.diff(X.indptr))[mask]
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
@@ -424,17 +455,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
             X[coordinates] = values
 
-        if self.add_indicator:
-            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X = hstack((X, X_trans_indicator))
-
-        return X
-
-    def _more_tags(self):
-        return {'allow_nan': True}
+        return super()._concatenate_indicator(X, X_indicator)
 
 
-class MissingIndicator(BaseEstimator, TransformerMixin):
+class MissingIndicator(TransformerMixin, BaseEstimator):
     """Binary indicators for missing values.
 
     Note that this component typically should not be used in a vanilla
@@ -443,6 +467,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     Read more in the :ref:`User Guide <impute>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
@@ -450,7 +476,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         `missing_values` will be indicated (True in the output array), the
         other values will be marked as False.
 
-    features : str, optional
+    features : str, default=None
         Whether the imputer mask should represent all or a subset of
         features.
 
@@ -458,7 +484,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
           features containing missing values during fit time.
         - If "all", the imputer mask will represent all features.
 
-    sparse : boolean or "auto", optional
+    sparse : boolean or "auto", default=None
         Whether the imputer mask format should be sparse or dense.
 
         - If "auto" (default), the imputer mask will be of same type as
@@ -466,7 +492,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         - If True, the imputer mask will be a sparse matrix.
         - If False, the imputer mask will be a numpy array.
 
-    error_on_new : boolean, optional
+    error_on_new : boolean, default=None
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
         in fit. This is applicable only when ``features="missing-only"``.
@@ -653,7 +679,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             will be boolean.
 
         """
-        check_is_fitted(self, "features_")
+        check_is_fitted(self)
         X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
