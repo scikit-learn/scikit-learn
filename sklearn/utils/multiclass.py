@@ -299,8 +299,6 @@ def type_of_target(y):
     if not issparse(y) and y.dtype == object and \
             not isinstance(y.flat[0], str):
         return 'unknown'
-    if issparse(y) and y.dtype == object and not isinstance(y.data[0], str):
-        return 'unknown'
 
     # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
