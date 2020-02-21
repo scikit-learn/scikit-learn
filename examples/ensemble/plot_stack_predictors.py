@@ -95,7 +95,6 @@ num_cols = X.columns[X.dtypes == 'float64']
 categories = [
     X[column].unique() for column in X[cat_cols]]
 
-
 for cat in categories:
     cat[cat == None] = 'missing'
 
@@ -121,15 +120,15 @@ num_proc_lin = make_pipeline(
 
 # transformation to use for non-linear estimators
 processor_nlin = make_column_transformer(
-                              (cat_proc_nlin, cat_cols),
-                              (num_proc_nlin, num_cols),
-                              remainder='passthrough')
+    (cat_proc_nlin, cat_cols),
+    (num_proc_nlin, num_cols),
+    remainder='passthrough')
 
 # transformation to use for linear estimators
 processor_lin = make_column_transformer(
-                              (cat_proc_lin, cat_cols),
-                              (num_proc_lin, num_cols),
-                              remainder='passthrough')
+    (cat_proc_lin, cat_cols),
+    (num_proc_lin, num_cols),
+    remainder='passthrough')
 
 
 ###############################################################################
@@ -159,18 +158,18 @@ from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
 
 
-lasso_pipe = make_pipeline(processor_lin,
+lasso_pipeline = make_pipeline(processor_lin,
                            LassoCV())
 
-rf_pipe = make_pipeline(processor_nlin,
+rf_pipeline = make_pipeline(processor_nlin,
                         RandomForestRegressor(random_state=42))
 
-gradient_pipe = make_pipeline(processor_nlin,
+gradient_pipeline = make_pipeline(processor_nlin,
                               HistGradientBoostingRegressor(random_state=0))
 
-estimators = [('Random Forest', rf_pipe),
-              ('Lasso', lasso_pipe),
-              ('Gradient Boosting', gradient_pipe)]
+estimators = [('Random Forest', rf_pipeline),
+              ('Lasso', lasso_pipeline),
+              ('Gradient Boosting', gradient_pipeline)]
 
 stacking_regressor = StackingRegressor(estimators=estimators,
                                        final_estimator=RidgeCV())
