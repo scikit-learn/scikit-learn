@@ -371,7 +371,7 @@ def test_cross_validate():
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
         mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2_score')
+        r2_scorer = check_scoring(est, 'r2')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -422,12 +422,12 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         # Single metric passed as a list
         if return_train_score:
             # It must be True by default - deprecated
-            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2_score'],
+            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2'],
                                             return_train_score=True)
             assert_array_almost_equal(r2_scores_dict['train_r2'],
                                       train_r2_scores, True)
         else:
-            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2_score'],
+            r2_scores_dict = cross_validate(clf, X, y, scoring=['r2'],
                                             return_train_score=False)
         assert isinstance(r2_scores_dict, dict)
         assert len(r2_scores_dict) == dict_len
@@ -446,8 +446,8 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
     # Test multimetric evaluation when scoring is a list / dict
     (train_mse_scores, test_mse_scores, train_r2_scores,
      test_r2_scores, fitted_estimators) = scores
-    all_scoring = (('r2_score', 'neg_mean_squared_error'),
-                   {'r2_score': make_scorer(r2_score),
+    all_scoring = (('r2', 'neg_mean_squared_error'),
+                   {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
     keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
@@ -661,7 +661,7 @@ def test_cross_val_score_with_score_func_regression():
 
     # R2 score (aka. determination coefficient) - should be the
     # same as the default estimator score
-    r2_scores = cross_val_score(reg, X, y, scoring="r2_score")
+    r2_scores = cross_val_score(reg, X, y, scoring="r2")
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
