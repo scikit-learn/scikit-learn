@@ -23,6 +23,9 @@ carry some information.
 """
 print(__doc__)
 
+# Authors: Maria Telenczuk  <https://github.com/maikia>
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -113,6 +116,9 @@ results_boston = np.array(get_results(load_boston()))
 mses_boston = results_boston[:, 0] * -1
 stds_boston = results_boston[:, 1]
 
+# TODO: load Ames instead
+
+
 n_bars = len(mses_diabetes)
 xval = np.arange(n_bars)
 
@@ -144,7 +150,9 @@ for j in xval:
     ax2.barh(j, mses_boston[j], xerr=stds_boston[j],
              color=colors[j], alpha=0.6, align='center')
 
-ax2.set_title('Imputation Techniques with Boston Data')
+# plot Ames results
+
+ax2.set_title('Imputation Techniques with Ames Data')
 ax2.set_yticks(xval)
 ax2.set_xlabel('MSE')
 ax2.invert_yaxis()
