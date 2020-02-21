@@ -40,6 +40,8 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import load_diabetes
 
 
+rng = np.random.RandomState(0)
+
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
 X_california = X_california[:500]
@@ -82,7 +84,11 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
 rng = np.random.RandomState(0)
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.impute import MissingIndicator
+
+# To use the experimental IterativeImputer, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import (SimpleImputer, KNNImputer, IterativeImputer,
+                            MissingIndicator)
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline, make_union
 
@@ -119,10 +125,9 @@ def get_full_score(X_full, y_full):
                                   cv=N_SPLITS)
     return full_scores.mean(), full_scores.std()
 
-mses_california[0], stds_california[0] = get_full_score(
-    X_miss_california, y_miss_california)
-mses_diabetes[0], stds_diabetes[0] = get_full_score(
-    X_miss_diabetes, y_miss_diabetes)
+mses_california[0], stds_california[0] = get_full_score(X_california,
+                                                        y_california)
+mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
 # The median is a more robust estimator for data with high magnitude variables
 # which could dominate results (otherwise known as a 'long tail').
@@ -189,17 +194,12 @@ def get_impute_iterative(X_missing, y_missing):
     iterative_impute_scores = get_scores_for_imputer(imputer,
                                                  X_missing,
                                                  y_missing)
+    return iterative_impute_scores.mean(), iterative_impute_scores.std()
+
 mses_california[4], stds_california[4] = get_impute_iterative(X_miss_california,
                                                          y_miss_california)
 mses_diabetes[4], stds_diabetes[4] = get_impute_iterative(X_miss_diabetes,
                                                      y_miss_diabetes)
-
-# To use the experimental IterativeImputer, we need to explicitly ask for it:
-from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import (
-    SimpleImputer, KNNImputer, IterativeImputer)
-
-
 '''
 
     return ((full_scores.mean(), full_scores.std()),
@@ -209,23 +209,8 @@ from sklearn.impute import (
             (iterative_impute_scores.mean(), iterative_impute_scores.std()))
 '''
 
-
-
-
-
-
-
-
-
-
-results_diabetes = np.array(get_results(load_diabetes()))
-mses_diabetes = results_diabetes[:, 0] * -1
-stds_diabetes = results_diabetes[:, 1]
-
-results_california = np.array(get_results(fetch_california_housing()))
-mses_california = results_california[:, 0] * -1
-stds_california = results_california[:, 1]
-
+mses_diabetes = mses_diabetes * -1
+mses_california = mses_california * -1
 
 
 ###############################################################################
