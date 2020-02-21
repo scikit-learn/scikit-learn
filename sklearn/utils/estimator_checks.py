@@ -345,8 +345,7 @@ def _construct_instance(Estimator):
 
 def _generate_instance_checks(name, estimator):
     """Generate instance checks."""
-    yield from ((estimator,
-                 partial(_check_tags_to_skip(check), name))
+    yield from ((estimator, partial(check, name))
                 for check in _yield_all_checks(name, estimator))
 
 
@@ -358,24 +357,21 @@ def _generate_class_checks(Estimator):
     yield from _generate_instance_checks(name, estimator)
 
 
-def _check_tags_to_skip(check):
-    """Wrap check and xfail or skip test based on estimator tag: _xfail_test"""
+def _mark_xfail_checks(estimator, check, pytest):
+    """Mark estimator check pairs with xfail"""
 
-    @wraps(check)
-    def wrapper(name, estimator_orig):
-        xfail_checks = _safe_tags(estimator_orig, '_xfail_test')
-        check_name = _set_check_estimator_ids(check).split("(", maxsplit=1)[0]
-        if xfail_checks and check_name in xfail_checks:
-            msg = xfail_checks[check_name]
-            try:
-                import pytest
-                pytest.xfail(msg)
-            except ImportError:
-                raise SkipTest(msg)
-        else:
-            return check(name, estimator_orig)
+    xfail_checks = _safe_tags(estimator, '_xfail_test')
+    if not xfail_checks:
+        return estimator, check
 
-    return wrapper
+    try:
+        check_name = _set_check_estimator_ids(check)
+        msg = xfail_checks[check_name]
+        return pytest.param(
+            estimator, check, marks=pytest.mark.xfail(reason=msg))
+
+    except KeyError:
+        return estimator, check
 
 
 def parametrize_with_checks(estimators):
@@ -396,11 +392,17 @@ def parametrize_with_checks(estimators):
     decorator : `pytest.mark.parametrize`
     """
     import pytest
-    return pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for estimator in estimators),
-        ids=_set_check_estimator_ids)
+
+    checks_generator = chain.from_iterable(
+        check_estimator(estimator, generate_only=True)
+        for estimator in estimators)
+
+    checks_with_marks = (
+        _mark_xfail_checks(estimator, check, pytest)
+        for estimator, check in checks_generator)
+
+    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+                                   ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):

@@ -620,23 +620,6 @@ def test_all_estimators_all_public():
         assert not est.__class__.__name__.startswith("_")
 
 
-def test_check_to_skip():
-    class CheckEstimator(BaseEstimator):
-
-        def _more_tags(self):
-            return {
-                '_xfail_test': {'check_things': 'This check is bad'}
-            }
-
-    def check_things(name, estimator_orig):
-        pass
-
-    wrapped_check = _check_tags_to_skip(check_things)
-
-    assert_raises_regex(SkipTest, 'This check is bad', wrapped_check,
-                        'checkestimator', CheckEstimator())
-
-
 if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
