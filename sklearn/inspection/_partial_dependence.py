@@ -32,6 +32,95 @@ __all__ = [
 ]
 
 
+def _validate_parameters(estimator, X, features, response_method, method):
+    if not (is_classifier(estimator) or is_regressor(estimator)):
+        raise ValueError(
+            "'estimator' must be a fitted regressor or classifier."
+        )
+
+    if isinstance(estimator, Pipeline):
+        # TODO: to be removed if/when pipeline get a `steps_` attributes
+        # assuming Pipeline is the only estimator that does not store a new
+        # attribute
+        for est in estimator:
+            # FIXME: remove the None option when it will be deprecated
+            if est not in (None, 'drop'):
+                check_is_fitted(est)
+    else:
+        check_is_fitted(estimator)
+
+    if (is_classifier(estimator) and
+            isinstance(estimator.classes_[0], np.ndarray)):
+        raise ValueError(
+            'Multiclass-multioutput estimators are not supported'
+        )
+
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
+    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+
+    accepted_responses = ('auto', 'predict_proba', 'decision_function')
+    if response_method not in accepted_responses:
+        raise ValueError(
+            'response_method {} is invalid. Accepted response_method names '
+            'are {}.'.format(response_method, ', '.join(accepted_responses)))
+
+    if is_regressor(estimator) and response_method != 'auto':
+        raise ValueError(
+            "The response_method parameter is ignored for regressors and "
+            "must be 'auto'."
+        )
+
+    accepted_methods = ('brute', 'recursion', 'auto')
+    if method not in accepted_methods:
+        raise ValueError(
+            'method {} is invalid. Accepted method names are {}.'.format(
+                method, ', '.join(accepted_methods)))
+
+    if method == 'auto':
+        if (isinstance(estimator, BaseGradientBoosting) and
+                estimator.init is None):
+            method = 'recursion'
+        elif isinstance(estimator, BaseHistGradientBoosting):
+            method = 'recursion'
+        else:
+            method = 'brute'
+
+    if method == 'recursion':
+        if not isinstance(estimator,
+                          (BaseGradientBoosting, BaseHistGradientBoosting)):
+            supported_classes_recursion = (
+                'GradientBoostingClassifier',
+                'GradientBoostingRegressor',
+                'HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor',
+            )
+            raise ValueError(
+                "Only the following estimators support the 'recursion' "
+                "method: {}. Try using method='brute'."
+                .format(', '.join(supported_classes_recursion)))
+        if response_method == 'auto':
+            response_method = 'decision_function'
+
+        if response_method != 'decision_function':
+            raise ValueError(
+                "With the 'recursion' method, the response_method must be "
+                "'decision_function'. Got {}.".format(response_method)
+            )
+
+    if _determine_key_type(features, accept_slice=False) == 'int':
+        # _get_column_indices() supports negative indexing. Here, we limit
+        # the indexing to be positive. The upper bound will be checked
+        # by _get_column_indices()
+        if np.any(np.less(features, 0)):
+            raise ValueError(
+                'all features must be in [0, {}]'.format(X.shape[1] - 1)
+            )
+
+    return X, response_method, method
+
+
 def _grid_from_X(X, percentiles, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
@@ -199,95 +288,6 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
     return averaged_predictions
-
-
-def _validate_parameters(estimator, X, features, response_method, method):
-    if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError(
-            "'estimator' must be a fitted regressor or classifier."
-        )
-
-    if isinstance(estimator, Pipeline):
-        # TODO: to be removed if/when pipeline get a `steps_` attributes
-        # assuming Pipeline is the only estimator that does not store a new
-        # attribute
-        for est in estimator:
-            # FIXME: remove the None option when it will be deprecated
-            if est not in (None, 'drop'):
-                check_is_fitted(est)
-    else:
-        check_is_fitted(estimator)
-
-    if (is_classifier(estimator) and
-            isinstance(estimator.classes_[0], np.ndarray)):
-        raise ValueError(
-            'Multiclass-multioutput estimators are not supported'
-        )
-
-    # Use check_array only on lists and other non-array-likes / sparse. Do not
-    # convert DataFrame into a NumPy array.
-    if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
-
-    accepted_responses = ('auto', 'predict_proba', 'decision_function')
-    if response_method not in accepted_responses:
-        raise ValueError(
-            'response_method {} is invalid. Accepted response_method names '
-            'are {}.'.format(response_method, ', '.join(accepted_responses)))
-
-    if is_regressor(estimator) and response_method != 'auto':
-        raise ValueError(
-            "The response_method parameter is ignored for regressors and "
-            "must be 'auto'."
-        )
-
-    accepted_methods = ('brute', 'recursion', 'auto')
-    if method not in accepted_methods:
-        raise ValueError(
-            'method {} is invalid. Accepted method names are {}.'.format(
-                method, ', '.join(accepted_methods)))
-
-    if method == 'auto':
-        if (isinstance(estimator, BaseGradientBoosting) and
-                estimator.init is None):
-            method = 'recursion'
-        elif isinstance(estimator, BaseHistGradientBoosting):
-            method = 'recursion'
-        else:
-            method = 'brute'
-
-    if method == 'recursion':
-        if not isinstance(estimator,
-                          (BaseGradientBoosting, BaseHistGradientBoosting)):
-            supported_classes_recursion = (
-                'GradientBoostingClassifier',
-                'GradientBoostingRegressor',
-                'HistGradientBoostingClassifier',
-                'HistGradientBoostingRegressor',
-            )
-            raise ValueError(
-                "Only the following estimators support the 'recursion' "
-                "method: {}. Try using method='brute'."
-                .format(', '.join(supported_classes_recursion)))
-        if response_method == 'auto':
-            response_method = 'decision_function'
-
-        if response_method != 'decision_function':
-            raise ValueError(
-                "With the 'recursion' method, the response_method must be "
-                "'decision_function'. Got {}.".format(response_method)
-            )
-
-    if _determine_key_type(features, accept_slice=False) == 'int':
-        # _get_column_indices() supports negative indexing. Here, we limit
-        # the indexing to be positive. The upper bound will be checked
-        # by _get_column_indices()
-        if np.any(np.less(features, 0)):
-            raise ValueError(
-                'all features must be in [0, {}]'.format(X.shape[1] - 1)
-            )
-
-    return X, response_method, method
 
 
 def partial_dependence(estimator, X, features, response_method='auto',
