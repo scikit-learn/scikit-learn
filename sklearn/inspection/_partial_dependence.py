@@ -104,15 +104,37 @@ def _partial_dependence_recursion(est, grid, features):
     return est._compute_partial_dependence_recursion(grid, features)
 
 
-def _get_predictions(est, grid, features_indices, X, response_method):
+def _get_predictions(estimator, grid, features_indices, X, response_method):
+    """Get predictions for an estimator by replacing the values of
+    a specific feature, keeping others constant.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The scikit-learn predictor.
+    grid : ndarray of shape (n_points, n_target_features)
+        The different values to try for the targeted features.
+    features_indices : ndarray of shape (n_targeted_features,)
+        The indices of the features targeted. The values of these
+        features will be changed.
+    X : {ndarray, dataframe} of shape (n_samples, n_features)
+        The dataset to be used.
+    response_method : {"auto", "predict_proba", "decision_function"}
+        The response method to use by the estimator. It applies only for
+        classifier.
+
+    Returns
+    -------
+    predictions : list of ndarray of shape (n_points,)
+    """
     predictions = []
 
     # define the prediction_method (predict, predict_proba, decision_function).
-    if is_regressor(est):
-        prediction_method = est.predict
+    if is_regressor(estimator):
+        prediction_method = estimator.predict
     else:
-        predict_proba = getattr(est, 'predict_proba', None)
-        decision_function = getattr(est, 'decision_function', None)
+        predict_proba = getattr(estimator, 'predict_proba', None)
+        decision_function = getattr(estimator, 'decision_function', None)
         if response_method == 'auto':
             # try predict_proba, then decision_function if it doesn't exist
             prediction_method = predict_proba or decision_function
