@@ -106,7 +106,6 @@ def _validate_parameters(estimator, X, features, response_method, method):
 
         if response_method == 'auto':
             response_method = 'decision_function'
-
         if response_method != 'decision_function':
             raise ValueError(
                 f"With the 'recursion' method, the response_method must be "
