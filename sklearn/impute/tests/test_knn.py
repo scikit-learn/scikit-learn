@@ -519,7 +519,7 @@ def test_knn_imputer_callable_metric():
 @pytest.mark.parametrize("na", [-1, np.nan])
 # Note that we use working_memory=0 to ensure that chunking is tested, even
 # for a small dataset. However, it should raise a UserWarning that we ignore.
-@ignore_warnings(UserWarning)
+@ignore_warnings(category=UserWarning)
 def test_knn_imputer_with_simple_example(na, working_memory):
 
     X = np.array([
