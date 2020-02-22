@@ -681,11 +681,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         if getattr(self, '_fitted_with_sw', False):
-            raise NotImplementedError("{} does not support partial dependence"
-                                      " plots when sample weights were given "
-                                      "during fit time.".format(
-                                          self.__class__.__name__
-                                      ))
+            raise NotImplementedError("{} does not support partial dependence "
+                                      "plots with the 'recursion' method when "
+                                      "sample weights were given during fit "
+                                      "time.".format(self.__class__.__name__))
 
         grid = np.asarray(grid, dtype=X_DTYPE, order='C')
         averaged_predictions = np.zeros(
