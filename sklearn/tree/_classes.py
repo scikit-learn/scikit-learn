@@ -567,6 +567,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         reduction of the criterion brought by that feature.
         It is also known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
@@ -650,11 +654,17 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Controls the randomness of the estimator. The features are always
+        randomly permuted at each split, even if ``splitter`` is set to
+        ``"best"``. When ``max_features < n_features``, the algorithm will
+        select ``max_features`` at random at each split before finding the best
+        split among them. But the best found split may vary across different
+        runs, even if ``max_features=n_features``. That is the case, if the
+        improvement of the criterion is identical for several splits and one
+        split has to be selected at random. To obtain a deterministic behaviour
+        during fitting, ``random_state`` has to be fixed to an integer.
+        See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -730,10 +740,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         or a list of arrays of class labels (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances. The higher, the more important the
-        feature. The importance of a feature is computed as the (normalized)
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     max_features_ : int
         The inferred value of max_features.
@@ -766,13 +781,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    The features are always randomly permuted at each split. Therefore,
-    the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
-    identical for several splits enumerated during the search of the best
-    split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
 
     References
     ----------
@@ -1030,11 +1038,17 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Controls the randomness of the estimator. The features are always
+        randomly permuted at each split, even if ``splitter`` is set to
+        ``"best"``. When ``max_features < n_features``, the algorithm will
+        select ``max_features`` at random at each split before finding the best
+        split among them. But the best found split may vary across different
+        runs, even if ``max_features=n_features``. That is the case, if the
+        improvement of the criterion is identical for several splits and one
+        split has to be selected at random. To obtain a deterministic behaviour
+        during fitting, ``random_state`` has to be fixed to an integer.
+        See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1091,6 +1105,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1117,13 +1135,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    The features are always randomly permuted at each split. Therefore,
-    the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
-    identical for several splits enumerated during the search of the best
-    split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
 
     References
     ----------
@@ -1319,11 +1330,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to pick randomly the `max_features` used at each split.
+        See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1402,8 +1411,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         output (for multi-output problems).
 
     feature_importances_ : ndarray of shape (n_features,)
-        Return the feature importances (the higher, the more important the
-        feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1549,11 +1565,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to pick randomly the `max_features` used at each split.
+        See :term:`Glossary <random_state>` for details.
 
     min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
@@ -1604,6 +1618,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_features_ : int
         The number of features when ``fit`` is performed.
 
+    feature_importances_ : ndarray of shape (n_features,)
+        Return impurity-based feature importances (the higher, the more
+        important the feature).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
@@ -1646,7 +1668,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.7788...
+    0.7447...
     """
     def __init__(self,
                  criterion="mse",
