@@ -10,7 +10,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_wine
 from sklearn.datasets import load_breast_cancer
-from sklearn.utils.testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 
 def test_sparse_matrix_non_pearson():
