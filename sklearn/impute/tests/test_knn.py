@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import ignore_warnings
 
 
 def _missing_mean(X, missing_value):
@@ -525,6 +526,9 @@ def test_knn_imputer_callable_metric():
 
 @pytest.mark.parametrize("working_memory", [None, 0])
 @pytest.mark.parametrize("na", [-1, np.nan])
+# Note that we use working_memory=0 to ensure that chunking is tested, even
+# for a small dataset. However, it should raise a UserWarning that we ignore.
+@ignore_warnings(UserWarning)
 def test_knn_imputer_with_simple_example(na, working_memory):
 
     X = np.array([
