@@ -279,6 +279,19 @@ for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
 
+.. warning::
+
+  The impurity-based feature importances computed on tree-based models suffer
+  from two flaws that can lead to misleading conclusions. First they are
+  computed on statistics derived from the training dataset and therefore **do
+  not necessarily inform us on which features are most important to make good
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
+  :ref:`permutation_importance` is an alternative to impurity-based feature
+  importance that does not suffer from these flaws. These two methods of
+  obtaining feature importance are explored in:
+  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
@@ -322,8 +335,9 @@ trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
 ** max_depth``, the maximum number of leaves in the forest.
 
-As neighboring data points are more likely to lie within the same leaf of a tree,
-the transformation performs an implicit, non-parametric density estimation.
+As neighboring data points are more likely to lie within the same leaf of a
+tree, the transformation performs an implicit, non-parametric density
+estimation.
 
 .. topic:: Examples:
 
@@ -540,8 +554,8 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the feature importances which can be obtained via
-the ``feature_importances_`` property.
+The plot on the right shows the impurity-based feature importances which can be
+obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -798,7 +812,7 @@ appropriate split points. This information can be used to measure the
 importance of each feature; the basic idea is: the more often a
 feature is used in the split points of a tree the more important that
 feature is. This notion of importance can be extended to decision tree
-ensembles by simply averaging the feature importance of each tree (see
+ensembles by simply averaging the impurity-based feature importance of each tree (see
 :ref:`random_forest_feature_importance` for more details).
 
 The feature importance scores of a fit gradient boosting model can be
@@ -895,13 +909,14 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-The early-stopping behaviour is controlled via the ``scoring``,
-``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
-possible to early-stop using an arbitrary :term:`scorer`, or just the
-training or validation loss. By default, early-stopping is performed using
-the default :term:`scorer` of the estimator on a validation set but it is
-also possible to perform early-stopping based on the loss value, which is
-significantly faster.
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early-stopping``, ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss.
+Note that for technical reasons, using a scorer is significantly slower than
+using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ----------------------
@@ -1323,7 +1338,7 @@ computationally expensive.
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.82
+    R2 score: 0.83
 
 .. topic:: References
 
