@@ -751,3 +751,13 @@ def test_dist_threshold_invalid_parameters():
         AgglomerativeClustering(n_clusters=None,
                                 distance_threshold=1,
                                 compute_full_tree=False).fit(X)
+
+
+def test_invalid_shape_precomputed_dist_matrix():
+    # Check that an error is raised when affinity='precomputed'
+    # and a non square matrix is passed (PR #16257).
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 3)
+    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+        AgglomerativeClustering(affinity='precomputed',
+                                linkage='complete').fit(X)

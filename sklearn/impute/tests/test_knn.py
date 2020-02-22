@@ -6,17 +6,8 @@ from sklearn.impute import KNNImputer
 from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import ignore_warnings
-
-
-def _missing_mean(X, missing_value):
-    masked_X = np.ma.array(X, mask=_get_mask(X, missing_value))
-    masked_X_mean = masked_X.mean(axis=0)
-    output = masked_X_mean.data
-    output[masked_X_mean.mask] = np.nan
-    return output
 
 
 @pytest.mark.parametrize("weights", ["uniform", "distance"])
