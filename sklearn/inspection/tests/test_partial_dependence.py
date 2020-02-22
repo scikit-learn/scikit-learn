@@ -385,8 +385,8 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       {'features': [0], 'response_method': 'decision_function'},
       'The estimator has no decision_function method.'),
      (LinearRegression(),
-      {'features': [0], 'method': 'blahblah'},
-      'blahblah is invalid. Accepted "method" names are brute, recursion, auto'),
+      {'features': [0], 'method': 'blah'},
+      'blah is invalid. Accepted "method" names are brute, recursion, auto'),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
       "Only the following estimators support the 'recursion' method:")]
