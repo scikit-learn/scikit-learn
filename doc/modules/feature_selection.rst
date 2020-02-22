@@ -81,7 +81,7 @@ are removed, while the uncorrelated feature remains:
 .. topic:: Reference
 
     .. [KUHN] Max Kuhn and Kjell Johnson, "Applied Predictive Modeling",
-        Springer, 2013
+      Springer, 2013 (Section 3.5)
 
 .. _univariate_feature_selection:
 
