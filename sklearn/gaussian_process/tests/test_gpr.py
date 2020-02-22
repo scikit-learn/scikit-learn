@@ -180,6 +180,19 @@ def test_no_optimizer():
     assert np.exp(gpr.kernel_.theta) == 1.0
 
 
+def test_lambda_regularizer():
+    def obj_func(self, theta, lmbda=0.01):
+        lml, lml_grad = self.log_marginal_likelihood(
+            theta, eval_gradient=True, clone_kernel=False)
+        loss = lml + (lmbda * (np.linalg.norm(theta, 2) ** 2))
+        grad = lml_grad + (2 * lmbda * theta)
+        return -loss, -grad
+
+    kernel = RBF(1.0)
+    gpr = GaussianProcessRegressor(kernel=kernel, obj_func=obj_func).fit(X, y)
+    gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    assert gpr.kernel_.theta != gpr2.kernel_.theta
+
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
     if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):

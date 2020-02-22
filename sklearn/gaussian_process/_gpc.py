@@ -4,6 +4,7 @@
 #
 # License: BSD 3 clause
 
+import types
 from operator import itemgetter
 
 import numpy as np
@@ -88,6 +89,13 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
+    obj_func : callable or None, default=None
+        The objective function for which the kernel hyperparameters are 
+        optimized. If obj_func is None, the default negative log likelihood
+        function is used. Otherwise, a callable may be specified that takes two
+        parameters, self and theta, and returns either the loss OR the loss and gradient
+        vector of the objective function.
+
     max_iter_predict : int, default=100
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
@@ -146,14 +154,18 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
-                 warm_start=False, copy_X_train=True, random_state=None):
+                 warm_start=False, copy_X_train=True, random_state=None,
+                 obj_func=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
+        self.obj_func = obj_func
         self.max_iter_predict = max_iter_predict
         self.warm_start = warm_start
         self.copy_X_train = copy_X_train
         self.random_state = random_state
+        # assign the method type so we pass self as first argument
+        self.obj_func = types.MethodType(obj_func, self) if obj_func else None
 
     def fit(self, X, y):
         """Fit Gaussian process classification model
@@ -197,17 +209,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
-            def obj_func(theta, eval_gradient=True):
-                if eval_gradient:
-                    lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True, clone_kernel=False)
-                    return -lml, -grad
-                else:
-                    return -self.log_marginal_likelihood(theta,
-                                                         clone_kernel=False)
+            if self.obj_func is None:
+               self.obj_func = self._default_obj_func
 
             # First optimize starting from theta specified in kernel
-            optima = [self._constrained_optimization(obj_func,
+            optima = [self._constrained_optimization(self.obj_func,
                                                      self.kernel_.theta,
                                                      self.kernel_.bounds)]
 
@@ -223,7 +229,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     theta_initial = np.exp(self.rng.uniform(bounds[:, 0],
                                                             bounds[:, 1]))
                     optima.append(
-                        self._constrained_optimization(obj_func, theta_initial,
+                        self._constrained_optimization(self.obj_func, theta_initial,
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -438,7 +444,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = scipy.optimize.minimize(
+            opt_res = scipy.optimize.minimize( 
                 obj_func, initial_theta, method="L-BFGS-B", jac=True,
                 bounds=bounds)
             _check_optimize_result("lbfgs", opt_res)
@@ -450,6 +456,16 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+
+    def _default_obj_func(self, theta, eval_gradient=True):
+        if eval_gradient:
+            lml, grad = self.log_marginal_likelihood(
+                theta, eval_gradient=True, clone_kernel=False)
+            return -lml, -grad
+        else:
+            return -self.log_marginal_likelihood(theta,
+                                                 clone_kernel=False)
 
 
 class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
@@ -589,7 +605,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
-                 multi_class="one_vs_rest", n_jobs=None):
+                 multi_class="one_vs_rest", n_jobs=None, obj_func=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
@@ -599,6 +615,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.multi_class = multi_class
         self.n_jobs = n_jobs
+        # obj_func isn't called here, so we don't need to set it as a MethodType
+        self.obj_func = obj_func
 
     def fit(self, X, y):
         """Fit Gaussian process classification model
@@ -625,7 +643,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,
             self.max_iter_predict, self.warm_start, self.copy_X_train,
-            self.random_state)
+            self.random_state, self.obj_func)
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.size
@@ -791,3 +809,4 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                                  "Obtained theta with shape %d."
                                  % (n_dims, n_dims * self.classes_.shape[0],
                                     theta.shape[0]))
+    

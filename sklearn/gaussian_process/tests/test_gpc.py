@@ -180,3 +180,17 @@ def test_multi_class_n_jobs(kernel):
     y_prob = gpc.predict_proba(X2)
     y_prob_2 = gpc_2.predict_proba(X2)
     assert_almost_equal(y_prob, y_prob_2)
+
+
+def test_lambda_regularizer():
+    def obj_func(self, theta, lmbda=0.01):
+        lml, lml_grad = self.log_marginal_likelihood(
+            theta, eval_gradient=True, clone_kernel=False)
+        loss = lml + (lmbda * (np.linalg.norm(theta, 2) ** 2))
+        grad = lml_grad + (2 * lmbda * theta)
+        return -loss, -grad
+
+    kernel = RBF(1.0)
+    gpr = GaussianProcessClassifier(kernel=kernel, obj_func=obj_func).fit(X, y)
+    gpr2 = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    assert gpr.kernel_.theta != gpr2.kernel_.theta

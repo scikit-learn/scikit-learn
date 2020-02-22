@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import warnings
+import types
 from operator import itemgetter
 
 import numpy as np
@@ -92,6 +93,13 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
+    obj_func : callable or None, default=None
+        The objective function for which the kernel hyperparameters are 
+        optimized. If obj_func is None, the default negative log likelihood
+        function is used. Otherwise, a callable may be specified that takes two
+        parameters, self and theta, and returns either the loss OR the loss and gradient
+        vector of the objective function.
+
     normalize_y : bool, default=False
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
@@ -150,7 +158,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=True, random_state=None):
+                 normalize_y=False, copy_X_train=True, random_state=None,
+                 obj_func=None):
         self.kernel = kernel
         self.alpha = alpha
         self.optimizer = optimizer
@@ -158,6 +167,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
+        # assign the method type so we pass self as first argument
+        self.obj_func = types.MethodType(obj_func, self) if obj_func else None
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -212,17 +223,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         if self.optimizer is not None and self.kernel_.n_dims > 0:
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
-            def obj_func(theta, eval_gradient=True):
-                if eval_gradient:
-                    lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True, clone_kernel=False)
-                    return -lml, -grad
-                else:
-                    return -self.log_marginal_likelihood(theta,
-                                                         clone_kernel=False)
-
+            if self.obj_func is None:
+               self.obj_func = self._default_obj_func
+            
             # First optimize starting from theta specified in kernel
-            optima = [(self._constrained_optimization(obj_func,
+            optima = [(self._constrained_optimization(self.obj_func,
                                                       self.kernel_.theta,
                                                       self.kernel_.bounds))]
 
@@ -238,7 +243,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     theta_initial = \
                         self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
-                        self._constrained_optimization(obj_func, theta_initial,
+                        self._constrained_optimization(self.obj_func, theta_initial,
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -495,3 +500,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     def _more_tags(self):
         return {'requires_fit': False}
+                
+    def _default_obj_func(self, theta, eval_gradient=True):
+        if eval_gradient:
+            lml, grad = self.log_marginal_likelihood(
+                theta, eval_gradient=True, clone_kernel=False)
+            return -lml, -grad
+        else:
+            return -self.log_marginal_likelihood(theta,
+                                                 clone_kernel=False)
