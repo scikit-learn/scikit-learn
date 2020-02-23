@@ -490,6 +490,22 @@ def test_get_column_indices_error(key, err_msg):
         _get_column_indices(X_df, key)
 
 
+@pytest.mark.parametrize(
+    "key",
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
+)
+def test_get_column_indices_pandas_nonunique_columns_error(key):
+    pd = pytest.importorskip('pandas')
+    toy = np.zeros((1, 5), dtype=int)
+    columns = ['col1', 'col1', 'col2', 'col3', 'col2']
+    X = pd.DataFrame(toy, columns=columns)
+
+    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
+    with pytest.raises(ValueError) as exc_info:
+        _get_column_indices(X, key)
+    assert str(exc_info.value) == err_msg
+
+
 def test_shuffle_on_ndim_equals_three():
     def to_tuple(A):    # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
