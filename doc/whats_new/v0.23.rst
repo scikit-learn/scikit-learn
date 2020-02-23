@@ -252,6 +252,13 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
+- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
+  name of the estimator was passed in the
+  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
+  results in a different plot when calling
+  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
+  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
   an error when `y_true` and `y_pred` were length zero and `labels` was
   not `None`. In addition, we raise an error when an empty list is given to
