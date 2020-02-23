@@ -1517,7 +1517,6 @@ class SGDRegressor(BaseSGDRegressor):
     intercept_ : ndarray of shape (1,)
         The intercept term.
 
-    TODO: what is this
     average_coef_ : ndarray of shape (n_features,)
         Averaged weights assigned to the features.
 

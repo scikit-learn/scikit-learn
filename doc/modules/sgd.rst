@@ -4,6 +4,9 @@
 Stochastic Gradient Descent
 ===========================
 
+
+.. TODO: Link refs where they should be linked
+
 .. currentmodule:: sklearn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient
@@ -186,10 +189,12 @@ further information.
 .. TODO: describe ASGD in math section
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
-by setting ```average=True```. ASGD works by averaging the coefficients
-of the plain SGD over each iteration over a sample. When using ASGD
-the learning rate can be larger and even constant leading on some
-datasets to a speed up in training time.
+by setting `average=True`. ASGD performs the same updates as the regular SGD
+(see :ref:`sgd_mathematical_formulation`), but the final `coef_` attribute is set to
+TODO FAIT CHIER
+attributes are set to the average of all the updates.
+When using ASGD the learning rate can be larger and even constant, leading on
+some datasets to a speed up in training time.
 
 For classification with a logistic loss, another variant of SGD with an
 averaging strategy is available with Stochastic Average Gradient (SAG)
