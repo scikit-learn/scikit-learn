@@ -245,7 +245,7 @@ Changelog
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
 - |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
-  parameter the name of the estimator was passed in the
+  name of the estimator was passed in the
   :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
   results in a different plot when calling
   :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.

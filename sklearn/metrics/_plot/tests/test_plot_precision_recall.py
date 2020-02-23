@@ -155,18 +155,12 @@ def test_precision_recall_curve_string_labels(pyplot):
     assert disp.estimator_name == lr.__class__.__name__
 
 
-@pytest.mark.parametrize(
-    "clf", [LogisticRegression(),
-            make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
-def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot,
-                                                                   clf):
+def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot):
     # non-regression test checking that the `name` used when calling
     # `plot_roc_curve` is used as well when calling `disp.plot()`
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     clf_name = "my hand-crafted name"
-    clf.fit(X, y)
+    clf = LogisticRegression().fit(X, y)
     disp = plot_precision_recall_curve(clf, X, y, name=clf_name)
     assert disp.estimator_name == clf_name
     pyplot.close("all")
