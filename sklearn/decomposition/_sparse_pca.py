@@ -55,6 +55,31 @@ def _get_explained_variance(X, components, ridge_alpha):
     Orthogonality is enforced in this case. Other variants exist that don't
     enforce this [2].
 
+    Examples
+    --------
+    R implementation using elasticnet 1.1.1
+
+    > library(elasticnet)
+    > sparse_pca <- spca(x = iris[,c(1, 2, 3, 4)], K = 1, para = c(1))
+    > sparse_pca$pev
+    0.9090568
+    > sparse_pca$loadings
+                         PC1
+    Sepal.Length  0.30698724
+    Sepal.Width  -0.02506061
+    Petal.Length  0.91173203
+    Petal.Width   0.27180050
+
+    >>> import numpy as np
+    >>> from numpy.testing import assert_almost_equal
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.decomposition._sparse_pca import _get_explained_variance
+    >>> data = load_iris()["data"]
+    >>> data = data - data.mean(axis=0)
+    >>> _, pev = _get_explained_variance(data,\
+    np.array([[0.30698724, -0.02506061,  0.91173203,  0.27180050]]), 1e-8)
+    >>> assert_almost_equal(pev, 0.9090568)
+
     References
     ----------
     .. [1] Hui Zou, Trevor Hastie, Robert Tibshirani "Sparse Principal
