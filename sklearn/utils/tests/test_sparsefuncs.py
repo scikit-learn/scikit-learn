@@ -551,10 +551,11 @@ def test_inplace_normalize():
 def test_csr_row_norms(dtype):
     # checks that csr_row_norms returns the same output as
     # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
-    X = sp.random(100, 10, format='csr', dtype=dtype)
+    X = sp.random(100, 10, format='csr', dtype=dtype, random_state=42)
 
     scipy_norms = sp.linalg.norm(X, axis=1)**2
     norms = csr_row_norms(X)
 
     assert norms.dtype == dtype
-    assert_allclose(norms, scipy_norms)
+    rtol = 1e-6 if dtype == np.float32 else 1e-7
+    assert_allclose(norms, scipy_norms, rtol=rtol)
