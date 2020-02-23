@@ -53,8 +53,8 @@ Functions
 
 .. _calibration_ref:
 
-:mod:`sklearn.calibration`: Probability Calibration
-===================================================
+:mod:`sklearn.calibration`: Prediction Calibration
+==================================================
 
 .. automodule:: sklearn.calibration
    :no-members:
@@ -69,7 +69,7 @@ Functions
    :template: class.rst
 
    calibration.CalibratedClassifierCV
-
+   calibration.CutoffClassifier
 
 .. autosummary::
    :toctree: generated/

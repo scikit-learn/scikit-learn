@@ -20,13 +20,17 @@ from .preprocessing import LabelEncoder
 
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
+from .base import clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
+from .metrics import precision_recall_curve
+from .metrics import roc_curve
 from .model_selection import check_cv
+from .utils.multiclass import type_of_target
 from .utils.validation import _deprecate_positional_args
 
 
@@ -597,3 +601,363 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     prob_pred = bin_sums[nonzero] / bin_total[nonzero]
 
     return prob_true, prob_pred
+
+
+class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+    """Decision threshold calibration for binary classification
+
+    Meta estimator that calibrates the decision threshold (cutoff point)
+    that is used for prediction. The methods for picking cutoff points make use
+    of traditional binary classification evaluation statistics such as the
+    true positive and true negative rates and F-scores.
+
+    If cv="prefit" the base estimator is assumed to be fitted and all data will
+    be used for the selection of the cutoff point. Otherwise the decision
+    threshold is calculated as the average of the thresholds resulting from the
+    cross-validation loop.
+
+    Parameters
+    ----------
+    base_estimator : obj
+        The binary classifier whose decision threshold will be adapted
+        according to the acquired cutoff point. The estimator must have a
+        decision_function or a predict_proba
+
+    strategy : str, optional (default='roc')
+        The strategy to use for choosing the cutoff point
+
+        'roc'
+            selects the point on the roc curve that is closest to the ideal
+            corner (0, 1)
+
+        'f_beta'
+            selects a decision threshold that maximizes the f_beta score
+
+        'max_tpr'
+            selects the point that yields the highest true positive rate with
+            true negative rate at least equal to the value of the parameter
+            threshold
+
+        'max_tnr'
+            selects the point that yields the highest true negative rate with
+            true positive rate at least equal to the value of the parameter
+            threshold
+
+    method : str or None, optional (default=None)
+        The method to be used for acquiring the score
+
+        'decision_function'
+            base_estimator.decision_function will be used for scoring
+
+        'predict_proba'
+            base_estimator.predict_proba will be used for scoring
+
+        None
+            base_estimator.decision_function will be used first and if not
+            available base_estimator.predict_proba
+
+    beta : float in [0, 1], optional (default=None)
+        beta value to be used in case strategy == 'f_beta'
+
+    threshold : float in [0, 1] or None, (default=None)
+        In case strategy is 'max_tpr' or 'max_tnr' this parameter must be set
+        to specify the threshold for the true negative rate or true positive
+        rate respectively that needs to be achieved
+
+    pos_label : object, optional (default=1)
+        Object representing the positive label
+
+    cv : int, cross-validation generator, iterable or 'prefit', optional
+        (default=3). Determines the cross-validation splitting strategy.
+        If cv='prefit' the base estimator is assumed to be fitted and all data
+        will be used for the calibration of the probability threshold
+
+    Attributes
+    ----------
+    decision_threshold_ : float
+        Decision threshold for the positive class. Determines the output of
+        predict
+
+    std_ : float
+        Standard deviation of the obtained decision thresholds for when the
+        provided base estimator is not pre-trained and the decision_threshold_
+        is computed as the mean of the decision threshold of each
+        cross-validation iteration. If the base estimator is pre-trained then
+        std_ = None
+
+    classes_ : array, shape (n_classes)
+        The class labels.
+
+    References
+    ----------
+    .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
+           evaluation tool in clinical medicine, MH Zweig, G Campbell -
+           Clinical chemistry, 1993
+
+    """
+    def __init__(self, base_estimator, strategy='roc', method=None, beta=None,
+                 threshold=None, pos_label=1, cv=3):
+        self.base_estimator = base_estimator
+        self.strategy = strategy
+        self.method = method
+        self.beta = beta
+        self.threshold = threshold
+        self.pos_label = pos_label
+        self.cv = cv
+
+    def fit(self, X, y):
+        """Fit model
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data
+
+        y : array-like, shape (n_samples,)
+            Target values. There must be two 2 distinct values
+
+        Returns
+        -------
+        self : object
+            Instance of self
+        """
+        if (not hasattr(self.base_estimator, 'decision_function') and
+                not hasattr(self.base_estimator, 'predict_proba')):
+            raise TypeError('The base_estimator needs to implement either a '
+                            'decision_function or a predict_proba method')
+
+        if self.strategy not in ('roc', 'f_beta', 'max_tpr', 'max_tnr'):
+            raise ValueError('strategy can either be "roc" or "max_tpr" or '
+                             '"max_tnr. Got {} instead'.format(self.strategy))
+
+        if self.method not in (None, 'decision_function', 'predict_proba'):
+            raise ValueError('method param can either be "decision_function" '
+                             'or "predict_proba" or None. '
+                             'Got {} instead'.format(self.method))
+
+        if self.strategy == 'max_tpr' or self.strategy == 'max_tnr':
+            if (not self.threshold or not
+                    isinstance(self.threshold, (int, float))
+                    or not self.threshold >= 0 or not self.threshold <= 1):
+                raise ValueError('parameter threshold must be a number in'
+                                 '[0, 1]. '
+                                 'Got {} instead'.format(self.threshold))
+
+        if self.strategy == 'f_beta':
+            if not self.beta or not isinstance(self.beta, (int, float)):
+                raise ValueError('parameter beta must be a real number.'
+                                 'Got {} instead'.format(type(self.beta)))
+
+        X, y = check_X_y(X, y)
+
+        y_type = type_of_target(y)
+        if y_type != 'binary':
+            raise ValueError('Expected target of binary type. Got {}'.format(
+                y_type))
+
+        self.label_encoder_ = LabelEncoder().fit(y)
+        self.classes_ = self.label_encoder_.classes_
+
+        y = self.label_encoder_.transform(y)
+        self.pos_label = self.label_encoder_.transform([self.pos_label])[0]
+
+        if self.cv == 'prefit':
+            self.decision_threshold_ = _CutoffClassifier(
+                self.base_estimator, self.strategy, self.method, self.beta,
+                self.threshold, self.pos_label
+            ).fit(X, y).decision_threshold_
+            self.std_ = None
+        else:
+            cv = check_cv(self.cv, y, classifier=True)
+            decision_thresholds = []
+
+            for train, test in cv.split(X, y):
+                estimator = clone(self.base_estimator).fit(X[train], y[train])
+                decision_thresholds.append(
+                    _CutoffClassifier(estimator, self.strategy, self.method,
+                                      self.beta, self.threshold,
+                                      self.pos_label).fit(
+                        X[test], y[test]
+                    ).decision_threshold_
+                )
+            self.decision_threshold_ = np.mean(decision_thresholds)
+            self.std_ = np.std(decision_thresholds)
+
+            self.base_estimator.fit(X, y)
+        return self
+
+    def predict(self, X):
+        """Predict using the calibrated decision threshold
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The samples
+
+        Returns
+        -------
+        C : array, shape (n_samples,)
+            The predicted class
+        """
+        X = check_array(X)
+        check_is_fitted(
+            self, ["label_encoder_", "decision_threshold_", "std_", "classes_"]
+        )
+
+        y_score = _get_binary_score(self.base_estimator, X, self.method,
+                                    self.pos_label)
+        return self.label_encoder_.inverse_transform(
+            (y_score > self.decision_threshold_).astype(int)
+        )
+
+
+class _CutoffClassifier(object):
+    """Cutoff point selection.
+
+    It assumes that base_estimator has already been fit, and uses the input set
+    of the fit function to select a cutoff point. Note that this class should
+    not be used as an estimator directly. Use the CutoffClassifier with
+    cv="prefit" instead.
+
+    Parameters
+    ----------
+    base_estimator : obj
+        The binary classifier whose decision threshold will be adapted
+        according to the acquired cutoff point. The estimator must have a
+        decision_function or a predict_proba
+
+    strategy : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
+        The method to use for choosing the cutoff point
+
+    method : str or None, optional (default=None)
+        The method to be used for acquiring the score. Can either be
+        "decision_function" or "predict_proba" or None. If None then
+        decision_function will be used first and if not available
+        predict_proba
+
+    beta : float in [0, 1]
+        beta value to be used in case strategy == 'f_beta'
+
+    threshold : float in [0, 1]
+        minimum required value for the true negative rate (specificity) in case
+        strategy 'max_tpr' is used or for the true positive rate (sensitivity)
+        in case method 'max_tnr' is used
+
+    pos_label : object
+        Label considered as positive during the roc_curve construction
+
+    Attributes
+    ----------
+    decision_threshold_ : float
+        Acquired decision threshold for the positive class
+    """
+    def __init__(self, base_estimator, strategy, method, beta, threshold,
+                 pos_label):
+        self.base_estimator = base_estimator
+        self.strategy = strategy
+        self.method = method
+        self.beta = beta
+        self.threshold = threshold
+        self.pos_label = pos_label
+
+    def fit(self, X, y):
+        """Select a decision threshold for the fitted model's positive class
+        using one of the available methods
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data
+
+        y : array-like, shape (n_samples,)
+            Target values
+
+        Returns
+        -------
+        self : object
+            Instance of self
+        """
+        y_score = _get_binary_score(self.base_estimator, X, self.method,
+                                    self.pos_label)
+        if self.strategy == 'f_beta':
+            precision, recall, thresholds = precision_recall_curve(
+                y, y_score, pos_label=self.pos_label
+            )
+            f_beta = ((1 + self.beta**2) * (precision * recall) /
+                      (self.beta**2 * precision + recall))
+            self.decision_threshold_ = thresholds[np.argmax(f_beta)]
+            return self
+
+        fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=self.pos_label)
+
+        if self.strategy == 'roc':
+            # we find the threshold of the point (fpr, tpr) with the smallest
+            # euclidean distance from the "ideal" corner (0, 1)
+            self.decision_threshold_ = thresholds[
+                np.argmin(fpr ** 2 + (tpr - 1) ** 2)
+            ]
+        elif self.strategy == 'max_tpr':
+            indices = np.where(1 - fpr >= self.threshold)[0]
+            max_tpr_index = np.argmax(tpr[indices])
+            self.decision_threshold_ = thresholds[indices[max_tpr_index]]
+        else:
+            indices = np.where(tpr >= self.threshold)[0]
+            max_tnr_index = np.argmax(1 - fpr[indices])
+            self.decision_threshold_ = thresholds[indices[max_tnr_index]]
+        return self
+
+
+def _get_binary_score(clf, X, method=None, pos_label=1):
+    """Binary classification score for the positive label (0 or 1)
+
+    Returns the score that a binary classifier outputs for the positive label
+    acquired either from decision_function or predict_proba
+
+    Parameters
+    ----------
+    clf : object
+        Classifier object to be used for acquiring the scores. Needs to have
+        a decision_function or a predict_proba method
+
+    X : array-like, shape (n_samples, n_features)
+        The samples
+
+    pos_label : int, optional (default=1)
+        The positive label. Can either be 0 or 1
+
+    method : str or None, optional (default=None)
+        The method to be used for acquiring the score. Can either be
+        "decision_function" or "predict_proba" or None. If None then
+        decision_function will be used first and if not available
+        predict_proba
+
+    Returns
+    -------
+    y_score : array-like, shape (n_samples,)
+        The return value of the provided classifier's decision_function or
+        predict_proba depending on the method used.
+    """
+    if len(clf.classes_) != 2:
+        raise ValueError('Expected binary classifier. Found {} classes'.format(
+            len(clf.classes_)
+        ))
+
+    if method not in (None, 'decision_function', 'predict_proba'):
+        raise ValueError('scoring param can either be "decision_function" '
+                         'or "predict_proba" or None. '
+                         'Got {} instead'.format(method))
+
+    if not method:
+        try:
+            y_score = clf.decision_function(X)
+            if pos_label == clf.classes_[0]:
+                y_score = -y_score
+        except (NotImplementedError, AttributeError):
+            y_score = clf.predict_proba(X)[:, pos_label]
+    elif method == 'decision_function':
+        y_score = clf.decision_function(X)
+        if pos_label == clf.classes_[0]:
+            y_score = - y_score
+    else:
+        y_score = clf.predict_proba(X)[:, pos_label]
+    return y_score
