@@ -94,11 +94,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         run is performed.
 
     obj_func : callable or None, default=None
-        The objective function for which the kernel hyperparameters are 
+        The objective function for which the kernel hyperparameters are
         optimized. If obj_func is None, the default negative log likelihood
-        function is used. Otherwise, a callable may be specified that takes two
-        parameters, self and theta, and returns either the loss OR the loss and gradient
-        vector of the objective function.
+        function is used. Otherwise, a callable may be specified that takes
+        two parameters, self and theta, and returns either the loss OR the
+        loss and gradient vector of the objective function.
 
     normalize_y : bool, default=False
         Whether the target values y are normalized, i.e., the mean of the
@@ -156,6 +156,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
+
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None,
@@ -224,8 +225,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
             if self.obj_func is None:
-               self.obj_func = self._default_obj_func
-            
+                self.obj_func = self._default_obj_func
+
             # First optimize starting from theta specified in kernel
             optima = [(self._constrained_optimization(self.obj_func,
                                                       self.kernel_.theta,
@@ -243,7 +244,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     theta_initial = \
                         self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
-                        self._constrained_optimization(self.obj_func, theta_initial,
+                        self._constrained_optimization(self.obj_func,
+                                                       theta_initial,
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -500,7 +502,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     def _more_tags(self):
         return {'requires_fit': False}
-                
+
     def _default_obj_func(self, theta, eval_gradient=True):
         if eval_gradient:
             lml, grad = self.log_marginal_likelihood(

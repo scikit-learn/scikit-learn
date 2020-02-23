@@ -90,11 +90,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         run is performed.
 
     obj_func : callable or None, default=None
-        The objective function for which the kernel hyperparameters are 
+        The objective function for which the kernel hyperparameters are
         optimized. If obj_func is None, the default negative log likelihood
-        function is used. Otherwise, a callable may be specified that takes two
-        parameters, self and theta, and returns either the loss OR the loss and gradient
-        vector of the objective function.
+        function is used. Otherwise, a callable may be specified that takes
+        two parameters, self and theta, and returns either the loss OR the
+        loss and gradient vector of the objective function.
 
     max_iter_predict : int, default=100
         The maximum number of iterations in Newton's method for approximating
@@ -152,6 +152,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
+
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
@@ -210,7 +211,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Choose hyperparameters based on maximizing the log-marginal
             # likelihood (potentially starting from several initial values)
             if self.obj_func is None:
-               self.obj_func = self._default_obj_func
+                self.obj_func = self._default_obj_func
 
             # First optimize starting from theta specified in kernel
             optima = [self._constrained_optimization(self.obj_func,
@@ -229,7 +230,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
                     theta_initial = np.exp(self.rng.uniform(bounds[:, 0],
                                                             bounds[:, 1]))
                     optima.append(
-                        self._constrained_optimization(self.obj_func, theta_initial,
+                        self._constrained_optimization(self.obj_func,
+                                                       theta_initial,
                                                        bounds))
             # Select result from run with minimal (negative) log-marginal
             # likelihood
@@ -444,7 +446,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            opt_res = scipy.optimize.minimize( 
+            opt_res = scipy.optimize.minimize(
                 obj_func, initial_theta, method="L-BFGS-B", jac=True,
                 bounds=bounds)
             _check_optimize_result("lbfgs", opt_res)
@@ -456,7 +458,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
-
 
     def _default_obj_func(self, theta, eval_gradient=True):
         if eval_gradient:
@@ -602,6 +603,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.18
     """
+
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
@@ -615,7 +617,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self.random_state = random_state
         self.multi_class = multi_class
         self.n_jobs = n_jobs
-        # obj_func isn't called here, so we don't need to set it as a MethodType
+        # obj_func isn't called here,
+        # so we don't need to set it as a MethodType
         self.obj_func = obj_func
 
     def fit(self, X, y):
@@ -809,4 +812,3 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                                  "Obtained theta with shape %d."
                                  % (n_dims, n_dims * self.classes_.shape[0],
                                     theta.shape[0]))
-    

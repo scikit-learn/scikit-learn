@@ -12,6 +12,7 @@ class MiniSeqKernel(GenericKernelMixin,
     A minimal (but valid) convolutional kernel for sequences of variable
     length.
     '''
+
     def __init__(self,
                  baseline_similarity=0.5,
                  baseline_similarity_bounds=(1e-5, 1)):
@@ -26,8 +27,8 @@ class MiniSeqKernel(GenericKernelMixin,
 
     def _f(self, s1, s2):
         return sum([1.0 if c1 == c2 else self.baseline_similarity
-                   for c1 in s1
-                   for c2 in s2])
+                    for c1 in s1
+                    for c2 in s2])
 
     def _g(self, s1, s2):
         return sum([0.0 if c1 == c2 else 1.0 for c1 in s1 for c2 in s2])

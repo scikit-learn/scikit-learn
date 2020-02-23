@@ -193,6 +193,7 @@ def test_lambda_regularizer():
     gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert gpr.kernel_.theta != gpr2.kernel_.theta
 
+
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
     if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
