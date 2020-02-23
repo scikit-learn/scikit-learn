@@ -810,7 +810,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         )
 
 
-class _CutoffClassifier(object):
+class _CutoffClassifier:
     """Cutoff point selection.
 
     It assumes that base_estimator has already been fit, and uses the input set
@@ -904,6 +904,9 @@ class _CutoffClassifier(object):
             max_tnr_index = np.argmax(1 - fpr[indices])
             self.decision_threshold_ = thresholds[indices[max_tnr_index]]
         return self
+
+    def _more_tags(self):
+        return {"binary_only": True}
 
 
 def _get_binary_score(clf, X, method=None, pos_label=1):
