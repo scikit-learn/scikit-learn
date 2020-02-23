@@ -279,9 +279,9 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         n_labels = labels.size
         if n_labels == 0:
             raise ValueError("'labels' should contains at least one label.")
-        if y_true.size == 0:
+        elif y_true.size == 0:
             return np.zeros((n_labels, n_labels), dtype=np.int)
-        if np.all([l not in y_true for l in labels]):
+        elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
