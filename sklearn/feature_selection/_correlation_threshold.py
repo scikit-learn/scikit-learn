@@ -52,7 +52,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
     See Also
     --------
     :class:`sklearn.cluster.FeatureAgglomeration` : Agglomerate features by
-        recursively merges features
+        recursively merging similar features
 
     References
     ----------
