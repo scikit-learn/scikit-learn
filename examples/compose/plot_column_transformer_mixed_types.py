@@ -90,11 +90,11 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 ###############################################################################
 # Use ``ColumnTransformer`` by selecting column by data types
 ###############################################################################
-# When dealing with cleaned dataset, the preprocessing can be automatic by
+# When dealing with a cleaned dataset, the preprocessing can be automatic by
 # using the data types of the column to decide whether to treat a column as a
-# numerical or categorical features.
+# numerical or categorical feature.
 # :func:`sklearn.compose.make_column_selector` gives this possibility.
-# First, let's only select a subset of columns to ease the simplify our
+# First, let's only select a subset of columns to simplify our
 # example.
 
 subset_feature = ['embarked', 'sex', 'pclass', 'age', 'fare']
@@ -107,14 +107,14 @@ X.info()
 
 ###############################################################################
 # We can observe that the `embarked` and `sex` columns were tagged as
-# `category` columns when lading the data with ``fetch_openml``. Therefore, we
+# `category` columns when loading the data with ``fetch_openml``. Therefore, we
 # can use this information to dispatch the categorical columns to the
 # ``categorical_transformer`` and the remaining columns to the
 # ``numerical_transformer``.
 
 ###############################################################################
-# .. note:: In practise, you will have to handle yourself the column data type.
-# If you want some columnw to be considered as `category`, you will have to
+# .. note:: In practice, you will have to handle yourself the column data type.
+# If you want some columns to be considered as `category`, you will have to
 # convert them into categorical columns. If you are using pandas, you can refer
 # to their documentation regarding `Categorical data
 # <https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html>`_.
