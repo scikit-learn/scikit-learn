@@ -443,7 +443,7 @@ class QuantileLossFunction(RegressionLossFunction):
     n_classes : int
         Number of classes.
 
-    alpha : float, default = 0.9
+    alpha : float, default=0.9
         The percentile.
     """
     def __init__(self, n_classes, alpha=0.9):

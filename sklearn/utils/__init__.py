@@ -58,9 +58,12 @@ _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
-    """Container object for datasets
+    """Container object exposing keys as attributes
 
-    Dictionary-like object that exposes its keys as attributes.
+    Bunch objects are sometimes used as an output for functions and methods.
+    They extend dictionaries by enabling values to be accessed by key,
+    `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
+
 
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
@@ -416,7 +419,7 @@ def _get_column_indices(X, key):
         return np.atleast_1d(idx).tolist()
     elif key_dtype == 'str':
         try:
-            all_columns = list(X.columns)
+            all_columns = X.columns
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
@@ -425,10 +428,10 @@ def _get_column_indices(X, key):
         elif isinstance(key, slice):
             start, stop = key.start, key.stop
             if start is not None:
-                start = all_columns.index(start)
+                start = all_columns.get_loc(start)
             if stop is not None:
                 # pandas indexing with strings is endpoint included
-                stop = all_columns.index(stop) + 1
+                stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
             return list(range(n_columns)[slice(start, stop)])
@@ -436,13 +439,18 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         try:
-            column_indices = [all_columns.index(col) for col in columns]
-        except ValueError as e:
-            if 'not in list' in str(e):
-                raise ValueError(
-                    "A given column is not a column of the dataframe"
-                ) from e
-            raise
+            column_indices = []
+            for col in columns:
+                col_idx = all_columns.get_loc(col)
+                if not isinstance(col_idx, numbers.Integral):
+                    raise ValueError(f"Selected columns, {columns}, are not "
+                                     "unique in dataframe")
+                column_indices.append(col_idx)
+
+        except KeyError as e:
+            raise ValueError(
+                "A given column is not a column of the dataframe"
+            ) from e
 
         return column_indices
     else:
@@ -476,11 +484,10 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
@@ -621,11 +628,10 @@ def shuffle(*arrays, **options):
     Other Parameters
     ----------------
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
@@ -748,6 +754,12 @@ def gen_batches(n, batch_size, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
+    if not isinstance(batch_size, numbers.Integral):
+        raise TypeError("gen_batches got batch_size=%s, must be an"
+                        " integer" % batch_size)
+    if batch_size <= 0:
+        raise ValueError("gen_batches got batch_size=%s, must be"
+                         " positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size

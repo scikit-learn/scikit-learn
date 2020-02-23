@@ -7,8 +7,10 @@ assignees: ''
 
 ---
 
+<!--
 Before submitting a bug, please make sure the issue hasn't been already
 addressed by searching through the past issues.
+-->
 
 #### Describe the bug
 <!--
