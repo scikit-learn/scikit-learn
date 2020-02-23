@@ -23,7 +23,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- list models here
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
+  and :class:`ensemble.IsolationForest`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -54,11 +55,35 @@ Changelog
   ``tol=0`` as with the default ``algorithm="full"``. :pr:`16075` by
   :user:`Erich Schubert <kno10>`.
 
-- |Efficiency| :class:`cluster.Birch` implementation of the predict method 
-  avoids high memory footprint by calculating the distances matrix using 
+- |Efficiency| :class:`cluster.Birch` implementation of the predict method
+  avoids high memory footprint by calculating the distances matrix using
   a chunked scheme.
-  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and 
+  :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
+
+- |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
+  could not have a `np.int64` type. :pr:`16484`
+  by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
+  :class:`cluster.SpectralCoclustering` and
+  :class:`cluster.SpectralBiclustering` is deprecated. They now use OpenMP
+  based parallelism. For more details on how to control the number of threads,
+  please refer to our :ref:`parallelism` notes. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
+  deprecated. It has no effect. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
+  optimized implementation. Parallelism is now over the data instead of over
+  initializations allowing better scalability. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| :class:`cluster.KMeans` now supports sparse data when
+  `solver = "elkan"`. :pr:`11950` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -67,10 +92,18 @@ Changelog
   returns correct results when one of the transformer steps applies on an
   empty list of columns :pr:`15963` by `Roman Yurchak`_.
 
+- |Efficiency| :class:`compose.ColumnTransformer` is now faster when working
+  with dataframes and strings are used to specific subsets of data for
+  transformers. :pr:`16431` by `Thomas Fan`_.
+
+- |Fix| :func:`compose.ColumnTransformer.fit` will error when selecting
+  a column name that is not unique in the dataframe. :pr:`16431` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| Added ``return_centers`` parameter  in  
+- |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
   :pr:`15709` by :user:`<shivamgargsya>` and
@@ -102,6 +135,10 @@ Changelog
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
+- |Enhancement| :class:`decomposition.NMF` and
+  :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
+  :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -124,6 +161,20 @@ Changelog
   Stumps (trees with one split) are now allowed.
   :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
 
+- |Feature| Early stopping in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is now determined with a
+  new `early_stopping` parameter instead of `n_iter_no_change`. Default value
+  is 'auto', which enables early stopping if there are at least 10,000
+  samples in the training set. :pr:`14516` by :user:`Johann Faouzi
+  <johannfaouzi>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
+  where the attribute `estimators_samples_` did not generate the proper indices
+  used during `fit`.
+  :pr:`16437` by :user:`Jin-Hwan CHO <chofchof>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -142,9 +193,20 @@ Changelog
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
-  
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
+  ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
+  for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
+  :class:`linear_model:Lasso` for dense feature matrix `X`.
+  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
@@ -167,6 +229,14 @@ Changelog
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |API| Deprecated public attributes `standard_coef_`, `standard_intercept_`,
+  `average_coef_`, and `average_intercept_` in
+  :class:`linear_model.SGDClassifier`,
+  :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor`.
+  :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
+
 - |Fix| :class:`linear_model.LogisticRegression` will now avoid an unnecessary
   iteration when `solver='newton-cg'` by checking for inferior or equal instead
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
@@ -176,11 +246,23 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
+
+- |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
+  an error when `y_true` and `y_pred` were length zero and `labels` was
+  not `None`. In addition, we raise an error when an empty list is given to
+  the `labels` parameter.
+  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
+
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
+  instead of the parameter `name`. It results in a different plot when calling
+  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
+  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -195,6 +277,17 @@ Changelog
   when `y=None`.
   :pr:`15918` by :user:`Luca Kubin <lkubin>`.
 
+- |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
+  be removed in 0.25. :pr:`16401` by
+  :user:`Arie Pratama Sutiono <ariepratama>`
+
+:mod:`sklearn.multioutput`
+..........................
+
+- |Enhancement| :class:`multioutput.RegressorChain` now supports `fit_params`
+  for `base_estimator` during `fit`.
+  :pr:`16111` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.naive_bayes`
 .............................
 
@@ -206,10 +299,10 @@ Changelog
 :mod:`sklearn.neighbors`
 ..............................
 
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object 
+- |Fix| Fix a bug which converted a list of arrays into a 2-D object
   array instead of a 1-D array containing NumPy arrays. This bug
   was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and  
+  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
@@ -267,3 +360,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
+  distance matrix is not square and `affinity=precomputed`. 
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
