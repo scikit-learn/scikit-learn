@@ -111,7 +111,7 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float or array-like of shape (n_features,), default=-no.inf
+    min_value : float or array-like of shape (n_features,), default=-np.inf
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one min value for
         each feature. The default is `-np.inf`.
