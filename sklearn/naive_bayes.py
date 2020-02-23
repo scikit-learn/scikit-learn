@@ -121,48 +121,50 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     """Naive Bayes metaclassifier for multiple naive Bayes models
 
-    The General Naive Bayes classifier is a metaestimator that
-    allows for multiple distributional assumptions on the features
-    of the data like the Bernoulli, Gaussian, multinomial, and
-    categorical distributions.
-
-    This is made possible by composing a joint probability distribution
-    as the product of independent models or probability distributions.
-    Each constituent distribution is fitted on a subset of features.
+    The General Naive Bayes classifier is a metaestimator that allows
+    different features in the data to be modeled with different naive Bayes
+    models. This is useful for data containing numerical and categorical 
+    features, where numerical features may be modeled as Gaussian distributions
+    and categorical features as categorical distributions.
 
     Read more in the :ref:`User Guide <general_naive_bayes>`.
 
     Parameters
     ----------
     models : list of tuples
-        List of (name, naive bayes estimator, column(s)) tuples specifying the
-        assumptions of distribution on the features to apply
-        naive Bayes on subsets of the data.
+        List of (name, naive Bayes model, column(s)) tuples specifying the
+        naive Bayes models to apply on the corresponding columns.
+        This is similar to :class:`Pipeline` or :class:`ColumnTransformer`.
 
         name : string
-            Like in Pipeline and ColumnTransformer, this allows the
-            distribution and its parameters to be set using ``set_params``.
+            This is a user-defined identifier that allows the models and its 
+            parameters to be retrieved and set.
         naive Bayes model : Estimator
-            Estimator must support :term:`fit`, :term:`predict`
-            and :term:`_joint_log_likelihood`.
-        column(s) : array-like of string or int, slicec
-            Indexes the data on its second axis. Integers are interpreted as
-            positional columns, while strings can reference DataFrame columns
-            by name. A scalar string or int should be used where
-            ``transformer`` expects X to be a 1d array-like (vector),
-            otherwise a 2d array will be passed to the transformer.
+            The naive Bayes model represents the distribution assumption on 
+            the features. Use our naive Bayes estimators like 
+            :ref:`<gaussian_naive_bayes>` and
+            :ref:`<categorical_naive_bayes>`. Custom estimators must support 
+            :term:`fit`, :term:`predict` and `_joint_log_likelihood`.
+        column(s) : array-like of {string or int}, slice, or callable
+            Features that correspond to the naive Bayes models. Indexes 
+            the data on its second axis. Integers are interpreted as 
+            positional columns, while strings reference DataFrame columns 
+            by name. A callable is passed the input data `X` and can return
+            any of the above. For example, 
+            :func:`sklearn.compose.make_column_selector` can select multiple
+            columns by name or dtype.
 
     Attributes
     ----------
     models_ : list of tuples
-        Verified list of (name, naive bayes estimator, column(s))
+        Verified list of (name, naive Bayes model, column(s)),
         based on `self.models`.
 
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
     n_features_ : int
-        Number of features of each sample.
+        Number of features in each sample.
 
     Examples
     --------
@@ -191,7 +193,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Fit X and y to the specified naive Bayes estimators.
+        """Fit X and y to the naive Bayes estimators.
 
         Parameters
         ----------
@@ -290,6 +292,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             in zip(value, self.models)]
 
     def get_params(self, deep=True):
+        """Get parameters for this metaestimator"""
         return self._get_params('_models', deep=deep)
 
     def set_params(self, **kwargs):

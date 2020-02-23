@@ -264,54 +264,35 @@ of feature :math:`i`.
 General Naive Bayes
 -------------------
 
-:class:`GeneralNB` implements multiple naive Bayes algorithms across the
-features in the dataset. Unlike other naive Bayes algorithms in this module,
-:class:`GeneralNB` can assume different distributions for different features.
-The naive Bayes algorithms correspond to the probability distributions
-that the respective features are assumed to follow. Bayes' theorem states
-the following
-relationship, given class variable :math:`y` and dependent feature
-vector :math:`x_1` through :math:`x_n`, :
+:class:`GeneralNB` implements multiple naive Bayes models across the
+features in the dataset by assuming different distributions for different
+features, while maintaining conditional independence between every pair of
+features given the value of a class variable.
+
+A practical use for this metaestimator is when encountering data with
+both numerical and categorical features. For example, if we assume that
+feature 1 (numerical) follow the Gaussian distribution
+and feature 2 (categorical) follows categorical, i.e.,
 
 .. math::
 
-   P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
-                                    {P(x_1, \dots, x_n)}
-
-A use case for this metaestimator is when the dataset consists of obvious
-distributions like the categorical and Gaussian distributions. We assume
-that the features are independent of each other and some features follow
-the categorical distributions, while the rest follow Gaussian.
-
-The posterior distribution is the same, except that the features come from
-the different distributions:
+   X_1 \mid y \sim \text{Normal}(\mu,\sigma^2)
 
 .. math::
 
-   p(y|x_1, x_2, x_3) = p(y|x_1) p(y|x_2) p(y|x_3)
+   X_2 \mid y \sim \text{Categorical}(\text{p})
 
-where
+and conditional independence between the two features given :math:`y`,
+we can use GeneralNB to model this data.
 
-.. math::
-
-   X_1 ~ Categorical(p) \\
-   X_2 ~ N(0,1) \\
-   X_3 ~ Categorical(4)
-
-Specifying the different naive Bayes models is similar to that of
-ColumnTransformer - you specify a name, the naive Bayes model and the
-column indices or names of the features that follow a distribution
-corresponding to this model.
-
-As :class:`GeneralNB` is a metaestimator, it follows that the data
-requirements of each feature depend on the requirements imposed
-by the naive Bayes estimators specified.
-
-GeneralNB is particularly useful for datasets
+Here is a code example involving a toy dataset with 5 features.
+We first import the relevant libraries:
 
    >>> import numpy as np
    >>> import pandas as pd
    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
+
+The data has 5 features - the first 3 are numerical, the last 2 categorical:
 
    >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
    >>>               [2.7, 3.8, 2.3, 1, 0],
@@ -319,45 +300,47 @@ GeneralNB is particularly useful for datasets
    >>> y = np.array([1, 0, 0])
    >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
 
+Specifying the different naive Bayes models is similar to that of
+:class:`ColumnTransformer` or :class:`Pipeline` - you specify
+the name, the naive Bayes model and the corresponding columns.
+See :mod:`naive_bayes` for a list of our naive Bayes models.
+
    >>> clf = GeneralNB([
    >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
-   >>>     ("bernoulli", BernoulliNB(), [3, 4])
+   >>>     ("categorical", CategoricalNB(), [3, 4])
    >>> ])
    >>> clf.fit(X, y)
    >>> print(clf.predict(X_test))
    [1]
-   >>> print(clf.score([[2.7, 3.8, 1, 0, 1]],[0]))
-   1.0
 
-You can also specify the column names of a pandas DataFrame
+You can also specify the column names of a pandas DataFrame:
 
-   >>> df = pd.DataFrame(X)
-   >>> df.columns = ["a", "b", "c", "d", "e"]
-   >>> df["y"] = [1, 0, 0]
-   >>> df_test = pd.DataFrame(X_test)
-   >>> df_test.columns = ["a", "b", "c", "d", "e"]
-
+   >>> X = pd.DataFrame(X)
+   >>> X.columns = ["a", "b", "c", "d", "e"]
+   >>> y = pd.DataFrame(X)
+   >>>
    >>> clf = GeneralNB([
    >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
-   >>>     ("bernoulli", BernoulliNB(), ["d", "e"])
+   >>>     ("categorical", CategoricalNB(), ["d", "e"])
    >>> ])
-   >>> clf.fit(df.iloc[:,:-1], df["y"])
-   >>> print(clf.predict(df_test))
-   [1]
+   >>> clf.fit(X, y)
 
-You may also select columns from `make_column_selector`.
+Alternatively, you may also select DataFrame columns using
+:func:`sklearn.compose.make_column_selector`.
 
    >>> from sklearn.compose import make_column_selector
    >>> clf = GeneralNB([
    >>>     ("gaussian", GaussianNB(), make_column_selector(pattern=r"[abc]")),
-   >>>     ("bernoulli", BernoulliNB(), make_column_selector(pattern=r"[de]"))
+   >>>     ("categorical", CategoricalNB(), make_column_selector(pattern=r"[de]"))
    >>> ])
-   >>> clf.fit(df.iloc[:,:-1], df["y"])
+   >>> clf.fit(X, y)
    >>> print(clf.predict(df_test))
    [1]
 
-You can also access the attributes and methods of the fitted estimators using
-the `named_models_` computed property. From the previous example,
+Access the attributes and methods of the fitted estimators using
+the `named_models_` computed property and the identifiers in the `self.model`
+parameters. Below we obtain the parameters of the fitted Bernoulli distribution
+using `bernoulli`.
 
    >>> clf.named_models_.bernoulli.var_smoothing
    1e-09
