@@ -22,7 +22,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._sgd_fast import plain_sgd, average_sgd, _plain_sgd
+from ._sgd_fast import _plain_sgd
 from ..utils import compute_class_weight
 from ._sgd_fast import Hinge
 from ._sgd_fast import SquaredHinge
@@ -422,39 +422,21 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
     tol = est.tol if est.tol is not None else -np.inf
 
-    if not est.average:
-        result = plain_sgd(coef, intercept, est.loss_function_,
-                           penalty_type, alpha, C, est.l1_ratio,
-                           dataset, validation_mask, est.early_stopping,
-                           validation_score_cb, int(est.n_iter_no_change),
-                           max_iter, tol, int(est.fit_intercept),
-                           int(est.verbose), int(est.shuffle), seed,
-                           pos_weight, neg_weight,
-                           learning_rate_type, est.eta0,
-                           est.power_t, est.t_, intercept_decay)
+    coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
+        coef, intercept, average_coef, average_intercept, est.loss_function_,
+        penalty_type, alpha, C, est.l1_ratio, dataset, validation_mask,
+        est.early_stopping, validation_score_cb, int(est.n_iter_no_change),
+        max_iter, tol, int(est.fit_intercept), int(est.verbose),
+        int(est.shuffle), seed, pos_weight, neg_weight, learning_rate_type,
+        est.eta0, est.power_t, est.t_, intercept_decay, est.average)
 
-    else:
-        standard_coef, standard_intercept, average_coef, average_intercept, \
-            n_iter_ = average_sgd(coef, intercept, average_coef,
-                                  average_intercept, est.loss_function_,
-                                  penalty_type, alpha, C, est.l1_ratio,
-                                  dataset, validation_mask, est.early_stopping,
-                                  validation_score_cb,
-                                  int(est.n_iter_no_change), max_iter, tol,
-                                  int(est.fit_intercept), int(est.verbose),
-                                  int(est.shuffle), seed, pos_weight,
-                                  neg_weight, learning_rate_type, est.eta0,
-                                  est.power_t, est.t_, intercept_decay,
-                                  est.average)
-
+    if est.average:
         if len(est.classes_) == 2:
             est._average_intercept[0] = average_intercept
         else:
             est._average_intercept[i] = average_intercept
 
-        result = standard_coef, standard_intercept, n_iter_
-
-    return result
+    return coef, intercept, n_iter_
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
