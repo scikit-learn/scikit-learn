@@ -114,10 +114,10 @@ X.info()
 
 ###############################################################################
 # .. note:: In practice, you will have to handle yourself the column data type.
-# If you want some columns to be considered as `category`, you will have to
-# convert them into categorical columns. If you are using pandas, you can refer
-# to their documentation regarding `Categorical data
-# <https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html>`_.
+#    If you want some columns to be considered as `category`, you will have to
+#    convert them into categorical columns. If you are using pandas, you can
+#    refer to their documentation regarding `Categorical data
+#    <https://pandas.pydata.org/pandas-docs/stable/user_guide/categorical.html>`_.
 
 from sklearn.compose import make_column_selector as selector
 
