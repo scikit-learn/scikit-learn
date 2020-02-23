@@ -51,20 +51,20 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     Parameters
     ----------
     transformers : list of tuples
-        List of (name, transformer, column(s)) tuples specifying the
+        List of (name, transformer, columns) tuples specifying the
         transformer objects to be applied to subsets of the data.
 
-        name : string
+        name : str
             Like in Pipeline and FeatureUnion, this allows the transformer and
             its parameters to be set using ``set_params`` and searched in grid
             search.
-        transformer : estimator or {'passthrough', 'drop'}
+        transformer : {'drop', 'passthrough'} or estimator
             Estimator must support :term:`fit` and :term:`transform`.
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        columns :  str, array-like of str, int, array-like of int, \
+                array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -72,9 +72,9 @@ boolean mask array or callable
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_transformer`.
+            :obj:`make_column_selector`.
 
-    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -88,25 +88,25 @@ boolean mask array or callable
         Note that using this feature requires that the DataFrame columns
         input at :term:`fit` and :term:`transform` have identical order.
 
-    sparse_threshold : float, default = 0.3
+    sparse_threshold : float, default=0.3
         If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
         stacked result will be dense, and this keyword will be ignored.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    transformer_weights : dict, optional
+    transformer_weights : dict, default=None
         Multiplicative weights for features per transformer. The output of the
         transformer is multiplied by these weights. Keys are transformer names,
         values the weights.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -124,13 +124,13 @@ boolean mask array or callable
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-    named_transformers_ : Bunch object, a dictionary with attribute access
+    named_transformers_ : Bunch
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
 
-    sparse_output_ : boolean
-        Boolean flag indicating wether the output of ``transform`` is a
+    sparse_output_ : bool
+        Boolean flag indicating whether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
 
@@ -206,13 +206,13 @@ boolean mask array or callable
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         return self._get_params('_transformers', deep=deep)
@@ -350,8 +350,9 @@ boolean mask array or callable
         """
         check_is_fitted(self)
         feature_names = []
-        for name, trans, _, _ in self._iter(fitted=True):
-            if trans == 'drop':
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop' or (
+                    hasattr(column, '__len__') and not len(column)):
                 continue
             elif trans == 'passthrough':
                 raise NotImplementedError(
@@ -466,11 +467,11 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             Input data, of which specified subsets are used to fit the
             transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples,...), default=None
             Targets for supervised learning.
 
         Returns
@@ -489,16 +490,17 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             Input data, of which specified subsets are used to fit the
             transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples,), default=None
             Targets for supervised learning.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : {array-like, sparse matrix} of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -544,12 +546,13 @@ boolean mask array or callable
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_features]
+        X : {array-like, dataframe} of shape (n_samples, n_features)
             The data to be transformed by subset.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : {array-like, sparse matrix} of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
             any result is a sparse matrix, everything will be converted to
@@ -602,7 +605,7 @@ boolean mask array or callable
 
         Parameters
         ----------
-        Xs : List of numpy arrays, sparse arrays, or DataFrames
+        Xs : list of {array-like, sparse matrix, dataframe}
         """
         if self.sparse_output_:
             try:
@@ -669,25 +672,26 @@ def make_column_transformer(*transformers, **kwargs):
     Parameters
     ----------
     *transformers : tuples
-        Tuples of the form (transformer, column(s)) specifying the
+        Tuples of the form (transformer, columns) specifying the
         transformer objects to be applied to subsets of the data.
 
-        transformer : estimator or {'passthrough', 'drop'}
+        transformer : {'drop', 'passthrough'} or estimator
             Estimator must support :term:`fit` and :term:`transform`.
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
             untransformed, respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        columns : str,  array-like of str, int, array-like of int, slice, \
+                array-like of bool or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name. A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
-            above.
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_selector`.
 
-    remainder : {'drop', 'passthrough'} or estimator, default 'drop'
+    remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
@@ -699,7 +703,7 @@ boolean mask array or callable
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
 
-    sparse_threshold : float, default = 0.3
+    sparse_threshold : float, default=0.3
         If the transformed output consists of a mix of sparse and dense data,
         it will be stacked as a sparse matrix if the density is lower than this
         value. Use ``sparse_threshold=0`` to always return dense.
@@ -707,13 +711,13 @@ boolean mask array or callable
         the stacked result will be sparse or dense, respectively, and this
         keyword will be ignored.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
