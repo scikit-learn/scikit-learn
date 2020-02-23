@@ -258,6 +258,12 @@ Changelog
   the `labels` parameter.
   :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
 
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
+  instead of the parameter `name`. It results in a different plot when calling
+  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
+  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
