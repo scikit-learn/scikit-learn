@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 import warnings
+from copy import deepcopy
 from inspect import signature
 
 from math import log
@@ -18,19 +19,30 @@ from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from .preprocessing import LabelEncoder
 
-from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
-                   MetaEstimatorMixin)
-from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_X_y, check_array, indexable, column_or_1d
-from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
+from .base import BaseEstimator
+from .base import ClassifierMixin
+from .base import MetaEstimatorMixin
+from .base import RegressorMixin
+from .base import clone
 from .isotonic import IsotonicRegression
-from .svm import LinearSVC
 from .metrics import precision_recall_curve
 from .metrics import roc_curve
 from .model_selection import check_cv
+from .preprocessing import label_binarize
+from .preprocessing import LabelBinarizer
+from .svm import LinearSVC
+from .utils import check_X_y
+from .utils import check_array
+from .utils import column_or_1d
+from .utils import indexable
+from .utils import _safe_indexing
+from .utils.multiclass import check_classification_targets
 from .utils.multiclass import type_of_target
+from .utils.validation import check_is_fitted
+from .utils.validation import check_consistent_length
+from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
@@ -602,7 +614,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     return prob_true, prob_pred
 
 
-class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """Decision threshold calibration for binary classification.
 
     Estimator that calibrates the decision threshold (cutoff point) that is
@@ -747,23 +759,32 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 raise ValueError('parameter beta must be a real number.'
                                  'Got {} instead'.format(type(self.beta)))
 
-        X, y = check_X_y(X, y)
+        self._base_estimator = (deepcopy(self.base_estimator)
+                                if self.cv != "prefit"
+                                else self.base_estimator)
 
+        X = check_array(
+            X, accept_sparse=['csc', 'csr'], force_all_finite=False,
+            allow_nd=True,
+        )
+        y = check_array(y, ensure_2d=False, dtype=None)
+        # FIXME: check_classification_targets should return the type of target
+        # as well
+        check_classification_targets(y)
         y_type = type_of_target(y)
         if y_type != 'binary':
-            raise ValueError('Expected target of binary type. Got {}'.format(
-                y_type))
+            raise ValueError(f'Expected target of binary type. Got {y_type}.')
 
         self.label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = self.label_encoder_.classes_
 
         y = self.label_encoder_.transform(y)
-        self.pos_label = self.label_encoder_.transform([self.pos_label])[0]
+        self._pos_label = self.label_encoder_.transform([self.pos_label])[0]
 
         if self.cv == 'prefit':
             self.decision_threshold_ = _CutoffClassifier(
-                self.base_estimator, self.strategy, self.method, self.beta,
-                self.threshold, self.pos_label
+                self._base_estimator, self.strategy, self.method, self.beta,
+                self.threshold, self._pos_label
             ).fit(X, y).decision_threshold_
             self.std_ = None
         else:
@@ -771,18 +792,22 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             decision_thresholds = []
 
             for train, test in cv.split(X, y):
-                estimator = clone(self.base_estimator).fit(X[train], y[train])
+                estimator = clone(self._base_estimator).fit(
+                    _safe_indexing(X, train), _safe_indexing(y, train)
+                )
                 decision_thresholds.append(
-                    _CutoffClassifier(estimator, self.strategy, self.method,
-                                      self.beta, self.threshold,
-                                      self.pos_label).fit(
-                        X[test], y[test]
+                    _CutoffClassifier(
+                        estimator, self.strategy, self.method,
+                        self.beta, self.threshold,
+                        self.pos_label
+                    ).fit(
+                        _safe_indexing(X, test), _safe_indexing(y, test)
                     ).decision_threshold_
                 )
             self.decision_threshold_ = np.mean(decision_thresholds)
             self.std_ = np.std(decision_thresholds)
 
-            self.base_estimator.fit(X, y)
+            self._base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
@@ -798,16 +823,17 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         C : array, shape (n_samples,)
             The predicted class
         """
-        X = check_array(X)
-        check_is_fitted(
-            self, ["label_encoder_", "decision_threshold_", "std_", "classes_"]
-        )
+        check_is_fitted(self)
 
-        y_score = _get_binary_score(self.base_estimator, X, self.method,
-                                    self.pos_label)
+        y_score = _get_binary_score(
+            self._base_estimator, X, self.method, self.pos_label
+        )
         return self.label_encoder_.inverse_transform(
             (y_score > self.decision_threshold_).astype(int)
         )
+
+    def _more_tags(self):
+        return {"binary_only": True}
 
 
 class _CutoffClassifier:
@@ -876,8 +902,9 @@ class _CutoffClassifier:
         self : object
             Instance of self
         """
-        y_score = _get_binary_score(self.base_estimator, X, self.method,
-                                    self.pos_label)
+        y_score = _get_binary_score(
+            self.base_estimator, X, self.method, self.pos_label
+        )
         if self.strategy == 'f_beta':
             precision, recall, thresholds = precision_recall_curve(
                 y, y_score, pos_label=self.pos_label
@@ -904,9 +931,6 @@ class _CutoffClassifier:
             max_tnr_index = np.argmax(1 - fpr[indices])
             self.decision_threshold_ = thresholds[indices[max_tnr_index]]
         return self
-
-    def _more_tags(self):
-        return {"binary_only": True}
 
 
 def _get_binary_score(clf, X, method=None, pos_label=1):
