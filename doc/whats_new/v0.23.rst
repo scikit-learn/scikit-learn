@@ -196,7 +196,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
@@ -204,7 +204,9 @@ Changelog
 
 - |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
   an error when `y_true` and `y_pred` were length zero and `labels` was
-  not `None`. :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`
+  not `None`. In addition, we raise an error when an empty list is given to
+  the `labels` parameter.
+  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
 
 :mod:`sklearn.model_selection`
 ..............................
