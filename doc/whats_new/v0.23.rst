@@ -252,6 +252,12 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
+- |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
+  an error when `y_true` and `y_pred` were length zero and `labels` was
+  not `None`. In addition, we raise an error when an empty list is given to
+  the `labels` parameter.
+  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
