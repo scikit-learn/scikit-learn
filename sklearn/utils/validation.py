@@ -1205,12 +1205,10 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=dtype)
-        else:
-            sample_weight = np.full(n_samples, sample_weight,
-                                    dtype=dtype)
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=dtype)
+    elif isinstance(sample_weight, numbers.Number):
+        sample_weight = np.full(n_samples, sample_weight, dtype=dtype)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
@@ -1292,7 +1290,7 @@ def _deprecate_positional_args(f):
             args_msg = ['{}={}'.format(name, arg)
                         for name, arg in zip(kwonly_args[:extra_args],
                                              args[-extra_args:])]
-            warnings.warn("Pass {} as keyword args. From version 0.24 "
+            warnings.warn("Pass {} as keyword args. From version 0.25 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
                           FutureWarning)
