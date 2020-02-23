@@ -244,7 +244,7 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
-- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where the parameter
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
   the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
   instead of the parameter `name`. It results in a different plot when calling
   :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
