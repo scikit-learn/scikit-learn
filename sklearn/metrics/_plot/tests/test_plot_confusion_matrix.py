@@ -226,8 +226,6 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
-
-
 @pytest.mark.parametrize(
     "clf", [LogisticRegression(),
             make_pipeline(StandardScaler(), LogisticRegression()),
