@@ -45,6 +45,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |MajorFeature| :class:`calibration.CutoffClassifier` calibrates the decision
+  threshold function of a classifier by maximizing a binary classification
+  metric through cross-validation.
+  :pr:`16525` by :user:`Prokopis Gryllos <PGryllos>`
+  and :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.cluster`
 ......................
 

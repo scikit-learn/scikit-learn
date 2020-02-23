@@ -603,12 +603,12 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
 
 
 class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
-    """Decision threshold calibration for binary classification
+    """Decision threshold calibration for binary classification.
 
-    Meta estimator that calibrates the decision threshold (cutoff point)
-    that is used for prediction. The methods for picking cutoff points make use
-    of traditional binary classification evaluation statistics such as the
-    true positive and true negative rates and F-scores.
+    Estimator that calibrates the decision threshold (cutoff point) that is
+    used for prediction. The methods for picking cutoff points make use of
+    traditional binary classification evaluation statistics such as the true
+    positive and true negative rates and F-scores.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
     be used for the selection of the cutoff point. Otherwise the decision
