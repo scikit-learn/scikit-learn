@@ -24,12 +24,12 @@ print(__doc__)
 # Download the dataset
 ###############################################################################
 #
-# We will use `Ames Housing`_ dataset which was first compiled by
-# Dean De Cock and became better known after it was used in `Kaggle
-# challenge`_. It is a set of 1460 residential homes in Ames, Iowa, each
-# described by 80 features. The task is to predict the final price of the
-# houses. In this example we will use only 20 most intersting features chosen
-# using GradientBoostingRegressor() and limit number of entries to 750 (here we don't show how to select most
+# We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
+# and became better known after it was used in `Kaggle challenge`_. It is a set
+# of 1460 residential homes in Ames, Iowa, each described by 80 features. The
+# task is to predict the final price of the houses. In this example we will use
+# only 20 most interesting features chosen using GradientBoostingRegressor()
+# and limit number of entries to 750 (here we don't show how to select most
 # interesting features, however please refer to:
 # :ref:`~examples.ensemble.plot_gradient_boosting_regression`).
 #
