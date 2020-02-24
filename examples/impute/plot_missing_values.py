@@ -13,8 +13,8 @@ Housing dataset for which the target is the median house value for California
 districts.
 
 Neither of those datasets has missing values. We will remove some of the
-values and compare the results of RandomForestRegressor on the full data and
-the data with the missing values imputed by different techniques.
+values and compare the results of RandomForestRegressor on the original data
+and the data with the missing values imputed by different techniques.
 
 """
 print(__doc__)
@@ -29,8 +29,8 @@ print(__doc__)
 # First we download the two datasets. Diabets dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
 # dataset is much larger with 20640 entires and 8 features and we will need to
-# fetch it. We will only use the first 500 entries here for sake of speeding up
-# the calculations but feel free to use the whole dataset.
+# fetch it. We will only use the first 500 entries for sake of speeding up the 
+# calculations but feel free to use the whole dataset.
 #
 
 import numpy as np
@@ -96,7 +96,8 @@ from sklearn.pipeline import make_pipeline, make_union
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
 
-# In addition of using an imputing method, we can also keep an indication of
+#
+# In addition to using an imputing method, we can also keep an indication of
 # the missing information using :func:`sklearn.impute.MissingIndicator` which
 # might carry some information.
 #
@@ -123,6 +124,7 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
+#
 # Now, we will calculate the score on the original data sets
 #
 
@@ -138,6 +140,7 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
                                                         y_california)
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
+#
 # Next, we will estimate the score after replacing missing values by 0
 #
 
@@ -156,6 +159,7 @@ mses_california[1], stds_california[1] = get_impute_zero_score(
 mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
+#
 # Estimate the score after kNN-imputation of the missing values
 #
 # With ``KNNImputer``, missing values can be imputed using the weighted
@@ -174,6 +178,7 @@ mses_california[2], stds_california[2] = get_impute_KNN_score(
 mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
+#
 # Estimate the score after imputation (mean strategy) of the missing values
 #
 
