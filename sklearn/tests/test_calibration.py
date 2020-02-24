@@ -15,19 +15,14 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import brier_score_loss
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
 from sklearn.metrics import log_loss
-from sklearn.metrics import recall_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
-from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -389,7 +384,7 @@ def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
 def test_cutoffclassifier_not_binary():
     X, y = load_iris(return_X_y=True)
     with pytest.raises(ValueError, match="Expected target of binary type."):
-        clf = CutoffClassifier(base_estimator=LogisticRegression()).fit(X, y)
+        CutoffClassifier(base_estimator=LogisticRegression()).fit(X, y)
 
 
 def test_cutoffclassifier_limit_tpr_tnr():

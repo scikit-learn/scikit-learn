@@ -7,9 +7,7 @@
 #
 # License: BSD 3 clause
 
-from copy import deepcopy
 from inspect import signature
-import numbers
 import warnings
 
 from math import log
@@ -28,10 +26,8 @@ from .base import clone
 from .exceptions import NotFittedError
 from .isotonic import IsotonicRegression
 from .metrics import balanced_accuracy_score
-from .metrics import precision_recall_curve
 from .metrics import roc_curve
 from .model_selection import check_cv
-from .model_selection import cross_val_predict
 from .preprocessing import label_binarize
 from .preprocessing import LabelBinarizer
 from .svm import LinearSVC
@@ -39,7 +35,6 @@ from .utils import check_X_y
 from .utils import check_array
 from .utils import column_or_1d
 from .utils import indexable
-from .utils import _safe_indexing
 from .utils.multiclass import check_classification_targets
 from .utils.multiclass import type_of_target
 from .utils.validation import check_is_fitted
@@ -784,7 +779,7 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 y, y_score, pos_label=self.pos_label
             )
             if self.objective_metric == "tnr":
-                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]
+                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]  # noqa
 
             threshold_idx = np.searchsorted(
                 eval(self.objective_metric), self.objective_value
