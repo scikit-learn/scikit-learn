@@ -197,6 +197,10 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
+- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
+  chunking pairwise distance computation.
+  :pr:`16397` by `Joel Nothman`_.
+
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
@@ -244,6 +248,10 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
+  its ``reduce_func`` to not have a return value, enabling in-place operations.
+  :pr:`16397` by `Joel Nothman`_.
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`.

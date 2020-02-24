@@ -6,7 +6,7 @@ import numpy as np
 
 from ._base import _BaseImputer
 from ..utils.validation import FLOAT_DTYPES
-from ..metrics import pairwise_distances
+from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
 from ..neighbors._base import _check_weights
@@ -217,71 +217,81 @@ class KNNImputer(_BaseImputer):
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
+        valid_mask = ~np.all(mask_fit_X, axis=0)
 
-        # Removes columns where the training data is all nan
         if not np.any(mask):
-            valid_mask = ~np.all(mask_fit_X, axis=0)
+            # No missing values in X
+            # Remove columns where the training data is all nan
             return X[:, valid_mask]
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
-        # Pairwise distances between receivers and fitted samples
-        dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
-                                  metric=self.metric,
-                                  missing_values=self.missing_values,
-                                  force_all_finite=force_all_finite)
+        non_missing_fix_X = np.logical_not(mask_fit_X)
 
         # Maps from indices from X to indices in dist matrix
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
-        non_missing_fix_X = np.logical_not(mask_fit_X)
+        def process_chunk(dist_chunk, start):
+            row_missing_chunk = row_missing_idx[start:start + len(dist_chunk)]
 
-        # Find and impute missing
-        valid_idx = []
-        for col in range(X.shape[1]):
-
-            potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
-
-            # column was all missing during training
-            if len(potential_donors_idx) == 0:
-                continue
-
-            # column has no missing values
-            if not np.any(mask[:, col]):
-                valid_idx.append(col)
-                continue
-
-            valid_idx.append(col)
-
-            receivers_idx = np.flatnonzero(mask[:, col])
-
-            # distances for samples that needed imputation for column
-            dist_subset = (dist[dist_idx_map[receivers_idx]]
-                           [:, potential_donors_idx])
-
-            # receivers with all nan distances impute with mean
-            all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
-            all_nan_receivers_idx = receivers_idx[all_nan_dist_mask]
-
-            if all_nan_receivers_idx.size:
-                col_mean = np.ma.array(self._fit_X[:, col],
-                                       mask=mask_fit_X[:, col]).mean()
-                X[all_nan_receivers_idx, col] = col_mean
-
-                if len(all_nan_receivers_idx) == len(receivers_idx):
-                    # all receivers imputed with mean
+            # Find and impute missing by column
+            for col in range(X.shape[1]):
+                if not valid_mask[col]:
+                    # column was all missing during training
                     continue
 
-                # receivers with at least one defined distance
-                receivers_idx = receivers_idx[~all_nan_dist_mask]
-                dist_subset = (dist[dist_idx_map[receivers_idx]]
+                col_mask = mask[row_missing_chunk, col]
+                if not np.any(col_mask):
+                    # column has no missing values
+                    continue
+
+                potential_donors_idx, = np.nonzero(non_missing_fix_X[:, col])
+
+                # receivers_idx are indices in X
+                receivers_idx = row_missing_chunk[np.flatnonzero(col_mask)]
+
+                # distances for samples that needed imputation for column
+                dist_subset = (dist_chunk[dist_idx_map[receivers_idx] - start]
                                [:, potential_donors_idx])
 
-            n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
-            value = self._calc_impute(dist_subset, n_neighbors,
-                                      self._fit_X[potential_donors_idx, col],
-                                      mask_fit_X[potential_donors_idx, col])
-            X[receivers_idx, col] = value
+                # receivers with all nan distances impute with mean
+                all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
+                all_nan_receivers_idx = receivers_idx[all_nan_dist_mask]
 
-        return super()._concatenate_indicator(X[:, valid_idx], X_indicator)
+                if all_nan_receivers_idx.size:
+                    col_mean = np.ma.array(self._fit_X[:, col],
+                                           mask=mask_fit_X[:, col]).mean()
+                    X[all_nan_receivers_idx, col] = col_mean
+
+                    if len(all_nan_receivers_idx) == len(receivers_idx):
+                        # all receivers imputed with mean
+                        continue
+
+                    # receivers with at least one defined distance
+                    receivers_idx = receivers_idx[~all_nan_dist_mask]
+                    dist_subset = (dist_chunk[dist_idx_map[receivers_idx]
+                                              - start]
+                                   [:, potential_donors_idx])
+
+                n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
+                value = self._calc_impute(
+                    dist_subset,
+                    n_neighbors,
+                    self._fit_X[potential_donors_idx, col],
+                    mask_fit_X[potential_donors_idx, col])
+                X[receivers_idx, col] = value
+
+        # process in fixed-memory chunks
+        gen = pairwise_distances_chunked(
+            X[row_missing_idx, :],
+            self._fit_X,
+            metric=self.metric,
+            missing_values=self.missing_values,
+            force_all_finite=force_all_finite,
+            reduce_func=process_chunk)
+        for chunk in gen:
+            # process_chunk modifies X in place. No return value.
+            pass
+
+        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
