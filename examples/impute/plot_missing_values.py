@@ -185,7 +185,6 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
 """
 
 
-
 def get_impute_KNN_score(X_missing, y_missing):
     imputer = KNNImputer(missing_values=0)
     knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
@@ -198,9 +197,12 @@ mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
 
-#
-# Estimate the score after imputation (mean strategy) of the missing values
-#
+"""
+-------------------------------------------------------------------------------
+ Impute missing values with mean
+-------------------------------------------------------------------------------
+
+"""
 
 
 def get_impute_mean(X_missing, y_missing):
@@ -215,15 +217,18 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
 
 
-# Estimate the score after iterative imputation of the missing values
-#
-# Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
-# round-robin linear regression, treating every variable as an output in
-# turn.
-# The version implemented assumes Gaussian (output) variables. If your
-# features are obviously non-Normal, consider transforming them to look more
-# Normal so as to potentially improve performance.
-#
+"""
+-------------------------------------------------------------------------------
+Iterative imputation of the missing values
+-------------------------------------------------------------------------------
+
+ Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
+ round-robin linear regression, treating every variable as an output in turn.
+ The version implemented assumes Gaussian (output) variables. If your features
+ are obviously non-Normal, consider transforming them to look more Normal so as
+ to potentially improve performance.
+
+"""
 
 
 def get_impute_iterative(X_missing, y_missing):
