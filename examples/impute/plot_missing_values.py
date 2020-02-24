@@ -96,15 +96,13 @@ from sklearn.pipeline import make_pipeline, make_union
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
 
-"""
--------------------------------------------------------------------------------
- Missing information
--------------------------------------------------------------------------------
- In addition to using an imputing method, we can also keep an indication of
- the missing information using :func:`sklearn.impute.MissingIndicator` which
- might carry some information.
-
-"""
+##############################################################################
+# Missing information
+#------------------------------------------------------------------------------
+# In addition to using an imputing method, we can also keep an indication of
+# the missing information using :func:`sklearn.impute.MissingIndicator` which
+# might carry some information.
+#
 
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
@@ -129,13 +127,12 @@ mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
 
-"""
--------------------------------------------------------------------------------
- Estimate the score
--------------------------------------------------------------------------------
- First, we want to estimate the score on the original data
-
-"""
+##############################################################################
+# Estimate the score
+#------------------------------------------------------------------------------
+# First, we want to estimate the score on the original data
+#
+#
 
 
 def get_full_score(X_full, y_full):
@@ -150,15 +147,13 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
 
-"""
--------------------------------------------------------------------------------
+##############################################################################
  Replace missing values by 0
--------------------------------------------------------------------------------
-
- Now we will estimate the score on the data where the missing values are
- replaced by 0
-
-"""
+#------------------------------------------------------------------------------
+#
+# Now we will estimate the score on the data where the missing values are
+# replaced by 0
+#
 
 
 def get_impute_zero_score(X_missing, y_missing):
@@ -176,15 +171,13 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
 
-"""
--------------------------------------------------------------------------------
- kNN-imputation of the missing values
--------------------------------------------------------------------------------
+###############################################################################
+# kNN-imputation of the missing values
+#------------------------------------------------------------------------------
+#
+# With ``KNNImputer``, missing values can be imputed using the weighted
+# or unweighted mean of the desired number of nearest neighbors.
 
- With ``KNNImputer``, missing values can be imputed using the weighted
- or unweighted mean of the desired number of nearest neighbors.
-
-"""
 
 
 def get_impute_KNN_score(X_missing, y_missing):
@@ -199,12 +192,10 @@ mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
 
-"""
--------------------------------------------------------------------------------
- Impute missing values with mean
--------------------------------------------------------------------------------
-
-"""
+###############################################################################
+# Impute missing values with mean
+#------------------------------------------------------------------------------
+#
 
 
 def get_impute_mean(X_missing, y_missing):
@@ -219,10 +210,10 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
 
 
-"""
--------------------------------------------------------------------------------
-Iterative imputation of the missing values
--------------------------------------------------------------------------------
+###############################################################################
+# Iterative imputation of the missing values
+#------------------------------------------------------------------------------
+#
 
  Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
  round-robin linear regression, treating every variable as an output in turn.
