@@ -174,13 +174,9 @@ string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-r2score = model.score(X_train, y_train)
-string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
-r2score = model.score(X_test, y_test)
-string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 fig, ax = plt.subplots(figsize=(5, 5))
-sns.regplot(y_test, y_pred)
-
+plt.scatter(y_test, y_pred)
+ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
 plt.text(3, 20, string_score)
 plt.title('Ridge model, small regularization')
 plt.ylabel('Model predictions')
@@ -190,7 +186,8 @@ plt.ylim([0, 27])
 
 ##############################################################################
 # The model learnt is far from being a good model making accurate predictions:
-# the R squared score is very low.
+# this is obvious when looking at the plot above, where good predictions
+# should lie on the red line.
 # In the following section, we will interpret the coefficients of the model.
 # While we do so, we should keep in mind that any conclusion we way draw will
 # be about
@@ -406,12 +403,9 @@ string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-r2score = model.score(X_train, y_train)
-string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
-r2score = model.score(X_test, y_test)
-string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 fig, ax = plt.subplots(figsize=(6, 6))
-sns.regplot(y_test, y_pred)
+plt.scatter(y_test, y_pred)
+ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
@@ -494,13 +488,10 @@ string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-r2score = model.score(X_train, y_train)
-string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
-r2score = model.score(X_test, y_test)
-string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 
 fig, ax = plt.subplots(figsize=(6, 6))
-sns.regplot(y_test, y_pred)
+plt.scatter(y_test, y_pred)
+ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
@@ -568,13 +559,10 @@ string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-r2score = model.score(X_train, y_train)
-string_score += '\nR2 score on training set: {0:.4f}'.format(r2score)
-r2score = model.score(X_test, y_test)
-string_score += '\nR2 score on testing set: {0:.4f}'.format(r2score)
 
 fig, ax = plt.subplots(figsize=(6, 6))
-sns.regplot(y_test, y_pred)
+plt.scatter(y_test, y_pred)
+ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
