@@ -25,20 +25,18 @@ print(__doc__)
 ###############################################################################
 #
 # We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
-# and became better known after it was used in `Kaggle challenge`_. It is a set
+# and became better known after it was used in Kaggle challenge. It is a set
 # of 1460 residential homes in Ames, Iowa, each described by 80 features. The
 # task is to predict the final price of the houses. In this example we will use
 # only 20 most interesting features chosen using GradientBoostingRegressor()
 # and limit number of entries to 750 (here we don't show how to select most
 # interesting features, however please refer to:
-# :ref:`~examples.ensemble.plot_gradient_boosting_regression`).
+# :doc:`examples/ensemble/plot_gradient_boosting_regression`).
 #
 # The Ames housing dataset is not shipped with scikit-learn and therefore we
 # will fetch it from `OpenML`_.
 #
 # .. _`Ames Housing`: http://jse.amstat.org/v19n3/decock.pdf
-# .. _`Kaggle challenge`: <https://www.kaggle.com/c/house-prices-advanced-
-# regression-techniques>
 # .. _`OpenML`: https://www.openml.org/d/42165
 
 
