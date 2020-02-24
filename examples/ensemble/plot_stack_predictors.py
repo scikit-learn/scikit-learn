@@ -60,8 +60,8 @@ def load_ames_housing():
     X = X[features]
     X, y = shuffle(X, y, random_state=0)
 
-    X = X[:1000]
-    y = y[:1000]
+    X = X[:750]
+    y = y[:750]
     return X, np.log(y)
 
 
