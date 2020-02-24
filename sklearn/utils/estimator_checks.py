@@ -363,14 +363,14 @@ def _mark_xfail_checks(estimator, check, pytest):
     if not xfail_checks:
         return estimator, check
 
-    try:
-        check_name = _set_check_estimator_ids(check)
-        msg = xfail_checks[check_name]
-        return pytest.param(
-            estimator, check, marks=pytest.mark.xfail(reason=msg))
+    check_name = _set_check_estimator_ids(check)
+    msg = xfail_checks.get(check_name, None)
 
-    except KeyError:
+    if msg is None:
         return estimator, check
+
+    return pytest.param(
+        estimator, check, marks=pytest.mark.xfail(reason=msg))
 
 
 def parametrize_with_checks(estimators):
