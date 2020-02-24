@@ -3,6 +3,8 @@
 Combine predictors using stacking
 =================================
 
+.. currentmodule:: sklearn
+
 Stacking refers to a method to blend estimators. In this strategy, some
 estimators are individually fitted on some training data while a final
 estimator is trained using the stacked predictions of these base estimators.
@@ -31,7 +33,7 @@ print(__doc__)
 # only 20 most interesting features chosen using GradientBoostingRegressor()
 # and limit number of entries to 750 (here we don't show how to select most
 # interesting features, however please refer to:
-# :doc:`examples/ensemble/plot_gradient_boosting_regression`).
+# :ref:`~examples.ensemble.plot_gradient_boosting_regression.html`).
 #
 # The Ames housing dataset is not shipped with scikit-learn and therefore we
 # will fetch it from `OpenML`_.
