@@ -134,25 +134,28 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     models : list of tuples
         List of (name, naive Bayes model, column(s)) tuples specifying the
         naive Bayes models to apply on the corresponding columns.
-        This is similar to :class:`Pipeline` or :class:`ColumnTransformer`.
+        This is similar to :class:`Pipeline <sklearn.pipeline.Pipeline>`
+        or :class:`ColumnTransformer <sklearn.compose.ColumnTransformer>`.
 
         name : string
             This is a user-defined identifier that allows the models and its 
-            parameters to be retrieved and set.
+            parameters to be retrieved and set later using :meth:`get_params_`
+            and :meth:`set_params_`.
         naive Bayes model : Estimator
             The naive Bayes model represents the distribution assumption on 
             the features. Use our naive Bayes estimators like 
-            :ref:`<gaussian_naive_bayes>` and
-            :ref:`<categorical_naive_bayes>`. Custom estimators must support 
-            :term:`fit`, :term:`predict` and `_joint_log_likelihood`.
+            :class:`GaussianNB <sklearn.naive_bayes.GaussianNB>` and
+            :class:`CategoricalNB <sklearn.naive_bayes.CategoricalNB>`. 
+            Custom estimators must support :term:`fit`, :term:`predict`
+            and `_joint_log_likelihood`.
         column(s) : array-like of {string or int}, slice, or callable
             Features that correspond to the naive Bayes models. Indexes 
             the data on its second axis. Integers are interpreted as 
             positional columns, while strings reference DataFrame columns 
-            by name. A callable is passed the input data `X` and can return
-            any of the above. For example, 
-            :func:`sklearn.compose.make_column_selector` can select multiple
-            columns by name or dtype.
+            by name. A callable is passed the input data `X` and must return
+            one of the above. For example, 
+            :func:`compose.make_column_selector <sklearn.compose.make_column_selector>`
+            can select multiple columns by name or dtype.
 
     Attributes
     ----------

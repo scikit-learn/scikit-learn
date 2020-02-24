@@ -270,40 +270,41 @@ features, while maintaining conditional independence between every pair of
 features given the value of a class variable.
 
 A practical use for this metaestimator is when encountering data with
-both numerical and categorical features. For example, if we assume that
-feature 1 (numerical) follow the Gaussian distribution
-and feature 2 (categorical) follows categorical, i.e.,
+both numerical and categorical features. For example, suppose our data
+had 5 features where the first three are numerical and the rest categorical.
+We then proceed to assume that numerical features follow the Gaussian
+distribution and the categorical features follow the categorical
+distribution, i.e.,
 
 .. math::
 
-   X_1 \mid y \sim \text{Normal}(\mu,\sigma^2)
+   X_1 \mid y \sim \text{Normal}(\mu_1,\sigma_1^2) \\
+   X_2 \mid y \sim \text{Normal}(\mu_2,\sigma_2^2) \\
+   X_3 \mid y \sim \text{Normal}(\mu_3,\sigma_3^2) \\
+   X_4 \mid y \sim \text{Categorical}(\textbf{p}_4) \\
+   X_5 \mid y \sim \text{Categorical}(\textbf{p}_5)
 
-.. math::
-
-   X_2 \mid y \sim \text{Categorical}(\text{p})
-
-and conditional independence between the two features given :math:`y`,
-we can use GeneralNB to model this data.
-
-Here is a code example involving a toy dataset with 5 features.
-We first import the relevant libraries:
+Let's see how we `GeneralNB` is used with this toy dataset. We first import
+the libraries and prepare the data:
 
    >>> import numpy as np
    >>> import pandas as pd
-   >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, BernoulliNB
-
-The data has 5 features - the first 3 are numerical, the last 2 categorical:
-
+   >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, CategoricalNB
+   >>>
    >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
    >>>               [2.7, 3.8, 2.3, 1, 0],
    >>>               [1.7, 0.1, 4.5, 1, 0]])
    >>> y = np.array([1, 0, 0])
    >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
 
-Specifying the different naive Bayes models is similar to that of
-:class:`ColumnTransformer` or :class:`Pipeline` - you specify
-the name, the naive Bayes model and the corresponding columns.
-See :mod:`naive_bayes` for a list of our naive Bayes models.
+In the `GeneralNB` constructor,
+define a name (for easy access of the fitted estimators later)
+and the corresponding columns for every naive Bayes model.
+Below we defined two tuples, one for the `GaussianNB()` and
+one for the `CategoricalNB()` model.
+This manner of specification is similar to that of *transformers* in
+:class:`ColumnTransformer <sklearn.compose.ColumnTransformer>` or
+*pipeline* in :class:`Pipeline <sklearn.pipeline.Pipeline>`.
 
    >>> clf = GeneralNB([
    >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
@@ -313,12 +314,13 @@ See :mod:`naive_bayes` for a list of our naive Bayes models.
    >>> print(clf.predict(X_test))
    [1]
 
-You can also specify the column names of a pandas DataFrame:
+Besides specifying a list of ints, you can also indicate column
+names explicitly if the `X` and `y` data are pandas `DataFrame`s:
 
    >>> X = pd.DataFrame(X)
    >>> X.columns = ["a", "b", "c", "d", "e"]
    >>> y = pd.DataFrame(X)
-   >>>
+   ...
    >>> clf = GeneralNB([
    >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
    >>>     ("categorical", CategoricalNB(), ["d", "e"])
@@ -326,7 +328,7 @@ You can also specify the column names of a pandas DataFrame:
    >>> clf.fit(X, y)
 
 Alternatively, you may also select DataFrame columns using
-:func:`sklearn.compose.make_column_selector`.
+:func:`sklearn.compose.make_column_selector`:
 
    >>> from sklearn.compose import make_column_selector
    >>> clf = GeneralNB([
@@ -337,13 +339,18 @@ Alternatively, you may also select DataFrame columns using
    >>> print(clf.predict(df_test))
    [1]
 
-Access the attributes and methods of the fitted estimators using
-the `named_models_` computed property and the identifiers in the `self.model`
-parameters. Below we obtain the parameters of the fitted Bernoulli distribution
-using `bernoulli`.
+Finally, you can access the attributes of the fitted estimators using
+the :meth:`named_models_ <sklearn.naive_bayes.GeneralNB.named_models_>`
+property and the previously defined names.
+Below we obtain the `class_count_` attribute from the fitted
+categorical distribution, where `"categorical"` comes from the previously
+defined `model` parameter in the constructor.
 
-   >>> clf.named_models_.bernoulli.var_smoothing
-   1e-09
+   >>> clf.named_models_.categorical.class_count_
+   array([2., 1.])
+
+Apart from these two naive Bayes models, you may also use other combinations
+of naive Bayes models found on this page to fit your dataset.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
