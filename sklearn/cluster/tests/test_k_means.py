@@ -209,7 +209,7 @@ def test_labels_assignment_and_inertia():
     assert (mindist >= 0.0).all()
     assert (labels_gold != -1).all()
 
-    sample_weight = None
+    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
@@ -599,7 +599,7 @@ def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  batch_size=10, random_state=42,
                                  n_init=1).fit(X)
-    assert mb_k_means.init_size_ == 3 * mb_k_means.batch_size
+    assert mb_k_means._init_size == 3 * mb_k_means.batch_size
     _check_fitted_model(mb_k_means)
 
 
@@ -614,7 +614,7 @@ def test_minibatch_set_init_size():
                                  init_size=666, random_state=42,
                                  n_init=1).fit(X)
     assert mb_k_means.init_size == 666
-    assert mb_k_means.init_size_ == n_samples
+    assert mb_k_means._init_size == n_samples
     _check_fitted_model(mb_k_means)
 
 
