@@ -639,11 +639,6 @@ def test_bad_input():
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
-    # sample_weight bad dimensions
-    clf = svm.SVC()
-    with pytest.raises(ValueError):
-        clf.fit(X, Y, sample_weight=range(len(X) - 1))
-
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
