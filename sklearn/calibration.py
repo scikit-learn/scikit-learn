@@ -30,6 +30,7 @@ from .isotonic import IsotonicRegression
 from .metrics import precision_recall_curve
 from .metrics import roc_curve
 from .model_selection import check_cv
+from .model_selection import cross_val_predict
 from .preprocessing import label_binarize
 from .preprocessing import LabelBinarizer
 from .svm import LinearSVC
@@ -631,66 +632,27 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     base_estimator : estimator instance
-        The binary classifier whose decision threshold will be adapted
-        according to the acquired cutoff point. The estimator must implement
-        `decision_function` or `predict_proba` function.
+        doc
 
-    strategy : {"roc", "f_beta", "max_tpr", "max_tnr", "constant"}, \
-            default="roc" The strategy to use for choosing the cutoff point.
+    objective_name : {...}, default=...
+        doc
 
-        - "roc" selects the point on the ROC curve that is closest to the ideal
-          corner (0, 1).
+    object_value : float, default=None
+        doc
 
-        - "f_beta" selects a decision threshold that maximizes the `f_beta`
-          score.
+    method : {"auto", "decision_function", "predict_proba"}, default="auto"
+        doc
 
-        - "max_tpr" selects the point that yields the highest true positive
-          rate (TPR) with true negative rate (TNR) at least equal to the value
-          of the parameter threshold.
-
-        - "max_tnr" selects the point that yields the highest true negative
-          rate (TNR) with true positive rate (TPR) at least equal to the value
-          of the parameter threshold.
-
-        - "constant" will use the threshold specified by the parameter
-          `decision_threshold`.
-
-    method : {"auto", "decision_function", "predict_proba"}, default="auto" The
-        method to be used to get the predictions. If `"auto"` (default), the
-        base estimator will try to invoke `decision_function` or
-        `predict_proba`, in that order.
-
-    beta : float in [0, 1], optional (default=None) beta value to be used in
-        case strategy == 'f_beta'
-
-    threshold : float in [0, 1] or None, (default=None) In case strategy is
-        'max_tpr' or 'max_tnr' this parameter must be set to specify the
-        threshold for the true negative rate or true positive rate respectively
-        that needs to be achieved
-
-    decision_threshold : float, default=0.5
-        When `strategy="constant"`, decision threshold used as cutoff point.
-
-    pos_label : object, optional (default=1) Object representing the positive
-        label
-
-    cv : int, cross-validation generator, iterable or 'prefit', optional
-        (default=3). Determines the cross-validation splitting strategy. If
-        cv='prefit' the base estimator is assumed to be fitted and all data
-        will be used for the calibration of the probability threshold
+    pos_label : int or str, default=None
+        doc
 
     Attributes
     ----------
-    decision_threshold_ : float Decision threshold for the positive class.
-        Determines the output of predict
+    decision_threshold_ : float
+        The new decision threshold.
 
-    std_ : float Standard deviation of the obtained decision thresholds for
-        when the provided base estimator is not pre-trained and the
-        decision_threshold_ is computed as the mean of the decision threshold
-        of each cross-validation iteration. If the base estimator is
-        pre-trained then std_ = None
-
-    classes_ : array, shape (n_classes) The class labels.
+    classes_ : array of shape (n_classes,)
+        The class labels.
 
     References
     ----------
@@ -699,17 +661,14 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, strategy="roc", method="auto",
-                 beta=None, threshold=None, decision_threshold=0.5,
-                 pos_label=1, cv=3):
+
+    def __init__(self, base_estimator, objective_name, objective_value=None,
+                 method="auto", pos_label=None):
         self.base_estimator = base_estimator
-        self.strategy = strategy
+        self.objective_name = objective_name
+        self.objective_value = objective_value
         self.method = method
-        self.beta = beta
-        self.threshold = threshold
-        self.decision_threshold = decision_threshold
         self.pos_label = pos_label
-        self.cv = cv
 
     def _validate_parameters(self):
         """Validate the input parameters."""
@@ -738,43 +697,7 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 )
             self._method = self.method
 
-        strategies = ("roc", "f_beta", "max_tpr", "max_tnr", "constant")
-        if self.strategy not in strategies:
-            raise ValueError(
-                f"'strategy' must be of {', '.join(strategies)}. "
-                f"Got {self.strategy} instead."
-            )
-        elif self.strategy in ("max_tpr", "max_tnr"):
-            if not isinstance(self.threshold, numbers.Real):
-                raise TypeError(
-                    "When strategy is max_tpr or max_tnr, threshold should be "
-                    f"a real in [0, 1]. Got {type(self.threshold)} instead."
-                )
-            elif not (0 < self.threshold < 1):
-                raise ValueError(
-                    f"threshold should be in the range [0, 1]. "
-                    f"Got {self.threshold} instead."
-                )
-        elif self.strategy == "f_beta":
-            if not isinstance(self.beta, numbers.Real):
-                raise TypeError(
-                    "When strategy is f_beta, beta should be a real. "
-                    f"Got {type(self.beta)} instead."
-                )
-        elif self.strategy == "constant":
-            if (self.method == "predict_proba" and
-                    not (0 < self.decision_threshold < 1)):
-                raise ValueError(
-                    f"decision_threshold should be in the range [0, 1] when "
-                    f"using 'predict_proba'. Got {self.decision_threshold} "
-                    "instead."
-                )
-
     def _validate_data(self, X, y):
-        X = check_array(
-            X, accept_sparse=['csc', 'csr'], force_all_finite=False,
-            allow_nd=True,
-        )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_classification_targets(y)
         y_type = type_of_target(y)
@@ -801,41 +724,31 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self._validate_parameters()
         X, y = self._validate_data(X, y)
 
-        self._label_encoder = LabelEncoder().fit(y)
-        self.classes_ = self._label_encoder.classes_
-
         try:
-            check_is_fitted(self.base_estimator)
-            self._base_estimator = deepcopy(self.base_estimator)
+            check_is_fitted(self.base_estimator, attributes=["n_classes_"])
+            self._estimator = self.base_estimator
         except NotFittedError:
-            self._base_estimator = clone(self.base_estimator).fit(X, y)
+            self._estimator = clone(self.base_estimator).fit(X, y)
+        self.classes_ = self._estimator.classes_
 
-        if self.strategy == "constant":
-            self.decision_threshold_ = self.decision_threshold
-        elif self.cv == 'prefit':
-            self.decision_threshold_ = _find_optimal_decision_threshold(
-                self._base_estimator, X, y, self.strategy, self._method,
-                self.beta, self.threshold, self.pos_label
+        y_score = getattr(self._estimator, self._method)(X)
+        if self.objective_name in ("precision", "recall"):
+            precision, recall, threshold = precision_recall_curve(
+                y, y_score, pos_label=self.pos_label
             )
-            self.std_ = None
-        else:
-            cv = check_cv(self.cv, y, classifier=True)
-            decision_thresholds = []
-
-            for train, test in cv.split(X, y):
-                estimator = clone(self._base_estimator).fit(
-                    _safe_indexing(X, train), _safe_indexing(y, train)
+            if self.objective_name == "precision":
+                # precision is ordered in increasing order
+                indices = np.flatnonzero(precision >= self.objective_value)
+                self.decision_threshold_ = \
+                    threshold[indices[np.argmax(recall[indices])]]
+            else:
+                # recall is ordered in descending order
+                higher_bound_idx = recall.size - np.searchsorted(
+                    recall[::-1], self.objective_value
                 )
-                decision_thresholds.append(
-                    _find_optimal_decision_threshold(
-                        estimator,
-                        _safe_indexing(X, test), _safe_indexing(y, test),
-                        self.strategy, self._method, self.beta, self.threshold,
-                        self.pos_label
-                    )
-                )
-            self.decision_threshold_ = np.mean(decision_thresholds)
-            self.std_ = np.std(decision_thresholds)
+                max_precision_idx = np.argmax(precision[:higher_bound_idx])
+                self.decision_threshold_ = \
+                    threshold[:higher_bound_idx][max_precision_idx]
         return self
 
     def predict(self, X):
@@ -853,46 +766,46 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        y_score = _get_binary_score(
-            self._base_estimator, X, self._method, self.pos_label
-        )
-        return self._label_encoder.inverse_transform(
-            (y_score > self.decision_threshold_).astype(int)
-        )
+        # y_score = _get_binary_score(
+        #     self._base_estimator, X, self._method, self.pos_label
+        # )
+        # return self._label_encoder.inverse_transform(
+        #     (y_score > self.decision_threshold_).astype(int)
+        # )
 
     def _more_tags(self):
         return {"binary_only": True}
 
 
-def _find_optimal_decision_threshold(estimator, X, y, strategy, method, beta,
-                                     threshold, pos_label):
-    y_score = _get_binary_score(
-        estimator, X, method=method, pos_label=pos_label
-    )
-    if strategy == 'f_beta':
-        precision, recall, thresholds = precision_recall_curve(
-            y, y_score, pos_label=pos_label
-        )
-        f_beta = ((1 + beta ** 2) * (precision * recall) /
-                  (beta ** 2 * precision + recall))
-        return thresholds[np.argmax(f_beta)]
+# def _find_optimal_decision_threshold(estimator, X, y, strategy, method, beta,
+#                                      threshold, pos_label):
+#     y_score = _get_binary_score(
+#         estimator, X, method=method, pos_label=pos_label
+#     )
+#     if strategy == 'f_beta':
+#         precision, recall, thresholds = precision_recall_curve(
+#             y, y_score, pos_label=pos_label
+#         )
+#         f_beta = ((1 + beta ** 2) * (precision * recall) /
+#                   (beta ** 2 * precision + recall))
+#         return thresholds[np.argmax(f_beta)]
 
-    fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=pos_label)
+#     fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=pos_label)
 
-    if strategy == 'roc':
-        # we find the threshold of the point (fpr, tpr) with the smallest
-        # euclidean distance from the "ideal" corner (0, 1)
-        return thresholds[np.argmin(fpr ** 2 + (tpr - 1) ** 2)]
-    elif strategy == 'max_tpr':
-        indices = np.where(1 - fpr >= threshold)[0]
-        max_tpr_index = np.argmax(tpr[indices])
-        return thresholds[indices[max_tpr_index]]
-    indices = np.where(tpr >= threshold)[0]
-    max_tnr_index = np.argmax(1 - fpr[indices])
-    return thresholds[indices[max_tnr_index]]
+#     if strategy == 'roc':
+#         # we find the threshold of the point (fpr, tpr) with the smallest
+#         # euclidean distance from the "ideal" corner (0, 1)
+#         return thresholds[np.argmin(fpr ** 2 + (tpr - 1) ** 2)]
+#     elif strategy == 'max_tpr':
+#         indices = np.where(1 - fpr >= threshold)[0]
+#         max_tpr_index = np.argmax(tpr[indices])
+#         return thresholds[indices[max_tpr_index]]
+#     indices = np.where(tpr >= threshold)[0]
+#     max_tnr_index = np.argmax(1 - fpr[indices])
+#     return thresholds[indices[max_tnr_index]]
 
 
-def _get_binary_score(estimator, X, method, pos_label):
+def _get_prediction(estimator, X, method, pos_label):
     """Binary classification score for the positive label (0 or 1)
 
     Returns the score that a binary classifier outputs for the positive label
