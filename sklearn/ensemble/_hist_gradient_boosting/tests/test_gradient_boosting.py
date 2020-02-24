@@ -516,8 +516,7 @@ def test_zero_sample_weights_classification():
     'multiclass_classification'
 ))
 @pytest.mark.parametrize('duplication', ('half', 'all'))
-@pytest.mark.parametrize('seed', range(1))
-def test_sample_weight_effect(problem, duplication, seed):
+def test_sample_weight_effect(problem, duplication):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
@@ -528,14 +527,14 @@ def test_sample_weight_effect(problem, duplication, seed):
     n_features = 2
     if problem == 'regression':
         X, y = make_regression(n_samples=n_samples, n_features=n_features,
-                               n_informative=n_features, random_state=seed)
+                               n_informative=n_features, random_state=0)
         Klass = HistGradientBoostingRegressor
     else:
         n_classes = 2 if problem == 'binary_classification' else 3
         X, y = make_classification(n_samples=n_samples, n_features=n_features,
                                    n_informative=n_features, n_redundant=0,
                                    n_clusters_per_class=1,
-                                   n_classes=n_classes, random_state=seed)
+                                   n_classes=n_classes, random_state=0)
         Klass = HistGradientBoostingClassifier
 
     # This test can't pass if min_samples_leaf > 1 because that would force 2
@@ -603,7 +602,7 @@ def test_sum_hessians_are_sample_weight(loss_name):
 
     for feature_idx in range(n_features):
         for bin_idx in range(bin_mapper.n_bins):
-            assert histograms[feature_idx][bin_idx]['sum_hessians'] == (
+            assert histograms[feature_idx, bin_idx]['sum_hessians'] == (
                 pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
 
 

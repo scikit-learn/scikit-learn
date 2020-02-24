@@ -183,10 +183,10 @@ class LeastSquares(BaseLoss):
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
-        hessians = hessians.reshape(-1)
         if sample_weight is None:
             _update_gradients_least_squares(gradients, y_true, raw_predictions)
         else:
+            hessians = hessians.reshape(-1)
             _update_gradients_hessians_least_squares(gradients, hessians,
                                                      y_true, raw_predictions,
                                                      sample_weight)

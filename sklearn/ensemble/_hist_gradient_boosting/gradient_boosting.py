@@ -492,7 +492,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             self.train_score_.append(
                 self.scorer_(self, X_binned_small_train, y_small_train,
-                             sample_weight_small_train)
+                             sample_weight=sample_weight_small_train)
             )
 
         if self._use_validation_data:
@@ -504,7 +504,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 )
             else:
                 self.validation_score_.append(
-                    self.scorer_(self, X_binned_val, y_val, sample_weight_val)
+                    self.scorer_(self, X_binned_val, y_val,
+                                 sample_weight=sample_weight_val)
                 )
             return self._should_stop(self.validation_score_)
         else:

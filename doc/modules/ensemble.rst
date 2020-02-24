@@ -977,6 +977,8 @@ zero sample weights:
     HistGradientBoostingClassifier(...)
     >>> gb.predict([[1, 0]])
     array([1])
+    >>> gb.predict_proba([[1, 0]])[0, 1]
+    0.99...
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
