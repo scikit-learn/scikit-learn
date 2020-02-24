@@ -5,15 +5,21 @@ Plot individual and voting regression predictions
 
 .. currentmodule:: sklearn
 
-Plot individual and averaged regression predictions for Boston dataset.
-
-First, three exemplary regressors are initialized
-(:class:`~ensemble.GradientBoostingRegressor`,
+A voting regressor is an ensemble meta-estimator that fits base regressors each
+on the whole dataset. It, then, averages the individual predictions to form a
+final prediction.
+We will use three different regressors to predict the data:
+:class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
-:class:`~linear_model.LinearRegression`) and used to initialize a
+:class:`~linear_model.LinearRegression`).
+Then, using them we will make voting regressor
 :class:`~ensemble.VotingRegressor`.
 
-The red starred dots are the averaged predictions.
+Finally, we will plot all of them for comparison.
+
+We will work with the diabetes dataset which consists of the 10 features
+collected from a cohort of diabetes patients. The target is the disease
+progression after one year from the baseline.
 
 """
 print(__doc__)
@@ -26,30 +32,60 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import VotingRegressor
 
-# Loading some example data
-X, y = datasets.load_boston(return_X_y=True)
-
+##############################################################################
 # Training classifiers
-reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
-reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+# --------------------------------
+#
+# First, we are going to load diabetes dataset and initiate gradient boosting
+# regressor, random forest regressor and linear regression. Next, we are going
+# to use each of them to build the voting regressor:
+
+X, y = datasets.load_diabetes(return_X_y=True)
+
+# Train classifiers
+reg1 = GradientBoostingRegressor(random_state=1)
+reg2 = RandomForestRegressor(random_state=1)
 reg3 = LinearRegression()
-ereg = VotingRegressor([('gb', reg1), ('rf', reg2), ('lr', reg3)])
+
 reg1.fit(X, y)
 reg2.fit(X, y)
 reg3.fit(X, y)
+
+ereg = VotingRegressor([('gb', reg1), ('rf', reg2), ('lr', reg3)])
 ereg.fit(X, y)
+
+##############################################################################
+# Making predictions
+# --------------------------------
+#
+# Now we will use each of the regressors to make 20 first predictions about the
+# diabetes dataset.
 
 xt = X[:20]
 
+pred1 = reg1.predict(xt)
+pred2 = reg2.predict(xt)
+pred3 = reg3.predict(xt)
+pred4 = ereg.predict(xt)
+
+##############################################################################
+# Plot the results
+# --------------------------------
+#
+# Finally, we will visualize the 20 predictions. The red stars show the average
+# prediction
+
 plt.figure()
-plt.plot(reg1.predict(xt), 'gd', label='GradientBoostingRegressor')
-plt.plot(reg2.predict(xt), 'b^', label='RandomForestRegressor')
-plt.plot(reg3.predict(xt), 'ys', label='LinearRegression')
-plt.plot(ereg.predict(xt), 'r*', label='VotingRegressor')
+plt.plot(pred1, 'gd', label='GradientBoostingRegressor')
+plt.plot(pred2, 'b^', label='RandomForestRegressor')
+plt.plot(pred3, 'ys', label='LinearRegression')
+plt.plot(pred4, 'r*', ms=10, label='VotingRegressor')
+
 plt.tick_params(axis='x', which='both', bottom=False, top=False,
                 labelbottom=False)
 plt.ylabel('predicted')
 plt.xlabel('training samples')
 plt.legend(loc="best")
-plt.title('Comparison of individual predictions with averaged')
+plt.title('Regressor predictions and their average')
+
 plt.show()

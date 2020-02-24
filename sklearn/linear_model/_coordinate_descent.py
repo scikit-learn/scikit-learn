@@ -7,6 +7,7 @@
 
 import sys
 import warnings
+import numbers
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -20,11 +21,55 @@ from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import _joblib_parallel_args
-from ..utils.validation import check_is_fitted
+from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 
 from . import _cd_fast as cd_fast
+
+
+def _set_order(X, y, order='C'):
+    """Change the order of X and y if necessary.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data.
+
+    y : ndarray of shape (n_samples,)
+        Target values.
+
+    order : {None, 'C', 'F'}
+        If 'C', dense arrays are returned as C-ordered, sparse matrices in csr
+        format. If 'F', dense arrays are return as F-ordered, sparse matrices
+        in csc format.
+
+    Returns
+    -------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data with guaranteed order.
+
+    y : ndarray of shape (n_samples,)
+        Target values with guaranteed order.
+    """
+    if order not in [None, 'C', 'F']:
+        raise ValueError("Unknown value for order. Got {} instead of "
+                         "None, 'C' or 'F'.".format(order))
+    sparse_X = sparse.issparse(X)
+    sparse_y = sparse.issparse(y)
+    if order is not None:
+        sparse_format = "csc" if order == "F" else "csr"
+        if sparse_X:
+            # As of scipy 1.1.0, new argument copy=False by default.
+            # This is what we want.
+            X = X.asformat(sparse_format, **_astype_copy_false(X))
+        else:
+            X = np.asarray(X, order=order)
+        if sparse_y:
+            y = y.asformat(sparse_format)
+        else:
+            y = np.asarray(y, order=order)
+    return X, y
 
 
 ###############################################################################
@@ -661,7 +706,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y, check_input=True):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Fit model with coordinate descent.
 
         Parameters
@@ -672,6 +717,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         y : {ndarray, sparse matrix} of shape (n_samples,) or \
             (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
+
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Sample weight.
 
         check_input : bool, default=True
             Allow to bypass several input checking.
@@ -709,18 +757,49 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
-        # Ensure copying happens only once, don't do it again if done above
+        n_samples, n_features = X.shape
+        alpha = self.alpha
+
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
+        if sample_weight is not None:
+            if check_input:
+                if sparse.issparse(X):
+                    raise ValueError("Sample weights do not (yet) support "
+                                     "sparse matrices.")
+                sample_weight = _check_sample_weight(sample_weight, X,
+                                                     dtype=X.dtype)
+            # simplify things by rescaling sw to sum up to n_samples
+            # => np.average(x, weights=sw) = np.mean(sw * x)
+            sample_weight *= (n_samples / np.sum(sample_weight))
+            # Objective function is:
+            # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
+            # but coordinate descent minimizes:
+            # 1/2 * sum(squared error) + alpha * penalty
+            # enet_path therefore sets alpha = n_samples * alpha
+            # With sw, enet_path should set alpha = sum(sw) * alpha
+            # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
+            # Note: As we rescaled sample_weights to sum up to n_samples,
+            #       we don't need this
+            # alpha *= np.sum(sample_weight) / n_samples
+
+        # Ensure copying happens only once, don't do it again if done above.
+        # X and y will be rescaled if sample_weight is not None, order='F'
+        # ensures that the returned X and y are still F-contiguous.
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=should_copy,
-                     check_input=check_input)
+                     check_input=check_input, sample_weight=sample_weight)
+        # coordinate descent needs F-ordered arrays and _pre_fit might have
+        # called _rescale_data
+        if check_input or sample_weight is not None:
+            X, y = _set_order(X, y, order='F')
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
             Xy = Xy[:, np.newaxis]
 
-        n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
         if self.selection not in ['cyclic', 'random']:
@@ -745,7 +824,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             _, this_coef, this_dual_gap, this_iter = \
                 self.path(X, y[:, k],
                           l1_ratio=self.l1_ratio, eps=None,
-                          n_alphas=None, alphas=[self.alpha],
+                          n_alphas=None, alphas=[alpha],
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
@@ -1396,6 +1475,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     def _more_tags(self):
         return {'multioutput': False}
+
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
