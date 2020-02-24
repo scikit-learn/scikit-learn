@@ -195,7 +195,6 @@ stacking_regressor = StackingRegressor(estimators=estimators,
 
 import time
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.model_selection import cross_validate, cross_val_predict
 
 
