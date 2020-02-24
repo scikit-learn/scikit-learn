@@ -176,7 +176,7 @@ mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 fig, ax = plt.subplots(figsize=(5, 5))
 plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
+ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
 plt.text(3, 20, string_score)
 plt.title('Ridge model, small regularization')
 plt.ylabel('Model predictions')
@@ -405,7 +405,7 @@ mae = median_absolute_error(y_test, y_pred)
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
+ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
@@ -491,7 +491,7 @@ string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
+ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
@@ -562,7 +562,7 @@ string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes,ls="--", c="red")
+ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
 
 plt.text(3, 20, string_score)
 
