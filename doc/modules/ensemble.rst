@@ -279,6 +279,19 @@ for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
 
+.. warning::
+
+  The impurity-based feature importances computed on tree-based models suffer
+  from two flaws that can lead to misleading conclusions. First they are
+  computed on statistics derived from the training dataset and therefore **do
+  not necessarily inform us on which features are most important to make good
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
+  :ref:`permutation_importance` is an alternative to impurity-based feature
+  importance that does not suffer from these flaws. These two methods of
+  obtaining feature importance are explored in:
+  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
+
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
@@ -293,13 +306,6 @@ In practice those estimates are stored as an attribute named
 ``(n_features,)`` whose values are positive and sum to 1.0. The higher
 the value, the more important is the contribution of the matching feature
 to the prediction function.
-
-The impurity-based feature importance for trees suffers from being computed
-on statistics derived from the training dataset
-and favors high cardinality features.
-:ref:`permutation_importance` is a nice alternative impurity-based feature importance.
-These two methods of obtaining feature importance are explored in:
-:ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 .. topic:: Examples:
 
@@ -329,8 +335,9 @@ trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
 ** max_depth``, the maximum number of leaves in the forest.
 
-As neighboring data points are more likely to lie within the same leaf of a tree,
-the transformation performs an implicit, non-parametric density estimation.
+As neighboring data points are more likely to lie within the same leaf of a
+tree, the transformation performs an implicit, non-parametric density
+estimation.
 
 .. topic:: Examples:
 
@@ -902,13 +909,14 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-The early-stopping behaviour is controlled via the ``scoring``,
-``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
-possible to early-stop using an arbitrary :term:`scorer`, or just the
-training or validation loss. By default, early-stopping is performed using
-the default :term:`scorer` of the estimator on a validation set but it is
-also possible to perform early-stopping based on the loss value, which is
-significantly faster.
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early-stopping``, ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss.
+Note that for technical reasons, using a scorer is significantly slower than
+using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ----------------------

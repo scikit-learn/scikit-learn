@@ -31,6 +31,7 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
+    '_xfail_test': False,
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True}

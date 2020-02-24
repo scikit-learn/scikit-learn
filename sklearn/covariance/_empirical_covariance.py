@@ -66,6 +66,16 @@ def empirical_covariance(X, assume_centered=False):
     -------
     covariance : ndarray of shape (n_features, n_features)
         Empirical covariance (Maximum Likelihood Estimator).
+
+    Examples
+    --------
+    >>> from sklearn.covariance import empirical_covariance
+    >>> X = [[1,1,1],[1,1,1],[1,1,1],
+    ...      [0,0,0],[0,0,0],[0,0,0]]
+    >>> empirical_covariance(X)
+    array([[0.25, 0.25, 0.25],
+           [0.25, 0.25, 0.25],
+           [0.25, 0.25, 0.25]])
     """
     X = np.asarray(X)
     if X.ndim == 1:

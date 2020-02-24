@@ -292,11 +292,16 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         -------
         self : object
         """
-        # Validate or convert input data
+        # Validate and convert input data
+        if issparse(y):
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+                )
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -421,6 +426,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
         Returns
         -------
@@ -837,6 +846,36 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         self.oob_score_ /= self.n_outputs_
 
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray of shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray of shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray of shape (n_samples,)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        averaged_predictions = np.zeros(shape=grid.shape[0],
+                                        dtype=np.float64, order='C')
+
+        for tree in self.estimators_:
+            # Note: we don't sum in parallel because the GIL isn't released in
+            # the fast method.
+            tree.tree_.compute_partial_dependence(
+                grid, target_features, averaged_predictions)
+        # Average over the forest
+        averaged_predictions /= len(self.estimators_)
+
+        return averaged_predictions
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -1056,6 +1095,10 @@ class RandomForestClassifier(ForestClassifier):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
@@ -1078,8 +1121,6 @@ class RandomForestClassifier(ForestClassifier):
     >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
     >>> clf.fit(X, y)
     RandomForestClassifier(max_depth=2, random_state=0)
-    >>> print(clf.feature_importances_)
-    [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1337,6 +1378,10 @@ class RandomForestRegressor(ForestRegressor):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -1361,8 +1406,6 @@ class RandomForestRegressor(ForestRegressor):
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
     >>> regr.fit(X, y)
     RandomForestRegressor(max_depth=2, random_state=0)
-    >>> print(regr.feature_importances_)
-    [0.18146984 0.81473937 0.00145312 0.00233767]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
 
@@ -1656,6 +1699,10 @@ class ExtraTreesClassifier(ForestClassifier):
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
@@ -1934,6 +1981,10 @@ class ExtraTreesRegressor(ForestRegressor):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features.

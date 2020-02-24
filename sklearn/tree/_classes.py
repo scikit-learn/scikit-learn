@@ -567,6 +567,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         reduction of the criterion brought by that feature.
         It is also known as the Gini importance.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
@@ -741,6 +745,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance [4]_.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     max_features_ : int
         The inferred value of max_features.
@@ -1097,6 +1105,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
 
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
+
     max_features_ : int
         The inferred value of max_features.
 
@@ -1239,6 +1251,31 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                "0.22 and will be removed in 0.24.")
         warnings.warn(msg, FutureWarning)
         return np.array([1] * self.n_outputs_, dtype=np.intp)
+
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray of shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray of shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray of shape (n_samples,)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        averaged_predictions = np.zeros(shape=grid.shape[0],
+                                        dtype=np.float64, order='C')
+
+        self.tree_.compute_partial_dependence(
+            grid, target_features, averaged_predictions)
+        return averaged_predictions
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1404,6 +1441,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
         known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1603,8 +1644,12 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The number of features when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        Return the feature importances (the higher, the more important the
-        feature).
+        Return impurity-based feature importances (the higher, the more
+        important the feature).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -1648,7 +1693,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.7788...
+    0.7447...
     """
     def __init__(self,
                  criterion="mse",
