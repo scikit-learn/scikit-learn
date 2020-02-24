@@ -56,7 +56,6 @@ X.describe(include="all")
 
 ##############################################################################
 # Notice that the dataset contains categorical and numerical variables.
-# Some of the categorical variables are binary variables.
 # This will give us directions on how to preprocess the data thereafter.
 
 X.head()
@@ -120,21 +119,18 @@ survey.data.info()
 #
 # - one-hot encode (i.e., generate a column by category) the categorical
 #   columns;
-# - replace by 0 and 1 the categories of binary columns;
 # - as a first approach (we will see after how the normalisation of numerical
 #   values will affect our discussion), keep numerical values as they are.
 
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
 
-categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR']
-binary_columns = ['MARR', 'UNION', 'SEX', 'SOUTH']
+categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
+                       'MARR', 'UNION', 'SEX', 'SOUTH']
 numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
 
 preprocessor = make_column_transformer(
     (OneHotEncoder(), categorical_columns),
-    (OrdinalEncoder(), binary_columns),
     remainder='passthrough'
 )
 
@@ -211,7 +207,7 @@ feature_names = (model.named_steps['columntransformer']
                       .named_transformers_['onehotencoder']
                       .get_feature_names(input_features=categorical_columns))
 feature_names = np.concatenate(
-    [feature_names, binary_columns, numerical_columns])
+    [feature_names, numerical_columns])
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
@@ -381,7 +377,6 @@ from sklearn.preprocessing import StandardScaler
 
 preprocessor = make_column_transformer(
     (OneHotEncoder(), categorical_columns),
-    (OrdinalEncoder(), binary_columns),
     (StandardScaler(), numerical_columns),
     remainder='passthrough'
 )
