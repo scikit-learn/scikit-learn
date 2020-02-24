@@ -58,6 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <stdarg.h>
 #include "svm.h"
+#include "_svm_cython_blas_helpers.h"
 
 #ifndef _LIBSVM_CPP
 typedef float Qfloat;
@@ -294,11 +295,17 @@ public:
 		swap(x[i],x[j]);
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
+	static void set_blas(BlasFunctions *blas);
+	static void check_array_size_and_realloc(int size);
+	static void free_array();
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
+	static BlasFunctions *m_blas;
+	static int m_size;
+	static double* m_array;
 #ifdef _DENSE_REP
 	PREFIX(node) *x;
 #else
@@ -394,8 +401,7 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 	double sum = 0;
 
 	int dim = min(px->dim, py->dim);
-	for (int i = 0; i < dim; i++)
-		sum += (px->values)[i] * (py->values)[i];
+	sum = m_blas->dot(dim, px->values, 1, py->values, 1);
 	return sum;
 }
 
@@ -404,8 +410,7 @@ double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
 	double sum = 0;
 
 	int dim = min(px.dim, py.dim);
-	for (int i = 0; i < dim; i++)
-		sum += px.values[i] * py.values[i];
+	sum = m_blas->dot(dim, px.values, 1, py.values, 1);
 	return sum;
 }
 #else
@@ -432,6 +437,27 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 }
 #endif
 
+void Kernel::set_blas(BlasFunctions *blas)
+{
+	Kernel::m_blas=blas;
+}
+
+void Kernel::check_array_size_and_realloc(int size)
+{
+	if (size > Kernel::m_size)
+	{
+		free(Kernel::m_array);
+		Kernel::m_array = (double*)malloc(sizeof(double)*size*2);
+		Kernel::m_size = size*2;
+	}
+}
+
+void Kernel::free_array()
+{
+	free(Kernel::m_array);
+	Kernel::m_size = 0;
+}
+
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param)
 {
@@ -446,11 +472,12 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			double sum = 0;
 #ifdef _DENSE_REP
 			int dim = min(x->dim, y->dim), i;
+			check_array_size_and_realloc(dim);
 			for (i = 0; i < dim; i++)
 			{
-				double d = x->values[i] - y->values[i];
-				sum += d*d;
+				m_array[i] = x->values[i] - y->values[i];
 			}
+			sum = m_blas->dot(dim, m_array, 1, m_array, 1);
 			for (; i < x->dim; i++)
 				sum += x->values[i] * x->values[i];
 			for (; i < y->dim; i++)
@@ -508,7 +535,9 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable 
 	}
 }
-
+BlasFunctions* NAMESPACE::Kernel::m_blas=0;
+int NAMESPACE::Kernel::m_size=0;
+double* NAMESPACE::Kernel::m_array=0;
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -2082,7 +2111,7 @@ static void multiclass_probability(int k, double **r, double *p)
 // Cross-validation decision values for probability estimates
 static void svm_binary_svc_probability(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double Cp, double Cn, double& probA, double& probB, int * status)
+	double Cp, double Cn, double& probA, double& probB, int * status, BlasFunctions *blas_functions)
 {
 	int i;
 	int nr_fold = 5;
@@ -2155,13 +2184,13 @@ static void svm_binary_svc_probability(
 			subparam.weight_label[1]=-1;
 			subparam.weight[0]=Cp;
 			subparam.weight[1]=Cn;
-			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam, status);
+			struct PREFIX(model) *submodel = PREFIX(train)(&subprob,&subparam, status, blas_functions);
 			for(j=begin;j<end;j++)
 			{
 #ifdef _DENSE_REP
-                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]])); 
+                                PREFIX(predict_values)(submodel,(prob->x+perm[j]),&(dec_values[perm[j]]), blas_functions); 
 #else
-				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]])); 
+				PREFIX(predict_values)(submodel,prob->x[perm[j]],&(dec_values[perm[j]]), blas_functions); 
 #endif
 				// ensure +1 -1 order; reason not using CV subroutine
 				dec_values[perm[j]] *= submodel->label[0];
@@ -2180,7 +2209,7 @@ static void svm_binary_svc_probability(
 
 // Return parameter of a Laplace distribution 
 static double svm_svr_probability(
-	const PREFIX(problem) *prob, const svm_parameter *param)
+	const PREFIX(problem) *prob, const svm_parameter *param, BlasFunctions *blas_functions)
 {
 	int i;
 	int nr_fold = 5;
@@ -2191,7 +2220,7 @@ static double svm_svr_probability(
 	newparam.probability = 0;
     newparam.random_seed = -1; // This is called from train, which already sets
                                // the seed.
-	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
+	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv, blas_functions);
 	for(i=0;i<prob->l;i++)
 	{
 		ymv[i]=prob->y[i]-ymv[i];
@@ -2336,8 +2365,9 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 // Interface functions
 //
 PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param,
-        int *status)
+        int *status, BlasFunctions *blas_functions)
 {
+	NAMESPACE::Kernel::set_blas(blas_functions);
 	PREFIX(problem) newprob;
 	remove_zero_weight(&newprob, prob);
 	prob = &newprob;
@@ -2367,7 +2397,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		    param->svm_type == NU_SVR))
 		{
 			model->probA = Malloc(double,1);
-			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param);
+			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param,blas_functions);
 		}
 
                 NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status);
@@ -2485,7 +2515,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				}
 
 				if(param->probability)
-                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status);
+                                    NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status, blas_functions);
 
 				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status);
 				for(k=0;k<ci;k++)
@@ -2619,7 +2649,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 }
 
 // Stratified cross validation
-void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target)
+void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *param, int nr_fold, double *target, BlasFunctions *blas_functions)
 {
 	int i;
 	int *fold_start = Malloc(int,nr_fold+1);
@@ -2726,25 +2756,25 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 			++k;
 		}
                 int dummy_status = 0; // IGNORES TIMEOUT ERRORS
-		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param, &dummy_status);
+		struct PREFIX(model) *submodel = PREFIX(train)(&subprob,param, &dummy_status, blas_functions);
 		if(param->probability && 
 		   (param->svm_type == C_SVC || param->svm_type == NU_SVC))
 		{
 			double *prob_estimates=Malloc(double, PREFIX(get_nr_class)(submodel));
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates);
+				target[perm[j]] = PREFIX(predict_probability)(submodel,(prob->x + perm[j]),prob_estimates, blas_functions);
 #else
-                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates);
+                                target[perm[j]] = PREFIX(predict_probability)(submodel,prob->x[perm[j]],prob_estimates, blas_functions);
 #endif
 			free(prob_estimates);			
 		}
 		else
 			for(j=begin;j<end;j++)
 #ifdef _DENSE_REP
-				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j]);
+				target[perm[j]] = PREFIX(predict)(submodel,prob->x+perm[j],blas_functions);
 #else
-                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]]);
+                target[perm[j]] = PREFIX(predict)(submodel,prob->x[perm[j]],blas_functions);
 #endif
 		PREFIX(free_and_destroy_model)(&submodel);
 		free(subprob.x);
@@ -2785,8 +2815,9 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 	}
 }
 
-double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
+double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values, BlasFunctions *blas_functions)
 {
+	NAMESPACE::Kernel::set_blas(blas_functions);
 	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
@@ -2868,9 +2899,10 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		free(vote);
 		return model->label[vote_max_idx];
 	}
+	NAMESPACE::Kernel::free_array();
 }
 
-double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
+double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFunctions *blas_functions)
 {
 	int nr_class = model->nr_class;
 	double *dec_values;
@@ -2880,13 +2912,13 @@ double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x)
 		dec_values = Malloc(double, 1);
 	else 
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-	double pred_result = PREFIX(predict_values)(model, x, dec_values);
+	double pred_result = PREFIX(predict_values)(model, x, dec_values, blas_functions);
 	free(dec_values);
 	return pred_result;
 }
 
 double PREFIX(predict_probability)(
-	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates)
+	const PREFIX(model) *model, const PREFIX(node) *x, double *prob_estimates, BlasFunctions *blas_functions)
 {
 	if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
 	    model->probA!=NULL && model->probB!=NULL)
@@ -2894,7 +2926,7 @@ double PREFIX(predict_probability)(
 		int i;
 		int nr_class = model->nr_class;
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-		PREFIX(predict_values)(model, x, dec_values);
+		PREFIX(predict_values)(model, x, dec_values, blas_functions);
 
 		double min_prob=1e-7;
 		double **pairwise_prob=Malloc(double *,nr_class);
@@ -2921,7 +2953,7 @@ double PREFIX(predict_probability)(
 		return model->label[prob_max_idx];
 	}
 	else 
-		return PREFIX(predict)(model, x);
+		return PREFIX(predict)(model, x, blas_functions);
 }
 
 
