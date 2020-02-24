@@ -450,19 +450,6 @@ def test_cutoff_prefit():
     with pytest.raises(ValueError):
         clf_roc.fit(X_non_binary, y_non_binary)
 
-    clf_foo = CutoffClassifier(lr, strategy='f_beta', beta='foo')
-    with pytest.raises(ValueError):
-        clf_foo.fit(X_train, y_train)
-
-    clf_foo = CutoffClassifier(lr, strategy='foo')
-    with pytest.raises(ValueError):
-        clf_foo.fit(X_train, y_train)
-
-    for method in ['max_tpr', 'max_tnr']:
-        clf_missing_info = CutoffClassifier(lr, strategy=method)
-        with pytest.raises(ValueError):
-            clf_missing_info.fit(X_train, y_train)
-
 
 def test_cutoff_cv():
     X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
@@ -499,58 +486,98 @@ def test_cutoff_cv():
     assert tpr_roc + tnr_roc > tpr + tnr
 
 
-def test_get_binary_score():
+# def test_get_binary_score():
+#     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
+#                                n_classes=2)
+
+#     X_train, X_test, y_train, _ = train_test_split(X, y, test_size=0.4,
+#                                                    random_state=42)
+#     lr = LogisticRegression(solver='liblinear').fit(X_train, y_train)
+#     y_pred_proba = lr.predict_proba(X_test)
+#     y_pred_score = lr.decision_function(X_test)
+
+#     assert_array_equal(
+#         y_pred_score, _get_binary_score(
+#             lr, X_test, method='decision_function', pos_label=1)
+#     )
+
+#     assert_array_equal(
+#         - y_pred_score, _get_binary_score(
+#             lr, X_test, method='decision_function', pos_label=0)
+#     )
+
+#     assert_array_equal(
+#         y_pred_proba[:, 1], _get_binary_score(
+#             lr, X_test, method='predict_proba', pos_label=1)
+#     )
+
+#     assert_array_equal(
+#         y_pred_proba[:, 0], _get_binary_score(
+#             lr, X_test, method='predict_proba', pos_label=0)
+#     )
+
+#     assert_array_equal(
+#         y_pred_score,
+#         _get_binary_score(lr, X_test, method=None, pos_label=1)
+#     )
+
+#     with pytest.raises(ValueError):
+#         _get_binary_score(lr, X_test, method='foo')
+
+#     # classifier that does not have a decision_function
+#     rf = RandomForestClassifier(n_estimators=10).fit(X_train, y_train)
+#     y_pred_proba_rf = rf.predict_proba(X_test)
+#     assert_array_equal(
+#         y_pred_proba_rf[:, 1],
+#         _get_binary_score(rf, X_test, method=None, pos_label=1)
+#     )
+
+#     X_non_binary, y_non_binary = make_classification(
+#         n_samples=20, n_features=6, random_state=42, n_classes=4,
+#         n_informative=4
+#     )
+
+#     rf_non_bin = RandomForestClassifier(n_estimators=10).fit(X_non_binary,
+#                                                              y_non_binary)
+#     with pytest.raises(ValueError):
+#         _get_binary_score(rf_non_bin, X_non_binary)
+
+
+class MockNoPredictorClassifier:
+    pass
+
+
+@pytest.mark.parametrize(
+    "Estimator, params, err_type, err_msg",
+    [
+        (LogisticRegression, {"method": "xxx"}, ValueError,
+         "'method' should be one of"),
+        (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
+         "'base_estimator' must implement one of the"),
+        (RandomForestRegressor, {"method": "predict_proba"}, TypeError,
+         "'base_estimator' does not implement predict_proba"),
+        (LogisticRegression, {"strategy": "xxx"}, ValueError,
+         "'strategy' must be of"),
+        (LogisticRegression, {"strategy": "max_tpr"}, TypeError,
+         "When strategy is max_tpr or max_tnr"),
+        (LogisticRegression, {"strategy": "f_beta"}, TypeError,
+         "When strategy is f_beta"),
+        (LogisticRegression, {"strategy": "max_tnr"}, TypeError,
+         "When strategy is max_tpr or max_tnr"),
+        (LogisticRegression, {"strategy": "max_tpr", "threshold": 10},
+         ValueError, r"threshold should be in the range \[0, 1\]"),
+        (LogisticRegression, {"strategy": "max_tnr", "threshold": 10},
+         ValueError, r"threshold should be in the range \[0, 1\]"),
+        (LogisticRegression,
+         {"strategy": "constant", "method": "predict_proba",
+          "decision_threshold": 10},
+         ValueError, r"decision_threshold should be in the range \[0, 1\]")
+    ]
+)
+def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
+                                             err_msg):
     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
                                n_classes=2)
-
-    X_train, X_test, y_train, _ = train_test_split(X, y, test_size=0.4,
-                                                   random_state=42)
-    lr = LogisticRegression(solver='liblinear').fit(X_train, y_train)
-    y_pred_proba = lr.predict_proba(X_test)
-    y_pred_score = lr.decision_function(X_test)
-
-    assert_array_equal(
-        y_pred_score, _get_binary_score(
-            lr, X_test, method='decision_function', pos_label=1)
-    )
-
-    assert_array_equal(
-        - y_pred_score, _get_binary_score(
-            lr, X_test, method='decision_function', pos_label=0)
-    )
-
-    assert_array_equal(
-        y_pred_proba[:, 1], _get_binary_score(
-            lr, X_test, method='predict_proba', pos_label=1)
-    )
-
-    assert_array_equal(
-        y_pred_proba[:, 0], _get_binary_score(
-            lr, X_test, method='predict_proba', pos_label=0)
-    )
-
-    assert_array_equal(
-        y_pred_score,
-        _get_binary_score(lr, X_test, method=None, pos_label=1)
-    )
-
-    with pytest.raises(ValueError):
-        _get_binary_score(lr, X_test, method='foo')
-
-    # classifier that does not have a decision_function
-    rf = RandomForestClassifier(n_estimators=10).fit(X_train, y_train)
-    y_pred_proba_rf = rf.predict_proba(X_test)
-    assert_array_equal(
-        y_pred_proba_rf[:, 1],
-        _get_binary_score(rf, X_test, method=None, pos_label=1)
-    )
-
-    X_non_binary, y_non_binary = make_classification(
-        n_samples=20, n_features=6, random_state=42, n_classes=4,
-        n_informative=4
-    )
-
-    rf_non_bin = RandomForestClassifier(n_estimators=10).fit(X_non_binary,
-                                                             y_non_binary)
-    with pytest.raises(ValueError):
-        _get_binary_score(rf_non_bin, X_non_binary)
+    with pytest.raises(err_type, match=err_msg):
+        clf = CutoffClassifier(base_estimator=Estimator(), **params)
+        clf.fit(X, y)

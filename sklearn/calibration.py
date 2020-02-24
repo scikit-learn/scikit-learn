@@ -7,9 +7,10 @@
 #
 # License: BSD 3 clause
 
-import warnings
 from copy import deepcopy
 from inspect import signature
+import numbers
+import warnings
 
 from math import log
 import numpy as np
@@ -24,6 +25,7 @@ from .base import ClassifierMixin
 from .base import MetaEstimatorMixin
 from .base import RegressorMixin
 from .base import clone
+from .exceptions import NotFittedError
 from .isotonic import IsotonicRegression
 from .metrics import precision_recall_curve
 from .metrics import roc_curve
@@ -42,7 +44,6 @@ from .utils.validation import check_is_fitted
 from .utils.validation import check_consistent_length
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
-
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
@@ -629,75 +630,67 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    base_estimator : obj
+    base_estimator : estimator instance
         The binary classifier whose decision threshold will be adapted
-        according to the acquired cutoff point. The estimator must have a
-        decision_function or a predict_proba
+        according to the acquired cutoff point. The estimator must implement
+        `decision_function` or `predict_proba` function.
 
-    strategy : str, optional (default='roc')
-        The strategy to use for choosing the cutoff point
+    strategy : {"roc", "f_beta", "max_tpr", "max_tnr", "constant"}, \
+            default="roc" The strategy to use for choosing the cutoff point.
 
-        'roc'
-            selects the point on the roc curve that is closest to the ideal
-            corner (0, 1)
+        - "roc" selects the point on the ROC curve that is closest to the ideal
+          corner (0, 1).
 
-        'f_beta'
-            selects a decision threshold that maximizes the f_beta score
+        - "f_beta" selects a decision threshold that maximizes the `f_beta`
+          score.
 
-        'max_tpr'
-            selects the point that yields the highest true positive rate with
-            true negative rate at least equal to the value of the parameter
-            threshold
+        - "max_tpr" selects the point that yields the highest true positive
+          rate (TPR) with true negative rate (TNR) at least equal to the value
+          of the parameter threshold.
 
-        'max_tnr'
-            selects the point that yields the highest true negative rate with
-            true positive rate at least equal to the value of the parameter
-            threshold
+        - "max_tnr" selects the point that yields the highest true negative
+          rate (TNR) with true positive rate (TPR) at least equal to the value
+          of the parameter threshold.
 
-    method : str or None, optional (default=None)
-        The method to be used for acquiring the score
+        - "constant" will use the threshold specified by the parameter
+          `decision_threshold`.
 
-        'decision_function'
-            base_estimator.decision_function will be used for scoring
+    method : {"auto", "decision_function", "predict_proba"}, default="auto" The
+        method to be used to get the predictions. If `"auto"` (default), the
+        base estimator will try to invoke `decision_function` or
+        `predict_proba`, in that order.
 
-        'predict_proba'
-            base_estimator.predict_proba will be used for scoring
+    beta : float in [0, 1], optional (default=None) beta value to be used in
+        case strategy == 'f_beta'
 
-        None
-            base_estimator.decision_function will be used first and if not
-            available base_estimator.predict_proba
+    threshold : float in [0, 1] or None, (default=None) In case strategy is
+        'max_tpr' or 'max_tnr' this parameter must be set to specify the
+        threshold for the true negative rate or true positive rate respectively
+        that needs to be achieved
 
-    beta : float in [0, 1], optional (default=None)
-        beta value to be used in case strategy == 'f_beta'
+    decision_threshold : float, default=0.5
+        When `strategy="constant"`, decision threshold used as cutoff point.
 
-    threshold : float in [0, 1] or None, (default=None)
-        In case strategy is 'max_tpr' or 'max_tnr' this parameter must be set
-        to specify the threshold for the true negative rate or true positive
-        rate respectively that needs to be achieved
-
-    pos_label : object, optional (default=1)
-        Object representing the positive label
+    pos_label : object, optional (default=1) Object representing the positive
+        label
 
     cv : int, cross-validation generator, iterable or 'prefit', optional
-        (default=3). Determines the cross-validation splitting strategy.
-        If cv='prefit' the base estimator is assumed to be fitted and all data
+        (default=3). Determines the cross-validation splitting strategy. If
+        cv='prefit' the base estimator is assumed to be fitted and all data
         will be used for the calibration of the probability threshold
 
     Attributes
     ----------
-    decision_threshold_ : float
-        Decision threshold for the positive class. Determines the output of
-        predict
+    decision_threshold_ : float Decision threshold for the positive class.
+        Determines the output of predict
 
-    std_ : float
-        Standard deviation of the obtained decision thresholds for when the
-        provided base estimator is not pre-trained and the decision_threshold_
-        is computed as the mean of the decision threshold of each
-        cross-validation iteration. If the base estimator is pre-trained then
-        std_ = None
+    std_ : float Standard deviation of the obtained decision thresholds for
+        when the provided base estimator is not pre-trained and the
+        decision_threshold_ is computed as the mean of the decision threshold
+        of each cross-validation iteration. If the base estimator is
+        pre-trained then std_ = None
 
-    classes_ : array, shape (n_classes)
-        The class labels.
+    classes_ : array, shape (n_classes) The class labels.
 
     References
     ----------
@@ -706,15 +699,88 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
            Clinical chemistry, 1993
 
     """
-    def __init__(self, base_estimator, strategy='roc', method=None, beta=None,
-                 threshold=None, pos_label=1, cv=3):
+    def __init__(self, base_estimator, strategy="roc", method="auto",
+                 beta=None, threshold=None, decision_threshold=0.5,
+                 pos_label=1, cv=3):
         self.base_estimator = base_estimator
         self.strategy = strategy
         self.method = method
         self.beta = beta
         self.threshold = threshold
+        self.decision_threshold = decision_threshold
         self.pos_label = pos_label
         self.cv = cv
+
+    def _validate_parameters(self):
+        """Validate the input parameters."""
+        supported_methods = ("decision_function", "predict_proba")
+        if self.method == "auto":
+            has_methods = [
+                hasattr(self.base_estimator, m) for m in supported_methods
+            ]
+            if not any(has_methods):
+                raise TypeError(
+                    f"'base_estimator' must implement one of the "
+                    f"{', '.join(supported_methods)} methods."
+                )
+            self._method = next(
+                (m for m, i in zip(supported_methods, has_methods) if i), None
+            )
+        else:
+            if self.method not in supported_methods:
+                raise ValueError(
+                    f"'method' should be one of {', '.join(supported_methods)}"
+                    f". Got {self.method} instead."
+                )
+            elif not hasattr(self.base_estimator, self.method):
+                raise TypeError(
+                    f"'base_estimator' does not implement {self.method}."
+                )
+            self._method = self.method
+
+        strategies = ("roc", "f_beta", "max_tpr", "max_tnr", "constant")
+        if self.strategy not in strategies:
+            raise ValueError(
+                f"'strategy' must be of {', '.join(strategies)}. "
+                f"Got {self.strategy} instead."
+            )
+        elif self.strategy in ("max_tpr", "max_tnr"):
+            if not isinstance(self.threshold, numbers.Real):
+                raise TypeError(
+                    "When strategy is max_tpr or max_tnr, threshold should be "
+                    f"a real in [0, 1]. Got {type(self.threshold)} instead."
+                )
+            elif not (0 < self.threshold < 1):
+                raise ValueError(
+                    f"threshold should be in the range [0, 1]. "
+                    f"Got {self.threshold} instead."
+                )
+        elif self.strategy == "f_beta":
+            if not isinstance(self.beta, numbers.Real):
+                raise TypeError(
+                    "When strategy is f_beta, beta should be a real. "
+                    f"Got {type(self.beta)} instead."
+                )
+        elif self.strategy == "constant":
+            if (self.method == "predict_proba" and
+                    not (0 < self.decision_threshold < 1)):
+                raise ValueError(
+                    f"decision_threshold should be in the range [0, 1] when "
+                    f"using 'predict_proba'. Got {self.decision_threshold} "
+                    "instead."
+                )
+
+    def _validate_data(self, X, y):
+        X = check_array(
+            X, accept_sparse=['csc', 'csr'], force_all_finite=False,
+            allow_nd=True,
+        )
+        y = check_array(y, ensure_2d=False, dtype=None)
+        check_classification_targets(y)
+        y_type = type_of_target(y)
+        if y_type != 'binary':
+            raise ValueError(f'Expected target of binary type. Got {y_type}.')
+        return X, y
 
     def fit(self, X, y):
         """Fit model
@@ -732,60 +798,25 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             Instance of self
         """
-        if (not hasattr(self.base_estimator, 'decision_function') and
-                not hasattr(self.base_estimator, 'predict_proba')):
-            raise TypeError('The base_estimator needs to implement either a '
-                            'decision_function or a predict_proba method')
+        self._validate_parameters()
+        X, y = self._validate_data(X, y)
 
-        if self.strategy not in ('roc', 'f_beta', 'max_tpr', 'max_tnr'):
-            raise ValueError('strategy can either be "roc" or "max_tpr" or '
-                             '"max_tnr. Got {} instead'.format(self.strategy))
+        self._label_encoder = LabelEncoder().fit(y)
+        self.classes_ = self._label_encoder.classes_
 
-        if self.method not in (None, 'decision_function', 'predict_proba'):
-            raise ValueError('method param can either be "decision_function" '
-                             'or "predict_proba" or None. '
-                             'Got {} instead'.format(self.method))
+        try:
+            check_is_fitted(self.base_estimator)
+            self._base_estimator = deepcopy(self.base_estimator)
+        except NotFittedError:
+            self._base_estimator = clone(self.base_estimator).fit(X, y)
 
-        if self.strategy == 'max_tpr' or self.strategy == 'max_tnr':
-            if (not self.threshold or not
-                    isinstance(self.threshold, (int, float))
-                    or not self.threshold >= 0 or not self.threshold <= 1):
-                raise ValueError('parameter threshold must be a number in'
-                                 '[0, 1]. '
-                                 'Got {} instead'.format(self.threshold))
-
-        if self.strategy == 'f_beta':
-            if not self.beta or not isinstance(self.beta, (int, float)):
-                raise ValueError('parameter beta must be a real number.'
-                                 'Got {} instead'.format(type(self.beta)))
-
-        self._base_estimator = (deepcopy(self.base_estimator)
-                                if self.cv != "prefit"
-                                else self.base_estimator)
-
-        X = check_array(
-            X, accept_sparse=['csc', 'csr'], force_all_finite=False,
-            allow_nd=True,
-        )
-        y = check_array(y, ensure_2d=False, dtype=None)
-        # FIXME: check_classification_targets should return the type of target
-        # as well
-        check_classification_targets(y)
-        y_type = type_of_target(y)
-        if y_type != 'binary':
-            raise ValueError(f'Expected target of binary type. Got {y_type}.')
-
-        self.label_encoder_ = LabelEncoder().fit(y)
-        self.classes_ = self.label_encoder_.classes_
-
-        y = self.label_encoder_.transform(y)
-        self._pos_label = self.label_encoder_.transform([self.pos_label])[0]
-
-        if self.cv == 'prefit':
-            self.decision_threshold_ = _CutoffClassifier(
-                self._base_estimator, self.strategy, self.method, self.beta,
-                self.threshold, self._pos_label
-            ).fit(X, y).decision_threshold_
+        if self.strategy == "constant":
+            self.decision_threshold_ = self.decision_threshold
+        elif self.cv == 'prefit':
+            self.decision_threshold_ = _find_optimal_decision_threshold(
+                self._base_estimator, X, y, self.strategy, self._method,
+                self.beta, self.threshold, self.pos_label
+            )
             self.std_ = None
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -796,18 +827,15 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                     _safe_indexing(X, train), _safe_indexing(y, train)
                 )
                 decision_thresholds.append(
-                    _CutoffClassifier(
-                        estimator, self.strategy, self.method,
-                        self.beta, self.threshold,
+                    _find_optimal_decision_threshold(
+                        estimator,
+                        _safe_indexing(X, test), _safe_indexing(y, test),
+                        self.strategy, self._method, self.beta, self.threshold,
                         self.pos_label
-                    ).fit(
-                        _safe_indexing(X, test), _safe_indexing(y, test)
-                    ).decision_threshold_
+                    )
                 )
             self.decision_threshold_ = np.mean(decision_thresholds)
             self.std_ = np.std(decision_thresholds)
-
-            self._base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
@@ -826,9 +854,9 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         y_score = _get_binary_score(
-            self._base_estimator, X, self.method, self.pos_label
+            self._base_estimator, X, self._method, self.pos_label
         )
-        return self.label_encoder_.inverse_transform(
+        return self._label_encoder.inverse_transform(
             (y_score > self.decision_threshold_).astype(int)
         )
 
@@ -836,104 +864,35 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return {"binary_only": True}
 
 
-class _CutoffClassifier:
-    """Cutoff point selection.
-
-    It assumes that base_estimator has already been fit, and uses the input set
-    of the fit function to select a cutoff point. Note that this class should
-    not be used as an estimator directly. Use the CutoffClassifier with
-    cv="prefit" instead.
-
-    Parameters
-    ----------
-    base_estimator : obj
-        The binary classifier whose decision threshold will be adapted
-        according to the acquired cutoff point. The estimator must have a
-        decision_function or a predict_proba
-
-    strategy : 'roc' or 'f_beta' or 'max_tpr' or 'max_tnr'
-        The method to use for choosing the cutoff point
-
-    method : str or None, optional (default=None)
-        The method to be used for acquiring the score. Can either be
-        "decision_function" or "predict_proba" or None. If None then
-        decision_function will be used first and if not available
-        predict_proba
-
-    beta : float in [0, 1]
-        beta value to be used in case strategy == 'f_beta'
-
-    threshold : float in [0, 1]
-        minimum required value for the true negative rate (specificity) in case
-        strategy 'max_tpr' is used or for the true positive rate (sensitivity)
-        in case method 'max_tnr' is used
-
-    pos_label : object
-        Label considered as positive during the roc_curve construction
-
-    Attributes
-    ----------
-    decision_threshold_ : float
-        Acquired decision threshold for the positive class
-    """
-    def __init__(self, base_estimator, strategy, method, beta, threshold,
-                 pos_label):
-        self.base_estimator = base_estimator
-        self.strategy = strategy
-        self.method = method
-        self.beta = beta
-        self.threshold = threshold
-        self.pos_label = pos_label
-
-    def fit(self, X, y):
-        """Select a decision threshold for the fitted model's positive class
-        using one of the available methods
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data
-
-        y : array-like, shape (n_samples,)
-            Target values
-
-        Returns
-        -------
-        self : object
-            Instance of self
-        """
-        y_score = _get_binary_score(
-            self.base_estimator, X, self.method, self.pos_label
+def _find_optimal_decision_threshold(estimator, X, y, strategy, method, beta,
+                                     threshold, pos_label):
+    y_score = _get_binary_score(
+        estimator, X, method=method, pos_label=pos_label
+    )
+    if strategy == 'f_beta':
+        precision, recall, thresholds = precision_recall_curve(
+            y, y_score, pos_label=pos_label
         )
-        if self.strategy == 'f_beta':
-            precision, recall, thresholds = precision_recall_curve(
-                y, y_score, pos_label=self.pos_label
-            )
-            f_beta = ((1 + self.beta**2) * (precision * recall) /
-                      (self.beta**2 * precision + recall))
-            self.decision_threshold_ = thresholds[np.argmax(f_beta)]
-            return self
+        f_beta = ((1 + beta ** 2) * (precision * recall) /
+                  (beta ** 2 * precision + recall))
+        return thresholds[np.argmax(f_beta)]
 
-        fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=self.pos_label)
+    fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=pos_label)
 
-        if self.strategy == 'roc':
-            # we find the threshold of the point (fpr, tpr) with the smallest
-            # euclidean distance from the "ideal" corner (0, 1)
-            self.decision_threshold_ = thresholds[
-                np.argmin(fpr ** 2 + (tpr - 1) ** 2)
-            ]
-        elif self.strategy == 'max_tpr':
-            indices = np.where(1 - fpr >= self.threshold)[0]
-            max_tpr_index = np.argmax(tpr[indices])
-            self.decision_threshold_ = thresholds[indices[max_tpr_index]]
-        else:
-            indices = np.where(tpr >= self.threshold)[0]
-            max_tnr_index = np.argmax(1 - fpr[indices])
-            self.decision_threshold_ = thresholds[indices[max_tnr_index]]
-        return self
+    if strategy == 'roc':
+        # we find the threshold of the point (fpr, tpr) with the smallest
+        # euclidean distance from the "ideal" corner (0, 1)
+        return thresholds[np.argmin(fpr ** 2 + (tpr - 1) ** 2)]
+    elif strategy == 'max_tpr':
+        indices = np.where(1 - fpr >= threshold)[0]
+        max_tpr_index = np.argmax(tpr[indices])
+        return thresholds[indices[max_tpr_index]]
+    indices = np.where(tpr >= threshold)[0]
+    max_tnr_index = np.argmax(1 - fpr[indices])
+    return thresholds[indices[max_tnr_index]]
 
 
-def _get_binary_score(clf, X, method=None, pos_label=1):
+def _get_binary_score(estimator, X, method, pos_label):
     """Binary classification score for the positive label (0 or 1)
 
     Returns the score that a binary classifier outputs for the positive label
@@ -941,15 +900,14 @@ def _get_binary_score(clf, X, method=None, pos_label=1):
 
     Parameters
     ----------
-    clf : object
-        Classifier object to be used for acquiring the scores. Needs to have
-        a decision_function or a predict_proba method
+    estimator : estimator object
+        Fitted estimator to get prediction from.
 
-    X : array-like, shape (n_samples, n_features)
-        The samples
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The data matrix.
 
-    pos_label : int, optional (default=1)
-        The positive label. Can either be 0 or 1
+    pos_label : int or str
+        The positive label.
 
     method : str or None, optional (default=None)
         The method to be used for acquiring the score. Can either be
@@ -963,27 +921,11 @@ def _get_binary_score(clf, X, method=None, pos_label=1):
         The return value of the provided classifier's decision_function or
         predict_proba depending on the method used.
     """
-    if len(clf.classes_) != 2:
-        raise ValueError('Expected binary classifier. Found {} classes'.format(
-            len(clf.classes_)
-        ))
-
-    if method not in (None, 'decision_function', 'predict_proba'):
-        raise ValueError('scoring param can either be "decision_function" '
-                         'or "predict_proba" or None. '
-                         'Got {} instead'.format(method))
-
-    if not method:
-        try:
-            y_score = clf.decision_function(X)
-            if pos_label == clf.classes_[0]:
-                y_score = -y_score
-        except (NotImplementedError, AttributeError):
-            y_score = clf.predict_proba(X)[:, pos_label]
-    elif method == 'decision_function':
-        y_score = clf.decision_function(X)
-        if pos_label == clf.classes_[0]:
-            y_score = - y_score
-    else:
-        y_score = clf.predict_proba(X)[:, pos_label]
+    # FIXME: what if estimator was fitted on encoded label??
+    y_score = getattr(estimator, method)(X)
+    if y_score.ndim == 2:
+        # probabilities
+        y_score = y_score[:, pos_label]
+    elif pos_label == estimator.classes_[0]:
+        y_score = -y_score
     return y_score
