@@ -28,11 +28,11 @@ print(__doc__)
 #
 # We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
 # and became better known after it was used in Kaggle challenge. It is a set
-# of 1460 residential homes in Ames, Iowa, each described by 80 features. The
-# task is to predict the final price of the houses. In this example we will use
-# only 20 most interesting features chosen using GradientBoostingRegressor()
-# and limit number of entries to 750 (here we won't go into the details on how
-# to select the most interesting features).
+# of 1460 residential homes in Ames, Iowa, each described by 80 features. We
+# will use it to predict the final logarithmic price of the houses. In this
+# example we will use only 20 most interesting features chosen using
+# GradientBoostingRegressor() and limit number of entries (here we won't go
+# into the details on how to select the most interesting features).
 #
 # The Ames housing dataset is not shipped with scikit-learn and therefore we
 # will fetch it from `OpenML`_.
