@@ -96,12 +96,15 @@ from sklearn.pipeline import make_pipeline, make_union
 N_SPLITS = 5
 REGRESSOR = RandomForestRegressor(random_state=0)
 
-#
-# In addition to using an imputing method, we can also keep an indication of
-# the missing information using :func:`sklearn.impute.MissingIndicator` which
-# might carry some information.
-#
+"""
+-------------------------------------------------------------------------------
+ Missing information
+-------------------------------------------------------------------------------
+ In addition to using an imputing method, we can also keep an indication of
+ the missing information using :func:`sklearn.impute.MissingIndicator` which
+ might carry some information.
 
+"""
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
@@ -124,10 +127,12 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
-#
-# Now, we will calculate the score on the original data sets
-#
+"""
+-------------------------------------------------------------------------------
+ Calculate score on original data
+-------------------------------------------------------------------------------
 
+"""
 
 def get_full_score(X_full, y_full):
     full_scores = cross_val_score(REGRESSOR, X_full, y_full,
