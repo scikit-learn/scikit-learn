@@ -92,6 +92,14 @@ Changelog
   returns correct results when one of the transformer steps applies on an
   empty list of columns :pr:`15963` by `Roman Yurchak`_.
 
+- |Efficiency| :class:`compose.ColumnTransformer` is now faster when working
+  with dataframes and strings are used to specific subsets of data for
+  transformers. :pr:`16431` by `Thomas Fan`_.
+
+- |Fix| :func:`compose.ColumnTransformer.fit` will error when selecting
+  a column name that is not unique in the dataframe. :pr:`16431` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -133,6 +141,10 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |MajorFeature|  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support
+  :term:`sample_weight`. :pr:`14696` by `Adrin Jalali`_ and `Nicolas Hug`_.
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
@@ -189,9 +201,23 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
+- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
+  chunking pairwise distance computation.
+  :pr:`16397` by `Joel Nothman`_.
+
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  method for :class:`ensemble.RandomForestRegressor` and
+  :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
+  `Nicolas Hug`_.
+
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -237,12 +263,35 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
+  its ``reduce_func`` to not have a return value, enabling in-place operations.
+  :pr:`16397` by `Joel Nothman`_.
+
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
+
+- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
+  name of the estimator was passed in the
+  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
+  results in a different plot when calling
+  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
+  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
+  an error when `y_true` and `y_pred` were length zero and `labels` was
+  not `None`. In addition, we raise an error when an empty list is given to
+  the `labels` parameter.
+  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
+
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
+  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
+  instead of the parameter `name`. It results in a different plot when calling
+  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
+  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
