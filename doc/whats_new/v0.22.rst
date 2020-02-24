@@ -401,11 +401,11 @@ Changelog
   <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
   :user:`Jon Cusick <jcusick13>`..
 
-- Many improvements were made to
+- |MajorFeature| Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`:
 
-  - |MajorFeature| Estimators now natively support dense data with missing
+  - |Feature| Estimators now natively support dense data with missing
     values both for training and predicting. They also support infinite
     values. :pr:`13911` and :pr:`14406` by `Nicolas Hug`_, `Adrin Jalali`_
     and `Olivier Grisel`_.

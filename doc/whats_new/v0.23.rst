@@ -142,6 +142,10 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature|  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support
+  :term:`sample_weight`. :pr:`14696` by `Adrin Jalali`_ and `Nicolas Hug`_.
+
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
   :pr:`15991` by :user:`Sam Bail <spbail>`,
