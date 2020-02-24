@@ -17,11 +17,11 @@ quantitative measure of disease progression one year after baseline.
   :Target: Column 11 is a quantitative measure of disease progression one year after baseline
 
   :Attribute Information:
-      - age     Age in years
+      - age     age in years
       - sex
       - bmi     body mass index
       - bp      average blood pressure
-      - s1      tc, a number of White Blood Cells per cubic mm of blood
+      - s1      tc, a number of White Blood Cells
       - s2      ldl, low-density lipoproteins
       - s3      hdl, high-density lipoproteins
       - s4      tch, thyroid stimulating hormone
