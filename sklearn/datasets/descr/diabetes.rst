@@ -19,8 +19,8 @@ quantitative measure of disease progression one year after baseline.
   :Attribute Information:
       - age     Age in years
       - sex
-      - bmi     Body mass index
-      - bp      Average blood pressure
+      - bmi     body mass index
+      - bp      average blood pressure
       - s1      tc, a number of White Blood Cells per cubic mm of blood
       - s2      ldl, low-density lipoproteins
       - s3      hdl, high-density lipoproteins
