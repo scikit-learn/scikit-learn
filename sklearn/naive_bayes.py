@@ -265,7 +265,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         # Obtain the jll of each fitted estimator
         jlls = [nb_model._joint_log_likelihood(
                     np.array(_safe_indexing(X, cols, axis=1)))
-                for (_, nb_model, cols) in self.models_]
+                for _, nb_model, cols in self.models_]
 
         # Stack these jlls to give us
         # the shape (estimator, sample, class)
