@@ -94,17 +94,17 @@ class ConfusionMatrixDisplay:
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
 
-                fmt = values_format
                 if values_format is None:
-                    fmt = '.2g'
+                    text_cm = format(cm[i, j], '.2g')
                     if cm.dtype.kind != 'f':
-                        fmt = 'd'
-                        if len(format(cm[i, j], '.2g')) < len(
-                                                        format(cm[i, j], 'd')):
-                            fmt = '.2g'
+                        text_d = format(cm[i, j], 'd')
+                        if len(text_d) < len(text_cm):
+                            text_cm = text_d
+                else:
+                    text_cm = format(cm[i, j], values_format)
 
                 self.text_[i, j] = ax.text(
-                    j, i, format(cm[i, j], fmt),
+                    j, i, text_cm,
                     ha="center", va="center",
                     color=color)
 
