@@ -44,10 +44,9 @@ np.random.seed(0)
 # Load the data
 # --------------------------------
 #
-# First we will write the function for loading the diabetes or 20newsgropus
-# dataset. We will add a parameter `sparse` 
+# First we will write the function for loading either of our two datasets:
+# diabetes or 20Newsgroups
 #
-
 
 def generate_data(case, sparse=False):
     """Generate regression/classification data."""
@@ -60,6 +59,7 @@ def generate_data(case, sparse=False):
     offset = int(X.shape[0] * 0.8)
     X_train, y_train = X[:offset], y[:offset]
     X_test, y_test = X[offset:], y[offset:]
+
     if sparse:
         X_train = csr_matrix(X_train)
         X_test = csr_matrix(X_test)
@@ -71,6 +71,14 @@ def generate_data(case, sparse=False):
     data = {'X_train': X_train, 'X_test': X_test, 'y_train': y_train,
             'y_test': y_test}
     return data
+
+
+##############################################################################
+#
+# --------------------------------
+#
+#
+#
 
 
 def benchmark_influence(conf):
@@ -102,6 +110,13 @@ def benchmark_influence(conf):
     return prediction_powers, prediction_times, complexities
 
 
+##############################################################################
+#
+# --------------------------------
+#
+#
+#
+
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
     Plot influence of model complexity on both accuracy and latency.
@@ -124,6 +139,13 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     plt.title('Influence of Model Complexity - %s' % conf['estimator'].__name__)
     plt.show()
 
+
+##############################################################################
+#
+# --------------------------------
+#
+#
+#
 
 def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.toarray()
@@ -169,6 +191,14 @@ configurations = [
      'prediction_performance_label': 'MSE',
      'n_samples': 30},
 ]
+
+##############################################################################
+#
+# --------------------------------
+#
+#
+#
+
 for conf in configurations:
     prediction_performances, prediction_times, complexities = \
         benchmark_influence(conf)
