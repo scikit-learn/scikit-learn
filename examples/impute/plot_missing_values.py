@@ -106,6 +106,7 @@ REGRESSOR = RandomForestRegressor(random_state=0)
 
 """
 
+
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
         make_union(imputer, MissingIndicator(missing_values=0)),
@@ -135,6 +136,7 @@ stds_diabetes = np.zeros(5)
  First, we want to estimate the score on the original data
 
 """
+
 
 def get_full_score(X_full, y_full):
     full_scores = cross_val_score(REGRESSOR, X_full, y_full,
