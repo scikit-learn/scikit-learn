@@ -481,31 +481,31 @@ runtime. The default values for the estimator tags are defined in the
 
 The current set of estimator tags are:
 
-allow_nan (default=``False``)
+allow_nan (default=False)
     whether the estimator supports data with missing values encoded as np.NaN
 
-binary_only (default=``False``)
+binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
-multilabel (default=``False``)
+multilabel (default=False)
     whether the estimator supports multilabel output
 
-multioutput (default=``False``)
+multioutput (default=False)
     whether a regressor supports multi-target outputs or a classifier supports
     multi-class multi-output.
 
-multioutput_only (default=``False``)
+multioutput_only (default=False)
     whether estimator supports only multi-output classification or regression.
 
-no_validation (default=``False``)
+no_validation (default=False)
     whether the estimator skips input-validation. This is only meant for
     stateless and dummy transformers!
 
-non_deterministic (default=``False``)
+non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
-poor_score (default=``False``)
+poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -513,31 +513,31 @@ poor_score (default=``False``)
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-requires_fit (default=``True``)
+requires_fit (default=True)
     whether the estimator requires to be fitted before calling one of
     `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-requires_positive_X (default=``False``)
+requires_positive_X (default=False)
     whether the estimator requires positive X.
 
-requires_positive_y (default=``False``)
+requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 
-_skip_test (default=``False``)
+_skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-_xfail_test (default=``False``)
+_xfail_test (default=False)
     dictionary ``{check_name : reason}`` of common checks to mark as a
     known failure, with the associated reason. Don't use this unless you have a
     *very good* reason.
 
-stateless (default=``False``)
+stateless (default=False)
     whether the estimator needs access to data for fitting. Even though an
     estimator is stateless, it might still need a call to ``fit`` for
     initialization.
 
-X_types (default=``['2darray']``)
+X_types (default=['2darray'])
     Supported input types for X as list of strings. Tests are currently only
     run if '2darray' is contained in the list, signifying that the estimator
     takes continuous 2d numpy arrays as input. The default value is
