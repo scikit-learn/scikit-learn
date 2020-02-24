@@ -127,10 +127,12 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
+
 """
 -------------------------------------------------------------------------------
- Calculate score on original data
+ Estimate the score
 -------------------------------------------------------------------------------
+ First, we want to estimate the score on the original data
 
 """
 
@@ -145,9 +147,16 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
                                                         y_california)
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
-#
-# Next, we will estimate the score after replacing missing values by 0
-#
+
+"""
+-------------------------------------------------------------------------------
+ Replace missing values by 0
+-------------------------------------------------------------------------------
+
+ Now we will estimate the score on the data where the missing values are
+ replaced by 0
+
+"""
 
 
 def get_impute_zero_score(X_missing, y_missing):
@@ -164,12 +173,17 @@ mses_california[1], stds_california[1] = get_impute_zero_score(
 mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
-#
-# Estimate the score after kNN-imputation of the missing values
-#
-# With ``KNNImputer``, missing values can be imputed using the weighted
-# or unweighted mean of the desired number of nearest neighbors.
-#
+
+"""
+-------------------------------------------------------------------------------
+ kNN-imputation of the missing values
+-------------------------------------------------------------------------------
+
+ With ``KNNImputer``, missing values can be imputed using the weighted
+ or unweighted mean of the desired number of nearest neighbors.
+
+"""
+
 
 
 def get_impute_KNN_score(X_missing, y_missing):
@@ -182,6 +196,7 @@ mses_california[2], stds_california[2] = get_impute_KNN_score(
     X_miss_california, y_miss_california)
 mses_diabetes[2], stds_diabetes[2] = get_impute_KNN_score(X_miss_diabetes,
                                                           y_miss_diabetes)
+
 
 #
 # Estimate the score after imputation (mean strategy) of the missing values
@@ -198,6 +213,7 @@ mses_california[3], stds_california[3] = get_impute_mean(X_miss_california,
                                                          y_miss_california)
 mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
+
 
 # Estimate the score after iterative imputation of the missing values
 #
