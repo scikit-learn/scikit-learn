@@ -36,8 +36,9 @@ from sklearn.decomposition import NMF
 
 n_samples = range(500, 2500, 1000)
 n_features = range(500, 2500, 1000)
-batch_size = 500
+batch_size = 1000
 n_components = 10
+n_top_words = 20
 
 def print_top_words(model, feature_names, n_top_words):
     for topic_idx, topic in enumerate(model.components_):
@@ -48,7 +49,9 @@ def print_top_words(model, feature_names, n_top_words):
     print()
 
 
-# Load the The Blog Authorship Corpus dataset and vectorize it.
+# Load the The Blog Authorship Corpus dataset
+# from http://u.cs.biu.ac.il/~koppel/BlogCorpus.htm
+# and vectorize it.
 
 print("Loading dataset...")
 t0 = time()
@@ -68,22 +71,28 @@ with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
             data.append(text)
 print("done in %0.3fs." % (time() - t0))
 
-ax1 = plt.subplot(221, ylabel = "time - Frobenius norm",
-                  title = "standard NMF algorithm")
+fig = plt.figure()
+
+ax1 = fig.add_subplot(221, ylabel = "time - gen. KL divergence",
+                  title = "standard NMF")
 ax1.tick_params(labelbottom=False)
-ax2 = plt.subplot(222, sharey = ax1,
-                  title = "online NMF algorithm")
+ax2 = fig.add_subplot(222, sharey = ax1,
+                  title = "online NMF")
 ax2.tick_params(labelbottom=False, labelleft=False)
-ax3 = plt.subplot(223, ylabel = "time - generalized KL divergence",
-                  xlabel = "n_samples", sharex = ax1)
-ax4 = plt.subplot(224, xlabel = "n_samples", sharex = ax2, sharey = ax3)
-ax4.tick_params(labelleft=False)
+#ax3 = fig.add_subplot(223, ylabel = "time - Frobenius norm",
+#                  xlabel = "n_samples", sharex = ax1)
+#ax4 = fig.add_subplot(224, xlabel = "n_samples", sharex = ax2, sharey = ax3)
+#ax4.tick_params(labelleft=False)
 
 for j in range(len(n_features)):
   timesFr = np.zeros(len(n_samples))
   timesmbFr = np.zeros(len(n_samples))
   timesKL = np.zeros(len(n_samples))
   timesmbKL = np.zeros(len(n_samples))
+  lossFr = np.zeros(len(n_samples))
+  lossmbFr = np.zeros(len(n_samples))
+  lossKL = np.zeros(len(n_samples))
+  lossmbKL = np.zeros(len(n_samples))
 
   for i in range(len(n_samples)):
     data_samples = data[:n_samples[i]]
@@ -96,28 +105,36 @@ for j in range(len(n_features)):
     tfidf = tfidf_vectorizer.fit_transform(data_samples)
     print("done in %0.3fs." % (time() - t0))
 
-    # Fit the NMF model
-    print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
-          "n_samples=%d and n_features=%d..."
-          % (n_samples[i], n_features[j]))
-    t0 = time()
-    nmf = NMF(n_components=n_components, random_state=1,
-              alpha=.1, l1_ratio=.5).fit(tfidf)
-    timesFr[i] = time() - t0
-    print("done in %0.3fs." % (timesFr[i]))
+    # Fit the NMF model Frobenius norm
+    #print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
+    #      "n_samples=%d and n_features=%d..."
+    #      % (n_samples[i], n_features[j]))
+    #t0 = time()
+    #nmf = NMF(n_components=n_components, random_state=1,
+    #          alpha=.1, l1_ratio=.5).fit(tfidf)
+    #timesFr[i] = time() - t0
+    #print("done in %0.3fs." % (timesFr[i]))
 
-    # Fit the NMF model with minibatch
-    print("Fitting the online NMF model (Frobenius norm) with tf-idf features, "
-          "n_samples=%d and n_features=%d..."
-          % (n_samples[i], n_features[j]))
-    t0 = time()
-    minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size,
-                        random_state=1, alpha=.1, l1_ratio=.5,
-                        max_iter=3).fit(tfidf)
-    timesmbFr[i] = time() - t0
-    print("done in %0.3fs." % (timesmbFr[i]))
+    #print("\nTopics in NMF model:")
+    #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+    #print_top_words(nmf, tfidf_feature_names, n_top_words)
 
-    # Fit the NMF model
+    # Fit the NMF model with minibatch Frobenius norm
+    #print("Fitting the online NMF model (Frobenius norm) with tf-idf features, "
+    #      "n_samples=%d and n_features=%d..."
+    #      % (n_samples[i], n_features[j]))
+    #t0 = time()
+    #minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size,
+    #                    random_state=1, alpha=.1, l1_ratio=.5,
+    #                    max_iter=3).fit(tfidf)
+    #timesmbFr[i] = time() - t0
+    #print("done in %0.3fs." % (timesmbFr[i]))
+
+    #print("\nTopics in NMF model:")
+    #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+    #print_top_words(nmf, tfidf_feature_names, n_top_words)
+
+    # Fit the NMF model KL
     print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
           "tf-idf features, n_samples=%d and n_features=%d..."
           % (n_samples[i], n_features[j]))
@@ -128,7 +145,11 @@ for j in range(len(n_features)):
     timesKL[i] = time() - t0
     print("done in %0.3fs." % (timesKL[i]))
 
-    # Fit the NMF model
+    print("\nTopics in NMF model:")
+    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+    print_top_words(nmf, tfidf_feature_names, n_top_words)
+
+    # Fit the NMF model KL
     print("Fitting the online NMF model (generalized Kullback-Leibler "
           "divergence) with "
           "tf-idf features, n_samples=%d and n_features=%d..."
@@ -141,13 +162,18 @@ for j in range(len(n_features)):
     timesmbKL[i] = time() - t0
     print("done in %0.3fs." % (timesmbKL[i]))
 
+    print("\nTopics in NMF model:")
+    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+    print_top_words(nmf, tfidf_feature_names, n_top_words)
+
   str1 = "n_Ftrs " + str(n_features[j]) 
-  ax1.plot(n_samples, timesFr)
-  ax2.plot(n_samples, timesmbFr)
-  ax3.plot(n_samples, timesKL)
-  ax4.plot(n_samples, timesmbKL, label = str1)
+  ax1.plot(n_samples, timesKL)
+  ax2.plot(n_samples, timesmbKL, label = str1)
+#  ax3.plot(n_samples, timesFr)
+#  ax4.plot(n_samples, timesmbFr)
 
-ax4.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 
-plt.subplots_adjust(wspace=0, hspace=0)
+plt.subplots_adjust(wspace=0, hspace=0, right=0.7)
+plt.savefig('bench_topics.png')
 plt.show()
