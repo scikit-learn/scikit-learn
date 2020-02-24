@@ -27,6 +27,7 @@ from .base import RegressorMixin
 from .base import clone
 from .exceptions import NotFittedError
 from .isotonic import IsotonicRegression
+from .metrics import balanced_accuracy_score
 from .metrics import precision_recall_curve
 from .metrics import roc_curve
 from .model_selection import check_cv
@@ -624,27 +625,40 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     traditional binary classification evaluation statistics such as the true
     positive and true negative rates and F-scores.
 
-    If cv="prefit" the base estimator is assumed to be fitted and all data will
-    be used for the selection of the cutoff point. Otherwise the decision
-    threshold is calculated as the average of the thresholds resulting from the
-    cross-validation loop.
-
     Parameters
     ----------
-    base_estimator : estimator instance
-        doc
+    base_estimator : estimator object
+        The classifier, fitted or not fitted, from which we want to optimize
+        the decision threshold used during `predict`.
 
-    objective_name : {...}, default=...
-        doc
+    objective_metric : {"tpr", "tnr"} or callable, \
+            default=balanced_accuracy_score
+        The objective metric to be optimized:
 
-    object_value : float, default=None
-        doc
+        * `"tpr"`: Find the decision threshold for a true positive ratio (TPR)
+          of `objective_value`.
+        * `"tnr"`: Find the decision threshold for a true negative ratio (TNR)
+          of `objective_value`.
+        * one of the scikit-learn scoring metric.
+
+    objective_value : float, default=None
+        The value associated with the `objective_metric` metric for which we
+        want to find the decision threshold.
 
     method : {"auto", "decision_function", "predict_proba"}, default="auto"
-        doc
+        Methods by the classifier `base_estimator` corresponding to the
+        decision function for which we want to find a threshold. It can be:
+
+        * if `"auto"`, it will try to invoke, for each estimator,
+          `"decision_function` or `"predict_proba"` in that order.
+        * otherwise, one of `"predict_proba"` or `"decision_function"`.
+          If the method is not implemented by the estimator, it will raise an
+          error.
 
     pos_label : int or str, default=None
-        doc
+        The label of the positive class. When `pos_label=None`, if `y_true` is
+        in `{-1, 1}` or `{0, 1}`, `pos_label` is set to 1, otherwise an error
+        will be raised.
 
     Attributes
     ----------
@@ -659,13 +673,18 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
            evaluation tool in clinical medicine, MH Zweig, G Campbell -
            Clinical chemistry, 1993
-
     """
 
-    def __init__(self, base_estimator, objective_name, objective_value=None,
-                 method="auto", pos_label=None):
+    def __init__(
+        self,
+        base_estimator,
+        objective_metric=balanced_accuracy_score,
+        objective_value=None,
+        method="auto",
+        pos_label=None
+    ):
         self.base_estimator = base_estimator
-        self.objective_name = objective_name
+        self.objective_metric = objective_metric
         self.objective_value = objective_value
         self.method = method
         self.pos_label = pos_label
@@ -696,8 +715,16 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                     f"'base_estimator' does not implement {self.method}."
                 )
             self._method = self.method
+        if (self.objective_metric not in ("tnr", "tpr") and
+                self.objective_value is not None):
+            raise ValueError(
+                f"When 'objective_metric' is a predefined scoring function, "
+                f"'objective_value' should be None. Got {self.objective_value}"
+                f" instead."
+            )
 
-    def _validate_data(self, X, y):
+    @staticmethod
+    def _validate_data(X, y):
         y = check_array(y, ensure_2d=False, dtype=None)
         check_classification_targets(y)
         y_type = type_of_target(y)
@@ -705,21 +732,41 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(f'Expected target of binary type. Got {y_type}.')
         return X, y
 
+    @staticmethod
+    def _get_pos_label_score(y_score, classes, pos_label):
+        """Get score of the positive class."""
+        if y_score.ndim == 2:
+            pos_label_encoded = np.flatnonzero(classes == pos_label).item(0)
+            y_score = y_score[:, pos_label_encoded]
+        return y_score
+
+    def _optimize_scorer(self, estimator, y_true, y_score, scorer, classes,
+                         pos_label):
+        # `np.unique` is already sorting the value, no need to call
+        #  `thresholds.sort()`
+        thresholds = np.unique(
+            self._get_pos_label_score(y_score, classes, pos_label)
+        )
+        scores = [scorer(y_true, (y_score >= th).astype(int))
+                  for th in thresholds]
+        return thresholds[np.argmax(scores)]
+
     def fit(self, X, y):
-        """Fit model
+        """Find the decision threshold.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            The training data.
 
-        y : array-like, shape (n_samples,)
-            Target values. There must be two 2 distinct values
+        y : array-like of shape (n_samples,)
+            Target values. It should be a binary target.
 
         Returns
         -------
         self : object
-            Instance of self
+            Returns an instance of self.
         """
         self._validate_parameters()
         X, y = self._validate_data(X, y)
@@ -732,23 +779,22 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self.classes_ = self._estimator.classes_
 
         y_score = getattr(self._estimator, self._method)(X)
-        if self.objective_name in ("precision", "recall"):
-            precision, recall, threshold = precision_recall_curve(
+        if self.objective_metric in ("tpr", "tnr"):
+            fpr, tpr, thresholds = roc_curve(
                 y, y_score, pos_label=self.pos_label
             )
-            if self.objective_name == "precision":
-                # precision is ordered in increasing order
-                indices = np.flatnonzero(precision >= self.objective_value)
-                self.decision_threshold_ = \
-                    threshold[indices[np.argmax(recall[indices])]]
-            else:
-                # recall is ordered in descending order
-                higher_bound_idx = recall.size - np.searchsorted(
-                    recall[::-1], self.objective_value
-                )
-                max_precision_idx = np.argmax(precision[:higher_bound_idx])
-                self.decision_threshold_ = \
-                    threshold[:higher_bound_idx][max_precision_idx]
+            if self.objective_metric == "tnr":
+                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]
+
+            threshold_idx = np.searchsorted(
+                eval(self.objective_metric), self.objective_value
+            )
+            self.decision_threshold_ = thresholds[threshold_idx]
+        else:
+            self.decision_threshold_ = self._optimize_scorer(
+                self._estimator, y, y_score, self.objective_metric,
+                self.classes_, self.pos_label,
+            )
         return self
 
     def predict(self, X):
@@ -756,89 +802,24 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            The samples
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-        C : array, shape (n_samples,)
-            The predicted class
+        C : ndarray of shape (n_samples,)
+            The predicted class.
         """
         check_is_fitted(self)
 
-        # y_score = _get_binary_score(
-        #     self._base_estimator, X, self._method, self.pos_label
-        # )
-        # return self._label_encoder.inverse_transform(
-        #     (y_score > self.decision_threshold_).astype(int)
-        # )
+        decision_function = getattr(self._estimator, self._method)
+        y_score = self._get_pos_label_score(
+            decision_function(X), self.classes_, self.pos_label
+        )
+        y_class_indices = (y_score >= self.decision_threshold_).astype(int)
+
+        return self._estimator.classes_[y_class_indices]
 
     def _more_tags(self):
         return {"binary_only": True}
-
-
-# def _find_optimal_decision_threshold(estimator, X, y, strategy, method, beta,
-#                                      threshold, pos_label):
-#     y_score = _get_binary_score(
-#         estimator, X, method=method, pos_label=pos_label
-#     )
-#     if strategy == 'f_beta':
-#         precision, recall, thresholds = precision_recall_curve(
-#             y, y_score, pos_label=pos_label
-#         )
-#         f_beta = ((1 + beta ** 2) * (precision * recall) /
-#                   (beta ** 2 * precision + recall))
-#         return thresholds[np.argmax(f_beta)]
-
-#     fpr, tpr, thresholds = roc_curve(y, y_score, pos_label=pos_label)
-
-#     if strategy == 'roc':
-#         # we find the threshold of the point (fpr, tpr) with the smallest
-#         # euclidean distance from the "ideal" corner (0, 1)
-#         return thresholds[np.argmin(fpr ** 2 + (tpr - 1) ** 2)]
-#     elif strategy == 'max_tpr':
-#         indices = np.where(1 - fpr >= threshold)[0]
-#         max_tpr_index = np.argmax(tpr[indices])
-#         return thresholds[indices[max_tpr_index]]
-#     indices = np.where(tpr >= threshold)[0]
-#     max_tnr_index = np.argmax(1 - fpr[indices])
-#     return thresholds[indices[max_tnr_index]]
-
-
-def _get_prediction(estimator, X, method, pos_label):
-    """Binary classification score for the positive label (0 or 1)
-
-    Returns the score that a binary classifier outputs for the positive label
-    acquired either from decision_function or predict_proba
-
-    Parameters
-    ----------
-    estimator : estimator object
-        Fitted estimator to get prediction from.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        The data matrix.
-
-    pos_label : int or str
-        The positive label.
-
-    method : str or None, optional (default=None)
-        The method to be used for acquiring the score. Can either be
-        "decision_function" or "predict_proba" or None. If None then
-        decision_function will be used first and if not available
-        predict_proba
-
-    Returns
-    -------
-    y_score : array-like, shape (n_samples,)
-        The return value of the provided classifier's decision_function or
-        predict_proba depending on the method used.
-    """
-    # FIXME: what if estimator was fitted on encoded label??
-    y_score = getattr(estimator, method)(X)
-    if y_score.ndim == 2:
-        # probabilities
-        y_score = y_score[:, pos_label]
-    elif pos_label == estimator.classes_[0]:
-        y_score = -y_score
-    return y_score

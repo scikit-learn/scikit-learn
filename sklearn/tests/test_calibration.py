@@ -6,13 +6,17 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import LeaveOneOut
-
-from sklearn.datasets import make_classification, make_blobs
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_iris
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
@@ -20,7 +24,10 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import recall_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -352,242 +359,70 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf.fit(X, y)
 
 
-# def test_cutoff_prefit():
-#     calibration_samples = 200
-#     X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
-#                                n_classes=2)
-
-#     X_train, X_test, y_train, y_test = train_test_split(X, y,
-#                                                         test_size=0.4,
-#                                                         random_state=42)
-#     lr = LogisticRegression(solver='liblinear').fit(X_train, y_train)
-
-#     clf_roc = CutoffClassifier(lr, strategy='roc', cv='prefit').fit(
-#         X_test[:calibration_samples], y_test[:calibration_samples]
-#     )
-
-#     y_pred = lr.predict(X_test[calibration_samples:])
-#     y_pred_roc = clf_roc.predict(X_test[calibration_samples:])
-
-#     tn, fp, fn, tp = confusion_matrix(
-#         y_test[calibration_samples:], y_pred).ravel()
-#     tn_roc, fp_roc, fn_roc, tp_roc = confusion_matrix(
-#         y_test[calibration_samples:], y_pred_roc).ravel()
-
-#     tpr = tp / (tp + fn)
-#     tnr = tn / (tn + fp)
-
-#     tpr_roc = tp_roc / (tp_roc + fn_roc)
-#     tnr_roc = tn_roc / (tn_roc + fp_roc)
-
-#     # check that the sum of tpr and tnr has improved
-#     assert tpr_roc + tnr_roc > tpr + tnr
-
-#     clf_f1 = CutoffClassifier(
-#         lr, strategy='f_beta', method='predict_proba', beta=1,
-#         cv='prefit').fit(
-#         X_test[:calibration_samples], y_test[:calibration_samples]
-#     )
-
-#     y_pred_f1 = clf_f1.predict(X_test[calibration_samples:])
-#     assert (f1_score(y_test[calibration_samples:], y_pred_f1) >
-#             f1_score(y_test[calibration_samples:], y_pred))
-
-#     clf_fbeta = CutoffClassifier(
-#         lr, strategy='f_beta', method='predict_proba', beta=2,
-#         cv='prefit').fit(
-#         X_test[:calibration_samples], y_test[:calibration_samples]
-#     )
-
-#     y_pred_fbeta = clf_fbeta.predict(X_test[calibration_samples:])
-#     assert (recall_score(y_test[calibration_samples:], y_pred_fbeta) >
-#             recall_score(y_test[calibration_samples:], y_pred))
-
-#     clf_max_tpr = CutoffClassifier(
-#         lr, strategy='max_tpr', threshold=0.7, cv='prefit'
-#     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
-
-#     y_pred_max_tpr = clf_max_tpr.predict(X_test[calibration_samples:])
-
-#     tn_max_tpr, fp_max_tpr, fn_max_tpr, tp_max_tpr = confusion_matrix(
-#         y_test[calibration_samples:], y_pred_max_tpr).ravel()
-
-#     tpr_max_tpr = tp_max_tpr / (tp_max_tpr + fn_max_tpr)
-#     tnr_max_tpr = tn_max_tpr / (tn_max_tpr + fp_max_tpr)
-
-#     # check that the tpr increases with tnr >= min_val_tnr
-#     assert tpr_max_tpr > tpr
-#     assert tpr_max_tpr > tpr_roc
-#     assert tnr_max_tpr >= 0.7
-
-#     clf_max_tnr = CutoffClassifier(
-#         lr, strategy='max_tnr', threshold=0.7, cv='prefit'
-#     ).fit(X_test[:calibration_samples], y_test[:calibration_samples])
-
-#     y_pred_clf = clf_max_tnr.predict(X_test[calibration_samples:])
-
-#     tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
-#         y_test[calibration_samples:], y_pred_clf).ravel()
-
-#     tnr_clf_max_tnr = tn_clf / (tn_clf + fp_clf)
-#     tpr_clf_max_tnr = tp_clf / (tp_clf + fn_clf)
-
-#     # check that the tnr increases with tpr >= min_val_tpr
-#     assert tnr_clf_max_tnr > tnr
-#     assert tnr_clf_max_tnr > tnr_roc
-#     assert tpr_clf_max_tnr >= 0.7
-
-#     # check error cases
-#     clf_bad_base_estimator = CutoffClassifier([])
-#     with pytest.raises(TypeError):
-#         clf_bad_base_estimator.fit(X_train, y_train)
-
-#     X_non_binary, y_non_binary = make_classification(
-#         n_samples=20, n_features=6, random_state=42, n_classes=4,
-#         n_informative=4
-#     )
-#     with pytest.raises(ValueError):
-#         clf_roc.fit(X_non_binary, y_non_binary)
+class MockNoPredictorClassifier:
+    pass
 
 
-# def test_cutoff_cv():
-#     X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
-#                                n_classes=2)
-
-#     X_train, X_test, y_train, y_test = train_test_split(X, y,
-#                                                         test_size=0.4,
-#                                                         random_state=42)
-#     lr = LogisticRegression(solver='liblinear').fit(X_train, y_train)
-#     clf_roc = CutoffClassifier(LogisticRegression(solver='liblinear'),
-#                                strategy='roc',
-#                                cv=3).fit(
-#         X_train, y_train
-#     )
-
-#     assert clf_roc.decision_threshold_ != 0
-#     assert clf_roc.std_ is not None and clf_roc.std_ != 0
-
-#     y_pred = lr.predict(X_test)
-#     y_pred_roc = clf_roc.predict(X_test)
-
-#     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-#     tn_roc, fp_roc, fn_roc, tp_roc = confusion_matrix(
-#         y_test, y_pred_roc
-#     ).ravel()
-
-#     tpr = tp / (tp + fn)
-#     tnr = tn / (tn + fp)
-
-#     tpr_roc = tp_roc / (tp_roc + fn_roc)
-#     tnr_roc = tn_roc / (tn_roc + fp_roc)
-
-#     # check that the sum of tpr + tnr has improved
-#     assert tpr_roc + tnr_roc > tpr + tnr
+@pytest.mark.parametrize(
+    "Estimator, params, err_type, err_msg",
+    [
+        (LogisticRegression, {"method": "xxx"}, ValueError,
+         "'method' should be one of"),
+        (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
+         "'base_estimator' must implement one of the"),
+        (RandomForestRegressor, {"method": "predict_proba"}, TypeError,
+         "'base_estimator' does not implement predict_proba"),
+        (LogisticRegression,
+         {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
+         "When 'objective_metric' is a predefined scoring function")
+    ]
+)
+def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
+                                             err_msg):
+    X, y = make_classification(n_samples=200, n_features=6, random_state=42,
+                               n_classes=2)
+    with pytest.raises(err_type, match=err_msg):
+        clf = CutoffClassifier(base_estimator=Estimator(), **params)
+        clf.fit(X, y)
 
 
-# def test_get_binary_score():
-#     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
-#                                n_classes=2)
-
-#     X_train, X_test, y_train, _ = train_test_split(X, y, test_size=0.4,
-#                                                    random_state=42)
-#     lr = LogisticRegression(solver='liblinear').fit(X_train, y_train)
-#     y_pred_proba = lr.predict_proba(X_test)
-#     y_pred_score = lr.decision_function(X_test)
-
-#     assert_array_equal(
-#         y_pred_score, _get_binary_score(
-#             lr, X_test, method='decision_function', pos_label=1)
-#     )
-
-#     assert_array_equal(
-#         - y_pred_score, _get_binary_score(
-#             lr, X_test, method='decision_function', pos_label=0)
-#     )
-
-#     assert_array_equal(
-#         y_pred_proba[:, 1], _get_binary_score(
-#             lr, X_test, method='predict_proba', pos_label=1)
-#     )
-
-#     assert_array_equal(
-#         y_pred_proba[:, 0], _get_binary_score(
-#             lr, X_test, method='predict_proba', pos_label=0)
-#     )
-
-#     assert_array_equal(
-#         y_pred_score,
-#         _get_binary_score(lr, X_test, method=None, pos_label=1)
-#     )
-
-#     with pytest.raises(ValueError):
-#         _get_binary_score(lr, X_test, method='foo')
-
-#     # classifier that does not have a decision_function
-#     rf = RandomForestClassifier(n_estimators=10).fit(X_train, y_train)
-#     y_pred_proba_rf = rf.predict_proba(X_test)
-#     assert_array_equal(
-#         y_pred_proba_rf[:, 1],
-#         _get_binary_score(rf, X_test, method=None, pos_label=1)
-#     )
-
-#     X_non_binary, y_non_binary = make_classification(
-#         n_samples=20, n_features=6, random_state=42, n_classes=4,
-#         n_informative=4
-#     )
-
-#     rf_non_bin = RandomForestClassifier(n_estimators=10).fit(X_non_binary,
-#                                                              y_non_binary)
-#     with pytest.raises(ValueError):
-#         _get_binary_score(rf_non_bin, X_non_binary)
+def test_cutoffclassifier_not_binary():
+    X, y = load_iris(return_X_y=True)
+    with pytest.raises(ValueError, match="Expected target of binary type."):
+        clf = CutoffClassifier(base_estimator=LogisticRegression()).fit(X, y)
 
 
-# class MockNoPredictorClassifier:
-#     pass
-
-
-# @pytest.mark.parametrize(
-#     "Estimator, params, err_type, err_msg",
-#     [
-#         (LogisticRegression, {"method": "xxx"}, ValueError,
-#          "'method' should be one of"),
-#         (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
-#          "'base_estimator' must implement one of the"),
-#         (RandomForestRegressor, {"method": "predict_proba"}, TypeError,
-#          "'base_estimator' does not implement predict_proba"),
-#         (LogisticRegression, {"strategy": "xxx"}, ValueError,
-#          "'strategy' must be of"),
-#         (LogisticRegression, {"strategy": "max_tpr"}, TypeError,
-#          "When strategy is max_tpr or max_tnr"),
-#         (LogisticRegression, {"strategy": "f_beta"}, TypeError,
-#          "When strategy is f_beta"),
-#         (LogisticRegression, {"strategy": "max_tnr"}, TypeError,
-#          "When strategy is max_tpr or max_tnr"),
-#         (LogisticRegression, {"strategy": "max_tpr", "threshold": 10},
-#          ValueError, r"threshold should be in the range \[0, 1\]"),
-#         (LogisticRegression, {"strategy": "max_tnr", "threshold": 10},
-#          ValueError, r"threshold should be in the range \[0, 1\]"),
-#         (LogisticRegression,
-#          {"strategy": "constant", "method": "predict_proba",
-#           "decision_threshold": 10},
-#          ValueError, r"decision_threshold should be in the range \[0, 1\]")
-#     ]
-# )
-# def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
-#                                              err_msg):
-#     X, y = make_classification(n_samples=200, n_features=6, random_state=42,
-#                                n_classes=2)
-#     with pytest.raises(err_type, match=err_msg):
-#         clf = CutoffClassifier(base_estimator=Estimator(), **params)
-#         clf.fit(X, y)
-
-
-def test_cutoff_classifier():
-    from sklearn.datasets import load_breast_cancer
+def test_cutoffclassifier_limit_tpr_tnr():
     X, y = load_breast_cancer(return_X_y=True)
-    clf = LogisticRegression().fit(X, y)
-    clf_optimized = CutoffClassifier(
-        base_estimator=clf, objective_name="precision", objective_value=0.9
+    clf = CutoffClassifier(
+        base_estimator=make_pipeline(StandardScaler(), LogisticRegression()),
+        objective_metric="tpr",
+        objective_value=0,
     )
-    clf_optimized.fit(X, y)
-    print(clf_optimized.decision_threshold_)
+    y_pred_tpr = clf.fit(X, y).predict(X)
+    clf.set_params(objective_metric="tnr")
+    y_pred_tnr = (~clf.fit(X, y).predict(X).astype(bool)).astype(int)
+    assert_array_equal(y_pred_tnr, y_pred_tpr)
+
+
+def test_cutoffclassifier_with_objective_value():
+    X, y = load_breast_cancer(return_X_y=True)
+    # remove feature to degrade performances
+    X = X[:, :5]
+
+    # make the problem completely imbalanced such that the balanced accuracy
+    # is low
+    indices_pos = np.flatnonzero(y == 1)
+    indices_pos = indices_pos[:indices_pos.size // 50]
+    indices_neg = np.flatnonzero(y == 0)
+
+    X = np.vstack([X[indices_neg], X[indices_pos]])
+    y = np.hstack([y[indices_neg], y[indices_pos]])
+
+    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
+    model = CutoffClassifier(
+        base_estimator=lr, objective_metric=balanced_accuracy_score
+    )
+    score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
+    score_baseline = balanced_accuracy_score(y, lr.predict(X))
+    assert score_optimized > score_baseline
