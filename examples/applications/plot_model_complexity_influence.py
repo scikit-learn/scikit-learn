@@ -7,7 +7,7 @@ Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
 Here we will use two datasets:
-Diabetes dataset for regerssion and 20 Newsgroups dataset for classification.
+Diabetes dataset for regeression and 20 Newsgroups dataset for classification.
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters and measure the influence on both computational
@@ -36,9 +36,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
 
-# #############################################################################
-# Routines
-
 
 # Initialize random generator
 np.random.seed(0)
@@ -47,7 +44,9 @@ np.random.seed(0)
 # Load the data
 # --------------------------------
 #
-# First we will load and prepare the data
+# First we will write the function for loading the diabetes or 20newsgropus
+# dataset. We will add a parameter `sparse` 
+#
 
 
 def generate_data(case, sparse=False):
