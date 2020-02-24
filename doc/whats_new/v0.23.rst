@@ -205,6 +205,16 @@ Changelog
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  method for :class:`ensemble.RandomForestRegressor` and
+  :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
+  `Nicolas Hug`_.
+
+
 :mod:`sklearn.linear_model`
 ...........................
 
