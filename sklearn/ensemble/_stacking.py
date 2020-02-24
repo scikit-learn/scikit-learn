@@ -169,6 +169,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
+                                       fit_params={
+                                           'sample_weight': sample_weight
+                                        },
                                        verbose=self.verbose)
             for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
