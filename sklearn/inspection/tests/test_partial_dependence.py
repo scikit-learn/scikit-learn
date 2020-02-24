@@ -520,6 +520,16 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
+def test_hist_gbdt_sw_not_supported():
+    # TODO: remove/fix when PDP supports HGBT with sample weights
+    clf = HistGradientBoostingRegressor(random_state=1)
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+
+    with pytest.raises(NotImplementedError,
+                       match="does not support partial dependence"):
+        partial_dependence(clf, X, features=[1])
+
+
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 @ignore_warnings(category=FutureWarning)
 def test_partial_dependence_pipeline():
