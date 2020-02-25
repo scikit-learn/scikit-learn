@@ -70,6 +70,7 @@ Functions
 
    calibration.CalibratedClassifierCV
 
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst

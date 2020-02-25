@@ -7,8 +7,8 @@
 #
 # License: BSD 3 clause
 
-from inspect import signature
 import warnings
+from inspect import signature
 
 from math import log
 import numpy as np
@@ -18,23 +18,15 @@ from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from .preprocessing import LabelEncoder
 
-from .base import BaseEstimator
-from .base import ClassifierMixin
-from .base import MetaEstimatorMixin
-from .base import RegressorMixin
-from .base import clone
-from .isotonic import IsotonicRegression
-from .model_selection import check_cv
-from .preprocessing import label_binarize
-from .preprocessing import LabelBinarizer
-from .svm import LinearSVC
-from .utils import check_X_y
-from .utils import check_array
-from .utils import column_or_1d
-from .utils import indexable
-from .utils.validation import check_is_fitted
-from .utils.validation import check_consistent_length
+from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
+                   MetaEstimatorMixin)
+from .preprocessing import label_binarize, LabelBinarizer
+from .utils import check_X_y, check_array, indexable, column_or_1d
+from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .isotonic import IsotonicRegression
+from .svm import LinearSVC
+from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
