@@ -722,6 +722,7 @@ def test_safe_sparse_dot_dense_output(dense_output):
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
 
+
 class TestingLinearOperator(LinearOperator):
     def __init__(self, M):
         self.M = M
@@ -732,6 +733,7 @@ class TestingLinearOperator(LinearOperator):
 
     def _adjoint(self):
         return TestingLinearOperator(self.M.T)
+
 
 def test_safe_sparse_dot_operator():
     rng = np.random.RandomState(0)
