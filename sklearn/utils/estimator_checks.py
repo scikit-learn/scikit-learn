@@ -2465,7 +2465,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1],
                   [0, 3], [1, 0], [2, 0], [4, 4], [2, 3], [3, 2]])
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
+    y = [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
         check_estimators_data_not_an_array(name, estimator_orig, X, y,

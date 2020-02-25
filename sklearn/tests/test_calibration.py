@@ -17,12 +17,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import f1_score
+from sklearn.metrics import fbeta_score
 from sklearn.metrics import log_loss
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -354,8 +357,10 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf.fit(X, y)
 
 
-class MockNoPredictorClassifier:
-    pass
+class MockNoPredictorClassifier(BaseEstimator):
+    def fit(self, X, y):
+        self.classes_ = np.array([0, 1])
+        return self
 
 
 @pytest.mark.parametrize(
@@ -365,7 +370,7 @@ class MockNoPredictorClassifier:
          "'method' should be one of"),
         (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
          "'base_estimator' must implement one of the"),
-        (RandomForestRegressor, {"method": "predict_proba"}, TypeError,
+        (SVC, {"method": "predict_proba"}, TypeError,
          "'base_estimator' does not implement predict_proba"),
         (LogisticRegression,
          {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
@@ -421,3 +426,20 @@ def test_cutoffclassifier_with_objective_value():
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
     assert score_optimized > score_baseline
+
+
+def test_cutoffclassifier_metric_with_parameter():
+    X, y = load_breast_cancer(return_X_y=True)
+    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
+    model_fbeta = CutoffClassifier(
+        base_estimator=lr, objective_metric=fbeta_score,
+        objective_metric_params={"beta": 1}
+    )
+    model_f1 = CutoffClassifier(
+        base_estimator=lr, objective_metric=f1_score,
+    )
+    model_f1.fit(X, y)
+    model_fbeta.fit(X, y)
+
+    assert (model_fbeta.decision_threshold_ ==
+            pytest.approx(model_f1.decision_threshold_))

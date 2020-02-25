@@ -618,7 +618,8 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Estimator that calibrates the decision threshold (cutoff point) that is
     used for prediction. The methods for picking cutoff points make use of
     traditional binary classification evaluation statistics such as the true
-    positive and true negative rates and F-scores.
+    positive and true negative rates or any metrics accepting true labels and
+    the output of a scoring functions from a scikit-learn estimator.
 
     Parameters
     ----------
@@ -635,6 +636,9 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         * `"tnr"`: Find the decision threshold for a true negative ratio (TNR)
           of `objective_value`.
         * one of the scikit-learn scoring metric.
+
+    objective_metric_params : dict, default=None
+        Some extra parameters to pass to `objective_metric`.
 
     objective_value : float, default=None
         The value associated with the `objective_metric` metric for which we
@@ -662,24 +666,20 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     classes_ : array of shape (n_classes,)
         The class labels.
-
-    References
-    ----------
-    .. [1] Receiver-operating characteristic (ROC) plots: a fundamental
-           evaluation tool in clinical medicine, MH Zweig, G Campbell -
-           Clinical chemistry, 1993
     """
 
     def __init__(
         self,
         base_estimator,
         objective_metric=balanced_accuracy_score,
+        objective_metric_params=None,
         objective_value=None,
         method="auto",
         pos_label=None
     ):
         self.base_estimator = base_estimator
         self.objective_metric = objective_metric
+        self.objective_metric_params = objective_metric_params
         self.objective_value = objective_value
         self.method = method
         self.pos_label = pos_label
@@ -718,6 +718,29 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 f" instead."
             )
 
+        # ensure binary classification if pos_label is not specified
+        # classes.dtype.kind in ('O', 'U', 'S') is required to avoid
+        # triggering a FutureWarning by calling np.array_equal(a, b)
+        # when elements in the two arrays are not comparable.
+        classes = self.classes_
+        if (self.pos_label is None and (
+                classes.dtype.kind in ('O', 'U', 'S') or
+                not (np.array_equal(classes, [0, 1]) or
+                     np.array_equal(classes, [-1, 1]) or
+                     np.array_equal(classes, [0]) or
+                     np.array_equal(classes, [-1]) or
+                     np.array_equal(classes, [1])))):
+            classes_repr = ", ".join(repr(c) for c in classes)
+            raise ValueError(
+                f"'y_true' takes value in {classes_repr} and 'pos_label' is "
+                f"not specified: either make 'y_true' take value in "
+                "{{0, 1}} or {{-1, 1}} or pass pos_label explicitly."
+            )
+        elif self.pos_label is None:
+            self._pos_label = 1.
+        else:
+            self._pos_label = self.pos_label
+
     @staticmethod
     def _validate_data(X, y):
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -734,17 +757,6 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             pos_label_encoded = np.flatnonzero(classes == pos_label).item(0)
             y_score = y_score[:, pos_label_encoded]
         return y_score
-
-    def _optimize_scorer(self, estimator, y_true, y_score, scorer, classes,
-                         pos_label):
-        # `np.unique` is already sorting the value, no need to call
-        #  `thresholds.sort()`
-        thresholds = np.unique(
-            self._get_pos_label_score(y_score, classes, pos_label)
-        )
-        scores = [scorer(y_true, (y_score >= th).astype(int))
-                  for th in thresholds]
-        return thresholds[np.argmax(scores)]
 
     def fit(self, X, y):
         """Find the decision threshold.
@@ -763,7 +775,6 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        self._validate_parameters()
         X, y = self._validate_data(X, y)
 
         try:
@@ -772,24 +783,61 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         except NotFittedError:
             self._estimator = clone(self.base_estimator).fit(X, y)
         self.classes_ = self._estimator.classes_
+        if len(self.classes_) == 1:
+            raise ValueError(
+                f"This classifier needs samples from 2 classes in the data "
+                f"to be trained but the data contains only the class: "
+                f"{self.classes_.item(0)}"
+            )
+
+        # delayed the parameters check until we have a fitted base estimator
+        # with known classes
+        self._validate_parameters()
+
+        # warm start a label encoder using the fitted estimator
+        label_encoder = LabelEncoder()
+        label_encoder.classes_ = self.classes_
+
+        y_encoded = label_encoder.transform(y)
+        self._pos_label_encoded = np.flatnonzero(
+            self.classes_ == self._pos_label
+        ).item(0)
 
         y_score = getattr(self._estimator, self._method)(X)
         if self.objective_metric in ("tpr", "tnr"):
             fpr, tpr, thresholds = roc_curve(
-                y, y_score, pos_label=self.pos_label
+                y_encoded, y_score, pos_label=self._pos_label_encoded
             )
+            metric = tpr
             if self.objective_metric == "tnr":
-                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]  # noqa
+                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]
+                metric = tnr
 
             threshold_idx = np.searchsorted(
-                eval(self.objective_metric), self.objective_value
+                metric, self.objective_value
             )
             self.decision_threshold_ = thresholds[threshold_idx]
         else:
-            self.decision_threshold_ = self._optimize_scorer(
-                self._estimator, y, y_score, self.objective_metric,
-                self.classes_, self.pos_label,
+            # `np.unique` is already sorting the value, no need to call
+            #  `thresholds.sort()`
+            thresholds = np.unique(
+                self._get_pos_label_score(
+                    y_score, self.classes_, self.pos_label
+                )
             )
+            params = ({} if self.objective_metric_params is None
+                      else self.objective_metric_params)
+            metric_signature = signature(self.objective_metric)
+            if "pos_label" in metric_signature.parameters:
+                params["pos_label"] = self._pos_label_encoded
+            scores = [
+                self.objective_metric(
+                    y_encoded, (y_score >= th).astype(int), **params
+                )
+                for th in thresholds
+            ]
+            self.decision_threshold_ = thresholds[np.argmax(scores)]
+
         return self
 
     def predict(self, X):
@@ -810,11 +858,19 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         decision_function = getattr(self._estimator, self._method)
         y_score = self._get_pos_label_score(
-            decision_function(X), self.classes_, self.pos_label
+            decision_function(X), self.classes_, self._pos_label
         )
         y_class_indices = (y_score >= self.decision_threshold_).astype(int)
 
-        return self._estimator.classes_[y_class_indices]
+        return self.classes_[y_class_indices]
 
     def _more_tags(self):
-        return {"binary_only": True}
+        return {
+            "binary_only": True,
+            "_xfail_test": {
+                "check_classifiers_classes":
+                "requires non default 'pos_label='two'' parameter",
+                "check_fit2d_1feature":
+                "requires non default 'pos_label=2' parameter",
+            }
+        }
