@@ -731,8 +731,11 @@ class TestingLinearOperator(LinearOperator):
     def _matvec(self, x):
         return self.M @ x
 
-    def _adjoint(self):
+    def _transpose(self):
         return TestingLinearOperator(self.M.T)
+
+    def _adjoint(self):
+        return TestingLinearOperator(self.M.H)
 
 
 def test_safe_sparse_dot_operator():
