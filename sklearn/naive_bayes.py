@@ -20,6 +20,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 import copy
 import numpy as np
+import pandas as pd
 
 from .base import BaseEstimator, ClassifierMixin
 from .exceptions import NotFittedError
@@ -182,11 +183,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     ...         [("gaussian", GaussianNB(), [0, 1, 2]),
     ...          ("categorical", CategoricalNB(), [3, 4])])
     >>> clf.fit(X, y)
-    GeneralNB(models=[('gaussian', GaussianNB(),
-                   [0, 1, 2]),
-                  ('categorical',
-                   CategoricalNB(),
-                   [3, 4])])
+    GeneralNB(models=[('gaussian', GaussianNB(...), [0, 1, 2]),
+                      ('categorical', CategoricalNB(...), [3, 4])])
     >>> clf.predict(X[:1,])
     array([1])
     """
@@ -268,10 +266,15 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                              "must be the same.")
 
         # Obtain the jll of each fitted estimator
-        jlls = [nb_model._joint_log_likelihood(
-                    np.array(_safe_indexing(
-                        nb_model._check_X(X), cols, axis=1)))
-                for _, nb_model, cols in self.models_]
+        jlls = []
+        for _, nb_model, cols in self.models_:
+            X_ = nb_model._check_X(X)
+            # If X is DataFrame, cast X_ back to DataFrame
+            if self._df_cols is not None:
+                X_ = pd.DataFrame(X_, columns=self._df_cols)
+            X_ = np.array(_safe_indexing(X_, cols, axis=1))
+            jll = nb_model._joint_log_likelihood(X_)
+            jlls.append(jll)
 
         # Stack these jlls to give us
         # the shape (estimator, sample, class)
@@ -402,7 +405,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             self._df_cols = X.columns
 
     def _check_X(self, X):
-        # Check if X should be a pandas dataframe
+        # Check if X is a pandas dataframe
         if self._df_cols is not None:
 
             if not hasattr(X, "columns"):
