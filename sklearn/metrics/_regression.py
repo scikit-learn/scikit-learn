@@ -200,7 +200,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples,) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
     y_pred : array-like of shape = (n_samples,) or (n_samples, n_outputs)
