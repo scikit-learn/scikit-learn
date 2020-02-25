@@ -757,3 +757,14 @@ def test_safe_sparse_dot_operator():
     op = TestingLinearOperator(B)
     actual = safe_sparse_dot(A, op)
     assert_allclose(actual, expected)
+
+
+def test_randomized_svd_operator():
+    rng = np.random.RandomState(0)
+    A = rng.random_sample((10, 20))
+    op = TestingLinearOperator(A)
+    u1, s1, v1 = randomized_svd(A, 5, flip_sign=True, random_state=41)
+    u2, s2, v2 = randomized_svd(op, 5, flip_sign=True, random_state=41)
+    assert_almost_equal(u1, u2)
+    assert_almost_equal(s1, s2)
+    assert_almost_equal(v1, v2)
