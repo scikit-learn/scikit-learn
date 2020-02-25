@@ -175,8 +175,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |API| Changed the formatting of values in :class:`metrics.confusion_matrix_display`
+  to pick the shorter format (either '2g' or 'd').
+  :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and `Thomas Fan`_
+
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
-  argument `squared` when argument `multioutput='raw_values'`. 
+  argument `squared` when argument `multioutput='raw_values'`.
   :pr:`16323` by :user:`Rushabh Vasani <rushabh-v>`
 
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
