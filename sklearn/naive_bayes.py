@@ -123,7 +123,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     The General Naive Bayes classifier is a metaestimator that allows
     different features in the data to be modeled with different naive Bayes
-    models. This is useful for data containing numerical and categorical 
+    models. This is useful for data containing numerical and categorical
     features, where numerical features may be modeled as Gaussian distributions
     and categorical features as categorical distributions.
 
@@ -138,23 +138,24 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         or :class:`ColumnTransformer <sklearn.compose.ColumnTransformer>`.
 
         name : string
-            This is a user-defined identifier that allows the models and its 
+            This is a user-defined identifier that allows the models and its
             parameters to be retrieved and set later using :meth:`get_params_`
             and :meth:`set_params_`.
         naive Bayes model : Estimator
-            The naive Bayes model represents the distribution assumption on 
-            the features. Use our naive Bayes estimators like 
+            The naive Bayes model represents the distribution assumption on
+            the features. Use our naive Bayes estimators like
             :class:`GaussianNB <sklearn.naive_bayes.GaussianNB>` and
-            :class:`CategoricalNB <sklearn.naive_bayes.CategoricalNB>`. 
+            :class:`CategoricalNB <sklearn.naive_bayes.CategoricalNB>`.
             Custom estimators must support :term:`fit`, :term:`predict`
             and `_joint_log_likelihood`.
         column(s) : array-like of {string or int}, slice, or callable
-            Features that correspond to the naive Bayes models. Indexes 
-            the data on its second axis. Integers are interpreted as 
-            positional columns, while strings reference DataFrame columns 
+            Features that correspond to the naive Bayes models. Indexes
+            the data on its second axis. Integers are interpreted as
+            positional columns, while strings reference DataFrame columns
             by name. A callable is passed the input data `X` and must return
-            one of the above. For example, 
-            :func:`compose.make_column_selector <sklearn.compose.make_column_selector>`
+            one of the above. For example,
+            :func:`compose.make_column_selector
+            <sklearn.compose.make_column_selector>`
             can select multiple columns by name or dtype.
 
     Attributes
@@ -172,18 +173,22 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, Categorical
+    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, CategoricalNB
     >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
     ...               [2.7, 3.8, 2.3, 1, 0],
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
-    >>> clf = GeneralNB([
-    ...     ("gaussian", GaussianNB(), [0, 1, 2]),
-    ...     ("categorical", CategoricalNB(), [3, 4])
-    >>> ])
+    >>> clf = GeneralNB(
+    ...         [("gaussian", GaussianNB(), [0, 1, 2]),
+    ...          ("categorical", CategoricalNB(), [3, 4])])
     >>> clf.fit(X, y)
-    >>> clf.predict(X[0])
-    [1]
+    GeneralNB(models=[('gaussian', GaussianNB(),
+                   [0, 1, 2]),
+                  ('categorical',
+                   CategoricalNB(),
+                   [3, 4])])
+    >>> clf.predict(X[:1,])
+    array([1])
     """
 
     def __init__(self, models):
@@ -264,7 +269,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         # Obtain the jll of each fitted estimator
         jlls = [nb_model._joint_log_likelihood(
-                    np.array(_safe_indexing(X, cols, axis=1)))
+                    np.array(_safe_indexing(
+                        nb_model._check_X(X), cols, axis=1)))
                 for _, nb_model, cols in self.models_]
 
         # Stack these jlls to give us
@@ -373,8 +379,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         if all(prior is not None for prior in all_class_priors):
             if np.max(np.ptp(all_class_priors, axis=0)) < 1e-6:
                 raise ValueError("The parameters 'class_prior' or 'priors' "
-                                "must be the same values throughout all "
-                                "estimators if specified.")
+                                 "must be the same values throughout all "
+                                 "estimators if specified.")
 
         # Check if `fit_prior`s are the same throughout all estimators
         if not all(all_fit_priors):
