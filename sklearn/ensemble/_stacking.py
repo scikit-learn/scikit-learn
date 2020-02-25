@@ -123,8 +123,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             support sample weights.
 
             .. versionchanged:: 0.23
-              when not None, `sample_weight` is passed to all underlying
-              estimators
+               when not None, `sample_weight` is passed to all underlying
+               estimators
 
         Returns
         -------
