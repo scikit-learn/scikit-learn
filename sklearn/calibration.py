@@ -27,38 +27,30 @@ from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
+from .utils.validation import _deprecate_positional_args
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                              MetaEstimatorMixin):
-    """Probability calibration with isotonic regression or sigmoid.
+    """Probability calibration with isotonic regression or logistic regression.
 
-    See glossary entry for :term:`cross-validation estimator`.
-
-    With this class, the base_estimator is fit on the train set of the
-    cross-validation generator and the test set is used for calibration.
-    The probabilities for each of the folds are then averaged
-    for prediction. In case that cv="prefit" is passed to __init__,
-    it is assumed that base_estimator has been fitted already and all
-    data is used for calibration. Note that data for fitting the
-    classifier and for calibrating it must be disjoint.
+    The calibration is based on the :term:`decision_function` method of the
+    `base_estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose output decision function needs to be calibrated
-        to offer more accurate predict_proba outputs. If cv=prefit, the
-        classifier must have been fit already on data.
+        The classifier whose output need to be calibrated to provide more
+        accurate `predict_proba` outputs.
 
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to
-        overfit.
-        Use sigmoids (Platt's calibration) in this case.
+        corresponds to Platt's method (i.e. a logistic regression model) or
+        'isotonic' which is a non-parametric approach. It is not advised to
+        use isotonic calibration with too few calibration samples
+        ``(<<1000)`` since it tends to overfit.
 
     cv : integer, cross-validation generator, iterable or "prefit", optional
         Determines the cross-validation splitting strategy.
@@ -77,7 +69,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If "prefit" is passed, it is assumed that base_estimator has been
+        If "prefit" is passed, it is assumed that `base_estimator` has been
         fitted already and all data is used for calibration.
 
         .. versionchanged:: 0.22
@@ -89,7 +81,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
-        The list of calibrated classifiers, one for each crossvalidation fold,
+        The list of calibrated classifiers, one for each cross-validation fold,
         which has been fitted on all but the validation fold and calibrated
         on the validation fold.
 
@@ -107,7 +99,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -223,8 +216,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         return mean_proba
 
     def predict(self, X):
-        """Predict the target of new samples. Can be different from the
-        prediction of the uncalibrated classifier.
+        """Predict the target of new samples. The predicted class is the
+        class that has the highest probability, and can thus be different
+        from the prediction of the uncalibrated classifier.
 
         Parameters
         ----------
@@ -283,7 +277,8 @@ class _CalibratedClassifier:
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid', classes=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes

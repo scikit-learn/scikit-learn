@@ -276,7 +276,12 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
-        if np.all([l not in y_true for l in labels]):
+        n_labels = labels.size
+        if n_labels == 0:
+            raise ValueError("'labels' should contains at least one label.")
+        elif y_true.size == 0:
+            return np.zeros((n_labels, n_labels), dtype=np.int)
+        elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
@@ -1799,7 +1804,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
-    """Build a text report showing the main classification metrics
+    """Build a text report showing the main classification metrics.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
@@ -2333,6 +2338,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
+
     The smaller the Brier score, the better, hence the naming with "loss".
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned

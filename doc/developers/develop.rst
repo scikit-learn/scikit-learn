@@ -74,7 +74,7 @@ multiple interfaces):
 Estimators
 ----------
 
-The API has one predominant object: the estimator. A estimator is an
+The API has one predominant object: the estimator. An estimator is an
 object that fits a model based on some training data and is capable of
 inferring some properties on new data. It can be, for instance, a
 classifier or a regressor. All estimators implement the fit method::
@@ -220,7 +220,7 @@ an integer called ``n_iter``.
 Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
-An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
+An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
 a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
 the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
@@ -481,39 +481,31 @@ runtime. The default values for the estimator tags are defined in the
 
 The current set of estimator tags are:
 
-non_deterministic (default=``False``)
-    whether the estimator is not deterministic given a fixed ``random_state``
+allow_nan (default=False)
+    whether the estimator supports data with missing values encoded as np.NaN
 
-requires_positive_X (default=``False``)
-    whether the estimator requires positive X.
+binary_only (default=False)
+    whether estimator supports binary classification but lacks multi-class
+    classification support.
 
-requires_positive_y (default=``False``)
-    whether the estimator requires a positive y (only applicable for regression).
+multilabel (default=False)
+    whether the estimator supports multilabel output
 
-no_validation (default=``False``)
-    whether the estimator skips input-validation. This is only meant for
-    stateless and dummy transformers!
-
-multioutput - unused for now (default=``False``)
+multioutput (default=False)
     whether a regressor supports multi-target outputs or a classifier supports
     multi-class multi-output.
 
-multilabel (default=``False``)
-    whether the estimator supports multilabel output
+multioutput_only (default=False)
+    whether estimator supports only multi-output classification or regression.
 
-stateless (default=``False``)
-    whether the estimator needs access to data for fitting. Even though an
-    estimator is stateless, it might still need a call to ``fit`` for
-    initialization.
+no_validation (default=False)
+    whether the estimator skips input-validation. This is only meant for
+    stateless and dummy transformers!
 
-requires_fit (default=``True``)
-    whether the estimator requires to be fitted before calling one of
-    `transform`, `predict`, `predict_proba`, or `decision_function`.
+non_deterministic (default=False)
+    whether the estimator is not deterministic given a fixed ``random_state``
 
-allow_nan (default=``False``)
-    whether the estimator supports data with missing values encoded as np.NaN
-
-poor_score (default=``False``)
+poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -521,18 +513,31 @@ poor_score (default=``False``)
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-multioutput_only (default=``False``)
-    whether estimator supports only multi-output classification or regression.
+requires_fit (default=True)
+    whether the estimator requires to be fitted before calling one of
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-binary_only (default=``False``)
-    whether estimator supports binary classification but lacks multi-class
-    classification support.
+requires_positive_X (default=False)
+    whether the estimator requires positive X.
 
-_skip_test (default=``False``)
+requires_positive_y (default=False)
+    whether the estimator requires a positive y (only applicable for regression).
+
+_skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-X_types (default=``['2darray']``)
+_xfail_test (default=False)
+    dictionary ``{check_name : reason}`` of common checks to mark as a
+    known failure, with the associated reason. Don't use this unless you have a
+    *very good* reason.
+
+stateless (default=False)
+    whether the estimator needs access to data for fitting. Even though an
+    estimator is stateless, it might still need a call to ``fit`` for
+    initialization.
+
+X_types (default=['2darray'])
     Supported input types for X as list of strings. Tests are currently only
     run if '2darray' is contained in the list, signifying that the estimator
     takes continuous 2d numpy arrays as input. The default value is
