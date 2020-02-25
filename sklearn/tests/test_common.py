@@ -20,7 +20,7 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, _safe_tags
 
 import sklearn
 from sklearn.base import BiclusterMixin
@@ -87,7 +87,7 @@ def _tested_estimators():
 
 
 @parametrize_with_checks(_tested_estimators())
-def test_estimators(estimator, check):
+def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
