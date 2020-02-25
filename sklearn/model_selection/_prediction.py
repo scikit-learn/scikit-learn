@@ -8,6 +8,7 @@ from ..base import ClassifierMixin
 from ..base import MetaEstimatorMixin
 from ..exceptions import NotFittedError
 from ..metrics import balanced_accuracy_score
+from ..metrics import confusion_matrix
 from ..metrics import roc_curve
 from ..preprocessing import LabelEncoder
 from ..utils import check_array
@@ -31,14 +32,16 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         The classifier, fitted or not fitted, from which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"tpr", "tnr"} or callable, \
+    objective_metric : {"tpr", "tnr"}, ndarray of shape (2, 2) or callable, \
             default=balanced_accuracy_score
         The objective metric to be optimized. Can be on of:
 
-        * `"tpr"`: Find the decision threshold for a true positive ratio (TPR)
+        * `"tpr"`: find the decision threshold for a true positive ratio (TPR)
           of `objective_value`.
-        * `"tnr"`: Find the decision threshold for a true negative ratio (TNR)
+        * `"tnr"`: find the decision threshold for a true negative ratio (TNR)
           of `objective_value`.
+        * `"cost_matrix"`: find the decision threshold which minimize the total
+           cost using the cost matrix given in `objective_value`.
         * a callable with the signature `metric(y_true, y_score, **kwargs)`.
 
     objective_metric_params : dict, default=None
@@ -46,8 +49,12 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     objective_value : float, default=None
         The value associated with the `objective_metric` metric for which we
-        want to find the decision threshold. Only apply when `objective_metric`
-        is `"tpr"` or `"tnr"`
+        want to find the decision threshold. When
+        `objective_metric='cost_matrix'`, this parameter should be a 2x2 cost
+        matrix with the same organization than a
+        :func:`sklearn.metrics.confusion_matrix`: the count of true negatives
+        is :math:`C_{0,0}`, false negatives is :math:`C_{1,0}`, true positives
+        is :math:`C_{1,1}` and false positives is :math:`C_{0,1}`.
 
     method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `base_estimator` corresponding to the
@@ -162,13 +169,19 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                     f"'base_estimator' does not implement {self.method}."
                 )
             self._method = self.method
-        if (self.objective_metric not in ("tnr", "tpr") and
+        if (self.objective_metric not in ("tpr", "tnr", "cost_matrix") and
                 self.objective_value is not None):
             raise ValueError(
                 f"When 'objective_metric' is a scoring function, "
-                f"'objective_value' should be None. Got {self.objective_value}"
-                f" instead."
+                f"'objective_value' should be None. Got "
+                f"{self.objective_metric} instead."
             )
+        elif self.objective_metric == "cost_matrix":
+            if self.objective_value.shape != (2, 2):
+                raise ValueError(
+                    f"When 'objective_metric' is a cost matrix, it must be of "
+                    f"shape (2, 2). Got {self.objective_value.shape} instead."
+                )
 
         # ensure binary classification if `pos_label` is not specified
         # `classes.dtype.kind` in ('O', 'U', 'S') is required to avoid
@@ -200,6 +213,11 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         if y_type != 'binary':
             raise ValueError(f'Expected target of binary type. Got {y_type}.')
         return X, y
+
+    @staticmethod
+    def cost_sensitive_score(y_true, y_pred, cost_matrix):
+        cm = confusion_matrix(y_true, y_pred) * cost_matrix
+        return np.diag(cm) / cm.sum()
 
     def fit(self, X, y):
         """Find the decision threshold.
@@ -247,7 +265,7 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ).item(0)
 
         y_score = getattr(self._estimator, self._method)(X)
-        if self.objective_metric in ("tpr", "tnr"):
+        if self.objective_metric in ("tnr", "tpr"):
             fpr, tpr, thresholds = roc_curve(
                 y_encoded, y_score, pos_label=self._pos_label_encoded
             )
@@ -261,22 +279,26 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             )
             self.decision_threshold_ = thresholds[threshold_idx]
         else:
-            # `np.unique` is already sorting the value, no need to call
-            #  `thresholds.sort()`
             if y_score.ndim == 2:
                 y_score = y_score[:, self._pos_label_encoded]
+            # `np.unique` is already sorting the value, no need to call
+            #  `thresholds.sort()`
             thresholds = np.unique(y_score)
+            scores = []
             params = ({} if self.objective_metric_params is None
                       else self.objective_metric_params)
-            metric_signature = signature(self.objective_metric)
-            if "pos_label" in metric_signature.parameters:
-                params["pos_label"] = self._pos_label_encoded
-            scores = [
-                self.objective_metric(
-                    y_encoded, (y_score >= th).astype(int), **params
+            if callable(self.objective_metric):
+                metric_func = self.objective_metric
+                metric_signature = signature(metric_func)
+                if "pos_label" in metric_signature.parameters:
+                    params["pos_label"] = self._pos_label_encoded
+            else:
+                metric_func = self.cost_sensitive_score
+                params["cost_matrix"] = self.objective_value
+            for th in thresholds:
+                scores.append(metric_func(
+                    y_encoded, (y_score >= th).astype(int), **params)
                 )
-                for th in thresholds
-            ]
             self.decision_threshold_ = thresholds[np.argmax(scores)]
 
         return self

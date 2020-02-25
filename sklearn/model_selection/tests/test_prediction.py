@@ -35,7 +35,11 @@ class MockNoPredictorClassifier(BaseEstimator):
          "'base_estimator' does not implement predict_proba"),
         (LogisticRegression,
          {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
-         "When 'objective_metric' is a scoring function")
+         "When 'objective_metric' is a scoring function"),
+        (LogisticRegression,
+         {"objective_metric": "cost_matrix",
+          "objective_value": np.array([[1], [2]])}, ValueError,
+         "When 'objective_metric' is a cost matrix"),
     ]
 )
 def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
@@ -174,3 +178,18 @@ def test_cutoffclassifier_with_string_targets(method, dtype, metric):
     assert_array_equal(np.sort(model.classes_), np.sort(classes))
     y_pred = model.predict(X[[0], :])
     assert y_pred.item(0) in classes
+
+
+def test_cutoffclassifier_cost_matrix():
+    X, y = load_breast_cancer(return_X_y=True)
+    cost_matrix = np.array([[0, 0],
+                            [0, 1]])
+    clf = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
+    model = CutoffClassifier(
+        base_estimator=clf,
+        objective_metric="cost_matrix",
+        objective_value=cost_matrix,
+    )
+    model.fit(X, y)
+    assert clf.predict(X).sum() < model.predict(X).sum()
+    assert model.predict(X).sum() > (y.size * 0.9)
