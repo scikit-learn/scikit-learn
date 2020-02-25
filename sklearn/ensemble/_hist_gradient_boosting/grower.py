@@ -135,7 +135,8 @@ class TreeGrower:
         maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf.
+        edges to go from the root to the deepest leaf.
+        Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
     min_gain_to_split : float, optional (default=0.)
@@ -230,9 +231,9 @@ class TreeGrower:
         if max_leaf_nodes is not None and max_leaf_nodes <= 1:
             raise ValueError('max_leaf_nodes={} should not be'
                              ' smaller than 2'.format(max_leaf_nodes))
-        if max_depth is not None and max_depth <= 1:
+        if max_depth is not None and max_depth < 1:
             raise ValueError('max_depth={} should not be'
-                             ' smaller than 2'.format(max_depth))
+                             ' smaller than 1'.format(max_depth))
         if min_samples_leaf < 1:
             raise ValueError('min_samples_leaf={} should '
                              'not be smaller than 1'.format(min_samples_leaf))
@@ -354,16 +355,16 @@ class TreeGrower:
 
         self.n_nodes += 2
 
-        if self.max_depth is not None and depth == self.max_depth:
-            self._finalize_leaf(left_child_node)
-            self._finalize_leaf(right_child_node)
-            return left_child_node, right_child_node
-
         if (self.max_leaf_nodes is not None
                 and n_leaf_nodes == self.max_leaf_nodes):
             self._finalize_leaf(left_child_node)
             self._finalize_leaf(right_child_node)
             self._finalize_splittable_nodes()
+            return left_child_node, right_child_node
+
+        if self.max_depth is not None and depth == self.max_depth:
+            self._finalize_leaf(left_child_node)
+            self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
         if left_child_node.n_samples < self.min_samples_leaf * 2:

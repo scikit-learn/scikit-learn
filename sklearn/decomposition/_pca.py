@@ -189,11 +189,10 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance or None, optional (default None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance, default=None
+        Used when ``svd_solver`` == 'arpack' or 'randomized'. Pass an int
+        for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18.0
 
@@ -463,9 +462,12 @@ class PCA(_BasePCA):
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
+            # side='right' ensures that number of features selected
+            # their variance is always greater than n_components float
+            # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components) + 1
-
+            n_components = np.searchsorted(ratio_cumsum, n_components,
+                                           side='right') + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):

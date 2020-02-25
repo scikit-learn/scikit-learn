@@ -581,7 +581,7 @@ implementation with special data types. The precomputed neighbors
   training point as its own neighbor in the count of `n_neighbors`. However,
   for compatibility reasons with other estimators which use the other
   definition, one extra neighbor will be computed when `mode == 'distance'`.
-  To maximise compatiblity with all estimators, a safe choice is to always
+  To maximise compatibility with all estimators, a safe choice is to always
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 

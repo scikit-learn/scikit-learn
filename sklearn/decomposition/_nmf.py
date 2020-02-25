@@ -287,11 +287,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
+    random_state : int, RandomState instance, default=None
+        Used when ``init`` == 'nndsvdar' or 'random'. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -326,18 +325,18 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     if init == 'random':
         avg = np.sqrt(X.mean() / n_components)
         rng = check_random_state(random_state)
-        H = avg * rng.randn(n_components, n_features)
-        W = avg * rng.randn(n_samples, n_components)
-        # we do not write np.abs(H, out=H) to stay compatible with
-        # numpy 1.5 and earlier where the 'out' keyword is not
-        # supported as a kwarg on ufuncs
-        np.abs(H, H)
-        np.abs(W, W)
+        H = avg * rng.randn(n_components, n_features).astype(X.dtype,
+                                                             copy=False)
+        W = avg * rng.randn(n_samples, n_components).astype(X.dtype,
+                                                            copy=False)
+        np.abs(H, out=H)
+        np.abs(W, out=W)
         return W, H
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
-    W, H = np.zeros(U.shape), np.zeros(V.shape)
+    W = np.zeros_like(U)
+    H = np.zeros_like(V)
 
     # The leading singular triplet is non-negative
     # so it can be used as is for initialization.
@@ -472,11 +471,11 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to randomize the coordinates in the CD solver, when
+        ``shuffle`` is set to ``True``. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -842,7 +841,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 
 def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init='warn', update_H=True, solver='cd',
+                               init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -891,10 +890,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'random'.
-
-        The default value will change from 'random' to None in version 0.23
-        to make it consistent with decomposition.NMF.
+        Default: None.
 
         Valid options:
 
@@ -914,6 +910,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             for when sparsity is not desired)
 
         - 'custom': use custom matrices W and H
+
+        .. versionchanged:: 0.23
+            The default value of `init` changed from 'random' to None in 0.23.
 
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
@@ -963,11 +962,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -1004,8 +1003,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1028,25 +1027,25 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
 
-    if init == "warn":
-        if n_components < n_features:
-            warnings.warn("The default value of init will change from "
-                          "random to None in 0.23 to make it consistent "
-                          "with decomposition.NMF.", FutureWarning)
-        init = "random"
-
     # check W and H, or initialize them
     if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if H.dtype != X.dtype or W.dtype != X.dtype:
+            raise TypeError("H and W should have the same dtype as X. Got "
+                            "H.dtype = {} and W.dtype = {}."
+                            .format(H.dtype, W.dtype))
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
+        if H.dtype != X.dtype:
+            raise TypeError("H should have the same dtype as X. Got H.dtype = "
+                            "{}.".format(H.dtype))
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
             avg = np.sqrt(X.mean() / n_components)
-            W = np.full((n_samples, n_components), avg)
+            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
         else:
-            W = np.zeros((n_samples, n_components))
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
@@ -1163,11 +1162,11 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to
@@ -1276,7 +1275,8 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=[np.float64, np.float32])
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
