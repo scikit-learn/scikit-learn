@@ -734,9 +734,6 @@ class TestingLinearOperator(LinearOperator):
     def _transpose(self):
         return TestingLinearOperator(self.M.T)
 
-    def _adjoint(self):
-        return TestingLinearOperator(self.M.H)
-
 
 def test_safe_sparse_dot_operator():
     rng = np.random.RandomState(0)
