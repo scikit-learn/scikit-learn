@@ -13,7 +13,7 @@ other features remain constant (`conditional dependence
 <https://en.wikipedia.org/wiki/Conditional_dependence>`_).
 This is different from plotting :math:`X_i` versus :math:`y` and fitting a
 linear relationship: in that case all possible values of the other features are
-added to the estimation (marginal dependence).
+taken into account in the estimation (marginal dependence).
 
 This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
@@ -368,7 +368,7 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The estimation of the EXPERIENCE coefficient is now less variable and
-# remain important for all predictors trained during cross-validation.
+# remain important for all models trained during cross-validation.
 #
 # .. _scaling_num:
 #
