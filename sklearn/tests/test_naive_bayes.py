@@ -109,13 +109,8 @@ def test_generalnb_models_too_few_cols():
 def test_generalnb_joint_log_likelihood():
     """Test whether joint log likelihood has been computed correctly"""
 
-    # Get jll from GeneralNB
-    clf = GeneralNB([
-        ("gaussian", GaussianNB(), [0]),
-        ("bernoulli", BernoulliNB(), [1])]
-    )
-    clf.fit(X, y)
-    jll = clf._joint_log_likelihood(X)
+    X = np.array([[-2, 0], [-1, 1], [-1, 0], [1, 1], [1, 0], [2, 1]])
+    y = np.array([1, 1, 1, 2, 2, 2])
 
     # Get jll from GaussianNB
     clf_gnb = GaussianNB()
@@ -128,6 +123,14 @@ def test_generalnb_joint_log_likelihood():
     clf_bnl.fit(X[:, 1, None], y)
     jll_bnl = clf_bnl._joint_log_likelihood(X[:, 1, None])
     clp_bnl = clf_bnl.class_log_prior_
+
+    # Get jll from GeneralNB
+    clf = GeneralNB([
+        ("gaussian", GaussianNB(), [0]),
+        ("bernoulli", BernoulliNB(), [1])]
+    )
+    clf.fit(X, y)
+    jll = clf._joint_log_likelihood(X)
 
     expected_jll = (jll_gnb - clp_gnb + jll_bnl - clp_bnl) + clp_bnl
     assert_array_almost_equal(jll, expected_jll)
