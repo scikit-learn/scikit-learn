@@ -6,6 +6,7 @@ Probability calibration
 
 .. currentmodule:: sklearn.calibration
 
+
 When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you

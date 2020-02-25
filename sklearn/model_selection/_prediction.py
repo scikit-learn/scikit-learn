@@ -201,14 +201,6 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(f'Expected target of binary type. Got {y_type}.')
         return X, y
 
-    @staticmethod
-    def _get_pos_label_score(y_score, classes, pos_label):
-        """Get score of the positive class."""
-        if y_score.ndim == 2:
-            pos_label_encoded = np.flatnonzero(classes == pos_label).item(0)
-            y_score = y_score[:, pos_label_encoded]
-        return y_score
-
     def fit(self, X, y):
         """Find the decision threshold.
 
@@ -271,11 +263,9 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         else:
             # `np.unique` is already sorting the value, no need to call
             #  `thresholds.sort()`
-            thresholds = np.unique(
-                self._get_pos_label_score(
-                    y_score, self.classes_, self.pos_label
-                )
-            )
+            if y_score.ndim == 2:
+                y_score = y_score[:, self._pos_label_encoded]
+            thresholds = np.unique(y_score)
             params = ({} if self.objective_metric_params is None
                       else self.objective_metric_params)
             metric_signature = signature(self.objective_metric)
@@ -308,9 +298,9 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         check_is_fitted(self)
 
         decision_function = getattr(self._estimator, self._method)
-        y_score = self._get_pos_label_score(
-            decision_function(X), self.classes_, self._pos_label
-        )
+        y_score = decision_function(X)
+        if y_score.ndim == 2:
+            y_score = y_score[:, self._pos_label_encoded]
         y_class_indices = (y_score >= self.decision_threshold_).astype(int)
 
         return self.classes_[y_class_indices]

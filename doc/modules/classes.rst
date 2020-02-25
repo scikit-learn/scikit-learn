@@ -53,8 +53,8 @@ Functions
 
 .. _calibration_ref:
 
-:mod:`sklearn.calibration`: Prediction Calibration
-==================================================
+:mod:`sklearn.calibration`: Probability Calibration
+===================================================
 
 .. automodule:: sklearn.calibration
    :no-members:

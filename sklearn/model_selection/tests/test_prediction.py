@@ -85,7 +85,11 @@ def test_cutoffclassifier_limit_tpr_tnr():
     assert_array_equal(y_pred_tnr, y_pred_tpr)
 
 
-def test_cutoffclassifier_with_objective_value():
+@pytest.mark.parametrize(
+    "method",
+    ["auto", "decision_function", "predict_proba"]
+)
+def test_cutoffclassifier_with_objective_value(method):
     # check that we can optimize a given metric as a callable
     X, y = load_breast_cancer(return_X_y=True)
     # remove feature to degrade performances
@@ -102,7 +106,9 @@ def test_cutoffclassifier_with_objective_value():
 
     lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
     model = CutoffClassifier(
-        base_estimator=lr, objective_metric=balanced_accuracy_score
+        base_estimator=lr,
+        objective_metric=balanced_accuracy_score,
+        method=method,
     )
     score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
     score_baseline = balanced_accuracy_score(y, lr.predict(X))
@@ -143,9 +149,13 @@ def test_cutoffclassifier_pretrained_estimator():
     assert model_prefit._estimator is lr_prefit
 
 
+@pytest.mark.parametrize(
+    "method",
+    ["auto", "decision_function", "predict_proba"]
+)
 @pytest.mark.parametrize("metric", [balanced_accuracy_score, f1_score])
 @pytest.mark.parametrize("dtype", [None, object])
-def test_cutoffclassifier_with_string_targets(dtype, metric):
+def test_cutoffclassifier_with_string_targets(method, dtype, metric):
     # check that targets represented by str are properly managed
     # check with several metrics to be sure that `pos_label` is properly
     # dispatched
@@ -159,6 +169,7 @@ def test_cutoffclassifier_with_string_targets(dtype, metric):
         base_estimator=make_pipeline(StandardScaler(), LogisticRegression()),
         objective_metric=metric,
         pos_label="cancer",
+        method=method,
     ).fit(X, y)
     assert_array_equal(np.sort(model.classes_), np.sort(classes))
     y_pred = model.predict(X[[0], :])
