@@ -80,6 +80,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
+    yield check_sample_weights_shape
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
@@ -355,6 +356,23 @@ def _generate_class_checks(Estimator):
     yield from _generate_instance_checks(name, estimator)
 
 
+def _mark_xfail_checks(estimator, check, pytest):
+    """Mark estimator check pairs with xfail"""
+
+    xfail_checks = _safe_tags(estimator, '_xfail_test')
+    if not xfail_checks:
+        return estimator, check
+
+    check_name = _set_check_estimator_ids(check)
+    msg = xfail_checks.get(check_name, None)
+
+    if msg is None:
+        return estimator, check
+
+    return pytest.param(
+        estimator, check, marks=pytest.mark.xfail(reason=msg))
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -373,11 +391,17 @@ def parametrize_with_checks(estimators):
     decorator : `pytest.mark.parametrize`
     """
     import pytest
-    return pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for estimator in estimators),
-        ids=_set_check_estimator_ids)
+
+    checks_generator = chain.from_iterable(
+        check_estimator(estimator, generate_only=True)
+        for estimator in estimators)
+
+    checks_with_marks = (
+        _mark_xfail_checks(estimator, check, pytest)
+        for estimator, check in checks_generator)
+
+    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+                                   ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -765,6 +789,31 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
+def check_sample_weights_shape(name, estimator_orig):
+    # check that estimators raise an error if sample_weight
+    # shape mismatches the input
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        estimator = clone(estimator_orig)
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2])
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        estimator.fit(X, y, sample_weight=np.ones(len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones(2*len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones((len(y), 2)))
+
+
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
@@ -1032,13 +1081,6 @@ def check_methods_subset_invariance(name, estimator_orig):
 
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
-        # TODO remove cases when corrected
-        if (name, method) in [('NuSVC', 'decision_function'),
-                              ('SparsePCA', 'transform'),
-                              ('MiniBatchSparsePCA', 'transform'),
-                              ('DummyClassifier', 'predict'),
-                              ('BernoulliRBM', 'score_samples')]:
-            raise SkipTest(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2243,13 +2285,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-    if name == "NuSVC":
-        # the sparse version has a parameter that doesn't do anything
-        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
-    if name.endswith("NB"):
-        # NaiveBayes classifiers have a somewhat different interface.
-        # FIXME SOON!
-        raise SkipTest
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]

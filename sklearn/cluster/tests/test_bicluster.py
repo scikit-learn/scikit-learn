@@ -67,8 +67,7 @@ def test_spectral_coclustering():
                   'n_svd_vecs': [None, 20],
                   'mini_batch': [False, True],
                   'init': ['k-means++'],
-                  'n_init': [10],
-                  'n_jobs': [1]}
+                  'n_init': [10]}
     random_state = 0
     S, rows, cols = make_biclusters((30, 30), 3, noise=0.5,
                                     random_state=random_state)
@@ -253,3 +252,16 @@ def test_wrong_shape():
     data = np.arange(27).reshape((3, 3, 3))
     with pytest.raises(ValueError):
         model.fit(data)
+
+
+@pytest.mark.parametrize("klass", [SpectralBiclustering, SpectralCoclustering])
+@pytest.mark.parametrize("n_jobs", [None, 1])
+def test_n_jobs_deprecated(klass, n_jobs):
+    # FIXME: remove in 0.25
+    depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
+                "in 0.25.")
+    S, _, _ = make_biclusters((30, 30), 3, noise=0.5, random_state=0)
+    est = klass(random_state=0, n_jobs=n_jobs)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.fit(S)
