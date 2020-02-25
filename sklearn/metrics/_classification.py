@@ -2401,6 +2401,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     ----------
     .. [1] `Wikipedia entry for the Brier score.
             <https://en.wikipedia.org/wiki/Brier_score>`_
+
+    .. versionadded:: 0.20
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
