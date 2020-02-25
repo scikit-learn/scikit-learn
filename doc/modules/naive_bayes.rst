@@ -292,8 +292,8 @@ the libraries and prepare the data:
    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, CategoricalNB
    >>>
    >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
-   >>>               [2.7, 3.8, 2.3, 1, 0],
-   >>>               [1.7, 0.1, 4.5, 1, 0]])
+   ...               [2.7, 3.8, 2.3, 1, 0],
+   ...               [1.7, 0.1, 4.5, 1, 0]])
    >>> y = np.array([1, 0, 0])
    >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
 
@@ -307,36 +307,45 @@ This manner of specification is similar to that of *transformers* in
 *pipeline* in :class:`Pipeline <sklearn.pipeline.Pipeline>`.
 
    >>> clf = GeneralNB([
-   >>>     ("gaussian", GaussianNB(), [0, 1, 2]),
-   >>>     ("categorical", CategoricalNB(), [3, 4])
-   >>> ])
+   ...     ("gaussian", GaussianNB(), [0, 1, 2]),
+   ...     ("categorical", CategoricalNB(), [3, 4])
+   ... ])
    >>> clf.fit(X, y)
+   GeneralNB(models=[('gaussian', GaussianNB(...), [0, 1, 2]),
+                     ('categorical', CategoricalNB(...), [3, 4])])
    >>> print(clf.predict(X_test))
    [1]
 
-Besides specifying a list of ints, you can also indicate column
+Besides specifying a list of integers, you can also indicate columns
 names explicitly if the `X` and `y` data are pandas `DataFrame`s:
 
    >>> X = pd.DataFrame(X)
    >>> X.columns = ["a", "b", "c", "d", "e"]
-   >>> y = pd.DataFrame(X)
-   ...
+   >>> y = pd.DataFrame(y)
+   >>>
    >>> clf = GeneralNB([
-   >>>     ("gaussian", GaussianNB(), ["a", "b", "c"]),
-   >>>     ("categorical", CategoricalNB(), ["d", "e"])
-   >>> ])
+   ...     ("gaussian", GaussianNB(), ["a", "b", "c"]),
+   ...     ("categorical", CategoricalNB(), ["d", "e"])
+   ... ])
    >>> clf.fit(X, y)
+   GeneralNB(models=[('gaussian', GaussianNB(...), ['a', 'b', 'c']),
+                     ('categorical', CategoricalNB(...), ['d', 'e'])])
 
 Alternatively, you may also select DataFrame columns using
-:func:`sklearn.compose.make_column_selector`:
+:func:`sklearn.compose.make_column_selector` as follows. Note that
+X and y must be DataFrames.
 
    >>> from sklearn.compose import make_column_selector
    >>> clf = GeneralNB([
-   >>>     ("gaussian", GaussianNB(), make_column_selector(pattern=r"[abc]")),
-   >>>     ("categorical", CategoricalNB(), make_column_selector(pattern=r"[de]"))
-   >>> ])
+   ...     ("gaussian", GaussianNB(),
+   ...         make_column_selector(pattern=r"[abc]")),
+   ...     ("categorical", CategoricalNB(),
+   ...        make_column_selector(pattern=r"[de]"))
+   ... ])
    >>> clf.fit(X, y)
-   >>> print(clf.predict(df_test))
+   GeneralNB(models=[('gaussian', GaussianNB(...), ...),
+                     ('categorical', CategoricalNB(...), ...)])
+   >>> print(clf.predict(X.iloc[:1,]))
    [1]
 
 Finally, you can access the attributes of the fitted estimators using
