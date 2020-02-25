@@ -43,10 +43,6 @@ def _assess_dimension(spectrum, rank, n_samples, n_features):
         Number of samples.
     n_features : int
         Number of features.
-    spectrum_threshold : float, default=None
-        Cut-off for values in `spectrum`. Any value lower than this
-        will be ignored (`default=epsilon of spectrum`). By default (`None`),
-        it corresponds to the machine epsilon of the `dtype` of `spectrum`.
 
     Returns
     -------
@@ -73,6 +69,8 @@ def _assess_dimension(spectrum, rank, n_samples, n_features):
     pl = -pl * n_samples / 2.
 
     if rank == n_features:
+        # TODO: this line is never executed because _infer_dimension's
+        # for loop is off by one
         pv = 0
         v = 1
     else:
@@ -89,6 +87,10 @@ def _assess_dimension(spectrum, rank, n_samples, n_features):
     spectrum_[rank:n_features] = v
     for i in range(rank):
         if spectrum_[i] < spectrum_threshold:
+            # TODO: this line is never executed (off by one in _infer_dimension)
+            # this break only happens when rank == n_features and
+            # spectrum_[i] < spectrum_threshold, otherwise the early return
+            # above catches this case.
             break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
