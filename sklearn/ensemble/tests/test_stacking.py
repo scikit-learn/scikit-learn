@@ -440,7 +440,7 @@ def test_stacking_with_sample_weight(stacker, X, y):
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
 
 
-def test_fit_stacking_with_sample_weight_passed():
+def test_stacking_classifier_sample_weight_fit_param():
     # check sample_weight is passed to all invokations of fit
     stacker = StackingClassifier(
         estimators=[
