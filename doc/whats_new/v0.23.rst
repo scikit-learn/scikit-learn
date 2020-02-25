@@ -196,7 +196,12 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
+  :pr:`15503` by :user:`Sam Dixon` <sam-dixon>.
+
+- |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
+  caused predicted standard deviations to only be between 0 and 1 when
+  WhiteKernel is not used. :pr:`15782`
+  by :user:`plgreenLIRU`.
 
 :mod:`sklearn.impute`
 .....................
@@ -217,7 +222,6 @@ Changelog
   method for :class:`ensemble.RandomForestRegressor` and
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
-
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -393,6 +397,6 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
-  distance matrix is not square and `affinity=precomputed`. 
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
