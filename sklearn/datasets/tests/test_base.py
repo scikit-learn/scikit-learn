@@ -25,6 +25,8 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.datasets.tests.test_common import check_as_frame
+from sklearn.datasets.tests.test_common import check_pandas_dependency_message
 
 from sklearn.externals._pilutil import pillow_installed
 
@@ -230,6 +232,33 @@ def test_load_breast_cancer():
 
     # test return_X_y option
     check_return_X_y(res, partial(load_breast_cancer))
+
+
+@pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
+    (load_breast_cancer, np.float64, np.int64),
+    (load_diabetes, np.float64, np.float64),
+    (load_digits, np.float64, np.int64),
+    (load_iris, np.float64, np.int64),
+    (load_linnerud, np.float64, np.float64),
+    (load_wine, np.float64, np.int64),
+])
+def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
+    default_result = loader_func()
+    check_as_frame(default_result, partial(loader_func),
+                   expected_data_dtype=data_dtype,
+                   expected_target_dtype=target_dtype)
+
+
+@pytest.mark.parametrize("loader_func", [
+    load_breast_cancer,
+    load_diabetes,
+    load_digits,
+    load_iris,
+    load_linnerud,
+    load_wine,
+])
+def test_toy_dataset_as_frame_no_pandas(loader_func):
+    check_pandas_dependency_message(loader_func)
 
 
 def test_load_boston():
