@@ -64,6 +64,7 @@ def fetch_olivetti_faces():
 def fetch_rcv1():
     return _wrapped_fetch(_fetch_rcv1, dataset_name='rcv1')
 
+
 @pytest.fixture
 def hide_available_pandas(monkeypatch):
     """ Pretend pandas was not installed. """
