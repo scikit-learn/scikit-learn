@@ -87,7 +87,8 @@ def _assess_dimension(spectrum, rank, n_samples, n_features):
     spectrum_[rank:n_features] = v
     for i in range(rank):
         if spectrum_[i] < spectrum_threshold:
-            # TODO: this line is never executed (off by one in _infer_dimension)
+            # TODO: this line is never executed
+            # (off by one in _infer_dimension)
             # this break only happens when rank == n_features and
             # spectrum_[i] < spectrum_threshold, otherwise the early return
             # above catches this case.
