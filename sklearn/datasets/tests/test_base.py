@@ -257,7 +257,6 @@ def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
     load_linnerud,
     load_wine,
 ])
-@pytest.mark.usefixtures('hide_available_pandas')
 def test_toy_dataset_as_frame_no_pandas(loader_func):
     check_pandas_dependency_message(loader_func)
 
