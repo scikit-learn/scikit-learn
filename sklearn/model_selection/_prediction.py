@@ -71,6 +71,53 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     classes_ : array of shape (n_classes,)
         The class labels.
+
+    Examples
+    --------
+    First, we will load the breast cancer databases and make it highly
+    imbalanced.
+
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> X, y = load_breast_cancer(return_X_y=True)
+    >>> pos_idx = np.flatnonzero(y == 1)[:10].tolist()
+    >>> neg_idx = np.flatnonzero(y == 0).tolist()
+    >>> X, y = X[pos_idx + neg_idx, :], y[pos_idx + neg_idx]
+
+    Then, we can split into a training and testing set and keep the
+    same imbalance level in both sets.
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, stratify=y, random_state=0
+    ... )
+
+    We can check the performance of a logistic regression model.
+
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.pipeline import make_pipeline
+    >>> model = make_pipeline(StandardScaler(), LogisticRegression())
+    >>> model.fit(X_train, y_train)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('logisticregression', LogisticRegression())])
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = model.predict(X_test)
+    >>> print(f"Score: {balanced_accuracy_score(y_test, y_pred):.3f}")
+    Score: 0.833
+
+    We will try to correct the decision threshold which is impacted by the
+    class imbalanced.
+
+    >>> from sklearn.model_selection import CutoffClassifier
+    >>> model_optimized = CutoffClassifier(
+    ...     base_estimator=model, objective_metric=balanced_accuracy_score
+    ... )
+    >>> model_optimized.fit(X, y)
+    CutoffClassifier(...)
+    >>> y_pred = model_optimized.predict(X_test)
+    >>> print(f"Score: {balanced_accuracy_score(y_test, y_pred):.3f}")
+    Score: 0.962
     """
 
     def __init__(
