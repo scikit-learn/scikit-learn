@@ -1,6 +1,5 @@
 """ Network tests are only run, if data is already locally available,
 or if download is specifically requested by environment variable."""
-import builtins
 from os import environ
 import pytest
 from sklearn.datasets import (
