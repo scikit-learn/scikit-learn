@@ -103,25 +103,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     --------
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.inspection import permutation_importance
-
-    >>> X = [[1,9,9],[1,9,9],[1,9,9],
-    ...      [0,9,9],[0,9,9],[0,9,9]]
-    >>> y = [1,1,1,0,0,0]
-
-    >>> clf = LogisticRegression().fit(X,y)
+    >>> X = [[1, 9, 9],[1, 9, 9],[1, 9, 9],
+    ...      [0, 9, 9],[0, 9, 9],[0, 9, 9]]
+    >>> y = [1, 1, 1, 0, 0, 0]
+    >>> clf = LogisticRegression().fit(X, y)
     LogisticRegression(...)
-
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
-    ... random_state=0)
-    {'importances_mean': array([0.5, 0. , 0. ]),
-    'importances_std': array([0.16666667, 0.        , 0.        ]),
-    'importances': array([[0.33333333, 0.66666667],
-        [0.        , 0.        ],
-        [0.        , 0.        ]])}
-
+                                    ... random_state=0)
     >>> result.importances_mean
     array([0.5, 0. , 0. ])
-
     >>> result.importances_std
     array([0.2236068, 0.       , 0.       ])
     """
