@@ -27,14 +27,11 @@ def test_fetch_asframe(fetch_california_housing):
     assert isinstance(bunch.target, pd.Series)
 
 
+@pytest.mark.usefixtures('hide_available_pandas')
 def test_pandas_dependency_message(fetch_california_housing):
-    try:
-        import pandas  # noqa
-        pytest.skip("This test requires pandas to be not installed")
-    except ImportError:
-        # Check that pandas is imported lazily and that an informative error
-        # message is raised when pandas is missing:
-        expected_msg = ('fetch_california_housing with as_frame=True'
-                        ' requires pandas')
-        with pytest.raises(ImportError, match=expected_msg):
-            fetch_california_housing(as_frame=True)
+    # Check that pandas is imported lazily and that an informative error
+    # message is raised when pandas is missing:
+    expected_msg = ('fetch_california_housing with as_frame=True'
+                    ' requires pandas')
+    with pytest.raises(ImportError, match=expected_msg):
+        fetch_california_housing(as_frame=True)
