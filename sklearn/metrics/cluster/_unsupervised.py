@@ -78,11 +78,10 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         If ``sample_size is None``, no sampling is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The generator used to randomly select a subset of samples.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+        Determines random number generation for selecting a subset of samples.
+        Used when ``sample_size is not None``.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.

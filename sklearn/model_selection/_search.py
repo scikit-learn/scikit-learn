@@ -37,7 +37,7 @@ from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-
+from ..utils import deprecated
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -53,7 +53,7 @@ class ParameterGrid:
 
     Parameters
     ----------
-    param_grid : dict of string to sequence, or sequence of such
+    param_grid : dict of str to sequence, or sequence of such
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
@@ -115,7 +115,7 @@ class ParameterGrid:
 
         Returns
         -------
-        params : iterator over dict of string to any
+        params : iterator over dict of str to any
             Yields dictionaries mapping each estimator parameter to one of its
             allowed values.
         """
@@ -147,7 +147,7 @@ class ParameterGrid:
 
         Returns
         -------
-        params : dict of string to any
+        params : dict of str to any
             Equal to list(self)[ind]
         """
         # This is used to make discrete sampling without replacement memory
@@ -194,7 +194,7 @@ class ParameterSampler:
     Parameters
     ----------
     param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
+        Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -203,10 +203,10 @@ class ParameterSampler:
 
     n_iter : integer
         Number of parameter settings that are produced.
-        .. versionchanged:: 0.20
+        ..versionchanged:: 0.20
             `n-iter` now acts as an upper bound on iterations
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
@@ -215,7 +215,7 @@ class ParameterSampler:
 
     Returns
     -------
-    params : dict of string to any
+    params : dict of str to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
 
@@ -236,6 +236,7 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
+
     def __init__(self, param_distributions, n_iter, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
@@ -303,6 +304,11 @@ class ParameterSampler:
         return self.n_iter
 
 
+# FIXME Remove fit_grid_point in 0.25
+@deprecated(
+    "fit_grid_point is deprecated in version 0.23 "
+    "and will be removed in version 0.25"
+)
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
@@ -342,11 +348,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error.
 
     Returns
     -------
@@ -432,7 +438,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+        y : array-like of shape (n_samples, n_output) \
+            or (n_samples,), default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -611,16 +618,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+        y : array-like of shape (n_samples, n_output) \
+            or (n_samples,), default=None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
-        **fit_params : dict of string -> object
+        **fit_params : dict of str -> object
             Parameters passed to the ``fit`` method of the estimator
         """
         estimator = self.estimator
@@ -721,7 +729,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
+                        self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
@@ -862,14 +870,14 @@ class GridSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
-        Dictionary with parameters names (string) as keys and lists of
+        Dictionary with parameters names (`str`) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`scoring_parameter`) or a callable
+    scoring : str, callable, list/tuple or dict, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
@@ -883,16 +891,20 @@ class GridSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+<<<<<<< HEAD
         ..versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     pre_dispatch : int, or string, optional
+=======
+    pre_dispatch : int, or str, default=n_jobs
+>>>>>>> upstream/master
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -906,10 +918,10 @@ class GridSearchCV(BaseSearchCV):
             - An int, giving the exact number of total jobs that are
               spawned
 
-            - A string, giving an expression as a function of n_jobs,
+            - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=False
+    iid : bool, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
@@ -918,7 +930,7 @@ class GridSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -937,11 +949,11 @@ class GridSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : boolean, string, or callable, default=True
+    refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
+        For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
@@ -970,13 +982,13 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error.
 
-    return_train_score : boolean, default=False
+    return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
@@ -1190,7 +1202,7 @@ class RandomizedSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     param_distributions : dict or list of dicts
-        Dictionary with parameters names (string) as keys and distributions
+        Dictionary with parameters names (`str`) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
@@ -1201,8 +1213,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`scoring_parameter`) or a callable
+    scoring : str, callable, list/tuple or dict, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
@@ -1216,16 +1228,20 @@ class RandomizedSearchCV(BaseSearchCV):
 
         If None, the estimator's score method is used.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+<<<<<<< HEAD
         ..versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     pre_dispatch : int, or string, optional
+=======
+    pre_dispatch : int, or str, default=None
+>>>>>>> upstream/master
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1239,10 +1255,10 @@ class RandomizedSearchCV(BaseSearchCV):
             - An int, giving the exact number of total jobs that are
               spawned
 
-            - A string, giving an expression as a function of n_jobs,
+            - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=False
+    iid : bool, default=False
         If True, return the average score across folds, weighted by the number
         of samples in each test set. In this case, the data is assumed to be
         identically distributed across the folds, and the loss minimized is
@@ -1251,10 +1267,9 @@ class RandomizedSearchCV(BaseSearchCV):
         .. deprecated:: 0.22
             Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
@@ -1270,11 +1285,11 @@ class RandomizedSearchCV(BaseSearchCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    refit : boolean, string, or callable, default=True
+    refit : bool, str, or callable, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
-        For multiple metric evaluation, this needs to be a string denoting the
+        For multiple metric evaluation, this needs to be a `str` denoting the
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
@@ -1303,20 +1318,20 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
         See :term:`Glossary <random_state>`.
 
-    error_score : 'raise' or numeric
+    error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
-        step, which will always raise the error. Default is ``np.nan``.
+        step, which will always raise the error.
 
-    return_train_score : boolean, default=False
+    return_train_score : bool, default=False
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different

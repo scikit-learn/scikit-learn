@@ -56,7 +56,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -140,7 +140,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -503,7 +503,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : ndarray, shape (n_samples,)
+        y_score : ndarray of shape (n_samples,)
         """
         Xt = X
         for _, _, transformer in self._iter(with_final=False):
@@ -665,7 +665,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -675,7 +675,7 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
@@ -774,7 +774,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -787,7 +787,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
-    verbose : boolean, optional(default=False)
+    verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
@@ -822,7 +822,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -904,7 +904,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data, used to fit transformers.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
@@ -928,12 +928,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
-        y : array-like, shape (n_samples, ...), optional
+        y : array-like of shape (n_samples, n_outputs), default=None
             Targets for supervised learning.
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -979,7 +980,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+        X_t : array-like or sparse matrix of \
+                shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
@@ -1014,16 +1016,20 @@ def make_union(*transformers, **kwargs):
     ----------
     *transformers : list of estimators
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+<<<<<<< HEAD
         ..versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     verbose : boolean, optional(default=False)
+=======
+    verbose : bool, default=False
+>>>>>>> upstream/master
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
