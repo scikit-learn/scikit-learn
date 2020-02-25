@@ -590,7 +590,8 @@ def test_assess_dimension_error_rank_greater_than_features():
     rank = 5
     with pytest.raises(ValueError, match="The tested rank cannot exceed "
                                          "the rank of the dataset"):
-        ret = _assess_dimension(spectrum, rank, n_samples, n_features)
+        _assess_dimension(spectrum, rank, n_samples, n_features)
+
 
 def test_assess_dimension_small_eigenvalues():
     # Test tiny eigenvalues appropriately when using 'mle'
@@ -601,6 +602,7 @@ def test_assess_dimension_small_eigenvalues():
     rank = 3
     ret = _assess_dimension(spectrum, rank, n_samples, n_features)
     assert ret == -np.inf
+
 
 def test_infer_dim_mle():
     # Test small eigenvalues when 'mle' with pathological 'X' dataset
