@@ -69,7 +69,6 @@ Functions
    :template: class.rst
 
    calibration.CalibratedClassifierCV
-   calibration.CutoffClassifier
 
 .. autosummary::
    :toctree: generated/
@@ -1137,6 +1136,7 @@ Splitter Classes
    :toctree: generated/
    :template: class.rst
 
+   model_selection.CutoffClassifier
    model_selection.GroupKFold
    model_selection.GroupShuffleSplit
    model_selection.KFold

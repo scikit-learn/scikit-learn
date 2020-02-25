@@ -29,7 +29,10 @@ from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
 
+from ._prediction import CutoffClassifier
+
 __all__ = ('BaseCrossValidator',
+           'CutoffClassifier',
            'GridSearchCV',
            'TimeSeriesSplit',
            'KFold',

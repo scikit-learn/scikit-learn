@@ -6,26 +6,17 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_iris
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut
-from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import brier_score_loss
-from sklearn.metrics import f1_score
-from sklearn.metrics import fbeta_score
 from sklearn.metrics import log_loss
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
-from sklearn.svm import SVC
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -33,7 +24,6 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.calibration import CutoffClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
@@ -355,91 +345,3 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
-
-
-class MockNoPredictorClassifier(BaseEstimator):
-    def fit(self, X, y):
-        self.classes_ = np.array([0, 1])
-        return self
-
-
-@pytest.mark.parametrize(
-    "Estimator, params, err_type, err_msg",
-    [
-        (LogisticRegression, {"method": "xxx"}, ValueError,
-         "'method' should be one of"),
-        (MockNoPredictorClassifier, {"method": "auto"}, TypeError,
-         "'base_estimator' must implement one of the"),
-        (SVC, {"method": "predict_proba"}, TypeError,
-         "'base_estimator' does not implement predict_proba"),
-        (LogisticRegression,
-         {"objective_metric": "accuracy", "objective_value": 0.5}, ValueError,
-         "When 'objective_metric' is a predefined scoring function")
-    ]
-)
-def test_cutoffclassifier_valid_params_error(Estimator, params, err_type,
-                                             err_msg):
-    X, y = make_classification(n_samples=200, n_features=6, random_state=42,
-                               n_classes=2)
-    with pytest.raises(err_type, match=err_msg):
-        clf = CutoffClassifier(base_estimator=Estimator(), **params)
-        clf.fit(X, y)
-
-
-def test_cutoffclassifier_not_binary():
-    X, y = load_iris(return_X_y=True)
-    with pytest.raises(ValueError, match="Expected target of binary type."):
-        CutoffClassifier(base_estimator=LogisticRegression()).fit(X, y)
-
-
-def test_cutoffclassifier_limit_tpr_tnr():
-    X, y = load_breast_cancer(return_X_y=True)
-    clf = CutoffClassifier(
-        base_estimator=make_pipeline(StandardScaler(), LogisticRegression()),
-        objective_metric="tpr",
-        objective_value=0,
-    )
-    y_pred_tpr = clf.fit(X, y).predict(X)
-    clf.set_params(objective_metric="tnr")
-    y_pred_tnr = (~clf.fit(X, y).predict(X).astype(bool)).astype(int)
-    assert_array_equal(y_pred_tnr, y_pred_tpr)
-
-
-def test_cutoffclassifier_with_objective_value():
-    X, y = load_breast_cancer(return_X_y=True)
-    # remove feature to degrade performances
-    X = X[:, :5]
-
-    # make the problem completely imbalanced such that the balanced accuracy
-    # is low
-    indices_pos = np.flatnonzero(y == 1)
-    indices_pos = indices_pos[:indices_pos.size // 50]
-    indices_neg = np.flatnonzero(y == 0)
-
-    X = np.vstack([X[indices_neg], X[indices_pos]])
-    y = np.hstack([y[indices_neg], y[indices_pos]])
-
-    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    model = CutoffClassifier(
-        base_estimator=lr, objective_metric=balanced_accuracy_score
-    )
-    score_optimized = balanced_accuracy_score(y, model.fit(X, y).predict(X))
-    score_baseline = balanced_accuracy_score(y, lr.predict(X))
-    assert score_optimized > score_baseline
-
-
-def test_cutoffclassifier_metric_with_parameter():
-    X, y = load_breast_cancer(return_X_y=True)
-    lr = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    model_fbeta = CutoffClassifier(
-        base_estimator=lr, objective_metric=fbeta_score,
-        objective_metric_params={"beta": 1}
-    )
-    model_f1 = CutoffClassifier(
-        base_estimator=lr, objective_metric=f1_score,
-    )
-    model_f1.fit(X, y)
-    model_fbeta.fit(X, y)
-
-    assert (model_fbeta.decision_threshold_ ==
-            pytest.approx(model_f1.decision_threshold_))
