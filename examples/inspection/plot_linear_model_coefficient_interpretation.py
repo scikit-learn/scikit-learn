@@ -197,8 +197,8 @@ plt.ylim([0, 27])
 # Interpreting coefficients: scale matters
 # ---------------------------------------------
 #
-# First of all, we can plot the values of the coefficients of the regressor we
-# have fitted.
+# First of all, we can take a look to the values of the coefficients of the
+# regressor we have fitted.
 
 feature_names = (model.named_steps['columntransformer']
                       .named_transformers_['onehotencoder']
@@ -210,23 +210,33 @@ coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
     columns=['Coefficients'], index=feature_names
 )
+
+coefs
+
+##############################################################################
+# The AGE coefficient is expressed in
+# :math:`$/hours/(living\ years)` while the EDUCATION one is expressed
+# in :math:`$/hours/(years\ of\ education)`.
+# This representation of the coefficients has the advantage of making clear
+# the practical predictions of the model:
+# an increase of :math:`1` year in AGE means a decrease of :math:`0.030867$`,
+# while an increase of :math:`1` year in EDUCATION means an increase of
+# :math:`0.054699$`.
+# On the other hand, categorical variables (as UNION or SEX) are adimensional
+# numbers taking the value either of 0 or 1. Their coefficients are expressed
+# in :math:`$/hours`. Then, we cannot compare the magnitude of different
+# coefficients since the features have different natural scales, and hence
+# value ranges, because of their different unit of measure.
+# This is more evident if we plot the coefficients.
+
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# In the plot above, the AGE coefficient is expressed in
-# :math:`$/hours/(living\ years)` while the EDUCATION one is expressed
-# in :math:`$/hours/(years\ of\ education)`.
-# On the other hand, categorical variables (as UNION or SEX) are adimensional
-# numbers taking the value either of 0 or 1. Their coefficients are expressed
-# in :math:`$/hours`. An increase of
-# :math:`1` in AGE is not comparable with an increase of :math:`1` in UNION.
-# We cannot compare different coefficients since the
-# features have different natural scales and hence value ranges
-# because of their different unit of measure.
-# Indeed, from this plot the most important factor in determining WAGE is the
+# Indeed, from the plot above the most important factor in determining WAGE
+# appears to be the
 # variable UNION, even if it is plausible that variables like EXPERIENCE
 # should have more impact.
 # Looking at the coefficient plot to extrapolate feature importance could be
@@ -247,7 +257,8 @@ plt.subplots_adjust(left=.3)
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
 # numerical variables to their standard deviation,
-# as :math:`y = \sum{coeff_i * X_i} = \sum{(coeff_i * std_i) * (X_i / std_i)}`.
+# as :math:`y = \sum{coeff_i \times X_i} =
+# \sum{(coeff_i \times std_i) \times (X_i / std_i)}`.
 #
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
@@ -264,13 +275,14 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
+# Now that the coefficients have been scaled, we can safely compare them.
+#
 # .. warning::
 #
 #   Why does the plot above suggest that an increase in age leads to a
 #   decrease in wage? Why this is different from the :ref:`initial pairplot
 #   <marginal_dependencies>`?
 #
-# Now that the coefficients have been scaled, we can start to interpret them.
 # The plot above tells us about dependencies between a specific feature and
 # the target when all other features remain constant, i.e., **conditional
 # dependencies**. An increase of the AGE will induce a decrease
