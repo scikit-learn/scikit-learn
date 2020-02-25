@@ -45,15 +45,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.calibration`
-..........................
-
-- |MajorFeature| :class:`calibration.CutoffClassifier` calibrates the decision
-  threshold function of a classifier by maximizing a binary classification
-  metric through cross-validation.
-  :pr:`16525` by :user:`Prokopis Gryllos <PGryllos>`
-  and :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -283,6 +274,12 @@ Changelog
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
   be removed in 0.25. :pr:`16401` by
   :user:`Arie Pratama Sutiono <ariepratama>`
+
+- |MajorFeature| :class:`model_selection.CutoffClassifier` calibrates the
+  decision threshold function of a classifier by maximizing a binary
+  classification metric through cross-validation.
+  :pr:`16525` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Prokopis Gryllos <PGryllos>`.
 
 :mod:`sklearn.multioutput`
 ..........................
