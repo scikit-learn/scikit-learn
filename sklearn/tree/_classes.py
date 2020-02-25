@@ -67,6 +67,7 @@ CRITERIA_CLF = {
     "gini": _criterion.Gini,
     "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
+    "hellinger": _criterion.HellingerDistance,
 }
 # TODO(1.2): Remove "mse" and "mae".
 CRITERIA_REG = {
