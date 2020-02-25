@@ -24,7 +24,6 @@ from .base import MetaEstimatorMixin
 from .base import RegressorMixin
 from .base import clone
 from .isotonic import IsotonicRegression
-from .metrics import roc_curve
 from .model_selection import check_cv
 from .preprocessing import label_binarize
 from .preprocessing import LabelBinarizer
