@@ -165,13 +165,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-
+        fit_params = {"sample_weight": sample_weight} \
+            if sample_weight is not None \
+            else None
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
-                                       fit_params={
-                                           'sample_weight': sample_weight
-                                        },
+                                       fit_params=fit_params,
                                        verbose=self.verbose)
             for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
@@ -185,21 +185,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        if sample_weight is not None:
-            try:
-                self.final_estimator_.fit(
-                    X_meta, y, sample_weight=sample_weight
-                )
-            except TypeError as exc:
-                if "unexpected keyword argument 'sample_weight'" in str(exc):
-                    raise TypeError(
-                        "Underlying estimator {} does not support sample "
-                        "weights."
-                        .format(self.final_estimator_.__class__.__name__)
-                    ) from exc
-                raise
-        else:
-            self.final_estimator_.fit(X_meta, y)
+        _parallel_fit_estimator(self.final_estimator_, X_meta, y,
+                                sample_weight=sample_weight)
 
         return self
 
