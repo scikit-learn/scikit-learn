@@ -213,6 +213,24 @@ The following GitHub checklist might be helpful in a release PR::
       #15847)
     * [ ] announce on mailing list and on twitter
 
+Merging Pull Requests
+---------------------
+
+Individual commits are squashed when a Pull Request (PR) is merged on Github.
+Before merging,
+
+- the resulting commit title can be edited if necessary. Note
+  that this will rename the PR title by default.
+- the detailed description, containing the titles of all the commits, can
+  be edited or deleted.
+- for PRs with multiple code contributors care must be taken to keep
+  the `Co-authored-by: name <name@example.com>` tags in the detailed
+  description. This will mark the PR as having `multiple co-authors
+  <https://help.github.com/en/github/committing-changes-to-your-project/creating-a-commit-with-multiple-authors>`_.
+  Whether code contributions are significanly enough to merit co-authorship is
+  left to the maintainer's discretion, same as for the "what's new" entry.
+
+
 The scikit-learn.org web site
 -----------------------------
 
