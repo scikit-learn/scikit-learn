@@ -186,8 +186,8 @@ def test_lambda_regularizer():
     def obj_func(self, theta, lmbda=0.01):
         lml, lml_grad = self.log_marginal_likelihood(
             theta, eval_gradient=True, clone_kernel=False)
-        loss = lml + (lmbda * (np.linalg.norm(theta, 2) ** 2))
-        grad = lml_grad + (2 * lmbda * theta)
+        loss = lml - (lmbda * (np.linalg.norm(theta, 2) ** 2))
+        grad = lml_grad - (2 * lmbda * theta)
         return -loss, -grad
 
     kernel = RBF(1.0)
