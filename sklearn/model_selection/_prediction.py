@@ -32,17 +32,17 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         The classifier, fitted or not fitted, from which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : {"tpr", "tnr"}, ndarray of shape (2, 2) or callable, \
+    objective_metric : callable, {"tpr", "tnr"} or ndarray of shape (2, 2), \
             default=balanced_accuracy_score
-        The objective metric to be optimized. Can be on of:
+        The objective metric to be optimized. Can be one of:
 
+        * a callable with the signature `metric(y_true, y_score, **kwargs)`;
         * `"tpr"`: find the decision threshold for a true positive ratio (TPR)
-          of `objective_value`.
+          of `objective_value`;
         * `"tnr"`: find the decision threshold for a true negative ratio (TNR)
-          of `objective_value`.
+          of `objective_value`;
         * `"cost_matrix"`: find the decision threshold which minimize the total
            cost using the cost matrix given in `objective_value`.
-        * a callable with the signature `metric(y_true, y_score, **kwargs)`.
 
     objective_metric_params : dict, default=None
         Some extra parameters to pass to `objective_metric`.
