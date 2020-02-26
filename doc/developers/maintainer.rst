@@ -228,7 +228,7 @@ Before merging,
   description. This will mark the PR as having `multiple co-authors
   <https://help.github.com/en/github/committing-changes-to-your-project/creating-a-commit-with-multiple-authors>`_.
   Whether code contributions are significanly enough to merit co-authorship is
-  left to the maintainer's appreciation, same as for the "what's new" entry.
+  left to the maintainer's discretion, same as for the "what's new" entry.
 
 
 The scikit-learn.org web site
