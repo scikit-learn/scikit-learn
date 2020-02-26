@@ -96,6 +96,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         two parameters, self and theta, and returns either the loss OR the
         loss and gradient vector of the objective function.
 
+        .. versionadded:: 0.23
+
     max_iter_predict : int, default=100
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
