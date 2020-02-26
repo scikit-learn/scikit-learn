@@ -228,9 +228,9 @@ class OneHotEncoder(_BaseEncoder):
     drop_idx_ : masked array of shape (n_features,)
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature.
-        ``drop_idx_.mask[i] = 1`` if no category is to be dropped from the feature
-        with index ``i``, e.g. when `drop='if_binary'` and the feature isn't
-        binary
+        ``drop_idx_.mask[i] = 1`` if no category is to be dropped from the
+        feature with index ``i``, e.g. when `drop='if_binary'` and the feature
+        isn't binary
 
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
