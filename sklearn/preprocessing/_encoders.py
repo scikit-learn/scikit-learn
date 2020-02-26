@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numpy.ma as ma
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
@@ -316,10 +317,15 @@ class OneHotEncoder(_BaseEncoder):
             return None
         elif isinstance(self.drop, str):
             if self.drop == 'first':
-                return np.zeros(len(self.categories_), dtype=np.int_)
+                return ma.array(np.zeros(len(self.categories_)),
+                                mask=np.zeros(len(self.categories_)),
+                                dtype=np.int_)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else -1
-                                for cats in self.categories_], dtype=np.int_)
+                return ma.array([0 if len(cats) == 2 else -9999
+                                for cats in self.categories_],
+                                mask=[False if len(cats) == 2 else True
+                                for cats in self.categories_],
+                                dtype=np.int_)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -352,9 +358,11 @@ class OneHotEncoder(_BaseEncoder):
                                 ["Category: {}, Feature: {}".format(c, v)
                                     for c, v in missing_drops])))
                 raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
+            return ma.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=np.int_)
+                             zip(self.drop, self.categories_)],
+                            mask=np.zeros(len(self.categories_)),
+                            dtype=np.int_)
 
     def fit(self, X, y=None):
         """
@@ -431,7 +439,7 @@ class OneHotEncoder(_BaseEncoder):
                 n_cats = len(cats)
 
                 # drop='if_binary' but feature isn't binary
-                if to_drop[i] == -1:
+                if to_drop.mask[i]:
                     # set to cardinality to not drop from X_int
                     to_drop[i] = n_cats
                     n_values.append(n_cats)
@@ -512,15 +520,17 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop is None:
                 cats = self.categories_[i]
             else:
-                cats = np.delete(self.categories_[i], self.drop_idx_[i])
+                if not self.drop_idx_.mask[i]:
+                    cats = np.delete(self.categories_[i], self.drop_idx_[i])
             n_categories = len(cats)
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
             # unique category value.
             if n_categories == 0:
-                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
-                j += n_categories
+                if not self.drop_idx_.mask[i]:
+                    X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
+                    j += n_categories
                 continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
@@ -537,8 +547,9 @@ class OneHotEncoder(_BaseEncoder):
             elif self.drop is not None:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
-
+                    if not self.drop_idx_.mask[i]:
+                        X_tr[dropped, i] = \
+                           self.categories_[i][self.drop_idx_[i]]
             j += n_categories
 
         # if ignored are found: potentially need to upcast result to
@@ -582,7 +593,8 @@ class OneHotEncoder(_BaseEncoder):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
             if self.drop is not None:
-                names.pop(self.drop_idx_[i])
+                if not self.drop_idx_.mask[i]:
+                    names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
