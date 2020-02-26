@@ -18,7 +18,8 @@ from libc.math cimport fabs, sqrt, pow, abs
 
 cimport numpy as np
 np.import_array()
-cdef double INFINITY = np.inf
+from numpy.math cimport INFINITY
+# cdef double INFINITY = np.inf
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
