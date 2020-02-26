@@ -469,12 +469,11 @@ def test_lda_numeric_consistency_float32_float64():
         assert_allclose(clf_32.coef_, clf_64.coef_, rtol=rtol)
 
 
-@pytest.mark.parametrize("solver", ["svd", "lsqr"])
-def test_qda(solver):
+def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
     # correct values for a simple toy dataset.
-    clf = QuadraticDiscriminantAnalysis(solver=solver)
+    clf = QuadraticDiscriminantAnalysis()
     y_pred = clf.fit(X6, y6).predict(X6)
     assert_array_equal(y_pred, y6)
 
@@ -495,57 +494,26 @@ def test_qda(solver):
     # Classes should have at least 2 elements
     assert_raises(ValueError, clf.fit, X6, y4)
 
-    # Number of sample should be bigger than number of classes
-    assert_raises(ValueError, clf.fit, X8, y8)
-    with pytest.raises(ValueError, match="The number of samples must be more"):
-        clf.fit(X8, y8)
 
-
-@pytest.mark.parametrize("solver", ["svd", "lsqr"])
-def test_qda_priors(solver):
-    clf = QuadraticDiscriminantAnalysis(solver=solver)
+def test_qda_priors():
+    clf = QuadraticDiscriminantAnalysis()
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos = np.sum(y_pred == 2)
 
     neg = 1e-15
-    clf = QuadraticDiscriminantAnalysis(solver=solver,
-                                        priors=np.array([neg, 1 - neg]))
+    clf = QuadraticDiscriminantAnalysis(priors=np.array([neg, 1 - neg]))
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
     assert n_pos2 > n_pos
 
-    # Test that negative priors raise an error
-    priors = np.array([0.5, -0.5])
-    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=priors)
-    msg = "priors must be non-negative"
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y)
-
-    # Test that priors passed as a list are correctly handled (run to see if
-    # failure)
-    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=[0.5, 0.5])
-    clf.fit(X, y)
-
-    # Test that priors always sum to 1
-    priors = np.array([0.5, 0.6])
-    prior_norm = np.array([0.45, 0.55])
-    clf = QuadraticDiscriminantAnalysis(solver=solver, priors=priors)
-    assert_warns(UserWarning, clf.fit, X, y)
-    assert_array_almost_equal(clf.priors_, prior_norm, 2)
-
-
-@pytest.mark.parametrize("solver", ["svd"])
-def test_qda_store_covariance(solver):
+def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
-    clf = QuadraticDiscriminantAnalysis(solver=solver).fit(X6, y6)
+    clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
     assert not hasattr(clf, 'covariance_')
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(
-            solver=solver,
-            store_covariance=True
-    ).fit(X6, y6)
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
     assert hasattr(clf, 'covariance_')
 
     assert_array_almost_equal(
@@ -559,8 +527,7 @@ def test_qda_store_covariance(solver):
     )
 
 
-@pytest.mark.parametrize("solver", ["svd", "lsqr"])
-def test_qda_regularization(solver):
+def test_qda_regularization():
     # the default is reg_param=0. and will cause issues
     # when there is a constant variable
     clf = QuadraticDiscriminantAnalysis()
@@ -583,69 +550,6 @@ def test_qda_regularization(solver):
     assert_array_equal(y_pred5, y5)
 
 
-def test_qda_ledoitwolf():
-    # test bad solver
-    clf = QuadraticDiscriminantAnalysis(
-            solver="svd",
-            covariance_estimator=LedoitWolf()
-    )
-    with pytest.raises(NotImplementedError, match="covariance estimator "
-                       "is not supported with svd solver. Try another solver"):
-        clf.fit(X, y)
-
-    # test with unkwown solver
-    clf = QuadraticDiscriminantAnalysis(
-            solver="dummy",
-            covariance_estimator=LedoitWolf()
-    )
-    with pytest.raises(ValueError, match="unknown solver"):
-        clf.fit(X, y)
-
-    clf = QuadraticDiscriminantAnalysis(
-            solver="lsqr",
-            covariance_estimator=LedoitWolf()
-    )
-    clf.fit(X2, y6)
-    y_pred = clf.predict(X2)
-    assert_array_equal(y_pred, y6)
-
-    # Case n_samples_in_a_class < n_features
-    clf = QuadraticDiscriminantAnalysis(
-            solver="lsqr",
-            covariance_estimator=LedoitWolf()
-    )
-    clf.fit(X5, y5)
-    y_pred5 = clf.predict(X5)
-    assert_array_equal(y_pred5, y5)
-
-
-def test_qda_covariance_sample_estimate():
-
-    # Bug with lsqr solver if covariance is degenerate
-    clf = QuadraticDiscriminantAnalysis(
-            solver="lsqr",
-            covariance_estimator=EmpiricalCovariance()
-    )
-    clf.fit(X2, y6)
-    assert_raises(ValueError, clf.predict, X2)
-
-    X = np.random.rand(100, 10)
-    Y = np.random.randint(3, size=(100))
-    c1 = QuadraticDiscriminantAnalysis(
-            solver="lsqr",
-            covariance_estimator=EmpiricalCovariance()
-    )
-    c2 = QuadraticDiscriminantAnalysis(
-            solver="lsqr",
-            store_covariance=True
-    )
-    c1.fit(X, Y)
-    c2.fit(X, Y)
-    for i in range(2):
-        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
-    np.testing.assert_allclose(c1.covariance_, c2.covariance_)
-
-
 def test_covariance():
     x, y = make_blobs(n_samples=100, n_features=5,
                       centers=1, random_state=42)
@@ -658,17 +562,6 @@ def test_covariance():
 
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
-
-    class InvalidCovarianceEstimator(BaseEstimator):
-        """ This estimator is wrong because it has no covariance_ attribute
-        """
-        def fit(self, X):
-            return self
-    with pytest.raises(ValueError,
-                       match="InvalidCovarianceEstimator does not have a"
-                       + " covariance_ attribute"):
-        _cov(x, None, InvalidCovarianceEstimator())
-
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):

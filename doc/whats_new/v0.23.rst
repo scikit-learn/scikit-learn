@@ -138,15 +138,11 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
-- |Enhancement| Added 'lsqr' solver to 
-  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
-  :pr:`14446` by :user:`Hugo Richard <hugorichard>`
-
 - |Enhancement| Disciminant analysis methods can now use custom
   covariance estimate by setting the `covariance_estimator` parameter of
-  :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
-  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   :pr:`14446` by :user:`Hugo Richard <hugorichard>`
+
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
   :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.

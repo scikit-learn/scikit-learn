@@ -161,54 +161,6 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     return cov
 
 
-def _classes_cov(X, y, shrinkage=None, covariance_estimator=None):
-    """Compute covariance matrix of each class.
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Input data.
-
-    y : array-like, shape (n_samples,) or (n_samples, n_targets)
-        Target values.
-
-    shrinkage : string or float, optional
-        Shrinkage parameter, possible values:
-          - None: no shrinkage (default).
-          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-          - float between 0 and 1: fixed shrinkage parameter.
-
-        Shrinkage parameter is ignored if  `covariance_estimator`\
-    is not None.
-
-    covariance_estimator : estimator, default=None
-        If not None, `covariance_estimator` is used to estimate
-        the covariance matrices instead of relying the empirical
-        covariance estimator (with potential shrinkage).
-        The object should have a fit method and a ``covariance_`` attribute
-        like the estimators in sklearn.covariance.
-        if None the shrinkage parameter drives the estimate.
-
-        .. versionadded:: 0.23
-
-    Returns
-    -------
-    cov : n_classes list of array-like shape (n_features, n_features)
-        Class covariance matrix of each class.
-    """
-    classes = np.unique(y)
-    covs = []
-    for idx, group in enumerate(classes):
-        Xg = X[y == group, :]
-        if len(Xg) == 1:
-            raise ValueError(
-                'y contains a class with'
-                'only 1 sample. Covariance '
-                'is ill defined.')
-        covs.append(np.atleast_2d(
-            _cov(Xg, shrinkage, covariance_estimator)))
-    return np.array(covs)
-
-
 class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                                  TransformerMixin):
     """Linear Discriminant Analysis
@@ -722,28 +674,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
         .. versionadded:: 0.17
 
-    solver : string, optional
-        Solver to use, possible values:
-          - 'svd': Singular value decomposition (default).
-            Does not compute the covariance matrix, therefore this solver is
-            recommended for data with a large number of features.
-          - 'lsqr': Least squares solution.
-            Can be combined with custom covariance estimator.
-
-        .. versionadded:: 0.23
-
-    covariance_estimator : estimator, default=None
-        If not None, `covariance_estimator` is used to estimate
-        the covariance matrices instead of relying the empirical
-        covariance estimator (with potential shrinkage).
-        The object should have a fit method and a ``covariance_`` attribute
-        like the estimators in sklearn.covariance.
-        if None the reg_param parameter drives the estimate.
-
-        Note that covariance_estimator works only with 'lsqr' solver
-
-        .. versionadded:: 0.23
-
     Attributes
     ----------
     covariance_ : list of array-like of shape (n_features, n_features)
@@ -789,13 +719,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         Discriminant Analysis
     """
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
-                 tol=1.0e-4, solver='svd', covariance_estimator=None):
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
-        self.solver = solver
-        self.covariance_estimator = covariance_estimator
 
     def _solve_svd(self, X, y):
         """SVD solver
@@ -847,55 +775,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def _solve_lsqr(
-            self,
-            X,
-            y,
-            reg_param,
-            covariance_estimator):
-        """Least squares solver.
-
-        The least squares solver computes a straightforward solution of the
-        optimal decision rule based directly on the discriminant functions.
-
-        .. versionadded:: 0.23
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data.
-
-        y : array-like, shape (n_samples,) or (n_samples, n_classes)
-            Target values.
-
-        reg_param : float, optional
-            Regularizes the covariance estimate as
-            ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
-
-        covariance_estimator : estimator, default=None
-            If not None, `covariance_estimator` is used to estimate
-            the covariance matrices instead of relying the empirical
-            covariance estimator (with potential shrinkage).
-            The object should have a fit method and a ``covariance_`` attribute
-            like the estimators in sklearn.covariance.
-            if None the reg_param parameter drives the estimate.
-
-            .. versionadded:: 0.23
-
-        Notes
-        -----
-        This solver is based on [1]_, section 2.6.2, pp. 39-41.
-
-        References
-        ----------
-        .. [1] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
-           (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
-           0-471-05669-3.
-        """
-        self.means_ = _class_means(X, y)
-        self.covariance_ = _classes_cov(X, y, reg_param, covariance_estimator)
-        return self
-
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
@@ -943,18 +822,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
-        if self.solver == 'svd':
-            if self.covariance_estimator is not None:
-                raise NotImplementedError(
-                    'covariance estimator is not '
-                    'supported with svd solver. Try another solver')
-            self._solve_svd(X, y)
-        elif self.solver == 'lsqr':
-            self._solve_lsqr(X, y, reg_param=self.reg_param,
-                             covariance_estimator=self.covariance_estimator)
-        else:
-            raise ValueError("unknown solver {} (valid solvers are 'svd' "
-                             "and 'lsqr').".format(self.solver))
+        self._solve_svd(X, y)
         return self
 
     def _decision_function(self, X):
@@ -962,40 +830,16 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
         X = check_array(X)
 
-        if self.solver == "svd":
-            norm2 = []
-            for i in range(len(self.classes_)):
-                R = self.rotations_[i]
-                S = self.scalings_[i]
-                Xm = X - self.means_[i]
-                X2 = np.dot(Xm, R * (S ** (-0.5)))
-                norm2.append(np.sum(X2 ** 2, 1))
-            norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
-            u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
-            return -0.5 * (norm2 + u) + np.log(self.priors_)
-
-        if self.solver == "lsqr":
-            n_classes = len(self.classes_)
-            dec_func = []
-            for k in range(n_classes):
-                mean = self.means_[k]
-                covariance = self.covariance_[k]
-                centeredX = X - mean
-                sign, log_det_cov_k = np.linalg.slogdet(covariance)
-                if sign <= 0:
-                    raise ValueError(
-                        "Determinant of covariance matrix"
-                        " corresponding to class %s was"
-                        " <= 0" % self.classes_[k])
-                log_prior = np.log(self.priors_[k])
-                quadratic_part = np.sum(centeredX * linalg.lstsq(
-                    covariance,
-                    centeredX.T)[0].T, axis=1)
-                decision_function_k = - 0.5 * quadratic_part
-                decision_function_k += - 0.5 * log_det_cov_k
-                decision_function_k += log_prior
-                dec_func.append(decision_function_k)
-            return np.array(dec_func).T
+        norm2 = []
+        for i in range(len(self.classes_)):
+            R = self.rotations_[i]
+            S = self.scalings_[i]
+            Xm = X - self.means_[i]
+            X2 = np.dot(Xm, R * (S ** (-0.5)))
+            norm2.append(np.sum(X2 ** 2, 1))
+        norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
+        u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
+        return -0.5 * (norm2 + u) + np.log(self.priors_)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
