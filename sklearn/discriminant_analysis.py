@@ -11,7 +11,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 import warnings
 import numpy as np
-from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
 from scipy.special import expit
 
@@ -24,6 +23,7 @@ from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
+from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
@@ -788,7 +788,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis
     """
-
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4, solver='svd', covariance_estimator=None):
         self.priors = np.asarray(priors) if priors is not None else None

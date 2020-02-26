@@ -856,8 +856,7 @@ leverage integer-based data structures (histograms) instead of relying on
 sorted continuous values when building the trees. The API of these
 estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-are not yet supported: in particular sample weights, and some loss
-functions.
+are not yet supported, for instance some loss functions.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -909,13 +908,14 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-The early-stopping behaviour is controlled via the ``scoring``,
-``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
-possible to early-stop using an arbitrary :term:`scorer`, or just the
-training or validation loss. By default, early-stopping is performed using
-the default :term:`scorer` of the estimator on a validation set but it is
-also possible to perform early-stopping based on the loss value, which is
-significantly faster.
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early-stopping``, ``scoring``, ``validation_fraction``,
+``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
+using an arbitrary :term:`scorer`, or just the training or validation loss.
+Note that for technical reasons, using a scorer is significantly slower than
+using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ----------------------
@@ -955,6 +955,39 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+Sample weight support
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` sample support weights during
+:term:`fit`.
+
+The following toy example demonstrates how the model ignores the samples with
+zero sample weights:
+
+    >>> X = [[1, 0],
+    ...      [1, 0],
+    ...      [1, 0],
+    ...      [0, 1]]
+    >>> y = [0, 0, 1, 0]
+    >>> # ignore the first 2 training samples by setting their weight to 0
+    >>> sample_weight = [0, 0, 1, 1]
+    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+    >>> gb.fit(X, y, sample_weight=sample_weight)
+    HistGradientBoostingClassifier(...)
+    >>> gb.predict([[1, 0]])
+    array([1])
+    >>> gb.predict_proba([[1, 0]])[0, 1]
+    0.99...
+
+As you can see, the `[1, 0]` is comfortably classified as `1` since the first
+two samples are ignored due to their sample weights.
+
+Implementation detail: taking sample weights into account amounts to
+multiplying the gradients (and the hessians) by the sample weights. Note that
+the binning stage (specifically the quantiles computation) does not take the
+weights into account.
 
 Low-level parallelism
 ---------------------

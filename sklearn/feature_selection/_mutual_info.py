@@ -224,12 +224,10 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -333,12 +331,10 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -412,12 +408,10 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------

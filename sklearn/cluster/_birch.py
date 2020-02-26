@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 import warnings
+import numbers
 import numpy as np
 from scipy import sparse
 from math import sqrt
@@ -617,7 +618,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(clusterer, int):
+        if isinstance(clusterer, numbers.Integral):
             clusterer = AgglomerativeClustering(
                 n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.

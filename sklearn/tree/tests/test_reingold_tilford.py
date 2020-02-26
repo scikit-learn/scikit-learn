@@ -43,8 +43,8 @@ def test_buchheim(tree, n_nodes):
     # we could also do it quicker using defaultdicts..
     depth = 0
     while True:
-        x_at_this_depth = [coordinates[0] for node in coordinates
-                           if coordinates[1] == depth]
+        x_at_this_depth = [node[0] for node in coordinates
+                           if node[1] == depth]
         if not x_at_this_depth:
             # reached all leafs
             break
