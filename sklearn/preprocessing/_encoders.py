@@ -517,20 +517,17 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if self.drop is None:
-                cats = self.categories_[i]
-            else:
-                if not self.drop_idx_.mask[i]:
-                    cats = np.delete(self.categories_[i], self.drop_idx_[i])
+            cats = self.categories_[i]
+            if self.drop_idx_ is not None and not self.drop_idx_.mask[i]:
+                cats = np.delete(self.categories_[i], self.drop_idx_[i])
             n_categories = len(cats)
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
             # unique category value.
             if n_categories == 0:
-                if not self.drop_idx_.mask[i]:
-                    X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
-                    j += n_categories
+                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
+                j += n_categories
                 continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
