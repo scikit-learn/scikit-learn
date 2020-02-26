@@ -24,7 +24,8 @@ from libc.math cimport fabs, sqrt, pow, abs
 
 cimport numpy as np
 np.import_array()
-cdef double INFINITY = np.inf
+from numpy.math cimport INFINITY
+# cdef double INFINITY = np.inf
 
 from ._utils cimport log
 from ._utils cimport safe_realloc
