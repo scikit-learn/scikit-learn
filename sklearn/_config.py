@@ -7,7 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': False,
-    'nep37': False,
+    'enable_duck_array': False,
 }
 
 
@@ -28,7 +28,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, nep37=None):
+               print_changed_only=None, enable_duck_array=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -71,8 +71,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
-    if nep37 is not None:
-        _global_config['nep37'] = nep37
+    if enable_duck_array is not None:
+        _global_config['enable_duck_array'] = enable_duck_array
 
 
 @contextmanager

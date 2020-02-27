@@ -435,7 +435,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
     """
-    if _get_config()['nep37']:
+    if _get_config()['enable_duck_array']:
         return array
 
     # store reference to original array to check if copy is needed when
