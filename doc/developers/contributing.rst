@@ -23,6 +23,9 @@ See :ref:`new_contributors` to get started.
     discussions.
 
     We aspire to treat everybody equally, and value their contributions.
+    We are particularly seeking people from underrepresented backgrounds
+    in Open Source Software and this project to participate and contribute
+    their expertise and experience.
 
     Decisions are made based on technical merit and consensus.
 
