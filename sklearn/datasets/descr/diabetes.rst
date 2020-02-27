@@ -21,7 +21,7 @@ quantitative measure of disease progression one year after baseline.
       - sex
       - bmi     body mass index
       - bp      average blood pressure
-      - s1      tc, a number of White Blood Cells
+      - s1      tc, T-Cells (a type of white blood cells)
       - s2      ldl, low-density lipoproteins
       - s3      hdl, high-density lipoproteins
       - s4      tch, thyroid stimulating hormone
