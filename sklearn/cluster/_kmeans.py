@@ -776,25 +776,25 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self._n_threads = _openmp_effective_n_threads(self._n_threads)
 
         if self.n_init <= 0:
-            raise ValueError(f"Invalid number of initializations. n_init="
-                             f"{self.n_init} must be bigger than zero.")
+            raise ValueError(
+                f"n_init should be > 0, got {self.n_init} instead.")
         self._n_init = self.n_init
 
         if self.max_iter <= 0:
-            raise ValueError(f"Number of iterations should be a positive "
-                             f"number, got {self.max_iter} instead.")
+            raise ValueError(
+                f"max_iter should be > 0, got {self.max_iter} instead.")
 
         if X.shape[0] < self.n_clusters:
             raise ValueError(f"n_samples={X.shape[0]} should be >= "
                              f"n_clusters={self.n_clusters}.")
 
         if self.tol < 0:
-            raise ValueError(f"tol={self.tol} should be >= 0.")
+            raise ValueError(f"tol should be >= 0, got {self.tol} instead.")
         self._tol = self._normalize_tolerance(X, self.tol)
 
         if self.algorithm not in ("auto", "full", "elkan"):
             raise ValueError(f"Algorithm must be 'auto', 'full' or 'elkan', "
-                             f"got {self.algorithm}.")
+                             f"got {self.algorithm} instead.")
 
         self._algorithm = self.algorithm
         if self._algorithm == "elkan" and self.n_clusters == 1:
@@ -804,12 +804,19 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         if self._algorithm == "auto":
             self._algorithm = "full" if self.n_clusters == 1 else "elkan"
 
+        if not (hasattr(self.init, '__array__') or callable(self.init)
+                or (isinstance(self.init, str)
+                    and self.init in ["k-means++", "random"])):
+            raise ValueError(
+                f"init should be either 'k-means++', 'random', a ndarray or a "
+                f"callable, got '{self.init}' instead.")
+
         if hasattr(self.init, '__array__'):
             self._validate_center_shape(X, self.init)
             if self._n_init != 1:
                 warnings.warn(
                     f"Explicit initial center position passed: performing only"
-                    f"one init in {self.__class__.__name__} instead of "
+                    f" one init in {self.__class__.__name__} instead of "
                     f"n_init={self._n_init}.", RuntimeWarning, stacklevel=2)
                 self._n_init = 1
 
@@ -881,12 +888,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         n_clusters = self.n_clusters
 
         if init_size is not None and init_size < n_samples:
-            if init_size < n_clusters:
-                warnings.warn(
-                    f"init_size={init_size} should be larger than "
-                    f"n_clusters={n_clusters}. Setting it to 3*n_clusters",
-                    RuntimeWarning, stacklevel=2)
-                init_size = 3 * n_clusters
             init_indices = random_state.randint(0, n_samples, init_size)
             X = X[init_indices]
             x_squared_norms = x_squared_norms[init_indices]
@@ -906,11 +907,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             centers = check_array(
                 centers, dtype=X.dtype, copy=False, order='C')
             self._validate_center_shape(X, centers)
-        else:
-            raise ValueError(
-                f"the init parameter for {self.__class__.__name__} should be "
-                f"'k-means++', 'random', a ndarray or a callable. '{init}'"
-                f" (type '{type(self.init)}') was passed.")
 
         if sp.issparse(centers):
             centers = centers.toarray()
@@ -1377,19 +1373,21 @@ class MiniBatchKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or ndarray of shape \
-            (n_clusters, n_features), default='k-means++'
-        Method for initialization
+    init : {'k-means++', 'random', ndarray, callable}, default='k-means++'
+        Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
 
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
+        'random': choose `n_clusters` observations (rows) at random from data
+        for the initial centroids.
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
+
+        If a callable is passed, it should take arguments X, n_clusters and a
+        random state and return an initialization.
 
     max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
@@ -1454,7 +1452,7 @@ class MiniBatchKMeans(KMeans):
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers
 
-    labels_ : int
+    labels_ : ndarray of shape (n_samples)
         Labels of each point (if compute_labels is set to True).
 
     inertia_ : float
@@ -1538,6 +1536,14 @@ class MiniBatchKMeans(KMeans):
         self._init_size = self.init_size
         if self._init_size is None:
             self._init_size = 3 * self.batch_size
+            if self._init_size < self.n_clusters:
+                self._init_size = 3 * self.n_clusters
+        elif self._init_size < self.n_clusters:
+            warnings.warn(
+                f"init_size={self._init_size} should be larger than "
+                f"n_clusters={self.n_clusters}. Setting it to 3*n_clusters",
+                RuntimeWarning, stacklevel=2)
+            self._init_size = 3 * self.n_clusters
         self._init_size = min(self._init_size, X.shape[0])
 
         if self.reassignment_ratio < 0:
@@ -1550,7 +1556,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1558,9 +1564,9 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
@@ -1609,8 +1615,8 @@ class MiniBatchKMeans(KMeans):
         best_inertia = None
         for init_idx in range(self._n_init):
             if self.verbose:
-                print("Init %d/%d with method: %s"
-                      % (init_idx + 1, self._n_init, self.init))
+                print(f"Init {init_idx + 1}/{self._n_init} with method {init}")
+
             weight_sums = np.zeros(self.n_clusters, dtype=sample_weight.dtype)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1619,15 +1625,14 @@ class MiniBatchKMeans(KMeans):
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
             cluster_centers = self._init_centroids(
-                X, x_squared_norms=x_squared_norms, init=self.init,
+                X, x_squared_norms=x_squared_norms, init=init,
                 random_state=random_state, init_size=self._init_size)
 
             # Compute the label assignment on the init dataset
             _mini_batch_step(
-                X_valid, sample_weight_valid,
-                x_squared_norms[validation_indices], cluster_centers,
-                weight_sums, old_center_buffer, False, distances=None,
-                verbose=self.verbose)
+                X_valid, sample_weight_valid, x_squared_norms_valid,
+                cluster_centers, weight_sums, old_center_buffer, False,
+                distances=None, verbose=self.verbose)
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
@@ -1635,8 +1640,8 @@ class MiniBatchKMeans(KMeans):
                                          x_squared_norms_valid,
                                          cluster_centers)
             if self.verbose:
-                print("Inertia for init %d/%d: %f"
-                      % (init_idx + 1, self._n_init, inertia))
+                print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
+                      f"{inertia}")
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = weight_sums
@@ -1709,7 +1714,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1735,9 +1740,9 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
@@ -1784,8 +1789,8 @@ class MiniBatchKMeans(KMeans):
             # of features.
             if X.shape[1] != self.cluster_centers_.shape[1]:
                 raise ValueError(
-                    "Number of features %d does not match previous "
-                    "data %d." % (X.shape[1], self.cluster_centers_.shape[1]))
+                    f"Number of features {X.shape[1]} does not match previous "
+                    f"data {self.cluster_centers_.shape[1]}.")
 
         _mini_batch_step(X, sample_weight, x_squared_norms,
                          self.cluster_centers_, self.counts_,
@@ -1813,13 +1818,13 @@ class MiniBatchKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None).
+            are assigned equal weight.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
