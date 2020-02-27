@@ -773,7 +773,7 @@ def column_or_1d(y, warn=False):
         "got an array of shape {} instead.".format(shape))
 
 
-def check_random_state(seed):
+def check_random_state(seed, arr_mod=np):
     """Turn seed into a np.random.RandomState instance
 
     Parameters
@@ -787,8 +787,8 @@ def check_random_state(seed):
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
     if isinstance(seed, numbers.Integral):
-        return np.random.RandomState(seed)
-    if isinstance(seed, np.random.RandomState):
+        return arr_mod.random.RandomState(seed)
+    if isinstance(seed, arr_mod.random.RandomState):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)

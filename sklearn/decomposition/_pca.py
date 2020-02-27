@@ -525,7 +525,9 @@ class PCA(_BasePCA):
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
 
-        random_state = check_random_state(self.random_state)
+        arr_mod = get_array_module(X)
+        random_state = check_random_state(self.random_state,
+                                          arr_mod=arr_mod)
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
