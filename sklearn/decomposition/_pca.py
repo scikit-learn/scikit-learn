@@ -29,11 +29,14 @@ from ..utils.validation import check_is_fitted
 
 def get_array_module(array):
     if isinstance(array, np.ndarray):
+        # if we need scipy support
         np.scipy = sp
         return np
     # assume cupy for now
     import cupy  # noqa
     import cupyx  # noqa
+
+    # if we need scipy support
     cupy.scipy = cupyx
     return cupy
 
@@ -525,9 +528,7 @@ class PCA(_BasePCA):
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
 
-        arr_mod = get_array_module(X)
-        random_state = check_random_state(self.random_state,
-                                          arr_mod=arr_mod)
+        random_state = check_random_state(self.random_state)
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
