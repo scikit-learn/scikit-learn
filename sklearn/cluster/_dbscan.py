@@ -15,7 +15,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -270,8 +270,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
-
-    def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
+    @_deprecate_positional_args
+    def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):
         self.eps = eps
