@@ -13,8 +13,8 @@
 from math import log, sqrt
 import numbers
 
-import scipy as sp
 import numpy as np
+import scipy as sp
 from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
