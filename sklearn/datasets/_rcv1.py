@@ -127,23 +127,20 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : scipy csr array, dtype np.float64, shape (804414, 47236)
-        The array has 0.16% of non zero values.
-
-    dataset.target : scipy csr array, dtype np.uint8, shape (804414, 103)
-        Each sample has a value of 1 in its categories, and 0 in others.
-        The array has 3.15% of non zero values.
-
-    dataset.sample_id : numpy array, dtype np.uint32, shape (804414,)
-        Identification number of each sample, as ordered in dataset.data.
-
-    dataset.target_names : numpy array, dtype object, length (103)
-        Names of each target (RCV1 topics), as ordered in dataset.target.
-
-    dataset.DESCR : string
-        Description of the RCV1 dataset.
+        data : scipy csr array, dtype np.float64, shape (804414, 47236)
+            The array has 0.16% of non zero values.
+        target : scipy csr array, dtype np.uint8, shape (804414, 103)
+            Each sample has a value of 1 in its categories, and 0 in others.
+            The array has 3.15% of non zero values.
+        sample_id : numpy array, dtype np.uint32, shape (804414,)
+            Identification number of each sample, as ordered in dataset.data.
+        target_names : numpy array, dtype object, length (103)
+            Names of each target (RCV1 topics), as ordered in dataset.target.
+        DESCR : string
+            Description of the RCV1 dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
