@@ -13,6 +13,7 @@
 from math import log, sqrt
 import numbers
 
+import scipy as sp
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
@@ -25,6 +26,15 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+
+
+def get_array_module(array):
+    if isinstance(array, np.ndarray):
+        np.scipy = sp
+        return np
+    # assume cupy for now
+    import cupy  # noqa
+    return cupy
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -442,6 +452,8 @@ class PCA(_BasePCA):
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
+
+
 
         U, S, V = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
