@@ -15,7 +15,6 @@ import numbers
 
 import scipy as sp
 import numpy as np
-from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
@@ -453,9 +452,8 @@ class PCA(_BasePCA):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
-
-
-        U, S, V = linalg.svd(X, full_matrices=False)
+        arr_mod = get_array_module(X)
+        U, S, V = arr_mod.scipy.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
         U, V = svd_flip(U, V)
 
