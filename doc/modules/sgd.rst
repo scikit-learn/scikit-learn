@@ -120,7 +120,9 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
   * and all regression losses below.
 
 .. TODO: describe losses, (what is modified huber????) or provide ref
-.. TODO: how do the regression losses work for classification?
+.. TODO: how do the regression losses work for classification? OK it's just
+treated as a regression problem, but do we have proba then? What's the
+threshold?
 
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
@@ -178,16 +180,6 @@ instances via the fit parameters ``class_weight`` and ``sample_weight``. See
 the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
-.. topic:: Examples:
-
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
- - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
- - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
-
-.. TODO: describe ASGD in math section
-
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting `average=True`. ASGD performs the same updates as the regular SGD
 (see :ref:`sgd_mathematical_formulation`), but instead of using the last
@@ -200,6 +192,15 @@ leading on some datasets to a speed up in training time.
 For classification with a logistic loss, another variant of SGD with an
 averaging strategy is available with Stochastic Average Gradient (SAG)
 algorithm, available as a solver in :class:`LogisticRegression`.
+
+.. topic:: Examples:
+
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+   (See the Note in the example)
 
 Regression
 ==========
@@ -357,6 +358,8 @@ the regularization stength.
 
 Different choices for :math:`L` entail different classifiers such as
 
+.. TODO not jsut classifiers, also change domain above to -1 1 for classif
+
    - Hinge: (soft-margin) Support Vector Machines.
    - Log:   Logistic Regression.
    - Least-Squares: Linear classification (Ridge or Lasso depending on
@@ -443,12 +446,14 @@ and use ``eta0`` to specify the starting learning rate. When the stopping
 criterion is reached, the learning rate is divided by 5, and the algorithm
 does not stop. The algorithm stops when the learning rate goes below 1e-6.
 
-The model parameters can be accessed through the members ``coef_`` and
-``intercept_``:
+The model parameters can be accessed through the ``coef_`` and
+``intercept_`` attributes: ``coef_`` holds the weights :math:`w` and
+``intercept_`` holds :math:`b`.
 
-     - Member ``coef_`` holds the weights :math:`w`
-
-     - Member ``intercept_`` holds :math:`b`
+When using Averaged SGD (with the `average` parameter), `coef_` is set to the
+average weight across all updates:
+`coef_` :math:`= \frac{1}{T} \sum_{t=1}^{T} w^{(t)}`,
+where :math:`T` is the total number of updates, found in the `t_` attribute.
 
 .. topic:: References:
 
