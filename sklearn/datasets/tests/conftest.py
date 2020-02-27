@@ -28,37 +28,37 @@ def _wrapped_fetch(f, dataset_name):
 
 
 @pytest.fixture
-def fetch_20newsgroups():
+def fetch_20newsgroups_fxt():
     return _wrapped_fetch(_fetch_20newsgroups, dataset_name='20newsgroups')
 
 
 @pytest.fixture
-def fetch_20newsgroups_vectorized():
+def fetch_20newsgroups_vectorized_fxt():
     return _wrapped_fetch(_fetch_20newsgroups_vectorized,
                           dataset_name='20newsgroups_vectorized')
 
 
 @pytest.fixture
-def fetch_california_housing():
+def fetch_california_housing_fxt():
     return _wrapped_fetch(_fetch_california_housing,
                           dataset_name='california_housing')
 
 
 @pytest.fixture
-def fetch_covtype():
+def fetch_covtype_fxt():
     return _wrapped_fetch(_fetch_covtype, dataset_name='covtype')
 
 
 @pytest.fixture
-def fetch_kddcup99():
+def fetch_kddcup99_fxt():
     return _wrapped_fetch(_fetch_kddcup99, dataset_name='kddcup99')
 
 
 @pytest.fixture
-def fetch_olivetti_faces():
+def fetch_olivetti_faces_fxt():
     return _wrapped_fetch(_fetch_olivetti_faces, dataset_name='olivetti_faces')
 
 
 @pytest.fixture
-def fetch_rcv1():
+def fetch_rcv1_fxt():
     return _wrapped_fetch(_fetch_rcv1, dataset_name='rcv1')
