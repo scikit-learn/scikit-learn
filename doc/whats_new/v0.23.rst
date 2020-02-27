@@ -356,6 +356,10 @@ Changelog
   each feature with two categories. :pr:`#16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
+  computing statistics when calling `partial_fit` on sparse inputs.
+  :pr:`16466` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.svm`
 ..................
 
