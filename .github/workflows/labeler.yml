@@ -6,7 +6,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: thomasjpfan/labeler@master
+    - uses: thomasjpfan/labeler@v2.2.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         max-labels: '3'
