@@ -545,8 +545,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        ccp_path : Bunch
-            Dictionary-like object, with attributes:
+        ccp_path : :class:`~sklearn.utils.Bunch`
+            Dictionary-like object, with the following attributes.
 
             ccp_alphas : ndarray
                 Effective alphas of subtree during pruning.

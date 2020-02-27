@@ -96,11 +96,15 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-         - 'data', the data to learn.
-         - 'target', the regression target for each sample.
-         - 'DESCR', a description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : ndarray of shape (494021, 41)
+            The data matrix to learn.
+        target : ndarray of shape (494021,)
+            The regression target for each sample.
+        DESCR : str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -190,13 +194,15 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
-        dataset.data : numpy array of shape (494021, 41)
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : numpy array of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.
-        dataset.target : numpy array of shape (494021,)
+        target : numpy array of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
-        dataset.DESCR : string
+        DESCR : string
             Description of the kddcup99 dataset.
 
     """

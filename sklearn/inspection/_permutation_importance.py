@@ -86,8 +86,8 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
 
     Returns
     -------
-    result : Bunch
-        Dictionary-like object, with attributes:
+    result : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         importances_mean : ndarray, shape (n_features, )
             Mean of feature importance over `n_repeats`.

@@ -64,7 +64,8 @@ class Bunch(dict):
     They extend dictionaries by enabling values to be accessed by key,
     `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-
+    Examples
+    --------
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -76,7 +77,6 @@ class Bunch(dict):
     >>> b.c = 6
     >>> b['c']
     6
-
     """
 
     def __init__(self, **kwargs):

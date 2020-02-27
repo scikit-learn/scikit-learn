@@ -163,12 +163,20 @@ def load_files(container_path, description=None, categories=None,
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are: either
-        data, the raw text data to learn, or 'filenames', the files
-        holding it, 'target', the classification labels (integer index),
-        'target_names', the meaning of the labels, and 'DESCR', the full
-        description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list of str
+            Only present when `load_content=True`.
+            The raw text data to learn.
+        target : ndarray
+            The target labels (integer index).
+        target_names : list
+            The names of target classes.
+        DESCR : str
+            The full description of the dataset.
+        filenames: ndarray
+            The filenames holding the dataset.
     """
     target = []
     target_names = []
@@ -295,8 +303,8 @@ def load_wine(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (178, 13)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -409,8 +417,8 @@ def load_iris(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (150, 4)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -521,8 +529,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -645,8 +653,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (1797, 64)
             The flattened data matrix. If `as_frame=True`, `data` will be
@@ -759,8 +767,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (442, 10)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -853,8 +861,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (20, 3)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -943,12 +951,21 @@ def load_boston(return_X_y=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression targets,
-        'DESCR', the full description of the dataset,
-        and 'filename', the physical location of boston
-        csv dataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : ndarray of shape (506, 13)
+            The data matrix.
+        target : ndarray of shape (506, )
+            The regression target.
+        filename : str
+            The physical location of boston csv dataset.
+
+            .. versionadded:: 0.20
+        DESCR : str
+            The full description of the dataset.
+        feature_names : ndarray
+            The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -1007,10 +1024,15 @@ def load_sample_images():
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object with the following attributes : 'images', the
-        two sample images, 'filenames', the file names for the images, and
-        'DESCR' the full description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        images : list of ndarray of shape (427, 640, 3)
+            The two sample image.
+        filenames : list
+            The filenames for the images.
+        DESCR : str
+            The full description of the dataset.
 
     Examples
     --------
