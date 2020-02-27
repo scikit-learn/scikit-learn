@@ -690,13 +690,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         ``n_k = min(n_features, number of elements in class k)``
         It is the rotation of the Gaussian distribution, i.e. its
         principal axis.
-        Note: only available when solver="svd"
 
     scalings_ : list of ndarrays
         For each class k an array of shape (n_k,). It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
-        Note: only available when solver="svd"
 
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
@@ -718,15 +716,23 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis
     """
-    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+    @_deprecate_positional_args
+    def __init__(self, *, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
 
-    def _solve_svd(self, X, y):
-        """SVD solver
+    def fit(self, X, y):
+        """Fit the model according to the given training data and parameters.
+
+            .. versionchanged:: 0.19
+               ``store_covariances`` has been moved to main constructor as
+               ``store_covariance``
+
+            .. versionchanged:: 0.19
+               ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -737,8 +743,18 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             Target values (integers)
         """
+        X, y = check_X_y(X, y)
+        check_classification_targets(y)
+        self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
+        if n_classes < 2:
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
+        if self.priors is None:
+            self.priors_ = np.bincount(y) / float(n_samples)
+        else:
+            self.priors_ = self.priors
 
         cov = None
         store_covariance = self.store_covariance
@@ -772,64 +788,12 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
-
-        return self
-
-    def fit(self, X, y):
-        """Fit the model according to the given training data and parameters.
-
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
-
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        y : array, shape = [n_samples]
-            Target values (integers)
-        """
-        # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
-                         dtype=[np.float64, np.float32])
-        check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        n_samples, _ = X.shape
-        n_classes = len(self.classes_)
-
-        if n_classes < 2:
-            raise ValueError('The number of classes has to be greater than'
-                             ' one; got %d class' % (n_classes))
-        if n_samples == n_classes:
-            raise ValueError("The number of samples must be more "
-                             "than the number of classes.")
-
-        if self.priors is None:  # estimate priors from sample
-            _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
-            self.priors_ = np.bincount(y_t) / float(len(y))
-        else:
-            self.priors_ = np.asarray(self.priors)
-
-        if (self.priors_ < 0).any():
-            raise ValueError("priors must be non-negative")
-        if not np.isclose(self.priors_.sum(), 1.0):
-            warnings.warn("The priors do not sum to 1. Renormalizing",
-                          UserWarning)
-            self.priors_ = self.priors_ / self.priors_.sum()
-
-        self._solve_svd(X, y)
         return self
 
     def _decision_function(self, X):
         check_is_fitted(self)
 
         X = check_array(X)
-
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]
@@ -839,7 +803,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
-        return -0.5 * (norm2 + u) + np.log(self.priors_)
+        return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -875,7 +839,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         -------
         C : ndarray of shape (n_samples,)
         """
-        check_is_fitted(self)
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
@@ -893,7 +856,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
-        check_is_fitted(self)
         values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.

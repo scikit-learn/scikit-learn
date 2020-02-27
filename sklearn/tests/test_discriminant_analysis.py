@@ -4,7 +4,6 @@ import pytest
 
 from scipy import linalg
 
-from sklearn.base import BaseEstimator
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (assert_array_equal, assert_no_warnings,
@@ -500,12 +499,13 @@ def test_qda_priors():
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos = np.sum(y_pred == 2)
 
-    neg = 1e-15
+    neg = 1e-10
     clf = QuadraticDiscriminantAnalysis(priors=np.array([neg, 1 - neg]))
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
     assert n_pos2 > n_pos
+
 
 def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
@@ -562,6 +562,7 @@ def test_covariance():
 
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
+
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
