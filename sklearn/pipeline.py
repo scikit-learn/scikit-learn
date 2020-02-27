@@ -72,7 +72,8 @@ class Pipeline(_BaseComposition):
 
     Attributes
     ----------
-    named_steps : bunch object, a dictionary with attribute access
+    named_steps : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
