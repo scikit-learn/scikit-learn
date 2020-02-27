@@ -190,11 +190,12 @@ further information.
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting `average=True`. ASGD performs the same updates as the regular SGD
-(see :ref:`sgd_mathematical_formulation`), but the final `coef_` attribute is set to
-TODO FAIT CHIER
-attributes are set to the average of all the updates.
-When using ASGD the learning rate can be larger and even constant, leading on
-some datasets to a speed up in training time.
+(see :ref:`sgd_mathematical_formulation`), but instead of using the last
+value of the coefficients as the `coef_` attribute (i.e. the values of the
+last update), `coef_` is set instead to the **average** value of the
+coefficients across all updates. The same is done for the `intercept_`
+attribute. When using ASGD the learning rate can be larger and even constant,
+leading on some datasets to a speed up in training time.
 
 For classification with a logistic loss, another variant of SGD with an
 averaging strategy is available with Stochastic Average Gradient (SAG)
@@ -222,8 +223,8 @@ robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
-:class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
-Averaging can be enabled by setting ```average=True```.
+:class:`SGDRegressor` also supports averaged SGD (see description above in
+the classification section).
 
 For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
