@@ -455,7 +455,7 @@ class PCA(_BasePCA):
         X -= self.mean_
 
         arr_mod = get_array_module(X)
-        U, S, V = arr_mod.scipy.linalg.svd(X, full_matrices=False)
+        U, S, V = arr_mod.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
         U, V = svd_flip(U, V)
 
