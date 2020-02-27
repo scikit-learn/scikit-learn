@@ -284,6 +284,7 @@ def _yield_all_checks(name, estimator):
         yield check_n_features_in
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
+    yield check_supervised_tag_y
 
 
 def _set_check_estimator_ids(obj):
@@ -2911,3 +2912,53 @@ def check_n_features_in(name, estimator_orig):
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
         )
+
+
+def check_supervised_tag_y(name, estimator_orig):
+    # Make sure that estimators fail gracefully when:
+    # - a supervised estimator is given y=None
+    # - a non-supervised estimator is not given y=None
+
+    import pytest  # TODO don't use pytest
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    y = rng.randint(low=0, high=2, size=n_samples)
+
+    warning_msg = ("As of scikit-learn 0.23, estimators should have a "
+                   "'is_supervised' tag set to the appropriate value. "
+                   "The default value of the tag is True. "
+                   "An error will be raised from version 0.25 when calling "
+                   "check_estimator() if the tag isn't properly set.")
+
+    # With supervised estimators, the use of the tag can only be properly
+    # enforced for estimators that validate X and y at the same time by calling
+    # validate_data(X, y). But this isn't the case of e.g. ElasticNetCV, for
+    # good reasons. For these, the error "the estiator is supervised so y
+    # cannot be None" will always be raised.
+    if estimator._get_tags()['is_supervised']:
+        try:
+            with pytest.raises(ValueError,
+                               match="is a supervised estimator "
+                                     "but the target y is None"):
+                estimator.fit(X, y=None)
+        except AssertionError:
+            warnings.warn(warning_msg, FutureWarning)
+    # Testing the else part requires non supervised estimators to always pass y
+    # to _validate_date() which doesn't make sense?
+    # 
+    # else:
+    #     try:
+    #         with pytest.raises(ValueError,
+    #                            match="is a non-supervised estimator "
+    #                                  "but a target vector y was passed"):
+    #             estimator.fit(X, y=y)
+    #     except AssertionError:
+    #         warnings.warn(warning_msg, FutureWarning)

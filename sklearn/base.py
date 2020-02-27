@@ -35,7 +35,9 @@ _DEFAULT_TAGS = {
     '_skip_test': False,
     'multioutput_only': False,
     'binary_only': False,
-    'requires_fit': True}
+    'requires_fit': True,
+    'is_supervised': True,
+    }
 
 
 def clone(estimator, safe=True):
@@ -398,10 +400,23 @@ class BaseEstimator:
             The validated input. A tuple is returned if `y` is not None.
         """
 
+        print(self)
+        print(y is None)
         if y is None:
+            if self._get_tags()['is_supervised']:
+                raise ValueError(
+                    f"This {self.__class__.__name__} estimator is a "
+                    f"supervised estimator but the target vector y is None."
+                )
             X = check_array(X, **check_params)
             out = X
         else:
+            if not self._get_tags()['is_supervised']:
+                raise ValueError(
+                    f"This {self.__class__.__name__} estimator is a "
+                    f"non-supervised estimator but a target vector y was "
+                    f"passed. y should be None."
+                )
             X, y = check_X_y(X, y, **check_params)
             out = X, y
 
@@ -520,6 +535,9 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {'is_supervised': False}
+
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
@@ -595,6 +613,9 @@ class BiclusterMixin:
         row_ind, col_ind = self.get_indices(i)
         return data[row_ind[:, np.newaxis], col_ind]
 
+    def _more_tags(self):
+        return {'is_supervised': False}
+
 
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
@@ -630,6 +651,10 @@ class TransformerMixin:
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
+    
+    def _more_tags(self):
+        return {'is_supervised': False}
+
 
 
 class DensityMixin:
@@ -652,6 +677,8 @@ class DensityMixin:
         """
         pass
 
+    def _more_tags(self):
+        return {'is_supervised': False}
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
