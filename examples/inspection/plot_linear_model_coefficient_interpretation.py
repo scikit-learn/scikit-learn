@@ -331,10 +331,14 @@ plt.subplots_adjust(left=.3)
 # apart.
 # To verify this interpretation we plot the variability of the AGE and
 # EXPERIENCE coefficient.
+#
+# .. _covariation:
 
 plt.ylabel('Age coefficient')
 plt.xlabel('Experience coefficient')
 plt.grid(True)
+plt.xlim(-0.4, 0.5)
+plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
 
@@ -514,7 +518,8 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# The R squared coefficient is similar to the non-regularized case.
+# The ability to reproduce the data of the regularized model is similar to
+# the one of the non-regularized model.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
@@ -526,12 +531,37 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ##############################################################################
-# Coefficients are significantly different.
-# AGE and EXPERIENCE coefficients are both positive.
-# Even if the model is still not able to provide a good description of the
-# dataset, the regularization manages to lower the influence of correlated
-# variables on the model.
-#
+# The coefficients are significantly different.
+# AGE and EXPERIENCE coefficients are both positive but they have less
+# influence on the prediction.
+# The regularization manages to lower the influence of correlated
+# variables on the model because the weight is shared between the two
+# predictive variables, so neither alone would be very strongly weighted.
+# On the other hand, those weights are more robust with respect to
+# cross validation (see the :ref:`ridge_regression` User Guide section),
+# as is shown in the plot below to be compared with the
+# :ref:`previous one<covariation>`. 
+
+cv_model = cross_validate(
+    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True, n_jobs=-1
+)
+coefs = pd.DataFrame(
+    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
+     X_train_preprocessed.std(axis=0)
+     for est in cv_model['estimator']],
+    columns=feature_names
+)
+
+plt.ylabel('Age coefficient')
+plt.xlabel('Experience coefficient')
+plt.grid(True)
+plt.xlim(-0.4, 0.5)
+plt.ylim(-0.4, 0.5)
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
+
+##############################################################################
 # Linear models with sparse coefficients
 # --------------------------------------
 #
@@ -585,8 +615,7 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# For our dataset the R squared coefficient is of the same order than all other
-# models.
+# For our dataset, again the model is not very predictive.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
