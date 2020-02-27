@@ -1973,7 +1973,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{\mid y - \hat{y} \mid}{\text{MAX}(\epsilon, \mid y \mid)}
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
