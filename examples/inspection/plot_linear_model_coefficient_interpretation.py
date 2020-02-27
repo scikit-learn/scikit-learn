@@ -540,7 +540,7 @@ plt.subplots_adjust(left=.3)
 # On the other hand, those weights are more robust with respect to
 # cross validation (see the :ref:`ridge_regression` User Guide section),
 # as is shown in the plot below to be compared with the
-# :ref:`previous one<covariation>`. 
+# :ref:`previous one<covariation>`.
 
 cv_model = cross_validate(
     model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
