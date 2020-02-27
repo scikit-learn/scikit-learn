@@ -790,6 +790,10 @@ def check_random_state(seed, arr_mod=np):
         return arr_mod.random.RandomState(seed)
     if isinstance(seed, arr_mod.random.RandomState):
         return seed
+    # return random state if nep37 is on
+    if _get_config()["nep37"]:
+        return seed
+
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
 
