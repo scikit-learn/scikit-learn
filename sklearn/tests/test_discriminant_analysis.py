@@ -24,7 +24,6 @@ from sklearn.covariance import ledoit_wolf
 
 from sklearn.covariance import ShrunkCovariance
 from sklearn.covariance import LedoitWolf
-from sklearn.covariance import EmpiricalCovariance
 
 from sklearn.preprocessing import StandardScaler
 
