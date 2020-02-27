@@ -33,6 +33,8 @@ def get_array_module(array):
         return np
     # assume cupy for now
     import cupy  # noqa
+    import cupyx  # noqa
+    cupy.scipy = cupyx
     return cupy
 
 
