@@ -356,6 +356,23 @@ def _generate_class_checks(Estimator):
     yield from _generate_instance_checks(name, estimator)
 
 
+def _mark_xfail_checks(estimator, check, pytest):
+    """Mark estimator check pairs with xfail"""
+
+    xfail_checks = _safe_tags(estimator, '_xfail_test')
+    if not xfail_checks:
+        return estimator, check
+
+    check_name = _set_check_estimator_ids(check)
+    msg = xfail_checks.get(check_name, None)
+
+    if msg is None:
+        return estimator, check
+
+    return pytest.param(
+        estimator, check, marks=pytest.mark.xfail(reason=msg))
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -374,11 +391,17 @@ def parametrize_with_checks(estimators):
     decorator : `pytest.mark.parametrize`
     """
     import pytest
-    return pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for estimator in estimators),
-        ids=_set_check_estimator_ids)
+
+    checks_generator = chain.from_iterable(
+        check_estimator(estimator, generate_only=True)
+        for estimator in estimators)
+
+    checks_with_marks = (
+        _mark_xfail_checks(estimator, check, pytest)
+        for estimator, check in checks_generator)
+
+    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+                                   ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):

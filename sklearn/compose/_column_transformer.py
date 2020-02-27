@@ -124,7 +124,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-    named_transformers_ : Bunch
+    named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.

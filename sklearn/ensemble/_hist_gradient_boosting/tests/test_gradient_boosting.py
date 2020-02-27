@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -11,6 +11,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
 
@@ -301,7 +303,8 @@ def test_small_trainset():
     gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
-    X_small, y_small = gb._get_small_trainset(X, y, seed=42)
+    X_small, y_small, _ = gb._get_small_trainset(X, y, seed=42,
+                                                 sample_weight_train=None)
 
     # Compute the class distribution in the small training set
     unique, counts = np.unique(y_small, return_counts=True)
@@ -435,6 +438,20 @@ def test_infinite_values():
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
 
 
+def test_consistent_lengths():
+    X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
+    y = np.array([0, 0, 1, 1])
+    sample_weight = np.array([.1, .3, .1])
+    gbdt = HistGradientBoostingRegressor()
+    with pytest.raises(ValueError,
+                       match=r"sample_weight.shape == \(3,\), expected"):
+        gbdt.fit(X, y, sample_weight)
+
+    with pytest.raises(ValueError,
+                       match="Found input variables with inconsistent number"):
+        gbdt.fit(X, y[1:])
+
+
 def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
@@ -472,6 +489,148 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
+
+
+def test_zero_sample_weights_regression():
+    # Make sure setting a SW to zero amounts to ignoring the corresponding
+    # sample
+
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1]]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    gb = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert gb.predict([[1, 0]])[0] > 0.5
+
+
+def test_zero_sample_weights_classification():
+    # Make sure setting a SW to zero amounts to ignoring the corresponding
+    # sample
+
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1]]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    gb = HistGradientBoostingClassifier(loss='binary_crossentropy',
+                                        min_samples_leaf=1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(gb.predict([[1, 0]]), [1])
+
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1],
+         [1, 1]]
+    y = [0, 0, 1, 0, 2]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1, 1]
+    gb = HistGradientBoostingClassifier(loss='categorical_crossentropy',
+                                        min_samples_leaf=1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(gb.predict([[1, 0]]), [1])
+
+
+@pytest.mark.parametrize('problem', (
+    'regression',
+    'binary_classification',
+    'multiclass_classification'
+))
+@pytest.mark.parametrize('duplication', ('half', 'all'))
+def test_sample_weight_effect(problem, duplication):
+    # High level test to make sure that duplicating a sample is equivalent to
+    # giving it weight of 2.
+
+    # fails for n_samples > 255 because binning does not take sample weights
+    # into account. Keeping n_samples <= 255 makes
+    # sure only unique values are used so SW have no effect on binning.
+    n_samples = 255
+    n_features = 2
+    if problem == 'regression':
+        X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                               n_informative=n_features, random_state=0)
+        Klass = HistGradientBoostingRegressor
+    else:
+        n_classes = 2 if problem == 'binary_classification' else 3
+        X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                                   n_informative=n_features, n_redundant=0,
+                                   n_clusters_per_class=1,
+                                   n_classes=n_classes, random_state=0)
+        Klass = HistGradientBoostingClassifier
+
+    # This test can't pass if min_samples_leaf > 1 because that would force 2
+    # samples to be in the same node in est_sw, while these samples would be
+    # free to be separate in est_dup: est_dup would just group together the
+    # duplicated samples.
+    est = Klass(min_samples_leaf=1)
+
+    # Create dataset with duplicate and corresponding sample weights
+    if duplication == 'half':
+        lim = n_samples // 2
+    else:
+        lim = n_samples
+    X_dup = np.r_[X, X[:lim]]
+    y_dup = np.r_[y, y[:lim]]
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[:lim] = 2
+
+    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_dup = clone(est).fit(X_dup, y_dup)
+
+    # checking raw_predict is stricter than just predict for classification
+    assert np.allclose(est_sw._raw_predict(X_dup),
+                       est_dup._raw_predict(X_dup))
+
+
+@pytest.mark.parametrize('loss_name', ('least_squares',
+                                       'least_absolute_deviation'))
+def test_sum_hessians_are_sample_weight(loss_name):
+    # For losses with constant hessians, the sum_hessians field of the
+    # histograms must be equal to the sum of the sample weight of samples at
+    # the corresponding bin.
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    n_features = 2
+    X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                           random_state=rng)
+    bin_mapper = _BinMapper()
+    X_binned = bin_mapper.fit_transform(X)
+
+    sample_weight = rng.normal(size=n_samples)
+
+    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    gradients, hessians = loss.init_gradients_and_hessians(
+        n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight)
+    raw_predictions = rng.normal(size=(1, n_samples))
+    loss.update_gradients_and_hessians(gradients, hessians, y,
+                                       raw_predictions, sample_weight)
+
+    # build sum_sample_weight which contains the sum of the sample weights at
+    # each bin (for each feature). This must be equal to the sum_hessians
+    # field of the corresponding histogram
+    sum_sw = np.zeros(shape=(n_features, bin_mapper.n_bins))
+    for feature_idx in range(n_features):
+        for sample_idx in range(n_samples):
+            sum_sw[feature_idx, X_binned[sample_idx, feature_idx]] += (
+                sample_weight[sample_idx])
+
+    # Build histogram
+    grower = TreeGrower(X_binned, gradients[0], hessians[0],
+                        n_bins=bin_mapper.n_bins)
+    histograms = grower.histogram_builder.compute_histograms_brute(
+        grower.root.sample_indices)
+
+    for feature_idx in range(n_features):
+        for bin_idx in range(bin_mapper.n_bins):
+            assert histograms[feature_idx, bin_idx]['sum_hessians'] == (
+                pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
 
 
 def test_max_depth_max_leaf_nodes():

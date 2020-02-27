@@ -856,8 +856,7 @@ leverage integer-based data structures (histograms) instead of relying on
 sorted continuous values when building the trees. The API of these
 estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-are not yet supported: in particular sample weights, and some loss
-functions.
+are not yet supported, for instance some loss functions.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -956,6 +955,39 @@ whether the feature value is missing or not::
 If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
+
+Sample weight support
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` sample support weights during
+:term:`fit`.
+
+The following toy example demonstrates how the model ignores the samples with
+zero sample weights:
+
+    >>> X = [[1, 0],
+    ...      [1, 0],
+    ...      [1, 0],
+    ...      [0, 1]]
+    >>> y = [0, 0, 1, 0]
+    >>> # ignore the first 2 training samples by setting their weight to 0
+    >>> sample_weight = [0, 0, 1, 1]
+    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+    >>> gb.fit(X, y, sample_weight=sample_weight)
+    HistGradientBoostingClassifier(...)
+    >>> gb.predict([[1, 0]])
+    array([1])
+    >>> gb.predict_proba([[1, 0]])[0, 1]
+    0.99...
+
+As you can see, the `[1, 0]` is comfortably classified as `1` since the first
+two samples are ignored due to their sample weights.
+
+Implementation detail: taking sample weights into account amounts to
+multiplying the gradients (and the hessians) by the sample weights. Note that
+the binning stage (specifically the quantiles computation) does not take the
+weights into account.
 
 Low-level parallelism
 ---------------------

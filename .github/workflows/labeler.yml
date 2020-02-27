@@ -1,0 +1,12 @@
+name: "Pull Request Labeler"
+on:
+- pull_request
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@master
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        max-labels: '3'
