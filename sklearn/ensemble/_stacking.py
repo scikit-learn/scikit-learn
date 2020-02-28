@@ -317,7 +317,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator
@@ -565,8 +565,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
+
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
