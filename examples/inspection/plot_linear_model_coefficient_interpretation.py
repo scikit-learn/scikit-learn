@@ -631,7 +631,7 @@ plt.subplots_adjust(left=.3)
 #
 # Lessons learned
 # ---------------
-# 
+#
 # * Feature importance could be extrapolated from the coefficients only after
 #   having scaled them to the same unit of measure.
 # * Coefficients in multiple linear models represent conditional dependencies
