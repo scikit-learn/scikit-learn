@@ -31,7 +31,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
-    dimf) having spectrum ``spectrum``.
+    dimf) having ``spectrum``.
 
     Parameters
     ----------
