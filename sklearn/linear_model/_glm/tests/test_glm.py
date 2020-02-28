@@ -346,6 +346,8 @@ def test_convergence_warning(regression_data):
 
 
 def test_poisson_regression_family(regression_data):
+    # Make sure the family attribute is read-only to prevent searching over it
+    # e.g. in a grid search
     est = PoissonRegressor()
     est.family == "poisson"
 
@@ -355,6 +357,8 @@ def test_poisson_regression_family(regression_data):
 
 
 def test_gamma_regression_family(regression_data):
+    # Make sure the family attribute is read-only to prevent searching over it
+    # e.g. in a grid search
     est = GammaRegressor()
     est.family == "gamma"
 
@@ -364,10 +368,21 @@ def test_gamma_regression_family(regression_data):
 
 
 def test_tweedie_regression_family(regression_data):
+    # Make sure the family attribute is always a TweedieDistribution and that
+    # the power attribute is properly updated
     power = 2.0
     est = TweedieRegressor(power=power)
     assert isinstance(est.family, TweedieDistribution)
     assert est.family.power == power
+    assert est.power == power
+
+    new_power = 0
+    new_family = TweedieDistribution(power=new_power)
+    est.family = new_family
+    assert isinstance(est.family, TweedieDistribution)
+    assert est.family.power == new_power
+    assert est.power == new_power
+
     msg = "TweedieRegressor.family must be of type TweedieDistribution!"
     with pytest.raises(TypeError, match=msg):
         est.family = None
