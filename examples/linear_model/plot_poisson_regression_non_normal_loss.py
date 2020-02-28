@@ -80,7 +80,7 @@ df["Exposure"] = df["Exposure"].clip(upper=1)
 #
 # The remaining columns can be used to predict the frequency of claim events.
 # Those columns are very heterogeneous with a mix of categorical and numeric
-# variables with different scales, possibly very uneven distributed.
+# variables with different scales, possibly very unevenly distributed.
 #
 # In order to fit linear models with those predictors it is therefore
 # necessary to perform standard feature transformations as follows:
@@ -214,11 +214,14 @@ score_estimator(poisson, df_test)
 ##############################################################################
 #
 # Finally, we will consider a non-linear model, namely a random forest. Random
-# forests do not require the categorical data to be one-hot encoded, instead
-# we encode each category label with an arbitrary integer using
-# :class:`preprocessing.OrdinalEncoder` to make the model faster to train (the
-# same information is encoded with a smaller number of features than with
-# one-hot encoding).
+# forests do not require the categorical data to be one-hot encoded: instead,
+# we can encode each category label with an arbitrary integer using
+# :class:`preprocessing.OrdinalEncoder`. With this encoding, the forest will
+# treat the categorical features as ordered features, which might not be always
+# a desired behavior. However this effect is limited for deep enough trees
+# which are able to recover the categorical nature of the features. The main
+# advantage of the :class:`preprocessing.OrdinalEncoder` over the
+# :class:`preprocessing.OneHotEncoder` is that it will make training faster.
 
 rf_preprocessor = ColumnTransformer(
     [
