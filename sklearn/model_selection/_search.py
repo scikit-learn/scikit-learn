@@ -898,7 +898,7 @@ class GridSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        ..versionchanged:: v0.20
+        .. versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     pre_dispatch : int, or str, default=n_jobs
@@ -1117,7 +1117,7 @@ class GridSearchCV(BaseSearchCV):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
-        ..versionadded:: 0.20
+        .. versionadded:: 0.20
 
     Notes
     -----
@@ -1232,7 +1232,7 @@ class RandomizedSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        ..versionchanged:: v0.20
+        .. versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     pre_dispatch : int, or str, default=None
@@ -1436,7 +1436,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
-        ..versionadded:: 0.20
+        .. versionadded:: 0.20
 
     Notes
     -----

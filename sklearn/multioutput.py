@@ -231,7 +231,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
 
-        ..versionchanged:: v0.20
+        .. versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     Attributes
@@ -289,7 +289,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        ..versionchanged:: v0.20
+        .. versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
     Attributes
