@@ -76,7 +76,7 @@ def test_one_hot_encoder_handle_unknown():
 
 def test_one_hot_encoder_not_fitted():
     X = np.array([['a'], ['b']])
-    enc = OneHotEncoder(categories=['a', 'b'])
+    enc = OneHotEncoder()
     msg = ("This OneHotEncoder instance is not fitted yet. "
            "Call 'fit' with appropriate arguments before using this "
            "estimator.")
@@ -356,11 +356,19 @@ def test_one_hot_encoder_unsorted_categories():
     assert np.issubdtype(enc.categories_[0].dtype, np.object_)
 
     # unsorted passed categories still raise for numerical values
-    X = np.array([[1, 2]]).T
-    enc = OneHotEncoder(categories=[[2, 1, 3]])
-    msg = 'Unsorted categories are not supported'
+    msg = 'Unsorted categories are not supported for numerical categories'
+
     with pytest.raises(ValueError, match=msg):
-        enc.fit_transform(X)
+        enc = OneHotEncoder(categories=[[2, 1, 3]])
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_unsorted_categories_on_mixed_category_types(Encoder):
+    categories = [['a', 'b', 'c'], [3, 1, 4, 2]]
+    msg = 'Unsorted categories are not supported for numerical categories'
+
+    with pytest.raises(ValueError, match=msg):
+        _ = Encoder(categories=categories)
 
 
 def test_one_hot_encoder_specified_categories_mixed_columns():
@@ -374,7 +382,7 @@ def test_one_hot_encoder_specified_categories_mixed_columns():
     assert np.issubdtype(enc.categories_[0].dtype, np.object_)
     assert enc.categories_[1].tolist() == [0, 1, 2]
     # integer categories but from object dtype data
-    assert np.issubdtype(enc.categories_[1].dtype, np.object_)
+    assert np.issubdtype(enc.categories_[1].dtype, np.integer)
 
 
 def test_one_hot_encoder_pandas():
@@ -536,14 +544,11 @@ def test_ordinal_encoder_raise_missing(X):
 
 
 def test_ordinal_encoder_raise_categories_shape():
-
-    X = np.array([['Low', 'Medium', 'High', 'Medium', 'Low']], dtype=object).T
     cats = ['Low', 'Medium', 'High']
-    enc = OrdinalEncoder(categories=cats)
-    msg = ("Shape mismatch: if categories is an array,")
+    msg = ("Categories are expected to be either list or array-like, but ")
 
-    with pytest.raises(ValueError, match=msg):
-        enc.fit(X)
+    with pytest.raises(TypeError, match=msg):
+        _ = OrdinalEncoder(categories=cats)
 
 
 def test_encoder_dtypes():
@@ -670,3 +675,10 @@ def test_categories(density, drop):
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_no_need_to_fit_with_given_categories(Encoder):
+    X = [['a', 2], ['b', 1]]
+    categories = [['a', 'b'], [1, 2, 3]]
+    Encoder(categories).fit(X)

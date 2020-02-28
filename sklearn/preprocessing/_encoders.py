@@ -2,6 +2,8 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import sparse
 
@@ -25,6 +27,21 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     transform the input features.
 
     """
+    def __init__(self, categories, dtype):
+        self.categories = categories
+        self.dtype = dtype
+
+        if self.categories != 'auto':
+            self._fit_given_categories()
+
+    def set_params(self, **params):
+        result = super().set_params(**params)
+
+        for param, value in params.items():
+            if param == 'categories':
+                self._fit_given_categories()
+
+        return result
 
     def _check_X(self, X):
         """
@@ -70,6 +87,51 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
+    def _fit_given_categories(self):
+        """Given a user-passed categories, check each one and convert them to
+        numpy array.
+
+        Should be called at most once at object construction time.
+        """
+        categories = list()
+
+        for idx, cats in enumerate(self.categories):
+            if len(cats) == 0:
+                raise ValueError("Category {} if of zero length, but it's not "
+                                 "allowed".format(idx))
+
+            if not isinstance(cats, (np.ndarray, list, tuple)):
+                raise TypeError("Categories are expected to be either list or "
+                                "array-like, but category {} is actually {}."
+                                .format(idx, type(cats)))
+
+            types = [type(cat) for cat in cats]
+
+            if types[:-1] != types[1:]:
+                raise ValueError("All the categories from {} are expected to "
+                                 "be of the same type, but actually {}"
+                                 .format(cats, types))
+
+            if isinstance(cats[0], Integral):
+                dtype = np.int64
+            elif isinstance(cats[0], Real):
+                dtype = np.float64
+            else:
+                dtype = np.object
+
+            cats = np.array(cats, dtype=dtype)
+
+            if np.issubdtype(cats.dtype, np.number):
+                if not np.all(np.sort(cats) == cats):
+                    raise ValueError("Unsorted categories are not "
+                                     "supported for numerical categories")
+
+            categories.append(cats)
+
+        self.categories_ = categories
+
+        return self
+
     def _fit(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
@@ -78,25 +140,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
-        self.categories_ = []
-
-        for i in range(n_features):
-            Xi = X_list[i]
-            if self.categories == 'auto':
-                cats = _encode(Xi)
-            else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype != object:
-                    if not np.all(np.sort(cats) == cats):
-                        raise ValueError("Unsorted categories are not "
-                                         "supported for numerical categories")
+        if self.categories == 'auto':
+            self.categories_ = [_encode(Xi) for Xi in X_list]
+        else:
+            for i, (Xi, cats) in enumerate(zip(X_list, self.categories_)):
                 if handle_unknown == 'error':
                     diff = _encode_check_unknown(Xi, cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-            self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -291,9 +344,8 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
-        self.categories = categories
+        super().__init__(categories, dtype)
         self.sparse = sparse
-        self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
 
@@ -652,8 +704,7 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', dtype=np.float64):
-        self.categories = categories
-        self.dtype = dtype
+        super().__init__(categories, dtype)
 
     def fit(self, X, y=None):
         """
