@@ -28,6 +28,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -674,3 +675,14 @@ def test_deprecation_joblib_api(tmpdir):
 
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1
