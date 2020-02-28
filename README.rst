@@ -14,8 +14,8 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
-.. _PythonVersion: https://img.shields.io/pypi/pyversions/scikit-learn.svg
+.. |PythonVersion| image:: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
+.. _PythonVersion: https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
