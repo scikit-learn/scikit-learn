@@ -22,7 +22,12 @@ from ..utils.metaestimators import _BaseComposition
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
                             message_clsname=None, message=None):
-    """Private function used to fit an estimator within a job."""
+    """Private function used to fit an estimator within a job.
+    Naming is weird here because we only fit a single estimator.
+    TODO: rename _parallel_fit_estimator to _fit_single_estimator.
+    See:
+    https://github.com/scikit-learn/scikit-learn/pull/16539/files#r385937964
+    """
     if sample_weight is not None:
         try:
             with _print_elapsed_time(message_clsname, message):
