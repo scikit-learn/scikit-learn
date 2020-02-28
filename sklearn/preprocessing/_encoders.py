@@ -581,7 +581,7 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
-            if self.drop is not None:
+            if (self.drop is not None) and (self.drop_idx_[i] != -1):
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
