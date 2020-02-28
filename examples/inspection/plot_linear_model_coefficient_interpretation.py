@@ -280,8 +280,8 @@ plt.subplots_adjust(left=.3)
 # .. warning::
 #
 #   Why does the plot above suggest that an increase in age leads to a
-#   decrease in wage? Why this is different from the :ref:`initial pairplot
-#   <marginal_dependencies>`?
+#   decrease in wage? Why the :ref:`initial pairplot
+#   <marginal_dependencies>` is telling the opposite?
 #
 # The plot above tells us about dependencies between a specific feature and
 # the target when all other features remain constant, i.e., **conditional
@@ -432,7 +432,6 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# The R squared coefficient is not better than for the non-normalized case.
 # For the coefficient analysis, scaling is not needed this time.
 
 coefs = pd.DataFrame(
@@ -627,5 +626,6 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 #############################################################################
-# It is worth noticing that a Lasso model identifies the correlation between
-# AGE and EXPERIENCE and suppresses one of them.
+# A Lasso model identifies the correlation between
+# AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
+
