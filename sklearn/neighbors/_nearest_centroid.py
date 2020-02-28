@@ -41,7 +41,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
 
-        versionchanged:: 0.19
+        .. versionchanged:: 0.19
             ``metric='precomputed'`` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
