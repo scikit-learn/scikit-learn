@@ -289,8 +289,8 @@ plt.tight_layout()
 ##############################################################################
 #
 # The experimental data presents a long tail distribution for ``y``. In all
-# models we predict the mean expected value, so we will have necessarily fewer
-# extreme values. Additionally, normal distribution used in ``Ridge`` and
+# models we predict a mean expected value, so we will have necessarily fewer
+# extreme values. Additionally, the normal distribution used in ``Ridge`` and
 # ``RandomForestRegressor`` has a constant variance, while for the Poisson
 # distribution used in ``PoissonRegressor``, the variance is proportional to
 # the mean predicted value.
@@ -390,7 +390,7 @@ plt.tight_layout()
 # the safest. In this case, the model evaluation would cast the problem as a
 # ranking problem rather than a regression problem.
 #
-# To compare the 3 models under this light on, one can plot the fraction of
+# To compare the 3 models within this perspective, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
 # the model predictions, from riskiest to safest according to each model:
 

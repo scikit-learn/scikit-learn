@@ -14,11 +14,12 @@ premium.
 
 There are several possibilities to do that, two of which are:
 
-1. Model the number of claims with a Poisson distribution, the average claim
-   amount per claim, also known as severity, as a Gamma distribution and
-   multiply the predictions of both in order to get the total claim amount.
-2. Model total claim amount directly, typically with a Tweedie distribution of
-   Tweedie power :math:`p \\in (1, 2)`.
+1. Model the number of claims with a Poisson distribution, and the average
+   claim amount per claim, also known as severity, as a Gamma distribution
+   and multiply the predictions of both in order to get the total claim
+   amount.
+2. Model the total claim amount per exposure directly, typically with a Tweedie
+   distribution of Tweedie power :math:`p \\in (1, 2)`.
 
 In this example we will illustrate both approaches. We start by defining a few
 helper functions for loading the data and visualizing results.
@@ -430,7 +431,7 @@ plt.tight_layout()
 # Pure Premium Modeling via a Product of Frequency and Severity
 # -------------------------------------------------------------
 # As mentioned in the introduction, the total claim amount per unit of
-# exposure can be modeled either as the product of the prediction of the
+# exposure can be modeled as the product of the prediction of the
 # frequency model by the prediction of the severity model.
 #
 # To quantify the aggregate performance of this product model, one can compute
