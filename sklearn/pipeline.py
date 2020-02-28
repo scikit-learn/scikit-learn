@@ -1022,14 +1022,10 @@ def make_union(*transformers, **kwargs):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-<<<<<<< HEAD
         ..versionchanged:: v0.20
            `n_jobs` changed from ``1`` to ``None``
 
-    verbose : boolean, optional(default=False)
-=======
     verbose : bool, default=False
->>>>>>> upstream/master
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
