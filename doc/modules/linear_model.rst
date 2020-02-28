@@ -1037,7 +1037,7 @@ becomes :math:`h(Xw)=\exp(Xw)`.
 If you want to model a relative frequency, i.e. counts per exposure (time,
 volume, ...) you can do so by using a Poisson distribution and passing
 :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
-together with :math:`s=\mathrm{exposure}` as sample weights. For a concrete
+together with :math:`\mathrm{exposure}` as sample weights. For a concrete
 example see e.g.
 :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`.
 
