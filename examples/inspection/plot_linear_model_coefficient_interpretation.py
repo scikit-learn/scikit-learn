@@ -628,4 +628,15 @@ plt.subplots_adjust(left=.3)
 #############################################################################
 # A Lasso model identifies the correlation between
 # AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
-
+#
+# Lessons learned
+# ---------------
+# 
+# * Feature importance could be extrapolated from the coefficients only after
+#   having scaled them to the same unit of measure.
+# * Coefficients in multiple linear models represent conditional dependencies
+#   between a given feature and the target.
+# * Correlated features induce variability in the coefficients of linear
+#   models.
+# * Different linear models respond differently to feature correlation and
+#   coefficients could significantly vary from one another.
