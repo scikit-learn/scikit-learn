@@ -206,10 +206,6 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
-  chunking pairwise distance computation.
-  :pr:`16397` by `Joel Nothman`_.
-
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
@@ -278,24 +274,11 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
-- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
-  name of the estimator was passed in the
-  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
-  results in a different plot when calling
-  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
-  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
   an error when `y_true` and `y_pred` were length zero and `labels` was
   not `None`. In addition, we raise an error when an empty list is given to
   the `labels` parameter.
   :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
-
-- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
-  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
-  instead of the parameter `name`. It results in a different plot when calling
-  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
-  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -328,15 +311,6 @@ Changelog
   :class:`naive_bayes.CategoricalNB` when the number of features in the input
   differs between `predict` and `fit`.
   :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
-
-:mod:`sklearn.neighbors`
-..............................
-
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object
-  array instead of a 1-D array containing NumPy arrays. This bug
-  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Alex Shacked <alexshacked>`.
 
 :mod:`sklearn.neural_network`
 .............................
