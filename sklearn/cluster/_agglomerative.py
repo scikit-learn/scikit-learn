@@ -17,7 +17,7 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 
@@ -780,8 +780,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
 
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', distance_threshold=None):
@@ -1029,8 +1029,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> X_reduced.shape
     (1797, 32)
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
