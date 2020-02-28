@@ -310,14 +310,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator
@@ -555,6 +561,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -562,8 +571,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
+
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.

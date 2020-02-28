@@ -381,10 +381,10 @@ class KFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int or RandomState instance, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -412,7 +412,7 @@ class KFold(_BaseKFold):
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -588,10 +588,10 @@ class StratifiedKFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int or RandomState instance, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold for each class.
+        Otherwise, leave `random_state` as `None`.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -726,7 +726,7 @@ class StratifiedKFold(_BaseKFold):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -1091,8 +1091,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Passes `random_state` to the arbitrary repeating cross validator.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
@@ -1195,8 +1195,9 @@ class RepeatedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.See :term:`Glossary <random_state>`.
+        Controls the randomness of each repeated cross-validation instance.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1218,7 +1219,7 @@ class RepeatedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -1247,8 +1248,8 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the generation of the random states for each repetition.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1272,7 +1273,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -1322,7 +1323,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         X, y, groups = indexable(X, y, groups)
@@ -1388,8 +1389,8 @@ class ShuffleSplit(BaseShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1488,8 +1489,8 @@ class GroupShuffleSplit(ShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1560,7 +1561,7 @@ class GroupShuffleSplit(ShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         return super().split(X, y, groups)
@@ -1600,8 +1601,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1727,7 +1728,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -2042,9 +2043,10 @@ def train_test_split(*arrays, **options):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the shuffling applied to the data before applying the split.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
 
     shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False

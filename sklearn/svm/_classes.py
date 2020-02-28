@@ -89,14 +89,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data for the dual coordinate descent (if ``dual=True``). When
-        ``dual=False`` the underlying implementation of :class:`LinearSVC`
-        is not random and ``random_state`` has no effect on the results. If
-        int, random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
+        underlying implementation of :class:`LinearSVC` is not random and
+        ``random_state`` has no effect on the results.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_iter : int, default=1000
         The maximum number of iterations to be run.
@@ -300,11 +298,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_iter : int, default=1000
         The maximum number of iterations to be run.
@@ -522,11 +518,10 @@ class SVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
-        the data for probability estimates. If int, random_state is the
-        seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -728,11 +723,10 @@ class NuSVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
-        the data for probability estimates. If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -833,6 +827,15 @@ class NuSVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
             random_state=random_state)
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_class_weight_classifiers': 'class_weight is ignored.'
+            }
+        }
 
 
 class SVR(RegressorMixin, BaseLibSVM):
