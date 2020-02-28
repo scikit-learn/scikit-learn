@@ -26,7 +26,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
     Naming is weird here because we only fit a single estimator.
     TODO: rename _parallel_fit_estimator to _fit_single_estimator.
     See:
-    https://github.com/scikit-learn/scikit-learn/pull/16539/files#r385937964
+    https://github.com/scikit-learn/scikit-learn/issues/16595
     """
     if sample_weight is not None:
         try:
