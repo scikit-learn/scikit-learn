@@ -682,3 +682,39 @@ def test_encoders_no_need_to_fit_with_given_categories(Encoder):
     X = [['a', 2], ['b', 1]]
     categories = [['a', 'b'], [1, 2, 3]]
     Encoder(categories).fit(X)
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_one_empty_category(Encoder):
+    categories = [['a', 'b'], [1, 2, 3], []]
+    msg = "Category {} if of zero length, but it's not allowed".format(2)
+
+    with pytest.raises(ValueError, match=msg):
+        Encoder(categories)
+
+
+def test_floating_point_categories():
+    X = [['a', 2.], ['b', 3.]]
+    exp = np.array([[1, 0, 1, 0], [0, 1, 0, 1]])
+
+    encoder = OneHotEncoder()
+    assert_array_equal(encoder.fit_transform(X).toarray(), exp)
+
+
+def test_floating_point_given_categories():
+    categories = [['a', 'b'], [1., 2., 3.]]
+    X = [['a', 2.], ['b', 3.]]
+    exp = np.array([[1, 0, 0, 1, 0], [0, 1, 0, 0, 1]])
+
+    encoder = OneHotEncoder(categories)
+    assert_array_equal(encoder.fit_transform(X).toarray(), exp)
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_mixed_types_within_category(Encoder):
+    categories = [['a', 1, 2.]]
+    msg = ("All the classes from category {} are expected to be of the same "
+           "type".format(0))
+
+    with pytest.raises(ValueError, match=msg):
+        _ = Encoder(categories)

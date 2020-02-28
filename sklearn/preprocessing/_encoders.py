@@ -108,9 +108,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             types = [type(cat) for cat in cats]
 
             if types[:-1] != types[1:]:
-                raise ValueError("All the categories from {} are expected to "
-                                 "be of the same type, but actually {}"
-                                 .format(cats, types))
+                raise ValueError("All the classes from category {} are "
+                                 "expected to be of the same type, but "
+                                 "actually {}".format(idx, types))
 
             if isinstance(cats[0], Integral):
                 dtype = np.int64
