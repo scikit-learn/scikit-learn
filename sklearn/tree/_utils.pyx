@@ -14,7 +14,7 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
-from libc.math cimport log as ln
+from libc.math cimport log as ln, sqrt, cos, M_PI
 
 import numpy as np
 cimport numpy as np
@@ -73,6 +73,11 @@ cdef inline double rand_uniform(double low, double high,
     return ((high - low) * <double> our_rand_r(random_state) /
             <double> RAND_R_MAX) + low
 
+cdef inline double rand_normal(UINT32_t* random_state) nogil:
+    # Use the Box-Muller transform
+    cdef double u = rand_uniform(0.0, 1.0, random_state)
+    cdef double v = rand_uniform(0.0, 1.0, random_state)
+    return sqrt(-2 * ln(u)) * cos(2 * M_PI * v)
 
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
