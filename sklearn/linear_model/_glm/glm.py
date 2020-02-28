@@ -101,8 +101,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
-        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
+        where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
 
     warm_start : bool, default=False
@@ -408,8 +408,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
-        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
+        where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
 
     warm_start : bool, default=False
@@ -474,8 +474,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
-        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
+        where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
 
     warm_start : bool, default=False
@@ -571,8 +571,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
-        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
-        where ``g_i`` is the i-th component of the gradient (derivative) of
+        the iteration will stop when ``max{|g_j|, j = 1, ..., d} <= tol``
+        where ``g_j`` is the j-th component of the gradient (derivative) of
         the objective function.
 
     warm_start : bool, default=False
