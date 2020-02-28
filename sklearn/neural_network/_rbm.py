@@ -57,9 +57,16 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         The verbosity level. The default, zero, means silent mode.
 
     random_state : integer or RandomState, default=None
-        A random number generator instance to define the state of the
-        random permutations generator. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+        Determines random number generation for:
+
+        - Gibbs sampling from visible and hidden layers.
+
+        - Initializing components, sampling from layers during fit.
+
+        - Corrupting the data when scoring samples.
+
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -365,3 +372,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 begin = end
 
         return self
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method'
+            }
+        }

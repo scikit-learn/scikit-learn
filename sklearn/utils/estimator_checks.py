@@ -80,6 +80,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
+    yield check_sample_weights_shape
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
@@ -117,7 +118,7 @@ def _yield_checks(name, estimator):
 def _yield_classifier_checks(name, classifier):
     tags = _safe_tags(classifier)
 
-    # test classifiers can handle non-array data
+    # test classifiers can handle non-array data and pandas objects
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
@@ -128,6 +129,8 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
+    yield partial(check_classifiers_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_classifiers_regression_target
     if tags["multilabel"]:
         yield check_classifiers_multilabel_representation_invariance
@@ -174,6 +177,8 @@ def _yield_regressor_checks(name, regressor):
     # basic testing
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
+    yield partial(check_regressors_train, readonly_memmap=True,
+                  X_dtype='float32')
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     if tags["multioutput"]:
@@ -311,8 +316,8 @@ def _set_check_estimator_ids(obj):
         if not obj.keywords:
             return obj.func.__name__
 
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in obj.keywords.items()])
+        kwstring = ",".join(["{}={}".format(k, v)
+                             for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
@@ -351,6 +356,23 @@ def _generate_class_checks(Estimator):
     yield from _generate_instance_checks(name, estimator)
 
 
+def _mark_xfail_checks(estimator, check, pytest):
+    """Mark estimator check pairs with xfail"""
+
+    xfail_checks = _safe_tags(estimator, '_xfail_test')
+    if not xfail_checks:
+        return estimator, check
+
+    check_name = _set_check_estimator_ids(check)
+    msg = xfail_checks.get(check_name, None)
+
+    if msg is None:
+        return estimator, check
+
+    return pytest.param(
+        estimator, check, marks=pytest.mark.xfail(reason=msg))
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -369,11 +391,17 @@ def parametrize_with_checks(estimators):
     decorator : `pytest.mark.parametrize`
     """
     import pytest
-    return pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for estimator in estimators),
-        ids=_set_check_estimator_ids)
+
+    checks_generator = chain.from_iterable(
+        check_estimator(estimator, generate_only=True)
+        for estimator in estimators)
+
+    checks_with_marks = (
+        _mark_xfail_checks(estimator, check, pytest)
+        for estimator, check in checks_generator)
+
+    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+                                   ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -761,6 +789,31 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
+def check_sample_weights_shape(name, estimator_orig):
+    # check that estimators raise an error if sample_weight
+    # shape mismatches the input
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        estimator = clone(estimator_orig)
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2])
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        estimator.fit(X, y, sample_weight=np.ones(len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones(2*len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones((len(y), 2)))
+
+
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
@@ -1028,13 +1081,6 @@ def check_methods_subset_invariance(name, estimator_orig):
 
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
-        # TODO remove cases when corrected
-        if (name, method) in [('NuSVC', 'decision_function'),
-                              ('SparsePCA', 'transform'),
-                              ('MiniBatchSparsePCA', 'transform'),
-                              ('DummyClassifier', 'predict'),
-                              ('BernoulliRBM', 'score_samples')]:
-            raise SkipTest(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -1711,8 +1757,10 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
+def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
+                            X_dtype='float64'):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
+    X_m = X_m.astype(X_dtype)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
@@ -2163,8 +2211,10 @@ def check_regressors_int(name, regressor_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_regressors_train(name, regressor_orig, readonly_memmap=False):
+def check_regressors_train(name, regressor_orig, readonly_memmap=False,
+                           X_dtype=np.float64):
     X, y = _boston_subset()
+    X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
@@ -2235,13 +2285,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-    if name == "NuSVC":
-        # the sparse version has a parameter that doesn't do anything
-        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
-    if name.endswith("NB"):
-        # NaiveBayes classifiers have a somewhat different interface.
-        # FIXME SOON!
-        raise SkipTest
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
@@ -2447,7 +2490,9 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2455,11 +2500,13 @@ def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
-    check_estimators_data_not_an_array(name, estimator_orig, X, y)
+    for obj_type in ["NotAnArray", "PandasDataframe"]:
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=FutureWarning)
-def check_estimators_data_not_an_array(name, estimator_orig, X, y):
+def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
@@ -2470,8 +2517,28 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
-    y_ = _NotAnArray(np.asarray(y))
-    X_ = _NotAnArray(np.asarray(X))
+    if obj_type not in ["NotAnArray", 'PandasDataframe']:
+        raise ValueError("Data type {0} not supported".format(obj_type))
+
+    if obj_type == "NotAnArray":
+        y_ = _NotAnArray(np.asarray(y))
+        X_ = _NotAnArray(np.asarray(X))
+    else:
+        # Here pandas objects (Series and DataFrame) are tested explicitly
+        # because some estimators may handle them (especially their indexing)
+        # specially.
+        try:
+            import pandas as pd
+            y_ = np.asarray(y)
+            if y_.ndim == 1:
+                y_ = pd.Series(y_)
+            else:
+                y_ = pd.DataFrame(y_)
+            X_ = pd.DataFrame(np.asarray(X))
+
+        except ImportError:
+            raise SkipTest("pandas is not installed: not checking estimators "
+                           "for pandas objects.")
 
     # fit
     estimator_1.fit(X_, y_)

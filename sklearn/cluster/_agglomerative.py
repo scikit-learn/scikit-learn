@@ -17,7 +17,7 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 
@@ -453,8 +453,12 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         if affinity == 'precomputed':
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
-            # by pdist: it is a flat array containing the upper triangular of
-            # the distance matrix.
+            # by sklearn.metrics.pairwise_distances.
+            if X.shape[0] != X.shape[1]:
+                raise ValueError(
+                    'Distance matrix should be square, '
+                    'Got matrix of shape {X.shape}'
+                )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         elif affinity == 'l2':
@@ -776,8 +780,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
 
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', distance_threshold=None):
@@ -1025,8 +1029,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> X_reduced.shape
     (1797, 32)
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,

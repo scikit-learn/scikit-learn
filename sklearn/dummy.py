@@ -18,7 +18,7 @@ from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 from .utils import deprecated
-
+from .utils.validation import _deprecate_positional_args
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
@@ -57,10 +57,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
              parameter *prior*.
 
     random_state : int, RandomState instance or None, optional, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the randomness to generate the predictions when
+        ``strategy='stratified'`` or ``strategy='uniform'``.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
@@ -98,8 +98,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     >>> dummy_clf.score(X, y)
     0.75
     """
-
-    def __init__(self, strategy="warn", random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="warn", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -354,7 +354,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             return [np.log(p) for p in proba]
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {
+            'poor_score': True, 'no_validation': True,
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the predict method'
+            }
+        }
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
@@ -453,8 +459,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> dummy_regr.score(X, y)
     0.0
     """
-
-    def __init__(self, strategy="mean", constant=None, quantile=None):
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile
