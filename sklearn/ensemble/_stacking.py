@@ -169,9 +169,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-        fit_params = {"sample_weight": sample_weight} \
-            if sample_weight is not None \
-            else None
+        fit_params = ({"sample_weight": sample_weight}
+                      if sample_weight is not None
+                      else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
