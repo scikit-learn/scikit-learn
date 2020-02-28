@@ -352,9 +352,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
 
             .. versionchanged:: 0.19
-                This function now returns a list of arrays where the length of the
-                list is ``n_outputs``, and each array is (``n_samples``, ``n_classes``)
-                for that particular output.
+                This function now returns a list of arrays where the length of
+                the list is ``n_outputs``, and each array is (``n_samples``,
+                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")

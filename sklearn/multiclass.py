@@ -391,7 +391,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         T : array-like of shape (n_samples, n_classes)
 
             .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to scikit-learn conventions.
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -633,7 +634,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         Y : array-like of shape (n_samples, n_classes)
             .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to scikit-learn conventions.
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions.
         """
         check_is_fitted(self)
 
