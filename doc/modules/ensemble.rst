@@ -489,6 +489,10 @@ trees.
   in this setting.
 
 
+The usage and the parameters of :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` are described below. The 2 most important
+parameters of these estimators are `n_estimators` and `learning_rate`.
+
 Classification
 ---------------
 
@@ -509,7 +513,13 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
+The number of weak learners (i.e. regression trees) is controlled by the
+parameter ``n_estimators``; :ref:`The size of each tree
+<gradient_boosting_tree_size>` can be controlled either by setting the tree
+depth via ``max_depth`` or by setting the number of leaf nodes via
+``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
+(0.0, 1.0] that controls overfitting via :ref:`shrinkage
+<gradient_boosting_shrinkage>` .
 
 .. note::
 
@@ -615,65 +625,118 @@ chapter on gradient boosting in [F2001]_ and is related to the parameter
 Mathematical formulation
 -------------------------
 
-GBRT considers additive models of the following form:
+We first present GBRT for regression, and then detail the classification
+case.
+
+Regression
+^^^^^^^^^^
+
+GBRT regressors are additive models whose prediction :math:`y_i` for a
+given input :math:`x_i` is of the following form:
 
   .. math::
 
-    F(x) = \sum_{m=1}^{M} \gamma_m h_m(x)
+    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
-where :math:`h_m(x)` are the basis functions which are usually called
-*weak learners* in the context of boosting. Gradient Tree Boosting
-uses :ref:`decision trees <tree>` of fixed size as weak
-learners. Decision trees have a number of abilities that make them
-valuable for boosting, namely the ability to handle data of mixed type
-and the ability to model complex functions.
+where the :math:`h_m` are estimators called *weak learners* in the context
+of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
+<tree>` of fixed size as weak learners. The constant M corresponds to the
+`n_estimators` parameter.
 
-Similar to other boosting algorithms, GBRT builds the additive model in
-a greedy fashion:
+Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
+    F_m(x) = F_{m-1}(x) + h_m(x),
 
-where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
-given the previous ensemble :math:`F_{m-1}`:
-
-  .. math::
-
-    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x_i)).
-
-The initial model :math:`F_{0}` is problem specific, for least-squares
-regression one usually chooses the mean of the target values.
-
-.. note:: The initial model can also be specified via the ``init``
-          argument. The passed object has to implement ``fit`` and ``predict``.
-
-Gradient Boosting attempts to solve this minimization problem
-numerically via steepest descent: The steepest descent direction is
-the negative gradient of the loss function evaluated at the current
-model :math:`F_{m-1}` which can be calculated for any differentiable
-loss function:
+where the newly added tree :math:`h_m` is fitted in order to minimize a sum
+of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
-    F_{m-1}(x_i))
+    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+    l(y_i, F_{m-1}(x_i) + h(x_i)),
 
-Where the step length :math:`\gamma_m` is chosen using line search:
+where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
+in the next section.
+
+By default, the initial model :math:`F_{0}` is chosen as the constant that
+minimizes the loss: for a least-squares loss, this is the empirical mean of
+the target values. The initial model can also be specified via the ``init``
+argument.
+
+Using a first-order Taylor approximation, the value of :math:`l` can be
+approximated as follows:
 
   .. math::
 
-    \gamma_m = \arg\min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i)
-    - \gamma \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
+    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+    l(y_i, F_{m-1}(x_i))
+    + h_m(x_i)
+    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
 
-The algorithms for regression and classification
-only differ in the concrete loss function used.
+.. note::
+
+  Briefly, a first-order Taylor approximation says that
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
+  :math:`a` corresponds to :math:`F_{m-1}(x_i)`
+
+The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
+\right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
+second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
+any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
+differentiable. We will denote it by :math:`g_i`.
+
+Removing the constant terms, we have:
+
+  .. math::
+
+    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+
+This is minimized if :math:`h(x_i)` is fitted to predict a value that is
+proportional to the negative gradient :math:`-g_i`. Therefore, at each
+iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
+gradients of the samples**. The gradients are updated at each iteration.
+This can be considered as some kind of gradient descent in a functional
+space.
+
+.. note::
+
+  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
+  accurate enough: the tree can only output integer values. As a result, the
+  leaves values of the tree :math:`h_m` are modified once the tree is
+  fitted, such that the leaves values minimize the loss :math:`L_m`. The
+  update is loss-dependent: for the LAD loss, the value of a leaf is updated
+  to the median of the samples in that leaf.
+
+Classification
+^^^^^^^^^^^^^^
+
+Gradient boosting for classification is very similar to the regression case.
+However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
+homogeneous to a prediction: it cannot be a class, since the trees predict
+continuous values.
+
+The mapping from the value :math:`F_M(x_i)` to a class or a probability is
+loss-dependent. For the deviance (or log-loss), the probability that
+:math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+
+For multiclass classification, K trees (for K classes) are built at each of
+the :math:`M` iterations. The probability that :math:`x_i` belongs to class
+k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
+
+Note that even for a classification task, the :math:`h_m` sub-estimator is
+still a regressor, not a classifier. This is because the sub-estimators are
+trained to predict (negative) *gradients*, which are always continuous
+quantities.
 
 .. _gradient_boosting_loss:
 
 Loss Functions
-...............
+--------------
 
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
@@ -713,20 +776,17 @@ the parameter ``loss``:
       examples than ``'deviance'``; can only be used for binary
       classification.
 
-Regularization
-----------------
-
 .. _gradient_boosting_shrinkage:
 
-Shrinkage
-..........
+Shrinkage via learning rate
+---------------------------
 
 [F2001]_ proposed a simple regularization strategy that scales
-the contribution of each weak learner by a factor :math:`\nu`:
+the contribution of each weak learner by a constant factor :math:`\nu`:
 
 .. math::
 
-    F_m(x) = F_{m-1}(x) + \nu \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \nu h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
 it scales the step length the gradient descent procedure; it can
@@ -743,7 +803,7 @@ stopping. For a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
-............
+-----------
 
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
@@ -787,8 +847,8 @@ is too time consuming.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
-Interpretation
---------------
+Interpretation with feature importance
+--------------------------------------
 
 Individual decision trees can be interpreted easily by simply
 visualizing the tree structure. Gradient boosting models, however,
@@ -796,9 +856,6 @@ comprise hundreds of regression trees thus they cannot be easily
 interpreted by visual inspection of the individual trees. Fortunately,
 a number of techniques have been proposed to summarize and interpret
 gradient boosting models.
-
-Feature importance
-..................
 
 Often features do not contribute equally to predict the target
 response; in many situations the majority of the features are in fact
@@ -826,6 +883,10 @@ accessed via the ``feature_importances_`` property::
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_
     array([0.10..., 0.10..., 0.11..., ...
+
+Note that this computation of feature importance is based on entropy, and it
+is distinct from :func:`sklearn.inspection.permutation_importance` which is
+based on permutation of the features.
 
 .. topic:: Examples:
 
@@ -1089,7 +1150,7 @@ based on the ascending sort order. E.g., in the following scenario
 the class label 1 will be assigned to the sample.
 
 Usage
-.....
+-----
 
 The following example shows how to fit the majority rule classifier::
 
@@ -1206,7 +1267,7 @@ hyperparameters of the individual estimators::
    >>> grid = grid.fit(iris.data, iris.target)
 
 Usage
-.....
+-----
 
 In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
