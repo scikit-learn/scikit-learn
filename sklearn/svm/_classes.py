@@ -1303,8 +1303,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -------
         y_pred : ndarray of shape (n_samples,)
             Class labels for samples in X.
-
-         .. versionadded:: 0.20
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
