@@ -237,10 +237,9 @@ def test_glm_log_regression(family):
 @pytest.mark.parametrize('fit_intercept', [True, False])
 def test_warm_start(fit_intercept):
     n_samples, n_features = 110, 10
-    X, y, coef = make_regression(n_samples=n_samples,
-                                 n_features=n_features,
-                                 n_informative=n_features-2, noise=0.5,
-                                 coef=True, random_state=42)
+    X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                           n_informative=n_features-2, noise=0.5,
+                           random_state=42)
 
     glm1 = GeneralizedLinearRegressor(
         warm_start=False,
