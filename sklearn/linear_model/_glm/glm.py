@@ -263,12 +263,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     coef, X, y, weights, family, link
                 )
                 dev = family.deviance(y, y_pred, weights)
-                intercept = (coef.size == X.shape[1] + 1)
-                idx = 1 if intercept else 0  # offset if coef[0] is intercept
-                coef_scaled = alpha * coef[idx:]
-                obj = 0.5 * dev + 0.5 * (coef[idx:] @ coef_scaled)
+                # offset if coef[0] is intercept
+                offset = 1 if self.fit_intercept else 0
+                coef_scaled = alpha * coef[offset:]
+                obj = 0.5 * dev + 0.5 * (coef[offset:] @ coef_scaled)
                 objp = 0.5 * devp
-                objp[idx:] += coef_scaled
+                objp[offset:] += coef_scaled
                 return obj, objp
 
             args = (X, y, weights, self.alpha, family, link)
