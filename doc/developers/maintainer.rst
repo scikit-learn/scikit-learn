@@ -83,6 +83,8 @@ master!) with all the desired changes::
 
 	$ git rebase -i upstream/0.999.2
 
+Do not forget to add a commit updating sklearn.__version__.
+
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
