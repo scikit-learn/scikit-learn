@@ -92,6 +92,20 @@ def test_glm_link_argument(name, instance):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize('family, expected_link_class', [
+    ('normal', IdentityLink),
+    ('poisson', LogLink),
+    ('gamma', LogLink),
+    ('inverse-gaussian', LogLink),
+])
+def test_glm_link_auto(family, expected_link_class):
+    # Make sure link='auto' delivers the expected link function
+    y = np.array([0.1, 0.5])  # in range of all distributions
+    X = np.array([[1], [2]])
+    glm = GeneralizedLinearRegressor(family=family, link='auto').fit(X, y)
+    assert isinstance(glm._link_instance, expected_link_class)
+
+
 @pytest.mark.parametrize('alpha', ['not a number', -4.2])
 def test_glm_alpha_argument(alpha):
     """Test GLM for invalid alpha argument."""
