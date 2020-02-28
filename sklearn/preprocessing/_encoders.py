@@ -185,7 +185,7 @@ class OneHotEncoder(_BaseEncoder):
           numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
-         .. versionadded:: 0.20
+        .. versionadded:: 0.20
 
     drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
             default=None
