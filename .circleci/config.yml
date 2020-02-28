@@ -45,6 +45,8 @@ jobs:
       - store_artifacts:
           path: ~/log.txt
           destination: log.txt
+      - store_test_results:
+          path: test-results
 
   doc:
     docker:
@@ -80,6 +82,8 @@ jobs:
       - store_artifacts:
           path: ~/log.txt
           destination: log.txt
+      - store_test_results:
+          path: test-results
       # Persists generated documentation so that it can be attached and deployed
       # in the 'deploy' step.
       - persist_to_workspace:
