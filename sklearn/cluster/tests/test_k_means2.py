@@ -57,7 +57,7 @@ def test_minibatch_update_consistency():
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, sample_weight_mb, x_mb_squared_norms, new_centers, weight_sums,
-        buffer, 1, None, random_reassign=False)
+        buffer, 1, np.random.RandomState(0), random_reassign=False)
     assert old_inertia > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
@@ -74,7 +74,8 @@ def test_minibatch_update_consistency():
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, new_centers_csr,
-        weight_sums_csr, buffer_csr, 1, None, random_reassign=False)
+        weight_sums_csr, buffer_csr, 1, np.random.RandomState(0),
+        random_reassign=False)
     assert old_inertia_csr > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
@@ -145,10 +146,10 @@ def test_minibatch_reassign():
             # Turn on verbosity to smoke test the display code
             _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                              mb_k_means.cluster_centers_,
-                             mb_k_means.counts_,
+                             mb_k_means._counts,
                              np.zeros(X.shape[1], np.double),
-                             False, distances=np.zeros(X.shape[0]),
-                             random_reassign=True, random_state=42,
+                             False, random_state=np.random.RandomState(0),
+                             random_reassign=True,
                              reassignment_ratio=1, verbose=True)
         finally:
             sys.stdout = old_stdout
@@ -165,10 +166,10 @@ def test_minibatch_reassign():
         # Turn on verbosity to smoke test the display code
         _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
-                         mb_k_means.counts_,
+                         mb_k_means._counts,
                          np.zeros(X.shape[1], np.double),
-                         False, distances=np.zeros(X.shape[0]),
-                         random_reassign=True, random_state=42,
+                         False, random_state=np.random.RandomState(0),
+                         random_reassign=True,
                          reassignment_ratio=1e-15)
         assert_array_almost_equal(clusters_before, mb_k_means.cluster_centers_)
 
