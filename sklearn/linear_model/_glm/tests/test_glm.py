@@ -5,6 +5,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
+import warnings
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model._glm import GeneralizedLinearRegressor
@@ -272,7 +273,11 @@ def test_warm_start(fit_intercept):
         fit_intercept=fit_intercept,
         max_iter=1
     )
-    glm2.fit(X, y)
+    # As we intentionally set max_iter=1, L-BFGS-B will issue a
+    # ConvergenceWarning which we here simply ignore.
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=ConvergenceWarning)
+        glm2.fit(X, y)
     assert glm1.score(X, y) > glm2.score(X, y)
     glm2.set_params(max_iter=1000)
     glm2.fit(X, y)
