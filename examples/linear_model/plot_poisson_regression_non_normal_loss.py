@@ -113,7 +113,7 @@ linear_model_preprocessor = ColumnTransformer(
 # events occurring with a constant rate in a given time interval
 # (``Exposure``, in units of years). Here we model the frequency
 # ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
-# and use ``Exposure`` as `sample_weight`.
+# and use ``Exposure`` as ``sample_weight``.
 
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 
@@ -201,7 +201,10 @@ score_estimator(ridge, df_test)
 
 ##############################################################################
 #
-# Next we fit the Poisson regressor on the target variable,
+# Next we fit the Poisson regressor on the target variable. We set the
+# regularization strength ``alpha`` to 1 over number of samples in oder to
+# mimic the Ridge regressor whose L2 penalty term scales differently with the
+# number of samples.
 
 poisson = make_pipeline(
     linear_model_preprocessor,
@@ -302,8 +305,8 @@ plt.tight_layout()
 # ``Ridge`` and ``RandomForestRegressor`` estimators.
 #
 # To ensure that estimators yield reasonable predictions for different
-# policyholder types, we can bin test samples according to `y_pred` returned
-# by each model. Then for each bin, we compare the mean predicted `y_pred`,
+# policyholder types, we can bin test samples according to ``y_pred`` returned
+# by each model. Then for each bin, we compare the mean predicted ``y_pred``,
 # with the mean observed target:
 
 
