@@ -64,7 +64,6 @@ def load_mtpl2(n_samples=100000):
       number of samples to select (for faster run time). Full dataset has
       678013 samples.
     """
-
     # freMTPL2freq dataset from https://www.openml.org/d/41214
     df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
     df_freq['IDpol'] = df_freq['IDpol'].astype(np.int)
