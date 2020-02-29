@@ -74,7 +74,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X*coef+intercept).
+        added to the linear predictor (X @ coef + intercept).
 
     family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
             or an ExponentialDispersionModel instance, default='normal'
@@ -84,8 +84,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
             default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
-        `Xw` to prediction `y_pred`. Option 'auto' sets the link depending
-        on the chosen family as follows:
+        `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
+        the link depending on the chosen family as follows:
 
         - 'identity' for Normal distribution
         - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
@@ -115,8 +115,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
-        the GLM.
+        Estimated coefficients for the linear predictor (X @ coef_ +
+        intercept_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -296,7 +296,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return self
 
     def _linear_predictor(self, X):
-        """Compute the linear_predictor = X*coef_ + intercept_.
+        """Compute the linear_predictor = X @ coef_ + intercept_.
 
         Parameters
         ----------
@@ -401,7 +401,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X*coef+intercept).
+        added to the linear predictor (X @ coef + intercept).
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -422,8 +422,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
-        the GLM.
+        Estimated coefficients for the linear predictor (X @ coef_ +
+        intercept_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -467,7 +467,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X*coef+intercept).
+        added to the linear predictor (X @ coef + intercept).
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -488,8 +488,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
-        the GLM.
+        Estimated coefficients for the linear predictor (X * coef_ +
+        intercept_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -556,15 +556,15 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
-        `Xw` to prediction `y_pred`. Option 'auto' sets the link depending
-        on the chosen family as follows:
+        `X @ coeff + intercept` to prediction `y_pred`. Option 'auto' sets
+        the link depending on the chosen family as follows:
 
         - 'identity' for Normal distribution
         - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X*coef+intercept).
+        added to the linear predictor (X @ coef + intercept).
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -585,8 +585,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X*coef_+intercept_)
-        in the GLM.
+        Estimated coefficients for the linear predictor (X @ coef_ +
+        intercept_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
