@@ -809,7 +809,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
@@ -1055,9 +1055,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        ensure_min_features=2, estimator=self)
-        return AgglomerativeClustering.fit(self, X.T, **params)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                ensure_min_features=2, estimator=self)
+        # save n_features_in_ attribute here to reset it after, because it will
+        # be overridden in AgglomerativeClustering since we passed it X.T.
+        n_features_in_ = self.n_features_in_
+        AgglomerativeClustering.fit(self, X.T, **params)
+        self.n_features_in_ = n_features_in_
+        return self
 
     @property
     def fit_predict(self):

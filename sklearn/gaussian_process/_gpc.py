@@ -616,11 +616,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : returns an instance of self.
         """
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=True, dtype="numeric")
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=True, dtype="numeric")
         else:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,

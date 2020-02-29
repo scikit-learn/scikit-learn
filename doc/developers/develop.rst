@@ -226,6 +226,17 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+Universal attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Estimators that expect tabular input should set a `n_features_in_`
+attribute at `fit` time to indicate the number of features that the estimator
+expects for subsequent calls to `predict` or `transform`.
+See
+`SLEP010
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+for details.
+
 .. _rolling_your_own_estimator:
 
 Rolling your own estimator

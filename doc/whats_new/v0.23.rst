@@ -14,7 +14,6 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
-
 Changed models
 --------------
 
@@ -378,3 +377,12 @@ Changelog
 - |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
   distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
+Miscellaneous
+.............
+
+- |API| Most estimators now expose a `n_features_in_` attribute. This
+  attribute is equal to the number of features passed to the `fit` method.
+  See `SLEP010
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+  for details. :pr:`16112` by `Nicolas Hug`_.

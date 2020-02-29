@@ -254,6 +254,17 @@ def test_wrong_shape():
         model.fit(data)
 
 
+@pytest.mark.parametrize('est',
+                         (SpectralBiclustering(), SpectralCoclustering()))
+def test_n_features_in_(est):
+
+    X, _, _ = make_biclusters((3, 3), 3, random_state=0)
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X)
+    assert est.n_features_in_ == 3
+
+
 @pytest.mark.parametrize("klass", [SpectralBiclustering, SpectralCoclustering])
 @pytest.mark.parametrize("n_jobs", [None, 1])
 def test_n_jobs_deprecated(klass, n_jobs):

@@ -246,7 +246,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             `max_trials` randomly chosen sub-samples.
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
 

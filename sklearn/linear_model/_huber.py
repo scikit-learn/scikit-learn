@@ -252,7 +252,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(
+        X, y = self._validate_data(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
             dtype=[np.float64, np.float32])
 

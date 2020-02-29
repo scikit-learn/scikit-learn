@@ -190,7 +190,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             raise ValueError('n_iter should be greater than or equal to 1.'
                              ' Got {!r}.'.format(self.n_iter))
 
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -526,8 +526,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
-                         ensure_min_samples=2)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
+                                   ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

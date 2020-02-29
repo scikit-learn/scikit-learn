@@ -474,8 +474,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64, ensure_min_samples=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=np.float64, ensure_min_samples=2)
         allow_squared = self.affinity in ["precomputed",
                                           "precomputed_nearest_neighbors"]
         if X.shape[0] == X.shape[1] and not allow_squared:

@@ -157,8 +157,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'],
-                        ensure_min_features=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
+                                ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":

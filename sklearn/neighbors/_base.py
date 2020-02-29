@@ -396,8 +396,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
+            self.n_features_in_ = X.shape[1]
         else:
-            X = check_array(X, accept_sparse='csr')
+            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:

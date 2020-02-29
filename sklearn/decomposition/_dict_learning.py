@@ -1043,6 +1043,10 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
         """
         return self
 
+    @property
+    def n_features_in_(self):
+        return self.components_.shape[1]
+
 
 class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     """Dictionary learning
@@ -1217,7 +1221,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1424,7 +1428,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
             X, self.n_components, self.alpha,

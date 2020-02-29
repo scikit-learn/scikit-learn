@@ -152,9 +152,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = check_X_y(X, y,
-                         multi_output=True,
-                         accept_sparse=True)
+        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -423,7 +421,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
         """
-        X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
+        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)

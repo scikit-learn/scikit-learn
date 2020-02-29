@@ -637,7 +637,7 @@ class MinCovDet(EmpiricalCovariance):
         -------
         self : object
         """
-        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
+        X = self._validate_data(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

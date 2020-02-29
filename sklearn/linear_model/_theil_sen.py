@@ -357,7 +357,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

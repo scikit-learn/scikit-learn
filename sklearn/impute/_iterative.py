@@ -505,8 +505,8 @@ class IterativeImputer(_BaseImputer):
         else:
             force_all_finite = True
 
-        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite=force_all_finite)
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+                                force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)

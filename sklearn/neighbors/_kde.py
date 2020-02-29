@@ -152,7 +152,7 @@ class KernelDensity(BaseEstimator):
             Returns instance of object.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = check_array(X, order='C', dtype=DTYPE)
+        X = self._validate_data(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DTYPE)

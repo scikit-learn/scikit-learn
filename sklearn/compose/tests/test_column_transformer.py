@@ -1187,6 +1187,18 @@ def test_column_transformer_mask_indexing(array_type):
     assert X_trans.shape == (3, 2)
 
 
+def test_n_features_in():
+    # make sure n_features_in is what is passed as input to the column
+    # transformer.
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    ct = ColumnTransformer([('a', DoubleTrans(), [0]),
+                            ('b', DoubleTrans(), [1])])
+    assert not hasattr(ct, 'n_features_in_')
+    ct.fit(X)
+    assert ct.n_features_in_ == 2
+
+
 @pytest.mark.parametrize('cols, pattern, include, exclude', [
     (['col_int', 'col_float'], None, np.number, None),
     (['col_int', 'col_float'], None, None, object),

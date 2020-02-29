@@ -71,25 +71,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.learning_rate = learning_rate
         self.random_state = random_state
 
-    def _validate_data(self, X, y=None):
-
-        # Accept or convert to these sparse matrix formats so we can
-        # use _safe_indexing
-        accept_sparse = ['csr', 'csc']
-        if y is None:
-            ret = check_array(X,
-                              accept_sparse=accept_sparse,
-                              ensure_2d=False,
-                              allow_nd=True,
-                              dtype=None)
-        else:
-            ret = check_X_y(X, y,
-                            accept_sparse=accept_sparse,
-                            ensure_2d=False,
-                            allow_nd=True,
-                            dtype=None,
-                            y_numeric=is_regressor(self))
-        return ret
+    def _check_X(self, X):
+        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=True,
+                           allow_nd=True, dtype=None)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -116,7 +100,12 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y,
+                                   accept_sparse=['csr', 'csc'],
+                                   ensure_2d=True,
+                                   allow_nd=True,
+                                   dtype=None,
+                                   y_numeric=is_regressor(self))
 
         sample_weight = _check_sample_weight(sample_weight, X, np.float64)
         sample_weight /= sample_weight.sum()
@@ -229,7 +218,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         ------
         z : float
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         for y_pred in self.staged_predict(X):
             if is_classifier(self):
@@ -637,7 +626,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         pred = self.decision_function(X)
 
@@ -667,7 +656,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : generator of ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_
@@ -701,7 +690,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -744,7 +733,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -813,7 +802,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -847,7 +836,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -873,7 +862,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
         return np.log(self.predict_proba(X))
 
 
@@ -1151,7 +1140,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The predicted regression values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1176,7 +1165,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The predicted regression values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

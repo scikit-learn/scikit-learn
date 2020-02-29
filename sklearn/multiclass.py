@@ -52,6 +52,7 @@ from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
 from .utils.metaestimators import _safe_split, if_delegate_has_method
+from .exceptions import NotFittedError
 
 from joblib import Parallel, delayed
 
@@ -433,6 +434,19 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     def _first_estimator(self):
         return self.estimators_[0]
 
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the OVR estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+        return self.estimators_[0].n_features_in_
+
 
 def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
@@ -521,7 +535,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
 
         self.classes_ = np.unique(y)
@@ -762,7 +776,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))

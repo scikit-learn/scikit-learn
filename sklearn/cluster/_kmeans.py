@@ -975,8 +975,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 ' got %d instead' % self.max_iter
             )
 
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', copy=self.copy_x, accept_large_sparse=False)
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', copy=self.copy_x,
+                                accept_large_sparse=False)
         # verify that the number of samples given is larger than k
         if _num_samples(X) < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
@@ -1591,8 +1593,8 @@ class MiniBatchKMeans(KMeans):
         self
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X, accept_sparse="csr", order='C',
-                        dtype=[np.float64, np.float32])
+        X = self._validate_data(X, accept_sparse="csr", order='C',
+                                dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d"

@@ -343,7 +343,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 

@@ -515,6 +515,26 @@ def test_check_estimators_voting_estimator(estimator):
 
 
 @pytest.mark.parametrize(
+    "est",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('tree', DecisionTreeRegressor(random_state=0))]),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=0)),
+                     ('tree', DecisionTreeClassifier(random_state=0))])],
+    ids=['VotingRegressor', 'VotingClassifier']
+)
+def test_n_features_in(est):
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X, y)
+    assert est.n_features_in_ == 2
+
+
+@pytest.mark.parametrize(
     "estimator",
     [VotingRegressor(
         estimators=[('lr', LinearRegression()),

@@ -30,6 +30,7 @@ from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..exceptions import NotFittedError
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -87,6 +88,20 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             self.named_estimators_[name] = current_est
 
         return self
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.estimators_[0].n_features_in_
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):

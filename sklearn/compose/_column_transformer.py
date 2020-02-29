@@ -513,6 +513,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             self._feature_names_in = None
         X = _check_X(X)
+        # set n_features_in_ attribute
+        self._check_n_features(X, reset=True)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -587,6 +589,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        # TODO: also call _check_n_features(reset=False) in 0.24
         self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
