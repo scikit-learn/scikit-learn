@@ -337,7 +337,7 @@ plot_obs_pred(
 ##############################################################################
 #
 # According to the observed data, the frequency of accidents is higher for
-# drivers younger than 30 years old, and it positively correlated with the
+# drivers younger than 30 years old, and is positively correlated with the
 # `BonusMalus` variable. Our model is able to mostly correctly model this
 # behaviour.
 #
