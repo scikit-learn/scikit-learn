@@ -443,7 +443,8 @@ plt.tight_layout()
 # As we do not know the true value of the "power" parameter, we compute the
 # mean deviances for a grid of possible values of the "power" parameter,
 # hoping that a good model for one value of "power" will stay a good model for
-# another:
+# another. Here, every value of "power" defines a separate metric and models
+# are to be compared metric by metric:
 
 tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
 scores = score_estimator(
