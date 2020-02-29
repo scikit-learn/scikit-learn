@@ -5,7 +5,7 @@ Poisson regression and non-normal loss
 
 This example illustrates the use of log-linear Poisson regression
 on the `French Motor Third-Party Liability Claims dataset
-<https://www.openml.org/d/41214>`_ [1]_ and compares
+<https://www.openml.org/d/41214>`_ from [1]_ and compares
 it with models learned with least squared error. The goal is to predict the
 expected number of insurance claims (or frequency) following car accidents for
 a policyholder given historical data over a population of policyholders.
