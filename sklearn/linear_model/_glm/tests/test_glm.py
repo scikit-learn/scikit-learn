@@ -237,21 +237,27 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     assert_allclose(glm1.coef_, glm2.coef_)
 
 
+@pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize(
     'family',
     [NormalDistribution(), PoissonDistribution(),
      GammaDistribution(), InverseGaussianDistribution(),
      TweedieDistribution(power=1.5), TweedieDistribution(power=4.5)])
-def test_glm_log_regression(family):
+def test_glm_log_regression(fit_intercept, family):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
-                alpha=0, family=family, link='log', fit_intercept=False,
-                tol=1e-6)
-    res = glm.fit(X, y)
-    assert_allclose(res.coef_, coef, rtol=5e-6)
+                alpha=0, family=family, link='log',
+                fit_intercept=fit_intercept, tol=1e-7)
+    if fit_intercept:
+        res = glm.fit(X[:, 1:], y)
+        assert_allclose(res.coef_, coef[1:], rtol=1e-6)
+        assert_allclose(res.intercept_, coef[0], rtol=1e-6)
+    else:
+        res = glm.fit(X, y)
+        assert_allclose(res.coef_, coef, rtol=2e-6)
 
 
 @pytest.mark.parametrize('fit_intercept', [True, False])
