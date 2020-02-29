@@ -167,15 +167,21 @@ def test_glm_warm_start_argument(warm_start):
         glm.fit(X, y)
 
 
-def test_glm_identity_regression():
+@pytest.mark.parametrize('fit_intercept', [False, True])
+def test_glm_identity_regression(fit_intercept):
     """Test GLM regression with identity link on a simple dataset."""
     coef = [1., 2.]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
-                                     fit_intercept=False)
-    glm.fit(X, y)
-    assert_allclose(glm.coef_, coef, rtol=1e-6)
+                                     fit_intercept=fit_intercept, tol=1e-12)
+    if fit_intercept:
+        glm.fit(X[:, 1:], y)
+        assert_allclose(glm.coef_, coef[1:], rtol=1e-10)
+        assert_allclose(glm.intercept_, coef[0], rtol=1e-10)
+    else:
+        glm.fit(X, y)
+        assert_allclose(glm.coef_, coef, rtol=1e-12)
 
 
 @pytest.mark.parametrize('fit_intercept', [False, True])
