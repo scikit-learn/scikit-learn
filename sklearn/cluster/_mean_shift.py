@@ -368,7 +368,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         y : Ignored
 
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)

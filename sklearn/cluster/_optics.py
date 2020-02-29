@@ -245,7 +245,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, dtype=np.float)
+        X = self._validate_data(X, dtype=np.float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"

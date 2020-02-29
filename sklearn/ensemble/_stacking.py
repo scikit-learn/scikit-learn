@@ -140,6 +140,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
+        self.n_features_in_ = self.estimators_[0].n_features_in_
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
