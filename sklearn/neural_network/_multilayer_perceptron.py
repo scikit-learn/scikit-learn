@@ -895,18 +895,17 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     --------
     >>> from sklearn.neural_network import MLPClassifier
     >>> from sklearn.datasets import make_classification
-
-    >>> X, y = make_classification(random_state=1)
-
-    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X, y)
-    >>> clf.predict_proba(X[:1, :])
-    array([[0.00925907, 0.99074093]])
-
-    >>> clf.predict(X[:1, :])
-    array([1])
-
-    >>> clf.score(X,y)
-    1.0
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    ...                                                     random_state=1)
+    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
+    >>> clf.predict_proba(X_test[:1])
+    array([[0.03838405, 0.96161595]])
+    >>> clf.predict(X_test[:5, :])
+    array([1, 0, 1, 0, 1])
+    >>> clf.score(X_test, y_test)
+    0.8...
 
     Notes
     -----
@@ -1301,15 +1300,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     --------
     >>> from sklearn.neural_network import MLPRegressor
     >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(random_state=1)
-
-    >>> clf = MLPRegressor(random_state=1,max_iter=1000).fit(X[0:20], y[0:20])
-    >>> clf.predict(X[:2,:])
-    array([ 120.36246143, -264.13833921])
-
-    >>> clf.score(X,y)
-    0.42937...
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(n_samples=200, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=1)
+    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
+    >>> regr.predict(X_test[:2])
+    array([-0.9..., -7.1...])
+    >>> regr.score(X_test, y_test)
+    0.4...
 
     Notes
     -----
