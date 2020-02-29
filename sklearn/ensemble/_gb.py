@@ -1029,6 +1029,22 @@ shape (n_estimators, ``loss_.K``)
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = GradientBoostingClassifier(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    GradientBoostingClassifier(random_state=0)
+    >>> clf.predict(X_test[:2])
+    array([1, 0])
+    >>> clf.score(X_test, y_test)
+    0.88
+
     See also
     --------
     sklearn.ensemble.HistGradientBoostingClassifier,
@@ -1505,6 +1521,22 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = GradientBoostingRegressor(random_state=0)
+    >>> reg.fit(X_train, y_train)
+    GradientBoostingRegressor(random_state=0)
+    >>> reg.predict(X_test[1:2])
+    array([-61...])
+    >>> reg.score(X_test, y_test)
+    0.4...
 
     See also
     --------
