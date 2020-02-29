@@ -61,9 +61,6 @@ module:neighbors:
 module:neural_network:
 - sklearn/neural_network/**/*
 
-module:neural_network:
-- sklearn/neural_network/**/*
-
 module:pipeline:
 - sklearn/pipeline.py
 
@@ -81,3 +78,11 @@ module:tree:
 
 module:utils:
 - sklearn/utils/**/*
+
+Build / CI:
+- build_tools/**/*
+- .github/**/*
+- maint_tools/**/*
+- azure-pipelines.yml
+- .travis.yml
+- pyproject.toml
