@@ -1532,8 +1532,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> reg = GradientBoostingRegressor(random_state=0)
     >>> reg.fit(X_train, y_train)
     GradientBoostingRegressor(random_state=0)
-    >>> reg.predict(X_test[10:12])
-    array([ 60..., -107...])
+    >>> reg.predict(X_test[1:2])
+    array([-61...])
     >>> reg.score(X_test, y_test)
     0.4...
 
