@@ -2196,12 +2196,12 @@ class RandomTreesEmbedding(BaseForest):
     >>> random_trees = RandomTreesEmbedding(
     ...    n_estimators=5, random_state=0, max_depth=1).fit(X)
     >>> X_sparse_embedding = random_trees.transform(X)
-    >>> X_sparse_embedding.todense()
-    matrix([[0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
-            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
-            [0., 1., 0., 1., 0., 1., 0., 1., 0., 1.],
-            [1., 0., 1., 0., 1., 0., 1., 0., 1., 0.],
-            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
+    >>> X_sparse_embedding.toarray()
+    array([[0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 0., 1., 0., 1., 0., 1., 0., 1.],
+           [1., 0., 1., 0., 1., 0., 1., 0., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
 
     References
     ----------
