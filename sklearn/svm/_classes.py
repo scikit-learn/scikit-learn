@@ -939,8 +939,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y)
+    >>> regr = SVR(C=1.0, epsilon=0.2)
+    >>> regr.fit(X, y)
     SVR(epsilon=0.2)
 
     See also
@@ -1079,8 +1079,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)
+    >>> regr = NuSVR(C=1.0, nu=0.1)
+    >>> regr.fit(X, y)
     NuSVR(nu=0.1)
 
     See also
