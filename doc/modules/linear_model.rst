@@ -970,7 +970,7 @@ in the following figure,
    :align: center
    :scale: 100%
 
-   PDF of a random variable Y following Gamma, Tweedie (power=1.5) and Gamma
+   PDF of a random variable Y following Poisson, Tweedie (power=1.5) and Gamma
    distributions with different mean values (:math:`\mu`). Observe the point
    mass at :math:`Y=0` for the Poisson distribution and the Tweedie (power=1.5)
    distribution, but not for the Gamma distribution which has a strictly
