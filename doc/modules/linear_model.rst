@@ -975,6 +975,19 @@ The choice of the distribution depends on the problem at hand:
   of the Tweedie family).
 
 
+Examples of use cases include:
+
+* Agriculture / weather modeling:  number of rain events per year (Poisson),
+  amount of rainfall per event (Gamma), total rainfall per year (Tweedie /
+  Compound Poisson Gamma).
+* Risk modeling / insurance policy pricing:  number of claim events /
+  policyholder per year (Poisson), cost per event (Gamma), total cost per
+  policyholder per year (Tweedie / Compound Poisson Gamma).
+* Predictive maintenance: number of production interruption event per year:
+  Poisson, duration of interruption: Gamma, total interruption time per year
+  (Tweedie / Compound Poisson Gamma).
+
+
 .. topic:: References:
 
     .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
