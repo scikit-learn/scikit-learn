@@ -12,7 +12,7 @@ print(__doc__)
 
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 # #############################################################################
 # Generate sample data

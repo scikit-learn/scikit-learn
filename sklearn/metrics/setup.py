@@ -14,8 +14,8 @@ def configuration(parent_package="", top_path=None):
     config.add_subpackage('_plot.tests')
     config.add_subpackage('cluster')
 
-    config.add_extension("pairwise_fast",
-                         sources=["pairwise_fast.pyx"],
+    config.add_extension("_pairwise_fast",
+                         sources=["_pairwise_fast.pyx"],
                          libraries=libraries)
 
     config.add_subpackage('tests')

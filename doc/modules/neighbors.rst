@@ -460,7 +460,7 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
+similar to the label updating phase of the :class:`sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
@@ -469,7 +469,7 @@ and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.Quadr
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
-    >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
+    >>> from sklearn.neighbors import NearestCentroid
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
@@ -572,7 +572,7 @@ implementation with special data types. The precomputed neighbors
 .. note::
   When a specific number of neighbors is queried (using
   :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
-  since it can either include each training point as its own neighbor, or 
+  since it can either include each training point as its own neighbor, or
   exclude them. Neither choice is perfect, since including them leads to a
   different number of non-self neighbors during training and testing, while
   excluding them leads to a difference between `fit(X).transform(X)` and
@@ -581,7 +581,7 @@ implementation with special data types. The precomputed neighbors
   training point as its own neighbor in the count of `n_neighbors`. However,
   for compatibility reasons with other estimators which use the other
   definition, one extra neighbor will be computed when `mode == 'distance'`.
-  To maximise compatiblity with all estimators, a safe choice is to always
+  To maximise compatibility with all estimators, a safe choice is to always
   include one extra neighbor in a custom nearest neighbors estimator, since
   unnecessary neighbors will be filtered by following estimators.
 

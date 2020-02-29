@@ -1,0 +1,14 @@
+name: Unassign
+#Runs when a contributor has unassigned themselves from the issue and adds 'help wanted' and 'stalled' tags
+on:
+  issues:
+    types: unassigned
+
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    steps:
+      - name:
+        run: |
+          echo "Marking issue ${{ github.event.issue.number }} as stalled"
+          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"labels": ["help wanted","Stalled"]}' https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels
