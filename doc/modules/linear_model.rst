@@ -963,6 +963,16 @@ Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y
 Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
 ================= ===============================  ============================================
 
+The Probability Density Functions (PDF) of these distributions are illustrated
+in the following figure,
+
+.. figure:: ./glm_data/poisson_gamma_tweedie_distributions.png
+   :align: center
+   :scale: 100%
+
+   PDF of a random variable Y following Gamma, Tweedie (power=1.5) and Gamma
+   distributions with different mean values (:math:`\mu`).
+
 The choice of the distribution depends on the problem at hand:
 
 * If the target values :math:`y` are counts (non-negative integer valued) or
