@@ -4,13 +4,14 @@ Tweedie regression on insurance claims
 ======================================
 
 This example illustrates the use of Poisson, Gamma and Tweedie regression on
-the French Motor Third-Party Liability Claims dataset, and is inspired by an R
-tutorial [1]_.
+the `French Motor Third-Party Liability Claims dataset
+<https://www.openml.org/d/41214>`_, and is inspired by an R tutorial [1]_.
 
 Insurance claims data consist of the number of claims and the total claim
-amount. Often, the final goal is to predict the expected value, i.e. the mean,
-of the total claim amount per exposure unit also referred to as the pure
-premium.
+amount, together with policyholder features such as driver age, vehicle age,
+vehicle power, etc. Often, the final goal is to predict the expected value,
+i.e. the mean, of the total claim amount per exposure unit also referred to as
+the pure premium.
 
 There are several possibilities to do that, two of which are:
 
