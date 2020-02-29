@@ -64,6 +64,7 @@ def load_mtpl2(n_samples=100000):
         return df.iloc[:n_samples]
     return df
 
+
 ##############################################################################
 # Let's load the motor claim dataset. We ignore the severity data for this
 # study for the sake of simplicitly.
