@@ -628,6 +628,11 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    @property
+    def n_features_in_(self):
+        # delegate to first step (which will call _check_is_fitted)
+        return self.steps[0][1].n_features_in_
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
@@ -999,6 +1004,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_list[:] = [(name, old if old is None or old == 'drop'
                                      else next(transformers))
                                     for name, old in self.transformer_list]
+
+    @property
+    def n_features_in_(self):
+        # X is passed to all transformers so we just delegate to the first one
+        return self.transformer_list[0][1].n_features_in_
 
 
 def make_union(*transformers, **kwargs):
