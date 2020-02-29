@@ -42,7 +42,7 @@ def test_sample_weights_validation():
     X = [[1]]
     y = [1]
     weights = 0
-    glm = GeneralizedLinearRegressor(fit_intercept=False)
+    glm = GeneralizedLinearRegressor()
 
     # Positive weights are accepted
     glm.fit(X, y, sample_weight=1)
@@ -71,8 +71,7 @@ def test_glm_family_argument(name, instance):
     glm = GeneralizedLinearRegressor(family=name, alpha=0).fit(X, y)
     assert isinstance(glm._family_instance, instance.__class__)
 
-    glm = GeneralizedLinearRegressor(family='not a family',
-                                     fit_intercept=False)
+    glm = GeneralizedLinearRegressor(family='not a family')
     with pytest.raises(ValueError, match="family must be"):
         glm.fit(X, y)
 
