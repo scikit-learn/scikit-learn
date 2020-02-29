@@ -9,11 +9,11 @@ from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils.testing import (assert_raises_regex,
-                                   ignore_warnings,
-                                   assert_warns, assert_raises,
-                                   SkipTest)
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils._testing import (assert_raises_regex,
+                                    ignore_warnings,
+                                    assert_warns, assert_raises,
+                                    SkipTest)
+from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -21,8 +21,11 @@ from sklearn.utils.estimator_checks import _set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
+from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.fixes import _parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -33,6 +36,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils import all_estimators
 
 
 class CorrectNotFittedError(ValueError):
@@ -256,9 +260,8 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
                     raise ValueError(
                         "Estimator doesn't support 64-bit indices")
             elif X.getformat() in ["csc", "csr"]:
-                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
-                    raise ValueError(
-                        "Estimator doesn't support 64-bit indices")
+                assert "int64" not in (X.indices.dtype, X.indptr.dtype),\
+                    "Estimator doesn't support 64-bit indices"
 
         return self
 
@@ -276,6 +279,27 @@ class SparseTransformer(BaseEstimator):
         if X.shape[1] != self.X_shape_[1]:
             raise ValueError('Bad number of features')
         return sp.csr_matrix(X)
+
+
+class EstimatorInconsistentForPandas(BaseEstimator):
+    def fit(self, X, y):
+        try:
+            from pandas import DataFrame
+            if isinstance(X, DataFrame):
+                self.value_ = X.iloc[0, 0]
+            else:
+                X = check_array(X)
+                self.value_ = X[1, 0]
+            return self
+
+        except ImportError:
+            X = check_array(X)
+            self.value_ = X[1, 0]
+            return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.array([self.value_] * X.shape[0])
 
 
 class UntaggedBinaryClassifier(DecisionTreeClassifier):
@@ -305,6 +329,17 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+def test_not_an_array_array_function():
+    np_version = _parse_version(np.__version__)
+    if np_version < (1, 17):
+        raise SkipTest("array_function protocol not supported in numpy <1.17")
+    not_array = _NotAnArray(np.ones(10))
+    msg = "Don't want to call array_function sum!"
+    assert_raises_regex(TypeError, msg, np.sum, not_array)
+    # always returns True
+    assert np.may_share_memory(not_array, None)
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -323,7 +358,7 @@ def test_check_estimator():
     # not a complete test of all checks, which are very extensive.
 
     # check that we have a set_params and can clone
-    msg = "it does not implement a 'get_params' methods"
+    msg = "it does not implement a 'get_params' method"
     assert_raises_regex(TypeError, msg, check_estimator, object)
     assert_raises_regex(TypeError, msg, check_estimator, object())
     # check that values returned by get_params match set_params
@@ -451,7 +486,7 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)
@@ -461,7 +496,7 @@ def test_check_estimator_clones():
             check_estimator(est)
         assert old_hash == joblib.hash(est)
 
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)
@@ -524,6 +559,22 @@ def test_check_estimator_pairwise():
     check_estimator(est)
 
 
+def test_check_classifier_data_not_an_array():
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_classifier_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
+
+
+def test_check_regressor_data_not_an_array():
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_regressor_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
+
+
 def test_check_estimator_required_parameters_skip():
     class MyEstimator(BaseEstimator):
         _required_parameters = ["special_parameter"]
@@ -558,6 +609,14 @@ def test_check_class_weight_balanced_linear_classifier():
                         check_class_weight_balanced_linear_classifier,
                         'estimator_name',
                         BadBalancedWeightsClassifier)
+
+
+def test_all_estimators_all_public():
+    # all_estimator should not fail when pytest is not installed and return
+    # only public estimators
+    estimators = all_estimators()
+    for est in estimators:
+        assert not est.__class__.__name__.startswith("_")
 
 
 if __name__ == '__main__':

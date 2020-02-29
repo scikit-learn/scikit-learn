@@ -1,5 +1,5 @@
 from sklearn import get_config, set_config, config_context
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 
 
 def test_config_context():
