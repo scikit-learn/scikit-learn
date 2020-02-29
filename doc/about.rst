@@ -142,6 +142,10 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
 .. |intel| image:: images/intel.png
    :width: 70pt
    :target: https://www.intel.com/
@@ -169,15 +173,19 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    +---------+----------+
    | |msn|   |  |bcg|   |
    +---------+----------+
-   |      .......       |
+   |                    |
    +---------+----------+ 
    |  |axa|  |   |bnp|  |
    +---------+----------+
-   | |intel| | |nvidia| |
+   ||fujitsu||  |intel| |
    +---------+----------+
-   |      ........      |
+   |                    |
    +---------+----------+
-   ||dataiku|| |inria|  |
+   ||dataiku|| |nvidia| |
+   +---------+----------+
+   |                    |
+   +---------+----------+
+   |       |inria|      |
    +---------+----------+
 
 .. raw:: html

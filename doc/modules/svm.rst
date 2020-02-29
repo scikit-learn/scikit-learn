@@ -267,10 +267,11 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
    :scale: 75
 
 
-:class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
-:class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword ``sample_weight``. Similar to ``class_weight``, these
-set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
+:class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR`, :class:`LinearSVC`,
+:class:`LinearSVR` and :class:`OneClassSVM` implement also weights for
+individual samples in method ``fit`` through keyword ``sample_weight``. Similar
+to ``class_weight``, these set the parameter ``C`` for the i-th example to
+``C * sample_weight[i]``.
 
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
@@ -319,10 +320,10 @@ floating point values instead of integer values::
     >>> from sklearn import svm
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
-    >>> clf = svm.SVR()
-    >>> clf.fit(X, y)
+    >>> regr = svm.SVR()
+    >>> regr.fit(X, y)
     SVR()
-    >>> clf.predict([[1, 1]])
+    >>> regr.predict([[1, 1]])
     array([1.5])
 
 
@@ -455,13 +456,13 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
+  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`, where
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`, where :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
+  * sigmoid :math:`\tanh(\gamma \langle x,x'\rangle + r)`,
     where :math:`r` is specified by ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
