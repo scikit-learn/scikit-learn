@@ -99,7 +99,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
         column name of df with the values of weights or exposure
     observed : str
         a column name of df with the observed target
-    predicted : frame
+    predicted : DataFrame
         a dataframe, with the same index as df, with the predicted target
     fill_legend : bool, default=False
         whether to show fill_between legend
@@ -191,7 +191,6 @@ def score_estimator(
 
 
 ##############################################################################
-#
 # Loading datasets, basic feature extraction and target definitions
 # -----------------------------------------------------------------
 #
@@ -278,7 +277,6 @@ scores = score_estimator(
 print(scores)
 
 ##############################################################################
-#
 # We can visually compare observed and predicted values, aggregated by the
 # drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
@@ -335,7 +333,6 @@ plot_obs_pred(
 
 
 ##############################################################################
-#
 # According to the observed data, the frequency of accidents is higher for
 # drivers younger than 30 years old, and is positively correlated with the
 # `BonusMalus` variable. Our model is able to mostly correctly model this
@@ -376,7 +373,6 @@ scores = score_estimator(
 print(scores)
 
 ##############################################################################
-#
 # Here, the scores for the test data call for caution as they are
 # significantly worse than for the training data indicating an overfit despite
 # the strong regularization.
@@ -394,7 +390,6 @@ print("Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
 
 
 ##############################################################################
-#
 # We can visually compare observed and predicted values, aggregated for
 # the drivers age (``DrivAge``).
 
@@ -425,7 +420,6 @@ plot_obs_pred(
 plt.tight_layout()
 
 ##############################################################################
-#
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
@@ -461,7 +455,6 @@ print(scores)
 
 
 ##############################################################################
-#
 # Pure Premium Modeling Using a Single Compound Poisson Gamma Model
 # -----------------------------------------------------------------
 # Instead of taking the product of two independently fit models for frequency
@@ -492,7 +485,6 @@ scores = score_estimator(
 print(scores)
 
 ##############################################################################
-#
 # In this example, both modeling approaches yield comparable performance
 # metrics.
 #
@@ -523,7 +515,6 @@ for subset_label, X, df in [
 print(pd.DataFrame(res).set_index("subset").T)
 
 ##############################################################################
-#
 # Finally, we can compare the two models using a plot of cumulated claims: for
 # each model, the policyholders are ranked from safest to riskiest and the
 # fraction of observed total cumulated claims is plotted on the y axis. This

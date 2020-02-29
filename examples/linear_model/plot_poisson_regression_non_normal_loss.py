@@ -50,7 +50,7 @@ def load_mtpl2(n_samples=100000):
     Parameters
     ----------
     n_samples: int or None, default=100000
-      number of samples to select (for faster run time). If None, the full
+      Number of samples to select (for faster run time). If None, the full
       dataset with 678013 samples is returned.
     """
 
@@ -64,9 +64,7 @@ def load_mtpl2(n_samples=100000):
         return df.iloc[:n_samples]
     return df
 
-
 ##############################################################################
-#
 # Let's load the motor claim dataset. We ignore the severity data for this
 # study for the sake of simplicitly.
 #
@@ -79,7 +77,6 @@ df = load_mtpl2(n_samples=300000)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 
 ##############################################################################
-#
 # The remaining columns can be used to predict the frequency of claim events.
 # Those columns are very heterogeneous with a mix of categorical and numeric
 # variables with different scales, possibly very unevenly distributed.
@@ -107,7 +104,6 @@ linear_model_preprocessor = ColumnTransformer(
 )
 
 ##############################################################################
-#
 # The number of claims (``ClaimNb``) is a positive integer that can be modeled
 # as a Poisson distribution. It is then assumed to be the number of discrete
 # events occurring with a constant rate in a given time interval
@@ -129,7 +125,6 @@ print("Percentage of zero claims = {0:%}"
               df["Exposure"].sum()))
 
 ##############################################################################
-#
 # It is worth noting that 92 % of policyholders have zero claims, and if we
 # were to convert this problem into a binary classification task, it would be
 # significantly imbalanced.
@@ -179,7 +174,6 @@ print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
 ##############################################################################
-#
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
@@ -188,7 +182,6 @@ ridge.fit(df_train, df_train["Frequency"],
           ridge__sample_weight=df_train["Exposure"])
 
 ##############################################################################
-#
 # The Poisson deviance cannot be computed on non-positive values predicted by
 # the model. For models that do return a few non-positive predictions
 # (e.g. :class:`linear_model.Ridge`) we ignore the corresponding samples,
@@ -200,7 +193,6 @@ print("Ridge evaluation:")
 score_estimator(ridge, df_test)
 
 ##############################################################################
-#
 # Next we fit the Poisson regressor on the target variable. We set the
 # regularization strength ``alpha`` to 1 over number of samples in oder to
 # mimic the Ridge regressor whose L2 penalty term scales differently with the
@@ -217,7 +209,6 @@ print("PoissonRegressor evaluation:")
 score_estimator(poisson, df_test)
 
 ##############################################################################
-#
 # Finally, we will consider a non-linear model, namely a random forest. Random
 # forests do not require the categorical data to be one-hot encoded: instead,
 # we can encode each category label with an arbitrary integer using
@@ -250,7 +241,6 @@ score_estimator(rf, df_test)
 
 
 ##############################################################################
-#
 # Like the Ridge regression above, the random forest model minimizes the
 # conditional squared error, too. However, because of a higher predictive
 # power, it also results in a smaller Poisson deviance than the Poisson
@@ -292,7 +282,6 @@ for row_idx, label, df in zip(range(2),
 plt.tight_layout()
 
 ##############################################################################
-#
 # The experimental data presents a long tail distribution for ``y``. In all
 # models we predict a mean expected value, so we will have necessarily fewer
 # extreme values. Additionally, the normal distribution used in ``Ridge`` and
@@ -374,13 +363,11 @@ for axi, model in zip(ax, [ridge, poisson, rf]):
         title=model[-1].__class__.__name__,
         xlabel='Fraction of samples sorted by y_pred',
         ylabel='Mean Frequency (y_pred)'
-
     )
     axi.legend()
 plt.tight_layout()
 
 ##############################################################################
-#
 # The ``Ridge`` regression model can predict very low expected frequencies
 # that do not match the data. It can therefore severly under-estimate the risk
 # for some policyholders.
@@ -444,7 +431,6 @@ ax.set(
 ax.legend(loc="lower right")
 
 ##############################################################################
-#
 # This plot reveals that the random forest model is slightly better at ranking
 # policyholders by risk profiles even if the absolute value of the predicted
 # expected frequencies are less well calibrated than for the linear Poisson
