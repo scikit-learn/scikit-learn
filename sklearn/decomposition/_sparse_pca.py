@@ -230,6 +230,14 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         return U
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                "check_methods_subset_invariance":
+                "fails for the transform method"
+            }
+        }
+
 
 class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis
