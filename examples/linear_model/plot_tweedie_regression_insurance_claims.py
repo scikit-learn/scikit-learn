@@ -354,7 +354,8 @@ plot_obs_pred(
 #
 # - We filter out ``ClaimAmount == 0`` as the Gamma distribution has support
 #   on :math:`(0, \infty)`, not :math:`[0, \infty)`.
-# - We use ``ClaimNb`` as `sample_weight`.
+# - We use ``ClaimNb`` as `sample_weight` to account for policies that contain
+#   more than one claim.
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
