@@ -523,7 +523,8 @@ def test_column_transformer_invalid_transformer():
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError, "All estimators should implement fit",
+    assert_raise_message(TypeError,
+                         "All estimators should implement fit and transform",
                          ct.fit, X_array)
 
 
@@ -1184,6 +1185,18 @@ def test_column_transformer_mask_indexing(array_type):
     )
     X_trans = column_transformer.fit_transform(X)
     assert X_trans.shape == (3, 2)
+
+
+def test_n_features_in():
+    # make sure n_features_in is what is passed as input to the column
+    # transformer.
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    ct = ColumnTransformer([('a', DoubleTrans(), [0]),
+                            ('b', DoubleTrans(), [1])])
+    assert not hasattr(ct, 'n_features_in_')
+    ct.fit(X)
+    assert ct.n_features_in_ == 2
 
 
 @pytest.mark.parametrize('cols, pattern, include, exclude', [
