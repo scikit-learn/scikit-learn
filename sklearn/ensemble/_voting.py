@@ -23,7 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
@@ -69,7 +69,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(
+                delayed(_fit_single_estimator)(
                         clone(clf), X, y,
                         sample_weight=sample_weight,
                         message_clsname='Voting',

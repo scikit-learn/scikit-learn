@@ -14,7 +14,7 @@ from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
 
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
@@ -137,7 +137,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
+            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
         self.n_features_in_ = self.estimators_[0].n_features_in_

@@ -316,7 +316,7 @@ def test_sample_weight():
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
-    # check that _parallel_fit_estimator will raise the right error
+    # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
     class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
