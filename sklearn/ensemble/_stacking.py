@@ -191,7 +191,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
 
         X_meta = self._concatenate_predictions(X, predictions)
         _fit_single_estimator(self.final_estimator_, X_meta, y,
-                                sample_weight=sample_weight)
+                              sample_weight=sample_weight)
 
         return self
 
