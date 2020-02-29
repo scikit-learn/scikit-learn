@@ -901,7 +901,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     ...                                                     random_state=1)
     >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
     >>> clf.predict_proba(X_test[:1])
-    array([[0.03838405, 0.96161595]])
+    array([[0.038..., 0.961...]])
     >>> clf.predict(X_test[:5, :])
     array([1, 0, 1, 0, 1])
     >>> clf.score(X_test, y_test)
