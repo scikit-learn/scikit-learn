@@ -197,12 +197,12 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
     sample_weight = np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-6)
+    assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # sample_weight are normalized to 1 so, scaling them has no effect
     sample_weight = 2*np.ones(y.shape)
     glm.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(glm.coef_, coef, rtol=1e-6)
+    assert_allclose(glm.coef_, coef, rtol=1e-12)
 
     # setting one element of sample_weight to 0 is equivalent to removing
     # the correspoding sample
@@ -211,7 +211,7 @@ def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     glm.fit(X, y, sample_weight=sample_weight)
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
-    assert_allclose(glm.coef_, coef1, rtol=1e-6)
+    assert_allclose(glm.coef_, coef1, rtol=1e-12)
 
     # check that multiplying sample_weight by 2 is equivalent
     # to repeating correspoding samples twice
