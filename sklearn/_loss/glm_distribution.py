@@ -40,7 +40,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     unit_deviance
     unit_deviance_derivative
     unit_variance
-    unit_variance_derivative
 
     References
     ----------
@@ -86,18 +85,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         ----------
         y_pred : array of shape (n_samples,)
             Predicted mean.
-        """
-
-    @abstractmethod
-    def unit_variance_derivative(self, y_pred):
-        r"""Compute the derivative of the unit variance w.r.t. y_pred.
-
-        Return :math:`v'(y_\textrm{pred})`.
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Target values.
         """
 
     @abstractmethod
@@ -257,17 +244,6 @@ class TweedieDistribution(ExponentialDispersionModel):
             Predicted mean.
         """
         return np.power(y_pred, self.power)
-
-    def unit_variance_derivative(self, y_pred):
-        """Compute the derivative of the unit variance of a Tweedie
-        distribution v(y_pred)=power*y_pred**(power-1).
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Predicted mean.
-        """
-        return self.power * np.power(y_pred, self.power - 1)
 
     def unit_deviance(self, y, y_pred, check_input=False):
         r"""Compute the unit deviance.
