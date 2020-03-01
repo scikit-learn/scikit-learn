@@ -440,10 +440,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
-        # We use a property with a setter, since the GLM solver relies
-        # on self.family attribute, but we can't set it in __init__ according
-        # to scikit-learn API constraints. This attribute is made read-only
-        # to disallow changing distribution to other than Poisson.
+        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "poisson"
 
     @family.setter
@@ -506,10 +503,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
-        # We use a property with a setter, since the GLM solver relies
-        # on self.family attribute, but we can't set it in __init__ according
-        # to scikit-learn API constraints. This attribute is made read-only
-        # to disallow changing distribution to other than Gamma.
+        # Make this attribute read-only to avoid mis-uses e.g. in GridSearch.
         return "gamma"
 
     @family.setter
