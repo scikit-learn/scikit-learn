@@ -151,7 +151,7 @@ def score_estimator(
     ]
     if tweedie_powers:
         metrics += [(
-            "mean Tweedie deviance (p={:.4f})".format(power),
+            "mean Tweedie dev p={:.4f}".format(power),
             partial(mean_tweedie_deviance, power=power)
         ) for power in tweedie_powers]
 
@@ -455,6 +455,10 @@ plt.tight_layout()
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
 
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=.1, max_iter=10000)
+glm_pure_premium.fit(X_train, df_train["PurePremium"],
+                     sample_weight=df_train["Exposure"])
+
 tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
 
 scores_product_model = score_estimator(
@@ -467,10 +471,6 @@ scores_product_model = score_estimator(
     weights="Exposure",
     tweedie_powers=tweedie_powers,
 )
-
-glm_pure_premium = TweedieRegressor(power=1.9, alpha=.1, max_iter=10000)
-glm_pure_premium.fit(X_train, df_train["PurePremium"],
-                     sample_weight=df_train["Exposure"])
 
 scores_glm_pure_premium = score_estimator(
     glm_pure_premium,
