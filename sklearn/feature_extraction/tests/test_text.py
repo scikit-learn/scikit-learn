@@ -1342,6 +1342,18 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
         vect.fit(train_data)
 
 
+@pytest.mark.parametrize('Vectorizer, X', (
+    (HashingVectorizer, [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]),
+    (CountVectorizer, JUNK_FOOD_DOCS))
+)
+def test_n_features_in(Vectorizer, X):
+    # For vectorizers, n_features_in_ does not make sense
+    vectorizer = Vectorizer()
+    assert not hasattr(vectorizer, 'n_features_in_')
+    vectorizer.fit(X)
+    assert not hasattr(vectorizer, 'n_features_in_')
+
+
 # TODO: Remove in 0.24
 def test_vectorizermixin_is_deprecated():
     class MyVectorizer(VectorizerMixin):

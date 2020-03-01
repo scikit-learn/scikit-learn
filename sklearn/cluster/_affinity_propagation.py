@@ -11,7 +11,7 @@ import warnings
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 
@@ -334,8 +334,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
-
-    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+    @_deprecate_positional_args
+    def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
                  verbose=False):
 
@@ -374,7 +374,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             accept_sparse = False
         else:
             accept_sparse = 'csr'
-        X = check_array(X, accept_sparse=accept_sparse)
+        X = self._validate_data(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
