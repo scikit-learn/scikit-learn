@@ -488,7 +488,8 @@ scores = pd.concat([scores_product_model, scores_glm_pure_premium],
                    keys=('Product Model', 'TweedieRegressor'))
 print("Evaluation of the Product Model and the Tweedie Regressor "
       "on target PurePremium")
-print(scores)
+with pd.option_context('display.expand_frame_repr', False):
+    print(scores)
 
 ##############################################################################
 # In this example, both modeling approaches yield comparable performance
