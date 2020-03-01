@@ -143,14 +143,9 @@ def score_estimator(
     tweedie_powers=None,
 ):
     """Evaluate an estimator on train and test sets with different metrics"""
-    if isinstance(estimator, tuple):
-        model_name = " * ".join(e.__class__.__name__ for e in estimator)
-    else:
-        model_name = estimator.__class__.__name__
-    print("\nEvaluation of {} of target {} ".format(model_name, target))
 
     metrics = [
-        ("D² explained", None),
+        ("D² explained", None),   # Use default scorer if it exists
         ("mean abs. error", mean_absolute_error),
         ("mean squared error", mean_squared_error),
     ]
@@ -280,6 +275,7 @@ scores = score_estimator(
     target="Frequency",
     weights="Exposure",
 )
+print("Evaluation of PoissonRegressor on target Frequency")
 print(scores)
 
 ##############################################################################
@@ -377,6 +373,7 @@ scores = score_estimator(
     target="AvgClaimAmount",
     weights="ClaimNb",
 )
+print("Evaluation of GammaRegressor on target AvgClaimAmount")
 print(scores)
 
 ##############################################################################
@@ -430,25 +427,37 @@ plt.tight_layout()
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
-# Pure Premium Modeling via a Product of Frequency and Severity
-# -------------------------------------------------------------
+# Pure Premium Modeling via a Product Model vs single TweedieRegressor
+# --------------------------------------------------------------------
 # As mentioned in the introduction, the total claim amount per unit of
 # exposure can be modeled as the product of the prediction of the
 # frequency model by the prediction of the severity model.
 #
-# To quantify the aggregate performance of this product model, one can compute
+# Alternatively, one can directly model the total loss with a unique
+# Compound Poisson Gamma generalized linear model (with a log link function).
+# This model is a special case of the Tweedie GLM with a "power" parameter
+# :math:`p \in (1, 2)`. Here, we fix apriori the `power` parameter of the
+# Tweedie model to some arbitrary value (1.9) in the valid range. Ideally one
+# would select this value via grid-search by minimizing the negative
+# log-likelihood of the Tweedie model, but unfortunately the current
+# implementation does not allow for this (yet).
+#
+# We will compare the performance of both approaches.
+# To quantify the performance of both models, one can compute
 # the mean deviance of the train and test data assuming a Compound
 # Poisson-Gamma distribution of the total claim amount. This is equivalent to
-# a Tweedie distribution with "power" parameter between 1 and 2.
+# a Tweedie distribution with a `power` parameter between 1 and 2.
 #
-# As we do not know the true value of the "power" parameter, we compute the
-# mean deviances for a grid of possible values of the "power" parameter,
-# hoping that a good model for one value of "power" will stay a good model for
-# another. Here, every value of "power" defines a separate metric and models
-# are to be compared metric by metric:
+# The :func:`sklearn.metrics.mean_tweedie_deviance` depends on a `power`
+# parameter. As we do not know the true value of the `power` parameter, we here
+# compute the mean deviances for a grid of possible values, and compare the
+# models side by side, i.e. we compare them at identical values of `power`.
+# Ideally, we hope that one model will be consistently better than the other,
+# regardless of `power`.
 
 tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
-scores = score_estimator(
+
+scores_product_model = score_estimator(
     (glm_freq, glm_sev),
     X_train,
     X_test,
@@ -458,28 +467,12 @@ scores = score_estimator(
     weights="Exposure",
     tweedie_powers=tweedie_powers,
 )
-print(scores)
-
-
-##############################################################################
-# Pure Premium Modeling Using a Single Compound Poisson Gamma Model
-# -----------------------------------------------------------------
-# Instead of taking the product of two independently fit models for frequency
-# and severity one can directly model the total loss with a unique Compound
-# Poisson Gamma generalized linear model (with a log link function). This
-# model is a special case of the Tweedie GLM with a "power" parameter :math:`p
-# \in (1, 2)`.
-#
-# Here we fix apriori the "power" parameter of the Tweedie model to some
-# arbitrary value in the valid range. Ideally one would select this value via
-# grid-search by minimizing the negative log-likelihood of the Tweedie model,
-# but unfortunately the current implementation does not allow for this (yet).
 
 glm_pure_premium = TweedieRegressor(power=1.9, alpha=.1, max_iter=10000)
 glm_pure_premium.fit(X_train, df_train["PurePremium"],
                      sample_weight=df_train["Exposure"])
 
-scores = score_estimator(
+scores_glm_pure_premium = score_estimator(
     glm_pure_premium,
     X_train,
     X_test,
@@ -489,11 +482,18 @@ scores = score_estimator(
     weights="Exposure",
     tweedie_powers=tweedie_powers
 )
+
+scores = pd.concat([scores_product_model, scores_glm_pure_premium],
+                   axis=1, sort=True,
+                   keys=('Product Model', 'TweedieRegressor'))
+print("Evaluation of the Product Model and the Tweedie Regressor "
+      "on target PurePremium")
 print(scores)
 
 ##############################################################################
 # In this example, both modeling approaches yield comparable performance
-# metrics.
+# metrics. For implementation reasons, the percentage of explained variance
+# :math:`D^2` is not available for the product model.
 #
 # We can additionally validate these models by comparing observed and
 # predicted total claim amount over the test and train subsets. We see that,
