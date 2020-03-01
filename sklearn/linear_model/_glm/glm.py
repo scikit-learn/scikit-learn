@@ -599,10 +599,9 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
-        # We use a property with a setter, since the GLM solver relies
-        # on self.family attribute, but we can't set it in __init__ according
-        # to scikit-learn API constraints. This also ensures that self.power
-        # and self.family.power are identical by construction.
+        # We use a property with a setter to make sure that the family is
+        # always a Tweedie distribution, and that self.power and
+        # self.family.power are identical by construction.
         dist = TweedieDistribution(power=self.power)
         # TODO: make the returned object immutable
         return dist
