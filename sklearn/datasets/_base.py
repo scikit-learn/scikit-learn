@@ -797,7 +797,7 @@ def load_diabetes(return_X_y=False, as_frame=False):
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
     data_filename = join(base_dir, 'diabetes_data.csv.gz')
-    data = np.loadtxt(data_filename, delimiter=',')
+    data = np.loadtxt(data_filename)
     target_filename = join(base_dir, 'diabetes_target.csv.gz')
     target = np.loadtxt(target_filename)
 
