@@ -488,8 +488,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X * coef_ +
-        intercept_) in the GLM.
+        Estimated coefficients for the linear predictor (`X * coef_ +
+        intercept_`) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
