@@ -115,8 +115,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X @ coef_ +
-        intercept_) in the GLM.
+        Estimated coefficients for the linear predictor (`X @ coef_ +
+        intercept_`) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -296,7 +296,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return self
 
     def _linear_predictor(self, X):
-        """Compute the linear_predictor = X @ coef_ + intercept_.
+        """Compute the linear_predictor = `X @ coef_ + intercept_`.
 
         Parameters
         ----------
@@ -422,8 +422,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X @ coef_ +
-        intercept_) in the GLM.
+        Estimated coefficients for the linear predictor (`X @ coef_ +
+        intercept_`) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -585,8 +585,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (X @ coef_ +
-        intercept_) in the GLM.
+        Estimated coefficients for the linear predictor (`X @ coef_ +
+        intercept_`) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
