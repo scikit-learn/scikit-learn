@@ -107,7 +107,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, regressor=None, transformer=None,
+    def __init__(self, regressor=None, *, transformer=None,
                  func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
