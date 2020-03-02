@@ -113,6 +113,8 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
+
+    predictions = []
     averaged_predictions = []
 
     # define the prediction_method (predict, predict_proba, decision_function).
@@ -148,22 +150,39 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
                 X_eval[:, variable] = new_values[i]
 
         try:
-            predictions = prediction_method(X_eval)
+            # Note: predictions is of shape
+            # (n_points,) for non-multioutput regressors
+            # (n_points, n_tasks) for multioutput regressors
+            # (n_points, 1) for the regressors in cross_decomposition (I think)
+            # (n_points, 2) for binary classification
+            # (n_points, n_classes) for multiclass classification
+            pred = prediction_method(X_eval)
+
+            predictions.append(pred)
+            # average over samples
+            averaged_predictions.append(np.mean(pred, axis=0))
         except NotFittedError:
             raise ValueError(
                 "'estimator' parameter must be a fitted estimator")
 
-        # Note: predictions is of shape
-        # (n_points,) for non-multioutput regressors
-        # (n_points, n_tasks) for multioutput regressors
-        # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
-        # (n_points, n_classes) for multiclass classification
+    n_samples = X.shape[0]
 
-        # average over samples
-        averaged_predictions.append(np.mean(predictions, axis=0))
+    # reshape to (n_targets, n_instances, n_points) where n_targets is:
+    # - 1 for non-multioutput regression and binary classification (shape is
+    #   already correct in those cases)
+    # - n_tasks for multi-output regression
+    # - n_classes for multiclass classification.
+    predictions = np.array(predictions).T
+    if is_regressor(est) and predictions.ndim == 2:
+        # non-multioutput regression, shape is (n_instances, n_points,)
+        predictions = predictions.reshape(n_samples, -1)
+    elif is_classifier(est) and predictions.shape[0] == 2:
+        # Binary classification, shape is (2, n_instances, n_points).
+        # we output the effect of **positive** class
+        predictions = predictions[1]
+        predictions = predictions.reshape(n_samples, -1)
 
-    # reshape to (n_targets, n_points) where n_targets is:
+    # reshape averaged_predictions to (n_targets, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
     #   already correct in those cases)
     # - n_tasks for multi-output regression
@@ -178,12 +197,12 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         averaged_predictions = averaged_predictions[1]
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
-    return averaged_predictions
+    return averaged_predictions, predictions
 
 
 def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto'):
+                       method='auto', individual=False):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -254,8 +273,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
           :class:`~sklearn.tree.DecisionTreeRegressor`,
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          )
-          but is more efficient in terms of speed.
+          ) when 'individual' = False
+          This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
@@ -269,17 +288,28 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
+    individual : True, False or 'both', default=False
+        Whether to return averaged or individual partial dependence
+
     Returns
     -------
-    averaged_predictions : ndarray, \
+    predictions : ndarray or tuple of ndarray
+        - individual=False,
             shape (n_outputs, len(values[0]), len(values[1]), ...)
-        The predictions for all the points in the grid, averaged over all
-        samples in X (or over the training data if ``method`` is
-        'recursion'). ``n_outputs`` corresponds to the number of classes in
-        a multi-class setting, or to the number of tasks for multi-output
-        regression. For classical regression and binary classification
-        ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
-        ``values[j]``.
+            The predictions for all the points in the grid, averaged over all
+            samples in X (or over the training data if ``method`` is
+            'recursion').
+        - individual=True,
+            shape (n_outputs, n_instances, len(values[0]), len(values[1]),...)
+            The predictions for all the points in the grid for all samples
+            in X.
+        - individual='both', tuple of ndarray
+            Tuple containing the results when individual=False and
+            individual=True
+        ``n_outputs`` corresponds to the number of classes in a multi-class
+        setting, or to the number of tasks for multi-output regression.
+        For classical regression and binary classification ``n_outputs==1``.
+        ``n_values_feature_j`` corresponds to the size ``values[j]``.
 
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
@@ -347,6 +377,13 @@ def partial_dependence(estimator, X, features, response_method='auto',
             'method {} is invalid. Accepted method names are {}.'.format(
                 method, ', '.join(accepted_methods)))
 
+    if individual is not False:
+        if method == 'recursion':
+            raise ValueError(
+                "recursion method is only available when individual is False"
+            )
+        method = 'brute'
+
     if method == 'auto':
         if (isinstance(estimator, BaseGradientBoosting) and
                 estimator.init is None):
@@ -403,8 +440,14 @@ def partial_dependence(estimator, X, features, response_method='auto',
     )
 
     if method == 'brute':
-        averaged_predictions = _partial_dependence_brute(
+        averaged_predictions, predictions = _partial_dependence_brute(
             estimator, grid, features_indices, X, response_method
+        )
+
+        # reshape predictions to
+        # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
+        predictions = predictions.reshape(
+            -1, X.shape[0], *[val.shape[0] for val in values]
         )
     else:
         averaged_predictions = _partial_dependence_recursion(
@@ -416,4 +459,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values])
 
-    return averaged_predictions, values
+    if individual is False:
+        return averaged_predictions, values
+    elif individual is True:
+        return predictions, values
+    else:  # individual='both'
+        return (averaged_predictions, predictions), values
