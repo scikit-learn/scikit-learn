@@ -6,9 +6,9 @@ import numpy as np
 import pytest
 
 from sklearn.covariance import EllipticEnvelope
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.exceptions import NotFittedError
 
 
