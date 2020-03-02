@@ -7,7 +7,7 @@
 Version 0.22.2
 ==============
 
-**February 28 2020**
+**March 2 2020**
 
 Changelog
 ---------
