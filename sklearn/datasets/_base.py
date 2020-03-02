@@ -736,7 +736,7 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
                  DESCR=descr)
 
 
-def load_diabetes(return_X_y=False, as_frame=False):
+def load_diabetes(return_X_y=False, as_frame=False, standardized=True):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -764,6 +764,11 @@ def load_diabetes(return_X_y=False, as_frame=False):
         DataFrames or Series as described below.
 
         .. versionadded:: 0.23
+
+    standardized : bool, default=True
+        If True, the feature variables are mean centered and scaled by the
+        standard deviation times `n_samples`.
+        If False, raw data is returned for the feature variables.
 
     Returns
     -------
@@ -796,7 +801,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
     """
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
-    data_filename = join(base_dir, 'diabetes_data.csv.gz')
+    data_filename = join(base_dir, 'diabetes_data.csv.gz') if standardized \
+        else join(base_dir, 'diabetes_data_raw.csv.gz')
     data = np.loadtxt(data_filename)
     target_filename = join(base_dir, 'diabetes_target.csv.gz')
     target = np.loadtxt(target_filename)
