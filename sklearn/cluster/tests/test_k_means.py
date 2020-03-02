@@ -21,7 +21,6 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._kmeans import _check_normalize_sample_weight
 from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
@@ -87,16 +86,6 @@ def test_result_equal_in_diff_n_threads(estimator):
     assert_array_equal(result_1, result_2)
 
 
-def test_check_normalize_sample_weight():
-    # Check the check sample weight helper. sample weights should sum to
-    # n_samples
-    sample_weight = None
-    checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
-    assert _num_samples(X) == _num_samples(checked_sample_weight)
-    assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
-    assert X.dtype == checked_sample_weight.dtype
-
-
 def _sort_centers(centers):
     return np.sort(centers, axis=0)
 
@@ -124,6 +113,7 @@ def test_weighted_vs_repeated(estimator, init):
 
     # TODO: FIXME
     if estimator is not MiniBatchKMeans:
+        assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
         assert_allclose(_sort_centers(km_weighted.cluster_centers_),
                         _sort_centers(km_repeated.cluster_centers_))
 
@@ -381,11 +371,11 @@ def test_kmeans_results(array_constr, algo, dtype):
     # Checks that KMeans works as intended on toy dataset by comparing with
     # expected results computed by hand.
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=dtype)
-    sample_weight = [3, 1, 1, 3]  # will be rescaled to [1.5, 0.5, 0.5, 1.5]
+    sample_weight = [3, 1, 1, 3]
     init_centers = np.array([[0, 0], [1, 1]], dtype=dtype)
 
     expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.1875
+    expected_inertia = 0.375
     expected_centers = np.array([[0.125, 0], [0.875, 1]], dtype=dtype)
     expected_n_iter = 2
 

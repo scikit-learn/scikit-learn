@@ -140,21 +140,6 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state,
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
 
-def _check_normalize_sample_weight(sample_weight, X):
-    """Set sample_weight if None, and check for correct dtype"""
-
-    sample_weight_was_none = sample_weight is None
-
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    if not sample_weight_was_none:
-        # normalize the weights to sum up to n_samples
-        # an array of 1 (i.e. samples_weight is None) is already normalized
-        n_samples = len(sample_weight)
-        scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
-    return sample_weight
-
-
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
@@ -691,7 +676,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Labels of each point
 
     inertia_ : float
-        Sum of squared distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center,
+        weighted by the sample weights if provided.
 
     n_iter_ : int
         Number of iterations run.
@@ -940,7 +926,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
                         order='C', copy=self.copy_x, accept_large_sparse=False)
 
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         random_state = check_random_state(self.random_state)
 
@@ -1113,7 +1099,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         return _labels_inertia(X, sample_weight, x_squared_norms,
                                self.cluster_centers_, self._n_threads)[0]
@@ -1142,7 +1128,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_, self._n_threads)[1]
@@ -1445,7 +1431,7 @@ class MiniBatchKMeans(KMeans):
         The value of the inertia criterion associated with the chosen
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their cluster
-        center.
+        center, weighted by the sample weights if provided.
 
     See Also
     --------
@@ -1601,7 +1587,7 @@ class MiniBatchKMeans(KMeans):
                         order='C')
         n_samples, n_features = X.shape
 
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         random_state = check_random_state(self.random_state)
 
@@ -1732,7 +1718,7 @@ class MiniBatchKMeans(KMeans):
         if n_samples == 0:
             return self
 
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
@@ -1817,7 +1803,7 @@ class MiniBatchKMeans(KMeans):
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         return self._labels_inertia_minibatch(
             X, sample_weight, x_squared_norms, self.cluster_centers_)[0]
