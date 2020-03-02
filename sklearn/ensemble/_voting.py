@@ -23,13 +23,14 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..exceptions import NotFittedError
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -68,7 +69,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(
+                delayed(_fit_single_estimator)(
                         clone(clf), X, y,
                         sample_weight=sample_weight,
                         message_clsname='Voting',
@@ -87,6 +88,20 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             self.named_estimators_[name] = current_est
 
         return self
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.estimators_[0].n_features_in_
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
