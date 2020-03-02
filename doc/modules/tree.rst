@@ -110,7 +110,7 @@ Alternatively, the probability of each class can be predicted, which is the
 fraction of training samples of the same class in a leaf::
 
     >>> clf.predict_proba([[2., 2.]])
-    array([[ 0.,  1.]])
+    array([[0., 1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -120,13 +120,24 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf = clf.fit(iris.data, iris.target)
+    >>> clf = clf.fit(X, y)
 
-Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+Once trained, you can plot the tree with the plot_tree function::
+
+
+    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
+
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
+   :scale: 75
+   :align: center
+
+We can also export the tree in `Graphviz
+<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
+
 and the python package can be installed with 
 
     conda install python-graphviz
@@ -149,10 +160,10 @@ using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-                             feature_names=iris.feature_names,  # doctest: +SKIP
-                             class_names=iris.target_names,  # doctest: +SKIP
-                             filled=True, rounded=True,  # doctest: +SKIP
-                             special_characters=True)  # doctest: +SKIP
+    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+    ...                      class_names=iris.target_names,  # doctest: +SKIP
+    ...                      filled=True, rounded=True,  # doctest: +SKIP
+    ...                      special_characters=True)  # doctest: +SKIP
     >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
     >>> graph # doctest: +SKIP
 
@@ -166,26 +177,36 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict the class of samples::
-
-    >>> clf.predict(iris.data[:1, :])
-    array([0])
-
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
-
-    >>> clf.predict_proba(iris.data[:1, :])
-    array([[ 1.,  0.,  0.]])
-
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
 
+Alternatively, the tree can also be exported in textual format with the
+function :func:`export_text`. This method doesn't require the installation
+of external libraries and is more compact:
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_text
+    >>> iris = load_iris()
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
+    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+    >>> print(r)
+    |--- petal width (cm) <= 0.80
+    |   |--- class: 0
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
+    |   |   |--- class: 1
+    |   |--- petal width (cm) >  1.75
+    |   |   |--- class: 2
+    <BLANKLINE>
+
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
-
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
@@ -210,7 +231,7 @@ instead of integer values::
     >>> clf = tree.DecisionTreeRegressor()
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
-    array([ 0.5])
+    array([0.5])
 
 .. topic:: Examples:
 
@@ -299,17 +320,6 @@ largest reduction in entropy.  This has a cost of
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
 
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
-
 
 Tips on practical use
 =====================
@@ -322,6 +332,10 @@ Tips on practical use
     :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
     give your tree a better chance of finding features that are discriminative.
 
+  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+    in gaining more insights about how the decision tree makes predictions, which is
+    important for understanding the important features in the data.
+
   * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
     how the tree is fitting to your data, and then increase the depth.
@@ -330,15 +344,17 @@ Tips on practical use
     for each additional level the tree grows to.  Use ``max_depth`` to control
     the size of the tree to prevent overfitting.
 
-  * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
-    samples at a leaf node.  A very small number will usually mean the tree
-    will overfit, whereas a large number will prevent the tree from learning
-    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
-    varies greatly, a float number can be used as percentage in these two parameters.
-    The main difference between the two is that ``min_samples_leaf`` guarantees
-    a minimum number of samples in a leaf, while ``min_samples_split`` can
-    create arbitrary small leaves, though ``min_samples_split`` is more common
-    in the literature.
+  * Use ``min_samples_split`` or ``min_samples_leaf`` to ensure that multiple
+    samples inform every decision in the tree, by controlling which splits will
+    be considered. A very small number will usually mean the tree will overfit,
+    whereas a large number will prevent the tree from learning the data. Try
+    ``min_samples_leaf=5`` as an initial value. If the sample size varies
+    greatly, a float number can be used as percentage in these two parameters.
+    While ``min_samples_split`` can create arbitrarily small leaves,
+    ``min_samples_leaf`` guarantees that each leaf has a minimum size, avoiding
+    low-variance, over-fit leaf nodes in regression problems.  For
+    classification with few classes, ``min_samples_leaf=1`` is often the best
+    choice.
 
   * Balance your dataset before training to prevent the tree from being biased
     toward the classes that are dominant. Class balancing can be done by
@@ -398,7 +414,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
@@ -462,7 +479,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 
@@ -490,30 +507,71 @@ Mean Squared Error:
 
 .. math::
 
-    c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
 Mean Absolute Error:
 
 .. math::
 
-    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 
+
+.. _minimal_cost_complexity_pruning:
+
+Minimal Cost-Complexity Pruning
+===============================
+
+Minimal cost-complexity pruning is an algorithm used to prune a tree to avoid
+over-fitting, described in Chapter 3 of [BRE]_. This algorithm is parameterized
+by :math:`\alpha\ge0` known as the complexity parameter. The complexity
+parameter is used to define the cost-complexity measure, :math:`R_\alpha(T)` of
+a given tree :math:`T`:
+
+.. math::
+
+  R_\alpha(T) = R(T) + \alpha|T|
+
+where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+is traditionally defined as the total misclassification rate of the terminal
+nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
+the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
+depends on the criterion. Minimal cost-complexity pruning finds the subtree of
+:math:`T` that minimizes :math:`R_\alpha(T)`.
+
+The cost complexity measure of a single node is
+:math:`R_\alpha(t)=R(t)+\alpha`. The branch, :math:`T_t`, is defined to be a
+tree where node :math:`t` is its root. In general, the impurity of a node
+is greater than the sum of impurities of its terminal nodes,
+:math:`R(T_t)<R(t)`. However, the cost complexity measure of a node,
+:math:`t`, and its branch, :math:`T_t`, can be equal depending on
+:math:`\alpha`. We define the effective :math:`\alpha` of a node to be the
+value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or
+:math:`\alpha_{eff}(t)=\frac{R(t)-R(T_t)}{|T|-1}`. A non-terminal node
+with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
+be pruned. This process stops when the pruned tree's minimal
+:math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+  
 .. topic:: References:
+
+    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+      and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-      Regression Trees. Wadsworth, Belmont, CA, 1984.
+    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+      Kaufmann, 1993.
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
-
-    * T. Hastie, R. Tibshirani and J. Friedman.
-      Elements of Statistical Learning, Springer, 2009.
+    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+      Learning, Springer, 2009.

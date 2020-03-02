@@ -22,18 +22,15 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
-from __future__ import print_function
-
 from collections import defaultdict
 import operator
 from time import time
 
 import numpy as np
 
-from sklearn.cluster.bicluster import SpectralCoclustering
+from sklearn.cluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.externals.six import iteritems
-from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
 
@@ -52,7 +49,7 @@ def number_normalizer(tokens):
 
 class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        tokenize = super(NumberNormalizingVectorizer, self).build_tokenizer()
+        tokenize = super().build_tokenizer()
         return lambda doc: list(number_normalizer(tokenize(doc)))
 
 
@@ -116,7 +113,7 @@ def most_common(d):
 
     Like Counter.most_common in Python >=2.7.
     """
-    return sorted(iteritems(d), key=operator.itemgetter(1), reverse=True)
+    return sorted(d.items(), key=operator.itemgetter(1), reverse=True)
 
 
 bicluster_ncuts = list(bicluster_ncut(i)
