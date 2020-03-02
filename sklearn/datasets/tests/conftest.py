@@ -2,15 +2,13 @@
 or if download is specifically requested by environment variable."""
 from os import environ
 import pytest
-from sklearn.datasets import (
-    fetch_20newsgroups as _fetch_20newsgroups,
-    fetch_20newsgroups_vectorized as _fetch_20newsgroups_vectorized,
-    fetch_california_housing as _fetch_california_housing,
-    fetch_covtype as _fetch_covtype,
-    fetch_kddcup99 as _fetch_kddcup99,
-    fetch_olivetti_faces as _fetch_olivetti_faces,
-    fetch_rcv1 as _fetch_rcv1,
-)
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups_vectorized
+from sklearn.datasets import fetch_california_housing
+from sklearn.datasets import fetch_covtype
+from sklearn.datasets import fetch_kddcup99
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.datasets import fetch_rcv1
 
 
 def _wrapped_fetch(f, dataset_name):
@@ -23,42 +21,41 @@ def _wrapped_fetch(f, dataset_name):
             return f(*args, **kwargs)
         except IOError:
             pytest.skip("Download {} to run this test".format(dataset_name))
-
     return wrapped
 
 
 @pytest.fixture
 def fetch_20newsgroups_fxt():
-    return _wrapped_fetch(_fetch_20newsgroups, dataset_name='20newsgroups')
+    return _wrapped_fetch(fetch_20newsgroups, dataset_name='20newsgroups')
 
 
 @pytest.fixture
 def fetch_20newsgroups_vectorized_fxt():
-    return _wrapped_fetch(_fetch_20newsgroups_vectorized,
+    return _wrapped_fetch(fetch_20newsgroups_vectorized,
                           dataset_name='20newsgroups_vectorized')
 
 
 @pytest.fixture
 def fetch_california_housing_fxt():
-    return _wrapped_fetch(_fetch_california_housing,
+    return _wrapped_fetch(fetch_california_housing,
                           dataset_name='california_housing')
 
 
 @pytest.fixture
 def fetch_covtype_fxt():
-    return _wrapped_fetch(_fetch_covtype, dataset_name='covtype')
+    return _wrapped_fetch(fetch_covtype, dataset_name='covtype')
 
 
 @pytest.fixture
 def fetch_kddcup99_fxt():
-    return _wrapped_fetch(_fetch_kddcup99, dataset_name='kddcup99')
+    return _wrapped_fetch(fetch_kddcup99, dataset_name='kddcup99')
 
 
 @pytest.fixture
 def fetch_olivetti_faces_fxt():
-    return _wrapped_fetch(_fetch_olivetti_faces, dataset_name='olivetti_faces')
+    return _wrapped_fetch(fetch_olivetti_faces, dataset_name='olivetti_faces')
 
 
 @pytest.fixture
 def fetch_rcv1_fxt():
-    return _wrapped_fetch(_fetch_rcv1, dataset_name='rcv1')
+    return _wrapped_fetch(fetch_rcv1, dataset_name='rcv1')
