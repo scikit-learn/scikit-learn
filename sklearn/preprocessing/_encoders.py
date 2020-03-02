@@ -227,9 +227,9 @@ class OneHotEncoder(_BaseEncoder):
     drop_idx_ : array of shape (n_features,)
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature.
-        ``drop_idx_[i] = None`` if no category is to be dropped from the feature
-        with index ``i``, e.g. when `drop='if_binary'` and the feature isn't
-        binary
+        ``drop_idx_[i] = None`` if no category is to be dropped from the
+        feature with index ``i``, e.g. when `drop='if_binary'` and the feature
+        isn't binary
 
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
@@ -354,7 +354,8 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(msg)
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=np.object)
+                             zip(self.drop, self.categories_)],
+                            dtype=np.object)
 
     def fit(self, X, y=None):
         """
@@ -431,7 +432,7 @@ class OneHotEncoder(_BaseEncoder):
                 n_cats = len(cats)
 
                 # drop='if_binary' but feature isn't binary
-                if to_drop[i] == None:
+                if to_drop[i] is None:
                     # set to cardinality to not drop from X_int
                     to_drop[i] = n_cats
                     n_values.append(n_cats)
