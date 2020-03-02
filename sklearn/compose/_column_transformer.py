@@ -313,12 +313,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.remainder)
 
         # Make it possible to check for reordered named columns on transform
-        if (hasattr(X, 'columns') and
-                any(_determine_key_type(cols) == 'str'
-                    for cols in self._columns)):
-            self._df_columns = X.columns
-        self._has_str_cols = any(_check_key_type(cols, str)
+        self._has_str_cols = any(_determine_key_type(cols) == 'str'
                                  for cols in self._columns)
+        if hasattr(X, 'columns'):
+            self._df_columns = X.columns
 
         self._n_features = X.shape[1]
         cols = []
