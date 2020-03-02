@@ -601,7 +601,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         else:
             features_indices = np.flatnonzero(n_missing)
 
-
         return imputer_mask, features_indices
 
     def _validate_input(self, X):
@@ -646,9 +645,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         self._precomputed = False
-        if sparse.issparse(X) or isinstance(X, np.ndarray):
-            if X.dtype == 'bool' and self.missing_values:
-                self._precomputed = True
+        if hasattr(X, 'dtype') and X.dtype.kind == 'b':
+            self._precomputed = True
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
