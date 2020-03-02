@@ -1,0 +1,13 @@
+name: "Pull Request Labeler"
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: thomasjpfan/labeler@v2.4.3
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        max-labels: "3"
