@@ -208,6 +208,9 @@ Changelog
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+  
+- |Fix| Fixed bug in :class:`impute.IterativeImputer` changed the default value of `min_value` and `max_value` from None to -inf and inf respectively. :pr:`16493`
+  by :user:`darshangowda0`.
 
 :mod:`sklearn.inspection`
 .........................
