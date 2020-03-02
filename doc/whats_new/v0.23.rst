@@ -14,7 +14,6 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
-
 Changed models
 --------------
 
@@ -206,10 +205,6 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |Efficiency| Reduce :func:`impute.KNNImputer` asymptotic memory usage by
-  chunking pairwise distance computation.
-  :pr:`16397` by `Joel Nothman`_.
-
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
@@ -267,6 +262,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |API| Changed the formatting of values in
+  :meth:`metrics.ConfusionMatrixDisplay.plot` and
+  :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  `Thomas Fan`_.
+
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
   its ``reduce_func`` to not have a return value, enabling in-place operations.
   :pr:`16397` by `Joel Nothman`_.
@@ -278,24 +279,11 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mutual_info_score` where negative
   scores could be returned. :pr:`16362` by `Thomas Fan`_.
 
-- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
-  name of the estimator was passed in the
-  :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
-  results in a different plot when calling
-  :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
-  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Fix| Fixed a bug in :func:`metrics.confusion_matrix` that would raise
   an error when `y_true` and `y_pred` were length zero and `labels` was
   not `None`. In addition, we raise an error when an empty list is given to
   the `labels` parameter.
   :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
-
-- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
-  the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
-  instead of the parameter `name`. It results in a different plot when calling
-  :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
-  :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -329,15 +317,6 @@ Changelog
   differs between `predict` and `fit`.
   :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
-:mod:`sklearn.neighbors`
-..............................
-
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object
-  array instead of a 1-D array containing NumPy arrays. This bug
-  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Alex Shacked <alexshacked>`.
-
 :mod:`sklearn.neural_network`
 .............................
 
@@ -355,6 +334,10 @@ Changelog
   will now accept value 'if_binary' and will drop the first category of
   each feature with two categories. :pr:`#16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
+  computing statistics when calling `partial_fit` on sparse inputs.
+  :pr:`16466` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -400,3 +383,12 @@ Changelog
 - |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
   distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
+Miscellaneous
+.............
+
+- |API| Most estimators now expose a `n_features_in_` attribute. This
+  attribute is equal to the number of features passed to the `fit` method.
+  See `SLEP010
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+  for details. :pr:`16112` by `Nicolas Hug`_.

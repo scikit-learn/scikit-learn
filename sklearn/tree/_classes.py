@@ -146,7 +146,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
@@ -545,8 +545,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        ccp_path : Bunch
-            Dictionary-like object, with attributes:
+        ccp_path : :class:`~sklearn.utils.Bunch`
+            Dictionary-like object, with the following attributes.
 
             ccp_alphas : ndarray
                 Effective alphas of subtree during pruning.
