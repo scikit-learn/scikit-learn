@@ -10,8 +10,8 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils._testing import assert_array_equal
 
 
-def test_olivetti_faces(fetch_olivetti_faces):
-    data = fetch_olivetti_faces(shuffle=True, random_state=0)
+def test_olivetti_faces(fetch_olivetti_faces_fxt):
+    data = fetch_olivetti_faces_fxt(shuffle=True, random_state=0)
 
     assert isinstance(data, Bunch)
     for expected_keys in ('data', 'images', 'target', 'DESCR'):
@@ -23,4 +23,4 @@ def test_olivetti_faces(fetch_olivetti_faces):
     assert_array_equal(np.unique(np.sort(data.target)), np.arange(40))
 
     # test the return_X_y option
-    check_return_X_y(data, fetch_olivetti_faces)
+    check_return_X_y(data, fetch_olivetti_faces_fxt)
