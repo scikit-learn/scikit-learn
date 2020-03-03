@@ -639,11 +639,6 @@ def test_bad_input():
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
-    # sample_weight bad dimensions
-    clf = svm.SVC()
-    with pytest.raises(ValueError):
-        clf.fit(X, Y, sample_weight=range(len(X) - 1))
-
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
     with pytest.raises(ValueError):
@@ -690,11 +685,8 @@ def test_unicode_kernel():
 def test_sparse_precomputed():
     clf = svm.SVC(kernel='precomputed')
     sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
-    try:
+    with pytest.raises(TypeError, match="Sparse precomputed"):
         clf.fit(sparse_gram, [0, 1])
-        assert not "reached"
-    except TypeError as e:
-        assert "Sparse precomputed" in str(e)
 
 
 def test_sparse_fit_support_vectors_empty():

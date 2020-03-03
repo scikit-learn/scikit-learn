@@ -293,10 +293,15 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
         """
         # Validate or convert input data
-        X = check_array(X, accept_sparse="csc", dtype=DTYPE)
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        if issparse(y):
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+            )
+        X, y = self._validate_data(X, y, multi_output=True,
+                                   accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -841,6 +846,36 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         self.oob_score_ /= self.n_outputs_
 
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray of shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray of shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray of shape (n_samples,)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        averaged_predictions = np.zeros(shape=grid.shape[0],
+                                        dtype=np.float64, order='C')
+
+        for tree in self.estimators_:
+            # Note: we don't sum in parallel because the GIL isn't released in
+            # the fast method.
+            tree.tree_.compute_partial_dependence(
+                grid, target_features, averaged_predictions)
+        # Average over the forest
+        averaged_predictions /= len(self.estimators_)
+
+        return averaged_predictions
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -2153,6 +2188,20 @@ class RandomTreesEmbedding(BaseForest):
     ----------
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomTreesEmbedding
+    >>> X = [[0,0], [1,0], [0,1], [-1,0], [0,-1]]
+    >>> random_trees = RandomTreesEmbedding(
+    ...    n_estimators=5, random_state=0, max_depth=1).fit(X)
+    >>> X_sparse_embedding = random_trees.transform(X)
+    >>> X_sparse_embedding.toarray()
+    array([[0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 0., 1., 0., 1., 0., 1., 0., 1.],
+           [1., 0., 1., 0., 1., 0., 1., 0., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
 
     References
     ----------

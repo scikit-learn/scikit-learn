@@ -36,7 +36,7 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "DecisionTreeClassifier should be a binary classifer"
+    msg = "DecisionTreeClassifier should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
         plot_roc_curve(clf, X, y)
 
@@ -131,4 +131,22 @@ def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
         plot_roc_curve(clf, X, y)
     clf.fit(X, y)
     disp = plot_roc_curve(clf, X, y)
+    assert clf.__class__.__name__ in disp.line_.get_label()
     assert disp.estimator_name == clf.__class__.__name__
+
+
+def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
+    # non-regression test checking that the `name` used when calling
+    # `plot_roc_curve` is used as well when calling `disp.plot()`
+    X, y = data_binary
+    clf_name = "my hand-crafted name"
+    clf = LogisticRegression().fit(X, y)
+    disp = plot_roc_curve(clf, X, y, name=clf_name)
+    assert disp.estimator_name == clf_name
+    pyplot.close("all")
+    disp.plot()
+    assert clf_name in disp.line_.get_label()
+    pyplot.close("all")
+    clf_name = "another_name"
+    disp.plot(name=clf_name)
+    assert clf_name in disp.line_.get_label()
