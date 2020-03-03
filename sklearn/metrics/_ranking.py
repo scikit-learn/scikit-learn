@@ -1436,7 +1436,7 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     y_score : array-like of shape (n_samples, n_classes)
         Target scores. These can be either probability estimates or
         non-thresholded decision values as returned by :term:`predict_proba` or
-        :term:`decision_function`.
+        :term:`decision_function`, respectively.
 
     k : int, default=5
         Number of guesses allowed to find the correct label.
