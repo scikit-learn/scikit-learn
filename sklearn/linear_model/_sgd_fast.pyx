@@ -433,9 +433,11 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     intercept : float
         The fitted intercept term.
     average_weights : array shape=[n_features]
-        The averaged weights across iterations. Values are valid only if is valid only if 
+        The averaged weights across iterations. Values are valid only if
+        average > 0.
     average_intercept : float
-        The averaged intercept across iterations. Only if 
+        The averaged intercept across iterations.
+        Values are valid only if average > 0.
     n_iter_ : int
         The actual number of iter (epochs).
     """
