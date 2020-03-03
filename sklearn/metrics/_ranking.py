@@ -1474,6 +1474,8 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     0.75
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
+    >>> top_k_accuracy_score([0]*4, y_score, k=2)
+    0.75
 
     """
     if k == 1:
