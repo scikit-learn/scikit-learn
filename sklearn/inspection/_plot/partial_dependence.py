@@ -19,7 +19,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
-                            line_kw=None, contour_kw=None, ax=None):
+                            line_kw=None, contour_kw=None, ax=None,
+                            individual=False):
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
@@ -78,8 +79,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
-        features[i] is a tuple, a two-way PDP is created. Each tuple must be
-        of size 2.
+        features[i] is a tuple, a two-way PDP is created (Only supported with
+        'individual' is False). Each tuple must be of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
@@ -179,6 +180,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         .. versionadded:: 0.22
 
+    individual : True, False or 'both', default=False
+        Whether to plot individual or averaged partial dependence plots
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     display: :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -256,7 +262,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-
+        if individual is not False and np.size(fxs) > 1:
+            raise ValueError("Each entry in features must be either an int or "
+                             "a string when 'individual' is set to True or "
+                             "'both'")
         tmp_features.append(fxs)
 
     features = tmp_features
@@ -274,13 +283,14 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    # compute averaged predictions
+    # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,
                                     grid_resolution=grid_resolution,
-                                    percentiles=percentiles)
+                                    percentiles=percentiles,
+                                    individual=individual)
         for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
@@ -288,21 +298,24 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # Also note: as multiclass-multioutput classifiers are not supported,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
-    avg_preds, _ = pd_results[0]  # checking the first result is enough
-    if is_regressor(estimator) and avg_preds.shape[0] > 1:
+    pd_result, _ = pd_results[0]  # checking the first result is enough
+    n_tasks = pd_result[0].shape[0] if individual == 'both' \
+        else pd_result.shape[0]
+    if is_regressor(estimator) and n_tasks > 1:
         if target is None:
             raise ValueError(
                 'target must be specified for multi-output regressors')
-        if not 0 <= target <= avg_preds.shape[0]:
+        if not 0 <= target <= n_tasks:
             raise ValueError(
                 'target must be in [0, n_tasks], got {}.'.format(target))
         target_idx = target
 
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
-    for avg_preds, values in pd_results:
-        min_pd = avg_preds[target_idx].min()
-        max_pd = avg_preds[target_idx].max()
+    for pd_result, values in pd_results:
+        preds = pd_result[1] if individual == 'both' else pd_result
+        min_pd = preds[target_idx].min()
+        max_pd = preds[target_idx].max()
         n_fx = len(values)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -322,8 +335,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         fig.clear()
         ax = fig.gca()
 
-    display = PartialDependenceDisplay(pd_results, features, feature_names,
-                                       target_idx, pdp_lim, deciles)
+    display = PartialDependenceDisplay(
+        pd_results, features, feature_names, target_idx,
+        pdp_lim, deciles, individual=individual
+    )
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
 
@@ -375,6 +390,11 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
+    individual : True, False or 'both', default=False
+        Whether to plot individual or averaged partial dependence plots
+
+        .. versionadded:: 0.23
+
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
@@ -407,13 +427,14 @@ class PartialDependenceDisplay:
 
     """
     def __init__(self, pd_results, features, feature_names, target_idx,
-                 pdp_lim, deciles):
+                 pdp_lim, deciles, individual=False):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
         self.pdp_lim = pdp_lim
         self.deciles = deciles
+        self.individual = individual
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
@@ -465,7 +486,17 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
+        individual_line_kw = line_kw.copy()
+        if self.individual == 'both':
+            individual_line_kw['alpha'] = 0.3
+            individual_line_kw['linewidth'] = 0.5
+
         n_features = len(self.features)
+        n_instances = 1
+        if self.individual is True:
+            n_instances = len(self.pd_results[0][0][0])
+        elif self.individual == 'both':
+            n_instances = len(self.pd_results[0][0][1][0]) + 1
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -483,7 +514,11 @@ class PartialDependenceDisplay:
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
-            self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
+            if self.individual is False:
+                self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
+            else:
+                self.lines_ = np.empty((n_rows, n_cols, n_instances),
+                                   dtype=np.object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
 
             axes_ravel = self.axes_.ravel()
@@ -507,7 +542,10 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
-            self.lines_ = np.empty_like(ax, dtype=np.object)
+            if self.individual is False:
+                self.lines_ = np.empty_like(ax, dtype=np.object)
+            else:
+                self.lines_ = np.empty((len(ax), n_instances), dtype=np.object)
             self.contours_ = np.empty_like(ax, dtype=np.object)
 
         # create contour levels for two-way plots
@@ -516,14 +554,32 @@ class PartialDependenceDisplay:
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
 
-        for i, axi, fx, (avg_preds, values) in zip(count(),
+        for i, axi, fx, (pd_result, values) in zip(count(),
                                                    self.axes_.ravel(),
                                                    self.features,
                                                    self.pd_results):
+
+            avg_preds = None
+            preds = None
+            if self.individual is True:
+                preds = pd_result
+            elif self.individual is False:
+                avg_preds = pd_result
+            else:  # individual='both'
+                avg_preds = pd_result[0]
+                preds = pd_result[1]
+
             if len(values) == 1:
-                lines_ravel[i] = axi.plot(values[0],
-                                          avg_preds[self.target_idx].ravel(),
-                                          **line_kw)[0]
+                if self.individual is True or self.individual == 'both':
+                    for j, ins in enumerate(preds[self.target_idx]):
+                        lines_ravel[i * j + j] = axi.plot(
+                            values[0], ins.ravel(), **individual_line_kw
+                        )[0]
+                if self.individual is False or self.individual == 'both':
+                    lines_ravel[i] = axi.plot(
+                        values[0], avg_preds[self.target_idx].ravel(),
+                        **line_kw
+                    )[0]
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
