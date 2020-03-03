@@ -18,6 +18,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
@@ -28,6 +29,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
 from sklearn.metrics import ndcg_score, dcg_score
+from sklearn.metrics import top_k_accuracy_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -1468,3 +1470,23 @@ def test_partial_roc_auc_score():
         assert_almost_equal(
             roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
+
+
+def test_top_k_accuracy_score():
+    y_true = np.array([0, 1, 2, 3, 4])
+
+    y_score = np.array([
+        [0.4, 0.3, 0.1, 0.1, 0.1],
+        [0.3, 0.2, 0.3, 0.1, 0.1],
+        [0.3, 0.4, 0.1, 0.2, 0.],
+        [0.3, 0.4, 0.2, 0.1, 0.],
+        [0.4, 0.1, 0.2, 0.25, 0.05],
+    ])
+
+    assert top_k_accuracy_score(y_true, y_score, k=1) \
+           == accuracy_score(y_true, np.argmax(y_score, axis=1))
+
+    assert top_k_accuracy_score(y_true, y_score, k=2) == .2
+    assert top_k_accuracy_score(y_true, y_score, k=3) == .4
+    assert top_k_accuracy_score(y_true, y_score, k=4) == .8
+    assert top_k_accuracy_score(y_true, y_score, k=5) == 1.
