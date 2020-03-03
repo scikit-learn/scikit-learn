@@ -362,9 +362,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The initial intercept.
     average_weights : ndarray[double, ndim=1]
         The average weights as computed for ASGD. Should be None if average
-        is False.
+        is 0.
     average_intercept : double
-        The average intercept for ASGD. Should be 0 if average is False.
+        The average intercept for ASGD. Should be 0 if average is 0.
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
