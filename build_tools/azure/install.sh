@@ -100,6 +100,17 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install pandas matplotlib pyamg scikit-image
     # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps
+elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
+    make_conda "python=$PYTHON_VERSION"
+    python -m pip install -U pip
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
+    echo "Installing numpy and scipy master wheels"
+    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    echo "Installing joblib master"
+    pip install https://github.com/joblib/joblib/archive/master.zip
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
