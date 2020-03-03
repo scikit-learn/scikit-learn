@@ -259,6 +259,16 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+:mod:`sklearn.manifold`
+...........................
+
+- |Feature| Support of multidimensional scaling method,
+  which uses Singular Value Decomposition (SVD) in :class:`manifold.MDS`.
+  User can choose whether to use SVD- or SMACOF-based method via parameter
+  `method`. The SVD-based method is faster and more accurate, but works
+  only for euclidean dissimilarity matrices.
+  :pr:`16067` by :user:`Piotr Gaiński <panpiort8>`.
+
 :mod:`sklearn.metrics`
 ......................
 
