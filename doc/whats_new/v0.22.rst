@@ -4,10 +4,15 @@
 
 .. _changes_0_22_2:
 
-Version 0.22.2
-==============
+Version 0.22.2.post1
+====================
 
-**February 28 2020**
+**March 3 2020**
+
+The 0.22.2.post1 release includes a packaging fix for the source distribution
+but the content of the packages is otherwise identical to the content of the
+wheels with the 0.22.2 version (without the .post1 suffix). Both contain the
+following changes.
 
 Changelog
 ---------
@@ -33,7 +38,7 @@ Changelog
   :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
   results in a different plot when calling
   :meth:`metrics.PrecisionRecallDisplay.plot` for the subsequent times.
-  :pr:`#16505` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`16505` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neighbors`
 ..............................
