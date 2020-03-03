@@ -690,8 +690,12 @@ def test_column_transformer_get_feature_names():
 
     assert ct.get_feature_names() == ['x1', 'x0']
 
+
+def test_column_transformer_get_feature_names_dataframe():
     # passthough transformer with a dataframe
     pd = pytest.importorskip('pandas')
+    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+                  [{'c': 5}, {'c': 6}]], dtype=object).T
     X_df = pd.DataFrame(X, columns=['col0', 'col1'])
 
     ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])

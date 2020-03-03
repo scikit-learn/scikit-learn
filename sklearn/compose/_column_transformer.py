@@ -543,7 +543,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
-        self._output_dims = [X.shape[1] for X in Xs]
 
         return self._hstack(list(Xs))
 
