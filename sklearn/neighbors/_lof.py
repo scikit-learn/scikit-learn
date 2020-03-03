@@ -147,6 +147,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         contamination parameter different than "auto" is provided. In that
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
+
         .. versionadded:: 0.20
 
     Examples
@@ -432,8 +433,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         opposite_lof_scores : ndarray of shape (n_samples,)
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
-
-        .. versionadded:: 0.20
         """
         if not self.novelty:
             msg = ('score_samples is not available when novelty=False. The '
