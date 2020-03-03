@@ -362,6 +362,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
+    def _more_tags(self):
+        return {'is_supervised': True}
+
 
 ######################################################################
 # Specific filters
