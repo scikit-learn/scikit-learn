@@ -136,6 +136,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
+
         .. versionadded:: 0.20
 
     error_score : 'raise' or numeric
@@ -143,6 +144,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
         .. versionadded:: 0.20
 
     Returns
@@ -352,6 +354,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
         .. versionadded:: 0.20
 
     Returns
@@ -1188,6 +1191,7 @@ def learning_curve(estimator, X, y, groups=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
         .. versionadded:: 0.20
 
     return_times : bool, default=False
@@ -1452,6 +1456,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+        
         .. versionadded:: 0.20
 
     Returns

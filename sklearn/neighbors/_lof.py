@@ -115,7 +115,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         LocalOutlierFactor for novelty detection. In this case be aware that
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
-        .. versionadded:: 0.20.0
+
+        .. versionadded:: 0.20
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.

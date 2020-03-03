@@ -436,6 +436,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
         matrix of pairwise distances or squared distances. Otherwise, see the
         documentation of argument metric in sklearn.pairwise.pairwise_distances
         for a list of available metrics.
+        
         .. versionadded:: 0.20
 
     Returns

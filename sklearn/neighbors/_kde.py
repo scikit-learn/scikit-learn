@@ -145,6 +145,7 @@ class KernelDensity(BaseEstimator):
             :class:`sklearn.pipeline.Pipeline`.
         sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
+            
             .. versionadded:: 0.20
 
         Returns
