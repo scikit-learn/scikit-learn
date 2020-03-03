@@ -520,7 +520,7 @@ class OneHotEncoder(_BaseEncoder):
             # category. In this case we just fill the column with this
             # unique category value.
             if n_categories == 0:
-                X_tr[:, i] = self.categories_[i][int(self.drop_idx_[i])]
+                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
                 j += n_categories
                 continue
             sub = X[:, j:j + n_categories]
@@ -539,7 +539,7 @@ class OneHotEncoder(_BaseEncoder):
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
                     X_tr[dropped, i] = \
-                       self.categories_[i][int(self.drop_idx_[i])]
+                       self.categories_[i][self.drop_idx_[i]]
 
             j += n_categories
 
@@ -584,7 +584,7 @@ class OneHotEncoder(_BaseEncoder):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
             if (self.drop is not None) and (self.drop_idx_[i] is not None):
-                names.pop(int(self.drop_idx_[i]))
+                names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
