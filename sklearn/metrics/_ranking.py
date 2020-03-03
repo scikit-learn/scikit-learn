@@ -1425,7 +1425,7 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     """Top k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
-    the top ``k`` labels predicted (ranked by probability). Note that
+    the top ``k`` labels predicted (ranked by predicted scores). Note that
     multilabel classification case isn't handled here.
 
     Parameters
