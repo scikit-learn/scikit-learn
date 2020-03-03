@@ -192,8 +192,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
-                            UnsupervisedMixin, TransformerMixin):
+class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
+                            TransformerMixin, NeighborsBase):
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -335,8 +335,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         return self.fit(X).transform(X)
 
 
-class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
-                                 UnsupervisedMixin, TransformerMixin):
+class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
+                                 TransformerMixin, NeighborsBase):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as returned by

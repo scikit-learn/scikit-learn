@@ -411,15 +411,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
-        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
-                                dtype=DTYPE)
+
+        check_X_params = dict(accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        check_y_params = dict(accept_sparse='csc', ensure_2d=False, dtype=None)
+        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
+                                                              check_y_params))
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
 
         sample_weight = _check_sample_weight(sample_weight, X)
 
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
         y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
 

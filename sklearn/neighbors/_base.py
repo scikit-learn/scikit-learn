@@ -23,7 +23,7 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array, gen_even_slices
+from ..utils import check_array, gen_even_slices
 from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -346,7 +346,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
         self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -398,7 +398,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X = _check_precomputed(X)
             self.n_features_in_ = X.shape[1]
         else:
-            X = self._validate_data(X, accept_sparse='csr')
+            if y is not None:
+                X, _ = self._validate_data(X, y, accept_sparse='csr',
+                                           multi_output=True)
+            else:
+                X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -1104,9 +1108,10 @@ class SupervisedFloatMixin:
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
         self._y = y
-        return self._fit(X)
+        return self._fit(X, y)
 
 
 class SupervisedIntegerMixin:
@@ -1124,7 +1129,8 @@ class SupervisedIntegerMixin:
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -1149,7 +1155,7 @@ class SupervisedIntegerMixin:
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        return self._fit(X)
+        return self._fit(X, y)
 
 
 class UnsupervisedMixin:
@@ -1163,3 +1169,6 @@ class UnsupervisedMixin:
             or [n_samples, n_samples] if metric='precomputed'.
         """
         return self._fit(X)
+
+    def _more_tags(self):
+        return {'is_supervised': False}

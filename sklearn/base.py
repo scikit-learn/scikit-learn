@@ -376,7 +376,8 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
-    def _validate_data(self, X, y=None, reset=True, **check_params):
+    def _validate_data(self, X, y=None, reset=True,
+                       validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -391,9 +392,14 @@ class BaseEstimator:
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+        validate_separately : False or tuple of dicts, default=False
+            Only used if y is not None.
+            If False, call validate_X_y(). Else, it must be a tuple of kwargs
+            and the method will call check_array() on both X and y separately.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
-            :func:`sklearn.utils.check_X_y`.
+            :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
+            is not False.
 
         Returns
         -------
@@ -416,7 +422,16 @@ class BaseEstimator:
                     f"non-supervised estimator but a target vector y was "
                     f"passed. y should be None."
                 )
-            X, y = check_X_y(X, y, **check_params)
+            if validate_separately:
+                # We need this because some estimators validate X and y
+                # separately, and in general, separately calling check_array()
+                # on X and y isn't equivalent to just calling check_X_y()
+                # :(
+                check_X_params, check_y_params = validate_separately
+                X = check_array(X, **check_X_params)
+                y = check_array(y, **check_y_params)
+            else:
+                X, y = check_X_y(X, y, **check_params)
             out = X, y
 
         if check_params.get('ensure_2d', True):
@@ -704,6 +719,8 @@ class OutlierMixin:
         # override for transductive outlier detectors like LocalOulierFactor
         return self.fit(X).predict(X)
 
+    def _more_tags(self):
+        return {'is_supervised': False}
 
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]

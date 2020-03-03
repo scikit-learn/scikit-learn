@@ -14,7 +14,7 @@ from scipy.sparse.linalg import eigsh
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
@@ -348,7 +348,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         return embedding[:n_components].T
 
 
-class SpectralEmbedding(BaseEstimator):
+class SpectralEmbedding(TransformerMixin, BaseEstimator):
     """Spectral embedding for non-linear dimensionality reduction.
 
     Forms an affinity matrix given by the specified function and

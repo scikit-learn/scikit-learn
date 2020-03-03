@@ -246,8 +246,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             `max_trials` randomly chosen sub-samples.
 
         """
-        X = self._validate_data(X, accept_sparse='csr')
-        y = check_array(y, ensure_2d=False)
+        check_X_params = dict(accept_sparse='csr')
+        check_y_params = dict(ensure_2d=False)
+        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
+                                                              check_y_params))
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
