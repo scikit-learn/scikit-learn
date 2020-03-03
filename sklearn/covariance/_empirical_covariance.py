@@ -313,3 +313,6 @@ class EmpiricalCovariance(BaseEstimator):
                                   metric='mahalanobis', VI=precision)
 
         return np.reshape(dist, (len(X),)) ** 2
+
+    def _more_tags(self):
+        return {'is_supervised': False}
