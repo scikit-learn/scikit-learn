@@ -538,8 +538,7 @@ class OneHotEncoder(_BaseEncoder):
             elif self.drop is not None:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
-                    X_tr[dropped, i] = \
-                       self.categories_[i][self.drop_idx_[i]]
+                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
 
             j += n_categories
 
