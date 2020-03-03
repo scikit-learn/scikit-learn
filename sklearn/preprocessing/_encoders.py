@@ -513,7 +513,7 @@ class OneHotEncoder(_BaseEncoder):
             if (self.drop is None) or (self.drop_idx_[i] is None):
                 cats = self.categories_[i]
             else:
-                cats = np.delete(self.categories_[i], int(self.drop_idx_[i]))
+                cats = np.delete(self.categories_[i], self.drop_idx_[i])
             n_categories = len(cats)
 
             # Only happens if there was a column with a unique
