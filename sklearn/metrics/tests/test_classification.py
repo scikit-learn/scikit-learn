@@ -42,7 +42,6 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import top_k_accuracy_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
