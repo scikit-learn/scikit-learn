@@ -18,7 +18,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 
-from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
@@ -1472,7 +1471,8 @@ def test_partial_roc_auc_score():
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
 
 
-def test_top_k_accuracy_score():
+@pytest.mark.parametrize('k, expected_score', [(2, .2), (3, .4), (4, .8)])
+def test_top_k_accuracy_score(k, expected_score):
     y_true = np.array([0, 1, 2, 3, 4])
 
     y_score = np.array([
@@ -1483,10 +1483,40 @@ def test_top_k_accuracy_score():
         [0.4, 0.1, 0.2, 0.25, 0.05],
     ])
 
-    assert top_k_accuracy_score(y_true, y_score, k=1) \
-           == accuracy_score(y_true, np.argmax(y_score, axis=1))
+    assert top_k_accuracy_score(y_true, y_score, k=k) == expected_score
 
-    assert top_k_accuracy_score(y_true, y_score, k=2) == .2
-    assert top_k_accuracy_score(y_true, y_score, k=3) == .4
-    assert top_k_accuracy_score(y_true, y_score, k=4) == .8
-    assert top_k_accuracy_score(y_true, y_score, k=5) == 1.
+
+@pytest.mark.parametrize('y_true, k, msg', [
+    (
+        [0, 1, 2],
+        1,
+        "'k'=1 is simply 'metrics.accuracy_score'. Please, use that method "
+        "instead."
+    ),
+    (
+        [.57, 1, 2],
+        2,
+        "Target type must be 'binary' or 'multiclass', got 'continuous' "
+        "instead."
+    ),
+    (
+        [0, 1, 2],
+        3,
+        "'k'='n_classes' results in a perfect score and is therefore "
+        "meaningless."
+    ),
+    (
+        [3, 1, 2],
+        2,
+        "Number of classes in 'y_true' is greater than the number of columns "
+        "in 'y_score'."
+    ),
+])
+def test_top_k_accuracy_score_error(y_true, k, msg):
+    y_score = np.array([
+        [0.4, 0.3, 0.3],
+        [0.3, 0.4, 0.3],
+        [0.4, 0.5, 0.1],
+    ])
+    with pytest.raises(ValueError, match=msg):
+        top_k_accuracy_score(y_true, y_score, k=k)

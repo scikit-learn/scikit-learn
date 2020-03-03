@@ -1425,8 +1425,8 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     """Top k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
-    the top ``k`` labels predicted (ranked by predicted scores). Note that
-    multilabel classification case isn't handled here.
+    the top `k` labels predicted (ranked by predicted scores). Note that
+    multilabel classification case isn't covered here.
 
     Parameters
     ----------
@@ -1434,20 +1434,22 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
         True labels.
 
     y_score : array-like of shape (n_samples, n_classes)
-        Target scores.
+        Target scores. These can be either probability estimates or
+        non-thresholded decision values as returned by :term:`predict_proba` or
+        :term:`decision_function`.
 
-    k : int, optional (default=5)
+    k : int, default=5
         Number of guesses allowed to find the correct label.
 
-    normalize : bool, optional (default=True)
-        If ``True``, return the fraction of correctly classified samples.
+    normalize : bool, default=True
+        If `True`, return the fraction of correctly classified samples.
         Otherwise, return the number of correctly classified samples.
 
     Returns
     -------
     score : float
-        The best performance is 1 with ``normalize == True`` and the number
-        of samples with ``normalize == False``.
+        The best performance is 1 with `normalize == True` and the number of
+        samples with `normalize == False`.
 
     See also
     --------
@@ -1455,14 +1457,9 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
 
     Notes
     -----
-    If ``k = 1``, the result will be the same as the accuracy_score (though see
-    note below). If ``k`` is the same as the number of classes, this score will
-    be perfect and meaningless.
-
-    In cases where two or more labels are assigned equal probabilities, the
-    result may be incorrect if one of those labels falls at the threshold, as
-    one class must be chosen to be the ``k``th class and the class chosen may
-    not be the correct one.
+    In cases where two or more labels are assigned equal predicted scores
+    labels with smallest indices will be chosen first. Then the result might
+    be incorrect if the good label falls at the treshold because of that.
 
     Examples
     --------
@@ -1473,34 +1470,43 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     ...                     [0.3, 0.4, 0.2],
     ...                     [0.2, 0.4, 0.3],
     ...                     [0.7, 0.2, 0.1]])
-    >>> top_k_accuracy_score(y_true, y_score, k=1)
-    0.5
     >>> top_k_accuracy_score(y_true, y_score, k=2)
     0.75
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-    >>> top_k_accuracy_score(y_true, y_score, k=3)
-    1.0
 
     """
+    if k == 1:
+        raise ValueError(
+            "'k'=1 is simply 'metrics.accuracy_score'. Please, use that "
+            "method instead."
+        )
+
     check_consistent_length(y_true, y_score)
     y_type = type_of_target(y_true)
 
-    if y_type != 'multiclass':
-        raise ValueError(f"Target type must be 'multiclass' not {y_type}")
+    if y_type not in {'binary', 'multiclass'}:
+        raise ValueError(
+            f"Target type must be 'binary' or 'multiclass', got '{y_type}' "
+            "instead."
+        )
 
     y_true = column_or_1d(y_true)
     y_score = check_array(y_score)
-    classes = _encode(y_true)
 
-    if len(classes) != y_score.shape[1]:
+    if k == y_score.shape[1]:
         raise ValueError(
-            "Number of classes in y_true not equal to the number of columns "
-            "in 'y_score'"
+            "'k'='n_classes' results in a perfect score and is therefore "
+            "meaningless."
+        )
+
+    if y_true.max() >= y_score.shape[1]:
+        raise ValueError(
+            "Number of classes in 'y_true' is greater than the number of "
+            "columns in 'y_score'."
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)
     score = sum(y in pred[:k] for y, pred in zip(y_true, sorted_pred))
     score = score / len(y_true) if normalize else score
     return score
-
