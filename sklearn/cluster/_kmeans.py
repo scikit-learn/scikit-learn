@@ -31,6 +31,7 @@ from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
 from ._k_means_fast import _mini_batch_update_csr
+from ._k_means_fast import _minibatch_update_dense
 from ._k_means_lloyd import _lloyd_iter_chunked_dense
 from ._k_means_lloyd import _lloyd_iter_chunked_sparse
 from ._k_means_elkan import _init_bounds_dense
@@ -1210,8 +1211,8 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
             new_centers = random_state.choice(X.shape[0], replace=False,
                                               size=n_reassigns)
             if verbose:
-                print("[MiniBatchKMeans] Reassigning %i cluster centers."
-                      % n_reassigns)
+                print(f"[MiniBatchKMeans] Reassigning {n_reassigns} "
+                      f"cluster centers.")
 
             if sp.issparse(X) and not sp.issparse(centers):
                 assign_rows_csr(
@@ -1232,10 +1233,17 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
             X, sample_weight, x_squared_norms, centers, weight_sums,
             labels, old_center_buffer, compute_squared_diff)
 
-    # dense variant in mostly numpy (not as memory efficient though)
-    k = centers.shape[0]
+    # dense variant in mostly numpy (not as memory efficient though.
+    else:
+        return inertia, _minibatch_update_dense(
+            X, sample_weight, centers, weight_sums, labels,
+            old_center_buffer, compute_squared_diff)
+
+
+def _minibatch_update_dense2(X, sample_weight, centers, weight_sums, labels,
+                             old_center_buffer, compute_squared_diff):
     squared_diff = 0.0
-    for center_idx in range(k):
+    for center_idx in range(centers.shape[0]):
         # find points from minibatch that are assigned to this center
         center_mask = labels == center_idx
         wsum = sample_weight[center_mask].sum()
@@ -1264,8 +1272,34 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
             if compute_squared_diff:
                 diff = centers[center_idx].ravel() - old_center_buffer.ravel()
                 squared_diff += np.dot(diff, diff)
+    
+    return squared_diff
 
-    return inertia, squared_diff
+
+def _minibatch_update_dense3(X, sample_weight, centers, weight_sums, labels,
+                            old_center_buffer, compute_squared_diff):
+    squared_diff = 0.0
+    for i in range(X.shape[0]):
+        label = labels[i]
+
+        # update center weight
+        weight_sums[label] += sample_weight[i]
+
+        # learning rate
+        if weight_sums[label] > 0:
+            lr = 1 / weight_sums[label]
+
+            if compute_squared_diff:
+                old_center_buffer[:] = centers[label]
+
+            centers[label] *= (1 - lr)
+            centers[label] += lr * X[i]
+
+            if compute_squared_diff:
+                diff = centers[label].ravel() - old_center_buffer.ravel()
+                squared_diff += np.dot(diff, diff)
+    
+    return squared_diff
 
 
 def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
@@ -1433,6 +1467,9 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their cluster
         center, weighted by the sample weights if provided.
 
+    n_iter_ : int
+        Number of iterations run.
+
     See Also
     --------
     KMeans
@@ -1513,7 +1550,8 @@ class MiniBatchKMeans(KMeans):
         elif self._init_size < self.n_clusters:
             warnings.warn(
                 f"init_size={self._init_size} should be larger than "
-                f"n_clusters={self.n_clusters}. Setting it to 3*n_clusters",
+                f"n_clusters={self.n_clusters}. Setting it to "
+                f"min(3*n_clusters, n_samples)",
                 RuntimeWarning, stacklevel=2)
             self._init_size = 3 * self.n_clusters
         self._init_size = min(self._init_size, X.shape[0])
@@ -1713,9 +1751,8 @@ class MiniBatchKMeans(KMeans):
         """
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
                         order='C')
-        n_samples, n_features = X.shape
 
-        if n_samples == 0:
+        if X.shape[0] == 0:
             return self
 
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1729,7 +1766,7 @@ class MiniBatchKMeans(KMeans):
         if not hasattr(self, 'cluster_centers_'):
             # this is the first call partial_fit on this object
 
-            # TODO: check batch size and co may be wrong here
+            # TODO: should we disable checks of unused params ?
             self._check_params(X)
 
             # Validate init array

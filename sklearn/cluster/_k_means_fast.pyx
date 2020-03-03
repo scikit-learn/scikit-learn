@@ -16,6 +16,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython cimport floating
+from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
@@ -383,4 +384,99 @@ def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] sample_weight,
                     squared_diff += (old_center[feature_idx]
                                      - centers[center_idx, feature_idx]) ** 2
 
+    return squared_diff
+
+
+def _minibatch_update_dense4(np.ndarray[floating, ndim=2, mode='c'] X,
+                            floating[::1] sample_weight,
+                            floating[:, ::1] centers,
+                            floating[::1] weight_sums,
+                            int[::1] labels,
+                            floating[::1] old_center,
+                            bint compute_squared_diff):
+    cdef:
+        floating squared_diff = 0
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        int i, j, label
+        floating weight_sum, tmp, lr
+
+    # for i in prange(n_samples, nogil=True):
+    for i in range(n_samples):
+        label = labels[i]
+
+        # update center weight
+        weight_sum = weight_sums[label] + sample_weight[i]
+
+        # learning rate
+        if weight_sum > 0:
+            lr = 1 / weight_sum
+
+            if compute_squared_diff:
+                for j in range(n_features):
+                    old_center[j] = centers[label, j]
+
+            for j in range(n_features):
+                centers[label, j] = centers[label, j] * (1 - lr) + lr * X[i, j]
+
+            if compute_squared_diff:
+                for j in range(n_features):
+                    tmp = centers[label, j] - old_center[j]
+                    squared_diff += tmp * tmp
+    
+        weight_sums[label] = weight_sum
+    
+    return squared_diff
+
+
+def _minibatch_update_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+                             floating[::1] sample_weight,
+                             floating[:, ::1] centers,
+                             floating[::1] weight_sums,
+                             int[::1] labels,
+                             floating[::1] old_center,
+                             bint compute_squared_diff):
+    cdef:
+        floating squared_diff = 0
+        int n_clusters = centers.shape[0]
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        int i, j, k
+        floating wsum, alpha, tmp
+    
+    with nogil:
+        for i in range(n_clusters):
+            wsum = 0
+            for j in prange(n_samples):
+                if labels[j] == i:
+                    wsum += sample_weight[j]
+
+            if wsum > 0:
+                if compute_squared_diff:
+                    for k in prange(n_features):
+                        old_center[k] = centers[i, k]
+
+                # inplace remove previous count scaling
+                for k in prange(n_features):
+                    centers[i, k] = centers[i, k] * weight_sums[i]
+                
+                for j in range(n_samples):
+                    if labels[j] == i:
+                        for k in range(n_features):
+                            centers[i, k] = centers[i, k] + X[j, k] * sample_weight[j]
+
+                # update the count statistics for this center
+                weight_sums[i] = weight_sums[i] + wsum
+
+                # inplace rescale to compute mean of all points (old and new)
+                alpha = 1 / weight_sums[i]
+                for k in prange(n_features):
+                    centers[i, k] = centers[i, k] * alpha
+
+                # update the squared diff if necessary
+                if compute_squared_diff:
+                    for k in prange(n_features):
+                        tmp = centers[i, k] - old_center[k]
+                        squared_diff += tmp * tmp
+    
     return squared_diff
