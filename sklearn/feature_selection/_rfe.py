@@ -338,7 +338,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     def _more_tags(self):
         estimator_tags = self.estimator._get_tags()
         return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True)}
+                'allow_nan': estimator_tags.get('allow_nan', True),
+                'is_supervised': True,
+                }
 
 
 class RFECV(RFE):

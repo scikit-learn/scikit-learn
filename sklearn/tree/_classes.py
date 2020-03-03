@@ -146,8 +146,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if check_input:
-            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y, dtype=DTYPE, accept_sparse="csc",
+                                       ensure_2d=False)
             if issparse(X):
                 X.sort_indices()
 

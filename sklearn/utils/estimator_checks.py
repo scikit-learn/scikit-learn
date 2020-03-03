@@ -156,6 +156,17 @@ def check_supervised_y_no_nan(name, estimator_orig):
     y = np.full(10, np.inf)
     y = _enforce_estimator_tags_y(estimator, y)
 
+    from sklearn.linear_model import MultiTaskElasticNet
+    from sklearn.linear_model import RANSACRegressor
+    from sklearn.ensemble._gb import BaseGradientBoosting
+    import pytest
+    if isinstance(estimator, (
+        MultiTaskElasticNet,
+        BaseGradientBoosting,
+        RANSACRegressor,
+        )):
+        pytest.xfail("X and y are validated separately")
+
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
@@ -2072,6 +2083,19 @@ def check_supervised_y_2d(name, estimator_orig):
     estimator = clone(estimator_orig)
     set_random_state(estimator)
     # fit
+    from sklearn.linear_model._coordinate_descent import LinearModelCV
+    from sklearn.linear_model import RANSACRegressor
+    from sklearn.ensemble._gb import BaseGradientBoosting
+    from sklearn.neighbors._base import NeighborsBase
+    import pytest
+    if isinstance(estimator, (
+        LinearModelCV,
+        BaseGradientBoosting,
+        NeighborsBase,
+        RANSACRegressor,
+        )):
+        pytest.xfail("X and y are validated separately")
+
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
@@ -2979,11 +3003,14 @@ def check_supervised_tag_y(name, estimator_orig):
     # good reasons. For these, the error "the estiator is supervised so y
     # cannot be None" will always be raised.
     if estimator._get_tags()['is_supervised']:
+        from sklearn.tree._classes import BaseDecisionTree
+        if isinstance(estimator, (BaseDecisionTree,)):
+            pytest.xfail("X and y are validated separately")
         try:
             with pytest.raises(ValueError,
                                match="is a supervised estimator "
-                                     "but the target y is None"):
-                estimator.fit(X, y=None)
+                                     "but the target vector y is None"):
+                estimator.fit(X, None)
         except AssertionError:
             warnings.warn(warning_msg, FutureWarning)
     # Testing the else part requires non supervised estimators to always pass y
