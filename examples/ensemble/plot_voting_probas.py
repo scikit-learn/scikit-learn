@@ -3,16 +3,19 @@
 Plot class probabilities calculated by the VotingClassifier
 ===========================================================
 
-Plot the class probabilities of the first sample in a toy dataset
-predicted by three different classifiers and averaged by the
-`VotingClassifier`.
+.. currentmodule:: sklearn
 
-First, three examplary classifiers are initialized (`LogisticRegression`,
-`GaussianNB`, and `RandomForestClassifier`) and used to initialize a
-soft-voting `VotingClassifier` with weights `[1, 1, 5]`, which means that
-the predicted probabilities of the `RandomForestClassifier` count 5 times
-as much as the weights of the other classifiers when the averaged probability
-is calculated.
+Plot the class probabilities of the first sample in a toy dataset predicted by
+three different classifiers and averaged by the
+:class:`~ensemble.VotingClassifier`.
+
+First, three examplary classifiers are initialized
+(:class:`~linear_model.LogisticRegression`, :class:`~naive_bayes.GaussianNB`,
+and :class:`~ensemble.RandomForestClassifier`) and used to initialize a
+soft-voting :class:`~ensemble.VotingClassifier` with weights `[1, 1, 5]`, which
+means that the predicted probabilities of the
+:class:`~ensemble.RandomForestClassifier` count 5 times as much as the weights
+of the other classifiers when the averaged probability is calculated.
 
 To visualize the probability weighting, we fit each classifier on the training
 set and plot the predicted class probabilities for the first sample in this

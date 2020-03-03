@@ -144,13 +144,12 @@ if opts.use_hashing:
         # Perform an IDF normalization on the output of HashingVectorizer
         hasher = HashingVectorizer(n_features=opts.n_features,
                                    stop_words='english', alternate_sign=False,
-                                   norm=None, binary=False)
+                                   norm=None)
         vectorizer = make_pipeline(hasher, TfidfTransformer())
     else:
         vectorizer = HashingVectorizer(n_features=opts.n_features,
                                        stop_words='english',
-                                       alternate_sign=False, norm='l2',
-                                       binary=False)
+                                       alternate_sign=False, norm='l2')
 else:
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
                                  min_df=2, stop_words='english',
