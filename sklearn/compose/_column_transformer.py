@@ -323,7 +323,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
 
-        remaining_idx = sorted(list(set(range(self._n_features)) - set(cols)))
+        remaining_idx = sorted(set(range(self._n_features)) - set(cols))
         self._remainder = ('remainder', self.remainder, remaining_idx or None)
 
     @property
