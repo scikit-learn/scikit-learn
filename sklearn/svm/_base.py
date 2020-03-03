@@ -158,8 +158,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
             else:
                 X, y = self._validate_data(X, y, dtype=np.float64,
-                                        order='C', accept_sparse='csr',
-                                        accept_large_sparse=False)
+                                           order='C', accept_sparse='csr',
+                                           accept_large_sparse=False)
 
         y = self._validate_targets(y)
 

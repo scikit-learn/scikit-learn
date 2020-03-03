@@ -1169,7 +1169,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             # by the model fitting itself
             check_X_params = dict(accept_sparse='csc',
                                   dtype=[np.float64, np.float32], copy=False)
-            X, y = self._validate_data(X, y, 
+            X, y = self._validate_data(X, y,
                                        validate_separately=(check_X_params,
                                                             check_y_params))
             if sparse.isspmatrix(X):
@@ -1185,7 +1185,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             check_X_params = dict(accept_sparse='csc',
                                   dtype=[np.float64, np.float32], order='F',
                                   copy=copy_X)
-            X, y = self._validate_data(X, y, 
+            X, y = self._validate_data(X, y,
                                        validate_separately=(check_X_params,
                                                             check_y_params))
             copy_X = False
@@ -1842,7 +1842,7 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        
+
         check_X_params = dict(dtype=[np.float64, np.float32], order='F',
                               copy=self.copy_X and self.fit_intercept)
         check_y_params = dict(ensure_2d=False)

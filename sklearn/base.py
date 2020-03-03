@@ -665,7 +665,7 @@ class TransformerMixin:
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
-    
+
     def _more_tags(self):
         return {'is_supervised': False}
 

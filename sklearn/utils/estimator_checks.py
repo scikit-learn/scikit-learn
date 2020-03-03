@@ -2966,7 +2966,7 @@ def check_supervised_tag_y(name, estimator_orig):
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
-    y = rng.randint(low=0, high=2, size=n_samples)
+    # y = rng.randint(low=0, high=2, size=n_samples)
 
     warning_msg = ("As of scikit-learn 0.23, estimators should have a "
                    "'is_supervised' tag set to the appropriate value. "
