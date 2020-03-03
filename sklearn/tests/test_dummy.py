@@ -5,12 +5,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -567,7 +567,7 @@ def test_classification_sample_weight():
     y = [0, 1, 0]
     sample_weight = [0.1, 1., 0.1]
 
-    clf = DummyClassifier().fit(X, y, sample_weight)
+    clf = DummyClassifier(strategy="stratified").fit(X, y, sample_weight)
     assert_array_almost_equal(clf.class_prior_, [0.2 / 1.2, 1. / 1.2])
 
 
@@ -687,7 +687,7 @@ def test_dummy_classifier_on_3D_array():
     y = [2, 2, 2]
     y_expected = [2, 2, 2]
     y_proba_expected = [[1], [1], [1]]
-    cls = DummyClassifier()
+    cls = DummyClassifier(strategy="stratified")
     cls.fit(X, y)
     y_pred = cls.predict(X)
     y_pred_proba = cls.predict_proba(X)
@@ -708,7 +708,6 @@ def test_dummy_regressor_return_std():
     assert_array_equal(y_pred_list[1], y_std_expected)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize("y,y_test", [
     ([1, 1, 1, 2], [1.25] * 4),
     (np.array([[2, 2],
@@ -757,10 +756,31 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
+@pytest.mark.filterwarnings("ignore:The default value of strategy.*")  # 0.24
+@pytest.mark.parametrize('Dummy', (DummyRegressor, DummyClassifier))
+def test_n_features_in_(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    d = Dummy()
+    assert not hasattr(d, 'n_features_in_')
+    d.fit(X, y)
+    assert d.n_features_in_ is None
+
+
 @pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
 def test_outputs_2d_deprecation(Dummy):
     X = [[1, 2]]
     y = [0]
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="will be removed in version 0.24"):
         Dummy().fit(X, y).outputs_2d_
+
+
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+def test_strategy_stratified_deprecated_for_prior():
+    X, y = [[1, 2]], [0]
+
+    msg = ("The default value of strategy will change from "
+           "stratified to prior in 0.24")
+    with pytest.warns(FutureWarning, match=msg):
+        DummyClassifier().fit(X, y)
