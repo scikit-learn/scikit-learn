@@ -828,6 +828,15 @@ class NuSVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state)
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_class_weight_classifiers': 'class_weight is ignored.'
+            }
+        }
+
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -930,8 +939,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y)
+    >>> regr = SVR(C=1.0, epsilon=0.2)
+    >>> regr.fit(X, y)
     SVR(epsilon=0.2)
 
     See also
@@ -1070,8 +1079,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)
+    >>> regr = NuSVR(C=1.0, nu=0.1)
+    >>> regr.fit(X, y)
     NuSVR(nu=0.1)
 
     See also

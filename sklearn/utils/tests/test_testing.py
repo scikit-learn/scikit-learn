@@ -35,7 +35,6 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container)
 
-from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
@@ -486,11 +485,8 @@ class MockMetaEstimator:
 
 
 def test_check_docstring_parameters():
-    try:
-        import numpydoc  # noqa
-    except ImportError:
-        raise SkipTest(
-            "numpydoc is required to test the docstrings")
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []

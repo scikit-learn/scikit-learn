@@ -82,7 +82,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run "
                   "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
-        random_state = np.random.RandomState(seeds[i])
+        random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False,
                                              random_state=random_state)
 
@@ -405,9 +405,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(
-                random_state, self.bootstrap_features, self.bootstrap,
+                seed, self.bootstrap_features, self.bootstrap,
                 self.n_features_, self._n_samples, self._max_features,
                 self._max_samples)
 
