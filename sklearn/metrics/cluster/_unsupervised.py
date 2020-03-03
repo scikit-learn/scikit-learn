@@ -309,7 +309,7 @@ def davies_bouldin_score(X, labels):
     The minimum score is zero, with lower values indicating better clustering.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
-    
+
     .. versionadded:: 0.20
 
     Parameters

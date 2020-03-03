@@ -1451,7 +1451,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
-        
+
         .. versionadded:: 0.20
 
     Notes

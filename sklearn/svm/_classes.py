@@ -1197,7 +1197,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         We have the relation: decision_function = score_samples - `offset_`.
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
-        
+
         .. versionadded:: 0.20
 
     fit_status_ : int

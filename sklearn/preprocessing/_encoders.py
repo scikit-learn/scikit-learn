@@ -185,7 +185,7 @@ class OneHotEncoder(_BaseEncoder):
           numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
-        
+
         .. versionadded:: 0.20
 
     drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
@@ -321,7 +321,7 @@ class OneHotEncoder(_BaseEncoder):
                 return np.zeros(len(self.categories_), dtype=np.int_)
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else -1
-                                for cats in self.categories_], dtype=np.int_)
+                                 for cats in self.categories_], dtype=np.int_)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "

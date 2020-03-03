@@ -962,7 +962,7 @@ def load_boston(return_X_y=False):
             The physical location of boston csv dataset.
 
             .. versionadded:: 0.20
-            
+
         DESCR : str
             The full description of the dataset.
         feature_names : ndarray

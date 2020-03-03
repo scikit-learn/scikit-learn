@@ -493,7 +493,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
-                          for k, v in parameters.items()))
+                                    for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # Adjust length of sample weights
@@ -1456,7 +1456,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
-        
+
         .. versionadded:: 0.20
 
     Returns
