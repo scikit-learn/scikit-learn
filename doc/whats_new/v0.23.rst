@@ -14,7 +14,6 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
-
 Changed models
 --------------
 
@@ -263,6 +262,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |API| Changed the formatting of values in
+  :meth:`metrics.ConfusionMatrixDisplay.plot` and
+  :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  `Thomas Fan`_.
+
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
   its ``reduce_func`` to not have a return value, enabling in-place operations.
   :pr:`16397` by `Joel Nothman`_.
@@ -378,3 +383,12 @@ Changelog
 - |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
   distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
+Miscellaneous
+.............
+
+- |API| Most estimators now expose a `n_features_in_` attribute. This
+  attribute is equal to the number of features passed to the `fit` method.
+  See `SLEP010
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+  for details. :pr:`16112` by `Nicolas Hug`_.

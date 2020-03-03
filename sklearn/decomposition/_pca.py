@@ -386,8 +386,8 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
-                        copy=self.copy)
+        X = self._validate_data(X, dtype=[np.float64, np.float32],
+                                ensure_2d=True, copy=self.copy)
 
         # Handle n_components==None
         if self.n_components is None:

@@ -156,6 +156,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
+        self.n_features_in_ = None  # No input validation is done for X
+
         check_consistent_length(X, y)
 
         if sample_weight is not None:
@@ -489,6 +491,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                              % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
+        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
