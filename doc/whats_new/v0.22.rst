@@ -712,12 +712,6 @@ Changelog
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
-- |Fix| Fixed a bug in :class:`linear_model.ElasticNetCV`,
-  :class:`linear_model.MultitaskElasticNetCV`, :class:`linear_model.LassoCV`
-  and :class:`linear_model.MultitaskLassoCV` where fitting would fail when
-  using joblib multiprocessing or loky backend. :pr:`14264` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 :mod:`sklearn.metrics`
 ......................
 
