@@ -518,7 +518,7 @@ class PartialDependenceDisplay:
                 self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
             else:
                 self.lines_ = np.empty((n_rows, n_cols, n_instances),
-                                   dtype=np.object)
+                                       dtype=np.object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
 
             axes_ravel = self.axes_.ravel()
