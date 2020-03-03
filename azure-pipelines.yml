@@ -52,6 +52,9 @@ jobs:
         CHECK_WARNINGS: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        SKLEARN_SKIP_NETWORK_TESTS: '0'
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
