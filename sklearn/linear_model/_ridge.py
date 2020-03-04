@@ -537,10 +537,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y,
-                         accept_sparse=_accept_sparse,
-                         dtype=_dtype,
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y,
+                                   accept_sparse=_accept_sparse,
+                                   dtype=_dtype,
+                                   multi_output=True, y_numeric=True)
         if sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ['auto', 'sparse_cg', 'sag']:
                 raise ValueError(
@@ -921,8 +921,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True,
-                         y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1450,8 +1450,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   dtype=[np.float64],
+                                   multi_output=True, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -1618,6 +1619,7 @@ class _BaseRidgeCV(LinearModel):
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
+        self.n_features_in_ = estimator.n_features_in_
 
         return self
 
@@ -1882,8 +1884,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True, y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)

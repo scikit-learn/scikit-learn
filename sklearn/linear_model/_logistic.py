@@ -1339,8 +1339,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=_dtype,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -1812,9 +1813,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 "LogisticRegressionCV."
             )
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=np.float64,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight

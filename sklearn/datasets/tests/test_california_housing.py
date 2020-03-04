@@ -1,48 +1,25 @@
-"""Test the california_housing loader.
-
-Skipped if california_housing is not already downloaded to data_home.
-"""
-
+"""Test the california_housing loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 import pytest
 
-from sklearn.datasets import fetch_california_housing
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
 
-def fetch(*args, **kwargs):
-    return fetch_california_housing(*args, download_if_missing=False, **kwargs)
-
-
-def _is_california_housing_dataset_not_available():
-    try:
-        fetch_california_housing(download_if_missing=False)
-        return False
-    except IOError:
-        return True
-
-
-@pytest.mark.skipif(
-    _is_california_housing_dataset_not_available(),
-    reason='Download California Housing dataset to run this test'
-)
-def test_fetch():
-    data = fetch()
+def test_fetch(fetch_california_housing_fxt):
+    data = fetch_california_housing_fxt()
     assert((20640, 8) == data.data.shape)
     assert((20640, ) == data.target.shape)
 
     # test return_X_y option
-    fetch_func = partial(fetch)
+    fetch_func = partial(fetch_california_housing_fxt)
     check_return_X_y(data, fetch_func)
 
 
-@pytest.mark.skipif(
-    _is_california_housing_dataset_not_available(),
-    reason='Download California Housing dataset to run this test'
-)
-def test_fetch_asframe():
+def test_fetch_asframe(fetch_california_housing_fxt):
     pd = pytest.importorskip('pandas')
-    bunch = fetch(as_frame=True)
+    bunch = fetch_california_housing_fxt(as_frame=True)
     frame = bunch.frame
     assert hasattr(bunch, 'frame') is True
     assert frame.shape == (20640, 9)
@@ -50,11 +27,7 @@ def test_fetch_asframe():
     assert isinstance(bunch.target, pd.Series)
 
 
-@pytest.mark.skipif(
-    _is_california_housing_dataset_not_available(),
-    reason='Download California Housing dataset to run this test'
-)
-def test_pandas_dependency_message():
+def test_pandas_dependency_message(fetch_california_housing_fxt):
     try:
         import pandas  # noqa
         pytest.skip("This test requires pandas to be not installed")
@@ -64,4 +37,4 @@ def test_pandas_dependency_message():
         expected_msg = ('fetch_california_housing with as_frame=True'
                         ' requires pandas')
         with pytest.raises(ImportError, match=expected_msg):
-            fetch_california_housing(as_frame=True)
+            fetch_california_housing_fxt(as_frame=True)

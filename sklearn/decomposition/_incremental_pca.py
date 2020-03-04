@@ -194,8 +194,8 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.noise_variance_ = None
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'lil'],
-                        copy=self.copy, dtype=[np.float64, np.float32])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'lil'],
+                                copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
