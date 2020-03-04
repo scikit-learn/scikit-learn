@@ -186,6 +186,14 @@ def test_load_diabetes():
     check_return_X_y(res, partial(load_diabetes))
 
 
+def test_load_diabetes_raw():
+    res = load_diabetes(standardized=False)
+    assert res.data.shape == (442, 10)
+    assert res.target.size, 442
+    assert len(res.feature_names) == 10
+    assert res.DESCR
+
+
 def test_load_linnerud():
     res = load_linnerud()
     assert res.data.shape == (20, 3)
