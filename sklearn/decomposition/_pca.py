@@ -27,7 +27,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features):
+def _assess_dimension(spectrum, rank, n_samples, n_features):
     """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
@@ -58,6 +58,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
 
+    spectrum_threshold = np.finfo(type(spectrum[0])).eps
+
     pu = -rank * log(2.)
     for i in range(rank):
         pu += (gammaln((n_features - i) / 2.) -
@@ -67,10 +69,14 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     pl = -pl * n_samples / 2.
 
     if rank == n_features:
+        # TODO: this line is never executed because _infer_dimension's
+        # for loop is off by one
         pv = 0
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
+        if spectrum_threshold > v:
+            return -np.inf
         pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
     m = n_features * rank - rank * (rank + 1.) / 2.
@@ -80,6 +86,13 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
+        if spectrum_[i] < spectrum_threshold:
+            # TODO: this line is never executed
+            # (off by one in _infer_dimension)
+            # this break only happens when rank == n_features and
+            # spectrum_[i] < spectrum_threshold, otherwise the early return
+            # above catches this case.
+            break
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
@@ -89,7 +102,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     return ll
 
 
-def _infer_dimension_(spectrum, n_samples, n_features):
+def _infer_dimension(spectrum, n_samples, n_features):
     """Infers the dimension of a dataset of shape (n_samples, n_features)
 
     The dataset is described by its spectrum `spectrum`.
@@ -97,7 +110,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
     n_spectrum = len(spectrum)
     ll = np.empty(n_spectrum)
     for rank in range(n_spectrum):
-        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
+        ll[rank] = _assess_dimension(spectrum, rank, n_samples, n_features)
     return ll.argmax()
 
 
@@ -458,7 +471,7 @@ class PCA(_BasePCA):
         # Postprocess the number of components required
         if n_components == 'mle':
             n_components = \
-                _infer_dimension_(explained_variance_, n_samples, n_features)
+                _infer_dimension(explained_variance_, n_samples, n_features)
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold

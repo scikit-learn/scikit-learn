@@ -8,8 +8,8 @@ from sklearn.utils._testing import assert_allclose
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
-from sklearn.decomposition._pca import _assess_dimension_
-from sklearn.decomposition._pca import _infer_dimension_
+from sklearn.decomposition._pca import _assess_dimension
+from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']
@@ -333,7 +333,7 @@ def test_infer_dim_1():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    ll = np.array([_assess_dimension_(spect, k, n, p) for k in range(p)])
+    ll = np.array([_assess_dimension(spect, k, n, p) for k in range(p)])
     assert ll[1] > ll.max() - .01 * n
 
 
@@ -348,7 +348,7 @@ def test_infer_dim_2():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    assert _infer_dimension_(spect, n, p) > 1
+    assert _infer_dimension(spect, n, p) > 1
 
 
 def test_infer_dim_3():
@@ -361,7 +361,7 @@ def test_infer_dim_3():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    assert _infer_dimension_(spect, n, p) > 2
+    assert _infer_dimension(spect, n, p) > 2
 
 
 @pytest.mark.parametrize(
@@ -568,3 +568,58 @@ def test_pca_n_components_mostly_explained_variance_ratio():
     n_components = pca1.explained_variance_ratio_.cumsum()[-2]
     pca2 = PCA(n_components=n_components).fit(X, y)
     assert pca2.n_components_ == X.shape[1]
+
+
+def test_infer_dim_bad_spec():
+    # Test a spectrum that drops to near zero for PR #16224
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    ret = _infer_dimension(spectrum, n_samples, n_features)
+    assert ret == 0
+
+
+def test_assess_dimension_error_rank_greater_than_features():
+    # Test error when tested rank is greater than the number of features
+    # for PR #16224
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 4
+    rank = 5
+    with pytest.raises(ValueError, match="The tested rank cannot exceed "
+                                         "the rank of the dataset"):
+        _assess_dimension(spectrum, rank, n_samples, n_features)
+
+
+def test_assess_dimension_small_eigenvalues():
+    # Test tiny eigenvalues appropriately when using 'mle'
+    # for  PR #16224
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    rank = 3
+    ret = _assess_dimension(spectrum, rank, n_samples, n_features)
+    assert ret == -np.inf
+
+
+def test_infer_dim_mle():
+    # Test small eigenvalues when 'mle' with pathological 'X' dataset
+    # for PR #16224
+    X, _ = datasets.make_classification(n_informative=1, n_repeated=18,
+                                        n_redundant=1, n_clusters_per_class=1,
+                                        random_state=42)
+    pca = PCA(n_components='mle').fit(X)
+    assert pca.n_components_ == 0
+
+
+def test_fit_mle_too_few_samples():
+    # Tests that an error is raised when the number of samples is smaller
+    # than the number of features during an mle fit for PR #16224
+    X, _ = datasets.make_classification(n_samples=20, n_features=21,
+                                        random_state=42)
+
+    pca = PCA(n_components='mle', svd_solver='full')
+    with pytest.raises(ValueError, match="n_components='mle' is only "
+                                         "supported if "
+                                         "n_samples >= n_features"):
+        pca.fit(X)

@@ -133,6 +133,10 @@ Changelog
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+- |Fix| :func:`decomposition._pca._assess_dimension` now correctly handles small
+   eigenvalues. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
+   :user:`Gelavizh Ahmadi <gelavizh1>` and
+   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
