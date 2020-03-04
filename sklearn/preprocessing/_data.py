@@ -719,8 +719,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             sparse_constructor = (sparse.csr_matrix
                                   if X.format == 'csr' else sparse.csc_matrix)
             counts_nan = sparse_constructor(
-                        (np.isnan(X.data), X.indices, X.indptr),
-                        shape=X.shape).sum(axis=0).A.ravel()
+                (np.isnan(X.data), X.indices, X.indptr),
+                shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
                 self.n_samples_seen_ = (
@@ -1438,6 +1438,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree
@@ -1559,7 +1560,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             if self.include_bias:
                 to_stack.append(np.ones(shape=(n_samples, 1), dtype=X.dtype))
             to_stack.append(X)
-            for deg in range(2, self.degree+1):
+            for deg in range(2, self.degree + 1):
                 Xp_next = _csr_polynomial_expansion(X.data, X.indices,
                                                     X.indptr, X.shape[1],
                                                     self.interaction_only,
@@ -2310,7 +2311,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                        np.nanpercentile(column_data, references))
+                    np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
         # due to floating-point precision error in `np.nanpercentile`,
         # make sure the quantiles are monotonically increasing
@@ -2414,9 +2415,9 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             # used (the upper when we do ascending, and the
             # lower for descending). We take the mean of these two
             X_col[isfinite_mask] = .5 * (
-                np.interp(X_col_finite, quantiles, self.references_)
-                - np.interp(-X_col_finite, -quantiles[::-1],
-                            -self.references_[::-1]))
+                    np.interp(X_col_finite, quantiles, self.references_)
+                    - np.interp(-X_col_finite, -quantiles[::-1],
+                                -self.references_[::-1]))
         else:
             X_col[isfinite_mask] = np.interp(X_col_finite,
                                              self.references_, quantiles)
@@ -2468,7 +2469,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         if self.output_distribution not in ('normal', 'uniform'):
             raise ValueError("'output_distribution' has to be either 'normal'"
                              " or 'uniform'. Got '{}' instead.".format(
-                                 self.output_distribution))
+                self.output_distribution))
 
         return X
 
@@ -2766,6 +2767,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
+
     def __init__(self, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
