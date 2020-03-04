@@ -837,6 +837,8 @@ class SGDClassifier(BaseSGDClassifier):
             training loss by tol or fail to increase validation score by tol if
             early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
@@ -1428,6 +1430,8 @@ class SGDRegressor(BaseSGDRegressor):
             training loss by tol or fail to increase validation score by tol if
             early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
@@ -1523,6 +1527,7 @@ class SGDRegressor(BaseSGDRegressor):
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
+
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
