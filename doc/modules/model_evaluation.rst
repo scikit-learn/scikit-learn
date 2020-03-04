@@ -308,6 +308,13 @@ Some of these are restricted to the binary classification case:
    precision_recall_curve
    roc_curve
 
+Others are restricted to the multiclass case:
+
+.. autosummary::
+   :template: function.rst
+
+   top_k_accuracy_score
+
 
 Others also work in the multiclass case:
 
@@ -441,6 +448,46 @@ In the multilabel case with binary label indicators: ::
   * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. _top_k_accuracy_score:
+
+Top-k Accuracy score
+--------------------
+
+The :func:`top_k_accuracy_score` function computes the
+`accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_ in the
+difference that for each sample, ``k`` attempts are allowed to find the correct
+response. Either the fraction (default) or the count (normalize=False) of
+correct predictions is returned.
+
+The function covers the multiclass classification case but not the binary and
+multilabel cases.
+
+If :math:`\hat{y}_{i,j}` is the predicted value of the :math:`i`-th sample for
+the :math:`j`-th largest predicted score and :math:`y_i` is the corresponding
+true value, then the fraction of correct predictions over
+:math:`n_\text{samples}` is defined as
+
+.. math::
+
+   \texttt{top-k accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{y}_{i,j} = y_i)
+
+where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
+`indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import top_k_accuracy_score
+  >>> y_true = np.array([0, 1, 2, 2])
+  >>> y_score = np.array([[0.5, 0.2, 0.2],
+  ...                     [0.3, 0.4, 0.2],
+  ...                     [0.2, 0.4, 0.3],
+  ...                     [0.7, 0.2, 0.1]])
+  >>> top_k_accuracy_score(y_true, y_score, k=2)
+  0.75
+  >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
+  3
+  >>> top_k_accuracy_score([0]*4, y_score, k=2)
+  0.75
 
 .. _balanced_accuracy_score:
 
