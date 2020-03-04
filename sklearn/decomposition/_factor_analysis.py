@@ -168,7 +168,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components

@@ -121,7 +121,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
                           " removed in 0.25.", FutureWarning)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
         return self

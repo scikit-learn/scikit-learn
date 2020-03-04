@@ -22,7 +22,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
-from ._sgd_fast import plain_sgd, average_sgd
+from ._sgd_fast import _plain_sgd
 from ..utils import compute_class_weight
 from ._sgd_fast import Hinge
 from ._sgd_fast import SquaredHinge
@@ -422,39 +422,21 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
 
     tol = est.tol if est.tol is not None else -np.inf
 
-    if not est.average:
-        result = plain_sgd(coef, intercept, est.loss_function_,
-                           penalty_type, alpha, C, est.l1_ratio,
-                           dataset, validation_mask, est.early_stopping,
-                           validation_score_cb, int(est.n_iter_no_change),
-                           max_iter, tol, int(est.fit_intercept),
-                           int(est.verbose), int(est.shuffle), seed,
-                           pos_weight, neg_weight,
-                           learning_rate_type, est.eta0,
-                           est.power_t, est.t_, intercept_decay)
+    coef, intercept, average_coef, average_intercept, n_iter_ = _plain_sgd(
+        coef, intercept, average_coef, average_intercept, est.loss_function_,
+        penalty_type, alpha, C, est.l1_ratio, dataset, validation_mask,
+        est.early_stopping, validation_score_cb, int(est.n_iter_no_change),
+        max_iter, tol, int(est.fit_intercept), int(est.verbose),
+        int(est.shuffle), seed, pos_weight, neg_weight, learning_rate_type,
+        est.eta0, est.power_t, est.t_, intercept_decay, est.average)
 
-    else:
-        standard_coef, standard_intercept, average_coef, average_intercept, \
-            n_iter_ = average_sgd(coef, intercept, average_coef,
-                                  average_intercept, est.loss_function_,
-                                  penalty_type, alpha, C, est.l1_ratio,
-                                  dataset, validation_mask, est.early_stopping,
-                                  validation_score_cb,
-                                  int(est.n_iter_no_change), max_iter, tol,
-                                  int(est.fit_intercept), int(est.verbose),
-                                  int(est.shuffle), seed, pos_weight,
-                                  neg_weight, learning_rate_type, est.eta0,
-                                  est.power_t, est.t_, intercept_decay,
-                                  est.average)
-
+    if est.average:
         if len(est.classes_) == 2:
             est._average_intercept[0] = average_intercept
         else:
             est._average_intercept[i] = average_intercept
 
-        result = standard_coef, standard_intercept, n_iter_
-
-    return result
+    return coef, intercept, n_iter_
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
@@ -546,8 +528,9 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
@@ -1120,8 +1103,9 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64,
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse="csr", copy=False,
+                                   order='C', dtype=np.float64,
+                                   accept_large_sparse=False)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
@@ -1188,12 +1172,6 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         else:
             self.coef_ = None
             self.intercept_ = None
-
-        if self.average > 0:
-            self._standard_intercept = self.intercept_
-            self._standard_coef = self.coef_
-            self._average_coef = None
-            self._average_intercept = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
@@ -1298,66 +1276,56 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         tol = self.tol if self.tol is not None else -np.inf
 
-        if self.average > 0:
-            self._standard_coef, self._standard_intercept, \
-                self._average_coef, self._average_intercept, self.n_iter_ =\
-                average_sgd(self._standard_coef,
-                            self._standard_intercept[0],
-                            self._average_coef,
-                            self._average_intercept[0],
-                            loss_function,
-                            penalty_type,
-                            alpha, C,
-                            self.l1_ratio,
-                            dataset,
-                            validation_mask, self.early_stopping,
-                            validation_score_cb,
-                            int(self.n_iter_no_change),
-                            max_iter, tol,
-                            int(self.fit_intercept),
-                            int(self.verbose),
-                            int(self.shuffle),
-                            seed,
-                            1.0, 1.0,
-                            learning_rate_type,
-                            self.eta0, self.power_t, self.t_,
-                            intercept_decay, self.average)
+        if self.average:
+            coef = self._standard_coef
+            intercept = self._standard_intercept
+            average_coef = self._average_coef
+            average_intercept = self._average_intercept
+        else:
+            coef = self.coef_
+            intercept = self.intercept_
+            average_coef = None  # Not used
+            average_intercept = [0]  # Not used
 
-            self._average_intercept = np.atleast_1d(self._average_intercept)
-            self._standard_intercept = np.atleast_1d(self._standard_intercept)
-            self.t_ += self.n_iter_ * X.shape[0]
+        coef, intercept, average_coef, average_intercept, self.n_iter_ = \
+            _plain_sgd(coef,
+                       intercept[0],
+                       average_coef,
+                       average_intercept[0],
+                       loss_function,
+                       penalty_type,
+                       alpha, C,
+                       self.l1_ratio,
+                       dataset,
+                       validation_mask, self.early_stopping,
+                       validation_score_cb,
+                       int(self.n_iter_no_change),
+                       max_iter, tol,
+                       int(self.fit_intercept),
+                       int(self.verbose),
+                       int(self.shuffle),
+                       seed,
+                       1.0, 1.0,
+                       learning_rate_type,
+                       self.eta0, self.power_t, self.t_,
+                       intercept_decay, self.average)
+
+        self.t_ += self.n_iter_ * X.shape[0]
+
+        if self.average > 0:
+            self._average_intercept = np.atleast_1d(average_intercept)
+            self._standard_intercept = np.atleast_1d(intercept)
 
             if self.average <= self.t_ - 1.0:
-                self.coef_ = self._average_coef
-                self.intercept_ = self._average_intercept
+                # made enough updates for averaging to be taken into account
+                self.coef_ = average_coef
+                self.intercept_ = np.atleast_1d(average_intercept)
             else:
-                self.coef_ = self._standard_coef
-                self.intercept_ = self._standard_intercept
+                self.coef_ = coef
+                self.intercept_ = np.atleast_1d(intercept)
 
         else:
-            self.coef_, self.intercept_, self.n_iter_ = \
-                plain_sgd(self.coef_,
-                          self.intercept_[0],
-                          loss_function,
-                          penalty_type,
-                          alpha, C,
-                          self.l1_ratio,
-                          dataset,
-                          validation_mask, self.early_stopping,
-                          validation_score_cb,
-                          int(self.n_iter_no_change),
-                          max_iter, tol,
-                          int(self.fit_intercept),
-                          int(self.verbose),
-                          int(self.shuffle),
-                          seed,
-                          1.0, 1.0,
-                          learning_rate_type,
-                          self.eta0, self.power_t, self.t_,
-                          intercept_decay)
-
-            self.t_ += self.n_iter_ * X.shape[0]
-            self.intercept_ = np.atleast_1d(self.intercept_)
+            self.intercept_ = np.atleast_1d(intercept)
 
 
 class SGDRegressor(BaseSGDRegressor):
