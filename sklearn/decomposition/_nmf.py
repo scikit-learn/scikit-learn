@@ -1314,8 +1314,8 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'),
-                        dtype=[np.float64, np.float32])
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
 
         W, H, A, B, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,

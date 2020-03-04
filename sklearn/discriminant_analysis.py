@@ -190,7 +190,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Intercept term.
 
     covariance_ : array-like of shape (n_features, n_features)
-        Covariance matrix (shared by all classes).
+        Covariance matrix (shared by all classes). Only available
+        `store_covariance` is True.
 
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
@@ -423,8 +424,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array-like of shape (n_samples,)
             Target values.
         """
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
-                         dtype=[np.float64, np.float32])
+        X, y = self._validate_data(X, y, ensure_min_samples=2, estimator=self,
+                                   dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -579,7 +580,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     covariance_ : list of array-like of shape (n_features, n_features)
-        Covariance matrices of each class.
+        Covariance matrices of each class. Only available
+        `store_covariance` is True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class means.
@@ -645,7 +647,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             Target values (integers)
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape

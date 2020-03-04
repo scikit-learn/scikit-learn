@@ -579,8 +579,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     Returns
     -------
 
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : np.array, scipy.sparse.csr_matrix of floats, or pandas DataFrame
             The feature matrix. Categorical features are encoded as ordinals.
