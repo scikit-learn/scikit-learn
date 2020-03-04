@@ -1921,7 +1921,6 @@ def test_normalizer_max():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
     X_sparse_unpruned = sparse.csr_matrix(X_dense)
-    X_all_neg = -np.abs(X_dense)
 
     # set the row number 3 to zero
     X_dense[3, :] = 0.0
@@ -1935,7 +1934,7 @@ def test_normalizer_max():
     X_sparse_pruned = sparse.csr_matrix(X_dense)
 
     # check inputs that support the no-copy optim
-    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned, X_all_neg):
+    for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
 
         normalizer = Normalizer(norm='max', copy=True)
         X_norm1 = normalizer.transform(X)
@@ -1949,30 +1948,22 @@ def test_normalizer_max():
 
         for X_norm in (X_norm1, X_norm2):
             row_maxs = X_norm.max(axis=1)
+            for i in range(3):
+                assert_almost_equal(row_maxs[i], 1.0)
+            assert_almost_equal(row_maxs[3], 0.0)
 
-            if X.max() > 0:
-                # skip if the array is all negative
-                for i in range(3):
-                    assert_almost_equal(row_maxs[i], 1.0)
-                assert_almost_equal(row_maxs[3], 0.0)
+    # check input for which copy=False won't prevent a copy
+    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
+        X = init(X_dense)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
-            # assert the sign does not change after normalization
-            assert_array_almost_equal(
-                np.sign(X_norm1.ravel()), np.sign(toarray(X).ravel()))
+        assert X_norm is not X
+        assert isinstance(X_norm, sparse.csr_matrix)
 
-        # check input for which copy=False won't prevent a copy
-        for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
-            X = init(X_dense)
-            X_norm = normalizer = \
-                Normalizer(norm='l2', copy=False).transform(X)
-
-            assert X_norm is not X
-            assert isinstance(X_norm, sparse.csr_matrix)
-            X_norm = toarray(X_norm)
-            if row_maxs.max() > 0:
-                for i in range(3):
-                    assert_almost_equal(row_maxs[i], 1.0)
-                assert_almost_equal(la.norm(X_norm[3]), 0.0)
+        X_norm = toarray(X_norm)
+        for i in range(3):
+            assert_almost_equal(row_maxs[i], 1.0)
+        assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
 def test_normalize():
