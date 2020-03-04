@@ -1421,8 +1421,8 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     return np.average(gain, weights=sample_weight)
 
 
-def top_k_accuracy_score(y_true, y_score, k=2, normalize=True):
-    """Top k Accuracy classification score.
+def top_k_accuracy_score(y_true, y_score, k=3, normalize=True):
+    """Top k Accuracy multiclass classification score.
 
     This metric computes the number of times where the correct label is among
     the top `k` labels predicted (ranked by predicted scores). Note that
@@ -1439,7 +1439,7 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True):
         non-thresholded decision values as returned by :term:`predict_proba` or
         :term:`decision_function`, respectively.
 
-    k : int, default=2
+    k : int, default=3
         Number of guesses allowed to find the correct label.
 
     normalize : bool, default=True
@@ -1488,22 +1488,23 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True):
         )
 
     check_consistent_length(y_true, y_score)
-    y_type = type_of_target(y_true)
+    y_true_type = type_of_target(y_true)
 
-    if y_type not in {'binary', 'multiclass'}:
+    if y_true_type not in {'binary', 'multiclass'}:
         raise ValueError(
-            f"Target type must be 'binary' or 'multiclass', got '{y_type}' "
-            "instead."
+            f"'y_true' type must be 'binary' or 'multiclass', got "
+            f"'{y_true_type}' instead."
         )
 
     y_true = column_or_1d(y_true)
-    y_score = check_array(y_score)
+    y_score = check_array(y_score, ensure_min_features=3)
 
     n_classes = y_score.shape[1]
-    if k == n_classes:
+    if k >= n_classes:
         raise ValueError(
-            f"'k'='n_classes' ({n_classes}) results in a perfect score and is "
-            "therefore meaningless."
+            f"'k' ({k}) can't be greater than or equal to 'n_classes' "
+            f"({n_classes}). Will result in a perfect score and is therefore "
+            "meaningless."
         )
 
     infered_n_classes = y_true.max() + 1

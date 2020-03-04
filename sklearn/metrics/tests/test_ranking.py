@@ -1501,14 +1501,14 @@ def test_top_k_accuracy_score(y_true, k, normalize, true_score):
     (
         [.57, 1, 2],
         2,
-        "Target type must be 'binary' or 'multiclass', got 'continuous' "
+        "'y_true' type must be 'binary' or 'multiclass', got 'continuous' "
         "instead."
     ),
     (
         [0, 1, 2],
         3,
-        r"'k'='n_classes' \(3\) results in a perfect score and is therefore "
-        "meaningless."
+        r"'k' \(3\) can't be greater than or equal to 'n_classes' \(3\). Will "
+        "result in a perfect score and is therefore meaningless."
     ),
     (
         [3, 1, 2],
