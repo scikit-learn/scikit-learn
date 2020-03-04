@@ -1421,7 +1421,7 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     return np.average(gain, weights=sample_weight)
 
 
-def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
+def top_k_accuracy_score(y_true, y_score, k=2, normalize=True):
     """Top k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
@@ -1438,7 +1438,7 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
         non-thresholded decision values as returned by :term:`predict_proba` or
         :term:`decision_function`.
 
-    k : int, default=5
+    k : int, default=2
         Number of guesses allowed to find the correct label.
 
     normalize : bool, default=True
@@ -1448,8 +1448,9 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     Returns
     -------
     score : float
-        The best performance is 1 with `normalize == True` and the number of
-        samples with `normalize == False`.
+        The top-k accuracy score. The best performance is 1 with
+        `normalize == True` and the number of samples with
+        `normalize == False`.
 
     See also
     --------
@@ -1457,9 +1458,10 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
 
     Notes
     -----
-    In cases where two or more labels are assigned equal predicted scores
-    labels with smallest indices will be chosen first. Then the result might
-    be incorrect if the good label falls at the treshold because of that.
+    In cases where two or more labels are assigned equal predicted scores,
+    the labels with the smallest indices will be chosen first. Then, the result
+    might be incorrect if the correct label falls after the threshold because
+    of that.
 
     Examples
     --------
@@ -1496,16 +1498,18 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     y_true = column_or_1d(y_true)
     y_score = check_array(y_score)
 
-    if k == y_score.shape[1]:
+    n_classes = y_score.shape[1]
+    if k == n_classes:
         raise ValueError(
-            "'k'='n_classes' results in a perfect score and is therefore "
-            "meaningless."
+            f"'k'='n_classes' ({n_classes}) results in a perfect score and is "
+            "therefore meaningless."
         )
 
-    if y_true.max() >= y_score.shape[1]:
+    infered_n_classes = y_true.max() + 1
+    if infered_n_classes > n_classes:
         raise ValueError(
-            "Number of classes in 'y_true' is greater than the number of "
-            "columns in 'y_score'."
+            f"Number of classes in 'y_true' {infered_n_classes} is greater "
+            f"than the number of columns in 'y_score' {n_classes}."
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)

@@ -1502,14 +1502,14 @@ def test_top_k_accuracy_score(k, expected_score):
     (
         [0, 1, 2],
         3,
-        "'k'='n_classes' results in a perfect score and is therefore "
+        r"'k'='n_classes' \(3\) results in a perfect score and is therefore "
         "meaningless."
     ),
     (
         [3, 1, 2],
         2,
-        "Number of classes in 'y_true' is greater than the number of columns "
-        "in 'y_score'."
+        "Number of classes in 'y_true' (4) is greater than the number of "
+        "columns in 'y_score' (3)."
     ),
 ])
 def test_top_k_accuracy_score_error(y_true, k, msg):
