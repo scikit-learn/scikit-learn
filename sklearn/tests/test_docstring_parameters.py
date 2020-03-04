@@ -211,7 +211,11 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
+    skipped_attributes = {'n_features_in_'}
+
     for attr in attributes:
+        if attr.name in skipped_attributes:
+            continue
         desc = ' '.join(attr.desc).lower()
         # As certain attributes are present "only" if a certain parameter is
         # provided, this checks if the word "only" is present in the attribute
@@ -244,5 +248,6 @@ def test_fit_docstring_attributes(name, Estimator):
                 and not k.startswith('_')]
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
+    undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
     assert not undocumented_attrs,\
         "Undocumented attributes: {}".format(undocumented_attrs)
