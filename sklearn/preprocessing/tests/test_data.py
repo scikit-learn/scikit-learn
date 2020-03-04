@@ -89,7 +89,7 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
         assert (i + 1) * chunk_size == n_samples_seen
     else:
         assert (i * chunk_size + (batch_stop - batch_start) ==
-                n_samples_seen)
+                     n_samples_seen)
 
 
 def test_polynomial_features():
@@ -626,6 +626,7 @@ def test_partial_fit_sparse_input():
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     for X in [X_csr, X_csc]:
+
         X_null = null_transform.partial_fit(X).transform(X)
         assert_array_equal(X_null.data, X.data)
         X_orig = null_transform.inverse_transform(X_null)
@@ -639,6 +640,7 @@ def test_standard_scaler_trasform_with_partial_fit():
 
     scaler_incr = StandardScaler()
     for i, batch in enumerate(gen_batches(X.shape[0], 1)):
+
         X_sofar = X[:(i + 1), :]
         chunks_copy = X_sofar.copy()
         scaled_batch = StandardScaler().fit_transform(X_sofar)
@@ -1051,7 +1053,7 @@ def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
     with pytest.raises(ValueError, match="Input contains infinity "
-                                         "or a value too large"):
+                       "or a value too large"):
         scale(X)
 
 
@@ -1284,8 +1286,8 @@ def test_quantile_transform_sparse_ignore_zeros():
 
     # dense case -> warning raise
     assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
-                                      " only with sparse matrix. This parameter has no"
-                                      " effect.", transformer.fit, X)
+                         " only with sparse matrix. This parameter has no"
+                         " effect.", transformer.fit, X)
 
     X_expected = np.array([[0, 0],
                            [0, 0],
@@ -1494,15 +1496,15 @@ def test_quantile_transform_bounds():
     transformer = QuantileTransformer()
     transformer.fit(X)
     assert (transformer.transform([[-10]]) ==
-            transformer.transform([[np.min(X)]]))
+                 transformer.transform([[np.min(X)]]))
     assert (transformer.transform([[10]]) ==
-            transformer.transform([[np.max(X)]]))
+                 transformer.transform([[np.max(X)]]))
     assert (transformer.inverse_transform([[-10]]) ==
-            transformer.inverse_transform(
-                [[np.min(transformer.references_)]]))
+                 transformer.inverse_transform(
+                     [[np.min(transformer.references_)]]))
     assert (transformer.inverse_transform([[10]]) ==
-            transformer.inverse_transform(
-                [[np.max(transformer.references_)]]))
+                 transformer.inverse_transform(
+                     [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():
@@ -1516,7 +1518,7 @@ def test_quantile_transform_and_inverse():
 
 
 def test_quantile_transform_nan():
-    X = np.array([[np.nan, 0, 0, 1],
+    X = np.array([[np.nan, 0,  0, 1],
                   [np.nan, np.nan, 0, 0.5],
                   [np.nan, 1, 1, 0]])
 
@@ -1700,17 +1702,17 @@ def test_maxabs_scaler_zero_variance_features():
 
 def test_maxabs_scaler_large_negative_value():
     # Check MaxAbsScaler on toy data with a large negative value
-    X = [[0., 1., +0.5, -1.0],
-         [0., 1., -0.3, -0.5],
-         [0., 1., -100.0, 0.0],
-         [0., 0., +0.0, -2.0]]
+    X = [[0., 1.,   +0.5, -1.0],
+         [0., 1.,   -0.3, -0.5],
+         [0., 1., -100.0,  0.0],
+         [0., 0.,   +0.0, -2.0]]
 
     scaler = MaxAbsScaler()
     X_trans = scaler.fit_transform(X)
-    X_expected = [[0., 1., 0.005, -0.5],
-                  [0., 1., -0.003, -0.25],
-                  [0., 1., -1.0, 0.0],
-                  [0., 0., 0.0, -1.0]]
+    X_expected = [[0., 1.,  0.005,    -0.5],
+                  [0., 1., -0.003,    -0.25],
+                  [0., 1., -1.0,       0.0],
+                  [0., 0.,  0.0,      -1.0]]
     assert_array_almost_equal(X_trans, X_expected)
 
 
@@ -1787,9 +1789,9 @@ def test_maxabs_scaler_partial_fit():
                                   scaler_incr_csc.max_abs_)
         assert scaler_batch.n_samples_seen_ == scaler_incr.n_samples_seen_
         assert (scaler_batch.n_samples_seen_ ==
-                scaler_incr_csr.n_samples_seen_)
+                     scaler_incr_csr.n_samples_seen_)
         assert (scaler_batch.n_samples_seen_ ==
-                scaler_incr_csc.n_samples_seen_)
+                     scaler_incr_csc.n_samples_seen_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csr.scale_)
         assert_array_almost_equal(scaler_batch.scale_, scaler_incr_csc.scale_)
@@ -1998,7 +2000,7 @@ def test_normalize():
                 if norm == 'l1':
                     row_sums = np.abs(X_norm).sum(axis=1)
                 else:
-                    X_norm_squared = X_norm ** 2
+                    X_norm_squared = X_norm**2
                     row_sums = X_norm_squared.sum(axis=1)
 
                 assert_array_almost_equal(row_sums, ones)
