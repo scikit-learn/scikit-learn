@@ -1482,8 +1482,8 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True):
     """
     if k == 1:
         raise ValueError(
-            "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use that "
-            "method instead."
+            "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use "
+            "that method instead."
         )
 
     check_consistent_length(y_true, y_score)
