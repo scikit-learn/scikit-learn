@@ -410,7 +410,11 @@ dummy_classification_data = make_classification(random_state=0)
       'All entries of features must be less than '),
      (dummy_classification_data,
       {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
-      'feature_names should not contain duplicates')]
+      'feature_names should not contain duplicates'),
+     (dummy_classification_data, {'features': [(1, 2)], 'individual': True},
+      'Each entry in features must be either an int or'),
+     (dummy_classification_data, {'features': [(1, 2)], 'individual': 'both'},
+      'Each entry in features must be either an int or')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
