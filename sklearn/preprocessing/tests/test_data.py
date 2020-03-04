@@ -1961,7 +1961,8 @@ def test_normalizer_max():
         X_norm = normalizer.transform(X)
         assert X_norm is not X
         X_norm = toarray(X_norm)
-        assert_array_equal(np.sign(X_norm).ravel(), np.sign(toarray(X)).ravel())
+        assert_array_equal(
+            np.sign(X_norm).ravel(), np.sign(toarray(X)).ravel())
 
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
