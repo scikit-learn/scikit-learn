@@ -1431,7 +1431,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True):
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True labels. Expected be a sequence of int in the range
+        True labels. Expected to be a sequence of int in the range
         (0, n_classes - 1).
 
     y_score : array-like of shape (n_samples, n_classes)
