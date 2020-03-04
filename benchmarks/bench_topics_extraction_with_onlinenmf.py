@@ -27,6 +27,7 @@ complexity is polynomial in NMF.
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 import zipfile as zp
 from bs4 import BeautifulSoup
@@ -34,11 +35,11 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF
 
-n_samples = range(500, 2500, 1000)
-n_features = range(500, 2500, 1000)
-batch_size = 1000
+n_samples = range(500, 2500, 2000)
+n_features = range(500, 2500, 2000)
+batch_size = 500
 n_components = 10
-n_top_words = 20
+#n_top_words = 20
 
 def print_top_words(model, feature_names, n_top_words):
     for topic_idx, topic in enumerate(model.components_):
@@ -55,7 +56,7 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
+with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -71,18 +72,13 @@ with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
             data.append(text)
 print("done in %0.3fs." % (time() - t0))
 
-fig = plt.figure()
+fig = plt.figure(constrained_layout=True)
+spec = gridspec.GridSpec(ncols=6, nrows=2, figure=fig)
 
-ax1 = fig.add_subplot(221, ylabel = "time - gen. KL divergence",
-                  title = "standard NMF")
-ax1.tick_params(labelbottom=False)
-ax2 = fig.add_subplot(222, sharey = ax1,
-                  title = "online NMF")
-ax2.tick_params(labelbottom=False, labelleft=False)
-#ax3 = fig.add_subplot(223, ylabel = "time - Frobenius norm",
-#                  xlabel = "n_samples", sharex = ax1)
-#ax4 = fig.add_subplot(224, xlabel = "n_samples", sharex = ax2, sharey = ax3)
-#ax4.tick_params(labelleft=False)
+ylabel = "time - gen. KL divergence"
+xlabel = "n_samples"
+
+ax = []
 
 for j in range(len(n_features)):
   timesFr = np.zeros(len(n_samples))
@@ -145,9 +141,9 @@ for j in range(len(n_features)):
     timesKL[i] = time() - t0
     print("done in %0.3fs." % (timesKL[i]))
 
-    print("\nTopics in NMF model:")
-    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-    print_top_words(nmf, tfidf_feature_names, n_top_words)
+#    print("\nTopics in NMF model:")
+#    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+#    print_top_words(nmf, tfidf_feature_names, n_top_words)
 
     # Fit the NMF model KL
     print("Fitting the online NMF model (generalized Kullback-Leibler "
@@ -162,18 +158,24 @@ for j in range(len(n_features)):
     timesmbKL[i] = time() - t0
     print("done in %0.3fs." % (timesmbKL[i]))
 
-    print("\nTopics in NMF model:")
-    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-    print_top_words(nmf, tfidf_feature_names, n_top_words)
+#    print("\nTopics in NMF model:")
+#    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+#    print_top_words(nmf, tfidf_feature_names, n_top_words)
+
+  row = int(j / 2)
+  col = j % 2
+  print(row, col)
+  ax = fig.add_subplot(spec[row:col])
+  plt.grid(True)
 
   str1 = "n_Ftrs " + str(n_features[j]) 
-  ax1.plot(n_samples, timesKL)
-  ax2.plot(n_samples, timesmbKL, label = str1)
-#  ax3.plot(n_samples, timesFr)
-#  ax4.plot(n_samples, timesmbFr)
+  ax.plot(n_samples, timesKL)
+  ax.plot(n_samples, timesmbKL, label = str1)
 
-ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+str1 += "\nbatch size: " + str(batch_size) + \
+        "\nn of components: " + str(n_components)
 
-plt.subplots_adjust(wspace=0, hspace=0, right=0.7)
+ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+
 plt.savefig('bench_topics.png')
 plt.show()
