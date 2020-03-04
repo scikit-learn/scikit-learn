@@ -55,7 +55,7 @@ class CCA(_UnstableArchMixin, _PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_ : array, [p, q]
+    coef_ : array of shape (p, q)
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
