@@ -147,6 +147,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.20
 
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
