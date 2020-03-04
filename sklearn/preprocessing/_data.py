@@ -1728,7 +1728,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         elif norm == 'l2':
             norms = row_norms(X)
         elif norm == 'max':
-            norms = np.max(X, axis=1).abs()
+            norms = np.abs(np.max(X, axis=1))
         norms = _handle_zeros_in_scale(norms, copy=False)
         X /= norms[:, np.newaxis]
 
