@@ -169,7 +169,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.3.1 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging
+  joblib packaging
 
 source activate testenv
 pip install sphinx-gallery
