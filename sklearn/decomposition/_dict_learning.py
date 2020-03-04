@@ -1447,6 +1447,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
         self.iter_offset_ = self.n_iter
+        self.random_state_ = random_state
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):

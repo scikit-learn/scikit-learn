@@ -145,6 +145,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The

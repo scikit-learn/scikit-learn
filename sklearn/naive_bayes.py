@@ -1147,18 +1147,19 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes,
                                    sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_X(self, X):
         X = check_array(X, dtype='int', accept_sparse=False,
                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
         X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
                                    force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):

@@ -190,7 +190,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Intercept term.
 
     covariance_ : array-like of shape (n_features, n_features)
-        Covariance matrix (shared by all classes).
+        Covariance matrix (shared by all classes). Only available
+        `store_covariance` is True.
 
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
@@ -579,7 +580,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     covariance_ : list of array-like of shape (n_features, n_features)
-        Covariance matrices of each class.
+        Covariance matrices of each class. Only available
+        `store_covariance` is True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class means.

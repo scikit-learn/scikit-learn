@@ -1485,14 +1485,15 @@ class SGDRegressor(BaseSGDRegressor):
         The intercept term.
 
     average_coef_ : ndarray of shape (n_features,)
-        Averaged weights assigned to the features.
+        Averaged weights assigned to the features. Only available
+        if ``average=True``.
 
         .. deprecated:: 0.23
             Attribute ``average_coef_`` was deprecated
             in version 0.23 and will be removed in 0.25.
 
     average_intercept_ : ndarray of shape (1,)
-        The averaged intercept term.
+        The averaged intercept term. Only available if ``average=True``.
 
         .. deprecated:: 0.23
             Attribute ``average_intercept_`` was deprecated
