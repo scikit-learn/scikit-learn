@@ -306,6 +306,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         - individual='both', tuple of ndarray
             Tuple containing the results when individual=False and
             individual=True
+
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
