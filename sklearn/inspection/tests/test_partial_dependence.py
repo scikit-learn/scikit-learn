@@ -63,11 +63,11 @@ iris = load_iris()
 
 
 @pytest.mark.parametrize('Estimator, method, data', [
-    (GradientBoostingClassifier, 'recursion', binary_classification_data),
-    (GradientBoostingClassifier, 'recursion', multiclass_classification_data),
+    (GradientBoostingClassifier, 'auto', binary_classification_data),
+    (GradientBoostingClassifier, 'auto', multiclass_classification_data),
     (GradientBoostingClassifier, 'brute', binary_classification_data),
     (GradientBoostingClassifier, 'brute', multiclass_classification_data),
-    (GradientBoostingRegressor, 'recursion', regression_data),
+    (GradientBoostingRegressor, 'auto', regression_data),
     (GradientBoostingRegressor, 'brute', regression_data),
     (DecisionTreeRegressor, 'brute', regression_data),
     (LinearRegression, 'brute', regression_data),
@@ -78,8 +78,9 @@ iris = load_iris()
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
+@pytest.mark.parametrize('individual', (False, True, 'both'))
 def test_output_shape(Estimator, method, data, grid_resolution,
-                      features):
+                      features, individual):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -92,17 +93,26 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
     # classical regression_data.
     (X, y), n_targets = data
+    n_instances = X.shape[0]
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, X=X, features=features,
-                                   method=method,
+                                   method=method, individual= individual,
                                    grid_resolution=grid_resolution)
 
-    expected_pdp_shape = (n_targets, *[grid_resolution
-                                       for _ in range(len(features))])
-    expected_axes_shape = (len(features), grid_resolution)
+    expected_pdp_shape = (n_targets,
+                          *[grid_resolution for _ in range(len(features))])
+    expected_ice_shape = (n_targets, n_instances,
+                          *[grid_resolution for _ in range(len(features))])
+    if individual is False:
+        assert pdp.shape == expected_pdp_shape
+    elif individual is True:
+        assert pdp.shape == expected_ice_shape
+    else:  # 'both'
+        assert pdp[0].shape == expected_pdp_shape
+        assert pdp[1].shape == expected_ice_shape
 
-    assert pdp.shape == expected_pdp_shape
+    expected_axes_shape = (len(features), grid_resolution)
     assert axes is not None
     assert np.asarray(axes).shape == expected_axes_shape
 
