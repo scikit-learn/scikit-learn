@@ -221,6 +221,13 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |MajorFeature| Added generalized linear models (GLM) with non normal error
+  distributions, including :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor` and :class:`linear_model.TweedieRegressor`
+  which use Poisson, Gamma and Tweedie distributions respectively.
+  :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
+  and `Olivier Grisel`_.
+
 - |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
   :class:`linear_model:Lasso` for dense feature matrix `X`.
   :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
