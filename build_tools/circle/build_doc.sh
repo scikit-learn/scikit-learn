@@ -172,6 +172,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib packaging
 
 source activate testenv
+pip install memory_profiler
 pip install sphinx-gallery
 pip install numpydoc
 
