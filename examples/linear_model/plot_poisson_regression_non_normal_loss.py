@@ -437,7 +437,7 @@ ax.set(
     xlabel='Fraction of exposure (from safest to riskiest)',
     ylabel='Fraction of number of claims'
 )
-ax.legend(loc="lower right")
+ax.legend(loc="upper left")
 
 ##############################################################################
 # This plot reveals that the random forest model is slightly better at ranking
