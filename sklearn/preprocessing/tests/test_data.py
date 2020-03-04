@@ -1906,8 +1906,7 @@ def test_normalizer_l2():
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
-        X_norm = normalizer = \
-            Normalizer(norm='l2', copy=False).transform(X)
+        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert X_norm is not X
         assert isinstance(X_norm, sparse.csr_matrix)
@@ -1964,7 +1963,8 @@ def test_normalizer_max():
         # check input for which copy=False won't prevent a copy
         for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
             X = init(X_dense)
-            X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+            X_norm = normalizer = \
+                Normalizer(norm='l2', copy=False).transform(X)
 
             assert X_norm is not X
             assert isinstance(X_norm, sparse.csr_matrix)
