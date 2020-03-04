@@ -1471,10 +1471,13 @@ def test_partial_roc_auc_score():
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
 
 
-@pytest.mark.parametrize('k, expected_score', [(2, .2), (3, .4), (4, .8)])
-def test_top_k_accuracy_score(k, expected_score):
-    y_true = np.array([0, 1, 2, 3, 4])
-
+@pytest.mark.parametrize('y_true, k, expected_score', [
+    ([0, 1, 2, 3, 4], 2, .2),
+    ([0, 1, 2, 3, 4], 3, .4),
+    ([0, 1, 2, 3, 4], 4, .8),
+    ([0, 0, 0, 0, 0], 2, 1),
+])
+def test_top_k_accuracy_score(y_true, k, expected_score):
     y_score = np.array([
         [0.4, 0.3, 0.1, 0.1, 0.1],
         [0.3, 0.2, 0.3, 0.1, 0.1],
@@ -1482,7 +1485,6 @@ def test_top_k_accuracy_score(k, expected_score):
         [0.3, 0.4, 0.2, 0.1, 0.],
         [0.4, 0.1, 0.2, 0.25, 0.05],
     ])
-
     assert top_k_accuracy_score(y_true, y_score, k=k) == expected_score
 
 
