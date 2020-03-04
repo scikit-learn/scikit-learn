@@ -1957,7 +1957,8 @@ def test_normalizer_max():
                 assert_almost_equal(row_maxs[3], 0.0)
 
             # assert the sign does not change after normalization
-            assert_array_almost_equal(X_norm1.ravel(), toarray(X).ravel())
+            assert_array_almost_equal(
+                np.sign(X_norm1.ravel()), np.sign(toarray(X).ravel()))
 
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
