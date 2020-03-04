@@ -93,6 +93,23 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
+@pytest.mark.parametrize("individual, shape", [
+    (False, (1, 3)), (True, (1, 3, 506)), ('both', (1, 3, 507))
+])
+def test_plot_partial_dependence_individual(individual, shape,
+                                            clf_boston, boston):
+    disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
+                                   individual=individual)
+
+    assert disp.axes_.shape == (1, 3)
+    assert disp.lines_.shape == shape
+    assert disp.contours_.shape == (1, 3)
+
+    assert disp.contours_[0, 0] is None
+    assert disp.contours_[0, 1] is None
+    assert disp.contours_[0, 2] is None
+
+
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [('dataframe', None),
