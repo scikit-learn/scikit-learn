@@ -5,5 +5,5 @@ scikit-image==0.16.2
 pandas==0.25.3
 sphinx-gallery==0.5.0
 # Need to update the scikit-learn version on each 0.22 minor release
-scikit-learn==0.22.2
+scikit-learn==0.22.2.post1
 
