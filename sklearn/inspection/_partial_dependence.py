@@ -291,6 +291,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     individual : True, False or 'both', default=False
         Whether to return averaged or individual partial dependence
 
+        .. versionadded:: 0.23
+
     Returns
     -------
     predictions : ndarray or tuple of ndarray
