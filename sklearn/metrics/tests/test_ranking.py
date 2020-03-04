@@ -1490,8 +1490,8 @@ def test_top_k_accuracy_score(k, expected_score):
     (
         [0, 1, 2],
         1,
-        "'k'=1 is simply 'metrics.accuracy_score'. Please, use that method "
-        "instead."
+        "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use that "
+        "method instead."
     ),
     (
         [.57, 1, 2],
