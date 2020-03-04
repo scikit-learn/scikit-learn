@@ -97,7 +97,7 @@ def test_output_shape(Estimator, method, data, grid_resolution,
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, X=X, features=features,
-                                   method=method, individual= individual,
+                                   method=method, individual=individual,
                                    grid_resolution=grid_resolution)
 
     expected_pdp_shape = (n_targets,
