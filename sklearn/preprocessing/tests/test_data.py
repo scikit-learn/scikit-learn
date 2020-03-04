@@ -1960,17 +1960,18 @@ def test_normalizer_max():
             assert_array_almost_equal(
                 np.sign(X_norm1.ravel()), np.sign(toarray(X).ravel()))
 
-    # check input for which copy=False won't prevent a copy
-    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
-        X = init(X_dense)
-        X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
+        # check input for which copy=False won't prevent a copy
+        for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
+            X = init(X_dense)
+            X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
-        assert X_norm is not X
-        assert isinstance(X_norm, sparse.csr_matrix)
-        X_norm = toarray(X_norm)
-        for i in range(3):
-            assert_almost_equal(row_maxs[i], 1.0)
-        assert_almost_equal(la.norm(X_norm[3]), 0.0)
+            assert X_norm is not X
+            assert isinstance(X_norm, sparse.csr_matrix)
+            X_norm = toarray(X_norm)
+            if row_maxs.max() > 0:
+                for i in range(3):
+                    assert_almost_equal(row_maxs[i], 1.0)
+                assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
 def test_normalize():
