@@ -2638,6 +2638,22 @@ def _enforce_estimator_tags_y(estimator, y):
     return y
 
 
+def _enforce_estimator_tags_x(estimator, X):
+    # Estimators with a `_pairwise` tag only accept
+    # X of shape (`n_samples`, `n_samples`)
+    if hasattr(estimator, '_pairwise'):
+        X = X.dot(X.T)
+    # Estimators with `1darray` in `X_types` tag only accept
+    # X of shape (`n_samples`,)
+    if '1darray' in _safe_tags(estimator, 'X_types'):
+        X = X[:, 0]
+    # Estimators with a `requires_positive_X` tag only accept
+    # strictly positive data
+    if _safe_tags(estimator, 'requires_positive_X'):
+        X -= X.min()
+    return X
+
+
 @ignore_warnings(category=FutureWarning)
 def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
