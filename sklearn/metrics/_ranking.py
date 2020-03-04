@@ -1491,7 +1491,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
             "that method instead."
         )
 
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true_type = type_of_target(y_true)
 
     if y_true_type not in {'binary', 'multiclass'}:
