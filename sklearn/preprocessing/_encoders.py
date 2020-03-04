@@ -601,8 +601,6 @@ class OrdinalEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20.1
-
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
