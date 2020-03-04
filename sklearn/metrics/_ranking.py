@@ -1480,7 +1480,7 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     """
     if k == 1:
         raise ValueError(
-            "'k'=1 is simply 'metrics.accuracy_score'. Please, use that "
+            "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use that "
             "method instead."
         )
 
