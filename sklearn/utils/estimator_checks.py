@@ -2950,12 +2950,9 @@ def check_n_features_in(name, estimator_orig):
 
 
 def check_supervised_tag_y(name, estimator_orig):
-    # Make sure that estimators fail gracefully when:
-    # - a supervised estimator is given y=None
-    # - a non-supervised estimator is not given y=None
+    # Make sure that estimators fail gracefully when a supervised estimator is
+    # given y=None
 
-    # TODO don't use pytest
-    import pytest  # noqa
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
@@ -2966,7 +2963,6 @@ def check_supervised_tag_y(name, estimator_orig):
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
-    # y = rng.randint(low=0, high=2, size=n_samples)
 
     warning_msg = ("As of scikit-learn 0.23, estimators should have a "
                    "'is_supervised' tag set to the appropriate value. "
@@ -2974,27 +2970,18 @@ def check_supervised_tag_y(name, estimator_orig):
                    "An error will be raised from version 0.25 when calling "
                    "check_estimator() if the tag isn't properly set.")
 
-    # With supervised estimators, the use of the tag can only be properly
-    # enforced for estimators that validate X and y at the same time by calling
-    # validate_data(X, y). But this isn't the case of e.g. ElasticNetCV, for
-    # good reasons. For these, the error "the estiator is supervised so y
-    # cannot be None" will always be raised.
     if estimator._get_tags()['is_supervised']:
         try:
+            # TODO don't use pytest
+            import pytest  # noqa
             with pytest.raises(ValueError,
                                match="is a supervised estimator "
                                      "but the target vector y is None"):
                 estimator.fit(X, None)
         except AssertionError:
             warnings.warn(warning_msg, FutureWarning)
-    # Testing the else part requires non supervised estimators to always pass y
-    # to _validate_date() which doesn't make sense?
-    #
-    # else:
-    #     try:
-    #         with pytest.raises(ValueError,
-    #                            match="is a non-supervised estimator "
-    #                                  "but a target vector y was passed"):
-    #             estimator.fit(X, y=y)
-    #     except AssertionError:
-    #         warnings.warn(warning_msg, FutureWarning)
+
+    # Note that we don't test the 'else' case, where the estimator is
+    # unsupervised and a non-None y was passed: this can only be checked if we
+    # require the unsupervised estimators to pass y to _validate_data(), which
+    # is not natural.
