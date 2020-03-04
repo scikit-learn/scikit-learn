@@ -71,25 +71,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.learning_rate = learning_rate
         self.random_state = random_state
 
-    def _validate_data(self, X, y=None):
-
-        # Accept or convert to these sparse matrix formats so we can
-        # use _safe_indexing
-        accept_sparse = ['csr', 'csc']
-        if y is None:
-            ret = check_array(X,
-                              accept_sparse=accept_sparse,
-                              ensure_2d=False,
-                              allow_nd=True,
-                              dtype=None)
-        else:
-            ret = check_X_y(X, y,
-                            accept_sparse=accept_sparse,
-                            ensure_2d=False,
-                            allow_nd=True,
-                            dtype=None,
-                            y_numeric=is_regressor(self))
-        return ret
+    def _check_X(self, X):
+        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=True,
+                           allow_nd=True, dtype=None)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -116,7 +100,12 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y,
+                                   accept_sparse=['csr', 'csc'],
+                                   ensure_2d=True,
+                                   allow_nd=True,
+                                   dtype=None,
+                                   y_numeric=is_regressor(self))
 
         sample_weight = _check_sample_weight(sample_weight, X, np.float64)
         sample_weight /= sample_weight.sum()
@@ -229,7 +218,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         ------
         z : float
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         for y_pred in self.staged_predict(X):
             if is_classifier(self):
@@ -239,8 +228,16 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """The impurity-based feature importances.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
         Returns
         -------
@@ -323,7 +320,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -338,21 +335,26 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int
         The number of classes.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Classification error for each estimator in the boosted
         ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     See Also
     --------
@@ -390,8 +392,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
     AdaBoostClassifier(n_estimators=100, random_state=0)
-    >>> clf.feature_importances_
-    array([0.28..., 0.42..., 0.14..., 0.16...])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
@@ -626,7 +626,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         pred = self.decision_function(X)
 
@@ -656,7 +656,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : generator of ndarray of shape (n_samples,)
             The predicted classes.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_
@@ -690,7 +690,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -733,7 +733,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -802,7 +802,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -836,7 +836,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         n_classes = self.n_classes_
 
@@ -862,7 +862,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        X = self._validate_data(X)
+        X = self._check_X(X)
         return np.log(self.predict_proba(X))
 
 
@@ -901,7 +901,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the random seed given at each `base_estimator` at each
         boosting iteration.
         Thus, it is only used when `base_estimator` exposes a `random_state`.
@@ -918,14 +918,19 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    estimator_weights_ : array of floats
+    estimator_weights_ : ndarray of floats
         Weights for each estimator in the boosted ensemble.
 
-    estimator_errors_ : array of floats
+    estimator_errors_ : ndarray of floats
         Regression error for each estimator in the boosted ensemble.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances if supported by the ``base_estimator``.
+        The impurity-based feature importances if supported by the
+        ``base_estimator`` (when based on decision trees).
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     Examples
     --------
@@ -936,8 +941,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
-    >>> regr.feature_importances_
-    array([0.2788..., 0.7109..., 0.0065..., 0.0036...])
     >>> regr.predict([[0, 0, 0, 0]])
     array([4.7972...])
     >>> regr.score(X, y)
@@ -1137,7 +1140,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The predicted regression values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1162,7 +1165,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The predicted regression values.
         """
         check_is_fitted(self)
-        X = self._validate_data(X)
+        X = self._check_X(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
