@@ -1954,12 +1954,14 @@ def test_normalizer_max():
 
     # test all negative data
     X_all_neg = -np.abs(X_dense)
-    normalizer = Normalizer(norm='max')
-    X_norm = normalizer.transform(X_all_neg)
-    assert X_norm is not X_all_neg
-    X_norm = toarray(X_norm)
-    print(X_norm, X_all_neg)
-    assert_array_equal(np.sign(X_norm).ravel(), np.sign(toarray(X_all_neg)).ravel())
+    X_all_neg_sparse = sparse.csr_matrix(X_all_neg)
+
+    for X in (X_all_neg, X_all_neg_sparse):
+        normalizer = Normalizer(norm='max')
+        X_norm = normalizer.transform(X)
+        assert X_norm is not X
+        X_norm = toarray(X_norm)
+        assert_array_equal(np.sign(X_norm).ravel(), np.sign(toarray(X)).ravel())
 
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
