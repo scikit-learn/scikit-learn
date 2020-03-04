@@ -7,7 +7,7 @@ import joblib
 
 from io import StringIO
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
                                     ignore_warnings,
@@ -230,6 +230,14 @@ class BadTransformerWithoutMixin(BaseEstimator):
         X = check_array(X)
         return X
 
+    def _get_tags(self):
+        # Currently, if a transformer doesn't inherit from the mixin AND
+        # doesn't have the tag (e.g. a third party transformer), it will fail
+        # fail when calling _validate_data(X).
+        # In other words, any transformer that uses _validate_data must also
+        # support the tag one way or another.
+        return {'is_supervised': False}
+
 
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
@@ -269,7 +277,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
         return self
 
 
-class SparseTransformer(BaseEstimator):
+class SparseTransformer(TransformerMixin, BaseEstimator):
     def fit(self, X, y=None):
         self.X_shape_ = self._validate_data(X).shape
         return self
