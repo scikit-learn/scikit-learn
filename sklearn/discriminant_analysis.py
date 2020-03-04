@@ -189,7 +189,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     intercept_ : ndarray of shape (n_classes,)
         Intercept term.
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like of shape (n_features, n_features)
         Covariance matrix (shared by all classes). Only available
         `store_covariance` is True.
 
