@@ -1423,7 +1423,7 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
 
 def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
                          sample_weight=None):
-    """Top k Accuracy multiclass classification score.
+    """Top-k Accuracy multiclass classification score.
 
     This metric computes the number of times where the correct label is among
     the top `k` labels predicted (ranked by predicted scores). Note that
