@@ -1421,7 +1421,8 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     return np.average(gain, weights=sample_weight)
 
 
-def top_k_accuracy_score(y_true, y_score, k=3, normalize=True):
+def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
+                         sample_weight=None):
     """Top k Accuracy multiclass classification score.
 
     This metric computes the number of times where the correct label is among
@@ -1445,6 +1446,9 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True):
     normalize : bool, default=True
         If `True`, return the fraction of correctly classified samples.
         Otherwise, return the number of correctly classified samples.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If `None`, all samples are given the same weight.
 
     Returns
     -------
@@ -1515,6 +1519,11 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True):
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)
-    score = sum(y in pred[:k] for y, pred in zip(y_true, sorted_pred))
-    score = score / len(y_true) if normalize else score
-    return score
+    scores = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+
+    if normalize:
+        return np.average(scores, weights=sample_weight)
+    elif sample_weight is None:
+        return sum(scores)
+    else:
+        return np.dot(scores, sample_weight)
