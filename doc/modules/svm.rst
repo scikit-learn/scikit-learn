@@ -320,10 +320,10 @@ floating point values instead of integer values::
     >>> from sklearn import svm
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
-    >>> clf = svm.SVR()
-    >>> clf.fit(X, y)
+    >>> regr = svm.SVR()
+    >>> regr.fit(X, y)
     SVR()
-    >>> clf.predict([[1, 1]])
+    >>> regr.predict([[1, 1]])
     array([1.5])
 
 

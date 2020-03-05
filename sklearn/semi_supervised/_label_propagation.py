@@ -223,7 +223,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         self.X_ = X
         check_classification_targets(y)
 

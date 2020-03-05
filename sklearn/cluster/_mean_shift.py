@@ -299,7 +299,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     cluster_centers_ : array, [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels_ :
+    labels_ : array of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int
@@ -368,7 +368,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         y : Ignored
 
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
