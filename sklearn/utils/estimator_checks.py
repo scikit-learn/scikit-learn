@@ -458,7 +458,7 @@ def check_estimator(Estimator, generate_only=False):
 
     for estimator, check in checks_generator:
         check_name = _set_check_estimator_ids(check)
-        if xfail_checks and check_name in xfail_checks:
+        if check_name in xfail_checks:
             # skip tests marked as a known failure and raise a warning
             msg = xfail_checks[check_name]
             warnings.warn(f'Skipping {check_name}: {msg}', SkipTestWarning)
