@@ -262,10 +262,10 @@ Changelog
 :mod:`sklearn.manifold`
 ...........................
 
-- |Feature| Support of multidimensional scaling method,
+- |Feature| Support of multidimensional scaling solver,
   which uses Singular Value Decomposition (SVD) in :class:`manifold.MDS`.
-  User can choose whether to use SVD- or SMACOF-based method via parameter
-  `method`. The SVD-based method is faster and more accurate, but works
+  User can choose whether to use SVD- or SMACOF-based solver via parameter
+  `solver`. The SVD-based solver is faster and more accurate, but works
   only for euclidean dissimilarity matrices.
   :pr:`16067` by :user:`Piotr Gaiński <panpiort8>`.
 

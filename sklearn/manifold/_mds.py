@@ -352,19 +352,19 @@ class MDS(BaseEstimator):
     metric : boolean, optional, default: True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
 
-        If  ``method=='svd'``, metric must be set to True.
+        If  ``solver=='svd'``, metric must be set to True.
 
     n_init : int, optional, default: 4
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
 
-        Ignored if  ``method=='svd'``.
+        Ignored if  ``solver=='svd'``.
 
     max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run.
 
-        Ignored if  ``method=='svd'``.
+        Ignored if  ``solver=='svd'``.
 
     verbose : int, optional, default: 0
         Level of verbosity.
@@ -373,7 +373,7 @@ class MDS(BaseEstimator):
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-        Ignored if  ``method=='svd'``.
+        Ignored if  ``solver=='svd'``.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. If multiple
@@ -384,7 +384,7 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        Ignored if  ``method=='svd'``.
+        Ignored if  ``solver=='svd'``.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used to initialize the centers.
@@ -401,8 +401,8 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    method : {'smacof', 'svd'}, default ='smacof'
-        The method used for solving the MDS problem.
+    solver : {'smacof', 'svd'}, default ='smacof'
+        The solver used for solving the MDS problem.
 
         .. versionadded:: 0.23
 
@@ -419,7 +419,7 @@ class MDS(BaseEstimator):
         The number of iterations of SMACOF algorithm corresponding
         to the best stress.
 
-        It is set to ``None`` if ``method=='svd'``.
+        It is set to ``None`` if ``solver=='svd'``.
 
     Examples
     --------
@@ -449,11 +449,11 @@ class MDS(BaseEstimator):
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean",
-                 method="smacof"):
+                 solver="smacof"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
-        self.method = method
+        self.solver = solver
         self.n_init = n_init
         self.max_iter = max_iter
         self.eps = eps
@@ -478,10 +478,11 @@ class MDS(BaseEstimator):
         y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Ignored if  ``method=='svd'``.
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+
+            Ignored if  ``solver=='svd'``.
         """
         self.fit_transform(X, init=init)
         return self
@@ -499,10 +500,11 @@ class MDS(BaseEstimator):
         y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Ignored if  ``method=='svd'``.
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
+
+            Ignored if  ``solver=='svd'``.
         """
         X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -520,7 +522,7 @@ class MDS(BaseEstimator):
                 "Dissimilarity matrix must be 'precomputed' or 'euclidean'."
                 " Got %s instead" % str(self.dissimilarity))
 
-        if self.method == "smacof":
+        if self.solver == "smacof":
             self.embedding_, self.stress_, self.n_iter_ = smacof(
                 self.dissimilarity_matrix_, metric=self.metric,
                 n_components=self.n_components, init=init,
@@ -528,14 +530,14 @@ class MDS(BaseEstimator):
                 max_iter=self.max_iter, verbose=self.verbose,
                 eps=self.eps, random_state=self.random_state,
                 return_n_iter=True)
-        elif self.method == "svd":
+        elif self.solver == "svd":
             if not self.metric:
                 raise ValueError("Using SVD requires metric=True")
             self.embedding_, self.stress_ = svd_scaler(
                 self.dissimilarity_matrix_, n_components=self.n_components)
             self.n_iter_ = None
         else:
-            raise ValueError("Method must be 'smacof' or 'svd'."
-                             " Got %s instead" % str(self.method))
+            raise ValueError("Solver must be 'smacof' or 'svd'."
+                             " Got %s instead" % str(self.solver))
 
         return self.embedding_

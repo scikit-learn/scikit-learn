@@ -109,15 +109,15 @@ def test_svd_error():
 
 
 def test_MDS_error():
-    # Bad method name
+    # Bad solver name
     sim = np.ones((2, 2))
-    mdc_clf = mds.MDS(method='bad name')
+    mdc_clf = mds.MDS(solver='bad name')
     with pytest.raises(ValueError):
         mdc_clf.fit(sim)
 
     # SVD with metric=False
     sim = np.ones((2, 2))
-    mdc_clf = mds.MDS(metric=False, method='svd')
+    mdc_clf = mds.MDS(metric=False, solver='svd')
     with pytest.raises(ValueError):
         mdc_clf.fit(sim)
 
@@ -139,7 +139,7 @@ def test_MDS_svd():
                     [82, 52, 0, 111],
                     [133, 60, 111, 0]])
 
-    mds_clf = mds.MDS(metric=True, method="svd", dissimilarity='precomputed')
+    mds_clf = mds.MDS(metric=True, solver="svd", dissimilarity='precomputed')
     mds_clf.fit(sim)
 
     X_true_1 = np.array([[-62.831, -32.97448],
