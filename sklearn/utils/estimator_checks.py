@@ -848,7 +848,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         if kind == 'ones':
             X2 = X
             y2 = y
-            sw2 = None
+            sw2 = np.ones(shape=len(y))
             err_msg = (f"For {name} sample_weight=None is not equivalent to "
                        f"sample_weight=ones")
         elif kind == 'zeros':
@@ -868,7 +868,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         y = _enforce_estimator_tags_y(estimator1, y)
         y2 = _enforce_estimator_tags_y(estimator2, y2)
 
-        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator1.fit(X, y=y, sample_weight=None)
         estimator2.fit(X2, y=y2, sample_weight=sw2)
 
         for method in ["predict", "predict_proba",
