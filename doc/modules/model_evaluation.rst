@@ -454,11 +454,10 @@ In the multilabel case with binary label indicators: ::
 Top-k Accuracy score
 --------------------
 
-The :func:`top_k_accuracy_score` function computes the
-`accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_ in the
-difference that for each sample, ``k`` attempts are allowed to find the correct
-response. Either the fraction (default) or the count (normalize=False) of
-correct predictions is returned.
+The :func:`top_k_accuracy_score` function is a generalization of
+:func:`accuracy_score`. The difference is that a prediction is considered
+correct as long as the true label is associated with one of the ``k`` highest
+predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
 
 The function covers the multiclass classification case but not the binary and
 multilabel cases.
@@ -486,7 +485,7 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   0.75
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
   3
-  >>> top_k_accuracy_score([0]*4, y_score, k=2)
+  >>> top_k_accuracy_score([0, 0, 0, 0], y_score, k=2)
   0.75
 
 .. _balanced_accuracy_score:
