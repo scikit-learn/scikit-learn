@@ -401,7 +401,7 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    method: {'smacof', 'svd'}, default ='smacof'
+    method : {'smacof', 'svd'}, default ='smacof'
         The method used for solving the MDS problem.
 
         .. versionadded:: 0.23

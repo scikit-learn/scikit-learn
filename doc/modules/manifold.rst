@@ -442,6 +442,19 @@ Most commonly, disparities are set to :math:`\hat{d}_{ij} = b S_{ij}`.
 If the metric of :math:`S` is Euclidean, user can choose to use faster and more accurate
 method of calculating results. See :ref:`multidimensional_scaling_method` for details.
 
+.. _multidimensional_scaling_method:
+
+Method
+-------------
+
+Metric :class:`MDS` offers two different algorithms (methods) to calculate
+results: SMACOF and SVD-based. The SMACOF method (Scaling by MAjorizing a
+COmplicated Function) minimizes its objective function (stress) in an iterative
+manner. The SVD-based method performs series of transformations (including
+Singular Value Decomposition) to give exact result. The SVD-based method is
+thus much faster and more accurate, but also less general - it requires metric
+of :math:`S` to be Euclidean.
+
 Nonmetric MDS
 -------------
 
@@ -459,19 +472,6 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
    :scale: 60
-
-.. _multidimensional_scaling_method:
-
-Method
--------------
-
-Metric :class:`MDS` offers two different algorithms (methods) to calculate
-results: SMACOF and SVD-based. The SMACOF method (Scaling by MAjorizing a
-COmplicated Function) minimizes objective function (stress) in iterative
-manner. The SVD-based method performs series of transformations (including
-Singular Value Decomposition) to give exact result. The SVD-based method is
-thus much faster and more accurate, but also less general - it requires metric
-of :math:`S` to be Euclidean.
 
 
 .. topic:: References:
