@@ -1,30 +1,42 @@
 """
-========================
-Partial Dependence Plots
-========================
+===============================================================
+Partial Dependence and Individual Conditional Expectation Plots
+===============================================================
 
 Partial dependence plots show the dependence between the target function [2]_
 and a set of 'target' features, marginalizing over the values of all other
 features (the complement features). Due to the limits of human perception, the
-size of the target feature set must be small (usually, one or two) thus the
+size of the 'target' feature set must be small (usually, one or two) thus the
 target features are usually chosen among the most important features.
 
-This example shows how to obtain partial dependence plots from a
+Similarly, an individual conditional expectation (ICE) plot [3]_
+shows the dependence between the target function and a 'target' feature.
+However, unlike partial dependence plots, which show the average effect of the
+'target' features, ICE plots visualize the dependence of the prediction on a
+feature for each instance separately, with one line per instance. Only one
+'target' feature is supported for ICE plots.
+
+This example shows how to obtain partial dependence and ICE plots from a
 :class:`~sklearn.neural_network.MLPRegressor` and a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
 The plots show four 1-way and two 1-way partial dependence plots (omitted for
-:class:`~sklearn.neural_network.MLPRegressor` due to computation time). The
-target variables for the one-way PDP are: median income (`MedInc`), average
-occupants per household (`AvgOccup`), median house age (`HouseAge`), and
-average rooms per household (`AveRooms`).
+:class:`~sklearn.neural_network.MLPRegressor` due to computation time) and
+four 1-way ICE plots. The target variables for the one-way PDP are:
+median income (`MedInc`), average occupants per household (`AvgOccup`),
+median house age (`HouseAge`), and average rooms per household (`AveRooms`).
 
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
        Learning Ed. 2", Springer, 2009.
 
 .. [2] For classification you can think of it as the regression score before
        the link function.
+
+.. [3] Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
+       the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation. (2015) Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
 """
 print(__doc__)
 
@@ -106,7 +118,7 @@ tic = time()
 # We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
 # with the brute method.
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
-plot_partial_dependence(est, X_train, features,
+plot_partial_dependence(est, X_train, features, individual=False,
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
@@ -146,7 +158,7 @@ print('Computing partial dependence plots...')
 tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms',
             ('AveOccup', 'HouseAge')]
-plot_partial_dependence(est, X_train, features,
+plot_partial_dependence(est, X_train, features, individual=False,
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
@@ -196,7 +208,7 @@ fig = plt.figure()
 
 features = ('AveOccup', 'HouseAge')
 pdp, axes = partial_dependence(est, X_train, features=features,
-                               grid_resolution=20)
+                               individual=False, grid_resolution=20)
 XX, YY = np.meshgrid(axes[0], axes[1])
 Z = pdp[0].T
 ax = Axes3D(fig)
@@ -211,5 +223,45 @@ plt.colorbar(surf)
 plt.suptitle('Partial dependence of house value on median\n'
              'age and average occupancy, with Gradient Boosting')
 plt.subplots_adjust(top=0.9)
+
+plt.show()
+
+##############################################################################
+# Individual Conditional Expectation (ICE) Plots
+# ----------------------------------------------
+#
+# One of the main limitations of ICE plots is that the plot gets overcrowded
+# if many ICE curves are drawn. Due to this, we will use a random sample of
+# 50 instances for the ICE plot.
+#
+# Let's now compute the ICE plots for this neural network:
+
+X_train_sample = X_train.sample(50, random_state=0)
+
+features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
+
+print('Computing ICE plots...')
+plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
+                        grid_resolution=20, individual=True)
+fig = plt.gcf()
+fig.suptitle('ICE of house value on non-location features\n'
+             'for the California housing dataset, with Gradient Boosting')
+fig.subplots_adjust(hspace=0.3)
+
+plt.show()
+
+##############################################################################
+# In ICE plots it might not be easy to see the average effect of the 'target'
+# variable. Hence, it is recommended to use ICE plots together with partial
+# dependency plots. They can be plotted in the same plot with ``individual``
+# parameter set to 'both'.
+
+print('Computing ICE and PDP plots...')
+plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
+                        grid_resolution=20, individual='both')
+fig = plt.gcf()
+fig.suptitle('ICE and PDP of house value on non-location features\n'
+             'for the California housing dataset, with Gradient Boosting')
+fig.subplots_adjust(hspace=0.3)
 
 plt.show()
