@@ -1429,6 +1429,8 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     the top `k` labels predicted (ranked by predicted scores). Note that
     multilabel classification case isn't covered here.
 
+    Read more in the :ref:`User Guide <top_k_accuracy_score>`
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
@@ -1481,14 +1483,14 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     0.75
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-    >>> top_k_accuracy_score([0]*4, y_score, k=2)
+    >>> top_k_accuracy_score([0, 0, 0, 0], y_score, k=2)
     0.75
 
     """
     if k == 1:
         raise ValueError(
             "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use "
-            "that method instead."
+            "that function instead."
         )
 
     check_consistent_length(y_true, y_score, sample_weight)
@@ -1496,26 +1498,33 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
 
     if y_true_type not in {'binary', 'multiclass'}:
         raise ValueError(
-            f"'y_true' type must be 'binary' or 'multiclass', got "
+            "'y_true' type must be 'binary' or 'multiclass', got "
             f"'{y_true_type}' instead."
         )
 
     y_true = column_or_1d(y_true)
-    y_score = check_array(y_score, ensure_min_features=3)
+    y_score = check_array(y_score)
 
     n_classes = y_score.shape[1]
+    if n_classes < 3:
+        raise ValueError(
+            "In a multiclass setting the number of columns in 'y_score' must "
+            f"be greater than 2, got ({n_classes}) instead. Please see "
+            "'metrics.accuracy_score' for the binary case."
+        )
+
     if k >= n_classes:
         raise ValueError(
             f"'k' ({k}) can't be greater than or equal to 'n_classes' "
-            f"({n_classes}). Will result in a perfect score and is therefore "
-            "meaningless."
+            f"({n_classes}). This will result in a perfect score and is "
+            "therefore meaningless."
         )
 
     infered_n_classes = y_true.max() + 1
     if infered_n_classes > n_classes:
         raise ValueError(
-            f"Number of classes in 'y_true' {infered_n_classes} is greater "
-            f"than the number of columns in 'y_score' {n_classes}."
+            f"Number of classes in 'y_true' ({infered_n_classes}) is greater "
+            f"than the number of columns in 'y_score' ({n_classes})."
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)

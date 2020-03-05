@@ -1472,59 +1472,79 @@ def test_partial_roc_auc_score():
 
 
 @pytest.mark.parametrize('y_true, k, normalize, sample_weight, true_score', [
-    ([0, 1, 2, 3, 4], 2, True, None, .2),
-    ([0, 1, 2, 3, 4], 3, True, None, .4),
-    ([0, 1, 2, 3, 4], 4, True, None, .8),
-    ([0, 1, 2, 3, 4], 2, False, None, 1),
-    ([0, 1, 2, 3, 4], 3, False, None, 2),
-    ([0, 1, 2, 3, 4], 4, False, None, 4),
-    ([0, 0, 0, 0, 0], 2, True, None, 1),
-    ([0, 1, 2, 3, 4], 2, True, [4, 1, 1, 1, 1], .5),
-    ([0, 1, 2, 3, 4], 3, False, [1, 2, 1, 1, 1], 3),
+    ([0, 0, 0, 0], 2, True, None, 1),
+    ([0, 1, 2, 3], 2, True, None, .25),
+    ([0, 1, 2, 3], 2, False, None, 1),
+    ([0, 1, 2, 3], 2, True, [3, 1, 1, 1], .5),
+    ([0, 1, 2, 3], 3, True, None, .5),
+    ([0, 1, 2, 3], 3, False, None, 2),
+    ([0, 1, 2, 3], 3, False, [1, 2, 1, 1], 3),
 ])
 def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
     y_score = np.array([
-        [0.4, 0.3, 0.1, 0.1, 0.1],
-        [0.3, 0.2, 0.3, 0.1, 0.1],
-        [0.3, 0.4, 0.1, 0.2, 0.],
-        [0.3, 0.4, 0.2, 0.1, 0.],
-        [0.4, 0.1, 0.2, 0.25, 0.05],
+        [0.4, 0.3, 0.1, 0.2],
+        [0.3, 0.2, 0.3, 0.2],
+        [0.3, 0.4, 0.1, 0.2],
+        [0.3, 0.4, 0.2, 0.1],
     ])
     assert top_k_accuracy_score(y_true, y_score, k, normalize,
                                 sample_weight) == pytest.approx(true_score)
 
 
-@pytest.mark.parametrize('y_true, k, msg', [
+@pytest.mark.parametrize('y_true, y_score, k, msg', [
     (
         [0, 1, 2],
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
         1,
-        "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use that "
-        "method instead."
+        "'k'=1 is equivalent to 'metrics.accuracy_score'"
     ),
     (
         [.57, 1, 2],
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
         2,
-        "'y_true' type must be 'binary' or 'multiclass', got 'continuous' "
-        "instead."
+        "'y_true' type must be 'binary' or 'multiclass', got 'continuous'"
+    ),
+    (
+        [0, 1, 1],
+        np.array([
+            [0.7, 0.3],
+            [0.6, 0.4],
+            [0.2, 0.8],
+        ]),
+        2,
+        "In a multiclass setting the number of columns in 'y_score' must "
+        r"be greater than 2, got \(2\) instead"
     ),
     (
         [0, 1, 2],
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
         3,
-        r"'k' \(3\) can't be greater than or equal to 'n_classes' \(3\). Will "
-        "result in a perfect score and is therefore meaningless."
+        r"'k' \(3\) can't be greater than or equal to 'n_classes' \(3\)"
     ),
     (
         [3, 1, 2],
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
         2,
-        "Number of classes in 'y_true' (4) is greater than the number of "
-        "columns in 'y_score' (3)."
+        r"Number of classes in 'y_true' \(4\) is greater than the number of "
+        r"columns in 'y_score' \(3\)."
     ),
 ])
-def test_top_k_accuracy_score_error(y_true, k, msg):
-    y_score = np.array([
-        [0.4, 0.3, 0.3],
-        [0.3, 0.4, 0.3],
-        [0.4, 0.5, 0.1],
-    ])
+def test_top_k_accuracy_score_error(y_true, y_score, k, msg):
     with pytest.raises(ValueError, match=msg):
         top_k_accuracy_score(y_true, y_score, k=k)
