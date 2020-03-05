@@ -229,7 +229,7 @@ class OneHotEncoder(_BaseEncoder):
         be dropped for each feature.
         ``drop_idx_[i] = None`` if no category is to be dropped from the
         feature with index ``i``, e.g. when `drop='if_binary'` and the feature
-        isn't binary
+        isn't binary.
 
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
