@@ -35,9 +35,9 @@ from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF
 
-n_samples = range(500, 2500, 2000)
-n_features = range(500, 2500, 2000)
-batch_size = 500
+n_samples = range(10000, 20000, 2000)
+n_features = range(2000, 10000, 2000)
+batch_size = range(400, 1000, 200) 
 n_components = 10
 #n_top_words = 20
 
@@ -56,7 +56,7 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
+with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -73,109 +73,114 @@ with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
 print("done in %0.3fs." % (time() - t0))
 
 fig = plt.figure(constrained_layout=True)
-spec = gridspec.GridSpec(ncols=6, nrows=2, figure=fig)
+spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(batch_size),
+                         figure=fig)
 
 ylabel = "time - gen. KL divergence"
 xlabel = "n_samples"
 
 ax = []
 
-for j in range(len(n_features)):
-  timesFr = np.zeros(len(n_samples))
-  timesmbFr = np.zeros(len(n_samples))
-  timesKL = np.zeros(len(n_samples))
-  timesmbKL = np.zeros(len(n_samples))
-  lossFr = np.zeros(len(n_samples))
-  lossmbFr = np.zeros(len(n_samples))
-  lossKL = np.zeros(len(n_samples))
-  lossmbKL = np.zeros(len(n_samples))
+for bj in range(len(batch_size)):
 
-  for i in range(len(n_samples)):
-    data_samples = data[:n_samples[i]]
-    # Use tf-idf features for NMF.
-    print("Extracting tf-idf features for NMF...")
-    tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                       max_features=n_features[j],
-                                       stop_words='english')
-    t0 = time()
-    tfidf = tfidf_vectorizer.fit_transform(data_samples)
-    print("done in %0.3fs." % (time() - t0))
+  for j in range(len(n_features)):
+    timesFr = np.zeros(len(n_samples))
+    timesmbFr = np.zeros(len(n_samples))
+    timesKL = np.zeros(len(n_samples))
+    timesmbKL = np.zeros(len(n_samples))
+    lossFr = np.zeros(len(n_samples))
+    lossmbFr = np.zeros(len(n_samples))
+    lossKL = np.zeros(len(n_samples))
+    lossmbKL = np.zeros(len(n_samples))
 
-    # Fit the NMF model Frobenius norm
-    #print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
-    #      "n_samples=%d and n_features=%d..."
-    #      % (n_samples[i], n_features[j]))
-    #t0 = time()
-    #nmf = NMF(n_components=n_components, random_state=1,
-    #          alpha=.1, l1_ratio=.5).fit(tfidf)
-    #timesFr[i] = time() - t0
-    #print("done in %0.3fs." % (timesFr[i]))
+    for i in range(len(n_samples)):
+      data_samples = data[:n_samples[i]]
+      # Use tf-idf features for NMF.
+      print("Extracting tf-idf features for NMF...")
+      tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
+                                         max_features=n_features[j],
+                                         stop_words='english')
+      t0 = time()
+      tfidf = tfidf_vectorizer.fit_transform(data_samples)
+      print("done in %0.3fs." % (time() - t0))
 
-    #print("\nTopics in NMF model:")
-    #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-    #print_top_words(nmf, tfidf_feature_names, n_top_words)
+      # Fit the NMF model Frobenius norm
+      #print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
+      #      "n_samples=%d and n_features=%d..."
+      #      % (n_samples[i], n_features[j]))
+      #t0 = time()
+      #nmf = NMF(n_components=n_components, random_state=1,
+      #          alpha=.1, l1_ratio=.5).fit(tfidf)
+      #timesFr[i] = time() - t0
+      #print("done in %0.3fs." % (timesFr[i]))
 
-    # Fit the NMF model with minibatch Frobenius norm
-    #print("Fitting the online NMF model (Frobenius norm) with tf-idf features, "
-    #      "n_samples=%d and n_features=%d..."
-    #      % (n_samples[i], n_features[j]))
-    #t0 = time()
-    #minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size,
-    #                    random_state=1, alpha=.1, l1_ratio=.5,
-    #                    max_iter=3).fit(tfidf)
-    #timesmbFr[i] = time() - t0
-    #print("done in %0.3fs." % (timesmbFr[i]))
+      #print("\nTopics in NMF model:")
+      #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+      #print_top_words(nmf, tfidf_feature_names, n_top_words)
 
-    #print("\nTopics in NMF model:")
-    #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-    #print_top_words(nmf, tfidf_feature_names, n_top_words)
+      # Fit the NMF model with minibatch Frobenius norm
+      #print("Fitting the online NMF model (Frobenius norm) with tf-idf features, "
+      #      "n_samples=%d and n_features=%d..."
+      #      % (n_samples[i], n_features[j]))
+      #t0 = time()
+      #minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size,
+      #                    random_state=1, alpha=.1, l1_ratio=.5,
+      #                    max_iter=3).fit(tfidf)
+      #timesmbFr[i] = time() - t0
+      #print("done in %0.3fs." % (timesmbFr[i]))
 
-    # Fit the NMF model KL
-    print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
-          "tf-idf features, n_samples=%d and n_features=%d..."
+      #print("\nTopics in NMF model:")
+      #tfidf_feature_names = tfidf_vectorizer.get_feature_names()
+      #print_top_words(nmf, tfidf_feature_names, n_top_words)
+
+      # Fit the NMF model KL
+      print("Fitting the NMF model (generalized Kullback-Leibler divergence) "
+            " with tf-idf features, n_samples=%d and n_features=%d..."
           % (n_samples[i], n_features[j]))
-    t0 = time()
-    nmf = NMF(n_components=n_components, random_state=1,
-              beta_loss='kullback-leibler', solver='mu', max_iter=1000,
-              alpha=.1, l1_ratio=.5).fit(tfidf)
-    timesKL[i] = time() - t0
-    print("done in %0.3fs." % (timesKL[i]))
+      t0 = time()
+      nmf = NMF(n_components=n_components, random_state=1,
+                beta_loss='kullback-leibler', solver='mu', max_iter=1000,
+                alpha=.1, l1_ratio=.5).fit(tfidf)
+      timesKL[i] = time() - t0
+      print("done in %0.3fs." % (timesKL[i]))
 
 #    print("\nTopics in NMF model:")
 #    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
 #    print_top_words(nmf, tfidf_feature_names, n_top_words)
 
-    # Fit the NMF model KL
-    print("Fitting the online NMF model (generalized Kullback-Leibler "
-          "divergence) with "
-          "tf-idf features, n_samples=%d and n_features=%d..."
-          % (n_samples[i], n_features[j]))
-    t0 = time()
-    minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size,
-                       random_state=1, beta_loss='kullback-leibler',
-                       solver='mu', max_iter=1000, alpha=.1,
-                       l1_ratio=.5).fit(tfidf)
-    timesmbKL[i] = time() - t0
-    print("done in %0.3fs." % (timesmbKL[i]))
+      # Fit the NMF model KL
+      print("Fitting the online NMF model (generalized Kullback-Leibler "
+            "divergence) with "
+            "tf-idf features, n_samples=%d and n_features=%d..."
+            % (n_samples[i], n_features[j]))
+      t0 = time()
+      minibatch_nmf = NMF(n_components=n_components, batch_size=batch_size[bj],
+                         random_state=1, beta_loss='kullback-leibler',
+                         solver='mu', max_iter=1000, alpha=.1,
+                         l1_ratio=.5).fit(tfidf)
+      timesmbKL[i] = time() - t0
+      print("done in %0.3fs." % (timesmbKL[i]))
 
 #    print("\nTopics in NMF model:")
 #    tfidf_feature_names = tfidf_vectorizer.get_feature_names()
 #    print_top_words(nmf, tfidf_feature_names, n_top_words)
 
-  row = int(j / 2)
-  col = j % 2
-  print(row, col)
-  ax = fig.add_subplot(spec[row:col])
-  plt.grid(True)
+    ax = fig.add_subplot(spec[bj,j], xlabel=xlabel, ylabel= ylabel)
+    plt.grid(True)
 
-  str1 = "n_Ftrs " + str(n_features[j]) 
-  ax.plot(n_samples, timesKL)
-  ax.plot(n_samples, timesmbKL, label = str1)
+    str1 = "NMF"
+    str2 = "Online NMF"
+    ax.plot(n_samples, timesKL, label = str1)
+    ax.plot(n_samples, timesmbKL, label = str2)
 
-str1 += "\nbatch size: " + str(batch_size) + \
-        "\nn of components: " + str(n_components)
+    strdesc = "n_Ftrs " + str(n_features[j])
 
-ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+    ax.set_title(strdesc)
+
+  ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
+  strbatch = "nbatch size: " + str(batch_size[bj]) + \
+             "\nn of components: " + str(n_components)
+  ax.annotate(strbatch, (1.05, 0.5), xycoords='axes fraction', va='center')
 
 plt.savefig('bench_topics.png')
-plt.show()
+#plt.show()
