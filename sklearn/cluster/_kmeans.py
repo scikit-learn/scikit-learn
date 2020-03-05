@@ -32,6 +32,7 @@ from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
 from ._k_means_fast import _mini_batch_update_csr
 from ._k_means_fast import _minibatch_update_dense
+from ._k_means_fast import _minibatch_update_dense4
 from ._k_means_lloyd import _lloyd_iter_chunked_dense
 from ._k_means_lloyd import _lloyd_iter_chunked_sparse
 from ._k_means_elkan import _init_bounds_dense
@@ -1136,7 +1137,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
 
 def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
-                     old_center_buffer, compute_squared_diff, random_state,
+                     centers_new, compute_squared_diff, random_state,
                      random_reassign=False, reassignment_ratio=.01,
                      verbose=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm.
@@ -1197,6 +1198,18 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     labels, inertia = _labels_inertia(X, sample_weight,
                                       x_squared_norms, centers)
 
+    # implementation for the sparse CSR representation completely written in
+    # cython
+    if sp.issparse(X):
+        _mini_batch_update_csr(
+            X, sample_weight, x_squared_norms, centers, weight_sums,
+            labels, centers_new, compute_squared_diff)
+
+    # dense variant in mostly numpy (not as memory efficient though.
+    else:
+        _minibatch_update_dense(
+            X, sample_weight, centers, centers_new, weight_sums, labels)
+
     if random_reassign and reassignment_ratio > 0:
         # Reassign clusters that have very low weight
         to_reassign = weight_sums < reassignment_ratio * weight_sums.max()
@@ -1208,6 +1221,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
+            # TODO proba ~ distance like kmeans++ ?
             new_centers = random_state.choice(X.shape[0], replace=False,
                                               size=n_reassigns)
             if verbose:
@@ -1220,63 +1234,42 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                         np.where(to_reassign)[0].astype(np.intp, copy=False),
                         centers)
             else:
-                centers[to_reassign] = X[new_centers]
+                centers_new[to_reassign] = X[new_centers]
         # reset counts of reassigned centers, but don't reset them too small
         # to avoid instant reassignment. This is a pretty dirty hack as it
         # also modifies the learning rates.
         weight_sums[to_reassign] = np.min(weight_sums[~to_reassign])
 
-    # implementation for the sparse CSR representation completely written in
-    # cython
-    if sp.issparse(X):
-        return inertia, _mini_batch_update_csr(
-            X, sample_weight, x_squared_norms, centers, weight_sums,
-            labels, old_center_buffer, compute_squared_diff)
-
-    # dense variant in mostly numpy (not as memory efficient though.
-    else:
-        return inertia, _minibatch_update_dense(
-            X, sample_weight, centers, weight_sums, labels,
-            old_center_buffer, compute_squared_diff)
+    return inertia, None
 
 
-def _minibatch_update_dense2(X, sample_weight, centers, weight_sums, labels,
-                             old_center_buffer, compute_squared_diff):
-    squared_diff = 0.0
-    for center_idx in range(centers.shape[0]):
+def _minibatch_update_dense3(X, sample_weight, centers, centers_new,
+                             weight_sums, labels):
+    for i in range(centers.shape[0]):
         # find points from minibatch that are assigned to this center
-        center_mask = labels == center_idx
-        wsum = sample_weight[center_mask].sum()
+        mask = labels == i
+        wsum = sample_weight[mask].sum()
 
         if wsum > 0:
-            if compute_squared_diff:
-                old_center_buffer[:] = centers[center_idx]
-
             # inplace remove previous count scaling
-            centers[center_idx] *= weight_sums[center_idx]
+            centers_new[i] = centers[i] * weight_sums[i]
 
             # inplace sum with new points members of this cluster
-            centers[center_idx] += \
-                np.sum(X[center_mask] *
-                       sample_weight[center_mask, np.newaxis], axis=0)
+            centers_new[i] += np.sum(
+                X[mask] * sample_weight[mask, np.newaxis], axis=0)
 
             # update the count statistics for this center
-            weight_sums[center_idx] += wsum
+            weight_sums[i] += wsum
 
             # inplace rescale to compute mean of all points (old and new)
             # Note: numpy >= 1.10 does not support '/=' for the following
             # expression for a mixture of int and float (see numpy issue #6464)
-            centers[center_idx] = centers[center_idx] / weight_sums[center_idx]
-
-            # update the squared diff if necessary
-            if compute_squared_diff:
-                diff = centers[center_idx].ravel() - old_center_buffer.ravel()
-                squared_diff += np.dot(diff, diff)
-    
-    return squared_diff
+            centers_new[i] /= weight_sums[i]
+        else:
+            centers_new[i] = centers[i]
 
 
-def _minibatch_update_dense3(X, sample_weight, centers, weight_sums, labels,
+def _minibatch_update_dense2(X, sample_weight, centers, weight_sums, labels,
                             old_center_buffer, compute_squared_diff):
     squared_diff = 0.0
     for i in range(X.shape[0]):
@@ -1676,8 +1669,11 @@ class MiniBatchKMeans(KMeans):
                 print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
                       f"{inertia}")
             if best_inertia is None or inertia < best_inertia:
-                self.cluster_centers_ = cluster_centers
+                init_centers = cluster_centers
                 best_inertia = inertia
+
+        centers = init_centers
+        centers_new = np.empty_like(centers)
 
         # Initialize counts
         self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
@@ -1699,9 +1695,9 @@ class MiniBatchKMeans(KMeans):
                 X=X[minibatch_indices],
                 sample_weight=sample_weight[minibatch_indices],
                 x_squared_norms=x_squared_norms[minibatch_indices],
-                centers=self.cluster_centers_,
+                centers=centers,
                 weight_sums=self._counts,
-                old_center_buffer=old_center_buffer,
+                centers_new=centers_new,
                 compute_squared_diff=self._tol > 0.0,
                 random_state=random_state,
                 # Here we randomly choose whether to perform
@@ -1714,12 +1710,17 @@ class MiniBatchKMeans(KMeans):
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
 
+            centers_squared_diff = np.sum((centers_new - centers)**2)
+            centers, centers_new = centers_new, centers
+
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
                     self, iteration_idx, n_iter, self._tol, n_samples,
                     centers_squared_diff, batch_inertia, convergence_context,
                     verbose=self.verbose):
                 break
+
+        self.cluster_centers_ = centers
 
         self.n_iter_ = iteration_idx + 1
 

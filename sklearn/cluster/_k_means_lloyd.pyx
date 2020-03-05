@@ -11,7 +11,7 @@ cimport numpy as np
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ..utils.extmath import row_norms

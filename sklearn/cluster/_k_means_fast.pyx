@@ -16,8 +16,9 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython cimport floating
-from cython.parallel cimport prange
+from cython.parallel cimport parallel, prange
 from libc.math cimport sqrt
+from libc.stdlib cimport malloc, free
 
 from ..utils.extmath import row_norms
 
@@ -401,82 +402,109 @@ def _minibatch_update_dense4(np.ndarray[floating, ndim=2, mode='c'] X,
         int i, j, label
         floating weight_sum, tmp, lr
 
-    # for i in prange(n_samples, nogil=True):
-    for i in range(n_samples):
-        label = labels[i]
-
-        # update center weight
-        weight_sum = weight_sums[label] + sample_weight[i]
-
-        # learning rate
-        if weight_sum > 0:
-            lr = 1 / weight_sum
-
-            if compute_squared_diff:
-                for j in range(n_features):
-                    old_center[j] = centers[label, j]
-
-            for j in range(n_features):
-                centers[label, j] = centers[label, j] * (1 - lr) + lr * X[i, j]
-
-            if compute_squared_diff:
-                for j in range(n_features):
-                    tmp = centers[label, j] - old_center[j]
-                    squared_diff += tmp * tmp
-    
-        weight_sums[label] = weight_sum
-    
-    return squared_diff
-
-
-def _minibatch_update_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                             floating[::1] sample_weight,
-                             floating[:, ::1] centers,
-                             floating[::1] weight_sums,
-                             int[::1] labels,
-                             floating[::1] old_center,
-                             bint compute_squared_diff):
-    cdef:
-        floating squared_diff = 0
-        int n_clusters = centers.shape[0]
-        int n_samples = X.shape[0]
-        int n_features = X.shape[1]
-        int i, j, k
-        floating wsum, alpha, tmp
-    
     with nogil:
-        for i in range(n_clusters):
-            wsum = 0
-            for j in prange(n_samples):
-                if labels[j] == i:
-                    wsum += sample_weight[j]
+        # for i in prange(n_samples, nogil=True):
+        for i in range(n_samples):
+            label = labels[i]
 
-            if wsum > 0:
+            # update center weight
+            weight_sum = weight_sums[label] + sample_weight[i]
+
+            # learning rate
+            if weight_sum > 0:
+                lr = 1 / weight_sum
+
                 if compute_squared_diff:
-                    for k in prange(n_features):
-                        old_center[k] = centers[i, k]
+                    for j in range(n_features):
+                        old_center[j] = centers[label, j]
 
-                # inplace remove previous count scaling
-                for k in prange(n_features):
-                    centers[i, k] = centers[i, k] * weight_sums[i]
-                
-                for j in range(n_samples):
-                    if labels[j] == i:
-                        for k in range(n_features):
-                            centers[i, k] = centers[i, k] + X[j, k] * sample_weight[j]
+                for j in range(n_features):
+                    centers[label, j] = centers[label, j] * (1 - lr) + lr * X[i, j]
 
-                # update the count statistics for this center
-                weight_sums[i] = weight_sums[i] + wsum
-
-                # inplace rescale to compute mean of all points (old and new)
-                alpha = 1 / weight_sums[i]
-                for k in prange(n_features):
-                    centers[i, k] = centers[i, k] * alpha
-
-                # update the squared diff if necessary
                 if compute_squared_diff:
-                    for k in prange(n_features):
-                        tmp = centers[i, k] - old_center[k]
+                    for j in range(n_features):
+                        tmp = centers[label, j] - old_center[j]
                         squared_diff += tmp * tmp
-    
+        
+            weight_sums[label] = weight_sum
+        
     return squared_diff
+
+
+def _minibatch_update_dense(
+        np.ndarray[floating, ndim=2, mode='c'] X,
+        floating[::1] sample_weight,
+        floating[:, ::1] centers,
+        floating[:, ::1] centers_new,
+        floating[::1] weight_sums,
+        int[::1] labels):
+    """"""
+    cdef:
+        int n_samples = X.shape[0]
+        int n_clusters = centers.shape[0]
+        int i
+
+        int *indices
+    
+    with nogil, parallel():
+        indices = <int*> malloc(n_samples * sizeof(int))
+
+        for i in prange(n_clusters):
+            update_cluster(i, &X[0, 0], centers, centers_new, labels,
+                           sample_weight, weight_sums, indices)
+        
+        free(indices)
+
+
+cdef void update_cluster(
+        int i,
+        floating *X,
+        floating[:, ::1] centers,
+        floating[:, ::1] centers_new,
+        int[::1] labels,
+        floating[::1] sample_weight,
+        floating[::1] weight_sums,
+        int *indices) nogil:
+    """"""
+    cdef:
+        int n_samples = sample_weight.shape[0]
+        int n_features = centers.shape[1]
+        floating alpha, tmp
+        int n_indices
+        int j, k, idx
+
+        floating wsum = 0
+
+    # indices = np.where(labels == i)
+    k = 0
+    for j in range(n_samples):
+        if labels[j] == i:
+            indices[k] = j
+            k += 1
+    n_indices = k
+
+    for j in range(n_indices):
+        idx = indices[j]
+        wsum += sample_weight[idx]
+
+    if wsum > 0:
+        # inplace remove previous count scaling
+        for k in range(n_features):
+            centers_new[i, k] = centers[i, k] * weight_sums[i]
+
+        # update cluster with new point members
+        for j in range(n_indices):
+            idx = indices[j]
+            for k in range(n_features):
+                centers_new[i, k] += X[idx * n_features + k] * sample_weight[idx]
+
+        # update the count statistics for this center
+        weight_sums[i] += wsum
+
+        # inplace rescale to compute mean of all points (old and new)
+        alpha = 1 / weight_sums[i]
+        for k in range(n_features):
+            centers_new[i, k] *= alpha
+    else:
+        for k in range(n_features):
+            centers_new[i, k] = centers[i, k]
