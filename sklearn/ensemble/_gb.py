@@ -1020,6 +1020,15 @@ shape (n_estimators, ``loss_.K``)
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
+    n_features_ : int
+        The number of data features.
+
+    n_classes_ : int
+        The number of classes.
+
+    max_features_ : int
+        The inferred value of max_features.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1512,6 +1521,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
+
+    n_features_ : int
+        The number of data features.
+
+    max_features_ : int
+        The inferred value of max_features.
 
     Notes
     -----
