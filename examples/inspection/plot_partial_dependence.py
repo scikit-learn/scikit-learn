@@ -257,12 +257,29 @@ plt.show()
 # dependency plots. They can be plotted in the same plot with ``individual``
 # parameter set to ``'both'``.
 
-print('Computing ICE and PDP plots...')
+print('Computing ICE and PD plots...')
 plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
                         grid_resolution=20, individual='both')
 fig = plt.gcf()
-fig.suptitle('ICE and PDP of house value on non-location features\n'
+fig.suptitle('ICE and PD of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
 fig.subplots_adjust(hspace=0.3)
 
 plt.show()
+
+##############################################################################
+# Analysis of the ICE plots
+# -------------------------
+#
+# From the partial dependence plots, we can see that the median house price
+# increases linearly with the median income (top left) and that the median
+# house price drops when the average occupants per household increases
+# (top middle). However, from  ICE plots we can see that there are some
+# exceptions, where the house price remain constant with median income and
+# average occupants.
+#
+# On the other hand, while the house age (top right) does not have a strong
+# influence on the median house price on average, there seems to be a number
+# of exceptions where the house price increase when between the ages 15-25.
+# Similar exceptions can be observed for the average number of rooms (bottom
+# left).
