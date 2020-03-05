@@ -1718,7 +1718,8 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
-            _, norms = min_max_axis(np.abs(X), 1)
+            mins, maxes = min_max_axis(np.abs(X), 1)
+            norms = np.maximum(abs(mins), maxes)
             norms_elementwise = norms.repeat(np.diff(X.indptr))
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
