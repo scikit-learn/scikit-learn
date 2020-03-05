@@ -853,7 +853,9 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
             err_msg = (f"For {name} sample_weight=None is not equivalent to "
                        f"sample_weight=ones")
         elif kind == 'zeros':
-            X2 = np.vstack([X, X])
+            # Construct a dataset that is very different to (X, y) if weights
+            # are disregarded, but identical to (X, y) given weights.
+            X2 = np.vstack([X, X + 1])
             y2 = np.hstack([y, 3 - y])
             sw2 = np.ones(shape=len(y) * 2)
             sw2[len(y):] = 0
