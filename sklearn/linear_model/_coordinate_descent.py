@@ -1167,6 +1167,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
+
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
             check_X_params = dict(accept_sparse='csc',
                                   dtype=[np.float64, np.float32], copy=False)
             X, y = self._validate_data(X, y,
@@ -1182,6 +1187,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                 copy_X = False
             del reference_to_old_X
         else:
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
             check_X_params = dict(accept_sparse='csc',
                                   dtype=[np.float64, np.float32], order='F',
                                   copy=copy_X)
@@ -1843,6 +1852,8 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
 
+        # Need to validate separately here.
+        # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(dtype=[np.float64, np.float32], order='F',
                               copy=self.copy_X and self.fit_intercept)
         check_y_params = dict(ensure_2d=False)

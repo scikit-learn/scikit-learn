@@ -148,8 +148,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             check_consistent_length(X, y)
         else:
             X, y = self._validate_data(X, y, dtype=np.float64,
-                                        order='C', accept_sparse='csr',
-                                        accept_large_sparse=False)
+                                       order='C', accept_sparse='csr',
+                                       accept_large_sparse=False)
 
         y = self._validate_targets(y)
 

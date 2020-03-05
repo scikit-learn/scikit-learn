@@ -246,6 +246,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             `max_trials` randomly chosen sub-samples.
 
         """
+        # Need to validate separately here.
+        # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(accept_sparse='csr')
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(X, y, validate_separately=(check_X_params,
