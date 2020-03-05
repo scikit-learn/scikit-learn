@@ -393,11 +393,11 @@ plt.tight_layout()
 #
 # To compare the 3 models within this perspective, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
-# the model predictions, from riskiest to safest according to each model:
+# the model predictions, from safest to riskiest  according to each model:
 
 
 def _cumulated_claims(y_true, y_pred, exposure):
-    idx_sort = np.argsort(y_pred)[::-1]  # from riskiest to safest
+    idx_sort = np.argsort(y_pred)  # from safest to riskiest
     sorted_exposure = exposure[idx_sort]
     sorted_frequencies = y_true[idx_sort]
     cumulated_exposure = np.cumsum(sorted_exposure)
@@ -434,10 +434,10 @@ ax.plot([0, 1], [0, 1], linestyle="--", color="black",
         label="Random baseline")
 ax.set(
     title="Cumulated number of claims by model",
-    xlabel='Fraction of exposure (from riskiest to safest)',
+    xlabel='Fraction of exposure (from safest to riskiest)',
     ylabel='Fraction of number of claims'
 )
-ax.legend(loc="lower right")
+ax.legend(loc="upper left")
 
 ##############################################################################
 # This plot reveals that the random forest model is slightly better at ranking
