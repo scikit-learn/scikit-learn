@@ -56,7 +56,7 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
+with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -72,7 +72,7 @@ with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
             data.append(text)
 print("done in %0.3fs." % (time() - t0))
 
-fig = plt.figure(constrained_layout=True)
+fig = plt.figure(constrained_layout=True, figsize=(22, 13))
 spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(batch_size),
                          figure=fig)
 
