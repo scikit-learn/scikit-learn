@@ -2979,5 +2979,5 @@ def check_supervised_y_none(name, estimator_orig):
     try:
         estimator.fit(X, None)
     except ValueError as ve:
-        if not any (msg in str(ve) for msg in expected_err_msgs):
+        if not any(msg in str(ve) for msg in expected_err_msgs):
             warnings.warn(warning_msg)
