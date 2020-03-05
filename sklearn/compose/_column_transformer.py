@@ -355,11 +355,14 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 continue
             if trans == 'passthrough':
                 if hasattr(self, '_df_columns'):
-                    feature_names.extend([self._df_columns[c]
-                                          if isinstance(c, int)
-                                          else c for c in column])
+                    if ((not isinstance(column, slice))
+                            and all(isinstance(col, str) for col in column)):
+                        feature_names.extend(column)
+                    else:
+                        feature_names.extend(self._df_columns[column])
                 else:
-                    feature_names.extend(['x%d' % i for i in column])
+                    indices = np.arange(self._n_features)
+                    feature_names.extend(['x%d' % i for i in indices[column]])
                 continue
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
