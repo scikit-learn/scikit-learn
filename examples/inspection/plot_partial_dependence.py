@@ -234,7 +234,8 @@ plt.show()
 # if many ICE curves are drawn. Due to this, we will use a random sample of
 # 50 instances for the ICE plot.
 #
-# Let's now compute the ICE plots for this neural network:
+# ICE plots are achieved by setting ``individual=True``.
+# Let's now compute the ICE plots for this Gradient Boosting model:
 
 X_train_sample = X_train.sample(50, random_state=0)
 
@@ -254,7 +255,7 @@ plt.show()
 # In ICE plots it might not be easy to see the average effect of the 'target'
 # variable. Hence, it is recommended to use ICE plots together with partial
 # dependency plots. They can be plotted in the same plot with ``individual``
-# parameter set to 'both'.
+# parameter set to ``'both'``.
 
 print('Computing ICE and PDP plots...')
 plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
