@@ -283,9 +283,10 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
     if not tags["no_validation"]:
         yield check_n_features_in
+        if tags["is_supervised"]:
+            yield check_supervised_y_none
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
-    yield check_supervised_tag_y
 
 
 def _set_check_estimator_ids(obj):
@@ -2949,7 +2950,7 @@ def check_n_features_in(name, estimator_orig):
         )
 
 
-def check_supervised_tag_y(name, estimator_orig):
+def check_supervised_y_none(name, estimator_orig):
     # Make sure that estimators fail gracefully when a supervised estimator is
     # given y=None
 
@@ -2970,13 +2971,13 @@ def check_supervised_tag_y(name, estimator_orig):
                    "An error will be raised from version 0.25 when calling "
                    "check_estimator() if the tag isn't properly set.")
 
-    if estimator._get_tags()['is_supervised']:
-        try:
-            # TODO don't use pytest
-            import pytest  # noqa
-            with pytest.raises(ValueError,
-                               match="is a supervised estimator "
-                                     "but the target vector y is None"):
-                estimator.fit(X, None)
-        except AssertionError:
-            warnings.warn(warning_msg, FutureWarning)
+    expected_err_msgs = (
+        "is a supervised estimator but the target y is None",
+        "Expected array-like (array or non-string sequence), got None"
+    )
+
+    try:
+        estimator.fit(X, None)
+    except ValueError as ve:
+        if not any (msg in str(ve) for msg in expected_err_msgs):
+            warnings.warn(warning_msg)

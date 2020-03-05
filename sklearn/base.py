@@ -411,7 +411,7 @@ class BaseEstimator:
             if self._get_tags()['is_supervised']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator is a "
-                    f"supervised estimator but the target vector y is None."
+                    f"supervised estimator but the target y is None."
                 )
             X = check_array(X, **check_params)
             out = X
