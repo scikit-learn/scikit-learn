@@ -167,7 +167,7 @@ fi
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.3.1 pillow \
+  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.4.0 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib packaging
 
