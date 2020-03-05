@@ -1952,18 +1952,6 @@ def test_normalizer_max():
                 assert_almost_equal(row_maxs[i], 1.0)
             assert_almost_equal(row_maxs[3], 0.0)
 
-    # test all negative data
-    X_all_neg = -np.abs(X_dense)
-    X_all_neg_sparse = sparse.csr_matrix(X_all_neg)
-
-    for X in (X_all_neg, X_all_neg_sparse):
-        normalizer = Normalizer(norm='max')
-        X_norm = normalizer.transform(X)
-        assert X_norm is not X
-        X_norm = toarray(X_norm)
-        assert_array_equal(
-            np.sign(X_norm).ravel(), np.sign(toarray(X)).ravel())
-
     # check input for which copy=False won't prevent a copy
     for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
@@ -1976,6 +1964,24 @@ def test_normalizer_max():
         for i in range(3):
             assert_almost_equal(row_maxs[i], 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalizer_max_sign():
+    # check that we normalize by a positive number even for negative data
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+    X_all_neg = -np.abs(X_dense)
+    X_all_neg_sparse = sparse.csr_matrix(X_all_neg)
+
+    for X in (X_all_neg, X_all_neg_sparse):
+        normalizer = Normalizer(norm='max')
+        X_norm = normalizer.transform(X)
+        assert X_norm is not X
+        X_norm = toarray(X_norm)
+        assert_array_equal(
+            np.sign(X_norm), np.sign(toarray(X)))
 
 
 def test_normalize():
