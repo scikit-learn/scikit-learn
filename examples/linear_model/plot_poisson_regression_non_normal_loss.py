@@ -3,87 +3,80 @@
 Poisson regression and non-normal loss
 ======================================
 
-This example illustrates the use of log-linear Poisson regression
-on the `French Motor Third-Party Liability Claims dataset
-<https://www.openml.org/d/41214>`_ from [1]_ and compares
-it with models learned with least squared error. In this dataset, each sample
-corresponds to an insurance policy, i.e. a contract within an insurance
-company and an individual (policiholder). Available features include driver
-age, vehicle age, vehicle power, etc.
+This example illustrates the use of log-linear Poisson regression on the
+`French Motor Third-Party Liability Claims dataset
+<https://www.openml.org/d/41214>`_ from [1]_ and compares it with models
+learned with least squared error. In this dataset, each sample corresponds to
+an insurance policy, i.e. a contract within an insurance company and an
+individual (policiholder). Available features include driver age, vehicle age,
+vehicle power, etc.
 
-A few definitions: a *claim* is the request made by a policyholder to the
-insurer to compensate for a loss covered by the insurance. The *exposure* is
-the duration of the insurance coverage of a given policy, in years.
+A few definitions:
+
+- a **claim** is the request made by a policyholder to the insurer to
+  compensate for a loss covered by the insurance.
+
+- the **exposure** is the duration of the insurance coverage of a given policy,
+  in years.
 
 Our goal is to predict the expected number of insurance claims (or frequency)
 following car accidents for a policyholder given the historical data over a
 population of policyholders.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
-    Third-Party Liability Claims (November 8, 2018).
-    `doi:10.2139/ssrn.3164764 <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
+    <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
 print(__doc__)
-
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import warnings
-
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from sklearn.datasets import fetch_openml
-from sklearn.dummy import DummyRegressor
-from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import Ridge, PoissonRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.utils import gen_even_slices
-from sklearn.metrics import auc
-
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from sklearn.metrics import mean_poisson_deviance
-
-
-def load_mtpl2(n_samples=100000):
-    """Fetch the French Motor Third-Party Liability Claims dataset.
-
-    Parameters
-    ----------
-    n_samples: int or None, default=100000
-      Number of samples to select (for faster run time). If None, the full
-      dataset with 678013 samples is returned.
-    """
-
-    # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df = fetch_openml(data_id=41214, as_frame=True)['data']
-
-    # unquote string fields
-    for column_name in df.columns[df.dtypes.values == np.object]:
-        df[column_name] = df[column_name].str.strip("'")
-    if n_samples is not None:
-        return df.iloc[:n_samples]
-    return df
-
 
 ##############################################################################
-# Let's load the motor claim dataset. We ignore the severity data for this
-# study for the sake of simplicitly.
+# The French Motor Third-Party Liability Claims dataset
+# -----------------------------------------------------
 #
-# We also subsample the data for the sake of computational cost and running
-# time. Using the full dataset would lead to similar conclusions.
+# Let's load the motor claim dataset. We ignore the severity data for this
+# study for the sake of simplicitly:
 
-df = load_mtpl2(n_samples=300000)
+from sklearn.datasets import fetch_openml
 
-# Correct for unreasonable observations (that might be data error)
-df["Exposure"] = df["Exposure"].clip(upper=1)
+
+df = fetch_openml(data_id=41214, as_frame=True).frame
+df
+
+##############################################################################
+# The number of claims (``ClaimNb``) is a positive integer that can be modeled
+# as a Poisson distribution. It is then assumed to be the number of discrete
+# events occurring with a constant rate in a given time interval (``Exposure``,
+# in units of years).
+#
+# Here we want to model the frequency ``y = ClaimNb / Exposure`` via a (scaled)
+# conditional Poisson distribution, and use ``Exposure`` as ``sample_weight``.
+
+df["Frequency"] = df["ClaimNb"] / df["Exposure"]
+
+print("Average Frequency = {}"
+      .format(np.average(df["Frequency"], weights=df["Exposure"])))
+
+print("Fraction of exposure with zero claims = {0:.1%}"
+      .format(df.loc[df["ClaimNb"] == 0, "Exposure"].sum() /
+              df["Exposure"].sum()))
+
+fig, (ax0, ax1, ax2) = plt.subplots(ncols=3, figsize=(16, 4))
+ax0.set_title("Number of claims")
+_ = df["ClaimNb"].hist(bins=30, log=True, ax=ax0)
+ax1.set_title("Exposure in years")
+_ = df["Exposure"].hist(bins=30, log=True, ax=ax1)
+ax2.set_title("Frequency (number of claims per year)")
+_ = df["Frequency"].hist(bins=30, log=True, ax=ax2)
 
 ##############################################################################
 # The remaining columns can be used to predict the frequency of claim events.
@@ -92,6 +85,12 @@ df["Exposure"] = df["Exposure"].clip(upper=1)
 #
 # In order to fit linear models with those predictors it is therefore
 # necessary to perform standard feature transformations as follows:
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
+from sklearn.compose import ColumnTransformer
+
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(np.log, validate=False),
@@ -112,29 +111,12 @@ linear_model_preprocessor = ColumnTransformer(
     remainder="drop",
 )
 
-##############################################################################
-# The number of claims (``ClaimNb``) is a positive integer that can be modeled
-# as a Poisson distribution. It is then assumed to be the number of discrete
-# events occurring with a constant rate in a given time interval
-# (``Exposure``, in units of years). Here we model the frequency
-# ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
-# and use ``Exposure`` as ``sample_weight``.
-
-df["Frequency"] = df["ClaimNb"] / df["Exposure"]
-
-print(
-   pd.cut(df["Frequency"], [-1e-6, 1e-6, 1, 2, 3, 4, 5]).value_counts()
-)
-
-print("Average Frequency = {}"
-      .format(np.average(df["Frequency"], weights=df["Exposure"])))
-
-print("Percentage of zero claims = {0:%}"
-      .format(df.loc[df["ClaimNb"] == 0, "Exposure"].sum() /
-              df["Exposure"].sum()))
 
 ##############################################################################
-# It is worth noting that 92 % of policyholders have zero claims, and if we
+# A constant prediction baseline
+# ------------------------------
+#
+# It is worth noting that 93% of policyholders have zero claims, and if we
 # were to convert this problem into a binary classification task, it would be
 # significantly imbalanced.
 #
@@ -142,19 +124,31 @@ print("Percentage of zero claims = {0:%}"
 # baseline a "dummy" estimator that constantly predicts the mean frequency of
 # the training sample.
 
-df_train, df_test = train_test_split(df, random_state=0)
+from sklearn.dummy import DummyRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 
-dummy = make_pipeline(
-    linear_model_preprocessor,
-    DummyRegressor(strategy='mean')
-)
+df_train, df_test = train_test_split(df, test_size=0.33, random_state=0)
+
+dummy = Pipeline([
+    ("preprocessor", linear_model_preprocessor),
+    ("regressor", DummyRegressor(strategy='mean')),
+])
 dummy.fit(df_train, df_train["Frequency"],
-          dummyregressor__sample_weight=df_train["Exposure"])
+          regressor__sample_weight=df_train["Exposure"])
+
+
+##############################################################################
+# Let's compute the performance of this constant prediction baseline with 3
+# different regression metrics:
+
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_poisson_deviance
 
 
 def score_estimator(estimator, df_test):
     """Score an estimator on the test set."""
-
     y_pred = estimator.predict(df_test)
 
     print("MSE: %.3f" %
@@ -183,12 +177,20 @@ print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
 ##############################################################################
-# We start by modeling the target variable with the least squares linear
-# regression model,
+# Linear models
+# -------------
+#
+# We start by modeling the target variable with the (penalized) least squares
+# linear regression model:
 
-ridge = make_pipeline(linear_model_preprocessor, Ridge(alpha=1.0))
-ridge.fit(df_train, df_train["Frequency"],
-          ridge__sample_weight=df_train["Exposure"])
+from sklearn.linear_model import Ridge
+
+
+ridge = Pipeline([
+    ("preprocessor", linear_model_preprocessor),
+    ("regressor", Ridge(alpha=1e-6)),
+]).fit(df_train, df_train["Frequency"],
+       regressor__sample_weight=df_train["Exposure"])
 
 ##############################################################################
 # The Poisson deviance cannot be computed on non-positive values predicted by
@@ -207,28 +209,37 @@ score_estimator(ridge, df_test)
 # mimic the Ridge regressor whose L2 penalty term scales differently with the
 # number of samples.
 
-poisson = make_pipeline(
-    linear_model_preprocessor,
-    PoissonRegressor(alpha=1/df_train.shape[0], max_iter=1000)
-)
+from sklearn.linear_model import PoissonRegressor
+
+
+poisson = Pipeline([
+    ("preprocessor", linear_model_preprocessor),
+    ("regressor", PoissonRegressor(alpha=1e-6, max_iter=1000))
+])
 poisson.fit(df_train, df_train["Frequency"],
-            poissonregressor__sample_weight=df_train["Exposure"])
+            regressor__sample_weight=df_train["Exposure"])
 
 print("PoissonRegressor evaluation:")
 score_estimator(poisson, df_test)
 
 ##############################################################################
-# Finally, we will consider a non-linear model, namely a random forest. Random
-# forests do not require the categorical data to be one-hot encoded: instead,
-# we can encode each category label with an arbitrary integer using
-# :class:`preprocessing.OrdinalEncoder`. With this encoding, the forest will
-# treat the categorical features as ordered features, which might not be always
-# a desired behavior. However this effect is limited for deep enough trees
-# which are able to recover the categorical nature of the features. The main
-# advantage of the :class:`preprocessing.OrdinalEncoder` over the
-# :class:`preprocessing.OneHotEncoder` is that it will make training faster.
+# Finally, we will consider a non-linear model, namely Gradient Boosting
+# Regression Trees. Tree-based models do not require the categorical data to be
+# one-hot encoded: instead, we can encode each category label with an arbitrary
+# integer using :class:`preprocessing.OrdinalEncoder`. With this encoding, the
+# the trees will treat the categorical features as ordered features, which
+# might not be always a desired behavior. However this effect is limited for
+# deep enough trees which are able to recover the categorical nature of the
+# features. The main advantage of the :class:`preprocessing.OrdinalEncoder`
+# over the :class:`preprocessing.OneHotEncoder` is that it will make training
+# faster.
 
-rf_preprocessor = ColumnTransformer(
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.preprocessing import OrdinalEncoder
+
+
+tree_preprocessor = ColumnTransformer(
     [
         ("categorical", OrdinalEncoder(),
             ["VehBrand", "VehPower", "VehGas", "Region", "Area"]),
@@ -237,22 +248,21 @@ rf_preprocessor = ColumnTransformer(
     ],
     remainder="drop",
 )
-rf = make_pipeline(
-    rf_preprocessor,
-    RandomForestRegressor(min_weight_fraction_leaf=0.01, n_jobs=2)
-)
-rf.fit(df_train, df_train["Frequency"].values,
-       randomforestregressor__sample_weight=df_train["Exposure"].values)
+gbrt = Pipeline([
+    ("preprocessor", tree_preprocessor),
+    ("regressor", HistGradientBoostingRegressor(max_leaf_nodes=128)),
+])
+gbrt.fit(df_train, df_train["Frequency"],
+         regressor__sample_weight=df_train["Exposure"])
 
-
-print("RandomForestRegressor evaluation:")
-score_estimator(rf, df_test)
+print("Gradient Boosted Trees evaluation:")
+score_estimator(gbrt, df_test)
 
 
 ##############################################################################
-# Like the Ridge regression above, the random forest model minimizes the
-# conditional squared error, too. However, because of a higher predictive
-# power, it also results in a smaller Poisson deviance than the Poisson
+# Like the Ridge regression above, the gradient boosted trees model minimizes
+# the conditional squared error. However, because of a higher predictive power,
+# it also results in a smaller Poisson deviance than the linear Poisson
 # regression model.
 #
 # Evaluating models with a single train / test split is prone to random
@@ -261,9 +271,9 @@ score_estimator(rf, df_test)
 #
 # The qualitative difference between these models can also be visualized by
 # comparing the histogram of observed target values with that of predicted
-# values:
+# values.
 
-fig, axes = plt.subplots(2, 4, figsize=(16, 6), sharey=True)
+fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16, 6), sharey=True)
 fig.subplots_adjust(bottom=0.2)
 n_bins = 20
 for row_idx, label, df in zip(range(2),
@@ -278,7 +288,7 @@ for row_idx, label, df in zip(range(2),
     axes[row_idx, 0].set_ylim([1e1, 5e5])
     axes[row_idx, 0].set_ylabel(label + " samples")
 
-    for idx, model in enumerate([ridge, poisson, rf]):
+    for idx, model in enumerate([ridge, poisson, gbrt]):
         y_pred = model.predict(df)
 
         pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins),
@@ -292,20 +302,29 @@ plt.tight_layout()
 
 ##############################################################################
 # The experimental data presents a long tail distribution for ``y``. In all
-# models we predict a mean expected value, so we will have necessarily fewer
-# extreme values. Additionally, the normal distribution used in ``Ridge`` and
-# ``RandomForestRegressor`` has a constant variance, while for the Poisson
-# distribution used in ``PoissonRegressor``, the variance is proportional to
-# the mean predicted value.
+# models, we predict a mean expected value, so we will have necessarily fewer
+# extreme values. Additionally, the normal conditional distribution used in
+# ``Ridge`` and ``HistGradientBoostingRegressor`` has a constant variance,
+# while for the Poisson distribution used in ``PoissonRegressor``, the variance
+# is proportional to the mean predicted value.
 #
-# Thus, among the considered estimators, ``PoissonRegressor`` is better suited
-# for modeling the long tail distribution of the data as compared to the
-# ``Ridge`` and ``RandomForestRegressor`` estimators.
+# Thus, among the considered estimators, ``PoissonRegressor`` is a-priori
+# better suited for modeling the long tail distribution of the data as compared
+# to its ``Ridge`` counter-part.
+#
+# The ``HistGradientBoostingRegressor`` estimator has more flexibility and is
+# able to predict higher mean predicted values while still minimizing a least
+# squares loss.
+#
+# Evaluation of the calibration of predictions
+# --------------------------------------------
 #
 # To ensure that estimators yield reasonable predictions for different
 # policyholder types, we can bin test samples according to ``y_pred`` returned
 # by each model. Then for each bin, we compare the mean predicted ``y_pred``,
 # with the mean observed target:
+
+from sklearn.utils import gen_even_slices
 
 
 def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
@@ -352,22 +371,25 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
     return bin_centers, y_true_bin, y_pred_bin
 
 
-fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3.5))
+print(f"Actual number of claims: {df_test['ClaimNb'].sum()}")
+fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 plt.subplots_adjust(wspace=0.3)
 
-for axi, model in zip(ax, [ridge, poisson, rf]):
+for axi, model in zip(ax.ravel(), [dummy, ridge, poisson, gbrt]):
     y_pred = model.predict(df_test)
-
+    y_true = df_test["Frequency"].values
+    exposure = df_test["Exposure"].values
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
-        df_test["Frequency"].values,
-        y_pred,
-        sample_weight=df_test["Exposure"].values,
-        n_bins=10)
+        y_true, y_pred, sample_weight=exposure, n_bins=10)
 
-    axi.plot(q, y_pred_seg, marker='o', linestyle="-", label="predictions")
-    axi.plot(q, y_true_seg, marker='x', linestyle="--", label="observations")
+    model_name = model.steps[-1][1].__class__.__name__
+    print(f"Predicted number of claims by {model_name}: "
+          f"{np.sum(y_pred * exposure):.1f}")
+
+    axi.plot(q, y_pred_seg, marker='x', linestyle="--", label="predictions")
+    axi.plot(q, y_true_seg, marker='o', linestyle="--", label="observations")
     axi.set_xlim(0, 1.0)
-    axi.set_ylim(0, 0.6)
+    axi.set_ylim(0, 0.5)
     axi.set(
         title=model[-1].__class__.__name__,
         xlabel='Fraction of samples sorted by y_pred',
@@ -376,57 +398,73 @@ for axi, model in zip(ax, [ridge, poisson, rf]):
     axi.legend()
 plt.tight_layout()
 
-##############################################################################
-# The ``Ridge`` regression model can predict very low expected frequencies
-# that do not match the data. It can therefore severly under-estimate the risk
-# for some policyholders.
+###############################################################################
+# The dummy regression model predicts on constant frequency. This model is not
+# discriminative at all but is none-the-less well calibrated.
 #
-# ``PoissonRegressor`` and ``RandomForestRegressor`` show better consistency
-# between predicted and observed targets, especially for low predicted target
-# values.
+# The ``Ridge`` regression model can predict very low expected frequencies that
+# do not match the data. It can therefore severly under-estimate the risk for
+# some policyholders.
 #
-# However, for some business applications, we are not necessarily interested
-# in the ability of the model to predict the expected frequency value, but
-# instead to predict which policyholder groups are the riskiest and which are
-# the safest. In this case, the model evaluation would cast the problem as a
-# ranking problem rather than a regression problem.
+# ``PoissonRegressor`` and ``HistGradientBoostingRegressor`` show better
+# consistency between predicted and observed targets, especially for low
+# predicted target values.
+#
+# The sum of all predictions also confirms the calibration issue of the
+# ``Ridge`` model that on average tend to under-estimate by more than 3% the
+# total number of claims in the test set while the other three models can
+# approximately recover the total number of claims of the test portfolio.
+#
+# Evaluation of the discriminative power
+# --------------------------------------
+#
+# For some business applications, we are interested in the ability of the model
+# to discriminate the riskiest from the safest policyholders, irrespective of
+# the absolute value of the prediction. In this case, the model evaluation
+# would cast the problem as a ranking problem rather than a regression problem.
 #
 # To compare the 3 models within this perspective, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
-# the model predictions, from safest to riskiest  according to each model:
+# the model predictions, from safest to riskiest according to each model.
+#
+# This plot is called a Lorenz curve and can be summarized by the Gini index:
+
+from sklearn.metrics import auc
 
 
-def _cumulated_claims(y_true, y_pred, exposure):
-    idx_sort = np.argsort(y_pred)  # from safest to riskiest
-    sorted_exposure = exposure[idx_sort]
-    sorted_frequencies = y_true[idx_sort]
-    cumulated_exposure = np.cumsum(sorted_exposure)
-    cumulated_exposure /= cumulated_exposure[-1]
-    cumulated_claims = np.cumsum(sorted_exposure * sorted_frequencies)
+def lorenz_curve(y_true, y_pred, exposure):
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    exposure = np.asarray(exposure)
+
+    # order samples by increasing predicted risk:
+    ranking = np.argsort(y_pred)
+    ranked_exposure = exposure[ranking]
+    ranked_frequencies = y_true[ranking]
+    ranked_exposure = exposure[ranking]
+    cumulated_claims = np.cumsum(ranked_frequencies * ranked_exposure)
     cumulated_claims /= cumulated_claims[-1]
+    cumulated_exposure = np.cumsum(ranked_exposure)
+    cumulated_exposure /= cumulated_exposure[-1]
     return cumulated_exposure, cumulated_claims
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
-for model in [ridge, poisson, rf]:
+for model in [dummy, ridge, poisson, gbrt]:
     y_pred = model.predict(df_test)
-    cum_exposure, cum_claims = _cumulated_claims(
-        df_test["Frequency"].values,
-        y_pred,
-        df_test["Exposure"].values)
-    area = auc(cum_exposure, cum_claims)
-    label = "{} (area under curve: {:.3f})".format(
-        model[-1].__class__.__name__, area)
+    cum_exposure, cum_claims = lorenz_curve(df_test["Frequency"], y_pred,
+                                            df_test["Exposure"])
+    gini = 1 - 2 * auc(cum_exposure, cum_claims)
+    label = "{} (Gini: {:.2f})".format(
+        model[-1].__class__.__name__, gini)
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = _cumulated_claims(
-    df_test["Frequency"].values,
-    df_test["Frequency"].values,
-    df_test["Exposure"].values)
-area = auc(cum_exposure, cum_claims)
-label = "Oracle (area under curve: {:.3f})".format(area)
+cum_exposure, cum_claims = lorenz_curve(df_test["Frequency"],
+                                        df_test["Frequency"],
+                                        df_test["Exposure"])
+gini = 1 - 2 * auc(cum_exposure, cum_claims)
+label = "Oracle (Gini: {:.2f})".format(gini)
 ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random Baseline
@@ -440,10 +478,11 @@ ax.set(
 ax.legend(loc="upper left")
 
 ##############################################################################
-# This plot reveals that the random forest model is slightly better at ranking
-# policyholders by risk profiles even if the absolute value of the predicted
-# expected frequencies are less well calibrated than for the linear Poisson
-# model.
+# As expected, the dummy regressor is unable to discriminate and therefore
+# performs the worst on this plot.
+#
+# The tree-based model is significantly better at ranking policyholders by risk
+# while the two linear models perform similarly.
 #
 # All three models are significantly better than chance but also very far from
 # making perfect predictions.
@@ -451,5 +490,41 @@ ax.legend(loc="upper left")
 # This last point is expected due to the nature of the problem: the occurrence
 # of accidents is mostly dominated by circumstantial causes that are not
 # captured in the columns of the dataset or that are indeed random.
+#
+# Main takeaways
+# --------------
+#
+# - A ideal model is both well-calibrated and discriminative.
+#
+# - The Gini index reflects the ability of a model to rank predictions
+#   irrespective of their absolute values, and therefore only assess their
+#   discriminative power.
+#
+# - The calibration of the model can be assessed by plotting the mean observed
+#   value vs the mean predicted value on groups of test samples binned by
+#   predicted risk.
+#
+# - The least squares loss of the Ridge regression model seem to cause this
+#   model to be badly calibrated. In particular it tends to under estimate the
+#   risk and can even predict invalid negative frequencies...
+#
+# - Using the Poisson loss can correct this problem and lead to a
+#   well-calibrated linear model.
+#
+# - Despite the improvement in calibration, the discriminative power of both
+#   linear models are comparable and well below the discriminative power of the
+#   Gradient Boosting Regression Trees.
+#
+# - The non-linear Gradient Boosting Regression Trees model does not seem to
+#   suffer from significant mis-calibration issues (despite the use of a least
+#   squares loss).
+#
+# - The Poisson deviance computed as an evaluation metric reflects both the
+#   calibration and the discriminative power of the model but makes a linear
+#   assumption on the ideal relationship between the expected value of an the
+#   variance of the response variable.
+#
+# - Traditional regression metrics such as Mean Squared Error and Mean Absolute
+#   Error are hard to meaningfully interpret on count values.
 
 plt.show()
