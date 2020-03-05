@@ -416,12 +416,6 @@ class BaseEstimator:
             X = check_array(X, **check_params)
             out = X
         else:
-            if not self._get_tags()['is_supervised']:
-                raise ValueError(
-                    f"This {self.__class__.__name__} estimator is a "
-                    f"non-supervised estimator but a target vector y was "
-                    f"passed. y should be None."
-                )
             if validate_separately:
                 # We need this because some estimators validate X and y
                 # separately, and in general, separately calling check_array()

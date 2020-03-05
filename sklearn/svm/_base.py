@@ -147,19 +147,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            from . import OneClassSVM # noqa
-            if isinstance(self, OneClassSVM):
-                # OneClassSVM is_supervised tag is False, but it still
-                # passes a non-None y. Using validate_data(X, y) would raise an
-                # error.
-                X = self._validate_data(X, dtype=np.float64,
+            X, y = self._validate_data(X, y, dtype=np.float64,
                                         order='C', accept_sparse='csr',
                                         accept_large_sparse=False)
-
-            else:
-                X, y = self._validate_data(X, y, dtype=np.float64,
-                                           order='C', accept_sparse='csr',
-                                           accept_large_sparse=False)
 
         y = self._validate_targets(y)
 

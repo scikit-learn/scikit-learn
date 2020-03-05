@@ -278,18 +278,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        from . import IsolationForest  # noqa
-        if isinstance(self, IsolationForest):
-            # IsolationForest is_supervised tag is False, but it still
-            # passes a non-None y. Using validate_data(X, y) would raise an
-            # error.
-            X = self._validate_data(X, accept_sparse=['csr', 'csc'],
-                                    dtype=None, force_all_finite=False)
-        else:
-            X, y = self._validate_data(
-                X, y, accept_sparse=['csr', 'csc'], dtype=None,
-                force_all_finite=False, multi_output=True
-            )
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False, multi_output=True
+        )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 

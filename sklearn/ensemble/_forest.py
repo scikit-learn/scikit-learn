@@ -299,14 +299,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 "sparse multilabel-indicator for y is not supported."
             )
 
-        if isinstance(self, RandomTreesEmbedding):
-            # RandomTreesEmbeddering is_supervised tag is False, but it still
-            # passes a non-None y. Using validate_data(X, y) would raise an
-            # error.
-            X = self._validate_data(X, accept_sparse="csc", dtype=DTYPE)
-        else:
-            X, y = self._validate_data(X, y, multi_output=True,
-                                       accept_sparse="csc", dtype=DTYPE)
+        X, y = self._validate_data(X, y, multi_output=True,
+                                    accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 

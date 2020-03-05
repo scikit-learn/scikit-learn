@@ -2980,8 +2980,3 @@ def check_supervised_tag_y(name, estimator_orig):
                 estimator.fit(X, None)
         except AssertionError:
             warnings.warn(warning_msg, FutureWarning)
-
-    # Note that we don't test the 'else' case, where the estimator is
-    # unsupervised and a non-None y was passed: this can only be checked if we
-    # require the unsupervised estimators to pass y to _validate_data(), which
-    # is not natural.
