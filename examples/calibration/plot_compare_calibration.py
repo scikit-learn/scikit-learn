@@ -107,7 +107,7 @@ for clf, name in [(lr, 'Logistic'),
     ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
              label="%s" % (name, ))
 
-    pd.Series(prob_pos).plot(kind='density', label=name, ax=ax2)
+    pd.Series(prob_pos).plot(kind='density', label=name, lw=2, ax=ax2)
 
 ax1.set_ylabel("Fraction of positives")
 ax1.set_ylim([-0.05, 1.05])
