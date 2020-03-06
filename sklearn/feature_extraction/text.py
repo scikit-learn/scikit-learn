@@ -1374,6 +1374,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
 
+        .. versionadded:: 0.20
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
