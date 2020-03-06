@@ -492,6 +492,8 @@ class RFECV(RFE):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+            .. versionadded:: 0.20
         """
         tags = self._get_tags()
         X, y = self._validate_data(
