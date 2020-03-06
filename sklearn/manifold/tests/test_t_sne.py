@@ -772,11 +772,11 @@ def test_uniform_grid(method):
     we re-run t-SNE from the final point when the convergence is not good
     enough.
     """
-    seeds = [0, 1, 2]
+    seeds = range(3)
     n_iter = 500
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
-                    perplexity=20, n_iter=n_iter, method=method)
+                    perplexity=50, n_iter=n_iter, method=method)
         Y = tsne.fit_transform(X_2d_grid)
 
         try_name = "{}_{}".format(method, seed)

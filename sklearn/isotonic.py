@@ -171,6 +171,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
 
+    increasing_ : bool
+        Inferred value for ``increasing``.
+
     Notes
     -----
     Ties are broken using the secondary method from Leeuw, 1977.
