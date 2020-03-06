@@ -48,6 +48,7 @@ print(__doc__)
 # License: BSD Style.
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from sklearn import datasets
 from sklearn.naive_bayes import GaussianNB
@@ -80,7 +81,7 @@ def plot_calibration_curve(est, name, fig_index):
     # Logistic regression with no calibration as baseline
     lr = LogisticRegression(C=1.)
 
-    fig = plt.figure(fig_index, figsize=(10, 10))
+    fig = plt.figure(fig_index, figsize=(8, 6))
     ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((3, 1), (2, 0))
 
@@ -111,17 +112,20 @@ def plot_calibration_curve(est, name, fig_index):
         ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
                  label="%s (%1.3f)" % (name, clf_score))
 
-        ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
-                 histtype="step", lw=2)
+        pd.Series(prob_pos).plot(kind='density', label=name, ax=ax2)
 
     ax1.set_ylabel("Fraction of positives")
     ax1.set_ylim([-0.05, 1.05])
-    ax1.legend(loc="lower right")
+    ax1.legend(loc="upper left", bbox_to_anchor=(1, 1))
     ax1.set_title('Calibration plots  (reliability curve)')
 
     ax2.set_xlabel("Mean predicted value")
-    ax2.set_ylabel("Count")
-    ax2.legend(loc="upper center", ncol=2)
+    ax2.set_ylabel("Density")
+    ax2.set_xlim(-0.2, 1.2)
+    ax2.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
+    for _ax in [ax1, ax2]:
+        _ax.grid()
 
     plt.tight_layout()
 
