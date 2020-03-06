@@ -34,6 +34,7 @@ print(__doc__)
 # Turn down for faster convergence
 t0 = time.time()
 train_samples = 5000
+test_samples = 1000
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
@@ -45,7 +46,7 @@ y = y[permutation]
 X = X.reshape((X.shape[0], -1))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=train_samples, test_size=10000)
+    X, y, train_size=train_samples, test_size=test_samples, random_state=0)
 
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
