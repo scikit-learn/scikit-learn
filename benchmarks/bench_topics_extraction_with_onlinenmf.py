@@ -56,7 +56,7 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
+with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -175,7 +175,11 @@ for bj in range(len(batch_size)):
 
     strdesc = "n_Ftrs " + str(n_features[j])
 
+    miny = min(min(timesKL),min(timesmbKL))
+    maxy = max(max(timesKL),max(timesmbKL))
+
     ax.set_title(strdesc)
+    ax.set_ylim(miny,maxy)
 
   ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
   strbatch = "nbatch size: " + str(batch_size[bj]) + \
