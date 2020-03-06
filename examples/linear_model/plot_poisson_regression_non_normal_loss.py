@@ -489,7 +489,8 @@ ax.legend(loc="upper left")
 # performs the worst on this plot.
 #
 # The tree-based model is significantly better at ranking policyholders by risk
-# while the two linear models perform similarly.
+# while the two linear models perform similarly. The linear models assume no
+# interactions between the input variables which likely causes under-fitting.
 #
 # All three models are significantly better than chance but also very far from
 # making perfect predictions.
