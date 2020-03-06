@@ -277,8 +277,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -721,6 +721,9 @@ class PLSCanonical(_PLS):
     y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
 
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
+
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component. Not useful if the algorithm provided is "svd".
@@ -886,8 +889,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
