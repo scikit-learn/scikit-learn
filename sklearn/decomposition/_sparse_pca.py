@@ -39,11 +39,11 @@ def _get_explained_variance(X, components, ridge_alpha):
 
     Parameters
     ----------
-    X : ndarray, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The feature vector. n_samples and n_features are the number of
         samples and features, respectively.
 
-    components : array, shape (n_components, n_features)
+    components : array of shape (n_components, n_features)
         The principal components. [1]
 
     ridge_alpha : float,
@@ -173,7 +173,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : array of shape (n_components, n_features)
         Sparse components extracted from the data.
 
     error_ : array
@@ -182,14 +182,14 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : array of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : array of shape (n_components,)
         The amount of variance explained by each of the selected components.
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : array of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
     Examples
@@ -253,7 +253,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -312,13 +312,13 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features)
+        X : array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new array, shape (n_samples, n_components)
+        X_new array of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
@@ -408,20 +408,20 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : array of shape (n_components, n_features)
         Sparse components extracted from the data.
 
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : array of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
 
-    explained_variance_ : array, shape (n_components,)
+    explained_variance_ : array of shape (n_components,)
         The amount of variance explained by each of the selected components.
 
-    explained_variance_ratio_ : array, shape (n_components,)
+    explained_variance_ratio_ : array of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
     Examples
@@ -466,7 +466,7 @@ class MiniBatchSparsePCA(SparsePCA):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
