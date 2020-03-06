@@ -182,6 +182,13 @@ Changelog
   used during `fit`.
   :pr:`16437` by :user:`Jin-Hwan CHO <chofchof>`.
 
+- |Fix| Fixed a bug in :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` where the `sample_weight`
+  argument was not being passed to `cross_val_predict` when
+  evaluating the base estimators on cross-validation folds
+  to obtain the input to the meta estimator.
+  :pr:`16539` by :user:`Bill DeRose <wderose>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
