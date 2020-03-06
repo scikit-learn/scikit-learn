@@ -545,7 +545,8 @@ class PartialDependenceDisplay:
             if self.individual is False:
                 self.lines_ = np.empty_like(ax, dtype=np.object)
             else:
-                self.lines_ = np.empty((len(ax), n_instances), dtype=np.object)
+                self.lines_ = np.empty(ax.shape + (n_instances,),
+                                       dtype=np.object)
             self.contours_ = np.empty_like(ax, dtype=np.object)
 
         # create contour levels for two-way plots

@@ -211,32 +211,35 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     assert ax.get_ylabel() == "ZN"
 
 
+@pytest.mark.parametrize("individual, lines", [
+    (False, 1), (True, 506), ('both', 507)
+])
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
-                                                    boston):
+                                                    boston, individual, lines):
     grid_resolution = 25
     feature_names = boston.feature_names.tolist()
     disp1 = plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN'],
+                                    ['CRIM', 'ZN'], individual=individual,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
     assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
     assert disp1.axes_[0, 1].get_ylabel() == ""
-    assert len(disp1.axes_[0, 0].get_lines()) == 1
-    assert len(disp1.axes_[0, 1].get_lines()) == 1
+    assert len(disp1.axes_[0, 0].get_lines()) == lines
+    assert len(disp1.axes_[0, 1].get_lines()) == lines
 
     lr = LinearRegression()
     lr.fit(boston.data, boston.target)
 
     disp2 = plot_partial_dependence(lr, boston.data,
-                                    ['CRIM', 'ZN'],
+                                    ['CRIM', 'ZN'], individual=individual,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names,
                                     ax=disp1.axes_)
 
     assert np.all(disp1.axes_ == disp2.axes_)
-    assert len(disp2.axes_[0, 0].get_lines()) == 2
-    assert len(disp2.axes_[0, 1].get_lines()) == 2
+    assert len(disp2.axes_[0, 0].get_lines()) == 2 * lines
+    assert len(disp2.axes_[0, 1].get_lines()) == 2 * lines
 
 
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
