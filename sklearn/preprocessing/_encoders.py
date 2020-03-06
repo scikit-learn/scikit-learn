@@ -225,13 +225,13 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
-        be dropped for each feature.
-        ``drop_idx_[i] = None`` if no category is to be dropped from the
-        feature with index ``i``, e.g. when `drop='if_binary'` and the feature
-        isn't binary.
-
-        ``drop_idx_ = None`` if all the transformed features will be retained.
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+          to be dropped for each feature.
+        - ``drop_idx_[i] = None`` if no category is to be dropped from the
+          feature with index ``i``, e.g. when `drop='if_binary'` and the
+          feature isn't binary.
+        - ``drop_idx_ = None`` if all the transformed features will be
+          retained.
 
     See Also
     --------
@@ -510,7 +510,7 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if (self.drop is None) or (self.drop_idx_[i] is None):
+            if self.drop is None or self.drop_idx_[i] is None:
                 cats = self.categories_[i]
             else:
                 cats = np.delete(self.categories_[i], self.drop_idx_[i])
@@ -582,7 +582,7 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
-            if (self.drop is not None) and (self.drop_idx_[i] is not None):
+            if self.drop is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
