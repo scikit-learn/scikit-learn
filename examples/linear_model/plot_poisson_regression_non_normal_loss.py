@@ -6,12 +6,12 @@ Poisson regression and non-normal loss
 This example illustrates the use of log-linear Poisson regression on the
 `French Motor Third-Party Liability Claims dataset
 <https://www.openml.org/d/41214>`_ from [1]_ and compares it with models
-learned with least squared error. In this dataset, each sample corresponds to
-an insurance policy, i.e. a contract within an insurance company and an
-individual (policiholder). Available features include driver age, vehicle age,
-vehicle power, etc.
+learned with least squared error.
 
 A few definitions:
+
+- a **policy** is a contract between an insurance company and an individual:
+  the **policyholder**, that is, the vehicle driver in this case.
 
 - a **claim** is the request made by a policyholder to the insurer to
   compensate for a loss covered by the insurance.
@@ -19,9 +19,15 @@ A few definitions:
 - the **exposure** is the duration of the insurance coverage of a given policy,
   in years.
 
-Our goal is to predict the expected number of insurance claims (or frequency)
-following car accidents for a policyholder given the historical data over a
-population of policyholders.
+- the claim **frequency** is the number of claims divided by the **exposure**,
+  typically measured in number of claims per year.
+
+In this dataset, each sample corresponds to an insurance policy. Available
+features include driver age, vehicle age, vehicle power, etc.
+
+Our goal is to predict the expected frequency of claims following car accidents
+for a new policyholder given the historical data over a population of
+policyholders.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
@@ -116,9 +122,9 @@ linear_model_preprocessor = ColumnTransformer(
 # A constant prediction baseline
 # ------------------------------
 #
-# It is worth noting that 93% of policyholders have zero claims, and if we
-# were to convert this problem into a binary classification task, it would be
-# significantly imbalanced.
+# It is worth noting that more than 93% of policyholders have zero claims. If
+# we were to convert this problem into a binary classification task, it would
+# be significantly imbalanced.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
 # baseline a "dummy" estimator that constantly predicts the mean frequency of
@@ -133,9 +139,8 @@ df_train, df_test = train_test_split(df, test_size=0.33, random_state=0)
 dummy = Pipeline([
     ("preprocessor", linear_model_preprocessor),
     ("regressor", DummyRegressor(strategy='mean')),
-])
-dummy.fit(df_train, df_train["Frequency"],
-          regressor__sample_weight=df_train["Exposure"])
+]).fit(df_train, df_train["Frequency"],
+       regressor__sample_weight=df_train["Exposure"])
 
 
 ##############################################################################
@@ -163,14 +168,13 @@ def score_estimator(estimator, df_test):
     mask = y_pred > 0
     if (~mask).any():
         warnings.warn("Estimator yields non-positive predictions for {} "
-                      "samples out of {}. These will be ignored while "
-                      "computing the Poisson deviance"
+                      "samples out of {}. These predictions will be clipped "
+                      " while computing the Poisson deviance"
                       .format((~mask).sum(), mask.shape[0]))
 
     print("mean Poisson deviance: %.3f" %
-          mean_poisson_deviance(df_test["Frequency"][mask],
-                                y_pred[mask],
-                                df_test["Exposure"][mask]))
+          mean_poisson_deviance(df_test["Frequency"], y_pred.clip(min=1e-6),
+                                df_test["Exposure"]))
 
 
 print("Constant mean frequency evaluation:")
@@ -181,7 +185,8 @@ score_estimator(dummy, df_test)
 # -------------
 #
 # We start by modeling the target variable with the (penalized) least squares
-# linear regression model:
+# linear regression model. We use a low penalization as we expect such a linear
+# model to under-fit on such a large dataset.
 
 from sklearn.linear_model import Ridge
 
@@ -211,10 +216,11 @@ score_estimator(ridge, df_test)
 
 from sklearn.linear_model import PoissonRegressor
 
+n_samples = df_train.shape[0]
 
 poisson = Pipeline([
     ("preprocessor", linear_model_preprocessor),
-    ("regressor", PoissonRegressor(alpha=1e-6, max_iter=1000))
+    ("regressor", PoissonRegressor(alpha=1e-6/n_samples, max_iter=1000))
 ])
 poisson.fit(df_train, df_train["Frequency"],
             regressor__sample_weight=df_train["Exposure"])
@@ -271,7 +277,7 @@ score_estimator(gbrt, df_test)
 #
 # The qualitative difference between these models can also be visualized by
 # comparing the histogram of observed target values with that of predicted
-# values.
+# values:
 
 fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16, 6), sharey=True)
 fig.subplots_adjust(bottom=0.2)
@@ -302,19 +308,20 @@ plt.tight_layout()
 
 ##############################################################################
 # The experimental data presents a long tail distribution for ``y``. In all
-# models, we predict a mean expected value, so we will have necessarily fewer
-# extreme values. Additionally, the normal conditional distribution used in
-# ``Ridge`` and ``HistGradientBoostingRegressor`` has a constant variance,
+# models, we predict the expected frequency of a random variable, so we will
+# have necessarily fewer extreme values than for the observed realizations of
+# that random variable. Additionally, the normal conditional distribution used
+# in ``Ridge`` and ``HistGradientBoostingRegressor`` has a constant variance,
 # while for the Poisson distribution used in ``PoissonRegressor``, the variance
-# is proportional to the mean predicted value.
+# is proportional to the predicted expected value.
 #
 # Thus, among the considered estimators, ``PoissonRegressor`` is a-priori
-# better suited for modeling the long tail distribution of the data as compared
-# to its ``Ridge`` counter-part.
+# better suited for modeling the long tail distribution of the non-negative
+# data as compared to its ``Ridge`` counter-part.
 #
 # The ``HistGradientBoostingRegressor`` estimator has more flexibility and is
-# able to predict higher mean predicted values while still minimizing a least
-# squares loss.
+# able to predict higher expected values while still assuming a normal
+# conditional distribution with constant variance for the response variable.
 #
 # Evaluation of the calibration of predictions
 # --------------------------------------------
@@ -411,9 +418,9 @@ plt.tight_layout()
 # predicted target values.
 #
 # The sum of all predictions also confirms the calibration issue of the
-# ``Ridge`` model that on average tend to under-estimate by more than 3% the
-# total number of claims in the test set while the other three models can
-# approximately recover the total number of claims of the test portfolio.
+# ``Ridge`` model: it under-estimates by more than 3% the total number of
+# claims in the test set while the other three models can approximately recover
+# the total number of claims of the test portfolio.
 #
 # Evaluation of the discriminative power
 # --------------------------------------
@@ -423,7 +430,7 @@ plt.tight_layout()
 # the absolute value of the prediction. In this case, the model evaluation
 # would cast the problem as a ranking problem rather than a regression problem.
 #
-# To compare the 3 models within this perspective, one can plot the fraction of
+# To compare the 3 models from this perspective, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
 # the model predictions, from safest to riskiest according to each model.
 #
@@ -525,6 +532,6 @@ ax.legend(loc="upper left")
 #   variance of the response variable.
 #
 # - Traditional regression metrics such as Mean Squared Error and Mean Absolute
-#   Error are hard to meaningfully interpret on count values.
+#   Error are hard to meaningfully interpret on count values with many zeros.
 
 plt.show()
