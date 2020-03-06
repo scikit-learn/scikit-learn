@@ -1,14 +1,21 @@
 
 .. _partial_dependence:
 
-========================
-Partial dependence plots
-========================
+========================================
+Interaction between feature and response
+========================================
 
 .. currentmodule:: sklearn.inspection
 
+Partial dependence plots (PDP) and individual conditional expectation (ICE)
+plots can be used visualize and analyze interaction between the target
+response [1]_ and a set of target features.
+
+Partial dependence plots
+========================
+
 Partial dependence plots (PDP) show the dependence between the target
-response [1]_ and a set of 'target' features, marginalizing over the values
+response and a set of 'target' features, marginalizing over the values
 of all other features (the 'complement' features). Intuitively, we can
 interpret the partial dependence as the expected target response as a
 function of the 'target' features.
@@ -163,15 +170,86 @@ support it, and 'brute' is used for the rest.
     samples differently. Remember, however, that the primary assumption for
     interpreting PDPs is that the features should be independent.
 
+
+Individual conditional expectation (ICE) plot
+=============================================
+
+Similar to a PDP, an individual conditional expectation (ICE) plot
+shows the dependence between the target function and a target feature.
+However, unlike a PDP, which shows the average effect of the target
+feature, an ICE plot visualizes the dependence of the prediction on a
+feature for each instance separately with one line per instance.
+Due to the limits of human perception, only one target feature is
+supported for ICE plots.
+
+The figures below show four ICE plots for the California housing dataset,
+with a :class:`GradientBoostingRegressor
+<sklearn.ensemble.GradientBoostingRegressor>`. The second figure plots
+the corresponding PD line overlaid on ICE lines.
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
+   :target: ../auto_examples/inspection/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_005.png
+   :target: ../auto_examples/inspection/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+While the PDPs are good at showing the average effect of the target features,
+they can obscure a heterogeneous relationship created by interactions.
+When interactions are present the ICE plot will provide much more insight.
+For example, we could observe a linear relationship between the median income
+and the house price in the PD line. However, the ICE lines show that there
+are some exceptions, where the house price remains constant with the median
+income.
+
+Similar to PDPs, the target features are assumed to be independent from the
+complement features.
+
+The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
+convenience function can be used to create ICE plots by setting
+``individual=True``. In the below example we show how to create a grid of
+ICE plots:
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.inspection import plot_partial_dependence
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> features = [0, 1]
+    >>> plot_partial_dependence(clf, X, features,
+    ...     individual=True) #doctest: +SKIP
+
+You can access the newly created figure and Axes objects using ``plt.gcf()``
+and ``plt.gca()``.
+
+In ICE plots it might not be easy to see the average effect of the target
+variable. Hence, it is recommended to use ICE plots alongside partial
+dependency plots. They can be plotted together with ``individual='both'``.
+
+    >>> plot_partial_dependence(clf, X, features,
+    ...     individual='both') #doctest: +SKIP
+
+Mathematical Definition
+^^^^^^^^^^^^^^^^^^^^^^^
+
+In ICE, for each instance in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
+line :math:`pd_{X_S}^{(i)}` is calculated against :math:`X_S^{(i)}`, while
+:math:`X_C^{(i)}` remains fixed.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
+
 .. rubric:: Footnotes
 
 .. [1] For classification, the target response may be the probability of a
    class (the positive class for binary classification), or the decision
    function.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. topic:: References
 
@@ -181,3 +259,9 @@ support it, and 'brute' is used for the rest.
 
     C. Molnar, `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
+
+    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, `Peeking Inside the
+    Black Box: Visualizing Statistical Learning With Plots of Individual
+    Conditional Expectation <https://arxiv.org/abs/1309.6392>`_,
+    Journal of Computational and Graphical Statistics, 24(1): 44-65, Springer,
+    2015.
