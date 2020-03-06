@@ -25,8 +25,8 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_k_means_fast',
-                         sources=['_k_means_fast.pyx'],
+    config.add_extension('_k_means_common',
+                         sources=['_k_means_common.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
@@ -37,6 +37,11 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('_k_means_elkan',
                          sources=['_k_means_elkan.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
+    config.add_extension('_k_means_minibatch',
+                         sources=['_k_means_minibatch.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

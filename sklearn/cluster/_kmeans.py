@@ -28,11 +28,11 @@ from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
-from ._k_means_fast import _inertia_dense
-from ._k_means_fast import _inertia_sparse
-from ._k_means_fast import _mini_batch_update_csr
-from ._k_means_fast import _minibatch_update_dense
-from ._k_means_fast import _minibatch_update_dense4
+from ._k_means_common import _inertia_dense
+from ._k_means_common import _inertia_sparse
+from ._k_means_minibatch import _minibatch_update_sparse
+from ._k_means_minibatch import _minibatch_update_dense
+from ._k_means_minibatch import _minibatch_update_dense4
 from ._k_means_lloyd import _lloyd_iter_chunked_dense
 from ._k_means_lloyd import _lloyd_iter_chunked_sparse
 from ._k_means_elkan import _init_bounds_dense
@@ -1136,89 +1136,80 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                                 self.cluster_centers_, self._n_threads)[1]
 
 
-def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
-                     centers_new, compute_squared_diff, random_state,
-                     random_reassign=False, reassignment_ratio=.01,
-                     verbose=False):
+def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
+                     weight_sums, random_state, random_reassign=False,
+                     reassignment_ratio=0.01, verbose=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm.
 
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
-        The original data array.
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The original data array. In sparse, must be in CSR format.
 
-    sample_weight : array-like, shape (n_samples,)
-        The weights for each observation in X.
-
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array, shape (k, n_features)
-        The cluster centers. This array is MODIFIED IN PLACE
+    sample_weight : ndarray of shape (n_samples,)
+        The weights for each observation in X.
 
-    counts : array, shape (k,)
-         The vector in which we keep track of the numbers of elements in a
-         cluster. This array is MODIFIED IN PLACE
+    # TODO better
+    centers : ndarray of shape (n_clusters, n_features)
+        The cluster centers.
+
+    centers_new : ndarray of shape (n_clusters, n_features)
+        TODO
+
+    weight_sums : ndarray of shape (n_clusters,)
+        The vector in which we keep track of the numbers of points in a
+        cluster. This array is modified in place.
 
     random_state : RandomState instance
         Determines random number generation for low count centers reassignment.
         See :term:`Glossary <random_state>`.
 
-    random_reassign : boolean, optional
+    random_reassign : boolean, default=False
         If True, centers with very low counts are randomly reassigned
         to observations.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Controls the verbosity.
-
-    compute_squared_diff : bool
-        If set to False, the squared diff computation is skipped.
-
-    old_center_buffer : int
-        Copy of old centers for monitoring convergence.
 
     Returns
     -------
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
-
-    squared_diff : numpy array, shape (n_clusters,)
-        Squared distances between previous and updated cluster centers.
-
     """
     # Perform label assignment to nearest centers
     labels, inertia = _labels_inertia(X, sample_weight,
                                       x_squared_norms, centers)
 
-    # implementation for the sparse CSR representation completely written in
-    # cython
+    # Update centers according to the labels
     if sp.issparse(X):
-        _mini_batch_update_csr(
-            X, sample_weight, x_squared_norms, centers, weight_sums,
-            labels, centers_new, compute_squared_diff)
-
-    # dense variant in mostly numpy (not as memory efficient though.
+        _minibatch_update_sparse(
+            X, sample_weight, centers, centers_new, weight_sums, labels)
     else:
         _minibatch_update_dense(
             X, sample_weight, centers, centers_new, weight_sums, labels)
 
+    # Reassign clusters that have very low weight
     if random_reassign and reassignment_ratio > 0:
-        # Reassign clusters that have very low weight
         to_reassign = weight_sums < reassignment_ratio * weight_sums.max()
+
         # pick at most .5 * batch_size samples as new centers
         if to_reassign.sum() > .5 * X.shape[0]:
             indices_dont_reassign = \
                     np.argsort(weight_sums)[int(.5 * X.shape[0]):]
             to_reassign[indices_dont_reassign] = False
         n_reassigns = to_reassign.sum()
+
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
             # TODO proba ~ distance like kmeans++ ?
@@ -1228,134 +1219,20 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                 print(f"[MiniBatchKMeans] Reassigning {n_reassigns} "
                       f"cluster centers.")
 
-            if sp.issparse(X) and not sp.issparse(centers):
+            if sp.issparse(X):
                 assign_rows_csr(
                         X, new_centers.astype(np.intp, copy=False),
                         np.where(to_reassign)[0].astype(np.intp, copy=False),
                         centers)
             else:
                 centers_new[to_reassign] = X[new_centers]
+
         # reset counts of reassigned centers, but don't reset them too small
         # to avoid instant reassignment. This is a pretty dirty hack as it
         # also modifies the learning rates.
         weight_sums[to_reassign] = np.min(weight_sums[~to_reassign])
 
-    return inertia, None
-
-
-def _minibatch_update_dense3(X, sample_weight, centers, centers_new,
-                             weight_sums, labels):
-    for i in range(centers.shape[0]):
-        # find points from minibatch that are assigned to this center
-        mask = labels == i
-        wsum = sample_weight[mask].sum()
-
-        if wsum > 0:
-            # inplace remove previous count scaling
-            centers_new[i] = centers[i] * weight_sums[i]
-
-            # inplace sum with new points members of this cluster
-            centers_new[i] += np.sum(
-                X[mask] * sample_weight[mask, np.newaxis], axis=0)
-
-            # update the count statistics for this center
-            weight_sums[i] += wsum
-
-            # inplace rescale to compute mean of all points (old and new)
-            # Note: numpy >= 1.10 does not support '/=' for the following
-            # expression for a mixture of int and float (see numpy issue #6464)
-            centers_new[i] /= weight_sums[i]
-        else:
-            centers_new[i] = centers[i]
-
-
-def _minibatch_update_dense2(X, sample_weight, centers, weight_sums, labels,
-                            old_center_buffer, compute_squared_diff):
-    squared_diff = 0.0
-    for i in range(X.shape[0]):
-        label = labels[i]
-
-        # update center weight
-        weight_sums[label] += sample_weight[i]
-
-        # learning rate
-        if weight_sums[label] > 0:
-            lr = 1 / weight_sums[label]
-
-            if compute_squared_diff:
-                old_center_buffer[:] = centers[label]
-
-            centers[label] *= (1 - lr)
-            centers[label] += lr * X[i]
-
-            if compute_squared_diff:
-                diff = centers[label].ravel() - old_center_buffer.ravel()
-                squared_diff += np.dot(diff, diff)
-    
-    return squared_diff
-
-
-def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
-                            n_samples, centers_squared_diff, batch_inertia,
-                            context, verbose=0):
-    """Helper function to encapsulate the early stopping logic"""
-    # Normalize inertia to be able to compare values when
-    # batch_size changes
-    batch_inertia /= model.batch_size
-    centers_squared_diff /= model.batch_size
-
-    # Compute an Exponentially Weighted Average of the squared
-    # diff to monitor the convergence while discarding
-    # minibatch-local stochastic variability:
-    # https://en.wikipedia.org/wiki/Moving_average
-    ewa_diff = context.get('ewa_diff')
-    ewa_inertia = context.get('ewa_inertia')
-    if ewa_diff is None:
-        ewa_diff = centers_squared_diff
-        ewa_inertia = batch_inertia
-    else:
-        alpha = model.batch_size * 2.0 / (n_samples + 1)
-        alpha = min(alpha, 1.0)
-        ewa_diff = ewa_diff * (1 - alpha) + centers_squared_diff * alpha
-        ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
-
-    # Log progress to be able to monitor convergence
-    if verbose:
-        progress_msg = (f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
-                        f"mean batch inertia: {batch_inertia}, ewa inertia: "
-                        f"{ewa_inertia}")
-        print(progress_msg)
-
-    # Early stopping based on absolute tolerance on squared change of
-    # centers position (using EWA smoothing)
-    if tol > 0.0 and ewa_diff <= tol:
-        if verbose:
-            print(f"Converged (small centers change) at iteration "
-                  f"{iteration_idx + 1}/{n_iter}")
-        return True
-
-    # Early stopping heuristic due to lack of improvement on smoothed inertia
-    ewa_inertia_min = context.get('ewa_inertia_min')
-    no_improvement = context.get('no_improvement', 0)
-    if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
-        no_improvement = 0
-        ewa_inertia_min = ewa_inertia
-    else:
-        no_improvement += 1
-
-    if (model.max_no_improvement is not None
-            and no_improvement >= model.max_no_improvement):
-        if verbose:
-            print(f"Converged (lack of improvement in inertia) at iteration "
-                  f"{iteration_idx}/{n_iter}")
-        return True
-
-    # update the convergence context to maintain state across successive calls:
-    context['ewa_diff'] = ewa_diff
-    context['ewa_inertia'] = ewa_inertia
-    context['ewa_inertia_min'] = ewa_inertia_min
-    context['no_improvement'] = no_improvement
-    return False
+    return inertia
 
 
 class MiniBatchKMeans(KMeans):
@@ -1592,6 +1469,78 @@ class MiniBatchKMeans(KMeans):
         labels, inertia = zip(*results)
         return np.hstack(labels), np.sum(inertia)
 
+    def _mini_batch_convergence(self, iteration_idx, n_iter, n_samples,
+                                centers_squared_diff, batch_inertia):
+        """Helper function to encapsulate the early stopping logic"""
+        # Normalize inertia to be able to compare values when
+        # batch_size changes
+        batch_inertia /= self.batch_size
+        centers_squared_diff /= self.batch_size
+
+        # We skip the first iteration because it would lead to a bad
+        # initialization of ewa_diff and ewa_inertia. The reason is that
+        # inertia is computed on centers before they are updated. Before the
+        # first iteration, centers are not yet the mean of their cluster.
+        if iteration_idx == 0:
+            if self.verbose:
+                print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
+                      f"mean batch inertia: {batch_inertia}, ewa inertia: "
+                      f"-")
+            return False
+
+        # Compute an Exponentially Weighted Average of the squared diff to
+        # monitor the convergence while discarding minibatch-local stochastic
+        # variability: https://en.wikipedia.org/wiki/Moving_average
+        ewa_diff = self._ewa_diff
+        ewa_inertia = self._ewa_inertia
+        if ewa_diff is None:
+            ewa_diff = centers_squared_diff
+            ewa_inertia = batch_inertia
+        else:
+            alpha = self.batch_size * 2.0 / (n_samples + 1)
+            ewa_diff = ewa_diff * (1 - alpha) + centers_squared_diff * alpha
+            ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
+
+        # Log progress to be able to monitor convergence
+        if self.verbose:
+            print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
+                  f"mean batch inertia: {batch_inertia}, ewa inertia: "
+                  f"{ewa_inertia}")
+
+        # Early stopping based on absolute tolerance on squared change of
+        # centers position (using EWA smoothing)
+        if self._tol > 0.0 and ewa_diff <= self._tol:
+            if self.verbose:
+                print(f"Converged (small centers change) at iteration "
+                      f"{iteration_idx + 1}/{n_iter}")
+            return True
+
+        # Early stopping heuristic due to lack of improvement on smoothed
+        # inertia
+        ewa_inertia_min = self._ewa_inertia_min
+        no_improvement = self._no_improvement
+        if iteration_idx >= 5:
+            if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
+                no_improvement = 0
+                ewa_inertia_min = ewa_inertia
+            else:
+                no_improvement += 1
+
+            if (self.max_no_improvement is not None
+                    and no_improvement >= self.max_no_improvement):
+                if self.verbose:
+                    print(f"Converged (lack of improvement in inertia) at "
+                        f"iteration {iteration_idx}/{n_iter}")
+                return True
+
+        # update the convergence context to maintain state across successive
+        # calls:
+        self._ewa_diff = ewa_diff
+        self._ewa_inertia = ewa_inertia
+        self._ewa_inertia_min = ewa_inertia_min
+        self._no_improvement = no_improvement
+        return False
+
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -1601,6 +1550,8 @@ class MiniBatchKMeans(KMeans):
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
+            If a sparse matrix is passed, a copy will be made if it's not in
+            CSR format.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -1632,18 +1583,9 @@ class MiniBatchKMeans(KMeans):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        if self._tol > 0.0:
-            # using tol-based early stopping needs the allocation of a
-            # dedicated before which can be expensive for high dim data:
-            # hence we allocate it outside of the main loop
-            old_center_buffer = np.zeros(n_features, dtype=X.dtype)
-        else:
-            # no need for the center buffer if tol-based early stopping is
-            # disabled
-            old_center_buffer = np.zeros(0, dtype=X.dtype)
-
         validation_indices = random_state.randint(0, n_samples,
-                                                  self._init_size)
+                                                #   self._init_size,
+                                                  self.batch_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
@@ -1678,51 +1620,55 @@ class MiniBatchKMeans(KMeans):
         # Initialize counts
         self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
-        # Empty conext to be used inplace by the convergence check routine
-        convergence_context = {}
+        # Attributes to monitor the convergence
+        self._ewa_diff = None
+        self._ewa_inertia = None
+        self._ewa_inertia_min = None
+        self._no_improvement = 0
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
         # Perform the iterative optimization until convergence
-        for iteration_idx in range(n_iter):
+        for i in range(n_iter):
             # Sample a minibatch from the full dataset
             minibatch_indices = random_state.randint(0, n_samples,
                                                      self.batch_size)
 
+            # Here we randomly choose whether to perform random reassignment:
+            # the choice is done as a function of the iteration index, and the
+            # minimum number of counts, in order to force this reassignment to
+            # happen every once in a while.
+            random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
+
             # Perform the actual update step on the minibatch data
-            batch_inertia, centers_squared_diff = _mini_batch_step(
+            batch_inertia = _mini_batch_step(
                 X=X[minibatch_indices],
-                sample_weight=sample_weight[minibatch_indices],
                 x_squared_norms=x_squared_norms[minibatch_indices],
+                sample_weight=sample_weight[minibatch_indices],
                 centers=centers,
-                weight_sums=self._counts,
                 centers_new=centers_new,
-                compute_squared_diff=self._tol > 0.0,
+                weight_sums=self._counts,
                 random_state=random_state,
-                # Here we randomly choose whether to perform
-                # random reassignment: the choice is done as a function
-                # of the iteration index, and the minimum number of
-                # counts, in order to force this reassignment to happen
-                # every once in a while
-                random_reassign=((iteration_idx + 1)
-                                 % (10 + int(self._counts.min())) == 0),
+                random_reassign=random_reassign,
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
 
-            centers_squared_diff = np.sum((centers_new - centers)**2)
+            if self._tol > 0.0:
+                centers_squared_diff = np.sum((centers_new - centers)**2)
+            else:
+                centers_squared_diff = 0
+
             centers, centers_new = centers_new, centers
 
             # Monitor convergence and do early stopping if necessary
-            if _mini_batch_convergence(
-                    self, iteration_idx, n_iter, self._tol, n_samples,
-                    centers_squared_diff, batch_inertia, convergence_context,
-                    verbose=self.verbose):
+            if self._mini_batch_convergence(
+                    i, n_iter, n_samples, centers_squared_diff, batch_inertia):
                 break
 
         self.cluster_centers_ = centers
 
-        self.n_iter_ = iteration_idx + 1
+        self.n_iter_ = i + 1
 
         if self.compute_labels:
             self.labels_, self.inertia_ = self._labels_inertia_minibatch(
@@ -1799,12 +1745,11 @@ class MiniBatchKMeans(KMeans):
                     f"data {self.cluster_centers_.shape[1]}.")
 
         _mini_batch_step(X,
-                         sample_weight=sample_weight,
                          x_squared_norms=x_squared_norms,
+                         sample_weight=sample_weight,
                          centers=self.cluster_centers_,
+                         centers_new=self.cluster_centers_,
                          weight_sums=self._counts,
-                         old_center_buffer=np.zeros(0, dtype=X.dtype),
-                         compute_squared_diff=False,
                          random_state=self._random_state,
                          random_reassign=random_reassign,
                          reassignment_ratio=self.reassignment_ratio,
