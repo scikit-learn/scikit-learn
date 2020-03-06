@@ -489,8 +489,7 @@ ax.legend(loc="upper left")
 # performs the worst on this plot.
 #
 # The tree-based model is significantly better at ranking policyholders by risk
-# while the two linear models perform similarly. The linear models assume no
-# interactions between the input variables which likely causes under-fitting.
+# while the two linear models perform similarly.
 #
 # All three models are significantly better than chance but also very far from
 # making perfect predictions.
@@ -498,6 +497,12 @@ ax.legend(loc="upper left")
 # This last point is expected due to the nature of the problem: the occurrence
 # of accidents is mostly dominated by circumstantial causes that are not
 # captured in the columns of the dataset or that are indeed random.
+#
+# The linear models assume no interactions between the input variables which
+# likely causes under-fitting. Inserting a polynomial feature extractor
+# (func:`sklearn.preprocessing.PolynomialFeatures`) indeed increases their
+# discrimative power by 2 points of Gini index. In particular it improves the
+# ability of the models to identify the top 5% riskiest profiles.
 #
 # Main takeaways
 # --------------
