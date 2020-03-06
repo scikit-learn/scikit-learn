@@ -721,6 +721,9 @@ class PLSCanonical(_PLS):
     y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
 
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
+
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component. Not useful if the algorithm provided is "svd".
