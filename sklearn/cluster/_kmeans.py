@@ -283,8 +283,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
 
 def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
-                         verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4, n_threads=1):
+                         verbose=False, x_squared_norms=None, tol=1e-4,
+                         n_threads=1):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
     Parameters
@@ -306,11 +306,6 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
 
     x_squared_norms : array-like, default=None
         Precomputed x_squared_norms.
-
-    random_state : int, RandomState instance, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Relative tolerance with regards to Frobenius norm of the difference
@@ -340,8 +335,6 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     n_iter : int
         Number of iterations run.
     """
-    random_state = check_random_state(random_state)
-
     n_samples = X.shape[0]
     n_clusters = centers_init.shape[0]
 
@@ -406,8 +399,8 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
 
 
 def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
-                         verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4, n_threads=1):
+                         verbose=False, x_squared_norms=None, tol=1e-4,
+                         n_threads=1):
     """A single run of k-means lloyd, assumes preparation completed prior.
 
     Parameters
@@ -429,11 +422,6 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
 
     x_squared_norms : ndarray of shape(n_samples,), default=None
         Precomputed x_squared_norms.
-
-    random_state : int, RandomState instance or None, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Relative tolerance with regards to Frobenius norm of the difference
@@ -463,8 +451,6 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
     n_iter : int
         Number of iterations run.
     """
-    random_state = check_random_state(random_state)
-
     n_clusters = centers_init.shape[0]
 
     # Buffers to avoid new allocations at each iteration.
@@ -1477,17 +1463,6 @@ class MiniBatchKMeans(KMeans):
         batch_inertia /= self.batch_size
         centers_squared_diff /= self.batch_size
 
-        # We skip the first iteration because it would lead to a bad
-        # initialization of ewa_diff and ewa_inertia. The reason is that
-        # inertia is computed on centers before they are updated. Before the
-        # first iteration, centers are not yet the mean of their cluster.
-        if iteration_idx == 0:
-            if self.verbose:
-                print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
-                      f"mean batch inertia: {batch_inertia}, ewa inertia: "
-                      f"-")
-            return False
-
         # Compute an Exponentially Weighted Average of the squared diff to
         # monitor the convergence while discarding minibatch-local stochastic
         # variability: https://en.wikipedia.org/wiki/Moving_average
@@ -1601,11 +1576,14 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms=x_squared_norms, init=init,
                 random_state=random_state, init_size=self._init_size)
 
-            # Keep the best cluster centers across independent inits based on
-            # inertia computed on a common validation set.
-            _, inertia = _labels_inertia(X_valid, sample_weight_valid,
-                                         x_squared_norms_valid,
-                                         cluster_centers)
+            # Preform one iteration of KMeans to make the centers being the
+            # mean of their cluster.
+            _, inertia, cluster_centers, _ = _kmeans_single_lloyd(
+                X=X_valid, x_squared_norms=x_squared_norms_valid,
+                sample_weight=sample_weight_valid,
+                centers_init=cluster_centers, max_iter=1, tol=0,
+                n_threads=self._n_threads)
+
             if self.verbose:
                 print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
                       f"{inertia}")
