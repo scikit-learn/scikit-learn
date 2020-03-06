@@ -370,6 +370,8 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
+        .. versionadded:: 0.20
+
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
