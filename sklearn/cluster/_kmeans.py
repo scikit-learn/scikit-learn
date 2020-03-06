@@ -1530,7 +1530,7 @@ class MiniBatchKMeans(KMeans):
                     and no_improvement >= self.max_no_improvement):
                 if self.verbose:
                     print(f"Converged (lack of improvement in inertia) at "
-                        f"iteration {iteration_idx}/{n_iter}")
+                          f"iteration {iteration_idx}/{n_iter}")
                 return True
 
         # update the convergence context to maintain state across successive
@@ -1584,8 +1584,7 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
 
         validation_indices = random_state.randint(0, n_samples,
-                                                #   self._init_size,
-                                                  self.batch_size)
+                                                  self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
