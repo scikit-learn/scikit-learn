@@ -1,5 +1,4 @@
-"""
-========================================
+"""========================================
 Comparison of Calibration of Classifiers
 ========================================
 
@@ -18,9 +17,9 @@ with different biases per method:
   are conditionally independent given the class, which is not the case in this
   dataset which contains 2 redundant features.
 
-* RandomForestClassifier shows the opposite behavior: the histograms show
-  peaks at approx. 0.2 and 0.9 probability, while probabilities close to 0 or 1
-  are very rare. An explanation for this is given by Niculescu-Mizil and Caruana
+* RandomForestClassifier shows the opposite behavior: the histograms show peaks
+  at approx. 0.2 and 0.9 probability, while probabilities close to 0 or 1 are
+  very rare. An explanation for this is given by Niculescu-Mizil and Caruana
   [1]_: "Methods such as bagging and random forests that average predictions
   from a base set of models can have difficulty making predictions near 0 and 1
   because variance in the underlying base models will bias predictions that
@@ -46,6 +45,7 @@ with different biases per method:
 
     .. [1] Predicting Good Probabilities with Supervised Learning,
           A. Niculescu-Mizil & R. Caruana, ICML 2005
+
 """
 print(__doc__)
 
