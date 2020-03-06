@@ -1476,6 +1476,7 @@ class MiniBatchKMeans(KMeans):
             ewa_inertia = batch_inertia
         else:
             alpha = self.batch_size * 2.0 / (n_samples + 1)
+            alpha = min(alpha, 1)
             ewa_diff = ewa_diff * (1 - alpha) + centers_squared_diff * alpha
             ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
 
@@ -1497,19 +1498,18 @@ class MiniBatchKMeans(KMeans):
         # inertia
         ewa_inertia_min = self._ewa_inertia_min
         no_improvement = self._no_improvement
-        if iteration_idx >= 5:
-            if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
-                no_improvement = 0
-                ewa_inertia_min = ewa_inertia
-            else:
-                no_improvement += 1
+        if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
+            no_improvement = 0
+            ewa_inertia_min = ewa_inertia
+        else:
+            no_improvement += 1
 
-            if (self.max_no_improvement is not None
-                    and no_improvement >= self.max_no_improvement):
-                if self.verbose:
-                    print(f"Converged (lack of improvement in inertia) at "
-                          f"iteration {iteration_idx}/{n_iter}")
-                return True
+        if (self.max_no_improvement is not None
+                and no_improvement >= self.max_no_improvement):
+            if self.verbose:
+                print(f"Converged (lack of improvement in inertia) at "
+                      f"iteration {iteration_idx}/{n_iter}")
+            return True
 
         # update the convergence context to maintain state across successive
         # calls:
@@ -1542,11 +1542,9 @@ class MiniBatchKMeans(KMeans):
         -------
         self
         """
-        # TODO accept_large_sparse ???
         X = self._validate_data(X, accept_sparse='csr',
                                 dtype=[np.float64, np.float32],
-                                order='C', copy=self.copy_x,
-                                accept_large_sparse=False)
+                                order='C', accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
