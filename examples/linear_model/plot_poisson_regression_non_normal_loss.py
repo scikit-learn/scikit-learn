@@ -19,7 +19,7 @@ A few definitions:
 - the **exposure** is the duration of the insurance coverage of a given policy,
   in years.
 
-- the claim **frequency** is the number of claims divided by the **exposure**,
+- the claim **frequency** is the number of claims divided by the exposure,
   typically measured in number of claims per year.
 
 In this dataset, each sample corresponds to an insurance policy. Available
