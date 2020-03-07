@@ -202,8 +202,8 @@ they can obscure a heterogeneous relationship created by interactions.
 When interactions are present the ICE plot will provide much more insight.
 For example, we could observe a linear relationship between the median income
 and the house price in the PD line. However, the ICE lines show that there
-are some exceptions, where the house price remains constant with the median
-income.
+are some exceptions, where the house price remains constant in some ranges of
+the median income.
 
 Similar to PDPs, the target features are assumed to be independent from the
 complement features.
