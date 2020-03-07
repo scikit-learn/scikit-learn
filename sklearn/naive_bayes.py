@@ -265,14 +265,16 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             raise ValueError("Class priors for every estimator "
                              "must be the same.")
 
+        # FIXME
         # Obtain the jll of each fitted estimator
         jlls = []
         for _, nb_model, cols in self.models_:
-            X_ = nb_model._check_X(X)
+            X_ = X.copy()
             # If X is DataFrame, cast X_ back to DataFrame
             if self._df_cols is not None:
                 X_ = pd.DataFrame(X_, columns=self._df_cols)
             X_ = np.array(_safe_indexing(X_, cols, axis=1))
+            X_ = nb_model._check_X(X_)
             jll = nb_model._joint_log_likelihood(X_)
             jlls.append(jll)
 
@@ -369,7 +371,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             for col in cols:
                 if col in dict_col2model:
                     raise ValueError("Duplicate specification of "
-                                     "column found.")
+                                     f"column {col} found.")
                 else:
                     dict_col2model[col] = estimator.__class__.__name__.lower()
             self._cols.append(cols)
