@@ -359,4 +359,4 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         K = self._get_kernel(X, self.X_transformed_fit_)
 
-        return np.dot(K, self.dual_coef_)
+        return np.dot(K, self.dual_coef_) + np.mean(self.dual_coef_, axis=0)
