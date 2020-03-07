@@ -47,7 +47,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           >>> X, y = make_friedman1()
           >>> est1 = LinearRegression().fit(X, y)
           >>> est2 = RandomForestRegressor().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est1, X, [1, 2])  # doctest: +SKIP
+          >>> disp1 = plot_partial_dependence(est1, X,
+          ...                                 [1, 2])  # doctest: +SKIP
           >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
           ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
