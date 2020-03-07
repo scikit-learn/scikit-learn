@@ -837,6 +837,21 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
 Miscellaneous
 -------------
 
@@ -1178,12 +1193,6 @@ Hyper-parameter optimizers
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
 
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -1614,4 +1623,5 @@ To be removed in 0.24
    :toctree: generated/
    :template: deprecated_function.rst
 
+   model_selection.fit_grid_point
    utils.safe_indexing

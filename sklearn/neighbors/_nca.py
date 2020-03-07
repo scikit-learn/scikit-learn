@@ -300,7 +300,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
