@@ -641,7 +641,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = \
@@ -879,8 +879,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True, ensure_min_features=2,
-                         estimator=self)
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
+                                   estimator=self)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])

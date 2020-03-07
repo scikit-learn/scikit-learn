@@ -281,6 +281,8 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    if not tags["no_validation"]:
+        yield check_n_features_in
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -2636,6 +2638,22 @@ def _enforce_estimator_tags_y(estimator, y):
     return y
 
 
+def _enforce_estimator_tags_x(estimator, X):
+    # Estimators with a `_pairwise` tag only accept
+    # X of shape (`n_samples`, `n_samples`)
+    if hasattr(estimator, '_pairwise'):
+        X = X.dot(X.T)
+    # Estimators with `1darray` in `X_types` tag only accept
+    # X of shape (`n_samples`,)
+    if '1darray' in _safe_tags(estimator, 'X_types'):
+        X = X[:, 0]
+    # Estimators with a `requires_positive_X` tag only accept
+    # strictly positive data
+    if _safe_tags(estimator, 'requires_positive_X'):
+        X -= X.min()
+    return X
+
+
 @ignore_warnings(category=FutureWarning)
 def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
@@ -2906,3 +2924,41 @@ def check_fit_idempotent(name, estimator_orig):
                 atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
                 err_msg="Idempotency check failed for method {}".format(method)
             )
+
+
+def check_n_features_in(name, estimator_orig):
+    # Make sure that n_features_in_ attribute doesn't exist until fit is
+    # called, and that its value is correct.
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    assert not hasattr(estimator, 'n_features_in_')
+    estimator.fit(X, y)
+    if hasattr(estimator, 'n_features_in_'):
+        assert estimator.n_features_in_ == X.shape[1]
+    else:
+        warnings.warn(
+            "As of scikit-learn 0.23, estimators should expose a "
+            "n_features_in_ attribute, unless the 'no_validation' tag is "
+            "True. This attribute should be equal to the number of features "
+            "passed to the fit method. "
+            "An error will be raised from version 0.25 when calling "
+            "check_estimator(). "
+            "See SLEP010: "
+            "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
+            FutureWarning
+        )
