@@ -1375,6 +1375,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if  ``use_idf`` is True.
 
         .. versionadded:: 0.20
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
