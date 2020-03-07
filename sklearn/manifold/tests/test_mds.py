@@ -55,30 +55,6 @@ def test_smacof_error():
         mds.smacof(sim, init=Z, n_init=1)
 
 
-def test_svd():
-    # Test svd using example data from "An Introduction to MDS"
-    # Florian Wickelmaier, p 11
-    sim = np.array([[0, 93, 82, 133],
-                    [93, 0, 52, 60],
-                    [82, 52, 0, 111],
-                    [133, 60, 111, 0]])
-
-    X, stress = mds.svd_scaler(sim, n_components=2)
-    X_true_1 = np.array([[-62.831, -32.97448],
-                         [18.403, 12.02697],
-                         [-24.960, 39.71091],
-                         [69.388, -18.76340]])
-    X_true_2 = np.copy(X_true_1)
-    X_true_2[:, 0] *= -1
-
-    # Signs of columns are dependent on signs of computed eigenvectors
-    # which are arbitrary and meaningless
-    assert(np.allclose(X, X_true_1)
-           or np.allclose(X, -X_true_1)
-           or np.allclose(X, X_true_2)
-           or np.allclose(X, -X_true_2))
-
-
 def test_svd_error():
     # Non symmetric (dis)similarity matrix:
     sim = np.array([[0, 5, 9, 4],
@@ -86,7 +62,7 @@ def test_svd_error():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Array must be symmetric"):
         mds.svd_scaler(sim)
 
     # Non squared (dis)similarity matrix:
@@ -94,7 +70,8 @@ def test_svd_error():
                     [5, 0, 2, 2],
                     [4, 2, 1, 0]])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       match="array must be 2-dimensional and square"):
         mds.svd_scaler(sim)
 
     # Non Euclidean (dis)similarity matrix:
@@ -112,13 +89,13 @@ def test_MDS_error():
     # Bad solver name
     sim = np.ones((2, 2))
     mdc_clf = mds.MDS(solver='bad name')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Solver must be 'smacof' or 'svd'"):
         mdc_clf.fit(sim)
 
     # SVD with metric=False
     sim = np.ones((2, 2))
     mdc_clf = mds.MDS(metric=False, solver='svd')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Using SVD requires metric=True"):
         mdc_clf.fit(sim)
 
 

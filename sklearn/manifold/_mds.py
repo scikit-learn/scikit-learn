@@ -287,7 +287,7 @@ def svd_scaler(dissimilarities, n_components=2):
 
     Returns
     ----------
-    X : ndarray, shape (n_samples, n_components)
+    embedding : ndarray, shape (n_samples, n_components)
         Coordinates of the points in a ``n_components``-space.
 
     stress : float
@@ -299,8 +299,8 @@ def svd_scaler(dissimilarities, n_components=2):
     "An Introduction to MDS" Florian Wickelmaier
     Sound Quality Research Unit, Aalborg University, Denmark (2003)
 
-    "Multidimensional Scaling" Chapman Hall
-    2nd edition, Boca Raton (2001)
+    "Metric and Euclidean properties of dissimilarity coefficients"
+    J. C. Gower and P. Legendre, Journal of Classification 3, 5–48 (1986)
 
     """
 
@@ -309,16 +309,17 @@ def svd_scaler(dissimilarities, n_components=2):
     n_samples = dissimilarities.shape[0]
 
     # Centering matrix
-    H = np.eye(*dissimilarities.shape) - (1. / n_samples) * \
-        np.ones(dissimilarities.shape)
+    J = np.eye(*dissimilarities.shape) - (1. / n_samples) * (
+        np.ones(dissimilarities.shape))
 
     # Double centered matrix
-    K = -0.5 * np.dot(H, np.dot(dissimilarities ** 2, H))
+    B = -0.5 * np.dot(J, np.dot(dissimilarities ** 2, J))
 
-    w, V = linalg.eigh(K, check_finite=False)
+    w, V = linalg.eigh(B, check_finite=False)
 
-    # ``dissimilarities`` is Euclidean iff ``K`` is positive semi-definite.
-    # For detail see "Multidimensional Scaling" Chapman Hall p 397
+    # ``dissimilarities`` is Euclidean iff ``B`` is positive semi-definite.
+    # See "Metric and Euclidean properties of dissimilarity coefficients"
+    # for details
     try:
         w = _check_psd_eigenvalues(w)
     except ValueError:
@@ -328,15 +329,15 @@ def svd_scaler(dissimilarities, n_components=2):
 
     # Get ``n_compontent`` greatest eigenvalues and corresponding eigenvectors.
     # Eigenvalues should be in descending order by convention.
-    w = w[:-n_components-1:-1]
-    V = V[:, :-n_components-1:-1]
+    w = w[::-1][:n_components]
+    V = V[:, ::-1][:, :n_components]
 
-    X = np.sqrt(w) * V
+    embedding = np.sqrt(w) * V
 
-    dist = euclidean_distances(X)
+    dist = euclidean_distances(embedding)
     stress = ((dissimilarities.ravel() - dist.ravel()) ** 2).sum() * 0.5
 
-    return X, stress
+    return embedding, stress
 
 
 class MDS(BaseEstimator):
