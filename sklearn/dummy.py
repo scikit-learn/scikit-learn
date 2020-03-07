@@ -31,6 +31,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.13
 
+    .. versionchanged:: 0.20
+        X is only required to be an object with finite length or shape now
+
     Parameters
     ----------
     strategy : str, default="stratified"
@@ -416,6 +419,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
     .. versionadded:: 0.13
+
+    .. versionchanged:: 0.20
+        X is only required to be an object with finite length or shape now
 
     Parameters
     ----------
