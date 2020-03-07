@@ -43,10 +43,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           >>> from sklearn.inspection import plot_partial_dependence
           >>> from sklearn.datasets import make_friedman1
           >>> from sklearn.linear_model import LinearRegression
+          >>> from sklearn.ensemble import RandomForestRegressor
           >>> X, y = make_friedman1()
-          >>> est = LinearRegression().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(est, X,
+          >>> est1 = LinearRegression().fit(X, y)
+          >>> est2 = RandomForestRegressor().fit(X, y)
+          >>> disp1 = plot_partial_dependence(est1, X, [1, 2])  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
           ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
     .. warning::
