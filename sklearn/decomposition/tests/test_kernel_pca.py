@@ -285,7 +285,8 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
-@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid", "cosine"])
+@pytest.mark.parametrize("kernel",
+                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
 def test_kernel_pca_inverse_transform_mean(kernel):
     X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
                        random_state=0)
