@@ -33,11 +33,11 @@ print(__doc__)
 
 # Turn down for faster convergence
 t0 = time.time()
-train_samples = 5000
-test_samples = 1000
+n_samples = 6000
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+X, y = X[:n_samples], y[:n_samples]
 
 random_state = check_random_state(0)
 permutation = random_state.permutation(X.shape[0])
@@ -46,7 +46,7 @@ y = y[permutation]
 X = X.reshape((X.shape[0], -1))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, train_size=train_samples, test_size=test_samples, random_state=0)
+    X, y, stratify=y, test_size=0.2, random_state=0)
 
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
@@ -54,8 +54,7 @@ X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
 clf = LogisticRegression(
-    C=50. / train_samples, penalty='l1', solver='saga', tol=0.1
-)
+    C=50. / n_samples, penalty='l1', solver='saga', tol=0.1)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
