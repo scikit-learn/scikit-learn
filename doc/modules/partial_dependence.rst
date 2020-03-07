@@ -8,7 +8,7 @@ Interaction between feature and response
 .. currentmodule:: sklearn.inspection
 
 Partial dependence plots (PDP) and individual conditional expectation (ICE)
-plots can be used visualize and analyze interaction between the target
+plots can be used to visualize and analyze interaction between the target
 response [1]_ and a set of target features.
 
 Partial dependence plots
