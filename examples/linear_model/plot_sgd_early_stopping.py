@@ -99,23 +99,23 @@ estimator_dict = {
 }
 
 # Load the dataset
-X, y = load_mnist(n_samples=10000)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
-                                                    random_state=0)
+# X, y = load_mnist(n_samples=10000)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
+#                                                     random_state=0)
 
-results = []
-for estimator_name, estimator in estimator_dict.items():
-    print(estimator_name + ': ', end='')
-    for max_iter in range(1, 50):
-        print('.', end='')
-        sys.stdout.flush()
+# results = []
+# for estimator_name, estimator in estimator_dict.items():
+#     print(estimator_name + ': ', end='')
+#     for max_iter in range(1, 50):
+#         print('.', end='')
+#         sys.stdout.flush()
 
-        fit_time, n_iter, train_score, test_score = fit_and_score(
-            estimator, max_iter, X_train, X_test, y_train, y_test)
+#         fit_time, n_iter, train_score, test_score = fit_and_score(
+#             estimator, max_iter, X_train, X_test, y_train, y_test)
 
-        results.append((estimator_name, max_iter, fit_time, n_iter,
-                        train_score, test_score))
-    print('')
+#         results.append((estimator_name, max_iter, fit_time, n_iter,
+#                         train_score, test_score))
+#     print('')
 
 # # Transform the results in a pandas dataframe for easy plotting
 # columns = [
