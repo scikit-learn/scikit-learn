@@ -21,8 +21,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, ax=None,
                             individual=False):
-    """Partial dependence plots.
+    """Partial dependence and individual conditional expectation plots.
 
+    Partial dependence plots, individual conditional expectation plots or an
+    overlay of both of them can be plotted by setting the ``individual``
+    parameter.
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -344,7 +347,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP) visualization.
+    """Partial Dependence Plot (PDP) and Individual Conditional Expectation
+    (ICE) visualization.
 
     It is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
