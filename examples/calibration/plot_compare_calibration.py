@@ -56,6 +56,7 @@ print(__doc__)
 import numpy as np
 np.random.seed(0)
 
+import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -65,6 +66,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from sklearn.calibration import calibration_curve
+
+matplotlib.style.use("classic")
 
 X, y = datasets.make_classification(n_samples=100000, n_features=20,
                                     n_informative=2, n_redundant=2)
@@ -77,50 +80,78 @@ y_train = y[:train_samples]
 y_test = y[train_samples:]
 
 # Create classifiers
-lr = LogisticRegression()
-gnb = GaussianNB()
-svc = LinearSVC(C=1.0)
-rfc = RandomForestClassifier()
+
+classifiers = [
+  LogisticRegression(),
+  GaussianNB(),
+  LinearSVC(C=1.0),
+  RandomForestClassifier(),
+]
+labels = [
+  'Logistic',
+  'Naive Bayes',
+  'Support Vector Classification',
+  'Random Forest'
+]
+markers = ['o', '^', 's', 'd']
+colors = ['blue', 'red', 'orange', 'magenta']
 
 
 # #############################################################################
 # Plot calibration plots
 
-plt.figure(figsize=(8, 6))
-ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
-ax2 = plt.subplot2grid((3, 1), (2, 0))
+plt.figure(figsize=(8, 11))
+ax0 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
+axes = []
+for i in range(2):
+    for j in range(2):
+        if i == 0 and j == 0:
+            _ax = plt.subplot2grid((4, 2), (i + 2, j))
+            ax_ref = _ax
+        else:
+            _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
+        axes.append(_ax)
 
-ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-for clf, name in [(lr, 'Logistic'),
-                  (gnb, 'Naive Bayes'),
-                  (svc, 'Support Vector Classification'),
-                  (rfc, 'Random Forest')]:
+
+ax0.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, markers, colors, axes)):
     clf.fit(X_train, y_train)
     if hasattr(clf, "predict_proba"):
         prob_pos = clf.predict_proba(X_test)[:, 1]
     else:  # use decision function
         prob_pos = clf.decision_function(X_test)
-        prob_pos = \
-            (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
-    fraction_of_positives, mean_predicted_value = \
-        calibration_curve(y_test, prob_pos, n_bins=10)
+        _min = prob_pos.min()
+        _max = prob_pos.max()
+        prob_pos = (prob_pos - _min) / (_max - _min)
+    prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
 
-    ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
-             label="%s" % (name, ))
+    ax0.plot(prob_pred, prob_true, marker=marker, color=color, markeredgecolor='none', label=label)
 
-    pd.Series(prob_pos).plot(kind='density', label=name, lw=2, ax=ax2)
+    ax.hist(prob_pos, bins=np.arange(0, 1, 0.04),  density=True, color=color, edgecolor='none', label=label)
+    # ax.hist(prob_pos, bins=10,  density=True, color=color, edgecolor='none', label=label)
+    # pd.Series(prob_pos).plot(kind='density', label=name, lw=2, ax=ax2)
 
-ax1.set_ylabel("Fraction of positives")
-ax1.set_ylim([-0.05, 1.05])
-ax1.legend(loc="upper left", bbox_to_anchor=(1, 1))
-ax1.set_title('Calibration plots  (reliability curve)')
+    ax.set_xlabel("Predicted P(Y=1)")
+    ax.set_ylabel("Density")
+    ax.set_xlim(-0.2, 1.2)
+    ax.set_title(label)
+    ax.grid()
+    # ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+    
+    if k in [1, 3]:
+      ax.set_ylabel('')
+    if k in [0, 1]:
+      ax.set_xlabel('')
 
-ax2.set_xlabel("Mean predicted value")
-ax2.set_ylabel("Density")
-ax2.set_xlim(-0.2, 1.2)
-ax2.legend(loc="upper left", bbox_to_anchor=(1, 1))
+ax0.set_xlabel("Predicted P(Y=1)")
+ax0.set_ylabel("Actual P(Y=1)")
+ax0.set_ylim([-0.05, 1.05])
+# ax0.legend(loc="upper left", bbox_to_anchor=(1, 1))
+ax0.legend(loc='lower right', fontsize=12)
+ax0.set_title('Calibration plots  (reliability curve)')
 
-for _ax in [ax1, ax2]:
+
+for _ax in [ax0]:
     _ax.grid()
 
 plt.tight_layout()
