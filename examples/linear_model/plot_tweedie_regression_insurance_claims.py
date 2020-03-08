@@ -38,6 +38,8 @@ helper functions for loading the data and visualizing results.
 
 """
 print(__doc__)
+import sys
+sys.exit(0)
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
