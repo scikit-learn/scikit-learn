@@ -199,7 +199,7 @@ def test_load_diabetes_raw():
     np.testing.assert_allclose(
         scale(diabetes_raw.data) / (442 ** 0.5),
         diabetes_default.data,
-        atol=0.01
+        atol=1e-04
     )
 
 
