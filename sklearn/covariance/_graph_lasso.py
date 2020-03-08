@@ -83,6 +83,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
+    .. versionchanged:: v0.20
+        :func:covariance.graph_lasso have been renamed to :func:covariance.graphical_lasso
+
     Parameters
     ----------
     emp_cov : ndarray of shape (n_features, n_features)
@@ -281,6 +284,9 @@ class GraphicalLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        :class:covariance.GraphLasso have been renamed to :class:covariance.GraphicalLasso
 
     Parameters
     ----------
@@ -507,6 +513,9 @@ class GraphicalLassoCV(GraphicalLasso):
     See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        :class:covariance.GraphLassoCV have been renamed to :class:covariance.GraphicalLassoCV
 
     Parameters
     ----------
