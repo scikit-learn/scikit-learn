@@ -141,6 +141,7 @@ Changelog
 - |Fix| :class:`decomposition.KernelPCA` method ``inverse_transform`` now
   applies the correct inverse transform to the transformed data. :pr:`16655`
   by :user:`Lewis Ball <lrjball>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
