@@ -142,6 +142,12 @@ Changelog
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
   :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Enhancement| :class:`decomposition.SparsePCA` and
+  :class:`decomposition.MiniBatchSparsePCA` now have two more attributes
+  `explained_variance_` and `explained_variance_ratio_`. :pr:`16255` by
+  :user:`Alexandre Batisse <batalex>` and
+  :user:`Julien Lhermitte <jrmlhermitte>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
