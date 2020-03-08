@@ -84,7 +84,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        :func:covariance.graph_lasso have been renamed to :func:covariance.graphical_lasso
+        graph_lasso have been renamed to graphical_lasso
 
     Parameters
     ----------
@@ -286,7 +286,7 @@ class GraphicalLasso(EmpiricalCovariance):
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        :class:covariance.GraphLasso have been renamed to :class:covariance.GraphicalLasso
+        GraphLasso have been renamed to GraphicalLasso
 
     Parameters
     ----------
@@ -515,7 +515,7 @@ class GraphicalLassoCV(GraphicalLasso):
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        :class:covariance.GraphLassoCV have been renamed to :class:covariance.GraphicalLassoCV
+        GraphLassoCV have been renamed to GraphicalLassoCV
 
     Parameters
     ----------
