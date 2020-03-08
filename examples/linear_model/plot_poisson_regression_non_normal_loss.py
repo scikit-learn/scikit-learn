@@ -25,8 +25,6 @@ population of policyholders.
 
 """
 print(__doc__)
-import sys
-sys.exit(0)
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>

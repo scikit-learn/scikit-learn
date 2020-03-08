@@ -16,8 +16,6 @@ below what can be reached by an l2-penalized linear model or a non-linear
 multi-layer perceptron model on this dataset.
 
 """
-import sys
-sys.exit(0)
 import time
 import matplotlib.pyplot as plt
 import numpy as np

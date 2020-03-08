@@ -40,7 +40,6 @@ is held out with the validation stopping criterion.
 # License: BSD 3 clause
 import time
 import sys
-sys.exit(0)
 
 import pandas as pd
 import numpy as np
