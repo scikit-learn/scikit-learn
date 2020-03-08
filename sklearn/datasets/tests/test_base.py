@@ -198,7 +198,8 @@ def test_load_diabetes_raw():
 
     np.testing.assert_allclose(
         scale(diabetes_raw.data),
-        diabetes_default.data
+        diabetes_default.data,
+        atol=0.01
     )
 
 
