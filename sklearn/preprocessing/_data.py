@@ -2323,7 +2323,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2520,7 +2520,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2528,7 +2528,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray, sparse matrix}, shape (n_samples, n_features)
             The projected data.
         """
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
@@ -2541,7 +2541,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2549,7 +2549,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray, sparse matrix}, shape (n_samples, n_features)
             The projected data.
         """
         X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
