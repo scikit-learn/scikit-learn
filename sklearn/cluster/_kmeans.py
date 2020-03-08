@@ -944,6 +944,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         self
@@ -1587,6 +1589,8 @@ class MiniBatchKMeans(KMeans):
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
+
+            .. versionadded:: 0.20
 
         Returns
         -------
