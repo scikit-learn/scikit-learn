@@ -177,6 +177,17 @@ def test_load_missing_sample_image_error():
 
 
 def test_load_diabetes():
+    res = load_diabetes()
+    assert res.data.shape == (442, 10)
+    assert res.target.size, 442
+    assert len(res.feature_names) == 10
+    assert res.DESCR
+
+    # test return_X_y option
+    check_return_X_y(res, partial(load_diabetes))
+
+
+def test_load_diabetes_raw():
     diabetes_raw = load_diabetes(standardized=False)
     assert diabetes_raw.data.shape == (442, 10)
     assert diabetes_raw.target.size, 442
@@ -186,13 +197,9 @@ def test_load_diabetes():
     diabetes_default = load_diabetes()
 
     np.testing.assert_allclose(
-        scale(diabetes_raw.data) / (442 ** 0.5),
-        diabetes_default.data,
-        atol=0.01
+        scale(diabetes_raw.data),
+        diabetes_default.data
     )
-
-    # test return_X_y option
-    check_return_X_y(diabetes_default, partial(load_diabetes))
 
 
 def test_load_linnerud():
