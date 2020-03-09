@@ -161,7 +161,7 @@ def main():
         )
 
         ax.set_xlabel("Predicted P(Y=1)")
-        ax.set_ylabel("Density")
+        ax.set_ylabel("Count")
         ax.set_xlim(-0.02, 1.02)
         ax.set_title(label)
         ax.grid()
@@ -175,7 +175,7 @@ def main():
     ax_cali.set_ylabel("Fraction of positives per bin")
     ax_cali.set_ylim([-0.05, 1.05])
     ax_cali.legend(loc="lower right", fontsize=12)
-    ax_cali.set_title("Cali plots  (reliability curve)")
+    ax_cali.set_title("Calibration plots  (reliability curve)")
     ax_cali.grid()
 
     plt.tight_layout()
