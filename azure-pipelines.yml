@@ -133,7 +133,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: xcode9-macos10.13
+    vmImage: macOS-10.14
     dependsOn: [linting]
     matrix:
       pylatest_conda_mkl:
