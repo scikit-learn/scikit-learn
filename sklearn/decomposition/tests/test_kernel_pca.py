@@ -294,4 +294,4 @@ def test_kernel_pca_inverse_transform(kernel):
     kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
     X_trans = kp.fit_transform(X)
     X_inv = kp.inverse_transform(X_trans)
-    assert np.isclose(X, X_inv).all()
+    assert_allclose(X, X_inv)
