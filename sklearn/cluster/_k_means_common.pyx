@@ -15,6 +15,7 @@
 import numpy as np
 cimport numpy as np
 from cython cimport floating
+from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
@@ -95,7 +96,8 @@ cpdef floating _inertia_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[:, ::1] centers,                  # IN
-        int[::1] labels):                          # IN
+        int[::1] labels,                           # IN
+        int n_threads):
     """Compute inertia for dense input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -108,7 +110,7 @@ cpdef floating _inertia_dense(
         floating sq_dist = 0.0
         floating inertia = 0.0
 
-    for i in range(n_samples):
+    for i in prange(n_samples, nogil=True, num_threads=n_threads):
         j = labels[i]
         sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
                                          n_features, True)
@@ -121,7 +123,8 @@ cpdef floating _inertia_sparse(
         X,                            # IN
         floating[::1] sample_weight,  # IN
         floating[:, ::1] centers,     # IN
-        int[::1] labels):             # IN
+        int[::1] labels,              # IN
+        int n_threads):
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
@@ -140,7 +143,7 @@ cpdef floating _inertia_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in range(n_samples):
+    for i in prange(n_samples, nogil=True, num_threads=n_threads):
         j = labels[i]
         sq_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
