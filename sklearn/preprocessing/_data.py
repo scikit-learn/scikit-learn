@@ -1766,7 +1766,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
     norm : 'l1', 'l2', or 'max', optional ('l2' by default)
         The norm to use to normalize each non zero sample. If norm='max'
         is used, values will be rescaled by the maximum of the absolute
-        value.
+        values.
 
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
