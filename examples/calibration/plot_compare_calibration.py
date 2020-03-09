@@ -154,7 +154,7 @@ def main():
 
         ax.hist(
             prob_pos,
-            bins=np.arange(0, 1, 0.04),
+            bins=np.arange(0, 1.01, 0.04),
             color=color,
             edgecolor="none",
             label=label,
