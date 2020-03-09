@@ -276,7 +276,7 @@ def test_one_hot_encoder_drop_reset(drop, reset_drop):
                   ['Female', 3],
                   ['Female', 2]], dtype=object)
     ohe = OneHotEncoder(drop=drop, sparse=False)
-    X_fit = ohe.fit(X)
+    ohe.fit(X)
     X_tr = ohe.transform(X)
     feature_names = ohe.get_feature_names()
     ohe.set_params(drop=reset_drop)
