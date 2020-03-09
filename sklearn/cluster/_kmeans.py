@@ -375,7 +375,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
                                             kth=1, axis=0)[1]
 
         if verbose:
-            inertia = _inertia(X, sample_weight, centers, labels)
+            inertia = _inertia(X, sample_weight, centers, labels, n_threads)
             print(f"Iteration {i}, inertia {inertia}")
 
         centers, centers_new = centers_new, centers
@@ -394,7 +394,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
                    lower_bounds, labels, center_shift, n_threads,
                    update_centers=False)
 
-    inertia = _inertia(X, sample_weight, centers, labels)
+    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
     return labels, inertia, centers, i + 1
 
@@ -473,7 +473,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
                    weight_in_clusters, labels, center_shift, n_threads)
 
         if verbose:
-            inertia = _inertia(X, sample_weight, centers, labels)
+            inertia = _inertia(X, sample_weight, centers, labels, n_threads)
             print(f"Iteration {i}, inertia {inertia}.")
 
         centers, centers_new = centers_new, centers
@@ -491,7 +491,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
                    weight_in_clusters, labels, center_shift, n_threads,
                    update_centers=False)
 
-    inertia = _inertia(X, sample_weight, centers, labels)
+    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
     return labels, inertia, centers, i + 1
 
@@ -551,7 +551,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
             weight_in_clusters, labels, center_shift, n_threads,
             update_centers=False)
 
-    inertia = _inertia(X, sample_weight, centers, labels)
+    inertia = _inertia(X, sample_weight, centers, labels, n_threads)
 
     return labels, inertia
 
