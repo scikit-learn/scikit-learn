@@ -297,7 +297,7 @@ class SubSectionTitleOrder:
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
-    'show_memory': True,
+    'show_memory': False,
     'reference_url': {
         'sklearn': None},
     'examples_dirs': ['../examples'],
