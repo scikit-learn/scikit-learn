@@ -268,6 +268,22 @@ def test_one_hot_encoder_inverse_if_binary():
     assert_array_equal(ohe.inverse_transform(X_tr), X)
 
 
+# check that resetting drop option without refitting does not throw an error
+@pytest.mark.parametrize('drop', ['if_binary', 'first', None])
+@pytest.mark.parametrize('reset_drop', ['if_binary', 'first', None])
+def test_one_hot_encoder_drop_reset(drop, reset_drop):
+    X = np.array([['Male', 1],
+                  ['Female', 3],
+                  ['Female', 2]], dtype=object)
+    ohe = OneHotEncoder(drop=drop, sparse=False)
+    X_fit = ohe.fit(X)
+    X_tr = ohe.transform(X)
+    feature_names = ohe.get_feature_names()
+    ohe.set_params(drop=reset_drop)
+    assert_array_equal(ohe.inverse_transform(X_tr), X)
+    assert_array_equal(ohe.transform(X), X_tr)
+    assert_array_equal(ohe.get_feature_names(), feature_names)
+
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
 @pytest.mark.parametrize("X", [
     [1, 2],
