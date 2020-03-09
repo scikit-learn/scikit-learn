@@ -1423,19 +1423,24 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
 
 def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
                          sample_weight=None):
-    """Top-k Accuracy multiclass classification score.
+    """Top-k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
-    the top `k` labels predicted (ranked by predicted scores). Note that
-    multilabel classification case isn't covered here.
+    the top `k` labels predicted (ranked by predicted scores).
+
+    In a :term:`multilabel` setting, when a sample belongs to multiple labels
+    then all the true labels must be in the `k` guesses for this sample to be
+    correct. Also, if no label belongs to the sample, the prediction scores
+    shouldn't assign any label to the sample to be correct.
 
     Read more in the :ref:`User Guide <top_k_accuracy_score>`
 
     Parameters
     ----------
-    y_true : array-like of shape (n_samples,)
-        True labels. Expected to be a sequence of int in the range
-        (0, n_classes - 1).
+    y_true : 1d array-like, or label indicator array
+        True labels. If 1d, expect a sequence of int in the range
+        (0, n_classes - 1) with shape (n_samples,). If indicator array, expect
+        a binary matrix of shape (n_samples, n_classes).
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores. These can be either probability estimates or
@@ -1494,41 +1499,73 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
         )
 
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true_type = type_of_target(y_true)
+    type_y_true = type_of_target(y_true)
+    type_y_score = type_of_target(y_score)
 
-    if y_true_type not in {'binary', 'multiclass'}:
+    if type_y_true not in {'binary', 'multiclass', 'multilabel-indicator'}:
         raise ValueError(
-            "'y_true' type must be 'binary' or 'multiclass', got "
-            f"'{y_true_type}' instead."
+            "'y_true' type must be 'binary', 'multiclass' or "
+            f"'multilabel-indicator', got '{type_y_true}' instead."
         )
 
-    y_true = column_or_1d(y_true)
+    if type_y_score != 'continuous-multioutput':
+        raise ValueError(
+            "'y_score' type must be 'continuous-multioutput', got "
+            f"'{type_y_score}' instead."
+        )
+
     y_score = check_array(y_score)
+    n_classes_y_score = y_score.shape[1]
 
-    n_classes = y_score.shape[1]
-    if n_classes < 3:
+    if type_y_true in {'binary', 'multiclass'}:
+        y_true = column_or_1d(y_true)
+        n_classes_y_true = y_true.max() + 1
+
+        if n_classes_y_true > n_classes_y_score:
+            raise ValueError(
+                f"'y_true' can't have more classes ({n_classes_y_true}) than "
+                f"'y_score' ({n_classes_y_score})."
+            )
+    else:
+        y_true = check_array(y_true)
+        n_classes_y_true = y_true.shape[1]
+
+        if n_classes_y_true != n_classes_y_score:
+            raise ValueError(
+                f"'y_true' number of classes ({n_classes_y_true}) is "
+                f"different than 'y_score' ({n_classes_y_score})."
+            )
+
+    if n_classes_y_score < 3:
         raise ValueError(
-            "In a multiclass setting the number of columns in 'y_score' must "
-            f"be greater than 2, got ({n_classes}) instead. Please see "
-            "'metrics.accuracy_score' for the binary case."
+            "In a multiclass or multilabel setting the number of classes must "
+            f"be greater than 2, 'y_score' has ({n_classes_y_score}) instead. "
+            "For the binary case please refer to 'metrics.accuracy_score'."
         )
 
-    if k >= n_classes:
+    if k >= n_classes_y_score:
         raise ValueError(
             f"'k' ({k}) can't be greater than or equal to 'n_classes' "
-            f"({n_classes}). This will result in a perfect score and is "
-            "therefore meaningless."
-        )
-
-    infered_n_classes = y_true.max() + 1
-    if infered_n_classes > n_classes:
-        raise ValueError(
-            f"Number of classes in 'y_true' ({infered_n_classes}) is greater "
-            f"than the number of columns in 'y_score' ({n_classes})."
+            f"({n_classes_y_score}). This would always result in a perfect "
+            "score, which is therefore meaningless."
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)
-    scores = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+
+    if type_y_true in {'binary', 'multiclass'}:
+        scores = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+    else:
+        scores = []
+        for y, pred, score in zip(y_true, sorted_pred, y_score):
+            y = np.nonzero(y)[0]
+            n_labels = y.shape[0]
+
+            if n_labels == 0:
+                scores.append(all(score < .5))
+            elif n_labels == 1:
+                scores.append(y in pred[:k])
+            else:
+                scores.append(all(label in pred[:k] for label in y))
 
     if normalize:
         return np.average(scores, weights=sample_weight)

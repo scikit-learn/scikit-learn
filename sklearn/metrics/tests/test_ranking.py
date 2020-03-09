@@ -1472,8 +1472,30 @@ def test_partial_roc_auc_score():
 
 
 @pytest.mark.parametrize('y_true, k, normalize, sample_weight, true_score', [
-    ([0, 0, 0, 0], 2, True, None, 1),
-    ([0, 1, 2, 3], 2, True, None, .25),
+    (
+        np.array([
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ]),
+        2,
+        True,
+        None,
+        1
+    ),
+    (
+        np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ]),
+        2,
+        True,
+        None,
+        .25
+    ),
     ([0, 1, 2, 3], 2, False, None, 1),
     ([0, 1, 2, 3], 2, True, [3, 1, 1, 1], .5),
     ([0, 1, 2, 3], 3, True, None, .5),
@@ -1510,7 +1532,43 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
             [0.4, 0.5, 0.1],
         ]),
         2,
-        "'y_true' type must be 'binary' or 'multiclass', got 'continuous'"
+        "'y_true' type must be 'binary', 'multiclass' or "
+        "'multilabel-indicator', got 'continuous'"
+    ),
+    (
+        [0, 1, 2],
+        np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 1, 0],
+        ]),
+        2,
+        "'y_score' type must be 'continuous-multioutput', got "
+        "'multilabel-indicator'"
+    ),
+    (
+        [3, 1, 2],
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
+        2,
+        r"'y_true' can't have more classes \(4\) than 'y_score' \(3\)"
+    ),
+    (
+        np.array([
+            [0, 0, 0, 1],
+            [0, 1, 0, 1],
+            [0, 0, 1, 0],
+        ]),
+        np.array([
+            [0.4, 0.3, 0.3],
+            [0.3, 0.4, 0.3],
+            [0.4, 0.5, 0.1],
+        ]),
+        2,
+        r"'y_true' number of classes \(4\) is different than 'y_score' \(3\)"
     ),
     (
         [0, 1, 1],
@@ -1520,8 +1578,8 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
             [0.2, 0.8],
         ]),
         2,
-        "In a multiclass setting the number of columns in 'y_score' must "
-        r"be greater than 2, got \(2\) instead"
+        "In a multiclass or multilabel setting the number of classes must "
+        r"be greater than 2, 'y_score' has \(2\)"
     ),
     (
         [0, 1, 2],
@@ -1532,17 +1590,6 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
         ]),
         3,
         r"'k' \(3\) can't be greater than or equal to 'n_classes' \(3\)"
-    ),
-    (
-        [3, 1, 2],
-        np.array([
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]),
-        2,
-        r"Number of classes in 'y_true' \(4\) is greater than the number of "
-        r"columns in 'y_score' \(3\)."
     ),
 ])
 def test_top_k_accuracy_score_error(y_true, y_score, k, msg):
