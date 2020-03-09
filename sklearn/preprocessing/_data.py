@@ -586,7 +586,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         The variance for each feature in the training set. Used to compute
         `scale_`. Equal to ``None`` when ``with_std=False``.
 
-    n_samples_seen_ : int or array, shape (n_features,)
+    n_samples_seen_ : int or ndarray of shape (n_features,)
         The number of samples processed by the estimator for each feature.
         If there are not missing samples, the ``n_samples_seen`` will be an
         integer, otherwise it will be an array.
@@ -655,7 +655,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -682,7 +682,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -781,7 +781,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
         copy : bool, optional (default: None)
             Copy the input X or not.
@@ -813,14 +813,14 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the features axis.
         copy : bool, optional (default: None)
             Copy the input X or not.
 
         Returns
         -------
-        X_tr : array-like, shape (n_samples, n_features)
+        X_tr : array-like of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -872,13 +872,13 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    scale_ : ndarray, shape (n_features,)
+    scale_ : ndarray of shape (n_features,)
         Per feature relative scaling of the data.
 
         .. versionadded:: 0.17
            *scale_* attribute.
 
-    max_abs_ : ndarray, shape (n_features,)
+    max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
     n_samples_seen_ : int
@@ -934,7 +934,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of (n_samples, n_features)
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
@@ -953,7 +953,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -992,7 +992,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data that should be scaled.
         """
         check_is_fitted(self)
@@ -1011,7 +1011,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data that should be transformed back.
         """
         check_is_fitted(self)
@@ -1040,7 +1040,7 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data.
 
     axis : int (0 by default)
@@ -1190,7 +1190,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to compute the median and quantiles
             used for later scaling along the features axis.
         """
@@ -1242,7 +1242,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
@@ -1265,7 +1265,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
@@ -1418,7 +1418,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    powers_ : array, shape (n_output_features, n_input_features)
+    powers_ : ndarray of shape (n_output_features, n_input_features)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -1499,7 +1499,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data.
 
         Returns
@@ -1520,7 +1520,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to transform, row by row.
 
             Prefer CSR over CSC for sparse input (for speed), but CSC is
@@ -1538,9 +1538,10 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        XP : {np.ndarray, CSR/CSC sparse matrix}, shape (n_samples, NP)
+        XP : {ndarray, sparse matrix} of shape (n_samples, NP)
             The matrix of features, where NP is the number of polynomial
-            features generated from the combination of inputs.
+            features generated from the combination of inputs. If a sparse
+            matrix is provided, it will be converted into a sparse ``csr_matrix``.
         """
         check_is_fitted(self)
 
@@ -1650,7 +1651,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to normalize, element by element.
         scipy.sparse matrices should be in CSR format to avoid an
         un-necessary copy.
@@ -1673,10 +1674,10 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     Returns
     -------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Normalized input X.
 
-    norms : array, shape (n_samples, ) if axis=1 else (n_features, )
+    norms : array of shape (n_samples, ) if axis=1 else (n_features, )
         An array of norms along given axis for X.
         When X is sparse, a NotImplementedError will be raised
         for norm 'l1' or 'l2'.
@@ -1811,7 +1812,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
         """
         self._validate_data(X, accept_sparse='csr')
         return self
@@ -1821,7 +1822,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         copy : bool, optional (default: None)
@@ -1842,7 +1843,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
         The data to binarize, element by element.
         scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
@@ -1945,7 +1946,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
         """
         self._validate_data(X, accept_sparse='csr')
         return self
@@ -1955,7 +1956,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features)
             The data to binarize, element by element.
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
@@ -1983,7 +1984,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    K_fit_rows_ : array, shape (n_samples,)
+    K_fit_rows_ : array of shape (n_samples,)
         Average of each column of kernel matrix
 
     K_fit_all_ : float
@@ -2019,7 +2020,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        K : numpy array of shape (n_samples, n_samples)
+        K : ndarray of shape (n_samples, n_samples)
             Kernel matrix.
 
         Returns
@@ -2044,7 +2045,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        K : numpy array of shape (n_samples1, n_samples2)
+        K : ndarray of shape (n_samples1, n_samples2)
             Kernel matrix.
 
         copy : boolean, optional, default True
@@ -2052,7 +2053,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        K_new : numpy array of shape (n_samples1, n_samples2)
+        K_new : ndarray of shape (n_samples1, n_samples2)
         """
         check_is_fitted(self)
 
@@ -2080,7 +2081,7 @@ def add_dummy_feature(X, value=1.0):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Data.
 
     value : float
@@ -2089,7 +2090,7 @@ def add_dummy_feature(X, value=1.0):
     Returns
     -------
 
-    X : {array, sparse matrix}, shape (n_samples, n_features + 1)
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features + 1)
         Same data with dummy feature added as first column.
 
     Examples
@@ -2194,10 +2195,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         The actual number of quantiles used to discretize the cumulative
         distribution function.
 
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
+    quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
-    references_ : ndarray, shape(n_quantiles, )
+    references_ : ndarray of shape(n_quantiles, )
         Quantiles of references.
 
     Examples
@@ -2245,7 +2246,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : {ndarray, dataframe} of shape (n_samples, n_features)
             The data used to scale along the features axis.
         """
         if self.ignore_implicit_zeros:
@@ -2275,9 +2276,10 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : sparse matrix CSC, shape (n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
-            needs to be nonnegative.
+            needs to be nonnegative. If a sparse matrix is provided,
+            it will be converted into a sparse ``csc_matrix``.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2323,7 +2325,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, dataframe} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2487,7 +2489,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
 
         inverse : bool, optional (default=False)
@@ -2496,7 +2498,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Projected data
         """
 
@@ -2520,7 +2522,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, dataframe} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2528,7 +2530,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray, sparse matrix, dataframe} of shape (n_samples, n_features)
             The projected data.
         """
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
@@ -2541,7 +2543,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix}, shape (n_samples, n_features)
+        X : {ndarray, sparse matrix, dataframe} of shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
@@ -2549,7 +2551,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : {ndarray, sparse matrix}, shape (n_samples, n_features)
+        Xt : {ndarray, sparse matrix} of (n_samples, n_features)
             The projected data.
         """
         X = self._check_inputs(X, in_fit=False, accept_sparse_negative=True,
@@ -2635,7 +2637,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Returns
     -------
-    Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+    Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
 
     Examples
@@ -2722,7 +2724,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    lambdas_ : array of float, shape (n_features,)
+    lambdas_ : array of float of shape (n_features,)
         The parameters of the power transformation for the selected features.
 
     Examples
@@ -2779,7 +2781,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data used to estimate the optimal transformation parameters.
 
         y : Ignored
@@ -2829,12 +2831,12 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The data to be transformed using a power transformation.
 
         Returns
         -------
-        X_trans : array-like, shape (n_samples, n_features)
+        X_trans : array-like of shape (n_samples, n_features)
             The transformed data.
         """
         check_is_fitted(self)
@@ -2876,12 +2878,12 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The transformed data.
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The original data
         """
         check_is_fitted(self)
@@ -2996,7 +2998,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         check_positive : bool
             If True, check that all data is positive and non-zero (only if
@@ -3057,7 +3059,7 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data to be transformed using a power transformation.
 
     method : {'yeo-johnson', 'box-cox'}, default='yeo-johnson'
@@ -3079,7 +3081,7 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
 
     Returns
     -------
-    X_trans : array-like, shape (n_samples, n_features)
+    X_trans : array-like of shape (n_samples, n_features)
         The transformed data.
 
     Examples
