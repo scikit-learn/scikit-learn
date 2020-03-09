@@ -87,6 +87,10 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
+    config.addinivalue_line(
+        "markers",
+        "network: mark a test for execution if network available."
+    )
 
 
 def pytest_unconfigure(config):
