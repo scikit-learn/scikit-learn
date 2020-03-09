@@ -281,7 +281,7 @@ def test_one_hot_encoder_drop_reset(drop, reset_drop):
     feature_names = ohe.get_feature_names()
     ohe.set_params(drop=reset_drop)
     assert_array_equal(ohe.inverse_transform(X_tr), X)
-    assert_array_equal(ohe.transform(X), X_tr)
+    assert_allclose(ohe.transform(X), X_tr)
     assert_array_equal(ohe.get_feature_names(), feature_names)
 
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
