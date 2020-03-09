@@ -54,11 +54,11 @@ print(__doc__)
 # License: BSD Style.
 
 import numpy as np
+
 np.random.seed(0)
 
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from sklearn import datasets
 from sklearn.naive_bayes import GaussianNB
@@ -69,53 +69,39 @@ from sklearn.calibration import calibration_curve
 
 matplotlib.style.use("classic")
 
-X, y = datasets.make_classification(n_samples=100000, n_features=20,
-                                    n_informative=2, n_redundant=2)
 
-train_samples = 100  # Samples used for training the models
+def init_data():
+    X, y = datasets.make_classification(
+        n_samples=100000, n_features=20, n_informative=2, n_redundant=2
+    )
 
-X_train = X[:train_samples]
-X_test = X[train_samples:]
-y_train = y[:train_samples]
-y_test = y[train_samples:]
+    train_samples = 100  # Samples used for training the models
 
-# Create classifiers
-
-classifiers = [
-  LogisticRegression(),
-  GaussianNB(),
-  LinearSVC(C=1.0),
-  RandomForestClassifier(),
-]
-labels = [
-  'Logistic',
-  'Naive Bayes',
-  'Support Vector Classification',
-  'Random Forest'
-]
-markers = ['o', '^', 's', 'd']
-colors = ['blue', 'red', 'orange', 'magenta']
+    X_train = X[:train_samples]
+    X_test = X[train_samples:]
+    y_train = y[:train_samples]
+    y_test = y[train_samples:]
+    return X_train, X_test, y_train, y_test
 
 
-# #############################################################################
-# Plot calibration plots
+def init_classifiers():
+    """Create classifiers"""
+    classifiers = [
+        LogisticRegression(),
+        GaussianNB(),
+        LinearSVC(C=1.0),
+        RandomForestClassifier(),
+    ]
+    labels = [
+        "Logistic",
+        "Naive Bayes",
+        "Support Vector Classification",
+        "Random Forest",
+    ]
+    return list(zip(labels, classifiers))
 
-plt.figure(figsize=(8, 11))
-ax0 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
-axes = []
-for i in range(2):
-    for j in range(2):
-        if i == 0 and j == 0:
-            _ax = plt.subplot2grid((4, 2), (i + 2, j))
-            ax_ref = _ax
-        else:
-            _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
-        axes.append(_ax)
 
-
-ax0.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, markers, colors, axes)):
-    clf.fit(X_train, y_train)
+def predict_prob(clf, X_test):
     if hasattr(clf, "predict_proba"):
         prob_pos = clf.predict_proba(X_test)[:, 1]
     else:  # use decision function
@@ -123,36 +109,78 @@ for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, mar
         _min = prob_pos.min()
         _max = prob_pos.max()
         prob_pos = (prob_pos - _min) / (_max - _min)
-    prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
-
-    ax0.plot(prob_pred, prob_true, marker=marker, color=color, markeredgecolor='none', label=label)
-
-    ax.hist(prob_pos, bins=np.arange(0, 1, 0.04),  density=True, color=color, edgecolor='none', label=label)
-    # ax.hist(prob_pos, bins=10,  density=True, color=color, edgecolor='none', label=label)
-    # pd.Series(prob_pos).plot(kind='density', label=name, lw=2, ax=ax2)
-
-    ax.set_xlabel("Predicted P(Y=1)")
-    ax.set_ylabel("Density")
-    ax.set_xlim(-0.2, 1.2)
-    ax.set_title(label)
-    ax.grid()
-    # ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
-    
-    if k in [1, 3]:
-      ax.set_ylabel('')
-    if k in [0, 1]:
-      ax.set_xlabel('')
-
-ax0.set_xlabel("Predicted P(Y=1)")
-ax0.set_ylabel("Actual P(Y=1)")
-ax0.set_ylim([-0.05, 1.05])
-# ax0.legend(loc="upper left", bbox_to_anchor=(1, 1))
-ax0.legend(loc='lower right', fontsize=12)
-ax0.set_title('Calibration plots  (reliability curve)')
+    return prob_pos
 
 
-for _ax in [ax0]:
-    _ax.grid()
+def init_axes():
+    """prepare axes for plotting"""
+    plt.figure(figsize=(8, 11))
+    ax_calibration = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
+    axes_hist = []  # for distribution plots
+    for i in range(2):
+        for j in range(2):
+            if i == 0 and j == 0:
+                _ax = plt.subplot2grid((4, 2), (i + 2, j))
+                ax_ref = _ax
+            else:
+                _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
+            axes_hist.append(_ax)
+    return ax_calibration, axes_hist
 
-plt.tight_layout()
-plt.show()
+
+def main():
+    ax_cali, axes_hist = init_axes()
+    ax_cali.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+
+    markers = ["o", "^", "s", "d"]
+    colors = ["blue", "red", "orange", "magenta"]
+
+    X_train, X_test, y_train, y_test = init_data()
+    for k, (label, clf) in enumerate(init_classifiers()):
+        clf.fit(X_train, y_train)
+        prob_pos = predict_prob(clf, X_test)
+        prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
+
+        ax, marker, color = axes_hist[k], markers[k], colors[k]
+
+        ax_cali.plot(
+            prob_pred,
+            prob_true,
+            marker=marker,
+            color=color,
+            markeredgecolor="none",
+            label=label,
+        )
+
+        ax.hist(
+            prob_pos,
+            bins=np.arange(0, 1, 0.04),
+            color=color,
+            edgecolor="none",
+            label=label,
+        )
+
+        ax.set_xlabel("Predicted P(Y=1)")
+        ax.set_ylabel("Density")
+        ax.set_xlim(-0.02, 1.02)
+        ax.set_title(label)
+        ax.grid()
+
+        if k in [1, 3]:
+            ax.set_ylabel("")
+        if k in [0, 1]:
+            ax.set_xlabel("")
+
+    ax_cali.set_xlabel("Mean predicted value per bin")
+    ax_cali.set_ylabel("Fraction of positives per bin")
+    ax_cali.set_ylim([-0.05, 1.05])
+    ax_cali.legend(loc="lower right", fontsize=12)
+    ax_cali.set_title("Cali plots  (reliability curve)")
+    ax_cali.grid()
+
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
