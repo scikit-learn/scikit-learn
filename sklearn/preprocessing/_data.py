@@ -1747,7 +1747,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
     Each sample (i.e. each row of the data matrix) with at least one
     non zero component is rescaled independently of other samples so
-    that its norm (l1 or l2) equals one.
+    that its norm (l1, l2 or inf) equals one.
 
     This transformer is able to work both with dense numpy arrays and
     scipy.sparse matrix (use CSR format if you want to avoid the burden of
@@ -1764,7 +1764,9 @@ class Normalizer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     norm : 'l1', 'l2', or 'max', optional ('l2' by default)
-        The norm to use to normalize each non zero sample.
+        The norm to use to normalize each non zero sample. If norm='max'
+        is used, values will be rescaled by the maximum of the absolute
+        value.
 
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
