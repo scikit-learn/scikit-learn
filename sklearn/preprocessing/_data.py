@@ -824,7 +824,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_tr : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
         check_is_fitted(self)
@@ -1554,7 +1554,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         XP : {ndarray, sparse matrix} of shape (n_samples, NP)
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs. If a sparse
-            matrix is provided, it will be converted into a sparse ``csr_matrix``.
+            matrix is provided, it will be converted into a sparse
+            ``csr_matrix``.
         """
         check_is_fitted(self)
 
@@ -3107,7 +3108,7 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
 
     Returns
     -------
-    X_trans : array-like of shape (n_samples, n_features)
+    X_trans : ndarray of shape (n_samples, n_features)
         The transformed data.
 
     Examples
