@@ -223,34 +223,3 @@ cdef void update_center_sparse(
     else:
         for k in range(n_features):
             centers_new[i, k] = centers_old[i, k]
-
-
-def _minibatch_update_dense4(np.ndarray[floating, ndim=2, mode='c'] X,
-                            floating[::1] sample_weight,
-                            floating[:, ::1] centers,
-                            floating[:, ::1] centers_new,
-                            floating[::1] weight_sums,
-                            int[::1] labels):
-    cdef:
-        int n_samples = X.shape[0]
-        int n_features = X.shape[1]
-        int i, j, label
-        floating weight_sum, tmp, lr
-
-    # for i in prange(n_samples, nogil=True):
-    for i in range(n_samples):
-        label = labels[i]
-
-        # update center weight
-        weight_sum = weight_sums[label] + sample_weight[i]
-
-        # learning rate
-        if weight_sum > 0:
-            lr = 1 / weight_sum
-
-            for j in range(n_features):
-                centers_new[label, j] = centers[label, j] * (1 - lr) + lr * X[i, j]
-        else:
-            centers_new[label, j] = centers[label, j]
-
-        weight_sums[label] = weight_sum

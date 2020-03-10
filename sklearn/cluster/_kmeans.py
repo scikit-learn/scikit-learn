@@ -33,7 +33,6 @@ from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_minibatch import _minibatch_update_dense
-from ._k_means_minibatch import _minibatch_update_dense4
 from ._k_means_lloyd import _lloyd_iter_chunked_dense
 from ._k_means_lloyd import _lloyd_iter_chunked_sparse
 from ._k_means_elkan import _init_bounds_dense
