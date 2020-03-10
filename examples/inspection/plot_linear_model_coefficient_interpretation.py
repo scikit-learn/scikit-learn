@@ -344,7 +344,7 @@ plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
-               'across folds')
+              'across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
