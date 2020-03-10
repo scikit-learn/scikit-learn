@@ -18,7 +18,7 @@ from joblib import Parallel, delayed
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import check_random_state, check_array
+from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
 from ..linear_model import _cd_fast as cd_fast
 from ..linear_model import lars_path_gram

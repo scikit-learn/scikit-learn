@@ -15,7 +15,7 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_X_y, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 

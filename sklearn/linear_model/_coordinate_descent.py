@@ -17,7 +17,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot

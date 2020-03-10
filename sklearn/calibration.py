@@ -21,7 +21,7 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_X_y, check_array, indexable, column_or_1d
+from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression

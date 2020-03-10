@@ -15,7 +15,7 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import as_float_array, check_array, check_X_y
+from ..utils import as_float_array, check_array
 from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear

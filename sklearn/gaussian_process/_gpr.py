@@ -15,7 +15,7 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_X_y, check_array
+from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
 
 

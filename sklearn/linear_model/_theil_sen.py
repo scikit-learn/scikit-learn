@@ -20,7 +20,6 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps

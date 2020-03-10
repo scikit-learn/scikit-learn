@@ -12,7 +12,6 @@ from scipy import linalg
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
-from ..utils import check_X_y
 from ..utils.fixes import pinvh
 from ..utils.validation import _check_sample_weight
 

@@ -40,22 +40,16 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import column_or_1d
-from ..utils import check_consistent_length
-from ..utils import deprecated
-from ..utils.fixes import logsumexp
-from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError

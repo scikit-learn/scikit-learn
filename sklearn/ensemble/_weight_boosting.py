@@ -33,7 +33,7 @@ from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_array, check_random_state, check_X_y, _safe_indexing
+from ..utils import check_array, check_random_state, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
