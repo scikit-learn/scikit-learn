@@ -459,6 +459,9 @@ The :func:`top_k_accuracy_score` function is a generalization of
 correct as long as the true label is associated with one of the ``k`` highest
 predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
 
+The function covers the multiclass classification case but not the binary and
+multilabel cases.
+
 If :math:`\hat{y}_{i,j}` is the predicted value of the :math:`i`-th sample for
 the :math:`j`-th largest predicted score and :math:`y_i` is the corresponding
 true value, then the fraction of correct predictions over
@@ -470,11 +473,6 @@ true value, then the fraction of correct predictions over
 
 where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
 `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
-
-In the :term:`multilabel` setting, when a sample belongs to multiple labels
-then all the true labels must be in the `k` guesses for this sample to be
-correct. Also, if no label belongs to the sample, the prediction scores
-shouldn't assign any label to the sample to be correct.
 
   >>> import numpy as np
   >>> from sklearn.metrics import top_k_accuracy_score
