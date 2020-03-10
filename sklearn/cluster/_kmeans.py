@@ -31,6 +31,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
+from ._k_means_minibatch import _copy_minibatch_to_buffer
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_dense4
@@ -962,8 +963,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 labels, inertia, centers, n_iter_ = kmeans_single(
                     X, sample_weight, centers_init, max_iter=self.max_iter,
                     verbose=self.verbose, tol=self._tol,
-                    x_squared_norms=x_squared_norms, random_state=random_state,
-                    n_threads=self._n_threads)
+                    x_squared_norms=x_squared_norms, n_threads=self._n_threads)
                 # determine if these results are the best so far
                 if best_inertia is None or inertia < best_inertia:
                     best_labels = labels
@@ -1568,6 +1568,9 @@ class MiniBatchKMeans(KMeans):
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
+        # TODO comment
+        centers_new = np.empty((self.n_clusters, n_features), dtype=X.dtype)
+
         # perform several inits with random sub-sets
         best_inertia = None
         for init_idx in range(self._n_init):
@@ -1580,26 +1583,36 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms=x_squared_norms, init=init,
                 random_state=random_state, init_size=self._init_size)
 
-            # Preform one iteration of KMeans to make the centers being the
-            # mean of their cluster.
-            _, inertia, cluster_centers, _ = _kmeans_single_lloyd(
-                X=X_valid, x_squared_norms=x_squared_norms_valid,
+            # # Preform one iteration of KMeans to make the centers being the
+            # # mean of their cluster.
+            # labels, inertia, cluster_centers, _ = _kmeans_single_lloyd(
+            #     X=X_valid, x_squared_norms=x_squared_norms_valid,
+            #     sample_weight=sample_weight_valid,
+            #     centers_init=cluster_centers, max_iter=1, tol=0,
+            #     n_threads=self._n_threads)
+            weight_sums = np.zeros(self.n_clusters, dtype=X.dtype)
+
+            inertia = _mini_batch_step(
+                X=X_valid,
+                x_squared_norms=x_squared_norms_valid,
                 sample_weight=sample_weight_valid,
-                centers_init=cluster_centers, max_iter=1, tol=0,
-                n_threads=self._n_threads)
+                centers=cluster_centers,
+                centers_new=centers_new,
+                weight_sums=weight_sums,
+                random_state=random_state)
 
             if self.verbose:
                 print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
                       f"{inertia}")
             if best_inertia is None or inertia < best_inertia:
                 init_centers = cluster_centers
+                self._counts = weight_sums
                 best_inertia = inertia
 
         centers = init_centers
-        centers_new = np.empty_like(centers)
 
         # Initialize counts
-        self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
+        # self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
         # Attributes to monitor the convergence
         self._ewa_diff = None
@@ -1610,11 +1623,22 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
+        if not sp.issparse(X):
+            minibatch_buffer = np.empty((self.batch_size, n_features),
+                                        dtype=X.dtype)
+
         # Perform the iterative optimization until convergence
         for i in range(n_iter):
             # Sample a minibatch from the full dataset
-            minibatch_indices = random_state.randint(0, n_samples,
-                                                     self.batch_size)
+            minibatch_indices = random_state.randint(
+                0, n_samples, self.batch_size).astype(np.int32, copy=False)
+
+            if sp.issparse(X):
+                X_minibatch = X[minibatch_indices]
+            else:
+                X_minibatch = minibatch_buffer
+                _copy_minibatch_to_buffer(X, minibatch_buffer,
+                                          minibatch_indices, self._n_threads)
 
             # Here we randomly choose whether to perform random reassignment:
             # the choice is done as a function of the iteration index, and the
@@ -1624,7 +1648,8 @@ class MiniBatchKMeans(KMeans):
 
             # Perform the actual update step on the minibatch data
             batch_inertia = _mini_batch_step(
-                X=X[minibatch_indices],
+                X=X_minibatch,
+                # X=X[minibatch_indices],
                 x_squared_norms=x_squared_norms[minibatch_indices],
                 sample_weight=sample_weight[minibatch_indices],
                 centers=centers,

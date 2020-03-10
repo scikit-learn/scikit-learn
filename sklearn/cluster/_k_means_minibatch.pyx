@@ -9,9 +9,25 @@ from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy, memset
 
 
 np.import_array()
+
+
+def _copy_minibatch_to_buffer(
+        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
+        floating[:, ::1] minibatch_buffer,         # OUT
+        int[::1] indices,                          # IN
+        int n_threads):
+    """"""
+    cdef:
+        int n_samples_minibatch = minibatch_buffer.shape[0]
+        int n_features = minibatch_buffer.shape[1]
+        int i, j, idx
+
+    for i in prange(n_samples_minibatch, nogil=True, num_threads=n_threads):
+        memcpy(&minibatch_buffer[i, 0], &X[indices[i], 0], n_features * sizeof(floating))
 
 
 def _minibatch_update_dense(

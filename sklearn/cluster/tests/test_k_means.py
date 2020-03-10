@@ -21,12 +21,12 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
-from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
-from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
-from sklearn.cluster._k_means_fast import _inertia_dense
-from sklearn.cluster._k_means_fast import _inertia_sparse
+from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
+from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
+from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
+from sklearn.cluster._k_means_common import _inertia_dense
+from sklearn.cluster._k_means_common import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -124,7 +124,7 @@ def test_unit_weights_vs_no_weights(estimator):
     # sample weights all equal to one.
     sample_weight = np.ones(n_samples)
 
-    km = estimator(n_clusters=n_clusters, random_state=42)
+    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
     km_none = clone(km).fit(X, sample_weight=None)
     km_ones = clone(km).fit(X, sample_weight=sample_weight)
 
@@ -139,7 +139,7 @@ def test_scaled_weights(estimator, data):
     # shouldn't change the result
     sample_weight = np.random.uniform(n_samples)
 
-    km = estimator(n_clusters=n_clusters, random_state=42)
+    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
     km_orig = clone(km).fit(data, sample_weight=sample_weight)
     km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
 
@@ -224,19 +224,6 @@ def test_float_precision(estimator, data):
     assert_allclose(Xt[np.float32], Xt[np.float64], rtol=1e-5)
     assert_allclose(centers[np.float32], centers[np.float64], rtol=1e-5)
     assert_array_equal(labels[np.float32], labels[np.float64])
-
-
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_score_multiple_inits(estimator):
-    # Check that fitting KMeans or MiniBatchKMeans with multiple inits gives
-    # better score
-    X = np.random.RandomState(0).randn(100, 10)
-
-    km1 = estimator(max_iter=10, random_state=42, n_init=1)
-    s1 = km1.fit(X).score(X)
-    km2 = estimator(max_iter=10, random_state=42, n_init=10)
-    s2 = km2.fit(X).score(X)
-    assert s2 > s1
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
@@ -361,8 +348,8 @@ def test_transform(estimator):
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
 def test_fit_transform(estimator):
     # Check equivalence between fit.transform and fit_transform
-    X1 = estimator(n_clusters=n_clusters, random_state=0).fit(X).transform(X)
-    X2 = estimator(n_clusters=n_clusters, random_state=0).fit_transform(X)
+    X1 = estimator(random_state=0, n_init=1).fit(X).transform(X)
+    X2 = estimator(random_state=0, n_init=1).fit_transform(X)
     assert_allclose(X1, X2)
 
 
@@ -620,8 +607,10 @@ def test_inertia(dtype):
     distances = ((X_dense - centers[labels])**2).sum(axis=1)
     expected = np.sum(distances * sample_weight)
 
-    inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels)
-    inertia_sparse = _inertia_sparse(X_sparse, sample_weight, centers, labels)
+    inertia_dense = _inertia_dense(
+        X_dense, sample_weight, centers, labels, 1)
+    inertia_sparse = _inertia_sparse(
+        X_sparse, sample_weight, centers, labels, 1)
 
     assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
     assert_allclose(inertia_dense, expected, rtol=1e-6)
