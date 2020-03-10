@@ -657,4 +657,5 @@ def test_early_stopping_on_test_set_with_warm_start():
 
     gb.fit(X, y)
     # does not raise on second call
+    gb.set_params(max_iter=2)
     gb.fit(X, y)
