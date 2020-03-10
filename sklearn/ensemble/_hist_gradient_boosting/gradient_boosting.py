@@ -8,7 +8,7 @@ import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_X_y, check_random_state, check_array, resample
+from ...utils import check_random_state, check_array, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length, _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
