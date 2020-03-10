@@ -275,7 +275,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
@@ -358,5 +358,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                  "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
-
+        n_samples = self.X_transformed_fit_.shape[0]
+        K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)

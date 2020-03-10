@@ -72,7 +72,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_transformer`.
+            :obj:`make_column_selector`.
 
     remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
@@ -124,7 +124,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ``len(transformers_)==len(transformers)+1``, otherwise
         ``len(transformers_)==len(transformers)``.
 
-    named_transformers_ : Bunch
+    named_transformers_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
@@ -513,6 +513,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             self._feature_names_in = None
         X = _check_X(X)
+        # set n_features_in_ attribute
+        self._check_n_features(X, reset=True)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -587,6 +589,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        # TODO: also call _check_n_features(reset=False) in 0.24
         self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
@@ -688,7 +691,8 @@ def make_column_transformer(*transformers, **kwargs):
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
-            above.
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_selector`.
 
     remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
