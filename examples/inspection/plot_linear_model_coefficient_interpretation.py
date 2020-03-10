@@ -261,7 +261,7 @@ plt.subplots_adjust(left=.3)
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
 # numerical variables to their standard deviation,
 # as :math:`y = \sum{coef_i \times X_i} =
-# \sum{(coeff_i \times std_i) \times (X_i / std_i)}`.
+# \sum{(coef_i \times std_i) \times (X_i / std_i)}`.
 #
 # In that way, we emphasize that the
 # greater the variance of a feature, the larger the weight of the corresponding
