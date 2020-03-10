@@ -260,7 +260,7 @@ plt.subplots_adjust(left=.3)
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
 # numerical variables to their standard deviation,
-# as :math:`y = \sum{coeff_i \times X_i} =
+# as :math:`y = \sum{coef_i \times X_i} =
 # \sum{(coeff_i \times std_i) \times (X_i / std_i)}`.
 #
 # In that way, we emphasize that the
