@@ -1627,7 +1627,7 @@ class MiniBatchKMeans(KMeans):
                 _copy_minibatch_to_buffer(X, minibatch_buffer,
                                           minibatch_indices, self._n_threads)
 
-            # Here we randomly choose whether to perform random reassignment:
+            # Randomly choose whether to perform random reassignment:
             # the choice is done as a function of the iteration index, and the
             # minimum number of counts, in order to force this reassignment to
             # happen every once in a while.
@@ -1636,7 +1636,6 @@ class MiniBatchKMeans(KMeans):
             # Perform the actual update step on the minibatch data
             batch_inertia = _mini_batch_step(
                 X=X_minibatch,
-                # X=X[minibatch_indices],
                 x_squared_norms=x_squared_norms[minibatch_indices],
                 sample_weight=sample_weight[minibatch_indices],
                 centers=centers,

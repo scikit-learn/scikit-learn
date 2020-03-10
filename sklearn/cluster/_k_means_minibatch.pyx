@@ -9,7 +9,7 @@ from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
-from libc.string cimport memcpy, memset
+from libc.string cimport memcpy
 
 
 np.import_array()
