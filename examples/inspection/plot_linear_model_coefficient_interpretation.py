@@ -20,7 +20,7 @@ models, pointing at problems that arise when either the linear model is not
 appropriate to describe the dataset, or when features are correlated.
 
 We will use data from the `"Current Population Survey"
-<https://www.openml.org/d/534>_` from 1985 to predict
+<https://www.openml.org/d/534>`_ from 1985 to predict
 wage as a function of various features such as experience, age, or education.
 
 .. contents::
@@ -343,7 +343,7 @@ plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
+_ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
 
 ###############################################################################
 # Two regions are populated: when the EXPERIENCE coefficient is
@@ -432,7 +432,7 @@ plt.title('Ridge model, small regularization, normalized variables')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
-plt.ylim([0, 27])
+_ = plt.ylim([0, 27])
 
 ##############################################################################
 # For the coefficient analysis, scaling is not needed this time.
@@ -517,7 +517,7 @@ plt.title('Ridge model, regularization, normalized variables')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
-plt.ylim([0, 27])
+_ = plt.ylim([0, 27])
 
 ##############################################################################
 # The ability to reproduce the data of the regularized model is similar to
@@ -561,7 +561,7 @@ plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
 plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
-plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
+_ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE across folds')
 
 ##############################################################################
 # Linear models with sparse coefficients
@@ -614,7 +614,7 @@ plt.title('Lasso model, regularization, normalized variables')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
-plt.ylim([0, 27])
+_ = plt.ylim([0, 27])
 
 ##############################################################################
 # For our dataset, again the model is not very predictive.
