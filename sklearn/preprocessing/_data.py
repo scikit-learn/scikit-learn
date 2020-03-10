@@ -1718,7 +1718,8 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
-            _, norms = min_max_axis(X, 1)
+            mins, maxes = min_max_axis(X, 1)
+            norms = np.maximum(abs(mins), maxes)
             norms_elementwise = norms.repeat(np.diff(X.indptr))
             mask = norms_elementwise != 0
             X.data[mask] /= norms_elementwise[mask]
@@ -1728,7 +1729,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         elif norm == 'l2':
             norms = row_norms(X)
         elif norm == 'max':
-            norms = np.max(X, axis=1)
+            norms = np.max(abs(X), axis=1)
         norms = _handle_zeros_in_scale(norms, copy=False)
         X /= norms[:, np.newaxis]
 
@@ -1746,7 +1747,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
     Each sample (i.e. each row of the data matrix) with at least one
     non zero component is rescaled independently of other samples so
-    that its norm (l1 or l2) equals one.
+    that its norm (l1, l2 or inf) equals one.
 
     This transformer is able to work both with dense numpy arrays and
     scipy.sparse matrix (use CSR format if you want to avoid the burden of
@@ -1763,7 +1764,9 @@ class Normalizer(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     norm : 'l1', 'l2', or 'max', optional ('l2' by default)
-        The norm to use to normalize each non zero sample.
+        The norm to use to normalize each non zero sample. If norm='max'
+        is used, values will be rescaled by the maximum of the absolute
+        values.
 
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
