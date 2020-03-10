@@ -1526,7 +1526,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
                 f"'y_true' can't have more classes ({n_classes_y_true}) than "
                 f"'y_score' ({n_classes_y_score})."
             )
-    else:
+    else: # multilabel
         y_true = check_array(y_true)
         n_classes_y_true = y_true.shape[1]
 
@@ -1553,23 +1553,21 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     sorted_pred = np.argsort(-y_score, axis=1)
 
     if type_y_true in {'binary', 'multiclass'}:
-        scores = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
-    else:
-        scores = []
+        hits = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+    else: # multilabel
+        hits = []
         for y, pred, score in zip(y_true, sorted_pred, y_score):
             y = np.nonzero(y)[0]
             n_labels = y.shape[0]
 
             if n_labels == 0:
-                scores.append(all(score < .5))
-            elif n_labels == 1:
-                scores.append(y in pred[:k])
-            else:
-                scores.append(all(label in pred[:k] for label in y))
+                hits.append(all(score < .5))
+            else: # n_labels >= 1
+                hits.append(all(label in pred[:k] for label in y))
 
     if normalize:
-        return np.average(scores, weights=sample_weight)
+        return np.average(hits, weights=sample_weight)
     elif sample_weight is None:
-        return sum(scores)
+        return np.sum(hits)
     else:
-        return np.dot(scores, sample_weight)
+        return np.dot(hits, sample_weight)
