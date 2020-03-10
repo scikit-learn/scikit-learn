@@ -14,7 +14,6 @@ import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_array
 from ..utils.validation import _check_sample_weight, _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
