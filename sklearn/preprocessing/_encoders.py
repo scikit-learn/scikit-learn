@@ -305,7 +305,7 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_ = None`` if all the transformed features will be retained.
 
     infrequent_indices_ : list of shape (n_features,)
-        Defined when `min_frequency` or `max_categories` is set to a
+        Defined only when `min_frequency` or `max_categories` is set to a
         non-default value. `infrequent_indices_[i]` is an array of indices
         corresponding to `categories_[i]` of the infrequent categories.
         `infrequent_indices_[i]` is None if the ith input feature has no
