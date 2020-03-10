@@ -396,6 +396,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                     self.bin_mapper_.missing_values_bin_idx_
                                 )
                             )
+                    else:
+                        raw_predictions_val = None
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train, sample_weight_train,
