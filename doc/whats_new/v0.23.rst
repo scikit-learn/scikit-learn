@@ -142,6 +142,10 @@ Changelog
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
   :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`decomposition.KernelPCA` method ``inverse_transform`` now
+  applies the correct inverse transform to the transformed data. :pr:`16655`
+  by :user:`Lewis Ball <lrjball>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
