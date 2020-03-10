@@ -31,7 +31,6 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
-from ._k_means_minibatch import _copy_minibatch_to_buffer
 from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_minibatch import _minibatch_update_dense
 from ._k_means_minibatch import _minibatch_update_dense4
@@ -1610,22 +1609,11 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        if not sp.issparse(X):
-            minibatch_buffer = np.empty((self.batch_size, n_features),
-                                        dtype=X.dtype)
-
         # Perform the iterative optimization until convergence
         for i in range(n_iter):
             # Sample a minibatch from the full dataset
-            minibatch_indices = random_state.randint(
-                0, n_samples, self.batch_size).astype(np.int32, copy=False)
-
-            if sp.issparse(X):
-                X_minibatch = X[minibatch_indices]
-            else:
-                X_minibatch = minibatch_buffer
-                _copy_minibatch_to_buffer(X, minibatch_buffer,
-                                          minibatch_indices, self._n_threads)
+            minibatch_indices = random_state.randint(0, n_samples,
+                                                     self.batch_size)
 
             # Randomly choose whether to perform random reassignment:
             # the choice is done as a function of the iteration index, and the
@@ -1635,7 +1623,7 @@ class MiniBatchKMeans(KMeans):
 
             # Perform the actual update step on the minibatch data
             batch_inertia = _mini_batch_step(
-                X=X_minibatch,
+                X=X[minibatch_indices],
                 x_squared_norms=x_squared_norms[minibatch_indices],
                 sample_weight=sample_weight[minibatch_indices],
                 centers=centers,
