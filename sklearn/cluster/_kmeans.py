@@ -1568,9 +1568,6 @@ class MiniBatchKMeans(KMeans):
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
-        # TODO comment
-        centers_new = np.empty((self.n_clusters, n_features), dtype=X.dtype)
-
         # perform several inits with random sub-sets
         best_inertia = None
         for init_idx in range(self._n_init):
@@ -1583,36 +1580,26 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms=x_squared_norms, init=init,
                 random_state=random_state, init_size=self._init_size)
 
-            # # Preform one iteration of KMeans to make the centers being the
-            # # mean of their cluster.
-            # labels, inertia, cluster_centers, _ = _kmeans_single_lloyd(
-            #     X=X_valid, x_squared_norms=x_squared_norms_valid,
-            #     sample_weight=sample_weight_valid,
-            #     centers_init=cluster_centers, max_iter=1, tol=0,
-            #     n_threads=self._n_threads)
-            weight_sums = np.zeros(self.n_clusters, dtype=X.dtype)
-
-            inertia = _mini_batch_step(
-                X=X_valid,
-                x_squared_norms=x_squared_norms_valid,
+            # Preform one iteration of KMeans to make the centers being the
+            # mean of their cluster.
+            labels, inertia, cluster_centers, _ = _kmeans_single_lloyd(
+                X=X_valid, x_squared_norms=x_squared_norms_valid,
                 sample_weight=sample_weight_valid,
-                centers=cluster_centers,
-                centers_new=centers_new,
-                weight_sums=weight_sums,
-                random_state=random_state)
+                centers_init=cluster_centers, max_iter=1, tol=0,
+                n_threads=self._n_threads)
 
             if self.verbose:
                 print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
                       f"{inertia}")
             if best_inertia is None or inertia < best_inertia:
                 init_centers = cluster_centers
-                self._counts = weight_sums
                 best_inertia = inertia
 
         centers = init_centers
+        centers_new = np.empty_like(centers)
 
         # Initialize counts
-        # self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
+        self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
         # Attributes to monitor the convergence
         self._ewa_diff = None
