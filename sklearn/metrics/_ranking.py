@@ -1426,8 +1426,8 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     """Top-k Accuracy multiclass classification score.
 
     This metric computes the number of times where the correct label is among
-    the top `k` labels predicted (ranked by predicted scores). Note that
-    multilabel classification case isn't covered here.
+    the top `k` labels predicted (ranked by predicted scores). Note that the
+    multilabel and multioutput cases aren't covered here.
 
     Read more in the :ref:`User Guide <top_k_accuracy_score>`
 
@@ -1528,7 +1528,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
         )
 
     sorted_pred = np.argsort(-y_score, axis=1)
-    scores = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+    hits = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
 
     if normalize:
         return np.average(hits, weights=sample_weight)

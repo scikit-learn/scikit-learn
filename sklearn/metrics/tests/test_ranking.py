@@ -1480,8 +1480,7 @@ def test_partial_roc_auc_score():
     ([0, 1, 2, 3], 3, False, None, 2),
     ([0, 1, 2, 3], 3, False, [1, 2, 1, 1], 3),
 ])
-def test_top_k_accuracy_score_multiclass(y_true, k, normalize, sample_weight,
-                                         true_score):
+def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
     y_score = np.array([
         [0.4, 0.3, 0.1, 0.2],
         [0.3, 0.2, 0.3, 0.2],
@@ -1490,24 +1489,6 @@ def test_top_k_accuracy_score_multiclass(y_true, k, normalize, sample_weight,
     ])
     assert top_k_accuracy_score(y_true, y_score, k, normalize,
                                 sample_weight) == pytest.approx(true_score)
-
-
-@pytest.mark.parametrize('k, true_score', [(2, .5), (3, 1)])
-def test_top_k_accuracy_score_multilabel(k, true_score):
-    y_true = np.array([
-        [1, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1],
-        [1, 1, 1, 0],
-    ])
-    y_score = np.array([
-        [0.4, 0.3, 0.1, 0.2],
-        [0.5, 0.2, 0.2, 0.1],
-        [0.3, 0.2, 0.1, 0.4],
-        [0.3, 0.3, 0.2, 0.2],
-    ])
-    assert top_k_accuracy_score(y_true, y_score,
-                                k) == pytest.approx(true_score)
 
 
 @pytest.mark.parametrize('y_true, y_score, k, msg', [
