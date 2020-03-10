@@ -357,6 +357,11 @@ Changelog
   computing statistics when calling `partial_fit` on sparse inputs.
   :pr:`16466` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fix a bug in :class:`preprocessing.Normalizer` with norm='max',
+  which was not taking the absolute value of the maximum values before
+  normalizing the vectors. :pr:`16632` by
+  :user:`Maura Pintor <Maupin1991>` and :user:`Battista Biggio <bbiggio>`.
+
 :mod:`sklearn.svm`
 ..................
 
