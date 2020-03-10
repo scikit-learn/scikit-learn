@@ -19,7 +19,8 @@ This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
 appropriate to describe the dataset, or when features are correlated.
 
-We will use data from the "Current Population Survey" from 1985 to predict
+We will use data from the `"Current Population Survey"
+<https://www.openml.org/d/534>_` from 1985 to predict
 wage as a function of various features such as experience, age, or education.
 
 .. contents::
@@ -61,7 +62,8 @@ X.describe(include="all")
 X.head()
 
 ##############################################################################
-# Our target for prediction: the wage
+# Our target for prediction: the wage.
+# Wages are described as floating-point number in :math:`k$`
 y = survey.target.values.ravel()
 survey.target.head()
 
@@ -87,7 +89,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
-sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
+_ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 
 ##############################################################################
 # Looking closely at the WAGE distribution it could be noticed that it has a
@@ -130,7 +132,7 @@ categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
 numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(), categorical_columns),
+    (OneHotEncoder(drop='if_binary'), categorical_columns),
     remainder='passthrough'
 )
 
@@ -161,19 +163,19 @@ model = make_pipeline(
 _ = model.fit(X_train, y_train)
 
 ##############################################################################
-# Then we check the performance of the computed
-# model using, for example, the median absolute error of the model and the R
-# squared coefficient.
+# Then we check the performance of the computed model plotting its predictions
+# on the test set and computing,
+# for example, the median absolute error of the model.
 
 from sklearn.metrics import median_absolute_error
 
 y_pred = model.predict(X_train)
 
 mae = median_absolute_error(y_train, y_pred)
-string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+string_score = f'MAE on training set: {mae:.2f} $/hour'
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
 fig, ax = plt.subplots(figsize=(5, 5))
 plt.scatter(y_test, y_pred)
 ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
@@ -182,7 +184,7 @@ plt.title('Ridge model, small regularization')
 plt.ylabel('Model predictions')
 plt.xlabel('Truths')
 plt.xlim([0, 27])
-plt.ylim([0, 27])
+_ = plt.ylim([0, 27])
 
 ##############################################################################
 # The model learnt is far from being a good model making accurate predictions:
@@ -248,6 +250,7 @@ X_train_preprocessed = pd.DataFrame(
     model.named_steps['columntransformer'].transform(X_train),
     columns=feature_names
 )
+
 X_train_preprocessed.std(axis=0).plot(kind='barh', figsize=(9, 7))
 plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
@@ -389,7 +392,7 @@ plt.subplots_adjust(left=.3)
 from sklearn.preprocessing import StandardScaler
 
 preprocessor = make_column_transformer(
-    (OneHotEncoder(), categorical_columns),
+    (OneHotEncoder(drop='if_binary'), categorical_columns),
     (StandardScaler(), numerical_columns),
     remainder='passthrough'
 )
@@ -415,10 +418,10 @@ _ = model.fit(X_train, y_train)
 
 y_pred = model.predict(X_train)
 mae = median_absolute_error(y_train, y_pred)
-string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+string_score = f'MAE on training set: {mae:.2f} $/hour'
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
 ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
@@ -499,10 +502,10 @@ model[-1].regressor_.alpha_
 
 y_pred = model.predict(X_train)
 mae = median_absolute_error(y_train, y_pred)
-string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+string_score = f'MAE on training set: {mae:.2f} $/hour'
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
 
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
@@ -596,10 +599,10 @@ model[-1].regressor_.alpha_
 
 y_pred = model.predict(X_train)
 mae = median_absolute_error(y_train, y_pred)
-string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+string_score = f'MAE on training set: {mae:.2f} $/hour'
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += f'\nMAE on testing set: {mae:.2f} $/hour'
 
 fig, ax = plt.subplots(figsize=(6, 6))
 plt.scatter(y_test, y_pred)
