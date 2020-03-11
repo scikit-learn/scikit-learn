@@ -80,6 +80,7 @@ jobs:
     name: Linux
     vmImage: ubuntu-18.04
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
@@ -123,6 +124,7 @@ jobs:
     name: Linux32
     vmImage: ubuntu-18.04
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
@@ -135,6 +137,7 @@ jobs:
     name: macOS
     vmImage: macOS-10.14
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
@@ -168,6 +171,7 @@ jobs:
     name: Windows
     vmImage: vs2017-win2016
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       py37_conda_mkl:
         PYTHON_VERSION: '3.7'

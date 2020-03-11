@@ -7,7 +7,6 @@ from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
-from ..utils import check_X_y
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight
 from ..utils.extmath import safe_sparse_dot
