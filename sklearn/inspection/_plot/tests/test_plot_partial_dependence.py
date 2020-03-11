@@ -96,7 +96,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
 @pytest.mark.parametrize("individual, shape", [
     (False, (1, 3)), (True, (1, 3, 506)), ('both', (1, 3, 507))
 ])
-def test_plot_partial_dependence_individual(individual, shape,
+def test_plot_partial_dependence_individual(pyplot, individual, shape,
                                             clf_boston, boston):
     disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
                                    individual=individual)
