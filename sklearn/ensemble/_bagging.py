@@ -16,7 +16,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_array, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
