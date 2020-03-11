@@ -273,7 +273,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
           :class:`~sklearn.tree.DecisionTreeRegressor`,
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          ) when 'individual' = False
+          ) when `'individual' = False`.
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
