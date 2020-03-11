@@ -210,7 +210,7 @@ complement features.
 
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
-``individual=True``. In the below example we show how to create a grid of
+``individual=True``. In the example below, we show how to create a grid of
 ICE plots:
 
     >>> from sklearn.datasets import make_hastie_10_2
