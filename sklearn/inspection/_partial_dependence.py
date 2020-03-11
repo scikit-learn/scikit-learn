@@ -288,7 +288,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    individual : True, False or 'both', default=False
+    individual : "both" or bool, default=False
         Whether to return averaged or individual partial dependence
 
         .. versionadded:: 0.23
