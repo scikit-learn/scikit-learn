@@ -106,7 +106,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
            ``behaviour`` parameter is deprecated in 0.22 and removed in
            0.24.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the pseudo-randomness of the selection of the feature
         and split values for each branching step and each tree in the forest.
 
@@ -144,6 +144,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         contamination parameter different than "auto" is provided, the offset
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
+
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
 
     Notes
     -----
@@ -483,7 +486,7 @@ def _average_path_length(n_samples_leaf):
 
     Returns
     -------
-    average_path_length : array of same shape as n_samples_leaf
+    average_path_length : ndarray of shape (n_samples,)
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)

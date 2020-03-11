@@ -137,7 +137,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape  (n_samples, n_features)
 
         random_state : RandomState
-            A random number generator instance.
+            A random number generator instance that controls the random seed
+            used for the method chosen to initialize the parameters.
         """
         n_samples, _ = X.shape
 
@@ -217,6 +218,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         X = _check_X(X, self.n_components, ensure_min_samples=2)
+        self._check_n_features(X, reset=True)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation
