@@ -568,6 +568,8 @@ def test_pickle_load_old_version():
         b'0.22.1\x94ub.'
     )
     reconstructed = pickle.loads(sklearn_0221_pickle)
+    assert not hasattr(reconstructed, '_necessary_X_')
+    assert not hasattr(reconstructed, '_necessary_y_')
     assert_allclose(reconstructed.X_thresholds_, [0., 1.])
     assert_allclose(reconstructed.y_thresholds_, [0., 1.])
     assert_allclose(reconstructed.predict([0., 0.5, 1.]), [0., 0.5, 1.])
