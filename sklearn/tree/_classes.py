@@ -1474,14 +1474,18 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Examples
     --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.tree import ExtraTreeClassifier
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = ExtraTreeClassifier(random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...    X, y, random_state=0)
+    >>> extra_tree = ExtraTreeClassifier(random_state=0)
+    >>> cls = BaggingClassifier(extra_tree, random_state=0).fit(
+    ...    X_train, y_train)
+    >>> cls.score(X_test, y_test)
+    0.8947...
 
     References
     ----------
