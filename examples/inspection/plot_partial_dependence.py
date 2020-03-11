@@ -224,8 +224,6 @@ plt.suptitle('Partial dependence of house value on median\n'
              'age and average occupancy, with Gradient Boosting')
 plt.subplots_adjust(top=0.9)
 
-plt.show()
-
 ##############################################################################
 # Individual Conditional Expectation (ICE) Plots
 # ----------------------------------------------
@@ -248,8 +246,6 @@ fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
 fig.subplots_adjust(hspace=0.3)
-
-plt.show()
 
 ##############################################################################
 # In ICE plots it might not be easy to see the average effect of the 'target'
