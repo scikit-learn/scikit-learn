@@ -107,6 +107,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSC matrix and if axis is 1).
 
+    Returns
+    -------
+    X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The transformed data.
+
     Notes
     -----
     This implementation will refuse to center scipy.sparse matrices
@@ -483,6 +488,11 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     copy : bool, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
+
+    Returns
+    -------
+    X_tr : ndarray of shape (n_samples, n_features)
+        The transformed data.
 
     See also
     --------
@@ -1087,6 +1097,11 @@ def maxabs_scale(X, axis=0, copy=True):
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
+    Returns
+    -------
+    X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The transformed data.
+
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
@@ -1380,6 +1395,11 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
+
+    Returns
+    -------
+    X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The transformed data.
 
     Notes
     -----
@@ -1933,14 +1953,19 @@ def binarize(X, threshold=0.0, copy=True):
         scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
 
-    threshold : float, optional (0.0 by default)
+    threshold : float, optional, default=0.0
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default True
+    copy : boolean, optional, default=True
         set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
+
+    Returns
+    -------
+    X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The transformed data.
 
     See also
     --------
