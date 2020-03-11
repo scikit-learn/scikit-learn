@@ -1720,6 +1720,12 @@ class ExtraTreesClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
+    RandomForestClassifier : Ensemble Classifier based on trees with optimal
+        splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1727,6 +1733,12 @@ class ExtraTreesClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    References
+    ----------
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -1738,35 +1750,6 @@ class ExtraTreesClassifier(ForestClassifier):
     ExtraTreesClassifier(random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
-
-    References
-    ----------
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
-
-    See Also
-    --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.datasets import load_boston
-    >>> from sklearn.ensemble import ExtraTreesRegressor
-    >>> boston=load_boston()
-    >>> etr=ExtraTreesRegressor(random_state=0)  # doctest: +ELLIPSIS
-    >>> X, y = load_boston(return_X_y=True)
-    >>> etr.fit(b_x, b_y)
-    ExtraTreesRegressor(random_state=0)
-    >>> etr.feature_importances_
-    array([0.0309..., 0.0060..., 0.0256..., 0.0150..., 0.0382...,
-        0.3388..., 0.0216..., 0.0308..., 0.0239..., 0.0454...,
-        0.0487..., 0.0191..., 0.3553...])
-    >>> etr.predict([np.zeros(13)])
-    array([28.253])
     """
     def __init__(self,
                  n_estimators=100,
@@ -2017,6 +2000,11 @@ class ExtraTreesRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
+    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -2031,10 +2019,18 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
 
-    See Also
+    Examples
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import ExtraTreesRegressor
+    >>> X, y = load_boston(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = ExtraTreesRegressor(n_estimators=100, random_state=0).fit(
+    ...    X_train, y_train)
+    >>> reg.score(X_test, y_test)
+    0.7617...
     """
     def __init__(self,
                  n_estimators=100,
