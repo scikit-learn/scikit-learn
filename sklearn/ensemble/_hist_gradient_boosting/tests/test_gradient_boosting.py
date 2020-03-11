@@ -645,3 +645,17 @@ def test_max_depth_max_leaf_nodes():
     tree = est._predictors[0][0]
     assert tree.get_max_depth() == 2
     assert tree.get_n_leaf_nodes() == 3  # would be 4 prior to bug fix
+
+
+def test_early_stopping_on_test_set_with_warm_start():
+    # Non regression test for #16661 where second fit fails with
+    # warm_start=True, early_stopping is on, and no validation set
+    X, y = make_classification(random_state=0)
+    gb = HistGradientBoostingClassifier(
+        max_iter=1, scoring='loss', warm_start=True, early_stopping=True,
+        n_iter_no_change=1, validation_fraction=None)
+
+    gb.fit(X, y)
+    # does not raise on second call
+    gb.set_params(max_iter=2)
+    gb.fit(X, y)
