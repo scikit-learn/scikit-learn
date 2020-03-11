@@ -223,7 +223,7 @@ coefs
 # means a decrease of :math:`0.030867` dollars/hour, while an increase of
 # :math:`1` year in EDUCATION means an increase of :math:`0.054699`
 # dollars/hour. On the other hand, categorical variables (as UNION or SEX) are
-# adimensional numbers taking the value either of 0 or 1. Their coefficients
+# adimensional numbers taking either the value 0 or 1. Their coefficients
 # are expressed in dollars/hour. Then, we cannot compare the magnitude of
 # different coefficients since the features have different natural scales, and
 # hence value ranges, because of their different unit of measure. This is more
