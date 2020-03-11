@@ -1455,7 +1455,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     degree : integer, default=2
-        The degree of the polynomial features. 
+        The degree of the polynomial features.
 
     interaction_only : boolean, default=False
         If true, only interaction features are produced: features that are
@@ -1552,7 +1552,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         output_feature_names : list of string, length n_output_features
-
         """
         powers = self.powers_
         if input_features is None:
@@ -1881,7 +1880,6 @@ class Normalizer(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-
 
     See also
     --------
