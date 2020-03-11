@@ -178,7 +178,7 @@ Similar to a PDP, an individual conditional expectation (ICE) plot
 shows the dependence between the target function and a target feature.
 However, unlike a PDP, which shows the average effect of the target
 feature, an ICE plot visualizes the dependence of the prediction on a
-feature for each instance separately with one line per instance.
+feature for each sample separately with one line per sample.
 Due to the limits of human perception, only one target feature is
 supported for ICE plots.
 
