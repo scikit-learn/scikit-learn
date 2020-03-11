@@ -8,7 +8,7 @@ import numpy as np
 from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
-from ...utils import check_X_y, check_random_state, check_array, resample
+from ...utils import check_random_state, check_array, resample
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length, _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
@@ -304,6 +304,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raw_predictions = self._raw_predict(X_binned_train)
             if self.do_early_stopping_ and self._use_validation_data:
                 raw_predictions_val = self._raw_predict(X_binned_val)
+            else:
+                raw_predictions_val = None
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
