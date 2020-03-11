@@ -21,7 +21,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, ax=None,
                             individual=False):
-    """Partial dependence and individual conditional expectation plots.
+    """Partial dependence (PD) and individual conditional expectation (ICE)
+    plots.
 
     Partial dependence plots, individual conditional expectation plots or an
     overlay of both of them can be plotted by setting the ``individual``
