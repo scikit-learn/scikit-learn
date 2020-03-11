@@ -178,7 +178,7 @@ Similar to a PDP, an individual conditional expectation (ICE) plot
 shows the dependence between the target function and a target feature.
 However, unlike a PDP, which shows the average effect of the target
 feature, an ICE plot visualizes the dependence of the prediction on a
-feature for each instance separately with one line per instance.
+feature for each sample separately with one line per sample.
 Due to the limits of human perception, only one target feature is
 supported for ICE plots.
 
@@ -199,18 +199,20 @@ the corresponding PD line overlaid on ICE lines.
 
 While the PDPs are good at showing the average effect of the target features,
 they can obscure a heterogeneous relationship created by interactions.
-When interactions are present the ICE plot will provide much more insight.
+When interactions are present the ICE plot will provide many more insights.
 For example, we could observe a linear relationship between the median income
 and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
 
 Similar to PDPs, the target features are assumed to be independent from the
-complement features.
+complement features. Thus, in the case of correlated features, we will create absurd
+data points to compute the ICE.
+ 
 
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
-``individual=True``. In the below example we show how to create a grid of
+``individual=True``. In the example below, we show how to create a grid of
 ICE plots:
 
     >>> from sklearn.datasets import make_hastie_10_2
@@ -237,7 +239,7 @@ dependency plots. They can be plotted together with ``individual='both'``.
 Mathematical Definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-In ICE, for each instance in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
+In ICE, for each sample in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
 line :math:`pd_{X_S}^{(i)}` is calculated against :math:`X_S^{(i)}`, while
 :math:`X_C^{(i)}` remains fixed.
 

@@ -250,8 +250,7 @@ fig.subplots_adjust(hspace=0.3)
 ##############################################################################
 # In ICE plots it might not be easy to see the average effect of the 'target'
 # variable. Hence, it is recommended to use ICE plots together with PDP.
-# They can be plotted in the same plot with ``individual`` parameter set to
-# ``'both'``.
+# The parameter `individual` controls this behaviour.
 
 print('Computing ICE and PD plots...')
 plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
@@ -270,7 +269,7 @@ plt.show()
 # From the partial dependence plots, we can see that the median house price
 # increases linearly with the median income (top left) and that the median
 # house price drops when the average occupants per household increases
-# (top middle). However, from  ICE plots we can see that there are some
+# (top middle). However, from the ICE plots we can see that there are some
 # exceptions, where the house price remain constant with median income and
 # average occupants.
 #
