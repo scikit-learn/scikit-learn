@@ -226,9 +226,6 @@ ICE plots:
     >>> plot_partial_dependence(clf, X, features,
     ...     individual=True) #doctest: +SKIP
 
-You can access the newly created figure and Axes objects using ``plt.gcf()``
-and ``plt.gca()``.
-
 In ICE plots it might not be easy to see the average effect of the target
 variable. Hence, it is recommended to use ICE plots alongside partial
 dependency plots. They can be plotted together with ``individual='both'``.
