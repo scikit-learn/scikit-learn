@@ -274,7 +274,7 @@ plt.show()
 # From the partial dependence plots, we can see that the median house price
 # increases linearly with the median income (top left) and that the median
 # house price drops when the average occupants per household increases
-# (top middle). However, from  ICE plots we can see that there are some
+# (top middle). However, from the ICE plots we can see that there are some
 # exceptions, where the house price remain constant with median income and
 # average occupants.
 #
