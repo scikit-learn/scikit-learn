@@ -306,8 +306,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result, _ = pd_results[0]  # checking the first result is enough
-    n_tasks = pd_result[0].shape[0] if individual == 'both' \
-        else pd_result.shape[0]
+    n_tasks = (pd_result[0].shape[0] if individual == 'both'
+               else pd_result.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
             raise ValueError(
