@@ -254,7 +254,7 @@ plt.show()
 ##############################################################################
 # In ICE plots it might not be easy to see the average effect of the 'target'
 # variable. Hence, it is recommended to use ICE plots together with partial
-# dependency plots. They can be plotted in the same plot with ``individual``
+# dependency plots. The parameter `individual` controls this behaviour.
 # parameter set to ``'both'``.
 
 print('Computing ICE and PD plots...')
