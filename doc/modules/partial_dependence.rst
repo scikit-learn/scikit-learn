@@ -237,7 +237,7 @@ dependency plots. They can be plotted together with ``individual='both'``.
 Mathematical Definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-In ICE, for each instance in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
+In ICE, for each sample in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
 line :math:`pd_{X_S}^{(i)}` is calculated against :math:`X_S^{(i)}`, while
 :math:`X_C^{(i)}` remains fixed.
 
