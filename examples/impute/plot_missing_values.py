@@ -26,7 +26,7 @@ print(__doc__)
 # Download the data and make missing values sets
 ###############################################################################
 #
-# First we download the two datasets. Diabets dataset is shipped with
+# First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
 # dataset is much larger with 20640 entires and 8 features and we will need to
 # fetch it. We will only use the first 500 entries for sake of speeding up the
