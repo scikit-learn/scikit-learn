@@ -2,16 +2,20 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
 
 jobs:
 - job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '4'
-    PYTEST_VERSION: '3.8.1'
+    PYTEST_VERSION: '5.2.1'
     OPENBLAS_NUM_THREADS: '4'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
   strategy:
@@ -34,12 +38,12 @@ jobs:
         -e JUNITXML=$JUNITXML
         -e VIRTUALENV=testvenv
         -e JOBLIB_VERSION=$JOBLIB_VERSION
+        -e THREADPOOLCTL_VERSION=$THREADPOOLCTL_VERSION
         -e PYTEST_VERSION=$PYTEST_VERSION
-        -e SKLEARN_NO_OPENMP=$SKLEARN_NO_OPENMP
         -e OMP_NUM_THREADS=$OMP_NUM_THREADS
         -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
         -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
-        i386/ubuntu:16.04
+        i386/ubuntu:18.04
         sleep 1000000
       displayName: 'Start container'
     - script: >

@@ -61,6 +61,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     check_X
     foo_param
     expected_fit_params
+
+    Attributes
+    ----------
+    classes_
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
@@ -91,6 +95,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             assert self.check_X(X)
         if self.check_y is not None:
             assert self.check_y(y)
+        self.n_features_in_ = len(X)
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:
@@ -135,3 +140,27 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     def _more_tags(self):
         return {'_skip_test': True, 'X_types': ['1dlabel']}
+
+
+class NoSampleWeightWrapper(BaseEstimator):
+    """Wrap estimator which will not expose `sample_weight`.
+
+    Parameters
+    ----------
+    est : estimator, default=None
+        The estimator to wrap.
+    """
+    def __init__(self, est=None):
+        self.est = est
+
+    def fit(self, X, y):
+        return self.est.fit(X, y)
+
+    def predict(self, X):
+        return self.est.predict(X)
+
+    def predict_proba(self, X):
+        return self.est.predict_proba(X)
+
+    def _more_tags(self):
+        return {'_skip_test': True}

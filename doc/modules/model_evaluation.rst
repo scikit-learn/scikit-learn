@@ -2,9 +2,9 @@
 
 .. _model_evaluation:
 
-========================================================
-Model evaluation: quantifying the quality of predictions
-========================================================
+===========================================================
+Metrics and scoring: quantifying the quality of predictions
+===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
@@ -307,7 +307,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -315,6 +314,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    cohen_kappa_score
    confusion_matrix
    hinge_loss
@@ -459,7 +459,11 @@ In the binary case, balanced accuracy is equal to the arithmetic mean of
 (true positive rate) and `specificity
 <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
 rate), or the area under the ROC curve with binary predictions rather than
-scores.
+scores:
+
+.. math::
+
+   \texttt{balanced-accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )
 
 If the classifier performs equally well on either class, this term reduces to
 the conventional accuracy (i.e., the number of correct predictions divided by
@@ -555,11 +559,10 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the confusion matrix
-with each row corresponding to the true class
-<https://en.wikipedia.org/wiki/Confusion_matrix>`_.
-(Wikipedia and other references may use different convention for axes.)
-
+classification accuracy by computing the `confusion matrix
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
+to the true class (Wikipedia and other references may use different convention
+for axes).
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -573,13 +576,26 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
 
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
@@ -744,8 +760,14 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary classification and multilabel indicator format. The
+:func:`plot_precision_recall_curve` function plots the precision recall as
+follows.
 
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
+        :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
+        :scale: 75
+        :align: center
 
 .. topic:: Examples:
 
@@ -1329,8 +1351,8 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly 
-(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+class. The OvO and OvR algorithms support weighting uniformly
+(``average='macro'``) and by prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
@@ -1358,13 +1380,13 @@ prevalence:
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
-The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
-OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+[PD2000]_. The algorithm is functionally the same as the multilabel case. To
+enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
 ``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
@@ -1398,16 +1420,20 @@ to the given limit.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
 
-    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
-       `An Experimental Comparison of Performance Measures for Classification. 
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+       `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-       Pattern Recognition Letters. 30. 27-38. 
+       Pattern Recognition Letters. 30. 27-38.
+
+    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
+       Stern School of Business, New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
-    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
        ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
@@ -1676,7 +1702,7 @@ Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
 (NDCG) are ranking metrics; they compare a predicted order to ground-truth
 scores, such as the relevance of answers to a query.
 
-from the Wikipedia page for Discounted Cumulative Gain:
+From the Wikipedia page for Discounted Cumulative Gain:
 
 "Discounted cumulative gain (DCG) is a measure of ranking quality. In
 information retrieval, it is often used to measure effectiveness of web search
@@ -1701,7 +1727,7 @@ relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
 DCG score is
 
 .. math::
@@ -1712,8 +1738,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
 
 .. topic:: References:
 
-  * Wikipedia entry for Discounted Cumulative Gain:
-    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+  * `Wikipedia entry for Discounted Cumulative Gain
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
 
   * Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
