@@ -6,11 +6,18 @@ Imputing missing values before building an estimator
 Missing values can be replaced by the mean, the median or the most frequent
 value using the basic :class:`sklearn.impute.SimpleImputer`.
 
-In this example we will investigate different imputation techniques on two
-datasets: Diabetes dataset which is the set of parameteres collected from the
-diabetes patients with aim to predict disease progression and California
-Housing dataset for which the target is the median house value for California
-districts.
+In this example we will investigate different imputation techniques:
+
+- imputation by the constant 0 value
+- imputation by the mean value of each feature combined with a missing-ness
+indicator auxiliary variable
+- k nearest neighbor imputation
+- iterative imputation
+
+We will use two datasets: Diabetes dataset which consists of set of parameteres
+collected from the diabetes patients with aim to predict disease progression
+and California Housing dataset for which the target is the median house value
+for California districts.
 
 Neither of those datasets has missing values. We will remove some of the
 values and compare the results of RandomForestRegressor on the original data
