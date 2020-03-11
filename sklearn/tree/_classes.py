@@ -1472,6 +1472,12 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
+    References
+    ----------
+
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -1486,12 +1492,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     ...    X_train, y_train)
     >>> cls.score(X_test, y_test)
     0.8947...
-
-    References
-    ----------
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
     """
     def __init__(self,
                  criterion="gini",
