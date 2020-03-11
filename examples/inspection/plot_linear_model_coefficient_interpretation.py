@@ -63,7 +63,7 @@ X.head()
 
 ##############################################################################
 # Our target for prediction: the wage.
-# Wages are described as floating-point number in :math:`k$`
+# Wages are described as floating-point number in dollars per hour.
 y = survey.target.values.ravel()
 survey.target.head()
 
