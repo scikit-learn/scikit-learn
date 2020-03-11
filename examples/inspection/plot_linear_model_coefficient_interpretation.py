@@ -216,20 +216,18 @@ coefs = pd.DataFrame(
 coefs
 
 ##############################################################################
-# The AGE coefficient is expressed in
-# :math:`$/hours/(living\ years)` while the EDUCATION one is expressed
-# in :math:`$/hours/(years\ of\ education)`.
-# This representation of the coefficients has the advantage of making clear
-# the practical predictions of the model:
-# an increase of :math:`1` year in AGE means a decrease of :math:`0.030867$`,
-# while an increase of :math:`1` year in EDUCATION means an increase of
-# :math:`0.054699$`.
-# On the other hand, categorical variables (as UNION or SEX) are adimensional
-# numbers taking the value either of 0 or 1. Their coefficients are expressed
-# in :math:`$/hours`. Then, we cannot compare the magnitude of different
-# coefficients since the features have different natural scales, and hence
-# value ranges, because of their different unit of measure.
-# This is more evident if we plot the coefficients.
+# The AGE coefficient is expressed in "dollars/hour per living years" while the
+# EDUCATION one is expressed in "dollars/hour per years of education". This
+# representation of the coefficients has the advantage of making clear the
+# practical predictions of the model: an increase of :math:`1` year in AGE
+# means a decrease of :math:`0.030867` dollars/hour, while an increase of
+# :math:`1` year in EDUCATION means an increase of :math:`0.054699`
+# dollars/hour. On the other hand, categorical variables (as UNION or SEX) are
+# adimensional numbers taking either the value 0 or 1. Their coefficients
+# are expressed in dollars/hour. Then, we cannot compare the magnitude of
+# different coefficients since the features have different natural scales, and
+# hence value ranges, because of their different unit of measure. This is more
+# evident if we plot the coefficients.
 
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.title('Ridge model, small regularization')
