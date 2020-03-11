@@ -496,7 +496,10 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
+        default_line_kws = {'color': 'C0'}
+        line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
+
         if self.individual == 'both':
             individual_line_kw['alpha'] = 0.3
             individual_line_kw['linewidth'] = 0.5
