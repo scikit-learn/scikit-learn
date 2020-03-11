@@ -20,6 +20,15 @@ jobs:
     - bash: conda create --name flake8_env --yes flake8
       displayName: Install flake8
     - bash: |
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
+           [[ $BUILD_REASON == "Schedule" ]]; then
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
+        fi
+      name: gitCommitMessage
+      displayName: Determine to run scipy-dev
+    - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"
@@ -29,15 +38,6 @@ jobs:
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
-    - bash: |
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
-           [[ $BUILD_REASON == "Schedule" ]]; then
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
-        else
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
-        fi
-      name: gitCommitMessage
-      displayName: Determine to run scipy-dev
 
 - template: build_tools/azure/posix.yml
   parameters:

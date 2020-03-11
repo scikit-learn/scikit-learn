@@ -9,6 +9,7 @@ from functools import partial
 
 import pytest
 import joblib
+from sklearn.datasets import make_biclusters
 
 import numpy as np
 from sklearn.datasets import get_data_home
