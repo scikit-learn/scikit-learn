@@ -187,7 +187,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         .. versionadded:: 0.22
 
     individual : "both" or bool, default=False
-        Whether to plot individual or averaged partial dependence plots
+        Whether to plot each individual partial dependence plots, the averaged
+        partial dependence plots or both.
 
         .. versionadded:: 0.23
 
@@ -398,7 +399,8 @@ class PartialDependenceDisplay:
         Deciles for feature indices in ``features``.
 
     individual : "both" or bool, default=False
-        Whether to plot individual or averaged partial dependence plots
+        Whether to plot each individual partial dependence plots, the averaged
+        partial dependence plots or both.
 
         .. versionadded:: 0.23
 
