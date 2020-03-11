@@ -9,6 +9,7 @@ from io import StringIO
 
 
 class ExecuteHTML(Directive):
+    "Execute Python code and includes stdout as HTML"
 
     has_content = True
     required_arguments = 0
