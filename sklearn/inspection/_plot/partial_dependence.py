@@ -85,7 +85,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
-        features[i] is a tuple, a two-way PDP is created (Only supported with
+        features[i] is a tuple, a two-way PDP is created (only supported with
         'individual' is False). Each tuple must be of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
