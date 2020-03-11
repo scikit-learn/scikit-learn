@@ -645,7 +645,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         equalizer = text_first_decision.split(' ')[1]
         anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
 
-        # Define this function to switch the equal sign.
+        # Define this function to switch the equal sign which we use
+        # for plotting the first edge.
         def opposite_equalizer(x):
             if x == "<=":
                 return ">"
@@ -664,6 +665,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
                              .get_window_extent().bounds),
                         list(anns2[2].get_bbox_patch()
                              .get_window_extent().bounds))//2
+        bbox_left = np.reshape(bbox_left,   [2, 2])
+        bbox_right = np.reshape(bbox_right, [2, 2])
 
         # Insert new text to left.
         anns.insert(1, ax.annotate(text_first_decision,
