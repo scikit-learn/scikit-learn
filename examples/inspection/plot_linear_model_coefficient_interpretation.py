@@ -216,8 +216,8 @@ coefs = pd.DataFrame(
 coefs
 
 ##############################################################################
-# The AGE coefficient is expressed in dollars/hour per living years while the
-# EDUCATION one is expressed in dollars/hour per years of education. This
+# The AGE coefficient is expressed in "dollars/hour per living years" while the
+# EDUCATION one is expressed in "dollars/hour per years of education". This
 # representation of the coefficients has the advantage of making clear the
 # practical predictions of the model: an increase of :math:`1` year in AGE
 # means a decrease of :math:`0.030867` dollars/hour, while an increase of
