@@ -3,21 +3,20 @@ Comparison between grid search and successive halving
 =====================================================
 
 This example compares the parameter search performed by
-:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>` and
-:class:`GridSearchCV <sklearn.model_selection.GridSearchCV>`.
+:class:`~sklearn.model_selection.HalvingGridSearchCV` and
+:class:`~sklearn.model_selection.GridSearchCV`.
 
 The heatmap shows the mean test score of the parameter combinations for an
 SVC instance. The
-:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>`
+:class:`~sklearn.model_selection.HalvingGridSearchCV`
 also shows the iteration at which the combinations where last used. The
 combinations marked as ``0`` were only evaluated at the first iteration, while
 the ones with ``5`` are the parameter combinations that are considered the
 best ones.
 
-We can see that the :class:`HalvingGridSearchCV
-<sklearn.model_selection.HalvingGridSearchCV>` class is able to find
-parameter combinations that are just as accurate as :class:`GridSearchCV
-<sklearn.model_selection.GridSearchCV>`, in much less time.
+We can see that the :class:`~sklearn.model_selection.HalvingGridSearchCV`
+class is able to find parameter combinations that are just as accurate as
+:class:`~sklearn.model_selection.GridSearchCV`, in much less time.
 """
 from time import time
 
