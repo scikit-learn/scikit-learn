@@ -647,7 +647,7 @@ plt.subplots_adjust(left=.3)
 # AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
 #
 # It is important to keep in mind that the coefficients that have been
-# dropped may still be related to the outcome in by themselves: the model
+# dropped may still be related to the outcome by themselves: the model
 # chose to suppress them because they brings little or no additional
 # information on top of the other features. Additionnaly, this selection
 # is unstable for correlated features, and should be interpreted with
