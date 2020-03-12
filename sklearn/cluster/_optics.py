@@ -14,7 +14,6 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
-from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
@@ -245,7 +244,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, dtype=np.float)
+        X = self._validate_data(X, dtype=np.float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"

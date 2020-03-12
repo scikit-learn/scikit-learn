@@ -16,7 +16,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_array, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
@@ -278,9 +278,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = check_X_y(
-            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
-            multi_output=True
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False, multi_output=True
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
