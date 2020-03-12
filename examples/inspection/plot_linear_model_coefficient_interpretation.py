@@ -57,7 +57,7 @@ X.describe(include="all")
 
 ##############################################################################
 # Note that the dataset contains categorical and numerical variables.
-# We will need to take this in account when preprocessing the dataset
+# We will need to take this into account when preprocessing the dataset
 # thereafter.
 
 X.head()
