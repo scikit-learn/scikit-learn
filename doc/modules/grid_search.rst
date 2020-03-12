@@ -216,22 +216,28 @@ in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
 parameter of :class:`HalvingGridSearchCV`.
 
 Consider a case where the resource is the number of samples, and where we
-have 1000 samples. With ``min_resources=10`` and ``ratio=2`` we are able to
-run 7 iterations, with the following number of samples: ``[10, 20, 40, 80,
-160, 320, 640]``.
+have 1000 samples. In theroy, with ``min_resources=10`` and ``ratio=2``, we
+are able to run **at most** 7 iterations with the following number of
+samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
-If we start with a high number of candidates, we might end up with a lot of
-candidates at the last iteration. On the other hand if we start with a small
-number of candidates, the last iteration might use less than 640 samples
-which is a waste of resources.
+But depending on the number of candidates, we might run less than 7
+iterations: if we start with a **small** number of candidates, the last
+iteration might use less than 640 samples, which is a waste of resources. For
+example if we start with 5 candidates, we only need 2 iterations: 5
+candidates for the first iteration, then `5 // 2 = 2` candidates at the
+second iteration, after which we know which candidate performs the best (so
+we don't need a third one). We would only be using at most 20 samples which
+is a waste since we have 1000 samples at our disposal.
+On the other hand, if we start with a **high** number of candidates, we might
+end up with a lot of candidates at the last iteration, which is not always
+ideal.
 
 In the case of :class:`HalvingRandomSearchCV`, the number of candidates is set
 by default such that the maximum amount of resources is used at the last
-iteration.
-
-Changing the value of ``min_resources`` will impact the number of possible
-iterations, and as a result will also have an effect on the ideal number of
-candidates.
+iteration. For :class:`HalvingGridSearchCV`, the number of candidates is
+determined by the `param_grid` parameter. Changing the value of
+``min_resources`` will impact the number of possible iterations, and as a
+result will also have an effect on the ideal number of candidates.
 
 Another consideration when choosing ``min_resources`` is whether or not it
 is easy to discriminate between good and bad candidates with a small amount
