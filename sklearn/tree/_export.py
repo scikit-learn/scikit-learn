@@ -620,6 +620,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
             for ann in anns:
                 ann.set_fontsize(size)
 
+        # Define this function to switch the equal sign.
+        # which we use to plot the opposite edge
+        def opposite_equalizer(x):
+            if x == "<=":
+                return ">"
+            if x == "=>":
+                return "<"
+
         # We sort the bbox list to get the correct order
         # of the nodes so we can get x,y values correctly.
         anns2 = sorted(anns, key=lambda x:
@@ -641,52 +649,48 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # Remove the decision threshold from the first node, and
         # add it as a the decision criteria on the edge.
-        text_first_decision = anns[0].get_text().split('\n')[0]
-        equalizer = text_first_decision.split(' ')[1]
+        text_first_decision = anns[0].get_text().split('\n')[0].split(' ')
+        index = 0
+        for i, j in enumerate(text_first_decision):
+            if j in ["<=", "<", ">=", ">"]:
+                index = i
         anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
-
-        # Define this function to switch the equal sign which we use
-        # for plotting the first edge.
-        def opposite_equalizer(x):
-            if x == "<=":
-                return ">"
-            if x == "=>":
-                return "<"
+        first = str(text_first_decision[0:index]).replace('\'', '')
+        first = first.replace(',', '')
+        first = first[0:len(first)-1] + " "
+        equalizer = opposite_equalizer(text_first_decision[index])
+        opp_equal = equalizer + " "
+        end = str(text_first_decision[index+1:len(text_first_decision)])
+        end = end.replace('\'', '').replace(',', '')
+        text_first_decision = str(text_first_decision).replace(',', '')
+        text_first_decision = text_first_decision.replace('\'', '')
+        text_first_decision = text_first_decision[1:len(text_first_decision)-1]
 
         # Take the average of bbox root node and first left node for
         # first decision
-        bbox_left = np.add(
-                        list(anns2[0].get_bbox_patch()
-                             .get_window_extent().bounds),
-                        list(anns2[1].get_bbox_patch()
-                             .get_window_extent().bounds))//2
-        bbox_right = np.add(
-                        list(anns2[0].get_bbox_patch()
-                             .get_window_extent().bounds),
-                        list(anns2[2].get_bbox_patch()
-                             .get_window_extent().bounds))//2
-        bbox_left = np.reshape(bbox_left,   [2, 2])
-        bbox_right = np.reshape(bbox_right, [2, 2])
+        box_left = np.add(
+            list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+            list(anns2[1].get_bbox_patch().get_window_extent().bounds))//2
+        box_right = np.add(
+            list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+            list(anns2[2].get_bbox_patch().get_window_extent().bounds))//2
+        box_left = np.reshape(box_left, [2, 2])
+        box_right = np.reshape(box_right, [2, 2])
 
         # Insert new text to left.
-        anns.insert(1, ax.annotate(text_first_decision,
-                                   (x_l, y_l),
-                                   bbox={'fc': 'white', 'color': 'white'},
-                                   zorder=100, xycoords='axes pixels',
-                                   fontsize=anns2[0].get_fontsize()))
-        anns2[1].get_bbox_patch().get_window_extent().set_points(bbox_left)
+        anns.insert(1, ax.annotate(text_first_decision, (x_l, y_l),
+                    bbox={'fc': 'white', 'color': 'white'},
+                    zorder=100, xycoords='axes pixels',
+                    fontsize=anns2[0].get_fontsize()))
+        anns2[1].get_bbox_patch().get_window_extent().set_points(box_left)
 
         # Insert new text to right.
-        anns.insert(2, ax.annotate(
-            text_first_decision.split(' ')[0] +
-            " " + opposite_equalizer(equalizer) + " " +
-            text_first_decision.split(' ')[2],
-            (x_r, y_r),
-            bbox={'fc': 'white', 'color': 'white'},
-            zorder=100,
-            xycoords='axes pixels',
-            fontsize=anns2[0].get_fontsize()))
-        anns2[1].get_bbox_patch().get_window_extent().set_points(bbox_right)
+        anns.insert(2, ax.annotate(first[1:len(first)] + opp_equal
+                    + end[1:len(end)-1], (x_r, y_r),
+                    bbox={'fc': 'white', 'color': 'white'},
+                    zorder=100, xycoords='axes pixels',
+                    fontsize=anns2[0].get_fontsize()))
+        anns2[1].get_bbox_patch().get_window_extent().set_points(box_right)
 
         return anns
 
