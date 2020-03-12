@@ -18,7 +18,7 @@ from joblib import Parallel, delayed
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import check_random_state, check_array
+from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
 from ..linear_model import _cd_fast as cd_fast
 from ..linear_model import lars_path_gram
@@ -383,8 +383,8 @@ class GraphicalLasso(EmpiricalCovariance):
         self : object
         """
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
-                        estimator=self)
+        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2,
+                                estimator=self)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -633,7 +633,7 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
     @_deprecate_positional_args
-    def __init__(self, alphas=4, *, n_refinements=4, cv=None, tol=1e-4,
+    def __init__(self, *, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super().__init__(
@@ -660,7 +660,7 @@ class GraphicalLassoCV(GraphicalLasso):
         self : object
         """
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
