@@ -362,7 +362,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Transformer instance.
+            Fitted scaler.
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -676,7 +676,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted scaler.
         """
 
         # Reset internal state before fitting
@@ -709,7 +709,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Transformer instance.
+            Fitted scaler.
         """
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 estimator=self, dtype=FLOAT_DTYPES,
@@ -969,9 +969,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted scaler.
         """
-
         # Reset internal state before fitting
         self._reset()
         return self.partial_fit(X, y)
@@ -997,7 +996,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Transformer instance.
+            Fitted scaler.
         """
         first_pass = not hasattr(self, 'n_samples_seen_')
         X = self._validate_data(X, reset=first_pass,
@@ -1252,7 +1251,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Transformer instance.
+            Fitted scaler.
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
@@ -1585,7 +1584,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted transformer.
         """
         n_samples, n_features = self._validate_data(
             X, accept_sparse=True).shape
@@ -1908,7 +1907,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted transformer.
         """
         self._validate_data(X, accept_sparse='csr')
         return self
@@ -2064,7 +2063,7 @@ class Binarizer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Transformer instance.
+            Fitted transformer.
         """
         self._validate_data(X, accept_sparse='csr')
         return self
@@ -2153,7 +2152,7 @@ class KernelCenterer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted transformer.
         """
 
         K = self._validate_data(K, dtype=FLOAT_DTYPES)
@@ -2464,7 +2463,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+           Fitted transformer.
         """
         if self.n_quantiles <= 0:
             raise ValueError("Invalid value for 'n_quantiles': %d. "
@@ -2923,7 +2922,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Fitted instance.
+            Fitted transformer.
         """
         self._fit(X, y=y, force_transform=False)
         return self
