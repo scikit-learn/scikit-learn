@@ -13,7 +13,6 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.base import BaseEstimator
 from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
