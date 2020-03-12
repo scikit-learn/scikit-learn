@@ -554,7 +554,7 @@ class OAS(EmpiricalCovariance):
         [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
     0.0195...
-    
+
     Notes
     -----
     The regularised covariance is:
