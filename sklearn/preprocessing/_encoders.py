@@ -581,8 +581,6 @@ class OneHotEncoder(_BaseEncoder):
             if type(input_features[i]) is not str:
                 msg = ("input_features should be a list of strings")
                 raise TypeError(msg)
-
-        for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
