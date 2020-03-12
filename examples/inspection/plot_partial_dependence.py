@@ -230,17 +230,15 @@ plt.subplots_adjust(top=0.9)
 #
 # One of the main limitations of ICE plots is that the plot gets overcrowded
 # if many ICE curves are drawn. Due to this, we will use a random sample of
-# 50 instances for the ICE plot.
+# 50 instances in the ICE plot with `subsample=50`.
 #
 # ICE plots are achieved by setting ``individual=True``.
 # Let's now compute the ICE plots for this Gradient Boosting model:
 
-X_train_sample = X_train.sample(50, random_state=0)
-
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 
 print('Computing ICE plots...')
-plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
+plot_partial_dependence(est, X_train, features, n_jobs=3, subsample=50,
                         grid_resolution=20, individual=True)
 fig = plt.gcf()
 fig.suptitle('ICE of house value on non-location features\n'
@@ -253,7 +251,7 @@ fig.subplots_adjust(hspace=0.3)
 # The parameter `individual` controls this behaviour.
 
 print('Computing ICE and PD plots...')
-plot_partial_dependence(est, X_train_sample, features, n_jobs=3,
+plot_partial_dependence(est, X_train, features, n_jobs=3, subsample=50,
                         grid_resolution=20, individual='both')
 fig = plt.gcf()
 fig.suptitle('ICE and PD of house value on non-location features\n'

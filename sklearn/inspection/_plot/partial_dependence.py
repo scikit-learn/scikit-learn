@@ -3,6 +3,7 @@ from itertools import chain
 from itertools import count
 import warnings
 
+from math import ceil
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
@@ -20,7 +21,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, ax=None,
-                            individual=False):
+                            individual=False, subsample=None):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
@@ -193,6 +194,14 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         .. versionadded:: 0.23
 
+    subsample : float, int or None, default=None
+        Sampling for ICE curves when `individual` is `True` or 'both'
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to be used to plot ICE curves. If int, represents the
+        absolute number samples to use.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
     display: :class:`~sklearn.inspection.PartialDependenceDisplay`
@@ -291,6 +300,15 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
+    n_samples = X.shape[0]
+    if ((isinstance(subsample, int)
+         and (subsample >= n_samples or subsample <= 0))
+            or (isinstance(subsample, float)
+                and (subsample <= 0 or subsample >= 1))):
+        raise ValueError('subsample={0} should be either positive and smaller'
+                         ' than the number of samples {1} or a float in the '
+                         '(0, 1) range'.format(subsample, n_samples))
+
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
@@ -345,7 +363,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     display = PartialDependenceDisplay(
         pd_results, features, feature_names, target_idx,
-        pdp_lim, deciles, individual=individual
+        pdp_lim, deciles, individual=individual, subsample=subsample
     )
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
@@ -405,6 +423,14 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.23
 
+    subsample : float, int or None, default=None
+        Sampling for ICE curves when `individual` is `True` or 'both'
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to be used to plot ICE curves. If int, represents the
+        absolute number samples to use.
+
+        .. versionadded:: 0.23
+
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
@@ -437,7 +463,7 @@ class PartialDependenceDisplay:
 
     """
     def __init__(self, pd_results, features, feature_names, target_idx,
-                 pdp_lim, deciles, individual=False):
+                 pdp_lim, deciles, individual=False, subsample=None):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
@@ -445,6 +471,14 @@ class PartialDependenceDisplay:
         self.pdp_lim = pdp_lim
         self.deciles = deciles
         self.individual = individual
+        self.subsample = subsample
+
+    def _get_sample_count(self, n_samples):
+        if isinstance(self.subsample, int):
+            return self.subsample
+        elif isinstance(self.subsample, float):
+            return ceil(n_samples * self.subsample)
+        return n_samples
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
@@ -505,11 +539,13 @@ class PartialDependenceDisplay:
             individual_line_kw['linewidth'] = 0.5
 
         n_features = len(self.features)
-        n_instances = 1
+        n_sampled = 1
         if self.individual is True:
             n_instances = len(self.pd_results[0][0][0])
+            n_sampled = self._get_sample_count(n_instances)
         elif self.individual == 'both':
-            n_instances = len(self.pd_results[0][0][1][0]) + 1
+            n_instances = len(self.pd_results[0][0][1][0])
+            n_sampled = self._get_sample_count(n_instances) + 1
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -530,7 +566,7 @@ class PartialDependenceDisplay:
             if self.individual is False:
                 self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
             else:
-                self.lines_ = np.empty((n_rows, n_cols, n_instances),
+                self.lines_ = np.empty((n_rows, n_cols, n_sampled),
                                        dtype=np.object)
             self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
 
@@ -558,7 +594,7 @@ class PartialDependenceDisplay:
             if self.individual is False:
                 self.lines_ = np.empty_like(ax, dtype=np.object)
             else:
-                self.lines_ = np.empty(ax.shape + (n_instances,),
+                self.lines_ = np.empty(ax.shape + (n_sampled,),
                                        dtype=np.object)
             self.contours_ = np.empty_like(ax, dtype=np.object)
 
@@ -585,7 +621,14 @@ class PartialDependenceDisplay:
 
             if len(values) == 1:
                 if self.individual is True or self.individual == 'both':
-                    for j, ins in enumerate(preds[self.target_idx]):
+                    n_sampled = self._get_sample_count(
+                        len(preds[self.target_idx])
+                    )
+                    ice_lines = preds[self.target_idx]
+                    sampled = ice_lines[np.random.choice(
+                        ice_lines.shape[0], n_sampled, replace=False
+                    ), :]
+                    for j, ins in enumerate(sampled):
                         lines_ravel[i * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]

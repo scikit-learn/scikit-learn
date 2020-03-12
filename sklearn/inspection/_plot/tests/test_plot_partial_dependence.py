@@ -93,13 +93,19 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-@pytest.mark.parametrize("individual, shape", [
-    (False, (1, 3)), (True, (1, 3, 506)), ('both', (1, 3, 507))
+@pytest.mark.parametrize("individual, subsample, shape", [
+    (False, None, (1, 3)),
+    (True, None, (1, 3, 506)),
+    ('both', None, (1, 3, 507)),
+    (True, 50, (1, 3, 50)),
+    ('both', 50, (1, 3, 51)),
+    (True, 0.5, (1, 3, 253)),
+    ('both', 0.5, (1, 3, 254))
 ])
-def test_plot_partial_dependence_individual(pyplot, individual, shape,
-                                            clf_boston, boston):
+def test_plot_partial_dependence_individual(pyplot, individual, subsample,
+                                            shape, clf_boston, boston):
     disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
-                                   individual=individual)
+                                   individual=individual, subsample=subsample)
 
     assert disp.axes_.shape == (1, 3)
     assert disp.lines_.shape == shape
@@ -434,7 +440,13 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data, {'features': [(1, 2)], 'individual': True},
       'Each entry in features must be either an int or'),
      (dummy_classification_data, {'features': [(1, 2)], 'individual': 'both'},
-      'Each entry in features must be either an int or')]
+      'Each entry in features must be either an int or'),
+     (dummy_classification_data, {'features': [1], 'subsample': 101},
+      'subsample=101 should be either positive and smaller'),
+     (dummy_classification_data, {'features': [1], 'subsample': -1},
+      'subsample=-1 should be either positive and smaller'),
+     (dummy_classification_data, {'features': [1], 'subsample': 1.2},
+      'subsample=1.2 should be either positive and smaller')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
