@@ -303,7 +303,7 @@ plt.subplots_adjust(left=.3)
 # --------------------------------------------
 #
 # We can check the coefficient variability through cross-validation:
-# it is a form of data perturbation (related to 
+# it is a form of data perturbation (related to
 # `resampling <https://en.wikipedia.org/wiki/Resampling_(statistics)>`_).
 #
 # If coefficients vary significantly when changing the input dataset
