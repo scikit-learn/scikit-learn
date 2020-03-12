@@ -539,7 +539,6 @@ class OAS(EmpiricalCovariance):
     >>> import numpy as np
     >>> from sklearn.covariance import OAS
     >>> from sklearn.datasets import make_gaussian_quantiles
-    >>> 
     >>> real_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
     >>> rng = np.random.RandomState(0)
@@ -554,7 +553,7 @@ class OAS(EmpiricalCovariance):
     array([[ 1.7833..., -1.2431... ],
         [-1.2431...,  3.3889...]])
     >>> oas.shrinkage_
-    0.019575821212412425
+    0.0195...
     
     Notes
     -----
