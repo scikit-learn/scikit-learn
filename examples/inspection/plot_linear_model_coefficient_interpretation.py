@@ -664,7 +664,7 @@ plt.subplots_adjust(left=.3)
 #   between a given feature and the target, **conditional** on the other
 #   features.
 # * Correlated features induce instabilities in the coefficients of linear
-#   models and there effects cannot be well teased apart.
+#   models and their effects cannot be well teased apart.
 # * Different linear models respond differently to feature correlation and
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
