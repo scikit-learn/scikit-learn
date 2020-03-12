@@ -258,17 +258,18 @@ that the last iteration uses as many samples as possible. Please see
 Amount of resource and number of candidates at each iteration
 -------------------------------------------------------------
 
-The amount of resources ``resource_iter`` (e.g. the number of samples)
-allocated for each candidate at iteration ``i`` is controlled by the
-parameters ``ratio`` and ``min_resources`` as follows::
+At any iteration `i`, each candidate is allocated a given amount of resources
+which we denote `resource_iter`. This quantity is controlled by the
+parameters ``ratio`` and ``min_resources`` as follows (`ratio` is strictly
+greater than 1)::
 
-    resource_iter = ratio**i * min_resources
+    resource_iter = ratio**i * min_resources,
 
-``min_resources`` is the amount of resources used at the first iteration and
-``ratio`` defines the proportions of candidates that will be selected for
-the next iteration (``ratio`` must be greater than 1)::
+where ``min_resources`` is the amount of resources used at the first
+iteration, and ``ratio (> 1)`` defines the proportions of candidates that
+will be selected for the next iteration::
 
-    n_candidates_to_keep = n_candidates_at_i // ratio
+    n_candidates_at_i+1 = n_candidates_at_i // ratio
 
 So in the first iteration, we use ``min_resources`` resources
 ``n_candidates`` times. In the second iteration, we use ``min_resources *
@@ -277,7 +278,7 @@ multiplies the resources per candidate and divides the number of candidates.
 This process stops when the maximum amount of resource per candidate is
 reached, or when we have identified the best candidate. The best candidate
 is identified at the iteration that is evaluating `ratio` or less candidates
-(see below).
+(see just below for an explanation).
 
 Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
 70 candidates:
@@ -304,8 +305,8 @@ We can note that:
   candidates: the best candidate is the best out of these 2 candidates. It
   is not necessary to run an additional iteration, since it would only
   evaluate one candidate (namely the best one, which we have already
-  identified). For this reason, in general, we want the last iteration to run
-  at most `ratio` candidates.
+  identified). For this reason, **in general, we want the last iteration to
+  run at most `ratio` candidates**.
 - each ``resource_iter`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
