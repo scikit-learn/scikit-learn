@@ -40,22 +40,16 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import column_or_1d
-from ..utils import check_consistent_length
-from ..utils import deprecated
-from ..utils.fixes import logsumexp
-from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
@@ -411,7 +405,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
@@ -708,8 +703,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self,
-                        msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(
                 'Using recursion method with a non-constant init predictor '
@@ -1021,6 +1014,15 @@ shape (n_estimators, ``loss_.K``)
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
+    n_features_ : int
+        The number of data features.
+
+    n_classes_ : int
+        The number of classes.
+
+    max_features_ : int
+        The inferred value of max_features.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1029,6 +1031,22 @@ shape (n_estimators, ``loss_.K``)
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = GradientBoostingClassifier(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    GradientBoostingClassifier(random_state=0)
+    >>> clf.predict(X_test[:2])
+    array([1, 0])
+    >>> clf.score(X_test, y_test)
+    0.88
 
     See also
     --------
@@ -1498,6 +1516,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    n_features_ : int
+        The number of data features.
+
+    max_features_ : int
+        The inferred value of max_features.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1506,6 +1530,22 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = GradientBoostingRegressor(random_state=0)
+    >>> reg.fit(X_train, y_train)
+    GradientBoostingRegressor(random_state=0)
+    >>> reg.predict(X_test[1:2])
+    array([-61...])
+    >>> reg.score(X_test, y_test)
+    0.4...
 
     See also
     --------

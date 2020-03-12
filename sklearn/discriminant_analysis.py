@@ -11,7 +11,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 import warnings
 import numpy as np
-from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
 from scipy.special import expit
 
@@ -19,11 +18,12 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array, check_X_y
+from .utils import check_array
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
+from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
@@ -190,7 +190,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Intercept term.
 
     covariance_ : array-like of shape (n_features, n_features)
-        Covariance matrix (shared by all classes).
+        Covariance matrix (shared by all classes). Only available
+        `store_covariance` is True.
 
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
@@ -246,8 +247,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    def __init__(self, solver='svd', shrinkage=None, priors=None,
+    @_deprecate_positional_args
+    def __init__(self, *, solver='svd', shrinkage=None, priors=None,
                  n_components=None, store_covariance=False, tol=1e-4):
         self.solver = solver
         self.shrinkage = shrinkage
@@ -423,8 +424,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array-like of shape (n_samples,)
             Target values.
         """
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
-                         dtype=[np.float64, np.float32])
+        X, y = self._validate_data(X, y, ensure_min_samples=2, estimator=self,
+                                   dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -579,7 +580,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     covariance_ : list of array-like of shape (n_features, n_features)
-        Covariance matrices of each class.
+        Covariance matrices of each class. Only available
+        `store_covariance` is True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class means.
@@ -618,8 +620,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     sklearn.discriminant_analysis.LinearDiscriminantAnalysis: Linear
         Discriminant Analysis
     """
-
-    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+    @_deprecate_positional_args
+    def __init__(self, *, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
@@ -645,7 +647,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         y : array-like of shape (n_samples,)
             Target values (integers)
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape

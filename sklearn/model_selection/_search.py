@@ -37,7 +37,7 @@ from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-
+from ..utils import deprecated
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -301,6 +301,11 @@ class ParameterSampler:
         return self.n_iter
 
 
+# FIXME Remove fit_grid_point in 0.25
+@deprecated(
+    "fit_grid_point is deprecated in version 0.23 "
+    "and will be removed in version 0.25"
+)
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score=np.nan, **fit_params):
     """Run fit on one set of parameters.
@@ -560,6 +565,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.inverse_transform(Xt)
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the search estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.best_estimator_.n_features_in_
 
     @property
     def classes_(self):

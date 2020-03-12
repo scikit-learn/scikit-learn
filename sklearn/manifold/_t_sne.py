@@ -16,7 +16,6 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
@@ -661,11 +660,12 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.method == 'barnes_hut':
-            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr'],
+                                    ensure_min_samples=2,
+                                    dtype=[np.float32, np.float64])
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                    dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "

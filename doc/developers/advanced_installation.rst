@@ -26,7 +26,7 @@ Installing a nightly build is the quickest way to:
 
 ::
 
-  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
 
 .. _install_bleeding_edge:

@@ -12,9 +12,10 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=FutureWarning)
     from .partial_dependence import partial_dependence
 
-from ._partial_dependence import plot_partial_dependence  # noqa
-from ._partial_dependence import PartialDependenceDisplay  # noqa
 from ._permutation_importance import permutation_importance  # noqa
+
+from ._plot.partial_dependence import plot_partial_dependence  # noqa
+from ._plot.partial_dependence import PartialDependenceDisplay  # noqa
 
 
 __all__ = [

@@ -10,7 +10,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
-from ..utils import column_or_1d, check_X_y
+from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
@@ -75,7 +75,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, self._impl))
 
@@ -147,9 +147,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = check_X_y(X, y, dtype=np.float64,
-                             order='C', accept_sparse='csr',
-                             accept_large_sparse=False)
+            X, y = self._validate_data(X, y, dtype=np.float64,
+                                       order='C', accept_sparse='csr',
+                                       accept_large_sparse=False)
 
         y = self._validate_targets(y)
 
@@ -200,7 +200,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self._gamma = self.gamma
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        if self.verbose:  # pragma: no cover
+        if self.verbose:
             print('[LibSVM]', end='')
 
         seed = rnd.randint(np.iinfo('i').max)
