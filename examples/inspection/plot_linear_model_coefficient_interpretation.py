@@ -95,7 +95,8 @@ _ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 ##############################################################################
 # Looking closely at the WAGE distribution reveals that it has a
 # long tail. For this reason, we should take its logarithm
-# to turn it approximately into a normal distribution.
+# to turn it approximately into a normal distribution (linear models such
+# as ridge or lasso work best for a normal distribution of error).
 #
 # The WAGE is increasing when EDUCATION is increasing.
 # Note that the dependence between WAGE and EDUCATION
@@ -552,10 +553,10 @@ plt.subplots_adjust(left=.3)
 # predictive variables, so neither alone would have strong weights.
 #
 # On the other hand, the weights obtained with regularization are more
-# stable, as visible from data perturbations, in a
-# cross validation (see the :ref:`ridge_regression` User Guide section),
-# shown in the plot below and to be compared with the
-# :ref:`previous one<covariation>`.
+# stable  (see the :ref:`ridge_regression` User Guide section). This
+# increased stability is visible from the plot, obtained from data
+# perturbations, in a cross validation. This plot can  be compared with
+# the :ref:`previous one<covariation>`.
 
 cv_model = cross_validate(
     model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
