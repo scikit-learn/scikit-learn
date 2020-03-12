@@ -625,8 +625,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         def opposite_equalizer(x):
             if x == "<=":
                 return ">"
-            if x == "=>":
-                return "<"
 
         # We sort the bbox list to get the correct order
         # of the nodes so we can get x,y values correctly.
