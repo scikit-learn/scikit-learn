@@ -649,7 +649,7 @@ plt.subplots_adjust(left=.3)
 #
 # It is important to keep in mind that the coefficients that have been
 # dropped may still be related to the outcome by themselves: the model
-# chose to suppress them because they brings little or no additional
+# chose to suppress them because they bring little or no additional
 # information on top of the other features. Additionnaly, this selection
 # is unstable for correlated features, and should be interpreted with
 # caution.
