@@ -634,7 +634,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # If max_depth == 1 change the x position.
         # Else the decision box will overlap the two edges.
-        if decision_tree.max_depth == 1:
+        if decision_tree.max_depth == 1:    # pragma: no cover
+            # Decision tree will always have at least three bounding boxes.
             x_l = anns2[1].get_bbox_patch().get_window_extent().bounds[0]
             y_l = (anns2[0].get_position()[1] + anns2[1].get_position()[1])//2
             x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
