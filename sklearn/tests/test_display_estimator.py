@@ -3,7 +3,6 @@ from io import StringIO
 
 import pytest
 
-from sklearn import config_context
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.impute import SimpleImputer
@@ -21,6 +20,7 @@ from sklearn._display_estimator import _write_label_html
 from sklearn._display_estimator import _estimator_details
 from sklearn._display_estimator import _type_of_html_estimator
 from sklearn._display_estimator import _estimator_repr_html
+from sklearn._config import config_context
 
 
 @pytest.mark.parametrize('est, expected', [
@@ -51,19 +51,21 @@ def test_write_label_html(checked):
 def test_type_of_html_estimator_single_str_none(est):
     est_html_info = _type_of_html_estimator(est)
     assert est_html_info.type == 'single'
-    assert est_html_info.estimators[0] == est
-    assert est_html_info.names[0] == str(est)
-    assert est_html_info.name_details[0] == str(est)
+    assert est_html_info.estimators == est
+    assert est_html_info.names == str(est)
+    assert est_html_info.name_details == str(est)
 
 
-def test_type_of_html_estimator_single_estimator():
-    # single estimator prints all the details
+@pytest.mark.parametrize('print_changed_only', [True, False])
+def test_type_of_html_estimator_single_estimator(print_changed_only):
     est = LogisticRegression(C=10.0)
-    est_html_info = _type_of_html_estimator(est, first_call=True)
+    est_html_info = _type_of_html_estimator(
+        est, print_changed_only=print_changed_only)
     assert est_html_info.type == 'single'
-    assert est_html_info.estimators[0] == est
-    assert est_html_info.names[0] == est.__class__.__name__
-    assert est_html_info.name_details[0] == _estimator_details(est)
+    assert est_html_info.estimators == est
+    assert est_html_info.names == est.__class__.__name__
+    assert (est_html_info.name_details ==
+            _estimator_details(est, print_changed_only=print_changed_only))
 
 
 def test_type_of_html_estimator_pipeline():
