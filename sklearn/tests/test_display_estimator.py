@@ -167,5 +167,5 @@ def test_display_estimator_pipeline():
 def test_display_estimator_ovo_classifier():
     ovo = OneVsOneClassifier(LinearSVC())
     html_output = _estimator_repr_html(ovo)
-    assert "<pre>OneVsOneClassifier(estimator=LinearSVC())</pre>" in html_output
+    assert "pre>OneVsOneClassifier(estimator=LinearSVC())</pre>" in html_output
     assert "LinearSVC</label>" in html_output

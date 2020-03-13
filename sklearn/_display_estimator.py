@@ -156,6 +156,7 @@ div.sk-toggleable__content {
 div.sk-toggleable__content pre {
   margin: 0.2em;
   border-radius: 0.25em;
+  background-color: #f0f8ff;
 }
 input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
