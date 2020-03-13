@@ -261,8 +261,9 @@ div.sk-parallel-item:only-child::after {
 }
 div.sk-dashed-wrapped {
   border: 1px dashed gray;
-  margin: 0 0.3em 0.3em 0.3em;
+  margin: 0 0.2em 0.2em 0.2em;
   box-sizing: border-box;
+  padding-bottom: 0.2em;
 }
 div.sk-label label {
   font-family: monospace;
