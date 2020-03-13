@@ -1131,20 +1131,18 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     Examples
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
-
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
     >>> clf.fit(X, y)
-    RandomForestClassifier(max_depth=2, random_state=0)
+    RandomForestClassifier(...)
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
@@ -1421,7 +1419,6 @@ class RandomForestRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
@@ -1431,12 +1428,11 @@ class RandomForestRegressor(ForestRegressor):
     --------
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
-
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
     >>> regr.fit(X, y)
-    RandomForestRegressor(max_depth=2, random_state=0)
+    RandomForestRegressor(...)
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
@@ -1736,7 +1732,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
     References
     ----------
-
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
@@ -2015,7 +2010,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
 
