@@ -23,6 +23,7 @@ from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = [
@@ -171,8 +172,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ['transformers']
 
+    @_deprecate_positional_args
     def __init__(self,
-                 transformers,
+                 transformers, *,
                  remainder='drop',
                  sparse_threshold=0.3,
                  n_jobs=None,
@@ -826,8 +828,9 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
-
-    def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
+    @_deprecate_positional_args
+    def __init__(self, pattern=None, *, dtype_include=None,
+                 dtype_exclude=None):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude
