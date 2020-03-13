@@ -1,76 +1,93 @@
 from collections import namedtuple
 from contextlib import closing
 from io import StringIO
-
-from .._config import config_context
-from ..base import BaseEstimator
-from ..pipeline import Pipeline
-from ..pipeline import FeatureUnion
-from ..compose import ColumnTransformer
-from ..ensemble import VotingClassifier, VotingRegressor
+import uuid
 
 
-def _estimator_tool_tip(estimator):
+def _estimator_details(estimator):
     """Replace newlines to allow for css content: attr(...) to properly
-    display tooltips.
+    display estimator details.
     """
     return str(estimator).replace('\n', '&#xa;')
 
 
+def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class):
+    out.write(
+        f'<div class="{outer_class}">'
+        f'<div class="{inner_class} sk-toggleable">')
+
+    if tool_tip is not None:
+        est_id = uuid.uuid4()
+        out.write(f'<input class="sk-toggleable__control sk-hidden--visually" '
+                  f'id="{est_id}" type="checkbox"/>'
+                  f'<label class="sk-toggleable__label" for="{est_id}">'
+                  f'{name}</label>'
+                  f'<div class="sk-toggleable__content"><pre>{tool_tip}'
+                  f'</pre></div>')
+    else:
+        out.write(f'<label>{name}</label>')
+    out.write('</div></div>')  # outer_class inner_class
+
+
 def _write_label_html(out, name, tool_tip):
     """Write label to html"""
-    out.write('<div class="sk-label-container">'
-              '<div class="sk-label" sk-data-tooltip="{}">'
-              '{}</div></div>'.format(tool_tip, name))
+    _write_dropdown_html(out, name, tool_tip, "sk-label-container", "sk-label")
 
 
 _EstHTMLInfo = namedtuple('_EstHTMLInfo',
-                          'type, estimators, names, name_tips')
+                          'type, estimators, names, name_details')
 
 
 def _type_of_html_estimator(estimator):
     """Generate information about how to display an estimator.
     """
+    from sklearn.base import BaseEstimator
+    from sklearn.pipeline import Pipeline
+    from sklearn.pipeline import FeatureUnion
+    from sklearn.compose import ColumnTransformer
+    from sklearn.ensemble import VotingClassifier, VotingRegressor
+
     if isinstance(estimator, str):
-        return _EstHTMLInfo('single', estimator, estimator, estimator)
+        return _EstHTMLInfo('single', [estimator], [estimator], [estimator])
 
     elif estimator is None:
-        return _EstHTMLInfo('single', estimator, 'None', 'None')
+        return _EstHTMLInfo('single', [estimator], ['None'], ['None'])
 
     elif isinstance(estimator, Pipeline):
         estimators = [step[1] for step in estimator.steps]
         names = [step[0] for step in estimator.steps]
-        name_tips = [_estimator_tool_tip(est) for est in estimators]
-        return _EstHTMLInfo('serial', estimators, names, name_tips)
+        name_details = [_estimator_details(est) for est in estimators]
+        return _EstHTMLInfo('serial', estimators, names, name_details)
 
     elif isinstance(estimator, ColumnTransformer):
         estimators = [trans[1] for trans in estimator.transformers]
         names = [trans[0] for trans in estimator.transformers]
-        name_tips = [trans[2] for trans in estimator.transformers]
-        return _EstHTMLInfo('parallel', estimators, names, name_tips)
+        name_details = [trans[2] for trans in estimator.transformers]
+        return _EstHTMLInfo('parallel', estimators, names, name_details)
 
     elif isinstance(estimator, FeatureUnion):
         estimators = [trans[1] for trans in estimator.transformer_list]
         names = [trans[0] for trans in estimator.transformer_list]
-        name_tips = [_estimator_tool_tip(est) for est in estimators]
-        return _EstHTMLInfo('parallel', estimators, names, name_tips)
+        name_details = [None] * len(names)
+        return _EstHTMLInfo('parallel', estimators, names, name_details)
 
     elif isinstance(estimator, (VotingClassifier, VotingRegressor)):
         estimators = [est[1] for est in estimator.estimators]
         names = [est[0] for est in estimator.estimators]
-        name_tips = [_estimator_tool_tip(est) for est in estimators]
-        return _EstHTMLInfo('parallel', estimators, names, name_tips)
+        name_details = [None] * len(names)
+        return _EstHTMLInfo('parallel', estimators, names, name_details)
 
     elif hasattr(estimator, "estimator"):
-        name = estimator.__class__.__name__
-        name_tip = _estimator_tool_tip(estimator)
+        names = [estimator.__class__.__name__]
+        name_details = [_estimator_details(estimator)]
         inner_estimator = estimator.estimator
-        return _EstHTMLInfo('single-meta', inner_estimator, name, name_tip)
+        return _EstHTMLInfo('single-meta', [inner_estimator], names,
+                            name_details)
 
     elif isinstance(estimator, BaseEstimator):
-        name = estimator.__class__.__name__
-        tool_tip = _estimator_tool_tip(estimator)
-        return _EstHTMLInfo('single', estimator, name, tool_tip)
+        names = [estimator.__class__.__name__]
+        tool_tips = [_estimator_details(estimator)]
+        return _EstHTMLInfo('single', [estimator], names, tool_tips)
 
     else:
         raise ValueError("Invalid estimator")
@@ -84,7 +101,7 @@ def _write_estimator_html(out, estimator, name):
     if est_html_info.type == 'serial':
         out.write('<div class="sk-serial">')
         est_infos = zip(est_html_info.estimators, est_html_info.names,
-                        est_html_info.name_tips)
+                        est_html_info.name_details)
         for est, name, tool_tip in est_infos:
             _write_estimator_html(out, est, name)
         out.write('</div>')  # sk-serial
@@ -92,12 +109,12 @@ def _write_estimator_html(out, estimator, name):
     elif est_html_info.type == 'parallel':
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
-            tool_tip = _estimator_tool_tip(estimator)
+            tool_tip = _estimator_details(estimator)
             _write_label_html(out, name, tool_tip)
         out.write('<div class="sk-parallel">')
 
         est_infos = zip(est_html_info.estimators, est_html_info.names,
-                        est_html_info.name_tips)
+                        est_html_info.name_details)
         for est, name, tool_tip in est_infos:
             out.write('<div class="sk-parallel-item">')
             _write_label_html(out, name, tool_tip)
@@ -105,20 +122,58 @@ def _write_estimator_html(out, estimator, name):
             _write_estimator_html(out, est, name)
             out.write('</div></div>')  # sk-parallel-item sk-serial
         out.write('</div></div>')  # sk-parallel sk-serial-item
+
     elif est_html_info.type == 'single-meta':
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
-        _write_label_html(out, est_html_info.names, est_html_info.name_tips)
-        _write_estimator_html(out, est_html_info.estimators,
+        _write_label_html(out, est_html_info.names[0],
+                          est_html_info.name_details[0])
+        _write_estimator_html(out, est_html_info.estimators[0],
                               est_html_info.estimators.__class__.__name__)
         out.write('</div>')  # sk-serial-item # sk-serial
+
     elif est_html_info.type == 'single':
-        out.write('<div class="sk-serial-item">'
-                  '<div class="sk-estimator" sk-data-tooltip="{}">'
-                  '{}</div></div>'.format(est_html_info.name_tips,
-                                          est_html_info.names))
+        _write_dropdown_html(out, est_html_info.names[0],
+                             est_html_info.name_details[0],
+                             "sk-serial-item", "sk-estimator")
 
 
 _STYLE = """
+.sk-toggleable {
+  background-color: white;
+}
+.sk-toggleable__label {
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  margin-bottom: 0;
+}
+.sk-toggleable__content {
+  max-height: 0;
+  max-width: 0;
+  overflow: hidden;
+  text-align: left;
+  background-color: #f0f8ff;
+}
+div.sk-toggleable__content pre {
+  margin: 0.5em;
+  border-radius: 0.25em;
+}
+.sk-toggleable__control:checked~.sk-toggleable__content {
+  max-height: 200px;
+  max-width: 100%;
+  overflow: auto;
+}
+.sk-hidden--visually {
+  border: 0;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
 .sk-estimator {
   font-family: monospace;
   background-color: #f0f8ff;
@@ -149,11 +204,15 @@ _STYLE = """
   float: left;
   background: white;
 }
+.sk-serial-item {
+  z-index: 1;
+}
 .sk-parallel {
   display: flex;
   align-items: stretch;
   justify-content: center;
 }
+
 .sk-parallel-item {
   display: flex;
   flex-direction: column;
@@ -175,19 +234,19 @@ _STYLE = """
   border: 1px dashed gray;
   padding: 0 0.25em 0.25em 0.25em;
 }
-.sk-label {
+.sk-label label {
   font-family: monospace;
   font-weight: bold;
   background: white;
   display: inline-block;
   margin: 0 0.5em;
+  line-height: 1.4em;
+  width: 97%;
 }
 .sk-label-container {
   text-align: center;
-}
-.sk-serial-item {
-  margin-bottom: 0.25em;
-  background: white;
+  border: #f0f8ff solid red;
+  z-index: 1;
 }
 .sk-container {
   display: flex;
@@ -220,12 +279,7 @@ _STYLE = """
   opacity: 1;
   z-index: 2;
 }
-.sk-top-container {
-  display: flex;
-  color: black;
-  padding-bottom: 2em;
-}
-"""
+""".replace('\n', '').replace('  ', '')
 
 
 def display_estimator(estimator, print_changed_only=True):
@@ -246,15 +300,18 @@ def display_estimator(estimator, print_changed_only=True):
         HTML representation of estimator. When called in jupyter notebook or
         lab, a iPython HTML object is returned.
     """
+    from sklearn._config import config_context
+    from sklearn.pipeline import Pipeline
 
     with config_context(print_changed_only=print_changed_only), \
             closing(StringIO()) as out:
 
+        # This forces estimators to always be serial at the first layer
         if not isinstance(estimator, Pipeline):
             estimator = Pipeline([(estimator.__class__.__name__, estimator)])
 
         out.write('<html><head><style>')
-        out.write(_STYLE.replace('\n', ''))
+        out.write(_STYLE)
         out.write('</style></head><body>')
 
         out.write('<div class="sk-top-container"><div class="sk-container">')
@@ -263,12 +320,4 @@ def display_estimator(estimator, print_changed_only=True):
         out.write('</body></html>')
 
         html_output = out.getvalue()
-        # wrap in iPython HTML if in a notebook context
-        try:
-            cls_name = get_ipython().__class__.__name__
-            if cls_name != 'ZMQInteractiveShell':
-                return html_output
-            from IPython.display import HTML
-            return HTML(html_output)
-        except (ImportError, NameError):
-            return html_output
+        return html_output
