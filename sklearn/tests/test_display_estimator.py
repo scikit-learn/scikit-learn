@@ -31,16 +31,19 @@ def test_estimator_tool_tip(est, expected):
     assert expected == _estimator_details(est)
 
 
-def test_write_label_html():
+@pytest.mark.parametrize("checked", [True, False])
+def test_write_label_html(checked):
     name = "LogisticRegression"
     tool_tip = "hello-world"
 
     with closing(StringIO()) as out:
-        _write_label_html(out, name, tool_tip)
+        _write_label_html(out, name, tool_tip, checked=checked)
         html_label = out.getvalue()
         assert 'LogisticRegression</label>' in html_label
         assert html_label.startswith('<div class="sk-label-container">')
         assert '<pre>hello-world</pre>' in html_label
+        if checked:
+            assert 'checked>' in html_label
 
 
 @pytest.mark.parametrize('est', ['passthrough', 'drop', None])
@@ -151,7 +154,7 @@ def test_display_estimator_pipeline():
       '(strategy=\'median\')',
       '<pre>SimpleImputer(missing_values=\'empty\', strategy=\'constant\')'
       '</pre>',
-      '(\'one-hot\', OneHotEncoder())',
+      '(\'one-hot\', OneHotEncoder',
       'preprocessor</label>',
       '<pre>[\'a\', \'b\', \'c\', \'d\', \'e\']</pre>',
       '<pre>LogisticRegression(random_state=1)</pre>',
@@ -167,5 +170,5 @@ def test_display_estimator_pipeline():
 def test_display_estimator_ovo_classifier():
     ovo = OneVsOneClassifier(LinearSVC())
     html_output = _estimator_repr_html(ovo)
-    assert "pre>OneVsOneClassifier(estimator=LinearSVC())</pre>" in html_output
+    assert "pre>OneVsOneClassifier(estimator=LinearSVC" in html_output
     assert "LinearSVC</label>" in html_output

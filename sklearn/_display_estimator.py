@@ -4,22 +4,26 @@ from io import StringIO
 import uuid
 
 
-def _estimator_details(estimator):
+def _estimator_details(estimator, print_changed_only=True):
     """Replace newlines to allow for css content: attr(...) to properly
     display estimator details.
     """
-    return str(estimator).replace('\n', '&#xa;')
+    from sklearn._config import config_context
+    with config_context(print_changed_only=print_changed_only):
+        return str(estimator).replace('\n', '&#xa;')
 
 
-def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class):
+def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class,
+                         checked=False):
     out.write(
         f'<div class="{outer_class}">'
         f'<div class="{inner_class} sk-toggleable">')
 
     if tool_tip is not None:
+        checked_str = 'checked' if checked else ''
         est_id = uuid.uuid4()
         out.write(f'<input class="sk-toggleable__control sk-hidden--visually" '
-                  f'id="{est_id}" type="checkbox"/>'
+                  f'id="{est_id}" type="checkbox" {checked_str}>'
                   f'<label class="sk-toggleable__label" for="{est_id}">'
                   f'{name}</label>'
                   f'<div class="sk-toggleable__content"><pre>{tool_tip}'
@@ -29,16 +33,17 @@ def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class):
     out.write('</div></div>')  # outer_class inner_class
 
 
-def _write_label_html(out, name, tool_tip):
+def _write_label_html(out, name, tool_tip, checked=False):
     """Write label to html"""
-    _write_dropdown_html(out, name, tool_tip, "sk-label-container", "sk-label")
+    _write_dropdown_html(out, name, tool_tip, "sk-label-container", "sk-label",
+                         checked=checked)
 
 
 _EstHTMLInfo = namedtuple('_EstHTMLInfo',
                           'type, estimators, names, name_details')
 
 
-def _type_of_html_estimator(estimator):
+def _type_of_html_estimator(estimator, first_call=False):
     """Generate information about how to display an estimator.
     """
     # import here to avoid circular import from base.py
@@ -48,7 +53,8 @@ def _type_of_html_estimator(estimator):
     from sklearn.ensemble import VotingClassifier, VotingRegressor
 
     if isinstance(estimator, str):
-        return _EstHTMLInfo('single', [estimator], [estimator], [estimator])
+        return _EstHTMLInfo('single', [estimator], [estimator],
+                            [estimator])
 
     elif estimator is None:
         return _EstHTMLInfo('single', [estimator], ['None'], ['None'])
@@ -83,16 +89,20 @@ def _type_of_html_estimator(estimator):
         inner_estimator = estimator.estimator
         return _EstHTMLInfo('single-meta', [inner_estimator], names,
                             name_details)
-    # Base estimator
+
+    # Base estimator, if this is the first call, then all parameters are
+    # printed
     names = [estimator.__class__.__name__]
-    tool_tips = [_estimator_details(estimator)]
+    tool_tips = [_estimator_details(estimator,
+                                    print_changed_only=not first_call)]
     return _EstHTMLInfo('single', [estimator], names, tool_tips)
 
 
-def _write_estimator_html(out, estimator, name):
+def _write_estimator_html(out, estimator, name, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
-    est_html_info = _type_of_html_estimator(estimator)
+    est_html_info = _type_of_html_estimator(estimator,
+                                            first_call=first_call)
 
     if est_html_info.type == 'serial':
         out.write('<div class="sk-serial">')
@@ -130,7 +140,8 @@ def _write_estimator_html(out, estimator, name):
     elif est_html_info.type == 'single':
         _write_dropdown_html(out, est_html_info.names[0],
                              est_html_info.name_details[0],
-                             "sk-serial-item", "sk-estimator")
+                             "sk-serial-item", "sk-estimator",
+                             checked=first_call)
 
 
 _STYLE = """
@@ -163,6 +174,12 @@ input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-width: 100%;
   overflow: auto;
 }
+div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: #d4ebff;
+}
+div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {
+  background-color: #d4ebff;
+}
 input.sk-hidden--visually {
   border: 0;
   clip: rect(1px 1px 1px 1px);
@@ -183,7 +200,7 @@ div.sk-estimator {
   box-sizing: border-box;
 }
 div.sk-estimator:hover {
-  background-color: #c1e2ff;
+  background-color: #d4ebff;
 }
 div.sk-parallel-item::after {
   content: "";
@@ -192,9 +209,7 @@ div.sk-parallel-item::after {
   flex-grow: 1;
 }
 div.sk-label:hover label.sk-toggleable__label {
-  color: #0087fe;
-  background-color: rgb(246, 246, 246);
-  border-radius: 0.25em;
+  background-color: #d4ebff;
 }
 div.sk-serial::before {
   content: "";
@@ -212,6 +227,7 @@ div.sk-serial {
   float: left;
   background: white;
 }
+
 div.sk-serial-item {
   z-index: 1;
 }
@@ -239,7 +255,7 @@ div.sk-parallel-item:only-child::after {
 }
 div.sk-dashed-wrapped {
   border: 1px dashed gray;
-  padding: 0 0.3em 0.3em 0.3em;
+  margin: 0 0.3em 0.3em 0.3em;
   box-sizing: border-box;
 }
 div.sk-label label {
@@ -285,10 +301,10 @@ div.sk-container {
   opacity: 1;
   z-index: 2;
 }
-""".replace('  ', '').replace('\n', '')
+""".replace('  ', '').replace('\n', '')  # noqa
 
 
-def _estimator_repr_html(estimator, print_changed_only=True):
+def _estimator_repr_html(estimator):
     """Build a HTML representation of an estimator
 
     Parameters
@@ -296,35 +312,19 @@ def _estimator_repr_html(estimator, print_changed_only=True):
     estimator : estimator object
         The estimator to visualize.
 
-    print_changed_only : bool, optional (default=True)
-        If True, only the parameters that were set to non-default
-        values will be printed when printing an estimator.
-
     Returns
     -------
     html: str or iPython HTML object
         HTML representation of estimator. When called in jupyter notebook or
         lab, a iPython HTML object is returned.
     """
-    # import here to avoid circular import from base.py
-    from sklearn._config import config_context
-    from sklearn.pipeline import Pipeline
+    with closing(StringIO()) as out:
 
-    with config_context(print_changed_only=print_changed_only), \
-            closing(StringIO()) as out:
-
-        # This forces estimators to always be serial at the first layer
-        if not isinstance(estimator, Pipeline):
-            estimator = Pipeline([(estimator.__class__.__name__, estimator)])
-
-        out.write('<html><head><style>')
-        out.write(_STYLE)
-        out.write('</style></head><body>')
-
-        out.write('<div class="sk-top-container"><div class="sk-container">')
-        _write_estimator_html(out, estimator, '')
-        out.write('</div></div>')  # sk-top-container # sk-container
-        out.write('</body></html>')
+        out.write(f'<html><head><style>{_STYLE}</style></head><body>'
+                  f'<div class="sk-top-container"><div class="sk-container">')
+        _write_estimator_html(out, estimator, estimator.__class__.__name__,
+                              first_call=True)
+        out.write('</div></div></body></html>')
 
         html_output = out.getvalue()
         return html_output
