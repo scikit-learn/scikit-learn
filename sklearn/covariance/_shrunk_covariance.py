@@ -543,8 +543,8 @@ class OAS(EmpiricalCovariance):
     ...                      [.3, .4]])
     >>> rng = np.random.RandomState(0)
     >>> X = rng.multivariate_normal(mean=[0, 0],
-    ...                                    cov=real_cov,
-    ...                                    size=500)
+    ...                                   cov=real_cov,
+    ...                                   size=500)
     >>> oas = OAS().fit(X)
     >>> oas.covariance_
     array([[0.7533..., 0.2763...],
