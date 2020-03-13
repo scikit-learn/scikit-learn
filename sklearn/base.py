@@ -20,7 +20,7 @@ from . import __version__
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from ._display_estimator import display_estimator
+from ._display_estimator import _estimator_repr_html
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -413,7 +413,7 @@ class BaseEstimator:
         return out
 
     def _repr_html_(self):
-        return display_estimator(self)
+        return _estimator_repr_html(self)
 
 
 class ClassifierMixin:

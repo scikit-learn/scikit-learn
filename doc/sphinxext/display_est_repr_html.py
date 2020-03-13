@@ -1,6 +1,5 @@
 """
-Primary used to display the html output  `sklearn.inspection.display_estimator`
-in sphinx.
+Primary used to display the html output of `_repr_html_` of estimators
 """
 import sys
 from docutils.parsers.rst import Directive
@@ -8,15 +7,18 @@ from docutils import nodes
 from io import StringIO
 
 
-class ExecuteHTML(Directive):
+class DisplayReprEstimator(Directive):
     "Execute Python code and includes stdout as HTML"
 
     has_content = True
     required_arguments = 0
     optional_arguments = 0
 
-    @classmethod
-    def execute(cls, code):
+    def execute(self, code):
+        code_parts = code.split('\n')
+        final_output = code_parts[-1]
+        code_parts[-1] = f'print({final_output}._repr_html_())'
+        code = '\n'.join(code_parts)
         orig_stdout, orig_stderr = sys.stdout, sys.stderr
 
         output, err = StringIO(), StringIO()
@@ -25,7 +27,7 @@ class ExecuteHTML(Directive):
         exec(code)
         sys.stdout, sys.stderr = orig_stdout, orig_stderr
 
-        return "".join(['<div style="font-size: 1.2em">',
+        return "".join(['<div style="font-size: 1.1em;display: inline-block">',
                         output.getvalue(), err.getvalue(), "</div>"])
 
     def run(self):
@@ -42,4 +44,4 @@ class ExecuteHTML(Directive):
 
 
 def setup(app):
-    app.add_directive('display_html', ExecuteHTML)
+    app.add_directive('display_estimator_repr_html', DisplayReprEstimator)

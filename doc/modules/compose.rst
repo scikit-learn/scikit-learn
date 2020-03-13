@@ -538,21 +538,20 @@ above example would be::
 Visualizing Composite Estimators
 ================================
 
-:func:`sklearn.inspection.display_estimator` outputs a html representation of
+In by default a jupyter notebook outputs a html representation of
 composite estimators. This can be useful to diagnose or visualize a Pipeline
 with may estimators. For example, the estimator defined in 
 The composite estimator defined in 
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
 can be visualized as:
 
-.. display_html::
+.. display_estimator_repr_html::
 
    from sklearn.compose import ColumnTransformer
    from sklearn.pipeline import Pipeline
    from sklearn.impute import SimpleImputer
    from sklearn.preprocessing import StandardScaler, OneHotEncoder
    from sklearn.linear_model import LogisticRegression
-   from sklearn.inspection import display_estimator
 
    numeric_features = ['age', 'fare']
    numeric_transformer = Pipeline(steps=[
@@ -571,7 +570,7 @@ can be visualized as:
 
    clf = Pipeline(steps=[('preprocessor', preprocessor),
                           ('classifier', LogisticRegression())])
-   print(display_estimator(clf))
+   clf
 
 .. topic:: Examples:
 

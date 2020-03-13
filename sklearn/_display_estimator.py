@@ -41,7 +41,7 @@ _EstHTMLInfo = namedtuple('_EstHTMLInfo',
 def _type_of_html_estimator(estimator):
     """Generate information about how to display an estimator.
     """
-    from sklearn.base import BaseEstimator
+    # import here to avoid circular import from base.py
     from sklearn.pipeline import Pipeline
     from sklearn.pipeline import FeatureUnion
     from sklearn.compose import ColumnTransformer
@@ -83,14 +83,10 @@ def _type_of_html_estimator(estimator):
         inner_estimator = estimator.estimator
         return _EstHTMLInfo('single-meta', [inner_estimator], names,
                             name_details)
-
-    elif isinstance(estimator, BaseEstimator):
-        names = [estimator.__class__.__name__]
-        tool_tips = [_estimator_details(estimator)]
-        return _EstHTMLInfo('single', [estimator], names, tool_tips)
-
-    else:
-        raise ValueError("Invalid estimator")
+    # Base estimator
+    names = [estimator.__class__.__name__]
+    tool_tips = [_estimator_details(estimator)]
+    return _EstHTMLInfo('single', [estimator], names, tool_tips)
 
 
 def _write_estimator_html(out, estimator, name):
@@ -138,16 +134,19 @@ def _write_estimator_html(out, estimator, name):
 
 
 _STYLE = """
-.sk-toggleable {
+div.sk-toggleable {
   background-color: white;
 }
-.sk-toggleable__label {
+label.sk-toggleable__label {
   cursor: pointer;
   display: block;
   width: 100%;
   margin-bottom: 0;
+  padding: 0.2em 0.3em;
+  box-sizing: border-box;
+  text-align: center;
 }
-.sk-toggleable__content {
+div.sk-toggleable__content {
   max-height: 0;
   max-width: 0;
   overflow: hidden;
@@ -155,15 +154,15 @@ _STYLE = """
   background-color: #f0f8ff;
 }
 div.sk-toggleable__content pre {
-  margin: 0.5em;
+  margin: 0.2em;
   border-radius: 0.25em;
 }
-.sk-toggleable__control:checked~.sk-toggleable__content {
+input.sk-toggleable__control:checked~div.sk-toggleable__content {
   max-height: 200px;
   max-width: 100%;
   overflow: auto;
 }
-.sk-hidden--visually {
+input.sk-hidden--visually {
   border: 0;
   clip: rect(1px 1px 1px 1px);
   clip: rect(1px, 1px, 1px, 1px);
@@ -174,81 +173,86 @@ div.sk-toggleable__content pre {
   position: absolute;
   width: 1px;
 }
-.sk-estimator {
+div.sk-estimator {
   font-family: monospace;
   background-color: #f0f8ff;
-  padding: 0.5em;
   margin: 0.25em 0.25em;
   border: 1px dotted black;
   border-radius: 0.25em;
-  text-align: center;
+  box-sizing: border-box;
 }
-.sk-parallel-item::after {
+div.sk-estimator:hover {
+  background-color: #a3d4ff;
+}
+div.sk-parallel-item::after {
   content: "";
   width: 100%;
   border-bottom: 1px solid gray;
   flex-grow: 1;
 }
-.sk-serial::before {
+div.sk-label:hover label.sk-toggleable__label {
+  color: #0087fe;
+  background-color: rgb(246, 246, 246);
+  border-radius: 0.25em;
+}
+div.sk-serial::before {
   content: "";
   position: absolute;
   border-left: 1px solid gray;
+  box-sizing: border-box;
   top: 2em;
   bottom: 0;
   left: 50%;
 }
-.sk-serial {
+div.sk-serial {
   display: flex;
   flex-direction: column;
   align-items: center;
   float: left;
   background: white;
 }
-.sk-serial-item {
+div.sk-serial-item {
   z-index: 1;
 }
-.sk-parallel {
+div.sk-parallel {
   display: flex;
   align-items: stretch;
   justify-content: center;
 }
-
-.sk-parallel-item {
+div.sk-parallel-item {
   display: flex;
   flex-direction: column;
   position: relative;
   background: white;
 }
-.sk-parallel-item:first-child::after {
+div.sk-parallel-item:first-child::after {
   align-self: flex-end;
   width: 50%;
 }
-.sk-parallel-item:last-child::after {
+div.sk-parallel-item:last-child::after {
   align-self: flex-start;
   width: 50%;
 }
-.sk-parallel-item:only-child::after {
+div.sk-parallel-item:only-child::after {
   width: 0;
 }
-.sk-dashed-wrapped {
+div.sk-dashed-wrapped {
   border: 1px dashed gray;
-  padding: 0 0.25em 0.25em 0.25em;
+  padding: 0 0.3em 0.3em 0.3em;
+  box-sizing: border-box;
 }
-.sk-label label {
+div.sk-label label {
   font-family: monospace;
   font-weight: bold;
   background: white;
   display: inline-block;
-  margin: 0 0.5em;
   line-height: 1.4em;
-  width: 97%;
 }
-.sk-label-container {
+div.sk-label-container {
   text-align: center;
-  border: #f0f8ff solid red;
   z-index: 1;
 }
-.sk-container {
+div.sk-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -270,6 +274,7 @@ div.sk-toggleable__content pre {
   overflow: hidden;
   background-color: #f0f8ff;
   border: 1px solid gray;
+  box-sizing: border-box;
   white-space: pre;
   content: attr(sk-data-tooltip);
   text-align: left;
@@ -279,10 +284,10 @@ div.sk-toggleable__content pre {
   opacity: 1;
   z-index: 2;
 }
-""".replace('\n', '').replace('  ', '')
+""".replace('  ', '').replace('\n', '')
 
 
-def display_estimator(estimator, print_changed_only=True):
+def _estimator_repr_html(estimator, print_changed_only=True):
     """Build a HTML representation of an estimator
 
     Parameters
@@ -300,6 +305,7 @@ def display_estimator(estimator, print_changed_only=True):
         HTML representation of estimator. When called in jupyter notebook or
         lab, a iPython HTML object is returned.
     """
+    # import here to avoid circular import from base.py
     from sklearn._config import config_context
     from sklearn.pipeline import Pipeline
 

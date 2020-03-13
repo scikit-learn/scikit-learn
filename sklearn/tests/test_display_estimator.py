@@ -19,7 +19,7 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn._display_estimator import _write_label_html
 from sklearn._display_estimator import _estimator_details
 from sklearn._display_estimator import _type_of_html_estimator
-from sklearn._display_estimator import display_estimator
+from sklearn._display_estimator import _estimator_repr_html
 
 
 @pytest.mark.parametrize('est, expected', [
@@ -41,11 +41,6 @@ def test_write_label_html():
         assert 'LogisticRegression</label>' in html_label
         assert html_label.startswith('<div class="sk-label-container">')
         assert '<pre>hello-world</pre>' in html_label
-
-
-def test_type_of_html_estimator_error():
-    with pytest.raises(ValueError, match="Invalid estimator"):
-        _type_of_html_estimator(100)
 
 
 @pytest.mark.parametrize('est', ['passthrough', 'drop', None])
@@ -148,7 +143,7 @@ def test_display_estimator_pipeline():
     pipe = Pipeline([
         ('preprocessor', preprocess), ('feat_u', feat_u), ('classifier', clf)
     ])
-    html_output = display_estimator(pipe)
+    html_output = _estimator_repr_html(pipe)
 
     expected_strings = [
       'passthrough</label>',
@@ -171,6 +166,6 @@ def test_display_estimator_pipeline():
 
 def test_display_estimator_ovo_classifier():
     ovo = OneVsOneClassifier(LinearSVC())
-    html_output = display_estimator(ovo)
+    html_output = _estimator_repr_html(ovo)
     assert "<pre>OneVsOneClassifier(estimator=LinearSVC())</pre>" in html_output
     assert "LinearSVC</label>" in html_output
