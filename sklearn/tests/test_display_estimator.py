@@ -20,7 +20,6 @@ from sklearn._display_estimator import _write_label_html
 from sklearn._display_estimator import _estimator_details
 from sklearn._display_estimator import _type_of_html_estimator
 from sklearn._display_estimator import _estimator_repr_html
-from sklearn._config import config_context
 
 
 @pytest.mark.parametrize('est, expected', [

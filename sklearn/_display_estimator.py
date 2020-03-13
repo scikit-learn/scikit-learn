@@ -36,10 +36,16 @@ def _write_label_html(out, name, name_details,
     out.write('</div></div>')  # outer_class inner_class
 
 
-# if type == 'single' then estimators, names, and name_details represent
-# repsent the single
 _EstHTMLInfo = namedtuple('_EstHTMLInfo',
                           'type, estimators, names, name_details')
+# In this section, the parameters mean estimators, names, and name_details
+# if type == 'single', then the parameters are single items representing the
+# single estimator
+# if type == 'parallel', then the paramters are list representing the
+# parallel estimators
+# if type == 'serial', then the parameters are list representing the serial
+# estimators
+# if type == 'single-meta', then parameters represent the wrapped estimator
 
 
 def _type_of_html_estimator(estimator, print_changed_only=True):
@@ -83,9 +89,10 @@ def _type_of_html_estimator(estimator, print_changed_only=True):
 
     elif (hasattr(estimator, "estimator") and
             hasattr(estimator.estimator, 'get_params')):
-        inner_estimator = estimator.estimator
-        inner_name = inner_estimator.__class__.__name__
-        return _EstHTMLInfo('single-meta', inner_estimator, inner_name, None)
+        wrapped_estimator = estimator.estimator
+        wrapped_name = wrapped_estimator.__class__.__name__
+        return _EstHTMLInfo('single-meta', wrapped_estimator, wrapped_name,
+                            None)
 
     # Base estimator, if this is the first call, then all parameters are
     # printed
