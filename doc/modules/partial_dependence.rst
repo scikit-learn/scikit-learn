@@ -209,7 +209,6 @@ Similar to PDPs, the target features are assumed to be independent from the
 complement features. Thus, in the case of correlated features, we will create absurd
 data points to compute the ICE.
  
-
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
 ``individual=True``. In the example below, we show how to create a grid of
