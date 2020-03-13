@@ -193,6 +193,10 @@ class OneHotEncoder(_BaseEncoder):
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression.
 
+        However, dropping one category breaks the symmetry of the original
+        representation and can therefore induce a bias in downstream models,
+        for instance for penalized linear classification or regression models.
+
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
