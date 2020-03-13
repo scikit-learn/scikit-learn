@@ -14,7 +14,6 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
-from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
