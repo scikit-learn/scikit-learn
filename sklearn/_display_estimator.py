@@ -182,7 +182,7 @@ div.sk-estimator {
   box-sizing: border-box;
 }
 div.sk-estimator:hover {
-  background-color: #a3d4ff;
+  background-color: #c1e2ff;
 }
 div.sk-parallel-item::after {
   content: "";
