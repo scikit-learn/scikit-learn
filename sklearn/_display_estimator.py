@@ -8,9 +8,7 @@ def _estimator_details(estimator, print_changed_only=True):
     """Replace newlines to allow for css content: attr(...) to properly
     display estimator details.
     """
-    from sklearn._config import config_context
-    with config_context(print_changed_only=print_changed_only):
-        return str(estimator).replace('\n', '&#xa;')
+    return str(estimator).replace('\n', '&#xa;')
 
 
 def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class,
@@ -51,56 +49,59 @@ def _type_of_html_estimator(estimator, first_call=False):
     from sklearn.pipeline import FeatureUnion
     from sklearn.compose import ColumnTransformer
     from sklearn.ensemble import VotingClassifier, VotingRegressor
+    from sklearn._config import config_context
 
-    if isinstance(estimator, str):
-        return _EstHTMLInfo('single', [estimator], [estimator],
-                            [estimator])
+    with config_context(print_changed_only=True):
+        if isinstance(estimator, str):
+            return _EstHTMLInfo('single', [estimator], [estimator],
+                                [estimator])
 
-    elif estimator is None:
-        return _EstHTMLInfo('single', [estimator], ['None'], ['None'])
+        elif estimator is None:
+            return _EstHTMLInfo('single', [estimator], ['None'], ['None'])
 
-    elif isinstance(estimator, Pipeline):
-        estimators = [step[1] for step in estimator.steps]
-        names = [step[0] for step in estimator.steps]
-        name_details = [_estimator_details(est) for est in estimators]
-        return _EstHTMLInfo('serial', estimators, names, name_details)
+        elif isinstance(estimator, Pipeline):
+            estimators = [step[1] for step in estimator.steps]
+            names = [step[0] for step in estimator.steps]
+            name_details = [_estimator_details(est) for est in estimators]
+            return _EstHTMLInfo('serial', estimators, names, name_details)
 
-    elif isinstance(estimator, ColumnTransformer):
-        estimators = [trans[1] for trans in estimator.transformers]
-        names = [trans[0] for trans in estimator.transformers]
-        name_details = [trans[2] for trans in estimator.transformers]
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
+        elif isinstance(estimator, ColumnTransformer):
+            estimators = [trans[1] for trans in estimator.transformers]
+            names = [trans[0] for trans in estimator.transformers]
+            name_details = [trans[2] for trans in estimator.transformers]
+            return _EstHTMLInfo('parallel', estimators, names, name_details)
 
-    elif isinstance(estimator, FeatureUnion):
-        estimators = [trans[1] for trans in estimator.transformer_list]
-        names = [trans[0] for trans in estimator.transformer_list]
-        name_details = [None] * len(names)
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
+        elif isinstance(estimator, FeatureUnion):
+            estimators = [trans[1] for trans in estimator.transformer_list]
+            names = [trans[0] for trans in estimator.transformer_list]
+            name_details = [None] * len(names)
+            return _EstHTMLInfo('parallel', estimators, names, name_details)
 
-    elif isinstance(estimator, (VotingClassifier, VotingRegressor)):
-        estimators = [est[1] for est in estimator.estimators]
-        names = [est[0] for est in estimator.estimators]
-        name_details = [None] * len(names)
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
+        elif isinstance(estimator, (VotingClassifier, VotingRegressor)):
+            estimators = [est[1] for est in estimator.estimators]
+            names = [est[0] for est in estimator.estimators]
+            name_details = [None] * len(names)
+            return _EstHTMLInfo('parallel', estimators, names, name_details)
 
-    elif hasattr(estimator, "estimator"):
-        names = [estimator.__class__.__name__]
-        name_details = [_estimator_details(estimator)]
-        inner_estimator = estimator.estimator
-        return _EstHTMLInfo('single-meta', [inner_estimator], names,
-                            name_details)
+        elif hasattr(estimator, "estimator"):
+            estimators = [estimator.estimator]
+            names = [estimator.__class__.__name__]
+            name_details = [_estimator_details(estimator)]
+            return _EstHTMLInfo('single-meta', estimators, names,
+                                name_details)
 
     # Base estimator, if this is the first call, then all parameters are
     # printed
     names = [estimator.__class__.__name__]
-    tool_tips = [_estimator_details(estimator,
-                                    print_changed_only=not first_call)]
+    with config_context(print_changed_only=not first_call):
+        tool_tips = [_estimator_details(estimator)]
     return _EstHTMLInfo('single', [estimator], names, tool_tips)
 
 
 def _write_estimator_html(out, estimator, name, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
+    from sklearn._config import config_context
     est_html_info = _type_of_html_estimator(estimator,
                                             first_call=first_call)
 
@@ -115,7 +116,8 @@ def _write_estimator_html(out, estimator, name, first_call=False):
     elif est_html_info.type == 'parallel':
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
-            tool_tip = _estimator_details(estimator)
+            with config_context(print_changed_only=True):
+                tool_tip = _estimator_details(estimator)
             _write_label_html(out, name, tool_tip)
         out.write('<div class="sk-parallel">')
 

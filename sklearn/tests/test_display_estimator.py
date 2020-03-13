@@ -3,6 +3,7 @@ from io import StringIO
 
 import pytest
 
+from sklearn import config_context
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.impute import SimpleImputer
@@ -56,8 +57,9 @@ def test_type_of_html_estimator_single_str_none(est):
 
 
 def test_type_of_html_estimator_single_estimator():
+    # single estimator prints all the details
     est = LogisticRegression(C=10.0)
-    est_html_info = _type_of_html_estimator(est)
+    est_html_info = _type_of_html_estimator(est, first_call=True)
     assert est_html_info.type == 'single'
     assert est_html_info.estimators[0] == est
     assert est_html_info.names[0] == est.__class__.__name__
@@ -65,6 +67,7 @@ def test_type_of_html_estimator_single_estimator():
 
 
 def test_type_of_html_estimator_pipeline():
+    # multiple estimators in a pipeline prints only the changes
     pipe = Pipeline([
         ('imputer', SimpleImputer()),
         ('classifier', LogisticRegression())
@@ -73,8 +76,10 @@ def test_type_of_html_estimator_pipeline():
     assert est_html_info.type == 'serial'
     assert est_html_info.estimators == [step[1] for step in pipe.steps]
     assert est_html_info.names == ['imputer', 'classifier']
-    assert est_html_info.name_details == [_estimator_details(step[1])
-                                          for step in pipe.steps]
+
+    with config_context(print_changed_only=True):
+        assert est_html_info.name_details == [_estimator_details(step[1])
+                                              for step in pipe.steps]
 
 
 def test_type_of_html_estimator_feature_union():
