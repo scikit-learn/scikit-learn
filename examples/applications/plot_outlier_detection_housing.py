@@ -24,14 +24,13 @@ and can therefore model the complex shape of the data much better.
 
 First example
 -------------
-The first example illustrates how robust covariance estimation can help
-concentrating on a relevant cluster when another one exists. Here, many
-observations are confounded into one and break down the empirical covariance
-estimation.
-Of course, some screening tools would have pointed out the presence of two
-clusters (Support Vector Machines, Gaussian Mixture Models, univariate
-outlier detection, ...). But had it been a high-dimensional example, none
-of these could be applied that easily.
+The first example illustrates how the Minimum Covariance Determinant
+robust estimator can help concentrate on a relevant cluster when outlying
+points exist. Here the empirical covariance estimation is skewed by points
+outside of the main cluster. Of course, some screening tools would have pointed
+out the presence of two clusters (Support Vector Machines, Gaussian Mixture
+Models, univariate outlier detection, ...). But had it been a high-dimensional
+example, none of these could be applied that easily.
 
 Second example
 --------------
@@ -56,26 +55,26 @@ from sklearn.covariance import EllipticEnvelope
 from sklearn.svm import OneClassSVM
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_wine
 
 # Get data
-X1 = load_boston()['data'][:, [8, 10]]  # two clusters
-X2 = load_boston()['data'][:, [5, 12]]  # "banana"-shaped
+X1 = load_wine()['data'][:, [1, 2]]  # two clusters
+X2 = load_wine()['data'][:, [6, 9]]  # "banana"-shaped
 
 # Define "classifiers" to be used
 classifiers = {
     "Empirical Covariance": EllipticEnvelope(support_fraction=1.,
-                                             contamination=0.261),
+                                             contamination=0.25),
     "Robust Covariance (Minimum Covariance Determinant)":
-    EllipticEnvelope(contamination=0.261),
-    "OCSVM": OneClassSVM(nu=0.261, gamma=0.05)}
+    EllipticEnvelope(contamination=0.25),
+    "OCSVM": OneClassSVM(nu=0.25, gamma=0.35)}
 colors = ['m', 'g', 'b']
 legend1 = {}
 legend2 = {}
 
 # Learn a frontier for outlier detection with several classifiers
-xx1, yy1 = np.meshgrid(np.linspace(-8, 28, 500), np.linspace(3, 40, 500))
-xx2, yy2 = np.meshgrid(np.linspace(3, 10, 500), np.linspace(-5, 45, 500))
+xx1, yy1 = np.meshgrid(np.linspace(0, 6, 500), np.linspace(1, 4.5, 500))
+xx2, yy2 = np.meshgrid(np.linspace(-1, 5.5, 500), np.linspace(-2.5, 19, 500))
 for i, (clf_name, clf) in enumerate(classifiers.items()):
     plt.figure(1)
     clf.fit(X1)
@@ -95,13 +94,13 @@ legend1_keys_list = list(legend1.keys())
 
 # Plot the results (= shape of the data points cloud)
 plt.figure(1)  # two clusters
-plt.title("Outlier detection on a real data set (boston housing)")
+plt.title("Outlier detection on a real data set (wine recognition)")
 plt.scatter(X1[:, 0], X1[:, 1], color='black')
 bbox_args = dict(boxstyle="round", fc="0.8")
 arrow_args = dict(arrowstyle="->")
-plt.annotate("several confounded points", xy=(24, 19),
+plt.annotate("several confounded points", xy=(4, 2),
              xycoords="data", textcoords="data",
-             xytext=(13, 10), bbox=bbox_args, arrowprops=arrow_args)
+             xytext=(3, 1.25), bbox=bbox_args, arrowprops=arrow_args)
 plt.xlim((xx1.min(), xx1.max()))
 plt.ylim((yy1.min(), yy1.max()))
 plt.legend((legend1_values_list[0].collections[0],
@@ -110,14 +109,14 @@ plt.legend((legend1_values_list[0].collections[0],
            (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
-plt.ylabel("accessibility to radial highways")
-plt.xlabel("pupil-teacher ratio by town")
+plt.ylabel("ash")
+plt.xlabel("malic_acid")
 
 legend2_values_list = list(legend2.values())
 legend2_keys_list = list(legend2.keys())
 
 plt.figure(2)  # "banana" shape
-plt.title("Outlier detection on a real data set (boston housing)")
+plt.title("Outlier detection on a real data set (wine recognition)")
 plt.scatter(X2[:, 0], X2[:, 1], color='black')
 plt.xlim((xx2.min(), xx2.max()))
 plt.ylim((yy2.min(), yy2.max()))
@@ -127,7 +126,7 @@ plt.legend((legend2_values_list[0].collections[0],
            (legend2_keys_list[0], legend2_keys_list[1], legend2_keys_list[2]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
-plt.ylabel("% lower status of the population")
-plt.xlabel("average number of rooms per dwelling")
+plt.ylabel("color_intensity")
+plt.xlabel("flavanoids")
 
 plt.show()
