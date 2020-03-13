@@ -11,30 +11,30 @@ def _estimator_details(estimator, print_changed_only=True):
     return str(estimator).replace('\n', '&#xa;')
 
 
-def _write_dropdown_html(out, name, tool_tip, outer_class, inner_class,
+def _write_dropdown_html(out, name, name_details, outer_class, inner_class,
                          checked=False):
     out.write(
         f'<div class="{outer_class}">'
         f'<div class="{inner_class} sk-toggleable">')
 
-    if tool_tip is not None:
+    if name_details is not None:
         checked_str = 'checked' if checked else ''
         est_id = uuid.uuid4()
         out.write(f'<input class="sk-toggleable__control sk-hidden--visually" '
                   f'id="{est_id}" type="checkbox" {checked_str}>'
                   f'<label class="sk-toggleable__label" for="{est_id}">'
                   f'{name}</label>'
-                  f'<div class="sk-toggleable__content"><pre>{tool_tip}'
+                  f'<div class="sk-toggleable__content"><pre>{name_details}'
                   f'</pre></div>')
     else:
         out.write(f'<label>{name}</label>')
     out.write('</div></div>')  # outer_class inner_class
 
 
-def _write_label_html(out, name, tool_tip, checked=False):
+def _write_label_html(out, name, name_details, checked=False):
     """Write label to html"""
-    _write_dropdown_html(out, name, tool_tip, "sk-label-container", "sk-label",
-                         checked=checked)
+    _write_dropdown_html(out, name, name_details, "sk-label-container",
+                         "sk-label", checked=checked)
 
 
 _EstHTMLInfo = namedtuple('_EstHTMLInfo',
@@ -62,7 +62,7 @@ def _type_of_html_estimator(estimator, first_call=False):
         elif isinstance(estimator, Pipeline):
             estimators = [step[1] for step in estimator.steps]
             names = [step[0] for step in estimator.steps]
-            name_details = [_estimator_details(est) for est in estimators]
+            name_details = [None] * len(names)
             return _EstHTMLInfo('serial', estimators, names, name_details)
 
         elif isinstance(estimator, ColumnTransformer):
@@ -83,7 +83,8 @@ def _type_of_html_estimator(estimator, first_call=False):
             name_details = [None] * len(names)
             return _EstHTMLInfo('parallel', estimators, names, name_details)
 
-        elif hasattr(estimator, "estimator"):
+        elif (hasattr(estimator, "estimator") and
+              hasattr(estimator.estimator, 'get_params')):
             estimators = [estimator.estimator]
             names = [estimator.__class__.__name__]
             name_details = [_estimator_details(estimator)]
@@ -94,8 +95,8 @@ def _type_of_html_estimator(estimator, first_call=False):
     # printed
     names = [estimator.__class__.__name__]
     with config_context(print_changed_only=not first_call):
-        tool_tips = [_estimator_details(estimator)]
-    return _EstHTMLInfo('single', [estimator], names, tool_tips)
+        name_details = [_estimator_details(estimator)]
+    return _EstHTMLInfo('single', [estimator], names, name_details)
 
 
 def _write_estimator_html(out, estimator, name, first_call=False):
@@ -107,9 +108,8 @@ def _write_estimator_html(out, estimator, name, first_call=False):
 
     if est_html_info.type == 'serial':
         out.write('<div class="sk-serial">')
-        est_infos = zip(est_html_info.estimators, est_html_info.names,
-                        est_html_info.name_details)
-        for est, name, tool_tip in est_infos:
+        est_infos = zip(est_html_info.estimators, est_html_info.names)
+        for est, name in est_infos:
             _write_estimator_html(out, est, name)
         out.write('</div>')  # sk-serial
 
@@ -117,17 +117,17 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
             with config_context(print_changed_only=True):
-                tool_tip = _estimator_details(estimator)
-            _write_label_html(out, name, tool_tip)
+                name_details = _estimator_details(estimator)
+            _write_label_html(out, name, name_details)
         out.write('<div class="sk-parallel">')
 
         est_infos = zip(est_html_info.estimators, est_html_info.names,
                         est_html_info.name_details)
-        for est, name, tool_tip in est_infos:
+        for est, name, name_details in est_infos:
             out.write('<div class="sk-parallel-item">')
-            _write_label_html(out, name, tool_tip)
+            _write_label_html(out, name, name_details)
             out.write('<div class="sk-serial">')
-            _write_estimator_html(out, est, name)
+            _write_estimator_html(out, est, '')
             out.write('</div></div>')  # sk-parallel-item sk-serial
         out.write('</div></div>')  # sk-parallel sk-serial-item
 
@@ -137,7 +137,7 @@ def _write_estimator_html(out, estimator, name, first_call=False):
                           est_html_info.name_details[0])
         _write_estimator_html(out, est_html_info.estimators[0],
                               est_html_info.estimators.__class__.__name__)
-        out.write('</div>')  # sk-serial-item # sk-serial
+        out.write('</div>')  # sk-serial-item
 
     elif est_html_info.type == 'single':
         _write_dropdown_html(out, est_html_info.names[0],

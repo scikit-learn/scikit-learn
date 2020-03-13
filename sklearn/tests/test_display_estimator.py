@@ -67,7 +67,6 @@ def test_type_of_html_estimator_single_estimator():
 
 
 def test_type_of_html_estimator_pipeline():
-    # multiple estimators in a pipeline prints only the changes
     pipe = Pipeline([
         ('imputer', SimpleImputer()),
         ('classifier', LogisticRegression())
@@ -76,10 +75,7 @@ def test_type_of_html_estimator_pipeline():
     assert est_html_info.type == 'serial'
     assert est_html_info.estimators == [step[1] for step in pipe.steps]
     assert est_html_info.names == ['imputer', 'classifier']
-
-    with config_context(print_changed_only=True):
-        assert est_html_info.name_details == [_estimator_details(step[1])
-                                              for step in pipe.steps]
+    assert est_html_info.name_details == [None, None]
 
 
 def test_type_of_html_estimator_feature_union():
