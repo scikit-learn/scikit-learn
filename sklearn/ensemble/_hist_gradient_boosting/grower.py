@@ -435,25 +435,21 @@ class TreeGrower:
         # See test_nodes_values() for details
         if (self.monotonic_cst[node.split_info.feature_idx] ==
                 MonotonicConstraint.NO_CST):
-            left_child_node.set_children_bounds(
-                node.children_lower_bound, node.children_upper_bound)
-            right_child_node.set_children_bounds(
-                node.children_lower_bound, node.children_upper_bound)
+            lower_left = lower_right = node.children_lower_bound
+            upper_left = upper_right = node.children_upper_bound
         else:
             middle = (left_child_node.value + right_child_node.value) / 2
             if (self.monotonic_cst[node.split_info.feature_idx] ==
                     MonotonicConstraint.POS):
-                left_child_node.set_children_bounds(
-                    node.children_lower_bound, middle)
-                right_child_node.set_children_bounds(
-                    middle, node.children_upper_bound)
+                lower_left, upper_left = node.children_lower_bound, middle
+                lower_right, upper_right = middle, node.children_upper_bound
             else:  # NEG
-                left_child_node.set_children_bounds(
-                    middle, node.children_upper_bound)
-                right_child_node.set_children_bounds(
-                    node.children_lower_bound, middle)
+                lower_left, upper_left = middle, node.children_upper_bound
+                lower_right, upper_right = node.children_lower_bound, middle
+        left_child_node.set_children_bounds(lower_left, upper_left)
+        right_child_node.set_children_bounds(lower_right, upper_right)
 
-        # Compute histograms of childs, and compute their best possible split
+        # Compute histograms of children, and compute their best possible split
         # (if needed)
         should_split_left = not left_child_node.is_leaf
         should_split_right = not right_child_node.is_leaf
