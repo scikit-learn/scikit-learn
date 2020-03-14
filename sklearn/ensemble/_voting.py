@@ -31,6 +31,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
+from .._display_estimator import _EstHTMLInfo
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -104,7 +105,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return self.estimators_[0].n_features_in_
 
     def _sk_repr_html(self):
-        from sklearn._display_estimator import _EstHTMLInfo
         names, estimators = zip(*self.estimators)
         return _EstHTMLInfo('parallel', estimators, names, None)
 

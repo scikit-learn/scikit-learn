@@ -15,6 +15,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
+from .._display_estimator import _EstHTMLInfo
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -629,7 +630,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return np.hstack(Xs)
 
     def _sk_repr_html(self):
-        from sklearn._display_estimator import _EstHTMLInfo
         names, transformers, name_details = zip(*self.transformers)
         return _EstHTMLInfo('parallel', transformers, names, name_details)
 

@@ -18,6 +18,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
+from ._display_estimator import _EstHTMLInfo
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -634,7 +635,6 @@ class Pipeline(_BaseComposition):
         return self.steps[0][1].n_features_in_
 
     def _sk_repr_html(self):
-        from sklearn._display_estimator import _EstHTMLInfo
         names, estimators = zip(*self.steps)
         return _EstHTMLInfo('serial', estimators, names, None)
 
@@ -1016,7 +1016,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self.transformer_list[0][1].n_features_in_
 
     def _sk_repr_html(self):
-        from sklearn._display_estimator import _EstHTMLInfo
         names, transformers = zip(*self.transformer_list)
         return _EstHTMLInfo('parallel', transformers, names, None)
 
