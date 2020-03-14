@@ -21,7 +21,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, ax=None,
-                            individual=False, subsample=None):
+                            individual=False, subsample=1000):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
@@ -194,7 +194,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         .. versionadded:: 0.23
 
-    subsample : float, int or None, default=None
+    subsample : float, int or None, default=1000
         Sampling for ICE curves when `individual` is `True` or 'both'
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to be used to plot ICE curves. If int, represents the
@@ -424,7 +424,7 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.23
 
-    subsample : float, int or None, default=None
+    subsample : float, int or None, default=1000
         Sampling for ICE curves when `individual` is `True` or 'both'
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to be used to plot ICE curves. If int, represents the
@@ -464,7 +464,7 @@ class PartialDependenceDisplay:
 
     """
     def __init__(self, pd_results, features, feature_names, target_idx,
-                 pdp_lim, deciles, individual=False, subsample=None):
+                 pdp_lim, deciles, individual=False, subsample=1000):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
@@ -476,7 +476,9 @@ class PartialDependenceDisplay:
 
     def _get_sample_count(self, n_samples):
         if isinstance(self.subsample, int):
-            return self.subsample
+            if self.subsample < n_samples:
+                return self.subsample
+            return n_samples
         elif isinstance(self.subsample, float):
             return ceil(n_samples * self.subsample)
         return n_samples
