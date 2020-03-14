@@ -753,7 +753,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
-    y = np.asarray(y)
+    y = np.asarray(y.toarray())
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
