@@ -10,7 +10,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
-from ..utils import column_or_1d, check_X_y
+from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
@@ -147,9 +147,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = check_X_y(X, y, dtype=np.float64,
-                             order='C', accept_sparse='csr',
-                             accept_large_sparse=False)
+            X, y = self._validate_data(X, y, dtype=np.float64,
+                                       order='C', accept_sparse='csr',
+                                       accept_large_sparse=False)
 
         y = self._validate_targets(y)
 

@@ -9,14 +9,20 @@ import importlib
 from pkgutil import walk_packages
 from inspect import signature
 
+import numpy as np
+
 import sklearn
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import all_estimators
+from sklearn.utils.estimator_checks import _safe_tags
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
+from sklearn.datasets import make_classification
 
 import pytest
 
@@ -161,13 +167,87 @@ def test_tabs():
                                     % modname)
 
 
-@pytest.mark.parametrize('name, Classifier',
-                         all_estimators(type_filter='classifier'))
-def test_classifier_docstring_attributes(name, Classifier):
-    docscrape = pytest.importorskip('numpydoc.docscrape')
+@pytest.mark.parametrize('name, Estimator',
+                         all_estimators())
+def test_fit_docstring_attributes(name, Estimator):
+    pytest.importorskip('numpydoc')
     from numpydoc import docscrape
 
-    doc = docscrape.ClassDoc(Classifier)
+    doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
-    assert attributes
-    assert 'classes_' in [att.name for att in attributes]
+
+    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
+               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
+               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+               'NoSampleWeightWrapper', 'OneVsOneClassifier',
+               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
+               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'SpectralBiclustering', 'StackingClassifier',
+               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+               'VotingRegressor'}
+    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
+        pytest.skip("Estimator cannot be fit easily to test fit attributes")
+
+    est = Estimator()
+
+    if Estimator.__name__ == 'SelectKBest':
+        est.k = 2
+
+    if Estimator.__name__ == 'DummyClassifier':
+        est.strategy = "stratified"
+
+    X, y = make_classification(n_samples=20, n_features=3,
+                               n_redundant=0, n_classes=2,
+                               random_state=2)
+
+    y = _enforce_estimator_tags_y(est, y)
+    X = _enforce_estimator_tags_x(est, X)
+
+    if '1dlabels' in _safe_tags(est, 'X_types'):
+        est.fit(y)
+    elif '2dlabels' in _safe_tags(est, 'X_types'):
+        est.fit(np.c_[y, y])
+    else:
+        est.fit(X, y)
+
+    skipped_attributes = {'n_features_in_'}
+
+    for attr in attributes:
+        if attr.name in skipped_attributes:
+            continue
+        desc = ' '.join(attr.desc).lower()
+        # As certain attributes are present "only" if a certain parameter is
+        # provided, this checks if the word "only" is present in the attribute
+        # description, and if not the attribute is required to be present.
+        if 'only ' not in desc:
+            assert hasattr(est, attr.name)
+
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+               'ElasticNetCV', 'GaussianProcessClassifier',
+               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
+               'HistGradientBoostingRegressor', 'IsolationForest',
+               'KNeighborsClassifier', 'KNeighborsRegressor',
+               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
+               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
+               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
+               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
+               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
+               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSRegression', 'PLSSVD',
+               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
+               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
+               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
+               'SkewedChi2Sampler'}
+    if Estimator.__name__ in IGNORED:
+        pytest.xfail(
+            reason="Classifier has too many undocumented attributes.")
+
+    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
+                and not k.startswith('_')]
+    fit_attr_names = [attr.name for attr in attributes]
+    undocumented_attrs = set(fit_attr).difference(fit_attr_names)
+    undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
+    assert not undocumented_attrs,\
+        "Undocumented attributes: {}".format(undocumented_attrs)
