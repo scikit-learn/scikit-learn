@@ -121,6 +121,10 @@ def _write_estimator_html(out, estimator, name, first_call=False):
 
 
 _STYLE = """
+div.sk-top-container {
+  color: black;
+  background-color: white;
+}
 div.sk-toggleable {
   background-color: white;
 }
@@ -142,6 +146,7 @@ div.sk-toggleable__content {
 }
 div.sk-toggleable__content pre {
   margin: 0.2em;
+  color: black;
   border-radius: 0.25em;
   background-color: #f0f8ff;
 }
@@ -201,7 +206,7 @@ div.sk-serial {
   flex-direction: column;
   align-items: center;
   float: left;
-  background: white;
+  background-color: white;
 }
 
 div.sk-serial-item {
@@ -211,12 +216,13 @@ div.sk-parallel {
   display: flex;
   align-items: stretch;
   justify-content: center;
+  background-color: white;
 }
 div.sk-parallel-item {
   display: flex;
   flex-direction: column;
   position: relative;
-  background: white;
+  background-color: white;
 }
 div.sk-parallel-item:first-child::after {
   align-self: flex-end;
@@ -234,11 +240,12 @@ div.sk-dashed-wrapped {
   margin: 0 0.2em 0.2em 0.2em;
   box-sizing: border-box;
   padding-bottom: 0.2em;
+  background-color: white;
 }
 div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  background: white;
+  background-color: white;
   display: inline-block;
   line-height: 1.4em;
 }
