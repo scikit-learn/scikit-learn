@@ -300,14 +300,13 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    n_samples = X.shape[0]
-    if ((isinstance(subsample, int)
-         and (subsample >= n_samples or subsample <= 0))
-            or (isinstance(subsample, float)
-                and (subsample <= 0 or subsample >= 1))):
-        raise ValueError('subsample={0} should be either positive and smaller'
-                         ' than the number of samples {1} or a float in the '
-                         '(0, 1) range'.format(subsample, n_samples))
+    if ((isinstance(subsample, int) and subsample <= 0)
+        or (isinstance(subsample, float)
+            and (subsample <= 0 or subsample >= 1))):
+        raise ValueError(
+            f"subsample={subsample} should be either a positive integer or a "
+            f"float in the (0, 1) range"
+        )
 
     # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(

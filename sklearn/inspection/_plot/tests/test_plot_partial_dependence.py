@@ -441,8 +441,6 @@ dummy_classification_data = make_classification(random_state=0)
       'Each entry in features must be either an int or'),
      (dummy_classification_data, {'features': [(1, 2)], 'individual': 'both'},
       'Each entry in features must be either an int or'),
-     (dummy_classification_data, {'features': [1], 'subsample': 101},
-      'subsample=101 should be either positive and smaller'),
      (dummy_classification_data, {'features': [1], 'subsample': -1},
       'subsample=-1 should be either positive and smaller'),
      (dummy_classification_data, {'features': [1], 'subsample': 1.2},
