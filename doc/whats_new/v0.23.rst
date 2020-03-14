@@ -291,7 +291,8 @@ Changelog
   `Thomas Fan`_.
 
 - |Feature| Added :func:`metrics.mean_absolute_relative_error` metric and
-  the associated scorer for regression problems.
+  the associated scorer for regression problems. :issue:`16688` fixed with the
+  PR :pr:`16689` by :user:`Ashutosh Hathidara <ashutosh1919>`.
 
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
   its ``reduce_func`` to not have a return value, enabling in-place operations.
