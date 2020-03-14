@@ -280,9 +280,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
         if individual is not False and np.size(fxs) > 1:
-            raise ValueError("Each entry in features must be either an int or "
-                             "a string when 'individual' is set to True or "
-                             "'both'")
+            raise ValueError(
+                f"It is not possible to display individual effects for more than "
+                f"one feature at a time. Got: features={features}.")
         tmp_features.append(fxs)
 
     features = tmp_features
