@@ -417,10 +417,10 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion', 'individual': True},
-      "recursion method is only available when individual is False"),
+      "The 'recursion' method only applies when 'individual' is set to False"),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion', 'individual': 'both'},
-      "recursion method is only available when individual is False"),
+      "The 'recursion' method only applies when 'individual' is set to False"),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
       "Only the following estimators support the 'recursion' method:")]
