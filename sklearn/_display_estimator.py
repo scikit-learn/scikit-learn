@@ -1,16 +1,15 @@
+from sklearn._config import config_context
 from collections import namedtuple
 from contextlib import closing
 from io import StringIO
 import uuid
 
 
-def _estimator_details(estimator, print_changed_only=True):
+def _estimator_details(estimator):
     """Replace newlines to allow for css content: attr(...) to properly
     display estimator details.
     """
-    from sklearn._config import config_context
-    with config_context(print_changed_only=print_changed_only):
-        return str(estimator).replace('\n', '&#xa;')
+    return str(estimator).replace('\n', '&#xa;')
 
 
 def _write_label_html(out, name, name_details,
@@ -48,65 +47,29 @@ _EstHTMLInfo = namedtuple('_EstHTMLInfo',
 # if type == 'single-meta', then parameters represent the wrapped estimator
 
 
-def _type_of_html_estimator(estimator, print_changed_only=True):
+def _type_of_html_estimator(estimator):
     """Generate information about how to display an estimator.
     """
-    # import here to avoid circular import from base.py
-    from sklearn.pipeline import Pipeline
-    from sklearn.pipeline import FeatureUnion
-    from sklearn.compose import ColumnTransformer
-    from sklearn.ensemble import VotingClassifier, VotingRegressor
-
     if isinstance(estimator, str):
         return _EstHTMLInfo('single', estimator, estimator, estimator)
-
     elif estimator is None:
         return _EstHTMLInfo('single', estimator, 'None', 'None')
 
-    elif isinstance(estimator, Pipeline):
-        estimators = [step[1] for step in estimator.steps]
-        names = [step[0] for step in estimator.steps]
-        name_details = [None] * len(names)
-        return _EstHTMLInfo('serial', estimators, names, name_details)
-
-    elif isinstance(estimator, ColumnTransformer):
-        estimators = [trans[1] for trans in estimator.transformers]
-        names = [trans[0] for trans in estimator.transformers]
-        name_details = [trans[2] for trans in estimator.transformers]
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
-
-    elif isinstance(estimator, FeatureUnion):
-        estimators = [trans[1] for trans in estimator.transformer_list]
-        names = [trans[0] for trans in estimator.transformer_list]
-        name_details = [None] * len(names)
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
-
-    elif isinstance(estimator, (VotingClassifier, VotingRegressor)):
-        estimators = [est[1] for est in estimator.estimators]
-        names = [est[0] for est in estimator.estimators]
-        name_details = [None] * len(names)
-        return _EstHTMLInfo('parallel', estimators, names, name_details)
-
-    elif (hasattr(estimator, "estimator") and
-            hasattr(estimator.estimator, 'get_params')):
-        wrapped_estimator = estimator.estimator
+    # looks like a meta estimator
+    if (hasattr(estimator, 'estimator') and
+            hasattr(getattr(estimator, 'estimator'), 'get_params')):
+        wrapped_estimator = getattr(estimator, 'estimator')
         wrapped_name = wrapped_estimator.__class__.__name__
         return _EstHTMLInfo('single-meta', wrapped_estimator, wrapped_name,
                             None)
-
-    # Base estimator, if this is the first call, then all parameters are
-    # printed
-    name = estimator.__class__.__name__
-    name_detail = _estimator_details(estimator,
-                                     print_changed_only=print_changed_only)
-    return _EstHTMLInfo('single', estimator, name, name_detail)
+    return estimator._sk_repr_html()
 
 
 def _write_estimator_html(out, estimator, name, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
-    est_html_info = _type_of_html_estimator(estimator,
-                                            print_changed_only=not first_call)
+    with config_context(print_changed_only=not first_call):
+        est_html_info = _type_of_html_estimator(estimator)
 
     if est_html_info.type == 'serial':
         out.write('<div class="sk-serial">')
@@ -118,12 +81,18 @@ def _write_estimator_html(out, estimator, name, first_call=False):
     elif est_html_info.type == 'parallel':
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
-            name_details = _estimator_details(estimator)
+            with config_context(print_changed_only=True):
+                name_details = _estimator_details(estimator)
             _write_label_html(out, name, name_details)
         out.write('<div class="sk-parallel">')
 
+        if est_html_info.name_details is None:
+            name_details = (None,) * len(est_html_info.estimators)
+        else:
+            name_details = est_html_info.name_details
+
         est_infos = zip(est_html_info.estimators, est_html_info.names,
-                        est_html_info.name_details)
+                        name_details)
         for est, name, name_details in est_infos:
             out.write('<div class="sk-parallel-item">')
             _write_label_html(out, name, name_details)
@@ -135,7 +104,8 @@ def _write_estimator_html(out, estimator, name, first_call=False):
     elif est_html_info.type == 'single-meta':
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
-            name_details = _estimator_details(estimator)
+            with config_context(print_changed_only=True):
+                name_details = _estimator_details(estimator)
             _write_label_html(out, name, name_details)
         out.write('<div class="sk-parallel"><div class="sk-parallel-item">')
         _write_estimator_html(out, est_html_info.estimators,

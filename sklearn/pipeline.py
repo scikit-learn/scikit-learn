@@ -633,6 +633,11 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
+    def _sk_repr_html(self):
+        from sklearn._display_estimator import _EstHTMLInfo
+        names, estimators = zip(*self.steps)
+        return _EstHTMLInfo('serial', estimators, names, None)
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
@@ -1009,6 +1014,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def n_features_in_(self):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    def _sk_repr_html(self):
+        from sklearn._display_estimator import _EstHTMLInfo
+        names, transformers = zip(*self.transformer_list)
+        return _EstHTMLInfo('parallel', transformers, names, None)
 
 
 def make_union(*transformers, **kwargs):

@@ -415,6 +415,12 @@ class BaseEstimator:
     def _repr_html_(self):
         return _estimator_repr_html(self)
 
+    def _sk_repr_html(self):
+        from sklearn._display_estimator import _EstHTMLInfo
+        return _EstHTMLInfo('single', self,
+                            self.__class__.__name__,
+                            str(self).replace('\n', '&#xa;'))
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""

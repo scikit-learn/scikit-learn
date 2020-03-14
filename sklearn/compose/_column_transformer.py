@@ -628,6 +628,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
 
+    def _sk_repr_html(self):
+        from sklearn._display_estimator import _EstHTMLInfo
+        names, transformers, name_details = zip(*self.transformers)
+        return _EstHTMLInfo('parallel', transformers, names, name_details)
+
 
 def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""

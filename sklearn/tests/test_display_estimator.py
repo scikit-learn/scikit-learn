@@ -55,16 +55,13 @@ def test_type_of_html_estimator_single_str_none(est):
     assert est_html_info.name_details == str(est)
 
 
-@pytest.mark.parametrize('print_changed_only', [True, False])
-def test_type_of_html_estimator_single_estimator(print_changed_only):
+def test_type_of_html_estimator_single_estimator():
     est = LogisticRegression(C=10.0)
-    est_html_info = _type_of_html_estimator(
-        est, print_changed_only=print_changed_only)
+    est_html_info = _type_of_html_estimator(est)
     assert est_html_info.type == 'single'
     assert est_html_info.estimators == est
     assert est_html_info.names == est.__class__.__name__
-    assert (est_html_info.name_details ==
-            _estimator_details(est, print_changed_only=print_changed_only))
+    assert (est_html_info.name_details == _estimator_details(est))
 
 
 def test_type_of_html_estimator_pipeline():
@@ -74,9 +71,9 @@ def test_type_of_html_estimator_pipeline():
     ])
     est_html_info = _type_of_html_estimator(pipe)
     assert est_html_info.type == 'serial'
-    assert est_html_info.estimators == [step[1] for step in pipe.steps]
-    assert est_html_info.names == ['imputer', 'classifier']
-    assert est_html_info.name_details == [None, None]
+    assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
+    assert est_html_info.names == ('imputer', 'classifier')
+    assert est_html_info.name_details is None
 
 
 def test_type_of_html_estimator_feature_union():
@@ -85,10 +82,10 @@ def test_type_of_html_estimator_feature_union():
     ])
     est_html_info = _type_of_html_estimator(f_union)
     assert est_html_info.type == 'parallel'
-    assert est_html_info.names == ['pca', 'svd']
-    assert est_html_info.estimators == [trans[1]
-                                        for trans in f_union.transformer_list]
-    assert est_html_info.name_details == [None, None]
+    assert est_html_info.names == ('pca', 'svd')
+    assert est_html_info.estimators == tuple(
+        trans[1] for trans in f_union.transformer_list)
+    assert est_html_info.name_details is None
 
 
 def test_type_of_html_estimator_voting():
@@ -98,10 +95,10 @@ def test_type_of_html_estimator_voting():
     ])
     est_html_info = _type_of_html_estimator(clf)
     assert est_html_info.type == 'parallel'
-    assert est_html_info.estimators == [trans[1]
-                                        for trans in clf.estimators]
-    assert est_html_info.names == ['log_reg', 'mlp']
-    assert est_html_info.name_details == [None, None]
+    assert est_html_info.estimators == tuple(trans[1]
+                                             for trans in clf.estimators)
+    assert est_html_info.names == ('log_reg', 'mlp')
+    assert est_html_info.name_details is None
 
 
 def test_type_of_html_estimator_column_transformer():
@@ -111,10 +108,10 @@ def test_type_of_html_estimator_column_transformer():
     ])
     est_html_info = _type_of_html_estimator(ct)
     assert est_html_info.type == 'parallel'
-    assert est_html_info.estimators == [trans[1]
-                                        for trans in ct.transformers]
-    assert est_html_info.names == ['pca', 'svd']
-    assert est_html_info.name_details == [['num1', 'num2'], [0, 3]]
+    assert est_html_info.estimators == tuple(
+        trans[1] for trans in ct.transformers)
+    assert est_html_info.names == ('pca', 'svd')
+    assert est_html_info.name_details == (['num1', 'num2'], [0, 3])
 
 
 def test_display_estimator_pipeline():
