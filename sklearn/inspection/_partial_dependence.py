@@ -384,7 +384,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if individual is not False:
         if method == 'recursion':
             raise ValueError(
-                "The 'recursion' method only applies when 'individual' is set to False"
+                "The 'recursion' method only applies when 'individual' is set "
+                "to False"
             )
         method = 'brute'
 
