@@ -538,12 +538,14 @@ above example would be::
 Visualizing Composite Estimators
 ================================
 
-In by default a jupyter notebook outputs a html representation of
-composite estimators. This can be useful to diagnose or visualize a Pipeline
-with may estimators. For example, the estimator defined in 
-The composite estimator defined in 
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
-can be visualized as:
+By default, estimators are displayed with a HTML representation when shown in a
+jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
+many estimators. An example of the HTML output can been seen below. 
+
+.. note:: 
+
+    The HTML output of this code snippet can only been seen on the HTML version
+    of the docs.
 
 .. display_estimator_repr_html::
 
