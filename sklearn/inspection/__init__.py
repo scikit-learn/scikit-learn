@@ -22,5 +22,5 @@ __all__ = [
     'partial_dependence',
     'plot_partial_dependence',
     'permutation_importance',
-    'PartialDependenceDisplay',
+    'PartialDependenceDisplay'
 ]

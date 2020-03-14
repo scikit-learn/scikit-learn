@@ -136,7 +136,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 
 ###############################################################################
 # Using the prediction pipeline in a grid search
-# ----------------------------------------------
+###############################################################################
 # Grid search can also be performed on the different preprocessing steps
 # defined in the ``ColumnTransformer`` object, together with the classifier's
 # hyperparameters as part of the ``Pipeline``.
