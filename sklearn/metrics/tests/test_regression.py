@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
-from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_relative_error
 from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
@@ -33,9 +33,9 @@ def test_regression_metrics(n_samples=50):
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
-    mape = mean_absolute_percentage_error(y_true, y_pred)
-    assert np.isfinite(mape)
-    assert mape > 1e6
+    mare = mean_absolute_relative_error(y_true, y_pred)
+    assert np.isfinite(mare)
+    assert mare > 1e6
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
@@ -90,7 +90,7 @@ def test_multioutput_regression():
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
 
-    error = np.around(mean_absolute_percentage_error(y_true, y_pred),
+    error = np.around(mean_absolute_relative_error(y_true, y_pred),
                       decimals=2)
     assert np.isfinite(error)
     assert error > 1e6
@@ -108,7 +108,7 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.], squared=False), 0.00, 2)
     assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
-    assert_almost_equal(mean_absolute_percentage_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(mean_absolute_relative_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
@@ -207,14 +207,14 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    mape = mean_absolute_percentage_error(y_true, y_pred,
-                                          multioutput='raw_values')
+    mare = mean_absolute_relative_error(y_true, y_pred,
+                                        multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
-    assert_array_almost_equal(mape, [7.78, 22.62], decimal=2)
+    assert_array_almost_equal(mare, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
 
@@ -266,15 +266,15 @@ def test_regression_custom_weights():
     rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6],
                                squared=False)
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
-    mapew = mean_absolute_percentage_error(y_true, y_pred,
-                                           multioutput=[0.4, 0.6])
+    marew = mean_absolute_relative_error(y_true, y_pred,
+                                         multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
 
     assert_almost_equal(msew, 0.39, decimal=2)
     assert_almost_equal(rmsew, 0.62, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
-    assert_almost_equal(mapew, 16.68, decimal=2)
+    assert_almost_equal(marew, 0.1668, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
 
@@ -325,8 +325,8 @@ def test_tweedie_deviance_continuity():
                     atol=1e-6)
 
 
-def test_mean_absolute_percentage_error():
+def test_mean_absolute_relative_error():
     random_number_generator = np.random.RandomState(42)
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
-    assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(20.)
+    assert mean_absolute_relative_error(y_true, y_pred) == pytest.approx(0.20)

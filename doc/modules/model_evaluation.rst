@@ -1962,41 +1962,41 @@ function::
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
 
-.. _mean_absolute_percentage_error:
+.. _mean_absolute_relative_error:
 
-Mean absolute percentage error
+Mean absolute relative error
 ------------------------------
-The :func:`mean_absolute_percentage_error` (MAPE), also known as mean absolute
-percentage deviation (MAPD), is an evaluation metric for regression problems.
+The :func:`mean_absolute_relative_error` (MARE), also known as mean absolute
+relative deviation (MARD), is an evaluation metric for regression problems.
 The idea of this metric is to be sensitive to relative errors. It is for example
 not changed by a global scaling of the target variable.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
-and :math:`y_i` is the corresponding true value, then the mean absolute percentage
-error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
+and :math:`y_i` is the corresponding true value, then the mean absolute relative
+error (MARE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+  \text{MARE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
 
-The :func:`mean_absolute_percentage_error` function supports multioutput.
+The :func:`mean_absolute_relative_error` function supports multioutput.
 
-Here is a small example of usage of the :func:`mean_absolute_percentage_error`
+Here is a small example of usage of the :func:`mean_absolute_relative_error`
 function::
 
-  >>> from sklearn.metrics import mean_absolute_percentage_error
+  >>> from sklearn.metrics import mean_absolute_relative_error
   >>> y_true = [1, 10, 1e6]
   >>> y_pred = [0.9, 15, 1.2e6]
-  >>> mean_absolute_percentage_error(y_true, y_pred)
-  26.66...
+  >>> mean_absolute_relative_error(y_true, y_pred)
+  0.2666...
 
 In above example, if we had used `mean_absolute_error`, it would have ignored
-the small magnitude values and only reflected the error in prediction of highest
-magnitude value. But that problem is resolved in case of MAPE because it calculates
-relative percentage error with respect to actual output.
+the small magnitude values and only reflected the error in prediction of
+highest magnitude value. But that problem is resolved in case of MARE because
+it calculates relative error with respect to actual output.
 
 .. _median_absolute_error:
 

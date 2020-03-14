@@ -981,7 +981,7 @@ details.
    metrics.mean_squared_error
    metrics.mean_squared_log_error
    metrics.median_absolute_error
-   metrics.mean_absolute_percentage_error
+   metrics.mean_absolute_relative_error
    metrics.r2_score
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
