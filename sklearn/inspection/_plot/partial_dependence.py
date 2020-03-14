@@ -370,8 +370,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP) and Individual Conditional Expectation
-    (ICE) visualization.
+    """Partial Dependence Plot (PDP)
+
+    This can also display individual partial dependencies which are often
+    referred to as: Individual Condition Expectation (ICE).
 
     It is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
