@@ -54,9 +54,8 @@ def _type_of_html_estimator(estimator):
         return _EstHTMLInfo('single', estimator, estimator, estimator)
     elif estimator is None:
         return _EstHTMLInfo('single', estimator, 'None', 'None')
-
     # looks like a meta estimator
-    if (hasattr(estimator, 'estimator') and
+    elif (hasattr(estimator, 'estimator') and
             hasattr(getattr(estimator, 'estimator'), 'get_params')):
         wrapped_estimator = getattr(estimator, 'estimator')
         wrapped_name = wrapped_estimator.__class__.__name__
