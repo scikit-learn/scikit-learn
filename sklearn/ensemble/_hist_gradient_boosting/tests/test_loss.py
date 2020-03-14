@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy.optimize import newton
+from scipy.special import logit
 from sklearn.utils import assert_all_finite
 from sklearn.utils.fixes import sp_version
 import pytest
@@ -49,10 +50,11 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    # I don't understand why but y_true == 0 fails :/
-    # ('binary_crossentropy', 0.3, 0),
-    ('binary_crossentropy', -12, 1),
-    ('binary_crossentropy', 30, 1),
+    # The argmin of binary_crossentropy for y_true=[-1, 1] is [-inf, inf] due
+    # to logit, cf. "complete separation". Therefore we use 0 < y_true < 1.
+    ('binary_crossentropy', 0.3, 0.1),
+    ('binary_crossentropy', -12, 0.2),
+    ('binary_crossentropy', 30, 0.9),
     ('poisson', 12., 1.),
     ('poisson', 0., 2.),
     ('poisson', -22., 10.),
@@ -71,7 +73,13 @@ def test_derivatives(loss, x0, y_true):
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     def func(x):
-        return loss.pointwise_loss(y_true, x)
+        if type(loss) == _LOSSES['binary_crossentropy']:
+            # Subtract a constant term such that the binary cross entropy
+            # has its minimum at zero. This only works if 0 < y_true < 1.
+            return loss.pointwise_loss(y_true, x) \
+                - loss.pointwise_loss(y_true, logit(y_true))
+        else:
+            return loss.pointwise_loss(y_true, x)
 
     def fprime(x):
         return get_gradients(y_true, x)
@@ -82,8 +90,8 @@ def test_derivatives(loss, x0, y_true):
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
                      maxiter=70, tol=2e-8)
     assert np.allclose(loss.inverse_link_function(optimum), y_true)
-    assert np.allclose(loss.pointwise_loss(y_true, optimum), 0)
-    assert np.allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
+    assert np.allclose(func(optimum), 0)
+    assert np.allclose(get_gradients(y_true, optimum), 0)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
