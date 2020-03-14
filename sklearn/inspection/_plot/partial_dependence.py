@@ -535,7 +535,7 @@ class PartialDependenceDisplay:
         line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
 
-        if self.individual == 'both':
+        if self.individual is True or self.individual == 'both':
             individual_line_kw['alpha'] = 0.3
             individual_line_kw['linewidth'] = 0.5
 
