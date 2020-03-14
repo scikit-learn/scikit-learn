@@ -5,6 +5,35 @@ from io import StringIO
 import uuid
 
 
+_EstHTMLInfo = namedtuple('_EstHTMLInfo',
+                          'type, estimators, names, name_details')
+# In this section, the parameters mean estimators, names, and name_details
+# if type == 'single', then the parameters are single items representing the
+# single estimator
+# if type == 'parallel', then the paramters are list representing the
+# parallel estimators
+# if type == 'serial', then the parameters are list representing the serial
+# estimators
+# if type == 'single-meta', then parameters represent the wrapped estimator
+
+
+def _type_of_html_estimator(estimator):
+    """Generate information about how to display an estimator.
+    """
+    if isinstance(estimator, str):
+        return _EstHTMLInfo('single', estimator, estimator, estimator)
+    elif estimator is None:
+        return _EstHTMLInfo('single', estimator, 'None', 'None')
+    # looks like a meta estimator
+    elif (hasattr(estimator, 'estimator') and
+            hasattr(getattr(estimator, 'estimator'), 'get_params')):
+        wrapped_estimator = getattr(estimator, 'estimator')
+        wrapped_name = wrapped_estimator.__class__.__name__
+        return _EstHTMLInfo('single-meta', wrapped_estimator, wrapped_name,
+                            None)
+    return estimator._sk_repr_html()
+
+
 def _estimator_details(estimator):
     """Replace newlines to allow for css content: attr(...) to properly
     display estimator details.
@@ -33,35 +62,6 @@ def _write_label_html(out, name, name_details,
     else:
         out.write(f'<label>{name}</label>')
     out.write('</div></div>')  # outer_class inner_class
-
-
-_EstHTMLInfo = namedtuple('_EstHTMLInfo',
-                          'type, estimators, names, name_details')
-# In this section, the parameters mean estimators, names, and name_details
-# if type == 'single', then the parameters are single items representing the
-# single estimator
-# if type == 'parallel', then the paramters are list representing the
-# parallel estimators
-# if type == 'serial', then the parameters are list representing the serial
-# estimators
-# if type == 'single-meta', then parameters represent the wrapped estimator
-
-
-def _type_of_html_estimator(estimator):
-    """Generate information about how to display an estimator.
-    """
-    if isinstance(estimator, str):
-        return _EstHTMLInfo('single', estimator, estimator, estimator)
-    elif estimator is None:
-        return _EstHTMLInfo('single', estimator, 'None', 'None')
-    # looks like a meta estimator
-    elif (hasattr(estimator, 'estimator') and
-            hasattr(getattr(estimator, 'estimator'), 'get_params')):
-        wrapped_estimator = getattr(estimator, 'estimator')
-        wrapped_name = wrapped_estimator.__class__.__name__
-        return _EstHTMLInfo('single-meta', wrapped_estimator, wrapped_name,
-                            None)
-    return estimator._sk_repr_html()
 
 
 def _write_estimator_html(out, estimator, name, first_call=False):
