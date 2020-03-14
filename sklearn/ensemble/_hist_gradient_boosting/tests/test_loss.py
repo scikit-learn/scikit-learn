@@ -52,6 +52,9 @@ def get_derivatives_helper(loss):
     # ('binary_crossentropy', 0.3, 0),
     ('binary_crossentropy', -12, 1),
     ('binary_crossentropy', 30, 1),
+    ('poisson_loss', 12., 1.),
+    ('poisson_loss', 0., 2.),
+    ('poisson_loss', -22., 10.),
 ])
 @pytest.mark.skipif(sp_version == (1, 2, 0),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
@@ -76,10 +79,11 @@ def test_derivatives(loss, x0, y_true):
     def fprime2(x):
         return get_hessians(y_true, x)
 
-    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2)
+    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
+                     maxiter=70, tol=2e-8)
     assert np.allclose(loss.inverse_link_function(optimum), y_true)
     assert np.allclose(loss.pointwise_loss(y_true, optimum), 0)
-    assert np.allclose(get_gradients(y_true, optimum), 0)
+    assert np.allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
@@ -87,6 +91,7 @@ def test_derivatives(loss, x0, y_true):
     ('least_absolute_deviation', 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
+    ('poisson_loss', 0, 1),
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
@@ -100,6 +105,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     n_samples = 100
     if loss in ('least_squares', 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
+    elif loss in ('poisson_loss'):
+        y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
     raw_predictions = rng.normal(
@@ -114,7 +121,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 
     # Approximate gradients
     # For multiclass loss, we should only change the predictions of one tree
-    # (here the first), hence the use of offset[:, 0] += eps
+    # (here the first), hence the use of offset[0, :] += eps
     # As a softmax is computed, offsetting the whole array by a constant would
     # have no effect on the probabilities, and thus on the loss
     eps = 1e-9
@@ -211,11 +218,33 @@ def test_baseline_categorical_crossentropy():
         assert np.allclose(baseline_prediction[k, :], np.log(p))
 
 
+def test_baseline_poisson_loss():
+    rng = np.random.RandomState(0)
+
+    loss = _LOSSES['poisson_loss'](sample_weight=None)
+    y_train = rng.poisson(size=100).astype(np.float64)
+    # Make sure at least one sample point is larger than zero
+    y_train[0] = 1.
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
+    assert baseline_prediction.shape == tuple()  # scalar
+    assert baseline_prediction.dtype == y_train.dtype
+    assert_all_finite(baseline_prediction)
+    # Make sure baseline prediction produces the mean of all targets
+    y_baseline = loss.inverse_link_function(baseline_prediction)
+    assert_almost_equal(np.mean(y_baseline), y_train.mean())
+
+    # Test baseline for y_true = 0
+    y_train.fill(0.)
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
+    assert_all_finite(baseline_prediction)
+
+
 @pytest.mark.parametrize('loss, problem', [
     ('least_squares', 'regression'),
     ('least_absolute_deviation', 'regression'),
     ('binary_crossentropy', 'classification'),
-    ('categorical_crossentropy', 'classification')
+    ('categorical_crossentropy', 'classification'),
+    ('poisson_loss', 'poisson_regression'),
     ])
 @pytest.mark.parametrize('sample_weight', ['ones', 'random'])
 def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
@@ -232,6 +261,8 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
 
     if problem == 'regression':
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
+    elif problem == 'poisson_regression':
+        y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
 
