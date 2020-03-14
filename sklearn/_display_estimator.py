@@ -247,7 +247,7 @@ div.sk-label label {
   font-weight: bold;
   background-color: white;
   display: inline-block;
-  line-height: 1em;
+  line-height: 1.2em;
 }
 div.sk-label-container {
   text-align: center;
