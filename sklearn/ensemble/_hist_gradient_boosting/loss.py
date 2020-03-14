@@ -28,6 +28,7 @@ from ...utils.stats import _weighted_percentile
 
 class BaseLoss(ABC):
     """Base class for a loss."""
+
     def __init__(self, hessians_are_constant):
         self.hessians_are_constant = hessians_are_constant
 
@@ -157,6 +158,7 @@ class LeastSquares(BaseLoss):
     the computation of the gradients and get a unit hessian (and be consistent
     with what is done in LightGBM).
     """
+
     def __init__(self, sample_weight):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
@@ -199,6 +201,7 @@ class LeastAbsoluteDeviation(BaseLoss):
 
         loss(x_i) = |y_true_i - raw_pred_i|
     """
+
     def __init__(self, sample_weight):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
