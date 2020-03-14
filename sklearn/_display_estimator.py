@@ -20,7 +20,9 @@ _EstHTMLInfo = namedtuple('_EstHTMLInfo',
 def _type_of_html_estimator(estimator):
     """Generate information about how to display an estimator.
     """
-    if isinstance(estimator, str):
+    if isinstance(estimator, _EstHTMLInfo):
+        return estimator
+    elif isinstance(estimator, str):
         return _EstHTMLInfo('single', estimator, estimator, estimator)
     elif estimator is None:
         return _EstHTMLInfo('single', estimator, 'None', 'None')
@@ -32,13 +34,6 @@ def _type_of_html_estimator(estimator):
         return _EstHTMLInfo('single-meta', wrapped_estimator, wrapped_name,
                             None)
     return estimator._sk_repr_html()
-
-
-def _estimator_details(estimator):
-    """Replace newlines to allow for css content: attr(...) to properly
-    display estimator details.
-    """
-    return str(estimator).replace('\n', '&#xa;')
 
 
 def _write_label_html(out, name, name_details,
@@ -81,7 +76,7 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
             with config_context(print_changed_only=True):
-                name_details = _estimator_details(estimator)
+                name_details = str(estimator)
             _write_label_html(out, name, name_details)
         out.write('<div class="sk-parallel">')
 
@@ -104,7 +99,7 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         out.write('<div class="sk-serial-item sk-dashed-wrapped">')
         if name:
             with config_context(print_changed_only=True):
-                name_details = _estimator_details(estimator)
+                name_details = str(estimator)
             _write_label_html(out, name, name_details)
         out.write('<div class="sk-parallel"><div class="sk-parallel-item">')
         _write_estimator_html(out, est_html_info.estimators,

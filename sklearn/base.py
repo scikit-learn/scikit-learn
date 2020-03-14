@@ -418,7 +418,7 @@ class BaseEstimator:
 
     def _sk_repr_html(self):
         return _EstHTMLInfo('single', self, self.__class__.__name__,
-                            str(self).replace('\n', '&#xa;'))
+                            str(self))
 
 
 class ClassifierMixin:

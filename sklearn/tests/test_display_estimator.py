@@ -15,20 +15,14 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.feature_selection import SelectPercentile
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVR
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import OneVsOneClassifier
+from sklearn.ensemble import StackingClassifier
+from sklearn.ensemble import StackingRegressor
 from sklearn._display_estimator import _write_label_html
-from sklearn._display_estimator import _estimator_details
 from sklearn._display_estimator import _type_of_html_estimator
 from sklearn._display_estimator import _estimator_repr_html
-
-
-@pytest.mark.parametrize('est, expected', [
-    ('None', 'None'),
-    ('passthrough', 'passthrough'),
-    ('hello\nworld', 'hello&#xa;world')
-])
-def test_estimator_tool_tip(est, expected):
-    assert expected == _estimator_details(est)
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -61,7 +55,7 @@ def test_type_of_html_estimator_single_estimator():
     assert est_html_info.type == 'single'
     assert est_html_info.estimators == est
     assert est_html_info.names == est.__class__.__name__
-    assert (est_html_info.name_details == _estimator_details(est))
+    assert est_html_info.name_details == str(est)
 
 
 def test_type_of_html_estimator_pipeline():
@@ -171,3 +165,34 @@ def test_display_estimator_ovo_classifier():
     html_output = _estimator_repr_html(ovo)
     assert "pre>OneVsOneClassifier(estimator=LinearSVC" in html_output
     assert "LinearSVC</label>" in html_output
+
+
+@pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
+def test_stacking_classsifer(final_estimator):
+    estimators = [('mlp', MLPClassifier(alpha=0.001)),
+                  ('tree', DecisionTreeClassifier())]
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=final_estimator)
+
+    html_output = _estimator_repr_html(clf)
+
+    assert "('mlp', MLPClassifier(alpha=0.001)" in html_output
+    if final_estimator is None:
+        assert "LogisticRegression()</pre>" in html_output
+    else:
+        assert final_estimator.__class__.__name__ in html_output
+
+
+@pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
+def test_stacking_regressor(final_estimator):
+    reg = StackingRegressor(
+        estimators=[('svr', LinearSVR())], final_estimator=final_estimator)
+
+    html_output = _estimator_repr_html(reg)
+
+    assert "('svr', LinearSVR()" in html_output
+    print(html_output)
+    if final_estimator is None:
+        assert "RidgeCV</label>" in html_output
+    else:
+        assert final_estimator.__class__.__name__ in html_output
