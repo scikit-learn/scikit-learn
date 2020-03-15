@@ -195,7 +195,8 @@ There are two main methods to approximate the integral above, namely the
 'brute' and 'recursion' methods. The `method` parameter controls which method
 to use.
 
-The 'brute' method is a generic method that works with any estimator. It
+The 'brute' method is a generic method that works with any estimator. Note that
+computing ICE plots is only supported with the 'brute' method. It
 approximates the above integral by computing an average over the data `X`:
 
 .. math::
@@ -207,21 +208,21 @@ where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
 over the dataset `X` which is computationally intensive.
 
 The 'recursion' method is faster than the 'brute' method, but it is only
-supported by some tree-based estimators. It is computed as follows. For a
-given point :math:`x_S`, a weighted tree traversal is performed: if a split
-node involves an input feature of interest, the corresponding left or right
-branch is followed; otherwise both branches are followed, each branch being
-weighted by the fraction of training samples that entered that branch. Finally,
-the partial dependence is given by a weighted average of all the visited leaves
-values.
+supported for PDP plots by some tree-based estimators. It is computed as
+follows. For a given point :math:`x_S`, a weighted tree traversal is performed:
+if a split node involves an input feature of interest, the corresponding left or
+right branch is followed; otherwise both branches are followed, each branch
+being weighted by the fraction of training samples that entered that branch.
+Finally, the partial dependence is given by a weighted average of all the visited
+leaves values.
 
 With the 'brute' method, the parameter `X` is used both for generating the
 grid of values :math:`x_S` and the complement feature values :math:`x_C`.
 However with the 'recursion' method, `X` is only used for the grid values:
 implicitly, the :math:`x_C` values are those of the training data.
 
-By default, the 'recursion' method is used on tree-based estimators that
-support it, and 'brute' is used for the rest.
+By default, the 'recursion' method is used for plotting PDPs on tree-based
+estimators that support it, and 'brute' is used for the rest.
 
 .. _pdp_method_differences:
 
