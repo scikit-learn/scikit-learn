@@ -9,20 +9,20 @@ Interaction between feature and response
 
 Partial dependence plots (PDP) and individual conditional expectation (ICE)
 plots can be used to visualize and analyze interaction between the target
-response [1]_ and a set of target features.
+response [1]_ and a set of input features of interest.
 
 Partial dependence plots
 ========================
 
-Partial dependence plots (PDP) show the dependence between the target
-response and a set of 'target' features, marginalizing over the values
-of all other features (the 'complement' features). Intuitively, we can
+Partial dependence plots (PDP) show the dependence between the target response
+and a set of input features of interest, marginalizing over the values
+of all other input features (the 'complement' features). Intuitively, we can
 interpret the partial dependence as the expected target response as a
-function of the 'target' features.
+function of the input features of interest.
 
-Due to the limits of human perception the size of the target feature set
-must be small (usually, one or two) thus the target features are usually
-chosen among the most important features.
+Due to the limits of human perception the size of the set of input feature of
+interest must be small (usually, one or two) thus the input features of interest
+are usually chosen among the most important features.
 
 The figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
@@ -33,20 +33,20 @@ for the California housing dataset, with a :class:`GradientBoostingRegressor
    :align: center
    :scale: 70
 
-One-way PDPs tell us about the interaction between the target response and
-the target feature (e.g. linear, non-linear). The upper left plot in the
-above figure shows the effect of the median income in a district on the
-median house price; we can clearly see a linear relationship among them. Note
-that PDPs assume that the target features are independent from the complement
-features, and this assumption is often violated in practice.
+One-way PDPs tell us about the interaction between the target response and an
+input feature of interest feature (e.g. linear, non-linear). The upper left
+plot in the above figure shows the effect of the median income in a district
+on the median house price; we can clearly see a linear relationship among them.
+Note that PDPs assume that the input features of interest are independent from
+the complement features, and this assumption is often violated in practice.
 
-PDPs with two target features show the interactions among the two features.
-For example, the two-variable PDP in the above figure shows the dependence
-of median house price on joint values of house age and average occupants per
-household. We can clearly see an interaction between the two features: for
-an average occupancy greater than two, the house price is nearly independent of
-the house age, whereas for values less than 2 there is a strong dependence
-on age.
+PDPs with two input features of interest show the interactions among the two
+features. For example, the two-variable PDP in the above figure shows the
+dependence of median house price on joint values of house age and average
+occupants per household. We can clearly see an interaction between the two
+features: for an average occupancy greater than two, the house price is nearly
+independent of the house age, whereas for values less than 2 there is a strong
+dependence on age.
 
 The :mod:`sklearn.inspection` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
@@ -96,14 +96,14 @@ The values at which the partial dependence should be evaluated are directly
 generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
 generated. The ``values`` field returned by
 :func:`sklearn.inspection.partial_dependence` gives the actual values
-used in the grid for each target feature. They also correspond to the axis
-of the plots.
+used in the grid for each input feature of interest. They also correspond to
+the axis of the plots.
 
 Mathematical Definition
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Let :math:`X_S` be the set of target features (i.e. the `features` parameter)
-and let :math:`X_C` be its complement.
+Let :math:`X_S` be the set of input features of interest (i.e. the `features`
+parameter) and let :math:`X_C` be its complement.
 
 The partial dependence of the response :math:`f` at a point :math:`x_S` is
 defined as:
@@ -143,10 +143,10 @@ over the dataset `X` which is computationally intensive.
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported by some tree-based estimators. It is computed as follows. For a
 given point :math:`x_S`, a weighted tree traversal is performed: if a split
-node involves a 'target' feature, the corresponding left or right branch is
-followed; otherwise both branches are followed, each branch being weighted
-by the fraction of training samples that entered that branch. Finally, the
-partial dependence is given by a weighted average of all the visited leaves
+node involves an input feature of interest, the corresponding left or right
+branch is followed; otherwise both branches are followed, each branch being
+weighted by the fraction of training samples that entered that branch. Finally,
+the partial dependence is given by a weighted average of all the visited leaves
 values.
 
 With the 'brute' method, the parameter `X` is used both for generating the
@@ -175,11 +175,11 @@ Individual conditional expectation (ICE) plot
 =============================================
 
 Similar to a PDP, an individual conditional expectation (ICE) plot
-shows the dependence between the target function and a target feature.
-However, unlike a PDP, which shows the average effect of the target
+shows the dependence between the target function and an input feature of
+interest. However, unlike a PDP, which shows the average effect of the input
 feature, an ICE plot visualizes the dependence of the prediction on a
 feature for each sample separately with one line per sample.
-Due to the limits of human perception, only one target feature is
+Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
 The figures below show four ICE plots for the California housing dataset,
@@ -205,9 +205,9 @@ and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
 
-Similar to PDPs, the target features are assumed to be independent from the
-complement features. Thus, in the case of correlated features, we will create absurd
-data points to compute the ICE.
+Similar to PDPs, the input features of interest are assumed to be independent
+from the complement features. Thus, in the case of correlated features, we will
+create absurd data points to compute the ICE.
  
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
@@ -225,9 +225,10 @@ ICE plots:
     >>> plot_partial_dependence(clf, X, features,
     ...     individual=True)  # doctest: +ELLIPSIS
 
-In ICE plots it might not be easy to see the average effect of the target
-variable. Hence, it is recommended to use ICE plots alongside partial
-dependency plots. They can be plotted together with ``individual='both'``.
+In ICE plots it might not be easy to see the average effect of the input
+feature of interest. Hence, it is recommended to use ICE plots alongside
+partial dependency plots. They can be plotted together with
+``individual='both'``.
 
     >>> plot_partial_dependence(clf, X, features,
     ...     individual='both')  # doctest: +ELLIPSIS
