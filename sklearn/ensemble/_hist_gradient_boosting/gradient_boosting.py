@@ -757,10 +757,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'least_squares', 'least_absolute_deviation'}, \
+    loss : {'least_squares', 'least_absolute_deviation', 'poisson_loss'}, \
             optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
-        "least squares" loss actually implements an "half least squares loss"
+        "least squares" loss actually implements an "half least squares loss",
+        "poisson loss" implements "half poisson deviance"
         to simplify the computation of the gradient.
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
@@ -862,7 +863,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.98...
     """
 
-    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
+    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation',
+                     'poisson_loss')
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
@@ -893,9 +895,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         y : ndarray, shape (n_samples,)
             The predicted values.
         """
-        # Return raw predictions after converting shape
-        # (n_samples, 1) to (n_samples,)
-        return self._raw_predict(X).ravel()
+        # Return inverse link of raw predictions after converting
+        # shape (n_samples, 1) to (n_samples,)
+        return self.loss_.inverse_link_function(self._raw_predict(X).ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
