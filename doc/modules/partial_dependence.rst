@@ -11,6 +11,11 @@ Partial dependence plots (PDP) and individual conditional expectation (ICE)
 plots can be used to visualize and analyze interaction between the target
 response [1]_ and a set of input features of interest.
 
+Both PDPs and ICEs assume that the input features of interest are independent
+from the complement features, and this assumption is often violated in practice.
+Thus, in the case of correlated features, we will create absurd data points to
+compute the PDP/ICE.
+
 Partial dependence plots
 ========================
 
@@ -37,8 +42,6 @@ One-way PDPs tell us about the interaction between the target response and an
 input feature of interest feature (e.g. linear, non-linear). The upper left
 plot in the above figure shows the effect of the median income in a district
 on the median house price; we can clearly see a linear relationship among them.
-Note that PDPs assume that the input features of interest are independent from
-the complement features, and this assumption is often violated in practice.
 
 PDPs with two input features of interest show the interactions among the two
 features. For example, the two-variable PDP in the above figure shows the
@@ -132,10 +135,6 @@ For example, we could observe a linear relationship between the median income
 and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
-
-Similar to PDPs, the input features of interest are assumed to be independent
-from the complement features. Thus, in the case of correlated features, we will
-create absurd data points to compute the ICE.
  
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
