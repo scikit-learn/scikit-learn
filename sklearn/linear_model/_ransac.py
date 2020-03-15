@@ -9,7 +9,7 @@ import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
