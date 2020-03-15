@@ -192,6 +192,24 @@ def test_least_absolute_deviation():
     assert gbdt.score(X, y) > .9
 
 
+def test_poisson_loss():
+    # For Poisson distributed target, Poisson loss should give better results
+    # than least squares measured in Poisson deviance as score.
+    rng = np.random.RandomState(42)
+    X, y, coef = make_regression(n_samples=500, coef=True, random_state=rng)
+    coef /= np.max(np.abs(coef))
+    y = rng.poisson(lam=np.exp(X @ coef))
+    gbdt1 = HistGradientBoostingRegressor(loss='poisson_loss',
+                                          scoring='neg_mean_poisson_deviance',
+                                          random_state=0)
+    gbdt2 = HistGradientBoostingRegressor(loss='least_squares',
+                                          scoring='neg_mean_poisson_deviance',
+                                          random_state=0)
+    gbdt1.fit(X, y)
+    gbdt2.fit(X, y)
+    assert gbdt1.score(X, y) > gbdt2.score(X, y)
+
+
 def test_binning_train_validation_are_separated():
     # Make sure training and validation data are binned separately.
     # See issue 13926
