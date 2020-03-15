@@ -392,7 +392,7 @@ class PoissonLoss(BaseLoss):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
         # equal to sample weights.
-        super().__init__(hessians_are_constant=sample_weight is None)
+        super().__init__(hessians_are_constant=False)
 
     inverse_link_function = staticmethod(np.exp)
 
