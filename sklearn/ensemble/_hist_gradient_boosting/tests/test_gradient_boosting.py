@@ -195,6 +195,19 @@ def test_least_absolute_deviation():
     assert gbdt.score(X, y) > .9
 
 
+@pytest.mark.parametrize(
+    'y',
+    [([1., -2., 0.]),
+     ([0., 0., 0.]),
+     ])
+def test_poisson_y_positive(y):
+    # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
+    err_msg = r"loss='poisson' requires non-negative y and sum\(y\) > 0."
+    gbdt = HistGradientBoostingRegressor(loss='poisson', random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(np.zeros(shape=(len(y), 1)), y)
+
+
 def test_poisson():
     # For Poisson distributed target, Poisson loss should give better results
     # than least squares measured in Poisson deviance as metric.
