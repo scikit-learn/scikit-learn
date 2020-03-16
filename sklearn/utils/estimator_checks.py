@@ -360,6 +360,9 @@ def _generate_class_checks(Estimator):
 
 def _mark_xfail_checks(estimator, check, pytest):
     """Mark estimator check pairs with xfail"""
+    if isinstance(estimator, type):
+        # Does not check _xfail_test when estimator is a class
+        return estimator, check
 
     xfail_checks = _safe_tags(estimator, '_xfail_test')
     if not xfail_checks:

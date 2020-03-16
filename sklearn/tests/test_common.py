@@ -47,6 +47,12 @@ def test_all_estimator_no_base_class():
         assert not name.lower().startswith('base'), msg
 
 
+@parametrize_with_checks([LogisticRegression])
+def test_non_init_estimator_with_parameterize_with_checks(estimator, check):
+    # Non-regression test for #16707
+    check(estimator)
+
+
 @pytest.mark.parametrize(
         'name, Estimator',
         all_estimators()
