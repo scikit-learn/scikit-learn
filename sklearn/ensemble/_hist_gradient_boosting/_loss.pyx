@@ -153,7 +153,7 @@ def _update_gradients_hessians_categorical_crossentropy(
                 hessians[k, i] = (p_i_k * (1. - p_i_k)) * sw
 
 
-def _update_gradients_hessians_poisson_loss(
+def _update_gradients_hessians_poisson(
         G_H_DTYPE_C [::1] gradients,  # OUT
         G_H_DTYPE_C [::1] hessians,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN

@@ -52,9 +52,9 @@ def get_derivatives_helper(loss):
     # ('binary_crossentropy', 0.3, 0),
     ('binary_crossentropy', -12, 1),
     ('binary_crossentropy', 30, 1),
-    ('poisson_loss', 12., 1.),
-    ('poisson_loss', 0., 2.),
-    ('poisson_loss', -22., 10.),
+    ('poisson', 12., 1.),
+    ('poisson', 0., 2.),
+    ('poisson', -22., 10.),
 ])
 @pytest.mark.skipif(sp_version == (1, 2, 0),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
@@ -91,7 +91,7 @@ def test_derivatives(loss, x0, y_true):
     ('least_absolute_deviation', 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
-    ('poisson_loss', 0, 1),
+    ('poisson', 0, 1),
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
@@ -105,7 +105,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     n_samples = 100
     if loss in ('least_squares', 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
-    elif loss in ('poisson_loss'):
+    elif loss in ('poisson'):
         y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
@@ -218,10 +218,10 @@ def test_baseline_categorical_crossentropy():
         assert np.allclose(baseline_prediction[k, :], np.log(p))
 
 
-def test_baseline_poisson_loss():
+def test_baseline_poisson():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['poisson_loss'](sample_weight=None)
+    loss = _LOSSES['poisson'](sample_weight=None)
     y_train = rng.poisson(size=100).astype(np.float64)
     # Make sure at least one sample point is larger than zero
     y_train[0] = 1.
@@ -244,7 +244,7 @@ def test_baseline_poisson_loss():
     ('least_absolute_deviation', 'regression'),
     ('binary_crossentropy', 'classification'),
     ('categorical_crossentropy', 'classification'),
-    ('poisson_loss', 'poisson_regression'),
+    ('poisson', 'poisson_regression'),
     ])
 @pytest.mark.parametrize('sample_weight', ['ones', 'random'])
 def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):

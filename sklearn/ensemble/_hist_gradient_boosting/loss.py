@@ -23,7 +23,7 @@ from ._loss import _update_gradients_least_absolute_deviation
 from ._loss import _update_gradients_hessians_least_absolute_deviation
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy
-from ._loss import _update_gradients_hessians_poisson_loss
+from ._loss import _update_gradients_hessians_poisson
 from ...utils.stats import _weighted_percentile
 
 
@@ -376,7 +376,7 @@ class CategoricalCrossEntropy(BaseLoss):
         return proba.T
 
 
-class PoissonLoss(BaseLoss):
+class Poisson(BaseLoss):
     """Poisson deviance loss with log-link, for regression.
 
     For a given sample x_i, Poisson deviance loss is defined as::
@@ -419,9 +419,9 @@ class PoissonLoss(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
-        _update_gradients_hessians_poisson_loss(gradients, hessians,
-                                                y_true, raw_predictions,
-                                                sample_weight)
+        _update_gradients_hessians_poisson(gradients, hessians,
+                                           y_true, raw_predictions,
+                                           sample_weight)
 
     def predict_target(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -437,5 +437,5 @@ _LOSSES = {
     'least_absolute_deviation': LeastAbsoluteDeviation,
     'binary_crossentropy': BinaryCrossEntropy,
     'categorical_crossentropy': CategoricalCrossEntropy,
-    'poisson_loss': PoissonLoss,
+    'poisson': Poisson,
 }

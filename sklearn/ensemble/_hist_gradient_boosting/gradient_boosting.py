@@ -757,12 +757,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'least_squares', 'least_absolute_deviation', 'poisson_loss'}, \
+    loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
             optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
         "least squares" loss actually implements an "half least squares loss",
-        "poisson loss" implements "half poisson deviance"
-        to simplify the computation of the gradient.
+        "poisson" implements "half poisson deviance" to simplify the
+        computation of the gradient.
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -864,7 +864,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """
 
     _VALID_LOSSES = ('least_squares', 'least_absolute_deviation',
-                     'poisson_loss')
+                     'poisson')
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
