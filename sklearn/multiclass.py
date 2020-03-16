@@ -517,11 +517,16 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from sklearn import datasets
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.multiclass import OneVsOneClassifier
     >>> from sklearn.svm import LinearSVC
-    >>> X, y = datasets.load_iris(return_X_y=True)
-    >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, random_state=42)
+    >>> clf = OneVsOneClassifier(LinearSVC(random_state=42)).fit(X_train, y_train)
+    OneVsOneClassifier(...)
+    >>> clf.predict(X_test)
     array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
            0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
