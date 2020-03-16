@@ -420,13 +420,8 @@ class SimpleImputer(_BaseImputer):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
-        # compute mask before eliminating invalid features
-        if sp.issparse(X):
-            missing_mask = _get_mask(X, self.missing_values,
-                                     sparse=sp.issparse(X))
-            mask = missing_mask.data
-        else:
-            mask = _get_mask(X, self.missing_values)
+        # compute mask before/if eliminating invalid features
+        missing_mask = _get_mask(X, self.missing_values, sparse=sp.issparse(X))
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -457,6 +452,8 @@ class SimpleImputer(_BaseImputer):
                 # else use the mask compued before eliminating invalid mask
                 if not isinstance(valid_statistics_indexes, slice):
                     mask = _get_mask(X.data, self.missing_values)
+                else:
+                    mask = missing_mask.data
                 indexes = np.repeat(
                     np.arange(len(X.indptr) - 1, dtype=np.int),
                     np.diff(X.indptr))[mask]
@@ -465,7 +462,7 @@ class SimpleImputer(_BaseImputer):
                                                                 copy=False)
         else:
             # mask computed before eliminating invalid mask can be used
-            missing_mask = mask
+            mask = missing_mask
             mask = mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
