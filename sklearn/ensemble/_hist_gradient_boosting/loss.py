@@ -273,6 +273,62 @@ class LeastAbsoluteDeviation(BaseLoss):
             # Note that the regularization is ignored here
 
 
+class Poisson(BaseLoss):
+    """Poisson deviance loss with log-link, for regression.
+
+    For a given sample x_i, Poisson deviance loss is defined as::
+
+        loss(x_i) = y_true_i * log(y_true_i/exp(raw_pred_i))
+                    - y_true_i + exp(raw_pred_i))
+
+    This actually computes half the Poisson deviance to simplify
+    the computation of the gradients.
+    """
+
+    def __init__(self, sample_weight):
+        # If sample weights are provided, the hessians and gradients
+        # are multiplied by sample_weight, which means the hessians are
+        # equal to sample weights.
+        super().__init__(hessians_are_constant=False)
+
+    inverse_link_function = staticmethod(np.exp)
+
+    def pointwise_loss(self, y_true, raw_predictions):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        # TODO: For speed, we could remove the constant xlogy(y_true, y_true)
+        # Advantage of this form: minimum of zero at raw_predictions = y_true.
+        loss = (xlogy(y_true, y_true) - y_true * (raw_predictions + 1)
+                + np.exp(raw_predictions))
+        return loss
+
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
+        y_pred = np.average(y_train, weights=sample_weight)
+        eps = np.finfo(y_train.dtype).eps
+        y_pred = np.clip(y_pred, eps, None)
+        return np.log(y_pred)
+
+    def update_gradients_and_hessians(self, gradients, hessians, y_true,
+                                      raw_predictions, sample_weight):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        gradients = gradients.reshape(-1)
+        hessians = hessians.reshape(-1)
+        _update_gradients_hessians_poisson(gradients, hessians,
+                                           y_true, raw_predictions,
+                                           sample_weight)
+
+    def predict_target(self, raw_predictions):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
+        raw_predictions = raw_predictions.reshape(-1)
+        target = np.empty_like(raw_predictions, dtype=Y_DTYPE)
+        target = np.exp(raw_predictions)
+        return target
+
+
 class BinaryCrossEntropy(BaseLoss):
     """Binary cross-entropy loss, for binary classification.
 
@@ -374,62 +430,6 @@ class CategoricalCrossEntropy(BaseLoss):
         proba = np.exp(raw_predictions -
                        logsumexp(raw_predictions, axis=0)[np.newaxis, :])
         return proba.T
-
-
-class Poisson(BaseLoss):
-    """Poisson deviance loss with log-link, for regression.
-
-    For a given sample x_i, Poisson deviance loss is defined as::
-
-        loss(x_i) = y_true_i * log(y_true_i/exp(raw_pred_i))
-                    - y_true_i + exp(raw_pred_i))
-
-    This actually computes half the Poisson deviance to simplify
-    the computation of the gradients.
-    """
-
-    def __init__(self, sample_weight):
-        # If sample weights are provided, the hessians and gradients
-        # are multiplied by sample_weight, which means the hessians are
-        # equal to sample weights.
-        super().__init__(hessians_are_constant=False)
-
-    inverse_link_function = staticmethod(np.exp)
-
-    def pointwise_loss(self, y_true, raw_predictions):
-        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        # TODO: For speed, we could remove the constant xlogy(y_true, y_true)
-        # Advantage of this form: minimum of zero at raw_predictions = y_true.
-        loss = (xlogy(y_true, y_true) - y_true * (raw_predictions + 1)
-                + np.exp(raw_predictions))
-        return loss
-
-    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
-        y_pred = np.average(y_train, weights=sample_weight)
-        eps = np.finfo(y_train.dtype).eps
-        y_pred = np.clip(y_pred, eps, None)
-        return np.log(y_pred)
-
-    def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions, sample_weight):
-        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        gradients = gradients.reshape(-1)
-        hessians = hessians.reshape(-1)
-        _update_gradients_hessians_poisson(gradients, hessians,
-                                           y_true, raw_predictions,
-                                           sample_weight)
-
-    def predict_target(self, raw_predictions):
-        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        target = np.empty_like(raw_predictions, dtype=Y_DTYPE)
-        target = np.exp(raw_predictions)
-        return target
 
 
 _LOSSES = {

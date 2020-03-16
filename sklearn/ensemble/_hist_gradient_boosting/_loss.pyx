@@ -87,6 +87,35 @@ def _update_gradients_least_absolute_deviation(
         gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
 
 
+def _update_gradients_hessians_poisson(
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        G_H_DTYPE_C [::1] hessians,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions,  # IN
+        const Y_DTYPE_C [::1] sample_weight):  # IN
+
+    cdef:
+        int n_samples
+        int i
+        Y_DTYPE_C y_pred
+
+    n_samples = raw_predictions.shape[0]
+    if sample_weight is None:
+        for i in prange(n_samples, schedule='static', nogil=True):
+            # Note: We use only half of the deviance loss. Therefore, there is
+            # no factor of 2.
+            y_pred = exp(raw_predictions[i])
+            gradients[i] = (y_pred - y_true[i])
+            hessians[i] = y_pred
+    else:
+        for i in prange(n_samples, schedule='static', nogil=True):
+            # Note: We use only half of the deviance loss. Therefore, there is
+            # no factor of 2.
+            y_pred = exp(raw_predictions[i])
+            gradients[i] = (y_pred - y_true[i]) * sample_weight[i]
+            hessians[i] = y_pred * sample_weight[i]
+
+
 def _update_gradients_hessians_binary_crossentropy(
         G_H_DTYPE_C [::1] gradients,  # OUT
         G_H_DTYPE_C [::1] hessians,  # OUT
@@ -151,35 +180,6 @@ def _update_gradients_hessians_categorical_crossentropy(
                 p_i_k = p[i, k]
                 gradients[k, i] = (p_i_k - (y_true[i] == k)) * sw
                 hessians[k, i] = (p_i_k * (1. - p_i_k)) * sw
-
-
-def _update_gradients_hessians_poisson(
-        G_H_DTYPE_C [::1] gradients,  # OUT
-        G_H_DTYPE_C [::1] hessians,  # OUT
-        const Y_DTYPE_C [::1] y_true,  # IN
-        const Y_DTYPE_C [::1] raw_predictions,  # IN
-        const Y_DTYPE_C [::1] sample_weight):  # IN
-
-    cdef:
-        int n_samples
-        int i
-        Y_DTYPE_C y_pred
-
-    n_samples = raw_predictions.shape[0]
-    if sample_weight is None:
-        for i in prange(n_samples, schedule='static', nogil=True):
-            # Note: We use only half of the deviance loss. Therefore, there is
-            # no factor of 2.
-            y_pred = exp(raw_predictions[i])
-            gradients[i] = (y_pred - y_true[i])
-            hessians[i] = y_pred
-    else:
-        for i in prange(n_samples, schedule='static', nogil=True):
-            # Note: We use only half of the deviance loss. Therefore, there is
-            # no factor of 2.
-            y_pred = exp(raw_predictions[i])
-            gradients[i] = (y_pred - y_true[i]) * sample_weight[i]
-            hessians[i] = y_pred * sample_weight[i]
 
 
 cdef inline void _compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:

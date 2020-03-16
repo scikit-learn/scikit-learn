@@ -171,6 +171,27 @@ def test_baseline_least_absolute_deviation():
     assert baseline_prediction == pytest.approx(np.median(y_train))
 
 
+def test_baseline_poisson():
+    rng = np.random.RandomState(0)
+
+    loss = _LOSSES['poisson'](sample_weight=None)
+    y_train = rng.poisson(size=100).astype(np.float64)
+    # Make sure at least one sample point is larger than zero
+    y_train[0] = 1.
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
+    assert baseline_prediction.shape == tuple()  # scalar
+    assert baseline_prediction.dtype == y_train.dtype
+    assert_all_finite(baseline_prediction)
+    # Make sure baseline prediction produces the mean of all targets
+    y_baseline = loss.inverse_link_function(baseline_prediction)
+    assert_almost_equal(np.mean(y_baseline), y_train.mean())
+
+    # Test baseline for y_true = 0
+    y_train.fill(0.)
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
+    assert_all_finite(baseline_prediction)
+
+
 def test_baseline_binary_crossentropy():
     rng = np.random.RandomState(0)
 
@@ -216,27 +237,6 @@ def test_baseline_categorical_crossentropy():
     for k in range(prediction_dim):
         p = (y_train == k).mean()
         assert np.allclose(baseline_prediction[k, :], np.log(p))
-
-
-def test_baseline_poisson():
-    rng = np.random.RandomState(0)
-
-    loss = _LOSSES['poisson'](sample_weight=None)
-    y_train = rng.poisson(size=100).astype(np.float64)
-    # Make sure at least one sample point is larger than zero
-    y_train[0] = 1.
-    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
-    assert baseline_prediction.shape == tuple()  # scalar
-    assert baseline_prediction.dtype == y_train.dtype
-    assert_all_finite(baseline_prediction)
-    # Make sure baseline prediction produces the mean of all targets
-    y_baseline = loss.inverse_link_function(baseline_prediction)
-    assert_almost_equal(np.mean(y_baseline), y_train.mean())
-
-    # Test baseline for y_true = 0
-    y_train.fill(0.)
-    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
-    assert_all_finite(baseline_prediction)
 
 
 @pytest.mark.parametrize('loss, problem', [
