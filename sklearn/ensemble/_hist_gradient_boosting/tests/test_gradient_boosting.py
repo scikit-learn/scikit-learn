@@ -195,11 +195,7 @@ def test_least_absolute_deviation():
     assert gbdt.score(X, y) > .9
 
 
-@pytest.mark.parametrize(
-    'y',
-    [([1., -2., 0.]),
-     ([0., 0., 0.]),
-     ])
+@pytest.mark.parametrize('y', [([1., -2., 0.]), ([0., 0., 0.])])
 def test_poisson_y_positive(y):
     # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
     err_msg = r"loss='poisson' requires non-negative y and sum\(y\) > 0."
@@ -217,32 +213,25 @@ def test_poisson():
                              random_state=rng)
     # We create a log-linear Poisson model and downscale coef as it will get
     # exponentiated.
-    coef = rng.uniform(low=-2., high=+2., size=n_features) / np.amax(X, axis=0)
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
     y = rng.poisson(lam=np.exp(X @ coef))
-    X_train, X_test = X[0:n_train, :], X[n_train:n_train+n_test, :]
-    y_train, y_test = y[0:n_train], y[n_train:n_train+n_test]
-    gbdt1 = HistGradientBoostingRegressor(loss='poisson', random_state=0)
-    gbdt2 = HistGradientBoostingRegressor(loss='least_squares', random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+    gbdt1 = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
+    gbdt2 = HistGradientBoostingRegressor(loss='least_squares',
+                                          random_state=rng)
     gbdt1.fit(X_train, y_train)
     gbdt2.fit(X_train, y_train)
     dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
-    # Loss on training set
-    metric1 = mean_poisson_deviance(y_train, gbdt1.predict(X_train))
-    # least_squares might produce non-positive predictions => clip
-    metric2 = mean_poisson_deviance(y_train, np.clip(gbdt2.predict(X_train),
-                                                     1e-15, None))
-    metric3 = mean_poisson_deviance(y_train, dummy.predict(X_train))
-    assert metric1 < metric2
-    assert metric1 < metric3
-
-    # Loss on test set
-    metric1 = mean_poisson_deviance(y_test, gbdt1.predict(X_test))
-    metric2 = mean_poisson_deviance(y_test, np.clip(gbdt2.predict(X_test),
-                                                    1e-15, None))
-    metric3 = mean_poisson_deviance(y_test, dummy.predict(X_test))
-    assert metric1 < metric2
-    assert metric1 < metric3
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        metric1 = mean_poisson_deviance(y, gbdt1.predict(X))
+        # least_squares might produce non-positive predictions => clip
+        metric2 = mean_poisson_deviance(y, np.clip(gbdt2.predict(X), 1e-15,
+                                                   None))
+        metric3 = mean_poisson_deviance(y, dummy.predict(X))
+        assert metric1 < metric2
+        assert metric1 < metric3
 
 
 def test_binning_train_validation_are_separated():
