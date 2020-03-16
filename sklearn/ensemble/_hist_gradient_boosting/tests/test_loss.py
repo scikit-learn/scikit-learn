@@ -176,8 +176,9 @@ def test_baseline_poisson():
 
     loss = _LOSSES['poisson'](sample_weight=None)
     y_train = rng.poisson(size=100).astype(np.float64)
-    # Make sure at least one sample point is larger than zero
-    y_train[0] = 1.
+    # Sanity check, make sure at least one sample is non-zero so we don't take
+    # log(0)
+    assert y_train.sum() > 0
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
