@@ -195,7 +195,7 @@ Changelog
 
 - |Feature| Added additional option `loss="poisson"` to
   :class:`ensemble.HistGradientBoostingRegressor`, which adds Poisson deviance
-  with log-link as splitting criterion.
+  with log-link useful for modeling count data.
   :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
 
 :mod:`sklearn.feature_extraction`
