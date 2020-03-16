@@ -96,7 +96,8 @@ class DataConversionWarning(UserWarning):
     >>> warnings.simplefilter('always', DataConversionWarning)
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
-    ...             D = pairwise_distances(X, metric="jaccard") # Will trigger warning as jaccard metric requires X.dtype=bool
+    ...             # Will trigger warning as jaccard metric requires X.dtype=bool
+    ...             D = pairwise_distances(X, metric="jaccard")
     ...     except ValueError:
     ...             pass
     ...     print(repr(w[-1].message))
