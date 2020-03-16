@@ -193,6 +193,11 @@ Changelog
   to obtain the input to the meta estimator.
   :pr:`16539` by :user:`Bill DeRose <wderose>`.
 
+- |Feature| Added additional option `loss="poisson"` to
+  :class:`ensemble.HistGradientBoostingRegressor`, which adds Poisson deviance
+  with log-link as splitting criterion.
+  :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -287,7 +292,7 @@ Changelog
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
   :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
-  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
