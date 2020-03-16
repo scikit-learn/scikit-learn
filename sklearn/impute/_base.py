@@ -569,14 +569,14 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The features containing missing values.
 
         """
-        if sp.issparse(X):
-            if not self._precomputed:
-                imputer_mask = _get_mask(X, self.missing_values,
-                                         sparse=sp.issparse(X))
-                mask = imputer_mask.data
-            else:
-                imputer_mask = X
+        if not self._precomputed:
+            imputer_mask = _get_mask(X, self.missing_values,
+                                     sparse=sp.issparse(X))
+            mask = imputer_mask.data
+        else:
+            imputer_mask = X
 
+        if sp.issparse(X):
             imputer_mask.eliminate_zeros()
 
             if self.features == 'missing-only':
