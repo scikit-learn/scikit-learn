@@ -183,9 +183,8 @@ def test_baseline_poisson():
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
     assert_all_finite(baseline_prediction)
-    # Make sure baseline prediction produces the mean of all targets
-    y_baseline = loss.inverse_link_function(baseline_prediction)
-    assert_almost_equal(np.mean(y_baseline), y_train.mean())
+    # Make sure baseline prediction produces the log of the mean of all targets
+    assert_almost_equal(np.log(y_train.mean()), baseline_prediction)
 
     # Test baseline for y_true = 0
     y_train.fill(0.)
