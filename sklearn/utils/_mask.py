@@ -57,4 +57,4 @@ def _get_mask(X, value_to_mask, sparse=False):
         (Xt, X.indices.copy(), X.indptr.copy()), shape=X.shape, dtype=bool
     )
 
-    return Xt, Xt_sparse
+    return Xt_sparse

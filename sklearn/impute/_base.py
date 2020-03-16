@@ -7,7 +7,7 @@ import warnings
 
 import numpy as np
 import numpy.ma as ma
-from scipy import sparse
+from scipy import sparse as sp
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
@@ -104,7 +104,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if not self.add_indicator:
             return X_imputed
 
-        hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
+        hstack = sp.hstack if sp.issparse(X_imputed) else np.hstack
         if X_indicator is None:
             raise ValueError(
                 "Data from the missing indicator are not provided. Call "
@@ -292,7 +292,7 @@ class SimpleImputer(_BaseImputer):
                              "numerical value when imputing numerical "
                              "data".format(fill_value))
 
-        if sparse.issparse(X):
+        if sp.issparse(X):
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
             if self.missing_values == 0:
@@ -315,7 +315,9 @@ class SimpleImputer(_BaseImputer):
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        mask_data, missing_mask = _get_mask(X, missing_values, True)
+        missing_mask = _get_mask(X, missing_values,
+                                 sparse=sp.issparse(X))
+        mask_data =  missing_mask.data
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
         statistics = np.empty(X.shape[1])
@@ -418,10 +420,11 @@ class SimpleImputer(_BaseImputer):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
-        # compute mask and missing_mask before eliminating invalid features
-        if sparse.issparse(X):
-            mask, missing_mask = _get_mask(X, self.missing_values,
-                                           reconstruct_sparse=True)
+        # compute mask before eliminating invalid features
+        if sp.issparse(X):
+            missing_mask = _get_mask(X, self.missing_values,
+                                     sparse=sp.issparse(X))
+            mask = missing_mask.data
         else:
             mask = _get_mask(X, self.missing_values)
 
@@ -444,7 +447,7 @@ class SimpleImputer(_BaseImputer):
                 X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X):
+        if sp.issparse(X):
             if self.missing_values == 0:
                 raise ValueError("Imputation not possible when missing_values "
                                  "== 0 and input is sparse. Provide a dense "
@@ -569,9 +572,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The features containing missing values.
 
         """
-        if sparse.issparse(X):
+        if sp.issparse(X):
             if not self._precomputed:
-                mask, imputer_mask = _get_mask(X, self.missing_values, True)
+                imputer_mask = _get_mask(X, self.missing_values,
+                                         sparse=sp.issparse(X))
+                mask = imputer_mask.data
             else:
                 imputer_mask = X
 
@@ -594,7 +599,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sparse.csc_matrix(imputer_mask)
+                imputer_mask = sp.csc_matrix(imputer_mask)
 
         if self.features == 'all':
             features_indices = np.arange(X.shape[1])
@@ -619,7 +624,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                              "with integer dtype or an array of string values "
                              "with an object dtype.".format(X.dtype))
 
-        if sparse.issparse(X) and self.missing_values == 0:
+        if sp.issparse(X) and self.missing_values == 0:
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
             raise ValueError("Sparse input with missing_values=0 is "
