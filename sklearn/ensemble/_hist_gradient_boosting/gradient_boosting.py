@@ -760,9 +760,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
             optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
-        "least squares" loss actually implements an "half least squares loss",
-        "poisson" implements "half poisson deviance" to simplify the
-        computation of the gradient.
+        "least squares" and "poisson" losses actually implement
+        "half least squares loss" and "half poisson deviance" to simplify the
+        computation of the gradient. Furthermore, "poisson" loss internally
+        uses a log-link and requires ``y >= 0``
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
