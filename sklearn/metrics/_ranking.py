@@ -1427,7 +1427,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
 
     This metric computes the number of times where the correct label is among
     the top `k` labels predicted (ranked by predicted scores). Note that the
-    multilabel and multioutput cases aren't covered here.
+    multilabel case isn't covered here.
 
     Read more in the :ref:`User Guide <top_k_accuracy_score>`
 
@@ -1435,7 +1435,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     ----------
     y_true : array-like of shape (n_samples,)
         True labels. Expected to be a sequence of int in the range
-        (0, n_classes - 1).
+        [0, n_classes - 1].
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores. These can be either probability estimates or
@@ -1466,8 +1466,8 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     Notes
     -----
     In cases where two or more labels are assigned equal predicted scores,
-    the labels with the smallest indices will be chosen first. Then, the result
-    might be incorrect if the correct label falls after the threshold because
+    the labels with the smallest indices will be chosen first. This might
+    impact the result if the correct label falls after the threshold because
     of that.
 
     Examples
@@ -1475,10 +1475,10 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     >>> import numpy as np
     >>> from sklearn.metrics import top_k_accuracy_score
     >>> y_true = np.array([0, 1, 2, 2])
-    >>> y_score = np.array([[0.5, 0.2, 0.2],
-    ...                     [0.3, 0.4, 0.2],
-    ...                     [0.2, 0.4, 0.3],
-    ...                     [0.7, 0.2, 0.1]])
+    >>> y_score = np.array([[0.5, 0.2, 0.2],  # 0 is in top 2
+    ...                     [0.3, 0.4, 0.2],  # 1 is in top 2
+    ...                     [0.2, 0.4, 0.3],  # 2 is in top 2
+    ...                     [0.7, 0.2, 0.1]]) # 2 isn't in top 2
     >>> top_k_accuracy_score(y_true, y_score, k=2)
     0.75
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
@@ -1508,9 +1508,9 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
     n_classes = y_score.shape[1]
     if n_classes < 3:
         raise ValueError(
-            "In a multiclass setting the number of columns in 'y_score' must "
-            f"be greater than 2, got ({n_classes}) instead. Please see "
-            "'metrics.accuracy_score' for the binary case."
+            "The number of columns in 'y_score' must be greater than 2, got "
+            f"({n_classes}) instead. Please use 'metrics.accuracy_score' for "
+            "the binary case."
         )
 
     if k >= n_classes:
@@ -1520,10 +1520,10 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
             "therefore meaningless."
         )
 
-    infered_n_classes = y_true.max() + 1
-    if infered_n_classes > n_classes:
+    n_classes_y_true = y_true.max() + 1
+    if n_classes_y_true > n_classes:
         raise ValueError(
-            f"Number of classes in 'y_true' ({infered_n_classes}) is greater "
+            f"Number of classes in 'y_true' ({n_classes_y_true}) is greater "
             f"than the number of columns in 'y_score' ({n_classes})."
         )
 

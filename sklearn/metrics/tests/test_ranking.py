@@ -31,6 +31,8 @@ from sklearn.metrics import ndcg_score, dcg_score
 from sklearn.metrics import top_k_accuracy_score
 
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
 
 
 ###############################################################################
@@ -1520,8 +1522,7 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
             [0.2, 0.8],
         ]),
         2,
-        "In a multiclass setting the number of columns in 'y_score' must "
-        r"be greater than 2, got \(2\) instead"
+        r"The number of columns in 'y_score' must be greater than 2, got \(2\)"
     ),
     (
         [0, 1, 2],
@@ -1548,3 +1549,22 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
 def test_top_k_accuracy_score_error(y_true, y_score, k, msg):
     with pytest.raises(ValueError, match=msg):
         top_k_accuracy_score(y_true, y_score, k=k)
+
+
+def test_top_k_accuracy_score_increasing():
+    # Make sure increasing k leads to a higher score
+    X, y = datasets.make_classification(n_classes=10, n_samples=1000,
+                                        n_informative=10, random_state=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X_train, y_train)
+
+    for X, y in zip((X_train, X_test), (y_train, y_test)):
+        scores = [
+            top_k_accuracy_score(y, clf.predict_proba(X), k=k)
+            for k in range(2, 10)
+        ]
+
+        assert np.all(np.diff(scores) > 0)
