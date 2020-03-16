@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import sparse
+from scipy import sparse as sp
 
 from . import is_scalar_nan
 from .fixes import _object_dtype_isnan
@@ -21,7 +21,7 @@ def _fit_mask(X, value_to_mask):
     return Xt
 
 
-def _get_mask(X, value_to_mask, reconstruct_sparse=False):
+def _get_mask(X, value_to_mask, sparse=False):
     """Compute the boolean mask X == value_to_mask.
 
     Parameters
@@ -33,27 +33,28 @@ def _get_mask(X, value_to_mask, reconstruct_sparse=False):
     value_to_mask : {int, float, nan}
                     The values for which should be maked in X.
 
-    reconstruct_sparse : bool, default=False
-                         Whether or not we need to reconstruct sparse matrix.
-                         If True, X is considered considered sparse and sparse
-                         mask matrix is created.
-                         If False, a dense mask matrix is returned of the same
-                         shape as X.
+    sparse : bool, default=False
+             Whether or not we need to reconstruct sparse matrix.
+             If True, X is considered considered sparse and sparse
+             mask matrix is created.
+             If False, a dense mask matrix is returned of the same
+             shape as X.
 
     """
-    if not (sparse.issparse(X) and reconstruct_sparse):
+    if not (sp.issparse(X) and sparse):
+        # For all cases apart of a sparse input where we need to reconstruct
+        # a sparse output
         return _fit_mask(X, value_to_mask)
 
-    if not sparse.issparse(X):
+    if not sp.issparse(X):
         raise ValueError("Cannot reconstruct sparse mask as passed"
                          " input is not sparse.")
     Xt = _fit_mask(X.data, value_to_mask)
 
-    # following code will execute only when we need to reconstruct sparse
-    sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
-                          else sparse.csc_matrix)
-    re_sparse = sparse_constructor(
+    sparse_constructor = (sp.csr_matrix if X.format == 'csr'
+                          else sp.csc_matrix)
+    Xt_sparse = sparse_constructor(
         (Xt, X.indices.copy(), X.indptr.copy()), shape=X.shape, dtype=bool
     )
 
-    return Xt, re_sparse
+    return Xt, Xt_sparse
