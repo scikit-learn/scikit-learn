@@ -512,8 +512,8 @@ class IterativeImputer(_BaseImputer):
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
-        mask_missing_values = _get_mask(X, self.missing_values)
-        X_missing_mask = mask_missing_values
+        X_missing_mask = _get_mask(X, self.missing_values)
+        mask_missing_values = X_missing_mask.copy()
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
@@ -576,10 +576,10 @@ class IterativeImputer(_BaseImputer):
 
         self.initial_imputer_ = None
 
-        X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
 
-        super()._fit_indicator(missing_mask)
-        X_indicator = super()._transform_indicator(missing_mask)
+        super()._fit_indicator(complete_mask)
+        X_indicator = super()._transform_indicator(complete_mask)
 
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
@@ -668,9 +668,9 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
 
-        X_indicator = super()._transform_indicator(missing_mask)
+        X_indicator = super()._transform_indicator(complete_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return super()._concatenate_indicator(Xt, X_indicator)

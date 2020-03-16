@@ -458,11 +458,10 @@ class SimpleImputer(_BaseImputer):
                                                                 copy=False)
         else:
             # mask computed before eliminating invalid mask can be used
-            mask = missing_mask
-            mask = mask[:, valid_statistics_indexes]
-            n_missing = np.sum(mask, axis=0)
+            mask_valid_features = missing_mask[:, valid_statistics_indexes]
+            n_missing = np.sum(mask_valid_features, axis=0)
             values = np.repeat(valid_statistics, n_missing)
-            coordinates = np.where(mask.transpose())[::-1]
+            coordinates = np.where(mask_valid_features.transpose())[::-1]
 
             X[coordinates] = values
 

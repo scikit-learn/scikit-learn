@@ -220,8 +220,7 @@ class KNNImputer(_BaseImputer):
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
 
-        missing_mask = mask
-        X_indicator = super()._transform_indicator(missing_mask)
+        X_indicator = super()._transform_indicator(mask)
 
         # Removes columns where the training data is all nan
         if not np.any(mask):
