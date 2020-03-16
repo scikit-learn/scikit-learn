@@ -99,13 +99,12 @@ plt.show()
 # --------------
 # The second example shows the ability of the Minimum Covariance Determinant
 # robust estimator of covariance to concentrate on the main mode of the data
-# distribution: the location seems to be well estimated, although the covariance
-# is hard to estimate due to the banana-shaped distribution. Anyway, we can
-# get rid of some outlying observations.
-# The One-Class SVM is able to capture the real data structure, but the
-# difficulty is to adjust its kernel bandwidth parameter so as to obtain
-# a good compromise between the shape of the data scatter matrix and the
-# risk of over-fitting the data.
+# distribution: the location seems to be well estimated, although the
+# covariance is hard to estimate due to the banana-shaped distribution. Anyway,
+# we can get rid of some outlying observations. The One-Class SVM is able to
+# capture the real data structure, but the difficulty is to adjust its kernel
+# bandwidth parameter so as to obtain a good compromise between the shape of
+# the data scatter matrix and the risk of over-fitting the data.
 
 # Get data
 X2 = load_wine()['data'][:, [6, 9]]  # "banana"-shaped
@@ -124,7 +123,7 @@ legend2_values_list = list(legend2.values())
 legend2_keys_list = list(legend2.keys())
 
 # Plot the results (= shape of the data points cloud)
-plt.figure(2, figsize=(10,10))  # "banana" shape
+plt.figure(2)  # "banana" shape
 plt.title("Outlier detection on a real data set (wine recognition)")
 plt.scatter(X2[:, 0], X2[:, 1], color='black')
 plt.xlim((xx2.min(), xx2.max()))
