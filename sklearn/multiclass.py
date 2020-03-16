@@ -523,8 +523,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     >>> from sklearn.svm import LinearSVC
     >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.33, random_state=42)
-    >>> clf = OneVsOneClassifier(LinearSVC(random_state=42)).fit(X_train, y_train)
+    ...     X, y, test_size=0.33, random_state=0)
+    >>> clf = OneVsOneClassifier(
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
     OneVsOneClassifier(...)
     >>> clf.predict(X_test)
     array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
