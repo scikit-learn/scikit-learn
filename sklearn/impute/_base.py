@@ -314,7 +314,7 @@ class SimpleImputer(_BaseImputer):
         """Fit the transformer on sparse data."""
         missing_mask = _get_mask(X, missing_values,
                                  sparse=sp.issparse(X))
-        mask_data =  missing_mask.data
+        mask_data = missing_mask.data
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
         statistics = np.empty(X.shape[1])
@@ -568,7 +568,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         if not self._precomputed:
             imputer_mask = _get_mask(X, self.missing_values,
                                      sparse=sp.issparse(X))
-            mask = imputer_mask.data
         else:
             imputer_mask = X
 
