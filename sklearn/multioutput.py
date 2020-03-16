@@ -239,14 +239,12 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.multioutput import MultiOutputRegressor
-    >>> from sklearn.ensemble import RandomForestRegressor
-
+    >>> from sklearn.linear_model import LinearRegression
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> y_multi = np.array([y, y]).T
-    >>> clf = MultiOutputRegressor(RandomForestRegressor(
-    ...     max_depth=30, n_estimators=100, random_state=0)).fit(X, y_multi)
-    >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
-    array([[20.88778272, 20.88778272]])
+    >>> y_multi = np.array([y, 2 * y]).T
+    >>> clf = MultiOutputRegressor(LinearRegression()).fit(X, y_multi)
+    >>> clf.predict(np.array([[0.2, 0.5, -0.4, 0.3]]))
+    array([[20.51..., 41.02...]])
     """
 
     def __init__(self, estimator, n_jobs=None):
