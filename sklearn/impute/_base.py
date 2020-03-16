@@ -72,15 +72,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
 
-    def _fit_indicator(self, X, mask=None):
+    def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
         if self.add_indicator:
-            # if any new missing_values is not passed,
-            # then set the missing_values to default
-            if mask is None:
-                mask = self.missing_values
             self.indicator_ = MissingIndicator(
-                missing_values=mask, error_on_new=False)
+                missing_values=self.missing_values, error_on_new=False)
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
@@ -309,7 +305,7 @@ class SimpleImputer(_BaseImputer):
                                                self.missing_values,
                                                fill_value)
 
-        super()._fit_indicator(missing_mask, True)
+        super()._fit_indicator(missing_mask)
 
         return self
 
