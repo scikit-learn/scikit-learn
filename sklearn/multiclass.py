@@ -514,6 +514,21 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+
+    Examples
+    --------
+    >>> from sklearn import datasets
+    >>> from sklearn.multiclass import OneVsOneClassifier
+    >>> from sklearn.svm import LinearSVC
+    >>> X, y = datasets.load_iris(return_X_y=True)
+    >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+    array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+           0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+           1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+           1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+           2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+           2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
     """
 
     def __init__(self, estimator, n_jobs=None):
