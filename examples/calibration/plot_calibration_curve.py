@@ -125,12 +125,12 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             _max = prob_pos.max()
             prob_pos = (prob_pos - _min) / (_max - _min)
 
-        clf_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
+        brier_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
         print(label)
-        print("\tBrier: %1.3f" % (clf_score))
-        print("\tPrecision: %1.3f" % precision_score(y_test, y_pred))
-        print("\tRecall: %1.3f" % recall_score(y_test, y_pred))
-        print("\tF1: %1.3f\n" % f1_score(y_test, y_pred))
+        print(f"\tBrier: {brier_score:.3f}")
+        print(f"\tPrecision: {precision_score(y_test, y_pred):.3f}")
+        print(f"\tRecall: {recall_score(y_test, y_pred):.3f}")
+        print(f"\tF1: {f1_score(y_test, y_pred):.3f}\n")
 
         prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
 
@@ -140,7 +140,7 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             marker=marker,
             color=color,
             markeredgecolor="none",
-            label=label,
+            label=f"{label}, Brier: {brier_score:.3f}",
         )
 
         ax.hist(
@@ -149,7 +149,6 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             density=False,
             color=color,
             edgecolor="none",
-            label=label,
         )
 
         ax.set_xlabel("Predicted P(Y=1)")
