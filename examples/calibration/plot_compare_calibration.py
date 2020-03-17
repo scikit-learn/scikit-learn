@@ -54,6 +54,7 @@ print(__doc__)
 # License: BSD Style.
 
 import numpy as np
+
 np.random.seed(0)
 
 import matplotlib
@@ -69,8 +70,9 @@ from sklearn.calibration import calibration_curve
 
 matplotlib.style.use("classic")
 
-X, y = datasets.make_classification(n_samples=100000, n_features=20,
-                                    n_informative=2, n_redundant=2)
+X, y = datasets.make_classification(
+    n_samples=100000, n_features=20, n_informative=2, n_redundant=2
+)
 
 train_samples = 100  # Samples used for training the models
 
@@ -82,19 +84,14 @@ y_test = y[train_samples:]
 # Create classifiers
 
 classifiers = [
-  LogisticRegression(),
-  GaussianNB(),
-  LinearSVC(C=1.0),
-  RandomForestClassifier(),
+    LogisticRegression(),
+    GaussianNB(),
+    LinearSVC(C=1.0),
+    RandomForestClassifier(),
 ]
-labels = [
-  'Logistic',
-  'Naive Bayes',
-  'Support Vector Classification',
-  'Random Forest'
-]
-markers = ['o', '^', 's', 'd']
-colors = ['blue', 'red', 'orange', 'magenta']
+labels = ["Logistic", "Naive Bayes", "Support Vector Classification", "Random Forest"]
+markers = ["o", "^", "s", "d"]
+colors = ["blue", "red", "orange", "magenta"]
 
 
 # #############################################################################
@@ -116,7 +113,9 @@ for i in range(2):
 
 
 ax_cali.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, markers, colors, axes)):
+for k, (clf, label, marker, color, ax) in enumerate(
+    zip(classifiers, labels, markers, colors, axes)
+):
     clf.fit(X_train, y_train)
     if hasattr(clf, "predict_proba"):
         prob_pos = clf.predict_proba(X_test)[:, 1]
@@ -127,9 +126,23 @@ for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, mar
         prob_pos = (prob_pos - _min) / (_max - _min)
     prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
 
-    ax_cali.plot(prob_pred, prob_true, marker=marker, color=color, markeredgecolor='none', label=label)
+    ax_cali.plot(
+        prob_pred,
+        prob_true,
+        marker=marker,
+        color=color,
+        markeredgecolor="none",
+        label=label,
+    )
 
-    ax.hist(prob_pos, bins=np.arange(0, 1.01, 0.04),  density=False, color=color, edgecolor='none', label=label)
+    ax.hist(
+        prob_pos,
+        bins=np.arange(0, 1.01, 0.04),
+        density=False,
+        color=color,
+        edgecolor="none",
+        label=label,
+    )
 
     ax.set_xlabel("Predicted P(Y=1)")
     ax.set_ylabel("Count")
@@ -138,16 +151,16 @@ for k, (clf, label, marker, color, ax) in enumerate(zip(classifiers, labels, mar
     ax.grid()
 
     if k in [1, 3]:
-      ax.set_ylabel('')
+        ax.set_ylabel("")
     if k in [0, 1]:
-      ax.set_xlabel('')
+        ax.set_xlabel("")
 
 ax_cali.set_xlabel("Mean predicted value per bin")
 ax_cali.set_ylabel("Fraction of positives per bin")
 ax_cali.set_xlim(-0.02, 1.02)
 ax_cali.set_ylim([-0.05, 1.05])
-ax_cali.legend(loc='lower right', fontsize=12)
-ax_cali.set_title('Calibration plots  (reliability curve)')
+ax_cali.legend(loc="lower right", fontsize=12)
+ax_cali.set_title("Calibration plots  (reliability curve)")
 ax_cali.grid()
 
 plt.tight_layout()
