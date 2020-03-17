@@ -403,12 +403,24 @@ def test_pipeline_methods_pca_tsne():
 
     pca_for_pipline = PCA(n_components=2, random_state=0)
     tsne_for_pipline = TSNE(random_state=0)
-    pipe = make_pipeline(pca_for_pipline, tsne_for_pipline)
+    msg = ("Intermediate step '%s' (type %s) does not have "
+           "transform, pipeline is not reusable." % (tsne_for_pipeline,
+                                                     type(tsne_for_pipeline)))
+    with pytest.warns(UserWarning, match=msg):
+        pipe = make_pipeline(pca_for_pipline, tsne_for_pipline)
 
     pipeline_emb = pipe.fit_transform(iris.data)
 
     assert_array_almost_equal(pipeline_emb, separate_emb)
 
+    error_estimator = NoTrans()
+    pipe_error = make_pipeline()
+
+    msg = ("Last step of Pipeline should implement fit, "
+           "fit_transform or be the string 'passthrough'. "
+           "'%s' (type %s) doesn't" % (error_estimator, type(error_estimator)))
+    with pytest.raises(TypeError, match=msg):
+        pipe_error.fit_transform(iris.data)
 
 def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
