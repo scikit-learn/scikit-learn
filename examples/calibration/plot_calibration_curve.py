@@ -53,21 +53,17 @@ import numpy as np
 from sklearn import datasets
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    brier_score_loss, f1_score, precision_score, recall_score
-)
+from sklearn.metrics import brier_score_loss, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
-
-np.random.seed(0)
 
 matplotlib.style.use("classic")
 
 # Create dataset of classification task with many redundant and few
 # informative features
 X, y = datasets.make_classification(
-    n_samples=100000, n_features=20, n_informative=2, n_redundant=10
+    n_samples=100000, n_features=20, n_informative=2, n_redundant=10, random_state=42
 )
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -88,8 +84,7 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
                 _ax = plt.subplot2grid((4, 2), (i + 2, j))
                 ax_ref = _ax  # reference ax for sharing X and Y axes
             else:
-                _ax = plt.subplot2grid((4, 2), (i + 2, j),
-                                       sharex=ax_ref, sharey=ax_ref)
+                _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
             axes.append(_ax)
 
     classifiers = [
@@ -127,10 +122,10 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
 
         brier_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
         print(label)
-        print(f"\tBrier: {brier_score:.3f}")
-        print(f"\tPrecision: {precision_score(y_test, y_pred):.3f}")
-        print(f"\tRecall: {recall_score(y_test, y_pred):.3f}")
-        print(f"\tF1: {f1_score(y_test, y_pred):.3f}\n")
+        print(f"\tBrier: {brier_score:.4f}")
+        print(f"\tPrecision: {precision_score(y_test, y_pred):.4f}")
+        print(f"\tRecall: {recall_score(y_test, y_pred):.4f}")
+        print(f"\tF1: {f1_score(y_test, y_pred):.4f}\n")
 
         prob_true, prob_pred = calibration_curve(y_test, prob_pos, n_bins=20)
 
@@ -140,7 +135,7 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             marker=marker,
             color=color,
             markeredgecolor="none",
-            label=f"{label}, Brier: {brier_score:.3f}",
+            label=f"{label}, Brier: {brier_score:.4f}",
         )
 
         ax.hist(
