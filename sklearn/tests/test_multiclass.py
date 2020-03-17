@@ -1,16 +1,14 @@
-import pytest
-
 import numpy as np
 import scipy.sparse as sp
 
 from re import escape
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises_regexp
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -76,8 +74,6 @@ def test_ovr_fit_predict():
     assert np.mean(iris.target == pred) > 0.65
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovr_partial_fit():
     # Test if partial_fit is working as intended
     X, y = shuffle(iris.data, iris.target, random_state=0)
@@ -602,8 +598,6 @@ def test_ovo_gridsearch():
     assert best_C in Cs
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties():
     # Test that ties are broken using the decision function,
     # not defaulting to the smallest label
@@ -629,8 +623,6 @@ def test_ovo_ties():
     assert ovo_prediction[0] == normalized_confidences[0].argmax()
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_ovo_ties2():
     # test that ties can not only be won by the first two labels
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])

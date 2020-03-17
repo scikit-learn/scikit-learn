@@ -224,6 +224,40 @@ It is advisable to evaluate both models, if time permits.
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
    3rd Conf. on Email and Anti-Spam (CEAS).
 
+.. _categorical_naive_bayes:
+
+Categorical Naive Bayes
+-----------------------
+
+:class:`CategoricalNB` implements the categorical naive Bayes 
+algorithm for categorically distributed data. It assumes that each feature, 
+which is described by the index :math:`i`, has its own categorical 
+distribution. 
+
+For each feature :math:`i` in the training set :math:`X`,
+:class:`CategoricalNB` estimates a categorical distribution for each feature i
+of X conditioned on the class y. The index set of the samples is defined as
+:math:`J = \{ 1, \dots, m \}`, with :math:`m` as the number of samples.
+
+The probability of category :math:`t` in feature :math:`i` given class
+:math:`c` is estimated as:
+
+.. math::
+
+    P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} +
+                                           \alpha n_i},
+
+where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number
+of times category :math:`t` appears in the samples :math:`x_{i}`, which belong
+to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the number
+of samples with class c, :math:`\alpha` is a smoothing parameter and
+:math:`n_i` is the number of available categories of feature :math:`i`.
+
+:class:`CategoricalNB` assumes that the sample matrix :math:`X` is encoded
+(for instance with the help of :class:`OrdinalEncoder`) such that all
+categories for each feature :math:`i` are represented with numbers
+:math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
+of feature :math:`i`.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
