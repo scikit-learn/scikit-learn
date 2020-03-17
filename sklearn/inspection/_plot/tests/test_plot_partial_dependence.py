@@ -102,8 +102,8 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     ('individual', 0.5, (1, 3, 253)),
     ('both', 0.5, (1, 3, 254))
 ])
-def test_plot_partial_dependence_kind(pyplot, kind, subsample,
-                                            shape, clf_boston, boston):
+def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
+                                      clf_boston, boston):
     disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
                                    kind=kind, subsample=subsample)
 
