@@ -53,19 +53,17 @@ print(__doc__)
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
 
-import numpy as np
-
-np.random.seed(0)
-
 import matplotlib
 import matplotlib.pyplot as plt
-
+import numpy as np
 from sklearn import datasets
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
 from sklearn.calibration import calibration_curve
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
+
+np.random.seed(0)
 
 matplotlib.style.use("classic")
 
