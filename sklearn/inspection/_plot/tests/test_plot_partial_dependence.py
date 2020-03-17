@@ -442,9 +442,9 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data, {'features': [(1, 2)], 'individual': 'both'},
       'It is not possible to display individual effects for more than one'),
      (dummy_classification_data, {'features': [1], 'subsample': -1},
-      'subsample=-1 should be either a positive integer or'),
+      'When an integer, subsample=-1 should be positive.'),
      (dummy_classification_data, {'features': [1], 'subsample': 1.2},
-      'subsample=1.2 should be either a positive integer or')]
+      'When a floating-point, subsample=1.2 should be in the (0, 1) range.')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data

@@ -300,12 +300,15 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    if ((isinstance(subsample, numbers.Integral) and subsample <= 0)
-        or (isinstance(subsample, numbers.Real)
-            and (subsample <= 0 or subsample >= 1))):
+    if isinstance(subsample, numbers.Integral) and subsample <= 0:
         raise ValueError(
-            f"subsample={subsample} should be either a positive integer or a "
-            f"float in the (0, 1) range."
+            f"When an integer, subsample={subsample} should be positive."
+        )
+    if (isinstance(subsample, numbers.Real)
+            and (subsample <= 0 or subsample >= 1)):
+        raise ValueError(
+            f"When a floating-point, subsample={subsample} should be in the "
+            f"(0, 1) range."
         )
 
     # compute predictions and/or averaged predictions
