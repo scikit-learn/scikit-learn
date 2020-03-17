@@ -196,7 +196,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `individual` is `True` or 'both'.
-        If float, should be between 0.0 and 1.0 and represent the proportion
+        If `float`, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to be used to plot ICE curves. If int, represents the
         absolute number samples to use.
 
