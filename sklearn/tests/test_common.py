@@ -56,7 +56,7 @@ def test_estimator_cls_parameterize_with_checks():
     list(param_checks.args[1])
 
 
-def test_mark_xfail_checks_with_consructable_estimator():
+def test_mark_xfail_checks_with_unconsructable_estimator():
     class MyEstimator:
         def __init__(self):
             raise ValueError("This is bad")
