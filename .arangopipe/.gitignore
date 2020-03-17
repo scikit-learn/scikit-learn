@@ -1,0 +1,17 @@
+# Compiled python modules.
+**/*.pyc
+# log files
+**/*.log
+# yaml files
+**/*.yaml
+# Setuptools distribution folder.
+arangopipe/dist/
+# Remove the build directory from repo
+arangopipe/build/
+#mlruns folder
+/arangopipe/tests/mlflow/mlruns/
+# Python egg metadata, regenerated from source files by setuptools.
+arangopipe/*.egg-info
+#ipynb checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
