@@ -543,3 +543,17 @@ def test_nmf_custom_init_dtype_error():
 
     with pytest.raises(TypeError, match="should have the same dtype as X"):
         non_negative_factorization(X, H=H, update_H=False)
+
+
+def test_nmf_raise_warnings_when_max_iter_is_reached_using_both_solvers():
+    """Test raise warning when `max_iter` is raised using `¢d` and `mu`.
+
+    Bug #16706
+    """
+    # Matrix used in `test_nmf_fit_nn_output`
+    A = np.c_[5. - np.arange(1, 6),
+              5. + np.arange(1, 6)]
+    for solver in ('cd', 'mu'):
+        model = NMF(n_components=2, solver=solver, random_state=0, max_iter=1)
+        with pytest.warns(ConvergenceWarning):
+            _ = model.fit_transform(A)
