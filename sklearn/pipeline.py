@@ -19,6 +19,7 @@ from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
 from ._display_estimator import _EstHTMLBlock
+from ._config import config_context
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -635,9 +636,15 @@ class Pipeline(_BaseComposition):
         return self.steps[0][1].n_features_in_
 
     def _sk_repr_html(self):
-        names, estimators = zip(*self.steps)
-        return _EstHTMLBlock('serial', estimators, names, None,
-                             dash_wrapped=False)
+        _, estimators = zip(*self.steps)
+
+        def _get_name(name, est):
+            if est is None or est == 'passthrough':
+                return f'{name}: passthrough'
+            # Is an estimator
+            return f'{name}: {est.__class__.__name__}'
+        names = [_get_name(name, est) for name, est in self.steps]
+        return _EstHTMLBlock('serial', estimators, names, dash_wrapped=False)
 
 
 def _name_estimators(estimators):
@@ -1018,7 +1025,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _sk_repr_html(self):
         names, transformers = zip(*self.transformer_list)
-        return _EstHTMLBlock('parallel', transformers, names, None)
+        with config_context(print_changed_only=True):
+            name_details = [str(trans) for trans in transformers]
+        return _EstHTMLBlock('parallel', transformers, names, name_details)
 
 
 def make_union(*transformers, **kwargs):

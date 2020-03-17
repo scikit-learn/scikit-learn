@@ -235,11 +235,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
 
     def _sk_repr_html(self, final_estimator):
         names, estimators = zip(*self.estimators)
-        parallel = _EstHTMLBlock('parallel', estimators, names, None,
+        parallel = _EstHTMLBlock('parallel', estimators, names,
                                  dash_wrapped=False)
         serial = _EstHTMLBlock('serial', (parallel, final_estimator),
-                               ('', ''), None, dash_wrapped=False)
-        return _EstHTMLBlock('single-meta', serial, str(self), None)
+                               ('', ''), dash_wrapped=False)
+        return _EstHTMLBlock('serial', [serial], [str(self)])
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):

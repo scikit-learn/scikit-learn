@@ -61,12 +61,17 @@ def test_type_of_html_estimator_single_estimator():
 def test_type_of_html_estimator_pipeline():
     pipe = Pipeline([
         ('imputer', SimpleImputer()),
+        ('do_nothing', 'passthrough'),
+        ('do_nothing_more', None),
         ('classifier', LogisticRegression())
     ])
     est_html_info = _type_of_html_estimator(pipe)
     assert est_html_info.type == 'serial'
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
-    assert est_html_info.names == ('imputer', 'classifier')
+    assert est_html_info.names == ['imputer: SimpleImputer',
+                                   'do_nothing: passthrough',
+                                   'do_nothing_more: passthrough',
+                                   'classifier: LogisticRegression']
     assert est_html_info.name_details is None
 
 
@@ -79,7 +84,7 @@ def test_type_of_html_estimator_feature_union():
     assert est_html_info.names == ('pca', 'svd')
     assert est_html_info.estimators == tuple(
         trans[1] for trans in f_union.transformer_list)
-    assert est_html_info.name_details is None
+    assert est_html_info.name_details == ['PCA()', 'TruncatedSVD()']
 
 
 def test_type_of_html_estimator_voting():
@@ -92,7 +97,8 @@ def test_type_of_html_estimator_voting():
     assert est_html_info.estimators == tuple(trans[1]
                                              for trans in clf.estimators)
     assert est_html_info.names == ('log_reg', 'mlp')
-    assert est_html_info.name_details is None
+    assert est_html_info.name_details == ['LogisticRegression()',
+                                          'MLPClassifier()']
 
 
 def test_type_of_html_estimator_column_transformer():
