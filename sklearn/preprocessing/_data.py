@@ -1466,7 +1466,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
-    order : str in {'C', 'F'}, default='C'
+    order : {'C', 'F'}, default='C'
         Order of output array in the dense case. 'F' order is faster to
         compute, but may slow down subsequent estimators.
 
@@ -2289,7 +2289,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         a better approximation of the cumulative distribution function
         estimator.
 
-    output_distribution : str, default='uniform'
+    output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
         'uniform' (default) or 'normal'.
 
@@ -2738,7 +2738,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         a better approximation of the cumulative distribution function
         estimator.
 
-    output_distribution : str, default='uniform'
+    output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
         'uniform' (default) or 'normal'.
 
@@ -2841,7 +2841,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    method : str, default='yeo-johnson'
+    method : {'yeo-johnson', 'box-cox'}, default='yeo-johnson'
         The power transform method. Available methods are:
 
         - 'yeo-johnson' [1]_, works with positive and negative values
