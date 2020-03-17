@@ -1,8 +1,0 @@
-# Compiled python modules.
-**/*.pyc
-# log files
-*.log
-**/*.log
-#ipynb checkpoints
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
