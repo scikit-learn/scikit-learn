@@ -1544,13 +1544,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        input_features : list of string, length n_features, optional
+        input_features : list of str, length n_features, default=None
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
         Returns
         -------
-        output_feature_names : list of string, length n_output_features
+        output_feature_names : list of str, length n_output_features
         """
         powers = self.powers_
         if input_features is None:
@@ -1847,7 +1847,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    norm : 'l1', 'l2', or 'max', default='l2'
+    norm : {'l1', 'l2', 'max'}, default='l2'
         The norm to use to normalize each non zero sample. If norm='max'
         is used, values will be rescaled by the maximum of the absolute
         values.
@@ -2316,7 +2316,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    n_quantiles_ : integer
+    n_quantiles_ : int
         The actual number of quantiles used to discretize the cumulative
         distribution function.
 
@@ -3134,14 +3134,14 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, dataframe} of shape (n_samples, n_features)
 
-        check_positive : bool
+        check_positive : bool, default=False
             If True, check that all data is positive and non-zero (only if
             ``self.method=='box-cox'``).
 
-        check_shape : bool
+        check_shape : bool, default=False
             If True, check that n_features matches the length of self.lambdas_
 
-        check_method : bool
+        check_method : bool, default=False
             If True, check that the transformation method is valid.
         """
         X = self._validate_data(X, ensure_2d=True, dtype=FLOAT_DTYPES,
