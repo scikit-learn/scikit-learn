@@ -133,7 +133,7 @@ the median income.
 
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
-``individual=True``. In the example below, we show how to create a grid of
+``kind='individual'``. In the example below, we show how to create a grid of
 ICE plots:
 
     >>> from sklearn.datasets import make_hastie_10_2
@@ -145,15 +145,15 @@ ICE plots:
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1]
     >>> plot_partial_dependence(clf, X, features,
-    ...     individual=True)  # doctest: +ELLIPSIS
+    ...     kind='individual')  # doctest: +ELLIPSIS
 
 In ICE plots it might not be easy to see the average effect of the input
 feature of interest. Hence, it is recommended to use ICE plots alongside
 partial dependency plots. They can be plotted together with
-``individual='both'``.
+``kind='both'``.
 
     >>> plot_partial_dependence(clf, X, features,
-    ...     individual='both')  # doctest: +ELLIPSIS
+    ...     kind='both')  # doctest: +ELLIPSIS
 
 Mathematical Definition
 =======================

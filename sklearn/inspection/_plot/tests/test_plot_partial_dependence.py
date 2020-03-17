@@ -93,19 +93,19 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-@pytest.mark.parametrize("individual, subsample, shape", [
-    (False, None, (1, 3)),
-    (True, None, (1, 3, 506)),
+@pytest.mark.parametrize("kind, subsample, shape", [
+    ('average', None, (1, 3)),
+    ('individual', None, (1, 3, 506)),
     ('both', None, (1, 3, 507)),
-    (True, 50, (1, 3, 50)),
+    ('individual', 50, (1, 3, 50)),
     ('both', 50, (1, 3, 51)),
-    (True, 0.5, (1, 3, 253)),
+    ('individual', 0.5, (1, 3, 253)),
     ('both', 0.5, (1, 3, 254))
 ])
-def test_plot_partial_dependence_individual(pyplot, individual, subsample,
+def test_plot_partial_dependence_kind(pyplot, kind, subsample,
                                             shape, clf_boston, boston):
     disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
-                                   individual=individual, subsample=subsample)
+                                   kind=kind, subsample=subsample)
 
     assert disp.axes_.shape == (1, 3)
     assert disp.lines_.shape == shape
@@ -217,15 +217,15 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     assert ax.get_ylabel() == "ZN"
 
 
-@pytest.mark.parametrize("individual, lines", [
-    (False, 1), (True, 506), ('both', 507)
+@pytest.mark.parametrize("kind, lines", [
+    ('average', 1), ('individual', 506), ('both', 507)
 ])
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
-                                                    boston, individual, lines):
+                                                    boston, kind, lines):
     grid_resolution = 25
     feature_names = boston.feature_names.tolist()
     disp1 = plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN'], individual=individual,
+                                    ['CRIM', 'ZN'], kind=kind,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
@@ -238,7 +238,7 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     lr.fit(boston.data, boston.target)
 
     disp2 = plot_partial_dependence(lr, boston.data,
-                                    ['CRIM', 'ZN'], individual=individual,
+                                    ['CRIM', 'ZN'], kind=kind,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names,
                                     ax=disp1.axes_)
@@ -437,9 +437,9 @@ dummy_classification_data = make_classification(random_state=0)
      (dummy_classification_data,
       {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
       'feature_names should not contain duplicates'),
-     (dummy_classification_data, {'features': [(1, 2)], 'individual': True},
+     (dummy_classification_data, {'features': [(1, 2)], 'kind': 'individual'},
       'It is not possible to display individual effects for more than one'),
-     (dummy_classification_data, {'features': [(1, 2)], 'individual': 'both'},
+     (dummy_classification_data, {'features': [(1, 2)], 'kind': 'both'},
       'It is not possible to display individual effects for more than one'),
      (dummy_classification_data, {'features': [1], 'subsample': -1},
       'When an integer, subsample=-1 should be positive.'),

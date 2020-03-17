@@ -202,7 +202,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 
 def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', individual=False):
+                       method='auto', kind='average'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -273,7 +273,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
           :class:`~sklearn.tree.DecisionTreeRegressor`,
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          ) when `'individual' = False`.
+          ) when `kind='average'`.
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -288,27 +288,35 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    individual : "both" or bool, default=False
-        Whether to return each individual partial dependence, the averaged
-        partial dependence or both.
+    kind : "average", "individual" or "both", default="average"
+        Whether to plot the partial dependence averaged across all the samples
+        in the dataset or one line per sample or both individual lines and the
+        average dependence at the same time.
+
+        - kind="average" results in the traditional PD plot;
+        - kind="individual" results in the ICE plot.
+
+       Note that the fast method="recursion" option is only available for
+       kind="average". Plotting individual dependencies requires using the
+       slower method="brute" option.
 
         .. versionadded:: 0.23
 
     Returns
     -------
     predictions : ndarray or tuple of ndarray
-        - individual=False,
+        - kind='average',
             shape (n_outputs, len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid, averaged over all
             samples in X (or over the training data if ``method`` is
             'recursion').
-        - individual=True,
+        - kind='individual',
             shape (n_outputs, n_instances, len(values[0]), len(values[1]),...)
             The predictions for all the points in the grid for all samples
             in X.
-        - individual='both', tuple of ndarray
-            Tuple containing the results when individual=False and
-            individual=True
+        - kind='both', tuple of ndarray
+            Tuple containing the results when kind='average' and
+            kind='individual'
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
@@ -381,11 +389,11 @@ def partial_dependence(estimator, X, features, response_method='auto',
             'method {} is invalid. Accepted method names are {}.'.format(
                 method, ', '.join(accepted_methods)))
 
-    if individual is not False:
+    if kind != 'average':
         if method == 'recursion':
             raise ValueError(
-                "The 'recursion' method only applies when 'individual' is set "
-                "to False"
+                "The 'recursion' method only applies when 'kind' is set "
+                "to 'average'"
             )
         method = 'brute'
 
@@ -464,9 +472,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values])
 
-    if individual is False:
+    if kind == 'average':
         return averaged_predictions, values
-    elif individual is True:
+    elif kind == 'individual':
         return predictions, values
-    else:  # individual='both'
+    else:  # kind='both'
         return (averaged_predictions, predictions), values

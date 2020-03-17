@@ -21,12 +21,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, ax=None,
-                            individual=False, subsample=1000):
+                            kind='average', subsample=1000):
     """Partial dependence (PD) and individual conditional expectation (ICE)
     plots.
 
     Partial dependence plots, individual conditional expectation plots or an
-    overlay of both of them can be plotted by setting the ``individual``
+    overlay of both of them can be plotted by setting the ``kind``
     parameter.
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
@@ -88,7 +88,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created (only supported with
-        'individual' is False). Each tuple must be of size 2.
+        kind='average'). Each tuple must be of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
@@ -188,14 +188,22 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         .. versionadded:: 0.22
 
-    individual : "both" or bool, default=False
-        Whether to plot each individual partial dependence plots, the averaged
-        partial dependence plots or both.
+    kind : "average", "individual" or "both", default="average"
+        Whether to plot the partial dependence averaged across all the samples
+        in the dataset or one line per sample or both individual lines and the
+        average dependence at the same time.
+
+        - kind="average" results in the traditional PD plot;
+        - kind="individual" results in the ICE plot.
+
+       Note that the fast method="recursion" option is only available for
+       kind="average". Plotting individual dependencies requires using the
+       slower method="brute" option.
 
         .. versionadded:: 0.23
 
     subsample : float, int or None, default=1000
-        Sampling for ICE curves when `individual` is `True` or 'both'.
+        Sampling for ICE curves when `kind` is 'individual' or 'both'.
         If `float`, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to be used to plot ICE curves. If `int`, represents the
         absolute number samples to use.
@@ -279,7 +287,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-        if individual is not False and np.size(fxs) > 1:
+        if kind != 'average' and np.size(fxs) > 1:
             raise ValueError(
                 f"It is not possible to display individual effects for more "
                 f"than one feature at a time. Got: features={features}.")
@@ -319,7 +327,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                                     method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles,
-                                    individual=individual)
+                                    kind=kind)
         for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
@@ -328,7 +336,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result, _ = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result[0].shape[0] if individual == 'both'
+    n_tasks = (pd_result[0].shape[0] if kind == 'both'
                else pd_result.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
@@ -342,7 +350,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for pd_result, values in pd_results:
-        preds = pd_result[1] if individual == 'both' else pd_result
+        preds = pd_result[1] if kind == 'both' else pd_result
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -366,7 +374,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     display = PartialDependenceDisplay(
         pd_results, features, feature_names, target_idx,
-        pdp_lim, deciles, individual=individual, subsample=subsample
+        pdp_lim, deciles, kind=kind, subsample=subsample
     )
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
@@ -422,14 +430,22 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    individual : "both" or bool, default=False
-        Whether to plot each individual partial dependence plots, the averaged
-        partial dependence plots or both.
+    kind : "average", "individual" or "both", default="average"
+        Whether to plot the partial dependence averaged across all the samples
+        in the dataset or one line per sample or both individual lines and the
+        average dependence at the same time.
+
+        - kind="average" results in the traditional PD plot;
+        - kind="individual" results in the ICE plot.
+
+       Note that the fast method="recursion" option is only available for
+       kind="average". Plotting individual dependencies requires using the
+       slower method="brute" option.
 
         .. versionadded:: 0.23
 
     subsample : float, int or None, default=1000
-        Sampling for ICE curves when `individual` is `True` or 'both'.
+        Sampling for ICE curves when `kind` is 'individual' or 'both'.
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to be used to plot ICE curves. If int, represents the
         maximum absolute number of samples to use.
@@ -468,14 +484,14 @@ class PartialDependenceDisplay:
 
     """
     def __init__(self, pd_results, features, feature_names, target_idx,
-                 pdp_lim, deciles, individual=False, subsample=1000):
+                 pdp_lim, deciles, kind='average', subsample=1000):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
         self.pdp_lim = pdp_lim
         self.deciles = deciles
-        self.individual = individual
+        self.kind = kind
         self.subsample = subsample
 
     def _get_sample_count(self, n_samples):
@@ -541,16 +557,16 @@ class PartialDependenceDisplay:
         line_kw = {**default_line_kws, **line_kw}
         individual_line_kw = line_kw.copy()
 
-        if self.individual is True or self.individual == 'both':
+        if self.kind == 'individual' or self.kind == 'both':
             individual_line_kw['alpha'] = 0.3
             individual_line_kw['linewidth'] = 0.5
 
         n_features = len(self.features)
         n_sampled = 1
-        if self.individual is True:
+        if self.kind == 'individual':
             n_instances = len(self.pd_results[0][0][0])
             n_sampled = self._get_sample_count(n_instances)
-        elif self.individual == 'both':
+        elif self.kind == 'both':
             n_instances = len(self.pd_results[0][0][1][0])
             n_sampled = self._get_sample_count(n_instances) + 1
 
@@ -570,7 +586,7 @@ class PartialDependenceDisplay:
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
-            if self.individual is False:
+            if self.kind == 'average':
                 self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
             else:
                 self.lines_ = np.empty((n_rows, n_cols, n_sampled),
@@ -598,7 +614,7 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
-            if self.individual is False:
+            if self.kind == 'average':
                 self.lines_ = np.empty_like(ax, dtype=np.object)
             else:
                 self.lines_ = np.empty(ax.shape + (n_sampled,),
@@ -618,16 +634,16 @@ class PartialDependenceDisplay:
 
             avg_preds = None
             preds = None
-            if self.individual is True:
+            if self.kind == 'individual':
                 preds = pd_result
-            elif self.individual is False:
+            elif self.kind == 'average':
                 avg_preds = pd_result
-            else:  # individual='both'
+            else:  # kind='both'
                 avg_preds = pd_result[0]
                 preds = pd_result[1]
 
             if len(values) == 1:
-                if self.individual is True or self.individual == 'both':
+                if self.kind == 'individual' or self.kind == 'both':
                     n_sampled = self._get_sample_count(
                         len(preds[self.target_idx])
                     )
@@ -639,12 +655,12 @@ class PartialDependenceDisplay:
                         lines_ravel[i * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
-                if self.individual is False:
+                if self.kind == 'average':
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         **line_kw
                     )[0]
-                elif self.individual == 'both':
+                elif self.kind == 'both':
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         label='average', **line_kw

@@ -78,9 +78,9 @@ iris = load_iris()
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
-@pytest.mark.parametrize('individual', (False, True, 'both'))
+@pytest.mark.parametrize('kind', ('average', 'individual', 'both'))
 def test_output_shape(Estimator, method, data, grid_resolution,
-                      features, individual):
+                      features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -97,16 +97,16 @@ def test_output_shape(Estimator, method, data, grid_resolution,
 
     est.fit(X, y)
     pdp, axes = partial_dependence(est, X=X, features=features,
-                                   method=method, individual=individual,
+                                   method=method, kind=kind,
                                    grid_resolution=grid_resolution)
 
     expected_pdp_shape = (n_targets,
                           *[grid_resolution for _ in range(len(features))])
     expected_ice_shape = (n_targets, n_instances,
                           *[grid_resolution for _ in range(len(features))])
-    if individual is False:
+    if kind == 'average':
         assert pdp.shape == expected_pdp_shape
-    elif individual is True:
+    elif kind == 'individual':
         assert pdp.shape == expected_ice_shape
     else:  # 'both'
         assert pdp[0].shape == expected_pdp_shape
@@ -416,11 +416,11 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
       {'features': [0], 'method': 'blahblah'},
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
      (LinearRegression(),
-      {'features': [0], 'method': 'recursion', 'individual': True},
-      "The 'recursion' method only applies when 'individual' is set to False"),
+      {'features': [0], 'method': 'recursion', 'kind': 'individual'},
+      "The 'recursion' method only applies when 'kind' is set to 'average'"),
      (LinearRegression(),
-      {'features': [0], 'method': 'recursion', 'individual': 'both'},
-      "The 'recursion' method only applies when 'individual' is set to False"),
+      {'features': [0], 'method': 'recursion', 'kind': 'both'},
+      "The 'recursion' method only applies when 'kind' is set to 'average'"),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
       "Only the following estimators support the 'recursion' method:")]

@@ -117,7 +117,7 @@ print('Computing partial dependence plots...')
 tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 display = plot_partial_dependence(
-       est, X_train, features, individual="both", subsample=50,
+       est, X_train, features, kind="both", subsample=50,
        n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
@@ -160,7 +160,7 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 print('Computing partial dependence plots...')
 tic = time()
 display = plot_partial_dependence(
-    est, X_train, features, individual="both", subsample=50,
+    est, X_train, features, kind="both", subsample=50,
     n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
@@ -214,7 +214,7 @@ features = ['AveOccup', 'HouseAge', ('AveOccup', 'HouseAge')]
 print('Computing partial dependence plots...')
 tic = time()
 display = plot_partial_dependence(
-    est, X_train, features, individual=False, n_jobs=3, grid_resolution=20
+    est, X_train, features, kind='average', n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -244,7 +244,7 @@ fig = plt.figure()
 
 features = ('AveOccup', 'HouseAge')
 pdp, axes = partial_dependence(
-    est, X_train, features=features, individual=False, grid_resolution=20
+    est, X_train, features=features, kind='average', grid_resolution=20
 )
 XX, YY = np.meshgrid(axes[0], axes[1])
 Z = pdp[0].T
