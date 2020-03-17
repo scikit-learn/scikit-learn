@@ -534,6 +534,27 @@ class OAS(EmpiricalCovariance):
       coefficient in the convex combination used for the computation
       of the shrunk estimate. Range is [0, 1].
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import OAS
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                             cov=real_cov,
+    ...                             size=500)
+    >>> oas = OAS().fit(X)
+    >>> oas.covariance_
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> oas.precision_
+    array([[ 1.7833..., -1.2431... ],
+           [-1.2431...,  3.3889...]])
+    >>> oas.shrinkage_
+    0.0195...
+
     Notes
     -----
     The regularised covariance is:
