@@ -18,7 +18,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from ._display_estimator import _EstHTMLInfo
+from ._display_estimator import _EstHTMLBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -636,7 +636,8 @@ class Pipeline(_BaseComposition):
 
     def _sk_repr_html(self):
         names, estimators = zip(*self.steps)
-        return _EstHTMLInfo('serial', estimators, names, None)
+        return _EstHTMLBlock('serial', estimators, names, None,
+                             dash_wrapped=False)
 
 
 def _name_estimators(estimators):
@@ -1017,7 +1018,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _sk_repr_html(self):
         names, transformers = zip(*self.transformer_list)
-        return _EstHTMLInfo('parallel', transformers, names, None)
+        return _EstHTMLBlock('parallel', transformers, names, None)
 
 
 def make_union(*transformers, **kwargs):

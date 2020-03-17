@@ -148,7 +148,7 @@ def test_display_estimator_pipeline():
       '<pre>SimpleImputer(missing_values=\'empty\', strategy=\'constant\')'
       '</pre>',
       '(\'one-hot\', OneHotEncoder',
-      'preprocessor</label>',
+      'preprocessor: ColumnTransformer</label>',
       '<pre>[\'a\', \'b\', \'c\', \'d\', \'e\']</pre>',
       '<pre>LogisticRegression(random_state=1)</pre>',
       '<pre>SelectPercentile()</pre>',

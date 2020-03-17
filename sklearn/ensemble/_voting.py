@@ -31,7 +31,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
-from .._display_estimator import _EstHTMLInfo
+from .._display_estimator import _EstHTMLBlock
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -106,7 +106,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _sk_repr_html(self):
         names, estimators = zip(*self.estimators)
-        return _EstHTMLInfo('parallel', estimators, names, None)
+        return _EstHTMLBlock('parallel', estimators, names, None)
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):

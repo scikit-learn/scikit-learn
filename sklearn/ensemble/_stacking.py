@@ -13,7 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
-from .._display_estimator import _EstHTMLInfo
+from .._display_estimator import _EstHTMLBlock
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
@@ -235,10 +235,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
 
     def _sk_repr_html(self, final_estimator):
         names, estimators = zip(*self.estimators)
-        parallel = _EstHTMLInfo('parallel', estimators, names, None)
-        serial = _EstHTMLInfo('serial', (parallel, final_estimator),
-                              ('', ''), None)
-        return _EstHTMLInfo('single-meta', serial, str(self), None)
+        parallel = _EstHTMLBlock('parallel', estimators, names, None,
+                                 dash_wrapped=False)
+        serial = _EstHTMLBlock('serial', (parallel, final_estimator),
+                               ('', ''), None, dash_wrapped=False)
+        return _EstHTMLBlock('single-meta', serial, str(self), None)
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
