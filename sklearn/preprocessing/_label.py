@@ -56,6 +56,10 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
 
 def _encode_python(values, uniques=None, encode=False):
     # only used in _encode below, see docstring there for details
+    if None in values:
+        raise ValueError("This encoder does not accept None typed values. "
+                         "Missing values should be imputed first, for "
+                         "instance using sklearn.preprocessing.SimpleImputer.")
     if uniques is None:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -112,6 +116,8 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
             res = _encode_python(values, uniques, encode)
         except TypeError:
             raise TypeError("argument must be a string or number")
+        except ValueError as e:
+            raise e
         return res
     else:
         return _encode_numpy(values, uniques, encode,
