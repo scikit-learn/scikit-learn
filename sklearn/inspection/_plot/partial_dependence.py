@@ -475,7 +475,7 @@ class PartialDependenceDisplay:
         self.subsample = subsample
 
     def _get_sample_count(self, n_samples):
-        if isinstance(self.subsample, int):
+        if isinstance(self.subsample, numbers.Integral):
             if self.subsample < n_samples:
                 return self.subsample
             return n_samples
