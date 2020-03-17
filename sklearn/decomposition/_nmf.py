@@ -501,7 +501,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     rng = check_random_state(random_state)
 
-    for n_iter in range(max_iter):
+    for n_iter in range(max_iter + 1):
         violation = 0.
 
         # Update W
