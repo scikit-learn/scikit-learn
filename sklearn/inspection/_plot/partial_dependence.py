@@ -300,7 +300,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    if ((isinstance(subsample, int) and subsample <= 0)
+    if ((isinstance(subsample, numbers.Integral) and subsample <= 0)
         or (isinstance(subsample, float)
             and (subsample <= 0 or subsample >= 1))):
         raise ValueError(
