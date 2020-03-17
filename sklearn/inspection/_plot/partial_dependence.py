@@ -305,7 +305,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
             and (subsample <= 0 or subsample >= 1))):
         raise ValueError(
             f"subsample={subsample} should be either a positive integer or a "
-            f"float in the (0, 1) range"
+            f"float in the (0, 1) range."
         )
 
     # compute predictions and/or averaged predictions
