@@ -402,13 +402,13 @@ def test_pipeline_methods_pca_tsne():
     tsne = TSNE(random_state=0)
     separate_emb = tsne.fit_transform(pca.fit_transform(iris.data))
 
-    pca_for_pipline = PCA(n_components=2, random_state=0)
-    tsne_for_pipline = TSNE(random_state=0)
+    pca_for_pipeline = PCA(n_components=2, random_state=0)
+    tsne_for_pipeline = TSNE(random_state=0)
     msg = ("Intermediate step '%s' (type %s) does not have "
            "transform, pipeline is not reusable." % (tsne_for_pipeline,
                                                      type(tsne_for_pipeline)))
     with pytest.warns(UserWarning, match=msg):
-        pipe = make_pipeline(pca_for_pipline, tsne_for_pipline)
+        pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline)
 
     pipeline_emb = pipe.fit_transform(iris.data)
 
