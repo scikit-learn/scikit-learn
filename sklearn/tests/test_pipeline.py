@@ -31,6 +31,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.manifold import TSNE
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -391,6 +392,22 @@ def test_pipeline_methods_preprocessing_svm():
         assert decision_function.shape == (n_samples, n_classes)
 
         pipe.score(X, y)
+
+def test_pipeline_methods_pca_tsne():
+    # test that a only fit_transform needs to be present in order to
+    # run a pipeline with fit_transform.
+    # Don't require transform to be present, explicitly.
+    pca = PCA(n_components=2, random_state=0)
+    tsne = TSNE(random_state=0)
+    separate_emb = tsne.fit_transform(pca.fit_transform(iris.data))
+
+    pca_for_pipline = PCA(n_components=2, random_state=0)
+    tsne_for_pipline = TSNE(random_state=0)
+    pipe = make_pipeline(pca_for_pipline, tsne_for_pipline)
+
+    pipeline_emb = pipe.fit_transform(iris.data)
+
+    assert_array_almost_equal(pipeline_emb, separate_emb)
 
 
 def test_fit_predict_on_pipeline():
