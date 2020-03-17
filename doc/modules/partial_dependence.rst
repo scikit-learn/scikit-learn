@@ -145,7 +145,7 @@ ICE plots:
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> features = [0, 1]
     >>> plot_partial_dependence(clf, X, features,
-    ...     kind='individual')  # doctest: +ELLIPSIS
+    ...     kind='individual')  # doctest: +SKIP
 
 In ICE plots it might not be easy to see the average effect of the input
 feature of interest. Hence, it is recommended to use ICE plots alongside
@@ -153,7 +153,7 @@ partial dependency plots. They can be plotted together with
 ``kind='both'``.
 
     >>> plot_partial_dependence(clf, X, features,
-    ...     kind='both')  # doctest: +ELLIPSIS
+    ...     kind='both')  # doctest: +SKIP
 
 Mathematical Definition
 =======================
