@@ -479,7 +479,7 @@ class PartialDependenceDisplay:
             if self.subsample < n_samples:
                 return self.subsample
             return n_samples
-        elif isinstance(self.subsample, float):
+        elif isinstance(self.subsample, numbers.Real):
             return ceil(n_samples * self.subsample)
         return n_samples
 
