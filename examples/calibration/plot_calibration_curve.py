@@ -53,8 +53,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (brier_score_loss, f1_score, precision_score,
-                             recall_score)
+from sklearn.metrics import brier_score_loss, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
@@ -65,12 +64,13 @@ matplotlib.style.use("classic")
 
 # Create dataset of classification task with many redundant and few
 # informative features
-X, y = datasets.make_classification(n_samples=100000, n_features=20,
-                                    n_informative=2, n_redundant=10,
-                                    random_state=42)
+X, y = datasets.make_classification(
+    n_samples=100000, n_features=20, n_informative=2, n_redundant=10, random_state=42
+)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
-                                                    random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.99, random_state=42
+)
 
 
 def plot_calibration_curve(estimator, estimator_name, fig_index):
@@ -84,34 +84,33 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
         for j in range(2):
             if i == 0 and j == 0:
                 _ax = plt.subplot2grid((4, 2), (i + 2, j))
-                ax_ref = _ax        # reference ax for sharing X and Y axes
+                ax_ref = _ax  # reference ax for sharing X and Y axes
             else:
-                _ax = plt.subplot2grid((4, 2), (i + 2, j),
-                                       sharex=ax_ref, sharey=ax_ref)
+                _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
             axes.append(_ax)
 
     classifiers = [
         # Logistic regression with no calibration as baseline,
-        LogisticRegression(C=1.),
+        LogisticRegression(C=1.0),
         # the raw estimator without calibraition
         estimator,
         # Calibrated with isotonic calibration
-        CalibratedClassifierCV(estimator, cv=2, method='isotonic'),
+        CalibratedClassifierCV(estimator, cv=2, method="isotonic"),
         # Calibrated with sigmoid calibration
-        CalibratedClassifierCV(estimator, cv=2, method='sigmoid'),
+        CalibratedClassifierCV(estimator, cv=2, method="sigmoid"),
     ]
     labels = [
         "Logistic",
         estimator_name,
-        estimator_name + ' + Isotonic',
-        estimator_name + ' + Sigmoid',
+        estimator_name + " + Isotonic",
+        estimator_name + " + Sigmoid",
     ]
     markers = ["o", "^", "s", "d"]
     colors = ["blue", "red", "orange", "magenta"]
 
     ax_cali.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
     for k, (clf, label, marker, color, ax) in enumerate(
-            zip(classifiers, labels, markers, colors, axes)
+        zip(classifiers, labels, markers, colors, axes)
     ):
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
@@ -119,8 +118,7 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             prob_pos = clf.predict_proba(X_test)[:, 1]
         else:  # use decision function
             prob_pos = clf.decision_function(X_test)
-            prob_pos = \
-                (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
+            prob_pos = (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
 
         clf_score = brier_score_loss(y_test, prob_pos, pos_label=y.max())
         print(label)
@@ -154,7 +152,6 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
         ax.set_xlim(-0.02, 1.02)
         ax.set_title(label)
         ax.grid()
-
 
     ax_cali.set_xlabel("Mean predicted value per bin")
     ax_cali.set_ylabel("Fraction of positives per bin")
