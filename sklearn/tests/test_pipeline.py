@@ -393,6 +393,7 @@ def test_pipeline_methods_preprocessing_svm():
 
         pipe.score(X, y)
 
+
 def test_pipeline_methods_pca_tsne():
     # test that a only fit_transform needs to be present in order to
     # run a pipeline with fit_transform.
@@ -421,6 +422,7 @@ def test_pipeline_methods_pca_tsne():
            "'%s' (type %s) doesn't" % (error_estimator, type(error_estimator)))
     with pytest.raises(TypeError, match=msg):
         pipe_error.fit_transform(iris.data)
+
 
 def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
