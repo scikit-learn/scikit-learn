@@ -201,7 +201,7 @@ class Pipeline(_BaseComposition):
                   not hasattr(estimator, "predict")):
             warnings.warn("Intermediate step '%s' (type %s) does not have "
                           "transform or predict, pipeline is not reusable."
-                          % (estimato, type(estimator)))
+                          % (estimator, type(estimator)))
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
