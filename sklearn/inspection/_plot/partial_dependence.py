@@ -639,11 +639,17 @@ class PartialDependenceDisplay:
                         lines_ravel[i * j + j] = axi.plot(
                             values[0], ins.ravel(), **individual_line_kw
                         )[0]
-                if self.individual is False or self.individual == 'both':
+                if self.individual is False:
                     lines_ravel[i] = axi.plot(
                         values[0], avg_preds[self.target_idx].ravel(),
                         **line_kw
                     )[0]
+                elif self.individual == 'both':
+                    lines_ravel[i] = axi.plot(
+                        values[0], avg_preds[self.target_idx].ravel(),
+                        label='average', **line_kw
+                    )[0]
+                    axi.legend()
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
