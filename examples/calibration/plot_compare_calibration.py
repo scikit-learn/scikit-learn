@@ -59,7 +59,6 @@ np.random.seed(0)
 
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 
 from sklearn import datasets
 from sklearn.naive_bayes import GaussianNB
@@ -89,7 +88,12 @@ classifiers = [
     LinearSVC(C=1.0),
     RandomForestClassifier(),
 ]
-labels = ["Logistic", "Naive Bayes", "Support Vector Classification", "Random Forest"]
+labels = [
+    "Logistic",
+    "Naive Bayes",
+    "Support Vector Classification",
+    "Random Forest"
+]
 markers = ["o", "^", "s", "d"]
 colors = ["blue", "red", "orange", "magenta"]
 
@@ -106,9 +110,10 @@ for i in range(2):
     for j in range(2):
         if i == 0 and j == 0:
             _ax = plt.subplot2grid((4, 2), (i + 2, j))
-            ax_ref = _ax
+            ax_ref = _ax        # reference ax for sharing X and Y axes
         else:
-            _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
+            _ax = plt.subplot2grid((4, 2), (i + 2, j),
+                                   sharex=ax_ref, sharey=ax_ref)
         axes.append(_ax)
 
 
@@ -164,4 +169,5 @@ ax_cali.set_title("Calibration plots  (reliability curve)")
 ax_cali.grid()
 
 plt.tight_layout()
+
 plt.show()
