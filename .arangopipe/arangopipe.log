@@ -1,0 +1,17 @@
+2020-03-17 10:43:11,939 - arangopipe_logger - INFO - The asset by name: heart beat check was not found in Arangopipe!
+2020-03-17 12:11:20,096 - arangopipe_logger - INFO - The asset by name: california-housing-dataset was not found in Arangopipe!
+2020-03-17 12:11:20,448 - arangopipe_logger - INFO - Recording dataset dataset link {'_id': 'datasets/110176238', '_key': '110176238', '_rev': '_aMa3n3K---'}
+2020-03-17 12:11:23,242 - arangopipe_logger - INFO - The asset by name: log_transformed_median_house_value was not found in Arangopipe!
+2020-03-17 12:11:23,575 - arangopipe_logger - INFO - Recording featureset {'_id': 'featuresets/110176239', '_key': '110176239', '_rev': '_aMa3q7C--_'}
+2020-03-17 12:11:23,920 - arangopipe_logger - INFO - Recording featureset dataset link {'_id': 'featureset_dataset/110176239-110176238', '_key': '110176239-110176238', '_rev': '_aMa3rQi--_'}
+2020-03-17 12:12:46,708 - arangopipe_logger - INFO - The asset by name: Lasso Model for Housing Dataset was not found in Arangopipe!
+2020-03-17 12:12:48,038 - arangopipe_logger - INFO - Recording project model link {'_id': 'project_models/110175175-110176256', '_key': '110175175-110176256', '_rev': '_aMa49aC--B'}
+2020-03-17 12:12:52,243 - arangopipe_logger - INFO - Run info {'_key': '275260692464344757957575878471622408447', 'timestamp': '2020-03-17 12:12:52.243219', 'tag': 'Housing_Price_Estimation_Project'}
+2020-03-17 12:12:52,662 - arangopipe_logger - INFO - Recording run {'_id': 'run/275260692464344757957575878471622408447', '_key': '275260692464344757957575878471622408447', '_rev': '_aMa5B2G--_'}
+2020-03-17 12:12:53,001 - arangopipe_logger - INFO - Recording model run link {'_id': 'run_models/275260692464344757957575878471622408447-110176256', '_key': '275260692464344757957575878471622408447-110176256', '_rev': '_aMa5CQS---'}
+2020-03-17 12:12:53,336 - arangopipe_logger - INFO - Recording model params {'_id': 'modelparams/275260692464344757957575878471622408447', '_key': '275260692464344757957575878471622408447', '_rev': '_aMa5ClO---'}
+2020-03-17 12:12:53,674 - arangopipe_logger - INFO - Recording run featureset link {'_id': 'run_featuresets/275260692464344757957575878471622408447-110176239', '_key': '275260692464344757957575878471622408447-110176239', '_rev': '_aMa5C6O--B'}
+2020-03-17 12:12:54,015 - arangopipe_logger - INFO - Recording run model params {'_id': 'run_modelparams/275260692464344757957575878471622408447-275260692464344757957575878471622408447', '_key': '275260692464344757957575878471622408447-275260692464344757957575878471622408447', '_rev': '_aMa5DPm--B'}
+2020-03-17 12:12:54,351 - arangopipe_logger - INFO - Recording model dev performance  {'_id': 'devperf/275260692464344757957575878471622408447', '_key': '275260692464344757957575878471622408447', '_rev': '_aMa5Dkq---'}
+2020-03-17 12:12:54,686 - arangopipe_logger - INFO - Recording run dev perf link {'_id': 'run_devperf/275260692464344757957575878471622408447-275260692464344757957575878471622408447', '_key': '275260692464344757957575878471622408447-275260692464344757957575878471622408447', '_rev': '_aMa5D5i--B'}
+2020-03-17 12:12:55,121 - arangopipe_logger - INFO - Recording run dev perf link {'_id': 'run_datasets/275260692464344757957575878471622408447-110176238', '_key': '275260692464344757957575878471622408447-110176238', '_rev': '_aMa5EUu--B'}
