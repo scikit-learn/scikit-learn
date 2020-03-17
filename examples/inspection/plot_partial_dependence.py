@@ -116,15 +116,16 @@ from sklearn.inspection import plot_partial_dependence
 print('Computing partial dependence plots...')
 tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
-plot_partial_dependence(
+display = plot_partial_dependence(
        est, X_train, features, individual="both", subsample=50,
        n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
-fig = plt.gcf()
-fig.suptitle('Partial dependence of house value on non-location features\n'
-             'for the California housing dataset, with MLPRegressor')
-fig.subplots_adjust(hspace=0.3)
+display.figure_.suptitle(
+    'Partial dependence of house value on non-location features\n'
+    'for the California housing dataset, with MLPRegressor'
+)
+display.figure_.subplots_adjust(hspace=0.3)
 
 ##############################################################################
 # Gradient boosting
@@ -158,15 +159,16 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 print('Computing partial dependence plots...')
 tic = time()
-plot_partial_dependence(
+display = plot_partial_dependence(
     est, X_train, features, individual="both", subsample=50,
     n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
-fig = plt.gcf()
-fig.suptitle('Partial dependence of house value on non-location features\n'
-             'for the California housing dataset, with Gradient Boosting')
-fig.subplots_adjust(wspace=0.4, hspace=0.3)
+display.figure_.suptitle(
+    'Partial dependence of house value on non-location features\n'
+    'for the California housing dataset, with Gradient Boosting'
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
 ##############################################################################
 # Analysis of the plots
@@ -211,14 +213,16 @@ fig.subplots_adjust(wspace=0.4, hspace=0.3)
 features = ['AveOccup', 'HouseAge', ('AveOccup', 'HouseAge')]
 print('Computing partial dependence plots...')
 tic = time()
-plot_partial_dependence(
+display = plot_partial_dependence(
     est, X_train, features, individual=False, n_jobs=3, grid_resolution=20
 )
 print(f"done in {time() - tic:.3f}s")
-fig = plt.gcf()
-fig.suptitle('Partial dependence of house value on non-location features\n'
-             'for the California housing dataset, with Gradient Boosting')
-fig.subplots_adjust(wspace=0.4, hspace=0.3)
+display.figure_.suptitle(
+    'Partial dependence of house value on non-location features\n'
+    'for the California housing dataset, with Gradient Boosting'
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+display.figure_.set_size_inches(4.8, 3.2, forward=True)
 
 #############################################################################
 # The two-way partial dependence plot shows the dependence of median house

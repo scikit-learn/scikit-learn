@@ -33,7 +33,7 @@ The figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
 <sklearn.ensemble.GradientBoostingRegressor>`:
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_002.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_003.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -114,16 +114,11 @@ Due to the limits of human perception, only one input feature of interest is
 supported for ICE plots.
 
 The figures below show four ICE plots for the California housing dataset,
-with a :class:`GradientBoostingRegressor
-<sklearn.ensemble.GradientBoostingRegressor>`. The second figure plots
+with a :class:`HistGradientBoostingRegressor
+<sklearn.ensemble.HistGradientBoostingRegressor>`. The second figure plots
 the corresponding PD line overlaid on ICE lines.
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_004.png
-   :target: ../auto_examples/inspection/plot_partial_dependence.html
-   :align: center
-   :scale: 70
-
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_005.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_002.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -135,7 +130,7 @@ For example, we could observe a linear relationship between the median income
 and the house price in the PD line. However, the ICE lines show that there
 are some exceptions, where the house price remains constant in some ranges of
 the median income.
- 
+
 The :mod:`sklearn.inspection` module's :func:`plot_partial_dependence`
 convenience function can be used to create ICE plots by setting
 ``individual=True``. In the example below, we show how to create a grid of
@@ -180,8 +175,8 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 :math:`x_C` for the features in :math:`X_C`. Note that :math:`x_S` and
 :math:`x_C` may be tuples.
 
-Computing this integral for various values of :math:`x_S` produces a PDP plot as
-above.
+Computing this integral for various values of :math:`x_S` produces a PDP plot
+as above.
 
 In ICE, for each sample in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
 line :math:`pd_{X_S}^{(i)}` is calculated against :math:`X_S^{(i)}`, while
@@ -209,11 +204,11 @@ over the dataset `X` which is computationally intensive.
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported for PDP plots by some tree-based estimators. It is computed as
 follows. For a given point :math:`x_S`, a weighted tree traversal is performed:
-if a split node involves an input feature of interest, the corresponding left or
-right branch is followed; otherwise both branches are followed, each branch
+if a split node involves an input feature of interest, the corresponding left
+or right branch is followed; otherwise both branches are followed, each branch
 being weighted by the fraction of training samples that entered that branch.
-Finally, the partial dependence is given by a weighted average of all the visited
-leaves values.
+Finally, the partial dependence is given by a weighted average of all the
+visited leaves values.
 
 With the 'brute' method, the parameter `X` is used both for generating the
 grid of values :math:`x_S` and the complement feature values :math:`x_C`.
