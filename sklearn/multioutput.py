@@ -237,14 +237,14 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.datasets import load_linnerud
     >>> from sklearn.multioutput import MultiOutputRegressor
-    >>> from sklearn.linear_model import LinearRegression
-    >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> y_multi = np.array([y, 2 * y]).T
-    >>> clf = MultiOutputRegressor(LinearRegression()).fit(X, y_multi)
-    >>> clf.predict(np.array([[0.2, 0.5, -0.4, 0.3]]))
-    array([[20.51..., 41.02...]])
+    >>> from sklearn.linear_model import Ridge
+    >>> np.random.seed(123)
+    >>> X, y = load_linnerud(return_X_y=True)
+    >>> clf = MultiOutputRegressor(Ridge(alpha=1.0)).fit(X, y)
+    >>> clf.predict(X[0, np.newaxis])
+    array([[176..., 35..., 57...]])
     """
 
     def __init__(self, estimator, n_jobs=None):
