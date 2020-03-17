@@ -1,3 +1,0 @@
-2020-03-17 10:42:40,887 - arangopipe_admin_logger - DEBUG - Connection reuse: False
-2020-03-17 10:42:40,887 - arangopipe_admin_logger - INFO - Requesting a managed service database...
-2020-03-17 10:42:44,321 - arangopipe_admin_logger - INFO - Managed service database was created !
