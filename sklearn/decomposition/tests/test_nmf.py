@@ -19,12 +19,13 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 
-def test_convergence_warning():
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
+def test_convergence_warning(solver):
     convergence_warning = "Maximum number of iterations 1 reached."
     convergence_warning += " Increase it to improve convergence."
     A = np.ones((2, 2))
     with pytest.warns(ConvergenceWarning, match=convergence_warning):
-        NMF(max_iter=1).fit(A)
+        NMF(solver=solver, max_iter=1).fit(A)
 
 
 def test_initialize_nn_output():
