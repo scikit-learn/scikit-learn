@@ -871,9 +871,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 continue
             if (not hasattr(t, "fit_transform") and
                     (not hasattr(t, "fit") and hasattr(t, "transform"))):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
-                                "transform, fit_transform or be the string "
-                                "'drop'. '%s' (type %s) doesn't"
+                                "transform. '%s' (type %s) doesn't"
                                 % (t, type(t)))
             elif not hasattr(t, "transform"):
                 warnings.warn("Intermediate step '%s' (type %s) does not have "

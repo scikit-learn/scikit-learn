@@ -525,8 +525,7 @@ def test_feature_union():
     # test error if some elements do not support transform
     assert_raises_regex(TypeError,
                         'All estimators should implement fit and '
-                        'transform, fit_transform or be the string \'drop\''
-                        '.*\\bNoTrans\\b.*',
+                        'transform.*\\bNoTrans\\b.*',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
 
