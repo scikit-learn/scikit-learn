@@ -388,7 +388,8 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
 
 @_deprecate_positional_args
-def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True, resize=0.5,
+def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
+                    resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
