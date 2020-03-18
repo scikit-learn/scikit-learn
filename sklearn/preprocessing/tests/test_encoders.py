@@ -692,7 +692,7 @@ def test_encoders_has_categorical_tags(Encoder):
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_does_not_support_none_values(Encoder):
-    values = [["a", None]]
-    with pytest.raises(ValueError, match="This encoder does not accept "
-                                         "None typed values"):
+    values = [["a"], [None]]
+    with pytest.raises(TypeError, match="Encoders require their input to be "
+                                         "strings or numbers."):
         Encoder().fit(values)
