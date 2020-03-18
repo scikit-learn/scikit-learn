@@ -115,9 +115,9 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         try:
             res = _encode_python(values, uniques, encode)
         except TypeError:
-            raise TypeError("argument must be a string or number")
-        except ValueError as e:
-            raise e
+            raise TypeError("Encoders require their input to be strings or numbers. Got {}")
+        except ValueError:
+            raise
         return res
     else:
         return _encode_numpy(values, uniques, encode,
