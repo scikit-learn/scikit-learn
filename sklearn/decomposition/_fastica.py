@@ -426,12 +426,6 @@ class FastICA(TransformerMixin, BaseEstimator):
             X_new : array-like, shape (n_samples, n_components)
         """
 
-        if self.whiten == 'unit-variance':
-            unit_variance = True
-            self.whiten = True
-        else:
-            unit_variance = False
-
         X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
                                 ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
@@ -457,7 +451,7 @@ class FastICA(TransformerMixin, BaseEstimator):
                 " should be one of 'logcosh', 'exp', 'cube' or callable"
                 % self.fun
             )
-        if unit_variance:
+        if self.whiten == 'unit-variance':
             warnings.warn(
                 "From version 0.24, whiten='unit-variance' by default.",
                 FutureWarning)
@@ -536,7 +530,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         self.n_iter_ = n_iter
 
         if self.whiten:
-            if unit_variance:
+            if self.whiten == 'unit-variance':
                 S = np.dot(np.dot(W, K), X).T
                 S_std = np.std(S, axis=0, keepdims=True)
                 S /= S_std
