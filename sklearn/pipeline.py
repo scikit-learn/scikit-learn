@@ -186,8 +186,8 @@ class Pipeline(_BaseComposition):
                                 % (t, type(t)))
             elif not hasattr(t, "transform"):
                 warnings.warn("Intermediate step '%s' (type %s) does not have "
-                              "transform, pipeline is not reusable."
-                              % (t, type(t)))
+                              "transform, pipeline is not reusable on "
+                              "test data." % (t, type(t)))
 
         # We allow last estimator to be None as an identity transformation
         if (estimator is not None and estimator != 'passthrough'
@@ -200,8 +200,8 @@ class Pipeline(_BaseComposition):
         elif not (hasattr(estimator, "transform") or
                   hasattr(estimator, "predict")):
             warnings.warn("Intermediate step '%s' (type %s) does not have "
-                          "transform or predict, pipeline is not reusable."
-                          % (estimator, type(estimator)))
+                          "transform or predict, pipeline is not reusable "
+                          "on test data." % (estimator, type(estimator)))
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
