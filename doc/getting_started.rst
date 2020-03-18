@@ -56,7 +56,7 @@ new data. You don't need to re-train the estimator::
 Transformers and pre-processors
 -------------------------------
 
-Machine learning worflows are often composed of different parts. A typical
+Machine learning workflows are often composed of different parts. A typical
 pipeline consists of a pre-processing step that transforms or imputes the
 data, and a final predictor that predicts target values.
 
@@ -77,7 +77,7 @@ Sometimes, you want to apply different transformations to different features:
 the :ref:`ColumnTransformer<column_transformer>` is designed for these
 use-cases.
 
-Pipelines: chaining pre-preocessors and estimators
+Pipelines: chaining pre-processors and estimators
 --------------------------------------------------
 
 Transformers and estimators (predictors) can be combined together into a
@@ -164,7 +164,7 @@ a :class:`~sklearn.ensemble.RandomForestRegressor` that has been fitted with
 the best set of parameters. Read more in the :ref:`User Guide
 <grid_search>`::
 
-  >>> from sklearn.datasets.california_housing import fetch_california_housing
+  >>> from sklearn.datasets import fetch_california_housing
   >>> from sklearn.ensemble import RandomForestRegressor
   >>> from sklearn.model_selection import RandomizedSearchCV
   >>> from sklearn.model_selection import train_test_split
@@ -205,7 +205,7 @@ the best set of parameters. Read more in the :ref:`User Guide
     training and testing data. Indeed, since you pre-processed the data
     using the whole dataset, some information about the test sets are
     available to the train sets. This will lead to over-estimating the
-    generalization power of the estimator (you can read more in this `kaggle
+    generalization power of the estimator (you can read more in this `Kaggle
     post <https://www.kaggle.com/alexisbcook/data-leakage>`_).
 
     Using a pipeline for cross-validation and searching will largely keep

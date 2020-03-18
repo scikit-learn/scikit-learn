@@ -13,7 +13,6 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.base import BaseEstimator
 from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
@@ -24,14 +23,16 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._mocking import NoSampleWeightWrapper
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -342,10 +343,6 @@ def test_check_inputs():
     # Test input checks (shape and type of X and y).
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y + [0, 1])
-
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(ValueError, clf.fit, X, y,
-                  sample_weight=([1] * len(y)) + [0, 1])
 
     weight = [0, 0, 0, 1, 1, 1]
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
@@ -1086,7 +1083,8 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+    est = assert_warns_message(FutureWarning,
+                               "min_impurity_decrease",
                                est.fit, X, y)
     for tree in est.estimators_.flat:
         assert tree.min_impurity_split == 0.1
@@ -1167,9 +1165,10 @@ def test_non_uniform_weights_toy_edge_case_clf():
 
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
     dense = EstimatorClass(n_estimators=10, random_state=0,
-                           max_depth=2).fit(X, y)
+                           max_depth=2, min_impurity_decrease=1e-7).fit(X, y)
     sparse = EstimatorClass(n_estimators=10, random_state=0,
-                            max_depth=2).fit(X_sparse, y)
+                            max_depth=2,
+                            min_impurity_decrease=1e-7).fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
@@ -1292,24 +1291,12 @@ def test_early_stopping_stratified():
         gbc.fit(X, y)
 
 
-class _NoSampleWeightWrapper(BaseEstimator):
-    def __init__(self, est):
-        self.est = est
-
-    def fit(self, X, y):
-        self.est.fit(X, y)
-
-    def predict(self, X):
-        return self.est.predict(X)
-
-    def predict_proba(self, X):
-        return self.est.predict_proba(X)
-
-
 def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),
@@ -1320,7 +1307,7 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
-    # inital estimator does not support sample weight
+    # initial estimator does not support sample weight
 
     X, y = dataset_maker()
     sample_weight = np.random.RandomState(42).rand(100)
@@ -1330,7 +1317,7 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = _NoSampleWeightWrapper(init_estimator())
+    init_est = NoSampleWeightWrapper(init_estimator())
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):
@@ -1413,6 +1400,6 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     gb = Cls(presort=presort)
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)
