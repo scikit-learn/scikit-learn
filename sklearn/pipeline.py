@@ -177,7 +177,7 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None or t == 'passthrough':
                 continue
-            if (not hasattr(t, "fit_transform") or
+            if (not hasattr(t, "fit_transform") and
                     (not (hasattr(t, "fit") and hasattr(t, "transform")))):
                 raise TypeError("All intermediate steps should be "
                                 "transformers and implement fit and "
