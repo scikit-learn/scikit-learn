@@ -515,7 +515,7 @@ Mean Absolute Error:
 
 .. math::
 
-    median(y)_m = \underset{\mathrm{median}}{i \in N_m}(y_i)
+    median(y)_m = \underset{i \in N_m}{\mathrm{median}}(y_i)
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - median(y)_m|
 
