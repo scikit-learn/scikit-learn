@@ -104,6 +104,12 @@ class DataConversionWarning(UserWarning):
     DataConversionWarning('Data was converted to boolean for metric jaccard')
 
 
+    >>> from sklearn.utils import validation
+    >>> Y = [[1],[2],[3]]
+    >>> # will trigger warning as Y is a column-vector
+    >>> validation.column_or_1d(Y,warn=True)
+    DataConversionWarning: A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
     """
