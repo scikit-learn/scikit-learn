@@ -419,10 +419,9 @@ class KFold(_BaseKFold):
 
     See also
     --------
-    StratifiedKFold
-        Takes group information into account to avoid building folds with
-        imbalanced class distributions (for binary or multiclass
-        classification tasks).
+    StratifiedKFold: Takes class information into account to build folds which
+        retain class distributions (for binary or multiclass classification
+        tasks).
 
     GroupKFold: K-fold iterator variant with non-overlapping groups.
 
@@ -733,6 +732,133 @@ class StratifiedKFold(_BaseKFold):
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
+
+
+class StratifiedGroupKFold(StratifiedKFold):
+    """Stratified K-Folds iterator variant with non-overlapping groups.
+
+    This cross-validation object is a variation of StratifiedKFold that returns
+    folds stratified by group class. The folds are made by preserving the
+    percentage of groups for each class.
+
+    The same group will not appear in two different folds (the number of
+    distinct groups has to be at least equal to the number of folds).
+
+    The difference between GroupKFold and StratifiedGroupKFold is that
+    the former attempts to create balanced folds such that the number of
+    distinct groups is approximately the same in each fold, whereas
+    StratifiedGroupKFold attempts to create folds which preserve the
+    percentage of groups for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    shuffle : bool, default=False
+        Whether to shuffle each class's samples before splitting into batches.
+        Note that the samples within each split will not be shuffled.
+
+    random_state : int or RandomState instance, default=None
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold for each class.
+        Otherwise, leave `random_state` as `None`.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import StratifiedGroupKFold
+    >>> X = np.ones((17, 2))
+    >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
+    >>> cv = StratifiedGroupKFold(n_splits=3, random_state=777)
+    >>> for train_idxs, test_idxs in cv.split(X, y, groups):
+    ...     print("TRAIN:", groups[train_idxs])
+    ...     print("      ", y[train_idxs])
+    ...     print(" TEST:", groups[test_idxs])
+    ...     print("      ", y[test_idxs])
+    TRAIN: [3 3 3 4 6 6 7 8 8]
+           [1 1 1 1 0 0 0 0 0]
+     TEST: [1 1 2 2 5 5 5 5]
+           [0 0 1 1 0 0 0 0]
+    TRAIN: [1 1 2 2 4 5 5 5 5 8 8]
+           [0 0 1 1 1 0 0 0 0 0 0]
+     TEST: [3 3 3 6 6 7]
+           [1 1 1 0 0 0]
+    TRAIN: [1 1 2 2 3 3 3 5 5 5 5 6 6 7]
+           [0 0 1 1 1 1 1 0 0 0 0 0 0 0]
+     TEST: [4 8 8]
+           [1 0 0]
+    >>> cv = GroupKFold(n_splits=3)
+    >>> for train_idxs, test_idxs in cv.split(X, y, groups):
+    ...     print("TRAIN:", groups[train_idxs])
+    ...     print("      ", y[train_idxs])
+    ...     print(" TEST:", groups[test_idxs])
+    ...     print("      ", y[test_idxs])
+    TRAIN: [2 2 3 3 3 4 6 6 7 8 8]
+           [1 1 1 1 1 1 0 0 0 0 0]
+     TEST: [1 1 5 5 5 5]
+           [0 0 0 0 0 0]
+    TRAIN: [1 1 5 5 5 5 6 6 7 8 8]
+           [0 0 0 0 0 0 0 0 0 0 0]
+     TEST: [2 2 3 3 3 4]
+           [1 1 1 1 1 1]
+    TRAIN: [1 1 2 2 3 3 3 4 5 5 5 5]
+           [0 0 1 1 1 1 1 1 0 0 0 0]
+     TEST: [6 6 7 8 8]
+           [0 0 0 0 0]
+
+    Notes
+    -----
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      group classes, or as close as possible.
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from class k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
+    * Generate test sets where the smallest and largest differ by at most one
+      group.
+
+    See also
+    --------
+    StratifiedKFold: Takes class information into account to build folds which
+        retain class distributions (for binary or multiclass classification
+        tasks).
+
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
+    """
+
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
+
+    def _iter_test_masks(self, X, y, groups):
+        y = check_array(y, ensure_2d=False, dtype=None)
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
+        (unique_groups, unique_groups_y), group_indices = np.unique(
+            np.stack((groups, y)), axis=1, return_inverse=True)
+        n_groups = len(unique_groups)
+        if self.n_splits > n_groups:
+            raise ValueError("Cannot have number of splits n_splits=%d greater"
+                             " than the number of groups: %d."
+                             % (self.n_splits, n_groups))
+        if unique_groups.shape[0] != np.unique(groups).shape[0]:
+            raise ValueError("Members of each group must all be of the same "
+                             "class.")
+        for group_test in super()._iter_test_masks(X=unique_groups,
+                                                   y=unique_groups_y):
+            # this is the mask of unique_groups in the partition invert it into
+            # a data mask
+            yield np.in1d(group_indices, np.where(group_test))
 
 
 class TimeSeriesSplit(_BaseKFold):
@@ -1745,8 +1871,9 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
     arbitrary domain specific stratifications of the samples as integers.
 
     This cross-validation object is a merge of GroupShuffleSplit and
-    StratifiedShuffleSplit, which returns stratified randomized folds. The
-    folds are made by preserving the percentage of groups for each class.
+    StratifiedShuffleSplit, which returns randomized folds stratified by group
+    class. The folds are made by preserving the percentage of groups for each
+    class.
 
     Note: like the StratifiedShuffleSplit strategy, stratified random group
     splits do not guarantee that all folds will be different, although this is
@@ -1756,23 +1883,23 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int (default 5)
+    n_splits : int, default=5
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, optional (default=None)
+    test_size : float, int, None, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
         set to the complement of the train size. By default, the value is set
         to 0.1.
 
-    train_size : float, int, or None, default is None
+    train_size : float, int, or None, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the groups to include in the train split. If
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -1808,6 +1935,12 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
            [0 0 1 1 1 1 1 1 0 0]
      TEST: [4 5 5 5 5]
            [0 1 1 1 1]
+
+    See also
+    --------
+    GroupShuffleSplit: Shuffle-Group(s)-Out iterator.
+
+    StratifiedShuffleSplit: Stratified ShuffleSplit iterator.
     """
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
@@ -1837,7 +1970,7 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
             test = np.flatnonzero(np.in1d(group_indices, group_test))
             yield train, test
 
-    def split(self, X, y=None, groups=None):
+    def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
