@@ -153,11 +153,6 @@ for k, (clf, label, marker, color, ax) in enumerate(
     ax.set_title(label)
     ax.grid()
 
-    if k in [1, 3]:
-        ax.set_ylabel("")
-    if k in [0, 1]:
-        ax.set_xlabel("")
-
 ax_cali.set_xlabel("Mean predicted value per bin")
 ax_cali.set_ylabel("Fraction of positives per bin")
 ax_cali.set_xlim(-0.02, 1.02)
