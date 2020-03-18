@@ -869,8 +869,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 continue
             if t == 'drop':
                 continue
-            if (not hasattr(t, "fit_transform") and
-                    (not hasattr(t, "fit") and hasattr(t, "transform"))):
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
