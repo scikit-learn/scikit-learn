@@ -319,7 +319,7 @@ def test_fastica_whiten_default_value_raise_warning():
         _ = ica.fit_transform(X)
 
 
-def test_fastica_whiten_true_is_behaving_bad():
+def test_fastica_whiten_true_preserves_bad_old_behaviour():
     """
 
     Bug #13056
