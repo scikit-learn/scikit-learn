@@ -314,8 +314,8 @@ def test_fastica_whiten_default_value_raise_warning():
     n_components = X.shape[1]
     ica = FastICA(n_components=n_components, random_state=0)
     with pytest.warns(FutureWarning,
-                       match="From version 0.24, whiten='unit-variance' by "
-                             "default."):
+                      match="From version 0.24, whiten='unit-variance' by "
+                            "default."):
         _ = ica.fit_transform(X)
 
 
