@@ -316,6 +316,7 @@ This manner of specification is similar to that of *transformers* in
    >>> print(clf.predict(X_test))
    [1]
 
+
 Besides specifying a list of integers, you can also indicate column
 names explicitly if the `X` and `y` data are pandas `DataFrame`s:
 
