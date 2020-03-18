@@ -19,7 +19,6 @@ from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
 from ._display_estimator import _EstHTMLBlock
-from ._config import config_context
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -1025,9 +1024,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _sk_repr_html(self):
         names, transformers = zip(*self.transformer_list)
-        with config_context(print_changed_only=True):
-            name_details = [str(trans) for trans in transformers]
-        return _EstHTMLBlock('parallel', transformers, names, name_details)
+        return _EstHTMLBlock('parallel', transformers, names)
 
 
 def make_union(*transformers, **kwargs):

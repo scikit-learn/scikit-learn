@@ -32,7 +32,6 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
 from .._display_estimator import _EstHTMLBlock
-from .._config import config_context
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -107,9 +106,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     def _sk_repr_html(self):
         names, estimators = zip(*self.estimators)
-        with config_context(print_changed_only=True):
-            name_details = [str(trans) for trans in estimators]
-        return _EstHTMLBlock('parallel', estimators, names, name_details)
+        return _EstHTMLBlock('parallel', estimators, names)
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
