@@ -545,7 +545,7 @@ many estimators. An example of the HTML output can been seen below.
 .. note:: 
 
     The HTML output of this code snippet can only been seen on the HTML version
-    of the docs.
+    of the documentation.
 
 .. display_estimator_repr_html::
 
