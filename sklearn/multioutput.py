@@ -240,10 +240,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> from sklearn.datasets import load_linnerud
     >>> from sklearn.multioutput import MultiOutputRegressor
     >>> from sklearn.linear_model import Ridge
-    >>> np.random.seed(123)
     >>> X, y = load_linnerud(return_X_y=True)
-    >>> clf = MultiOutputRegressor(Ridge(alpha=1.0)).fit(X, y)
-    >>> clf.predict(X[0, np.newaxis])
+    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> clf.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
 
