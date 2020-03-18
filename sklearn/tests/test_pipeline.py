@@ -410,7 +410,7 @@ def test_pipeline_methods_pca_tsne():
 
     with pytest.warns(UserWarning, match=msg):
         pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
-                                 'passthrough')
+                             'passthrough')
 
     pipeline_emb = pipe.fit_transform(iris.data)
 
