@@ -50,6 +50,7 @@ from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
+from ..utils.validation import _deprecate_positional_args
 from ._base import _pkl_filepath
 
 # The original data can be found at:
@@ -137,7 +138,8 @@ def construct_grids(batch):
     return (xgrid, ygrid)
 
 
-def fetch_species_distributions(data_home=None,
+@_deprecate_positional_args
+def fetch_species_distributions(*, data_home=None,
                                 download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006)
 

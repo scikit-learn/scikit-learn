@@ -25,6 +25,7 @@ import scipy.sparse as sp
 from .. import __version__
 
 from ..utils import check_array, IS_PYPY
+from ..utils.validation import _deprecate_positional_args
 
 if not IS_PYPY:
     from ._svmlight_format_fast import _load_svmlight_file
@@ -37,7 +38,8 @@ else:
                 'for the status updates).')
 
 
-def load_svmlight_file(f, n_features=None, dtype=np.float64,
+@_deprecate_positional_args
+def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
                        multilabel=False, zero_based="auto", query_id=False,
                        offset=0, length=-1):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
@@ -196,7 +198,8 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
     return data, indices, indptr, labels, query
 
 
-def load_svmlight_files(files, n_features=None, dtype=np.float64,
+@_deprecate_positional_args
+def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto", query_id=False,
                         offset=0, length=-1):
     """Load dataset from multiple files in SVMlight format
@@ -380,7 +383,9 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+@_deprecate_positional_args
+def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
+                       query_id=None,
                        multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 

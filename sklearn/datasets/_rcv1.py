@@ -25,6 +25,7 @@ from ._base import RemoteFileMetadata
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
+from ..utils.validation import _deprecate_positional_args
 
 
 # The original vectorized data can be found at:
@@ -75,7 +76,8 @@ TOPICS_METADATA = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
+@_deprecate_positional_args
+def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
                random_state=None, shuffle=False, return_X_y=False):
     """Load the RCV1 multilabel dataset (classification).
 

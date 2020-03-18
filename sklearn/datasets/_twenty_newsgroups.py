@@ -45,6 +45,7 @@ from ._base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils.validation import _deprecate_positional_args
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +147,8 @@ def strip_newsgroup_footer(text):
         return text
 
 
-def fetch_20newsgroups(data_home=None, subset='train', categories=None,
+@_deprecate_positional_args
+def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True, return_X_y=False):
@@ -322,7 +324,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
+@_deprecate_positional_args
+def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
                                   normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
