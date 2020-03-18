@@ -776,7 +776,7 @@ class StratifiedGroupKFold(StratifiedKFold):
     >>> X = np.ones((17, 2))
     >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
-    >>> cv = StratifiedGroupKFold(n_splits=3, random_state=777)
+    >>> cv = StratifiedGroupKFold(n_splits=3)
     >>> for train_idxs, test_idxs in cv.split(X, y, groups):
     ...     print("TRAIN:", groups[train_idxs])
     ...     print("      ", y[train_idxs])
