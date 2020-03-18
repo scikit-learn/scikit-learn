@@ -877,10 +877,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 continue
             if (not hasattr(t, "fit_transform") and
                     (not hasattr(t, "fit") and hasattr(t, "transform"))):
-                raise TypeError("All intermediate steps should be "
-                                "transformers and implement fit and "
+                raise TypeError("All estimators should implement fit and "
                                 "transform, fit_transform or be the string "
-                                "'passthrough'. '%s' (type %s) doesn't"
+                                "'drop'. '%s' (type %s) doesn't"
                                 % (t, type(t)))
             elif not hasattr(t, "transform"):
                 warnings.warn("Intermediate step '%s' (type %s) does not have "
