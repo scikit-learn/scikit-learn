@@ -94,12 +94,6 @@ def _write_named_label_html(out, estimator, name):
     _write_label_html(out, name, name_details)
 
 
-def _write_sk_item(out, dash_wrapped=True):
-    """Write sk-item with or without sk-dashed-wrapped"""
-    dash_cls = " sk-dashed-wrapped" if dash_wrapped else ""
-    out.write(f'<div class="sk-item{dash_cls}">')
-
-
 def _write_estimator_html(out, estimator, name, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
@@ -107,7 +101,10 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         est_block = _get_visual_block(estimator)
 
     if est_block.kind == 'serial':
-        _write_sk_item(out, dash_wrapped=first_call or est_block.dash_wrapped)
+        dashed_wrapped = first_call or est_block.dash_wrapped
+        dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
+        out.write(f'<div class="sk-item{dash_cls}">')
+
         _write_named_label_html(out, estimator, name)
 
         out.write('<div class="sk-serial">')
@@ -117,7 +114,10 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         out.write('</div></div>')  # sk-serial sk-item
 
     elif est_block.kind == 'parallel':
-        _write_sk_item(out, dash_wrapped=est_block.dash_wrapped)
+        dashed_wrapped = first_call or est_block.dash_wrapped
+        dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
+        out.write(f'<div class="sk-item{dash_cls}">')
+
         _write_named_label_html(out, estimator, name)
         out.write('<div class="sk-parallel">')
 
