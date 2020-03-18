@@ -1946,11 +1946,8 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
                  random_state=None):
-        super().__init__(
-            n_splits=n_splits,
-            test_size=test_size,
-            train_size=train_size,
-            random_state=random_state)
+        super().__init__(n_splits=n_splits, test_size=test_size,
+                         train_size=train_size, random_state=random_state)
         self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups):
