@@ -197,11 +197,6 @@ class Pipeline(_BaseComposition):
                 "Last step of Pipeline should implement fit, "
                 "fit_transform or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator)))
-        elif not (hasattr(estimator, "transform") or
-                  hasattr(estimator, "predict")):
-            warnings.warn("Intermediate step '%s' (type %s) does not have "
-                          "transform or predict, pipeline is not reusable "
-                          "on test data." % (estimator, type(estimator)))
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
