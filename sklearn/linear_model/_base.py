@@ -26,7 +26,7 @@ from joblib import Parallel, delayed
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot

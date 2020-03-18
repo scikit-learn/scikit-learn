@@ -22,7 +22,6 @@ from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
-from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight

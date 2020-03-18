@@ -8,7 +8,6 @@ from pickle import dumps
 from functools import partial
 
 import pytest
-import joblib
 
 import numpy as np
 from sklearn.datasets import get_data_home

@@ -146,7 +146,7 @@ a linear kernel.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-
+   * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Ridge Complexity
 ----------------
@@ -232,6 +232,7 @@ computes the coefficients along the full path of possible values.
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 
 .. note:: **Feature selection with Lasso**
