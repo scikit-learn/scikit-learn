@@ -4,63 +4,62 @@ from io import StringIO
 import uuid
 
 
-class _EstHTMLBlock:
+class _VisualBlock:
     """HTML Representation of Estimator
 
     Parameters
     ----------
-    type : {'serial', 'parallel', 'single'}
-        Type of HTML block
+    kind : {'serial', 'parallel', 'single'}
+        kind of HTML block
 
-    estimators : list of estimators or _EstHTMLBlock
-                or a single estimator
-        If type is in ('parallel', 'serial'), then `estimators` is a list of
+    estimators : list of estimators or `_VisualBlock`s or a single estimator
+        If kind is in ('parallel', 'serial'), then `estimators` is a list of
         estimators.
-        If type == 'single', then `estimators` is a single estimator.
+        If kind == 'single', then `estimators` is a single estimator.
 
     names : list of str
-        If type in ('parallel', 'serial'), then `names` corresponds to
+        If kind in ('parallel', 'serial'), then `names` corresponds to
         estimators
-        If type is 'single', then `names` is a single string corresponding to
+        If kind is 'single', then `names` is a single string corresponding to
         the single estimator.
 
     name_details : list of str, str, or None, default=None
-        If type == 'parallel', then `name_details` corresponds to `names`.
-        If type == 'single', then `name_details` is a single string
+        If kind == 'parallel', then `name_details` corresponds to `names`.
+        If kind == 'single', then `name_details` is a single string
         corresponding to the single estimator.
-        `name_details` is not used when type == 'single'.
+        `name_details` is not used when kind == 'single'.
 
     dash_wrapped : bool, default=True
-        If true, wrapped HTML element will be wrapped with a dashed boarder.
+        If true, wrapped HTML element will be wrapped with a dashed border.
     """
-    def __init__(self, type, estimators, names, name_details=None,
+    def __init__(self, kind, estimators, names, name_details=None,
                  dash_wrapped=True):
-        self.type = type
+        self.kind = kind
         self.estimators = estimators
         self.names = names
         self.dash_wrapped = dash_wrapped
 
-        if self.type == 'parallel' and name_details is None:
+        if self.kind == 'parallel' and name_details is None:
             name_details = (None, ) * len(names)
 
         self.name_details = name_details
 
 
-def _type_of_html_estimator(estimator):
+def _get_visual_block(estimator):
     """Generate information about how to display an estimator.
     """
-    if isinstance(estimator, _EstHTMLBlock):
+    if isinstance(estimator, _VisualBlock):
         return estimator
     elif isinstance(estimator, str):
-        return _EstHTMLBlock('single', estimator, estimator, estimator)
+        return _VisualBlock('single', estimator, estimator, estimator)
     elif estimator is None:
-        return _EstHTMLBlock('single', estimator, 'None', 'None')
+        return _VisualBlock('single', estimator, 'None', 'None')
     # looks like a meta estimator
     elif (hasattr(estimator, 'estimator') and
             hasattr(getattr(estimator, 'estimator'), 'get_params')):
         wrapped_estimator = getattr(estimator, 'estimator')
         wrapped_name = wrapped_estimator.__class__.__name__
-        return _EstHTMLBlock('serial', [wrapped_estimator], [wrapped_name])
+        return _VisualBlock('serial', [wrapped_estimator], [wrapped_name])
     return estimator._sk_repr_html()
 
 
@@ -88,7 +87,7 @@ def _write_label_html(out, name, name_details,
 
 def _write_named_label_html(out, estimator, name):
     """Write label with details based on name"""
-    if not name or isinstance(estimator, _EstHTMLBlock):
+    if not name or isinstance(estimator, _VisualBlock):
         return
     with config_context(print_changed_only=True):
         name_details = str(estimator)
@@ -105,9 +104,9 @@ def _write_estimator_html(out, estimator, name, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
     with config_context(print_changed_only=not first_call):
-        est_block = _type_of_html_estimator(estimator)
+        est_block = _get_visual_block(estimator)
 
-    if est_block.type == 'serial':
+    if est_block.kind == 'serial':
         _write_sk_item(out, dash_wrapped=first_call or est_block.dash_wrapped)
         _write_named_label_html(out, estimator, name)
 
@@ -117,7 +116,7 @@ def _write_estimator_html(out, estimator, name, first_call=False):
             _write_estimator_html(out, est, name)
         out.write('</div></div>')  # sk-serial sk-item
 
-    elif est_block.type == 'parallel':
+    elif est_block.kind == 'parallel':
         _write_sk_item(out, dash_wrapped=est_block.dash_wrapped)
         _write_named_label_html(out, estimator, name)
         out.write('<div class="sk-parallel">')
@@ -132,7 +131,7 @@ def _write_estimator_html(out, estimator, name, first_call=False):
             out.write('</div></div>')  # sk-parallel-item sk-serial
         out.write('</div></div>')  # sk-parallel sk-item
 
-    elif est_block.type == 'single':
+    elif est_block.kind == 'single':
         _write_label_html(out, est_block.names, est_block.name_details,
                           outer_class="sk-item", inner_class="sk-estimator",
                           checked=first_call)
@@ -276,7 +275,6 @@ div.sk-container {
   flex-direction: column;
   align-items: flex-start;
   position: relative;
-  float: left;
 }
 """.replace('  ', '').replace('\n', '')  # noqa
 

@@ -21,7 +21,7 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
 from sklearn._display_estimator import _write_label_html
-from sklearn._display_estimator import _type_of_html_estimator
+from sklearn._display_estimator import _get_visual_block
 from sklearn._display_estimator import _estimator_repr_html
 
 
@@ -41,32 +41,32 @@ def test_write_label_html(checked):
 
 
 @pytest.mark.parametrize('est', ['passthrough', 'drop', None])
-def test_type_of_html_estimator_single_str_none(est):
-    est_html_info = _type_of_html_estimator(est)
-    assert est_html_info.type == 'single'
+def test_get_visual_block_single_str_none(est):
+    est_html_info = _get_visual_block(est)
+    assert est_html_info.kind == 'single'
     assert est_html_info.estimators == est
     assert est_html_info.names == str(est)
     assert est_html_info.name_details == str(est)
 
 
-def test_type_of_html_estimator_single_estimator():
+def test_get_visual_block_single_estimator():
     est = LogisticRegression(C=10.0)
-    est_html_info = _type_of_html_estimator(est)
-    assert est_html_info.type == 'single'
+    est_html_info = _get_visual_block(est)
+    assert est_html_info.kind == 'single'
     assert est_html_info.estimators == est
     assert est_html_info.names == est.__class__.__name__
     assert est_html_info.name_details == str(est)
 
 
-def test_type_of_html_estimator_pipeline():
+def test_get_visual_block_pipeline():
     pipe = Pipeline([
         ('imputer', SimpleImputer()),
         ('do_nothing', 'passthrough'),
         ('do_nothing_more', None),
         ('classifier', LogisticRegression())
     ])
-    est_html_info = _type_of_html_estimator(pipe)
-    assert est_html_info.type == 'serial'
+    est_html_info = _get_visual_block(pipe)
+    assert est_html_info.kind == 'serial'
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
     assert est_html_info.names == ['imputer: SimpleImputer',
                                    'do_nothing: passthrough',
@@ -75,38 +75,38 @@ def test_type_of_html_estimator_pipeline():
     assert est_html_info.name_details is None
 
 
-def test_type_of_html_estimator_feature_union():
+def test_get_visual_block_feature_union():
     f_union = FeatureUnion([
         ('pca', PCA()), ('svd', TruncatedSVD())
     ])
-    est_html_info = _type_of_html_estimator(f_union)
-    assert est_html_info.type == 'parallel'
+    est_html_info = _get_visual_block(f_union)
+    assert est_html_info.kind == 'parallel'
     assert est_html_info.names == ('pca', 'svd')
     assert est_html_info.estimators == tuple(
         trans[1] for trans in f_union.transformer_list)
     assert est_html_info.name_details == (None, None)
 
 
-def test_type_of_html_estimator_voting():
+def test_get_visual_block_voting():
     clf = VotingClassifier([
         ('log_reg', LogisticRegression()),
         ('mlp', MLPClassifier())
     ])
-    est_html_info = _type_of_html_estimator(clf)
-    assert est_html_info.type == 'parallel'
+    est_html_info = _get_visual_block(clf)
+    assert est_html_info.kind == 'parallel'
     assert est_html_info.estimators == tuple(trans[1]
                                              for trans in clf.estimators)
     assert est_html_info.names == ('log_reg', 'mlp')
     assert est_html_info.name_details == (None, None)
 
 
-def test_type_of_html_estimator_column_transformer():
+def test_get_visual_block_column_transformer():
     ct = ColumnTransformer([
         ('pca', PCA(), ['num1', 'num2']),
         ('svd', TruncatedSVD, [0, 3])
     ])
-    est_html_info = _type_of_html_estimator(ct)
-    assert est_html_info.type == 'parallel'
+    est_html_info = _get_visual_block(ct)
+    assert est_html_info.kind == 'parallel'
     assert est_html_info.estimators == tuple(
         trans[1] for trans in ct.transformers)
     assert est_html_info.names == ('pca', 'svd')
