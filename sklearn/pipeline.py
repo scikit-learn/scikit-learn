@@ -191,8 +191,7 @@ class Pipeline(_BaseComposition):
 
         # We allow last estimator to be None as an identity transformation
         if (estimator is not None and estimator != 'passthrough'
-                and not (hasattr(estimator, "fit") or
-                         hasattr(estimator, "fit_transform"))):
+                and not hasattr(estimator, "fit")):
             raise TypeError(
                 "Last step of Pipeline should implement fit, "
                 "fit_transform or be the string 'passthrough'. "
