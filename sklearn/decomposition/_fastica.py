@@ -398,6 +398,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "
                              "(max_iter={})".format(max_iter))
+        if whiten == 'unit-variance':
+            self.unit_variance = True
+            whiten = True
+        else:
+            self.unit_variance = False
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -451,6 +456,10 @@ class FastICA(TransformerMixin, BaseEstimator):
                 " should be one of 'logcosh', 'exp', 'cube' or callable"
                 % self.fun
             )
+        if self.unit_variance:
+            warnings.warn(
+                "From version 0.24, whiten='unit-variance' by default.",
+                FutureWarning)
 
         n_samples, n_features = X.shape
 
@@ -526,10 +535,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         self.n_iter_ = n_iter
 
         if self.whiten:
-            S = np.dot(np.dot(W, K), X).T
-            S_std = np.std(S, axis=0, keepdims=True)
-            S /= S_std
-            W /= S_std.T
+            if self.unit_variance:
+                S = np.dot(np.dot(W, K), X).T
+                S_std = np.std(S, axis=0, keepdims=True)
+                S /= S_std
+                W /= S_std.T
 
             self.components_ = np.dot(W, K)
             self.mean_ = X_mean

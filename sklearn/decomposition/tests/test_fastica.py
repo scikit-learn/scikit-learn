@@ -78,9 +78,9 @@ def test_fastica_simple(add_noise, seed):
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
-    whitening = ['unit-variance', False]
+    whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
-        if whiten == 'unit-variance':
+        if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
             with pytest.raises(ValueError):
                 fastica(m.T, fun=np.tanh, algorithm=algo)
@@ -93,7 +93,7 @@ def test_fastica_simple(add_noise, seed):
                 fastica(X, fun=np.tanh, algorithm=algo)
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
-        if whiten == 'unit-variance':
+        if whiten:
             assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
         center_and_norm(s_)
@@ -116,7 +116,7 @@ def test_fastica_simple(add_noise, seed):
     # Test FastICA class
     _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo,
                                 random_state=seed)
-    ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
+    ica = FastICA(fun=nl, algorithm=algo, random_state=seed, whiten=True)
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
     assert sources.shape == (1000, 2)
@@ -302,6 +302,36 @@ def test_fastica_whiten_unit_variance():
     Xt = ica.fit_transform(X)
 
     assert_almost_equal(np.var(Xt), 1.0)
+
+
+def test_fastica_whiten_default_value_raise_warning():
+    """Test FastICA warns when using default value.
+
+    Bug #13056
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 1))
+    n_components = X.shape[1]
+    ica = FastICA(n_components=n_components, random_state=0)
+    with pytest.warns(FutureWarning,
+                       match="From version 0.24, whiten='unit-variance' by "
+                             "default."):
+        _ = ica.fit_transform(X)
+
+
+def test_fastica_whiten_true_is_behaving_bad():
+    """
+
+    Bug #13056
+    """
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    n_components = X.shape[1]
+    ica = FastICA(n_components=n_components, whiten='true',
+                  random_state=0)
+    Xt = ica.fit_transform(X)
+
+    assert_almost_equal(np.var(Xt), 1.0 / 100)
 
 
 @pytest.mark.parametrize('whiten', [True, False])
