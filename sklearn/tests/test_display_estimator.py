@@ -84,7 +84,7 @@ def test_type_of_html_estimator_feature_union():
     assert est_html_info.names == ('pca', 'svd')
     assert est_html_info.estimators == tuple(
         trans[1] for trans in f_union.transformer_list)
-    assert est_html_info.name_details == ['PCA()', 'TruncatedSVD()']
+    assert est_html_info.name_details == (None, None)
 
 
 def test_type_of_html_estimator_voting():
@@ -97,8 +97,7 @@ def test_type_of_html_estimator_voting():
     assert est_html_info.estimators == tuple(trans[1]
                                              for trans in clf.estimators)
     assert est_html_info.names == ('log_reg', 'mlp')
-    assert est_html_info.name_details == ['LogisticRegression()',
-                                          'MLPClassifier()']
+    assert est_html_info.name_details == (None, None)
 
 
 def test_type_of_html_estimator_column_transformer():
