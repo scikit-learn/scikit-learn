@@ -87,11 +87,10 @@ def test_derivatives(loss, x0, y_true):
     def fprime2(x):
         return get_hessians(y_true, x)
 
-    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
-                     maxiter=70, tol=2e-8)
-    assert np.allclose(loss.inverse_link_function(optimum), y_true)
-    assert np.allclose(func(optimum), 0)
-    assert np.allclose(get_gradients(y_true, optimum), 0)
+    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2)
+    assert_allclose(loss.inverse_link_function(optimum)[0], y_true)
+    assert_allclose(func(optimum)[0], 0, atol=1e-17)
+    assert_allclose(get_gradients(y_true, optimum)[0], 0, atol=1e-8)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
