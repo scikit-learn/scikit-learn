@@ -457,7 +457,7 @@ class FastICA(TransformerMixin, BaseEstimator):
                 " should be one of 'logcosh', 'exp', 'cube' or callable"
                 % self.fun
             )
-        if self.unit_variance:
+        if unit_variance:
             warnings.warn(
                 "From version 0.24, whiten='unit-variance' by default.",
                 FutureWarning)
