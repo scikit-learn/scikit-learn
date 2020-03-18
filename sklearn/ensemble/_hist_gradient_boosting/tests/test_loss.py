@@ -50,7 +50,7 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    # The argmin of binary_crossentropy for y_true=[-1, 1] is [-inf, inf] due
+    # The argmin of binary_crossentropy for y_true=[0, 1] is [-inf, +inf] due
     # to logit, cf. "complete separation". Therefore we use 0 < y_true < 1.
     ('binary_crossentropy', 0.3, 0.1),
     ('binary_crossentropy', -12, 0.2),
@@ -73,7 +73,7 @@ def test_derivatives(loss, x0, y_true):
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     def func(x):
-        if type(loss) == _LOSSES['binary_crossentropy']:
+        if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
             # has its minimum at zero. This only works if 0 < y_true < 1.
             return loss.pointwise_loss(y_true, x) \
