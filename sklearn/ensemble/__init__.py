@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     # import errors for experimenal estimators.
     # TODO: remove the above check once the estimator is no longer
     #       experimental.
-    from ._hist_gradient_boosting.gradient_boosting import (
+    from ._hist_gradient_boosting.gradient_boosting import (  # noqa
         HistGradientBoostingRegressor, HistGradientBoostingClassifier
     )
 

@@ -107,7 +107,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters : List[str] = []
+    _required_parameters: List[str] = []
 
     @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,

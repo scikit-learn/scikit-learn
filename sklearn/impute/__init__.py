@@ -9,7 +9,7 @@ if typing.TYPE_CHECKING:
     # import errors for experimenal estimators.
     # TODO: remove the above check once the estimator is no longer
     #       experimental.
-    from ._iterative import IterativeImputer
+    from ._iterative import IterativeImputer  # noqa
 
 __all__ = [
     'MissingIndicator',
