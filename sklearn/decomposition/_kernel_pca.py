@@ -216,7 +216,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,
-                                   np.empty_like(self.alphas_).T)
+                                   np.zeros_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]

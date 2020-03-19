@@ -146,6 +146,10 @@ Changelog
   applies the correct inverse transform to the transformed data. :pr:`16655`
   by :user:`Lewis Ball <lrjball>`.
 
+- |Fix| Fixed bug that was causing :class:`decomposition.KernelPCA` to sometimes
+  raise `invalid value encountered in multiply` during `fit`.
+  :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
