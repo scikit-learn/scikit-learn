@@ -411,7 +411,7 @@ example updates the model parameters according to the update rule given by
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
 without regularization (and with additional decay for sparse matrices, as
-detailed in :ref:`implemtation_details`).
+detailed in :ref:`implementation_details`).
 
 The learning rate :math:`\eta` can be either constant or gradually decaying. For
 classification, the default learning rate schedule (``learning_rate='optimal'``)
