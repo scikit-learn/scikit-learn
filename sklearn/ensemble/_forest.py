@@ -1110,19 +1110,9 @@ class RandomForestClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.datasets import make_classification
-
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit(X, y)
-    RandomForestClassifier(max_depth=2, random_state=0)
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
+    DecisionTreeClassifier, ExtraTreesClassifier
 
     Notes
     -----
@@ -1141,12 +1131,20 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    See Also
+    Examples
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
+    >>> clf.fit(X, y)
+    RandomForestClassifier(...)
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
     """
     def __init__(self,
                  n_estimators=100,
@@ -1396,18 +1394,9 @@ class RandomForestRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestRegressor
-    >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(n_features=4, n_informative=2,
-    ...                        random_state=0, shuffle=False)
-    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)
-    RandomForestRegressor(max_depth=2, random_state=0)
-    >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-8.32987858]
+    DecisionTreeRegressor, ExtraTreesRegressor
 
     Notes
     -----
@@ -1430,15 +1419,22 @@ class RandomForestRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
-    See Also
+    Examples
     --------
-    DecisionTreeRegressor, ExtraTreesRegressor
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
+    >>> regr.fit(X, y)
+    RandomForestRegressor(...)
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-8.32987858]
     """
     def __init__(self,
                  n_estimators=100,
@@ -1720,6 +1716,12 @@ class ExtraTreesClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
+    RandomForestClassifier : Ensemble Classifier based on trees with optimal
+        splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1727,6 +1729,11 @@ class ExtraTreesClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -1738,18 +1745,6 @@ class ExtraTreesClassifier(ForestClassifier):
     ExtraTreesClassifier(random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
-
-    References
-    ----------
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
-
-    See Also
-    --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
     """
     def __init__(self,
                  n_estimators=100,
@@ -2000,6 +1995,11 @@ class ExtraTreesRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
+    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -2010,14 +2010,21 @@ class ExtraTreesRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
 
-    See Also
+    Examples
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import ExtraTreesRegressor
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = ExtraTreesRegressor(n_estimators=100, random_state=0).fit(
+    ...    X_train, y_train)
+    >>> reg.score(X_test, y_test)
+    0.2708...
     """
     def __init__(self,
                  n_estimators=100,
@@ -2189,6 +2196,14 @@ class RandomTreesEmbedding(BaseForest):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
+           Machine Learning, 63(1), 3-42, 2006.
+    .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
+           visual codebooks using randomized clustering forests"
+           NIPS 2007
+
     Examples
     --------
     >>> from sklearn.ensemble import RandomTreesEmbedding
@@ -2202,15 +2217,6 @@ class RandomTreesEmbedding(BaseForest):
            [0., 1., 0., 1., 0., 1., 0., 1., 0., 1.],
            [1., 0., 1., 0., 1., 0., 1., 0., 1., 0.],
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
-
-    References
-    ----------
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
-           Machine Learning, 63(1), 3-42, 2006.
-    .. [2] Moosmann, F. and Triggs, B. and Jurie, F.  "Fast discriminative
-           visual codebooks using randomized clustering forests"
-           NIPS 2007
-
     """
 
     criterion = 'mse'
