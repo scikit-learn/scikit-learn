@@ -11,7 +11,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.validation import check_array, _deprecate_positional_args
+from ..utils.validation import _deprecate_positional_args
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -474,8 +474,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64, ensure_min_samples=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=np.float64, ensure_min_samples=2)
         allow_squared = self.affinity in ["precomputed",
                                           "precomputed_nearest_neighbors"]
         if X.shape[0] == X.shape[1] and not allow_squared:

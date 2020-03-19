@@ -19,6 +19,15 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
+def test_convergence_warning(solver):
+    convergence_warning = ("Maximum number of iterations 1 reached. "
+                           "Increase it to improve convergence.")
+    A = np.ones((2, 2))
+    with pytest.warns(ConvergenceWarning, match=convergence_warning):
+        NMF(solver=solver, max_iter=1).fit(A)
+
+
 def test_initialize_nn_output():
     # Test that initialization does not return negative values
     rng = np.random.mtrand.RandomState(42)

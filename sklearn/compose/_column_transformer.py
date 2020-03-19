@@ -23,6 +23,7 @@ from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = [
@@ -171,8 +172,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ['transformers']
 
+    @_deprecate_positional_args
     def __init__(self,
-                 transformers,
+                 transformers, *,
                  remainder='drop',
                  sparse_threshold=0.3,
                  n_jobs=None,
@@ -513,6 +515,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         else:
             self._feature_names_in = None
         X = _check_X(X)
+        # set n_features_in_ attribute
+        self._check_n_features(X, reset=True)
         self._validate_transformers()
         self._validate_column_callables(X)
         self._validate_remainder(X)
@@ -587,6 +591,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        # TODO: also call _check_n_features(reset=False) in 0.24
         self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
@@ -823,8 +828,9 @@ class make_column_selector:
            [-0.30151134,  0.        ,  1.        ,  0.        ],
            [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
-
-    def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
+    @_deprecate_positional_args
+    def __init__(self, pattern=None, *, dtype_include=None,
+                 dtype_exclude=None):
         self.pattern = pattern
         self.dtype_include = dtype_include
         self.dtype_exclude = dtype_exclude

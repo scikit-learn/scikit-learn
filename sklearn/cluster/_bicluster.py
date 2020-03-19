@@ -18,8 +18,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
-from ..utils.validation import (assert_all_finite, check_array,
-                                _deprecate_positional_args)
+from ..utils.validation import assert_all_finite, _deprecate_positional_args
 
 
 __all__ = ['SpectralCoclustering',
@@ -121,7 +120,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
                           " removed in 0.25.", FutureWarning)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
         return self
