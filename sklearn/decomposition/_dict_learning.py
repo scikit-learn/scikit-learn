@@ -1014,7 +1014,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     _required_parameters = ["dictionary"]
 
     @_deprecate_positional_args
-    def __init__(self, *, dictionary, transform_algorithm='omp',
+    def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
