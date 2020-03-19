@@ -14,7 +14,6 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
-
 Changed models
 --------------
 
@@ -134,13 +133,29 @@ Changelog
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+- |Fix| :func:`decomposition._pca._assess_dimension` now correctly handles small
+   eigenvalues. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
+   :user:`Gelavizh Ahmadi <gelavizh1>` and
+   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
   :pr:`16280` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`decomposition.KernelPCA` method ``inverse_transform`` now
+  applies the correct inverse transform to the transformed data. :pr:`16655`
+  by :user:`Lewis Ball <lrjball>`.
+
+- |Fix| Fixed bug that was causing :class:`decomposition.KernelPCA` to sometimes
+  raise `invalid value encountered in multiply` during `fit`.
+  :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
+
 :mod:`sklearn.ensemble`
 .......................
+
+- |MajorFeature|  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support
+  :term:`sample_weight`. :pr:`14696` by `Adrin Jalali`_ and `Nicolas Hug`_.
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
@@ -175,6 +190,13 @@ Changelog
   used during `fit`.
   :pr:`16437` by :user:`Jin-Hwan CHO <chofchof>`.
 
+- |Fix| Fixed a bug in :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` where the `sample_weight`
+  argument was not being passed to `cross_val_predict` when
+  evaluating the base estimators on cross-validation folds
+  to obtain the input to the meta estimator.
+  :pr:`16539` by :user:`Bill DeRose <wderose>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -192,7 +214,12 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
+  :pr:`15503` by :user:`Sam Dixon` <sam-dixon>.
+
+- |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
+  caused predicted standard deviations to only be between 0 and 1 when
+  WhiteKernel is not used. :pr:`15782`
+  by :user:`plgreenLIRU`.
 
 :mod:`sklearn.impute`
 .....................
@@ -201,8 +228,24 @@ Changelog
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  method for :class:`ensemble.RandomForestRegressor` and
+  :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
+  `Nicolas Hug`_.
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |MajorFeature| Added generalized linear models (GLM) with non normal error
+  distributions, including :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor` and :class:`linear_model.TweedieRegressor`
+  which use Poisson, Gamma and Tweedie distributions respectively.
+  :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
+  and `Olivier Grisel`_.
 
 - |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
   :class:`linear_model:Lasso` for dense feature matrix `X`.
@@ -244,6 +287,16 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |API| Changed the formatting of values in
+  :meth:`metrics.ConfusionMatrixDisplay.plot` and
+  :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  `Thomas Fan`_.
+
+- |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
+  its ``reduce_func`` to not have a return value, enabling in-place operations.
+  :pr:`16397` by `Joel Nothman`_.
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` to not ignore
   argument `squared` when argument `multioutput='raw_values'`.
@@ -296,15 +349,6 @@ Changelog
   differs between `predict` and `fit`.
   :pr:`16090` by :user:`Madhura Jayaratne <madhuracj>`.
 
-:mod:`sklearn.neighbors`
-..............................
-
-- |Fix| Fix a bug which converted a list of arrays into a 2-D object
-  array instead of a 1-D array containing NumPy arrays. This bug
-  was affecting :meth:`neighbors.NearestNeighbors.radius_neighbors`.
-  :pr:`16076` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Alex Shacked <alexshacked>`.
-
 :mod:`sklearn.neural_network`
 .............................
 
@@ -322,6 +366,15 @@ Changelog
   will now accept value 'if_binary' and will drop the first category of
   each feature with two categories. :pr:`#16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
+  computing statistics when calling `partial_fit` on sparse inputs.
+  :pr:`16466` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fix a bug in :class:`preprocessing.Normalizer` with norm='max',
+  which was not taking the absolute value of the maximum values before
+  normalizing the vectors. :pr:`16632` by
+  :user:`Maura Pintor <Maupin1991>` and :user:`Battista Biggio <bbiggio>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -364,6 +417,15 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
-  distance matrix is not square and `affinity=precomputed`. 
+- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
+Miscellaneous
+.............
+
+- |API| Most estimators now expose a `n_features_in_` attribute. This
+  attribute is equal to the number of features passed to the `fit` method.
+  See `SLEP010
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+  for details. :pr:`16112` by `Nicolas Hug`_.

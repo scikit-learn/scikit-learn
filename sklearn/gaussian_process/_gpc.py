@@ -14,7 +14,7 @@ from scipy.special import erf, expit
 from ..base import BaseEstimator, ClassifierMixin, clone
 from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
@@ -616,11 +616,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : returns an instance of self.
         """
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=True, dtype="numeric")
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=True, dtype="numeric")
         else:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,

@@ -272,24 +272,23 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : numpy array of shape (13233, 2914)
-        Each row corresponds to a ravelled face image of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the
-        shape of the output.
-
-    dataset.images : numpy array of shape (13233, 62, 47)
-        Each row is a face image corresponding to one of the 5749 people in
-        the dataset. Changing the ``slice_`` or resize parameters will change
-        the shape of the output.
-
-    dataset.target : numpy array of shape (13233,)
-        Labels associated to each face image. Those labels range from 0-5748
-        and correspond to the person IDs.
-
-    dataset.DESCR : string
-        Description of the Labeled Faces in the Wild (LFW) dataset.
+        data : numpy array of shape (13233, 2914)
+            Each row corresponds to a ravelled face image
+            of original size 62 x 47 pixels.
+            Changing the ``slice_`` or resize parameters will change the
+            shape of the output.
+        images : numpy array of shape (13233, 62, 47)
+            Each row is a face image corresponding to one of the 5749 people in
+            the dataset. Changing the ``slice_``
+            or resize parameters will change the shape of the output.
+        target : numpy array of shape (13233,)
+            Labels associated to each face image.
+            Those labels range from 0-5748 and correspond to the person IDs.
+        DESCR : string
+            Description of the Labeled Faces in the Wild (LFW) dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -446,25 +445,25 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     Returns
     -------
-    The data is returned as a Bunch object with the following attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    data : numpy array of shape (2200, 5828). Shape depends on ``subset``.
-        Each row corresponds to 2 ravel'd face images of original size 62 x 47
-        pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
-        will change the shape of the output.
-
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
-        Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people. Changing the ``slice_``,
-        ``resize`` or ``subset`` parameters will change the shape of the
-        output.
-
-    target : numpy array of shape (2200,). Shape depends on ``subset``.
-        Labels associated to each pair of images. The two label values being
-        different persons or the same person.
-
-    DESCR : string
-        Description of the Labeled Faces in the Wild (LFW) dataset.
+        data : ndarray of shape (2200, 5828). Shape depends on ``subset``.
+            Each row corresponds to 2 ravel'd face images
+            of original size 62 x 47 pixels.
+            Changing the ``slice_``, ``resize`` or ``subset`` parameters
+            will change the shape of the output.
+        pairs : ndarray of shape (2200, 2, 62, 47). Shape depends on ``subset``
+            Each row has 2 face images corresponding
+            to same or different person from the dataset
+            containing 5749 people. Changing the ``slice_``,
+            ``resize`` or ``subset`` parameters will change the shape of the
+            output.
+        target : numpy array of shape (2200,). Shape depends on ``subset``.
+            Labels associated to each pair of images.
+            The two label values being different persons or the same person.
+        DESCR : string
+            Description of the Labeled Faces in the Wild (LFW) dataset.
 
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
