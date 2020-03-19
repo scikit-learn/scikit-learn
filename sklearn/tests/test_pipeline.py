@@ -405,8 +405,7 @@ def test_pipeline_methods_pca_tsne():
     pca_for_pipeline = PCA(n_components=2, random_state=0)
     tsne_for_pipeline = TSNE(random_state=0)
     msg = ("Intermediate step .*\\bTSNE\\b.* does not have "
-           "transform, pipeline is not reusable on test data."
-           % (tsne_for_pipeline, type(tsne_for_pipeline)))
+           "transform, pipeline is not reusable on test data.")
 
     with pytest.warns(UserWarning, match=msg):
         pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
