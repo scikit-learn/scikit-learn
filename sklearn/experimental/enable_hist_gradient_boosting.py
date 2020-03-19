@@ -26,11 +26,11 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 
 from .. import ensemble
 
-ensemble.HistGradientBoostingClassifier = (
-    HistGradientBoostingClassifier  # type: ignore
+ensemble.HistGradientBoostingClassifier = (  # type: ignore
+    HistGradientBoostingClassifier
 )
-ensemble.HistGradientBoostingRegressor = (
-    HistGradientBoostingRegressor  # type: ignore
+ensemble.HistGradientBoostingRegressor = (  # type: ignore
+    HistGradientBoostingRegressor
 )
 ensemble.__all__ += ['HistGradientBoostingClassifier',
                      'HistGradientBoostingRegressor']
