@@ -930,13 +930,17 @@ class SGDClassifier(BaseSGDClassifier):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
+    >>> # Always scale the input. The most convenient way is to use a pipeline.
+    >>> clf = make_pipeline(StandardScaler(),
+    ...                     SGDClassifier(max_iter=1000, tol=1e-3))
     >>> clf.fit(X, Y)
-    SGDClassifier()
-
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('sgdclassifier', SGDClassifier())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
@@ -1514,14 +1518,19 @@ class SGDRegressor(BaseSGDRegressor):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import SGDRegressor
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> n_samples, n_features = 10, 5
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
-    >>> clf.fit(X, y)
-    SGDRegressor()
+    >>> # Always scale the input. The most convenient way is to use a pipeline.
+    >>> reg = make_pipeline(StandardScaler(),
+    ...                     SGDRegressor(max_iter=1000, tol=1e-3))
+    >>> reg.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('sgdregressor', SGDRegressor())])
 
     See also
     --------
