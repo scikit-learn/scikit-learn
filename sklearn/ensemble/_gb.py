@@ -53,6 +53,7 @@ from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -65,8 +66,8 @@ class VerboseReporter:
         (when iteration mod verbose_mod is zero).; if larger than 1 then output
         is printed for each update.
     """
-
-    def __init__(self, verbose):
+    @_deprecate_positional_args
+    def __init__(self, *, verbose):
         self.verbose = verbose
 
     def init(self, est, begin_at_stage=0):
@@ -134,7 +135,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
-    def __init__(self, loss, learning_rate, n_estimators, criterion,
+    def __init__(self, *, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features, ccp_alpha,
@@ -1067,7 +1068,8 @@ shape (n_estimators, ``loss_.K``)
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
@@ -1565,7 +1567,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,

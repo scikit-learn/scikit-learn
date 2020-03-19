@@ -18,6 +18,7 @@ from ..base import MetaEstimatorMixin
 from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
+from ..utils.validation import _deprecate_positional_args
 
 
 def _fit_single_estimator(estimator, X, y, sample_weight=None,
@@ -109,7 +110,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
+    def __init__(self, base_estimator, *, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator
