@@ -527,7 +527,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         loss_ = self.loss_
 
         if self.verbose:
-            verbose_reporter = VerboseReporter(self.verbose)
+            verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
         X_csc = csc_matrix(X) if issparse(X) else None
