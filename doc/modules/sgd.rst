@@ -23,7 +23,7 @@ examples and more than 10^5 features.
 
 Strictly speaking, SGD is merely an optimization technique and does not
 correspond to a specific family of machine learning models. It is only a
-*way* to train a model. Often, and instance of :class:`SGDClassifier` or
+*way* to train a model. Often, an instance of :class:`SGDClassifier` or
 :class:`SGDRegressor` will have an equivalent estimator in
 the scikit-learn API, potentially using a different optimization technique.
 For example, using `SGDClassifier(loss='log')` results in logistic regression,
