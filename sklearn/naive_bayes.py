@@ -140,8 +140,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         name : string
             This is a user-defined identifier that allows the models and its
-            parameters to be retrieved and set later using :meth:`get_params_`
-            and :meth:`set_params_`.
+            parameters to be retrieved and set later using :meth:`get_params`
+            and :meth:`set_params`.
         naive Bayes model : Estimator
             The naive Bayes model represents the distribution assumption on
             the features. Use our naive Bayes estimators like
@@ -352,6 +352,9 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise TypeError("Naive bayes estimator should implement "
                                 "the fit and _joint_log_likelihood methods. "
                                 "{} doesn't.".format(type(estimator)))
+            if estimator.__class__.__name__ not in valid_modules:
+                raise ValueError(
+                    "Distributions should be one of {}".format(valid_modules))
 
             # Check naive bayes estimator for attributes
             # like `priors`, `class_prior` and `fit_prior`
