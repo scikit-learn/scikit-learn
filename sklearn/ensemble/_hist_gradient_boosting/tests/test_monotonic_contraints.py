@@ -94,7 +94,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
     if monotonic_cst == MonotonicConstraint.NO_CST:
         return
 
-    def dfs(node):
+    def dfs(node):  # dfs = depth first search
         if node.is_leaf:
             return
         if node is not grower.root and node is node.parent.left_child:
