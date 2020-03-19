@@ -56,11 +56,10 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
         may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None, optional, default = None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used during randomized svd. Pass an int for reproducible results across
+        multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
@@ -158,8 +157,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'],
-                        ensure_min_features=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
+                                ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":

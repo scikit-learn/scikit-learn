@@ -32,18 +32,13 @@ S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 
 
-def _check_with_col_sign_flipping(A, B, tol=0.0):
+def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """ Check array A and B are equal with possible sign flipping on
     each columns"""
-    sign = True
-    for column_idx in range(A.shape[1]):
-        sign = sign and ((((A[:, column_idx] -
-                            B[:, column_idx]) ** 2).mean() <= tol ** 2) or
-                         (((A[:, column_idx] +
-                            B[:, column_idx]) ** 2).mean() <= tol ** 2))
-        if not sign:
-            return False
-    return True
+    tol_squared = tol ** 2
+    for A_col, B_col in zip(A.T, B.T):
+        assert (np.max((A_col - B_col) ** 2) <= tol_squared or
+                np.max((A_col + B_col) ** 2) <= tol_squared)
 
 
 def test_sparse_graph_connected_component():
@@ -139,7 +134,7 @@ def test_spectral_embedding_precomputed_affinity(X, seed=36):
     embed_rbf = se_rbf.fit_transform(X)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05)
+    _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
 def test_precomputed_nearest_neighbors_filtering():
@@ -178,7 +173,7 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
-    assert _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05)
+    _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
 # TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
@@ -197,7 +192,7 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
+    _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
     # same with special case in which amg is not actually used
     # regression test for #10715
@@ -212,35 +207,34 @@ def test_spectral_embedding_amg_solver(seed=36):
     se_arpack.affinity = "precomputed"
     embed_amg = se_amg.fit_transform(affinity)
     embed_arpack = se_arpack.fit_transform(affinity)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
+    _assert_equal_with_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
-# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# TODO: Remove filterwarnings when pyamg does replaces sp.rand call with
+# np.random.rand:
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
     "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
-def test_spectral_embedding_amg_solver_failure(seed=36):
-    # Test spectral embedding with amg solver failure, see issue #13393
+def test_spectral_embedding_amg_solver_failure():
+    # Non-regression test for amg solver failure (issue #13393 on github)
     pytest.importorskip('pyamg')
+    seed = 36
+    num_nodes = 100
+    X = sparse.rand(num_nodes, num_nodes, density=0.1, random_state=seed)
+    upper = sparse.triu(X) - sparse.diags(X.diagonal())
+    sym_matrix = upper + upper.T
+    embedding = spectral_embedding(sym_matrix,
+                                   n_components=10,
+                                   eigen_solver='amg',
+                                   random_state=0)
 
-    # The generated graph below is NOT fully connected if n_neighbors=3
-    n_samples = 200
-    n_clusters = 3
-    n_features = 3
-    centers = np.eye(n_clusters, n_features)
-    S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
-                                cluster_std=1., random_state=42)
-
-    se_amg0 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
-                                eigen_solver="amg", n_neighbors=3,
-                                random_state=np.random.RandomState(seed))
-    embed_amg0 = se_amg0.fit_transform(S)
-
-    for i in range(10):
-        se_amg0.set_params(random_state=np.random.RandomState(seed + 1))
-        embed_amg1 = se_amg0.fit_transform(S)
-
-        assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
+    # Check that the learned embedding is stable w.r.t. random solver init:
+    for i in range(3):
+        new_embedding = spectral_embedding(sym_matrix,
+                                           n_components=10,
+                                           eigen_solver='amg',
+                                           random_state=i + 1)
+        _assert_equal_with_sign_flipping(embedding, new_embedding, tol=0.05)
 
 
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "

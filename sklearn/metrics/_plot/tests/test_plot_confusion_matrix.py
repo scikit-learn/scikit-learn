@@ -21,6 +21,7 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
 
+
 @pytest.fixture(scope="module")
 def n_classes():
     return 5
@@ -226,8 +227,6 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
-
-
 @pytest.mark.parametrize(
     "clf", [LogisticRegression(),
             make_pipeline(StandardScaler(), LogisticRegression()),
@@ -245,3 +244,39 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
+
+
+@pytest.mark.parametrize("values_format", ['e', 'n'])
+def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
+                                      fitted_clf, values_format):
+    # Make sure plot text is formatted with 'values_format'.
+    X, y = data
+    cm = confusion_matrix(y, y_pred)
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 include_values=True,
+                                 values_format=values_format)
+
+    assert disp.text_.shape == (n_classes, n_classes)
+
+    expected_text = np.array([format(v, values_format)
+                              for v in cm.ravel()])
+    text_text = np.array([
+        t.get_text() for t in disp.text_.ravel()])
+    assert_array_equal(expected_text, text_text)
+
+
+def test_confusion_matrix_standard_format(pyplot):
+    cm = np.array([[10000000, 0], [123456, 12345678]])
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
+    # Values should be shown as whole numbers 'd',
+    # except the first number which should be shown as 1e+07 (longer length)
+    # and the last number will be showns as 1.2e+07 (longer length)
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['1e+07', '0', '123456', '1.2e+07']
+
+    cm = np.array([[0.1, 10], [100, 0.525]])
+    plotted_text = ConfusionMatrixDisplay(cm, [False, True]).plot().text_
+    # Values should now formatted as '.2g', since there's a float in
+    # Values are have two dec places max, (e.g 100 becomes 1e+02)
+    test = [t.get_text() for t in plotted_text.ravel()]
+    assert test == ['0.1', '10', '1e+02', '0.53']
