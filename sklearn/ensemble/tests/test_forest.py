@@ -15,6 +15,7 @@ from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
+from typing import Dict, Any
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -100,12 +101,12 @@ FOREST_TRANSFORMERS = {
     "RandomTreesEmbedding": RandomTreesEmbedding,
 }
 
-FOREST_ESTIMATORS = dict()
+FOREST_ESTIMATORS: Dict[str, Any] = dict()
 FOREST_ESTIMATORS.update(FOREST_CLASSIFIERS)
 FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
-FOREST_CLASSIFIERS_REGRESSORS = FOREST_CLASSIFIERS.copy()
+FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 

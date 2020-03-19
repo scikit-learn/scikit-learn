@@ -37,21 +37,21 @@ sp_version = _parse_version(scipy.__version__)
 try:  # SciPy >= 0.19
     from scipy.special import comb, logsumexp
 except ImportError:
-    from scipy.misc import comb, logsumexp  # noqa
+    from scipy.misc import comb, logsumexp  # type: ignore  # noqa
 
 if sp_version >= (1, 4):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
     # once support for sp_version < (1, 4) is dropped
-    from ..externals._lobpcg import lobpcg  # noqa
+    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
 if sp_version >= (1, 3):
     # Preserves earlier default choice of pinvh cutoff `cond` value.
     # Can be removed once issue #14055 is fully addressed.
     from ..externals._scipy_linalg import pinvh
 else:
-    from scipy.linalg import pinvh # noqa
+    from scipy.linalg import pinvh  # type: ignore  # noqa
 
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
@@ -170,7 +170,8 @@ if np_version < (1, 12):
             return data_state + (np.ma.getmaskarray(self).tostring(cf),
                                  self._fill_value)
 else:
-    from numpy.ma import MaskedArray    # noqa
+    from numpy.ma import MaskedArray   # type: ignore  # noqa
+
 
 
 def _object_dtype_isnan(X):
