@@ -177,8 +177,9 @@ def test_fit_docstring_attributes(name, Estimator):
     attributes = doc['Attributes']
 
     IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+               'CutoffClassifier', 'DictVectorizer', 'FeatureUnion',
+               'GaussianRandomProjection', 'GridSearchCV',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
                'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
                'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
