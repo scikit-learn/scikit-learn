@@ -26,15 +26,15 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
         """get leaves values from left to right"""
         values = []
 
-        def dfs(node_idx):
+        def depth_first_collect_leaf_values(node_idx):
             node = nodes[node_idx]
             if node['is_leaf']:
                 values.append(node['value'])
                 return
-            dfs(node['left'])
-            dfs(node['right'])
+            depth_first_collect_leaf_values(node['left'])
+            depth_first_collect_leaf_values(node['right'])
 
-        dfs(0)  # start at root (0)
+        depth_first_collect_leaf_values(0)  # start at root (0)
         return values
 
     values = get_leaves_values()
