@@ -501,7 +501,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     rng = check_random_state(random_state)
 
-    for n_iter in range(max_iter):
+    for n_iter in range(1, max_iter + 1):
         violation = 0.
 
         # Update W
@@ -512,7 +512,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
             violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
                                                     l2_reg_H, shuffle, rng)
 
-        if n_iter == 0:
+        if n_iter == 1:
             violation_init = violation
 
         if violation_init == 0:
@@ -1071,7 +1071,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
     if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iteration %d reached. Increase it to"
+        warnings.warn("Maximum number of iterations %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
     return W, H, n_iter
