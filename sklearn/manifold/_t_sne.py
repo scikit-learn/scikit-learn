@@ -22,7 +22,7 @@ from ..utils.validation import check_non_negative
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
-from . import _barnes_hut_tsne
+from . import _barnes_hut_tsne  # type: ignore
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps

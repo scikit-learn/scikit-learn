@@ -1260,7 +1260,7 @@ def test_min_impurity_decrease():
             assert tree.min_impurity_decrease == 0.1
 
 
-class MyBackend(DEFAULT_JOBLIB_BACKEND):
+class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)

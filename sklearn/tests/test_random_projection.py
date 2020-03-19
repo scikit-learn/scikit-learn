@@ -25,12 +25,15 @@ from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix = [_sparse_random_matrix]
 all_dense_random_matrix = [_gaussian_random_matrix]
-all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
+all_random_matrix = (
+    all_sparse_random_matrix + all_dense_random_matrix  # type: ignore
+)
 
 all_SparseRandomProjection = [SparseRandomProjection]
 all_DenseRandomProjection = [GaussianRandomProjection]
-all_RandomProjection = set(all_SparseRandomProjection +
-                           all_DenseRandomProjection)
+all_RandomProjection = set(
+    all_SparseRandomProjection + all_DenseRandomProjection  # type: ignore
+)
 
 
 # Make some random data with uniformly located non zero entries with

@@ -148,7 +148,7 @@ else:
     def _sparse_argmax(self, axis=None, out=None):
         return _arg_min_or_max(self, axis, out, np.argmax, np.greater)
 
-    def _argmax(arr_or_matrix, axis=None):
+    def _argmax(arr_or_matrix, axis=None):  # type: ignore
         if sp.issparse(arr_or_matrix):
             return _sparse_argmax(arr_or_matrix, axis=axis)
         else:

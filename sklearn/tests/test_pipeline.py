@@ -1143,7 +1143,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
         method == 'fit_transform' and hasattr(est, 'steps') and
-        isinstance(est.steps[-1][1], FitParamT))
+        isinstance(est.steps[-1][1], FitParamT))  # type: ignore
 )
 
 

@@ -15,5 +15,5 @@ as an attribute of the impute module::
 from ..impute._iterative import IterativeImputer
 from .. import impute
 
-impute.IterativeImputer = IterativeImputer
+impute.IterativeImputer = IterativeImputer  # type: ignore
 impute.__all__ += ['IterativeImputer']

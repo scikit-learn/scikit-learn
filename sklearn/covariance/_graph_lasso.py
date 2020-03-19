@@ -20,7 +20,7 @@ from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
-from ..linear_model import _cd_fast as cd_fast
+from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 
