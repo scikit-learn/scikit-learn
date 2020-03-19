@@ -117,13 +117,12 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
   * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
   * ``loss="modified_huber"``: smoothed hinge loss,
   * ``loss="log"``: logistic regression,
-  * and all regression losses below.
+  * and all regression losses below. In this case the target is encoded as -1
+    or 1, and the problem is treated as a regression problem. The predicted
+    class then correspond to the sign of the predicted target.
 
-.. TODO: describe losses, (what is modified huber????) or provide ref
-.. TODO: how do the regression losses work for classification? OK it's just
-treated as a regression problem, but do we have proba then? What's the
-threshold?
-
+Please refer to the :ref:`<mathematical section below>
+sgd_mathematical_formulation` for formulas.
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
@@ -219,13 +218,18 @@ parameter. :class:`SGDRegressor` supports the following loss functions:
   * ``loss="huber"``: Huber loss for robust regression,
   * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
+Please refer to the :ref:`<mathematical section below>
+sgd_mathematical_formulation` for formulas.
 The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
-:class:`SGDRegressor` also supports averaged SGD (see description above in
-the classification section).
+The `penalty` parameter determines the regularization to be used (see
+description above in the classification section).
+
+:class:`SGDRegressor` also supports averaged SGD (here again, see description
+above in the classification section).
 
 For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
@@ -237,7 +241,7 @@ Stochastic Gradient Descent for sparse data
 
 .. note:: The sparse implementation produces slightly different results
   from the dense implementation, due to a shrunk learning rate for the
-  intercept. See :ref:implementation_details.
+  intercept. See :ref:`implementation_details`.
 
 There is built-in support for sparse data given in any matrix in a format
 supported by `scipy.sparse
@@ -337,15 +341,13 @@ Tips on Practical Use
 Mathematical formulation
 ========================
 
-.. TODO: domain of y is wrong
-
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}`, our goal is to
-learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
-:math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
-to make predictions, we simply look at the sign of :math:`f(x)`.
-A common choice to find the model parameters is by minimizing the regularized
-training error given by
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}` (:math:`y_i \in
+{-1, 1}` for classification), our goal is to learn a linear scoring function
+:math:`f(x) = w^T x + b` with model parameters :math:`w \in \mathbf{R}^m` and
+intercept :math:`b \in \mathbf{R}`. In order to make predictions for binary
+classification, we simply look at the sign of :math:`f(x)`. To find the model
+parameters, we minimize the regularized training error given by
 
 .. math::
 
@@ -356,15 +358,26 @@ where :math:`L` is a loss function that measures model (mis)fit and
 complexity; :math:`\alpha > 0` is a non-negative hyperparameter that controls
 the regularization stength.
 
-Different choices for :math:`L` entail different classifiers such as
+Different choices for :math:`L` entail different classifiers or regressors:
 
-.. TODO not jsut classifiers, also change domain above to -1 1 for classif
-
-   - Hinge: (soft-margin) Support Vector Machines.
-   - Log:   Logistic Regression.
-   - Least-Squares: Linear classification (Ridge or Lasso depending on
-     :math:`R`)
-   - Epsilon-Insensitive: (soft-margin) Support Vector Regression.
+- Hinge (soft-margin): equivalent to Support Vector Classification.
+  :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))`.
+- Perceptron: 
+  :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
+- Modified Huber: 
+  :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
+  1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
+- Log: equivalent to Logistic Regression.
+  :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
+- Least-Squares: Linear regression (Ridge or Lasso depending on
+  :math:`R`).
+  :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i)^2`.
+- Huber: less sensitive to outliers than least-squares. It is equivalent to
+  least squares when :math:`|y_i - f(x_i)| \leq \varepsilon`, and
+  :math:`L(y_i, f(x_i)) = \varepsilon |y_i - f(x_i)| - \frac{1}{2}
+  \varepsilon^2` otherwise.
+- Epsilon-Insensitive: (soft-margin) equivalent to Support Vector Regression.
+  :math:`L(y_i, f(x_i)) = \max(0, |y_i - f(x_i)| - \varepsilon)`.
 
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
@@ -374,7 +387,8 @@ misclassification error (Zero-one loss) as shown in the Figure below.
     :align: center
     :scale: 75
 
-Popular choices for the regularization term :math:`R` include:
+Popular choices for the regularization term :math:`R` (the `penalty`
+parameter) include:
 
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{j=1}^{m} w_j^2 = ||w||_2^2`,
    - L1 norm: :math:`R(w) := \sum_{j=1}^{m} |w_j|`, which leads to sparse
@@ -452,7 +466,7 @@ The model parameters can be accessed through the ``coef_`` and
 
 When using Averaged SGD (with the `average` parameter), `coef_` is set to the
 average weight across all updates:
-`coef_` :math:`= \frac{1}{T} \sum_{t=1}^{T} w^{(t)}`,
+`coef_` :math:`= \frac{1}{T} \sum_{t=0}^{T-1} w^{(t)}`,
 where :math:`T` is the total number of updates, found in the `t_` attribute.
 
 .. topic:: References:
