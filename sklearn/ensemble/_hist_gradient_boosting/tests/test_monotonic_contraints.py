@@ -60,14 +60,11 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
     # descendents. That's why we need to bound the predicted values (this is
     # tested in assert_children_values_bounded)
     nodes = predictor.nodes
-
     left_lower = []
     left_greater = []
-
-    def dfs(node_idx):
-        node = nodes[node_idx]
+    for node in nodes:
         if node['is_leaf']:
-            return
+            continue
 
         left_idx = node['left']
         right_idx = node['right']
@@ -76,10 +73,6 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
             left_lower.append(node)
         elif nodes[left_idx]['value'] > nodes[right_idx]['value']:
             left_greater.append(node)
-        dfs(left_idx)
-        dfs(right_idx)
-
-    dfs(0)  # start at root (0)
 
     if monotonic_cst == MonotonicConstraint.NO_CST:
         assert left_lower and left_greater
@@ -178,7 +171,7 @@ def test_nodes_values(monotonic_cst, seed):
         leave.value /= grower.shrinkage
 
     # The consistency of the bounds can only be checked on the tree grower
-    # as the node bounds are not copied into the predictor tree. The 
+    # as the node bounds are not copied into the predictor tree. The
     # consistency checks on the values of node children and leaves can be
     # done either on the grower tree or on the predictor tree. We only
     # do those checks on the predictor tree as the latter is derived from
