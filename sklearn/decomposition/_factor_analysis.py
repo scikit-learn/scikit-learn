@@ -139,7 +139,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         non-Gaussian latent variables.
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, tol=1e-2, copy=True, max_iter=1000,
+    def __init__(self, n_components=None, *, tol=1e-2, copy=True,
+                 max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
                  iterated_power=3, random_state=0):
         self.n_components = n_components
