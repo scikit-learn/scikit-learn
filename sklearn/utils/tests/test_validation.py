@@ -1153,3 +1153,20 @@ def test_check_fit_params(indices):
         result['sparse-col'],
         _safe_indexing(fit_params['sparse-col'], indices_)
     )
+
+
+def test_check_sparse_pandas():
+    pd = pytest.importorskip("pandas")
+    sp_mat = _sparse_random_matrix(1000, 5)
+
+    sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    result = check_array(sdf, accept_sparse=True)
+
+    assert sp.issparse(result)
+    assert result.format == 'coo'
+    assert_allclose_dense_sparse(sp_mat, result)
+
+    for sp_format in ['csr', 'csc', 'coo', 'bsr']:
+        result = check_array(sdf, accept_sparse=sp_format)
+        assert result.format == sp_format
+        assert_allclose_dense_sparse(sp_mat, result)
