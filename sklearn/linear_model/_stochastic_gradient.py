@@ -763,7 +763,8 @@ class SGDClassifier(BaseSGDClassifier):
         classification as well; see
         :class:`~sklearn.linear_model.SGDRegressor` for a description.
 
-        TODO: Add link to UG for details (when link exists...)
+        More details about the losses formulas can be found in the
+        :ref:`User Guide <sgd_mathematical_formulation>`.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1361,6 +1362,9 @@ class SGDRegressor(BaseSGDRegressor):
         linear past that; this is the loss function used in SVR.
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
+
+        More details about the losses formulas can be found in the
+        :ref:`User Guide <sgd_mathematical_formulation>`.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'

@@ -4,9 +4,6 @@
 Stochastic Gradient Descent
 ===========================
 
-
-.. TODO: Link refs where they should be linked
-
 .. currentmodule:: sklearn.linear_model
 
 **Stochastic Gradient Descent (SGD)** is a simple yet very efficient
@@ -121,8 +118,8 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
     or 1, and the problem is treated as a regression problem. The predicted
     class then correspond to the sign of the predicted target.
 
-Please refer to the :ref:`<mathematical section below>
-sgd_mathematical_formulation` for formulas.
+Please refer to the :ref:`mathematical section below
+<sgd_mathematical_formulation>` for formulas.
 The first two loss functions are lazy, they only update the model
 parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
@@ -145,7 +142,7 @@ SGD supports the following penalties:
     ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
 The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
-solutions, driving most coefficients to zero. The Elastic Net solves
+solutions, driving most coefficients to zero. The Elastic Net [#5]_ solves
 some deficiencies of the L1 penalty in the presence of highly correlated
 attributes. The parameter ``l1_ratio`` controls the convex combination
 of L1 and L2 penalty.
@@ -179,11 +176,11 @@ instances via the fit parameters ``class_weight`` and ``sample_weight``. See
 the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
-:class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
-by setting `average=True`. ASGD performs the same updates as the regular SGD
-(see :ref:`sgd_mathematical_formulation`), but instead of using the last
-value of the coefficients as the `coef_` attribute (i.e. the values of the
-last update), `coef_` is set instead to the **average** value of the
+:class:`SGDClassifier` supports averaged SGD (ASGD) [#4]_. Averaging can be
+enabled by setting `average=True`. ASGD performs the same updates as the
+regular SGD (see :ref:`sgd_mathematical_formulation`), but instead of using
+the last value of the coefficients as the `coef_` attribute (i.e. the values
+of the last update), `coef_` is set instead to the **average** value of the
 coefficients across all updates. The same is done for the `intercept_`
 attribute. When using ASGD the learning rate can be larger and even constant,
 leading on some datasets to a speed up in training time.
@@ -218,8 +215,8 @@ parameter. :class:`SGDRegressor` supports the following loss functions:
   * ``loss="huber"``: Huber loss for robust regression,
   * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
-Please refer to the :ref:`<mathematical section below>
-sgd_mathematical_formulation` for formulas.
+Please refer to the :ref:`mathematical section below
+<sgd_mathematical_formulation>` for formulas.
 The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
@@ -228,8 +225,8 @@ scale of the target variables.
 The `penalty` parameter determines the regularization to be used (see
 description above in the classification section).
 
-:class:`SGDRegressor` also supports averaged SGD (here again, see description
-above in the classification section).
+:class:`SGDRegressor` also supports averaged SGD [#4]_ (here again, see
+description above in the classification section).
 
 For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average
@@ -340,6 +337,9 @@ Tips on Practical Use
 
 Mathematical formulation
 ========================
+
+We describe here the mathematical details of the SGD procedure. A good
+overview with convergence rates can be found in [#6]_.
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
 :math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \mathcal{R}` (:math:`y_i \in
@@ -469,53 +469,52 @@ average weight across all updates:
 `coef_` :math:`= \frac{1}{T} \sum_{t=0}^{T-1} w^{(t)}`,
 where :math:`T` is the total number of updates, found in the `t_` attribute.
 
-.. topic:: References:
-
- * `"Solving large scale linear prediction problems using stochastic
-   gradient descent algorithms"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
-   T. Zhang - In Proceedings of ICML '04.
-
- * `"Regularization and variable selection via the elastic net"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
-   H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
-   67 (2), 301-320.
-
- * `"Towards Optimal One Pass Large Scale Learning with
-   Averaged Stochastic Gradient Descent"
-   <https://arxiv.org/pdf/1107.2490v2.pdf>`_
-   Xu, Wei
-
-
 .. _implementation_details:
 
 Implementation details
 ======================
 
-The implementation of SGD is influenced by the `Stochastic Gradient SVM
-<https://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
+The implementation of SGD is influenced by the `Stochastic Gradient SVM` of
+[#1]_.
+Similar to SvmSGD,
 the weight vector is represented as the product of a scalar and a vector
 which allows an efficient weight update in the case of L2 regularization.
 In the case of sparse input `X`, the intercept is updated with a
 smaller learning rate (multiplied by 0.01) to account for the fact that
 it is updated more frequently. Training examples are picked up sequentially
 and the learning rate is lowered after each observed example. We adopted the
-learning rate schedule from Shalev-Shwartz et al. 2007.
+learning rate schedule from [#2]_.
 For multi-class classification, a "one versus all" approach is used.
-We use the truncated gradient algorithm proposed by Tsuruoka et al. 2009
+We use the truncated gradient algorithm proposed in [#3]_
 for L1 regularization (and the Elastic Net).
 The code is written in Cython.
 
 .. topic:: References:
 
- * `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+   .. [#1] `"Stochastic Gradient Descent"
+       <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
- * `"The Tradeoffs of Large Scale Machine Learning" <https://leon.bottou.org/slides/largescale/lstut.pdf>`_ L. Bottou - Website, 2011.
+   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+      S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
- * `"Pegasos: Primal estimated sub-gradient solver for svm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
-   S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
+   .. [#3] `"Stochastic gradient descent training for l1-regularized
+      log-linear models with cumulative penalty"
+      <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
+      Y. Tsuruoka, J. Tsujii, S. Ananiadou - In Proceedings of the AFNLP/ACL
+      '09.
 
- * `"Stochastic gradient descent training for l1-regularized log-linear models with cumulative penalty"
-   <https://www.aclweb.org/anthology/P/P09/P09-1054.pdf>`_
-   Y. Tsuruoka, J. Tsujii, S. Ananiadou -  In Proceedings of the AFNLP/ACL '09.
+   .. [#4] `"Towards Optimal One Pass Large Scale Learning with
+      Averaged Stochastic Gradient Descent"
+      <https://arxiv.org/pdf/1107.2490v2.pdf>`_
+      Xu, Wei
+
+   .. [#5] `"Regularization and variable selection via the elastic net"
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
+      H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
+      67 (2), 301-320.
+
+   .. [#6] `"Solving large scale linear prediction problems using stochastic
+      gradient descent algorithms"
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
+      T. Zhang - In Proceedings of ICML '04.
