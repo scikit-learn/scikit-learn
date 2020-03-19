@@ -833,7 +833,7 @@ class SGDClassifier(BaseSGDClassifier):
         - 'constant': `eta = eta0`
         - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
           where t0 is chosen by a heuristic proposed by Leon Bottou.
-        - 'invscaling' (default): `eta = eta0 / pow(t, power_t)`
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
         - 'adaptive': eta = eta0, as long as the training keeps decreasing.
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
@@ -1430,7 +1430,7 @@ class SGDRegressor(BaseSGDRegressor):
         - 'constant': `eta = eta0`
         - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
           where t0 is chosen by a heuristic proposed by Leon Bottou.
-        - 'invscaling' (default): `eta = eta0 / pow(t, power_t)`
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
         - 'adaptive': eta = eta0, as long as the training keeps decreasing.
           Each time n_iter_no_change consecutive epochs fail to decrease the
           training loss by tol or fail to increase validation score by tol if
