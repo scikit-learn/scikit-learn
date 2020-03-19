@@ -180,9 +180,8 @@ class TreeGrower:
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
-                 monotonic_cst=None,
-                 l2_regularization=0., min_hessian_to_split=1e-3,
-                 shrinkage=1.):
+                 monotonic_cst=None, l2_regularization=0.,
+                 min_hessian_to_split=1e-3, shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -297,7 +296,6 @@ class TreeGrower:
         non-leaf), which would lead to a wrong computation of the 'middle'
         value needed to enforce the monotonic constraints.
         """
-
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
@@ -489,8 +487,7 @@ class TreeGrower:
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
-        """Set is_leaf attibute and add node to the finalized_leaves attribute.
-        """
+        """Make node a leaf of the tree being grown."""
 
         node.is_leaf = True
         self.finalized_leaves.append(node)

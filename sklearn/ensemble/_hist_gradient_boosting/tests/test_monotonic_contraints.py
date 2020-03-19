@@ -177,6 +177,12 @@ def test_nodes_values(monotonic_cst, seed):
     for leave in grower.finalized_leaves:
         leave.value /= grower.shrinkage
 
+    # The consistency of the bounds can only be checked on the tree grower
+    # as the node bounds are not copied into the predictor tree. The 
+    # consistency checks on the values of node children and leaves can be
+    # done either on the grower tree or on the predictor tree. We only
+    # do those checks on the predictor tree as the latter is derived from
+    # the former.
     predictor = grower.make_predictor()
     assert_children_values_monotonic(predictor, monotonic_cst)
     assert_children_values_bounded(grower, monotonic_cst)
@@ -189,7 +195,7 @@ def test_predictions(seed):
     # constraint on the second feature, and make sure the constraints are
     # respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
-    # by https://xgboost.readthedocs.io/en/latest//tutorials/monotonic.html
+    # by https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html
 
     rng = np.random.RandomState(seed)
 
