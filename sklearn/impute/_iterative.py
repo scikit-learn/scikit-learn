@@ -1,10 +1,8 @@
 
 from time import time
-from distutils.version import LooseVersion
 from collections import namedtuple
 import warnings
 
-import scipy
 from scipy import stats
 import numpy as np
 

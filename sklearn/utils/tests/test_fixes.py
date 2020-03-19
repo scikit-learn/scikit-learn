@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 import math
-import pickle
 
 import numpy as np
 import pytest
