@@ -40,7 +40,7 @@ jobs:
         else
           source activate flake8_env
           mypy sklearn/ --ignore-missing-imports
-        if
+        fi
       displayName: Run mypy
     - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
