@@ -395,5 +395,5 @@ def test_split_on_nan_with_infinite_values():
     predictions = predictor.predict(X)
     predictions_binned = predictor.predict_binned(
         X_binned, missing_values_bin_idx=bin_mapper.missing_values_bin_idx_)
-    assert np.all(predictions.astype(G_H_DTYPE) == -gradients)
-    assert np.all(predictions_binned.astype(G_H_DTYPE) == -gradients)
+    np.testing.assert_allclose(predictions, -gradients)
+    np.testing.assert_allclose(predictions_binned, -gradients)
