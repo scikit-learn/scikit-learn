@@ -195,7 +195,9 @@ def mean_absolute_percentage_error(y_true, y_pred,
                                    multioutput='uniform_average'):
     """Mean absolute percentage error regression loss
 
-    Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
+    Note here that we do not represent the output as a percentage in range
+    [0, 100]. Instead, we represent it in range [0, 1]. Read more in the
+    :ref:`User Guide <mean_absolute_percentage_error>`.
 
     Parameters
     ----------
@@ -221,7 +223,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
 
     Returns
     -------
-    loss : float or ndarray of floats
+    loss : float or ndarray of floats in the range [0, 1]
         If multioutput is 'raw_values', then mean absolute percentage error
         is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
@@ -230,6 +232,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
         MAPE output is non-negative floating point. The best value is 0.0.
         But note the fact that bad predictions can lead to arbitarily large
         MAPE values, especially if some y_true values are very close to zero.
+        Note that we return a large value instead of `inf` when y_true is zero.
 
     Examples
     --------
@@ -237,13 +240,13 @@ def mean_absolute_percentage_error(y_true, y_pred,
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    32.73...
+    0.3273...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    55.15...
+    0.5515...
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    61.98...
+    0.6198...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -251,7 +254,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
     epsilon = np.finfo(np.float64).eps
     mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
     output_errors = np.average(mape,
-                               weights=sample_weight, axis=0) * 100.0
+                               weights=sample_weight, axis=0)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors

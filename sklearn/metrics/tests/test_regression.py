@@ -214,7 +214,7 @@ def test_regression_multioutput_array():
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
-    assert_array_almost_equal(mape, [7.78, 22.62], decimal=2)
+    assert_array_almost_equal(mape, [0.0778, 0.2262], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
 
@@ -274,7 +274,7 @@ def test_regression_custom_weights():
     assert_almost_equal(msew, 0.39, decimal=2)
     assert_almost_equal(rmsew, 0.62, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
-    assert_almost_equal(mapew, 16.68, decimal=2)
+    assert_almost_equal(mapew, 0.1668, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
 
@@ -329,4 +329,4 @@ def test_mean_absolute_percentage_error():
     random_number_generator = np.random.RandomState(42)
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
-    assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(20.)
+    assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)

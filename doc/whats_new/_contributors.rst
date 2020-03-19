@@ -176,6 +176,4 @@
 
 .. _Nicolas Hug: https://github.com/NicolasHug
 
-.. _Ashutosh Hathidara: https://github.com/ashutosh1919
-
 .. _Guillaume Lemaitre: https://github.com/glemaitre

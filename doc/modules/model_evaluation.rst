@@ -1991,7 +1991,7 @@ function::
   >>> y_true = [1, 10, 1e6]
   >>> y_pred = [0.9, 15, 1.2e6]
   >>> mean_absolute_percentage_error(y_true, y_pred)
-  26.66...
+  0.2666...
 
 In above example, if we had used `mean_absolute_error`, it would have ignored
 the small magnitude values and only reflected the error in prediction of highest
