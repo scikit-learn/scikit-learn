@@ -29,7 +29,9 @@ jobs:
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
-    - bash: mypy sklearn/ --ignore-missing-imports
+    - bash: |
+        source activate flake8_env    
+        mypy sklearn/ --ignore-missing-imports
       displayName: Run mypy
     - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
