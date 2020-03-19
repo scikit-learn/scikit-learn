@@ -9,7 +9,7 @@ from scipy.stats.mstats import mquantiles
 from joblib import Parallel, delayed
 
 from .. import partial_dependence
-from ...base import is_classifier, is_regressor
+from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing
@@ -126,7 +126,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
-          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`)
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+          :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.ensemble.RandomForestRegressor`
           but is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -201,9 +203,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
-    if (is_classifier(estimator) and
-            hasattr(estimator, 'classes_') and
-            np.size(estimator.classes_) > 2):
+    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(estimator.classes_, target)

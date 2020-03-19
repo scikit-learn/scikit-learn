@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import arrayfuncs, as_float_array
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
@@ -944,7 +944,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
+        X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
@@ -1367,7 +1367,7 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1748,7 +1748,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy_X)

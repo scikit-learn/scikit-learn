@@ -20,7 +20,7 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.estimator_checks import check_estimator, _safe_tags
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 from sklearn.base import BiclusterMixin
@@ -31,6 +31,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
+    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
@@ -45,6 +46,24 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
+
+
+def test_estimator_cls_parameterize_with_checks():
+    # Non-regression test for #16707 to ensure that parametrize_with_checks
+    # works with estimator classes
+    param_checks = parametrize_with_checks([LogisticRegression])
+    # Using the generator does not raise
+    list(param_checks.args[1])
+
+
+def test_mark_xfail_checks_with_unconsructable_estimator():
+    class MyEstimator:
+        def __init__(self):
+            raise ValueError("This is bad")
+
+    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
+    assert estimator == MyEstimator
+    assert check == 42
 
 
 @pytest.mark.parametrize(
@@ -93,13 +112,6 @@ def test_estimators(estimator, check, request):
                                    ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
-
-        xfail_checks = _safe_tags(estimator, '_xfail_test')
-        check_name = _set_check_estimator_ids(check)
-        if xfail_checks:
-            if check_name in xfail_checks:
-                msg = xfail_checks[check_name]
-                request.applymarker(pytest.mark.xfail(reason=msg))
         check(estimator)
 
 

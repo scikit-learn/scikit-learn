@@ -16,7 +16,6 @@ from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
-from ...utils import deprecated
 
 
 def check_number_of_labels(n_labels, n_samples):
