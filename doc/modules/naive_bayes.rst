@@ -303,8 +303,7 @@ and the corresponding columns for every naive Bayes model.
 Below we defined two tuples, one for the `GaussianNB()` and
 one for the `CategoricalNB()` model.
 This manner of specification is similar to that of *transformers* in
-:class:`ColumnTransformer <sklearn.compose.ColumnTransformer>` or
-*pipeline* in :class:`Pipeline <sklearn.pipeline.Pipeline>`.
+:class:`ColumnTransformer <sklearn.compose.ColumnTransformer>`.
 
    >>> clf = GeneralNB([
    ...     ("gaussian", GaussianNB(), [0, 1, 2]),
