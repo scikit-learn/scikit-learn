@@ -521,7 +521,7 @@ cdef class Splitter:
 
         loss_current_node = _loss_from_value(
             compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
-                          self.l2_regularization),
+                               self.l2_regularization),
             sum_gradients
         )
 
@@ -637,7 +637,7 @@ cdef class Splitter:
 
         loss_current_node = _loss_from_value(
             compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
-                          self.l2_regularization),
+                               self.l2_regularization),
             sum_gradients
         )
 
@@ -732,17 +732,18 @@ cdef inline Y_DTYPE_C _split_gain(
 
     # Compute values of potential left and right children
     value_left = compute_node_value(sum_gradient_left, sum_hessian_left,
-                               lower_bound, upper_bound,
-                               l2_regularization)
+                                    lower_bound, upper_bound,
+                                    l2_regularization)
     value_right = compute_node_value(sum_gradient_right, sum_hessian_right,
-                                lower_bound, upper_bound,
-                                l2_regularization)
+                                    lower_bound, upper_bound,
+                                    l2_regularization)
 
     if ((monotonic_cst == MonotonicConstraint.POS and value_left > value_right) or
             (monotonic_cst == MonotonicConstraint.NEG and value_left < value_right)):
         # don't consider this split since it does not respect the monotonic
         # constraints. Note that these comparisons need to be done on values
-        # that are already bounded.
+        # that have already been clipped to take the monotonic constraints into
+        # account (if any).
         return -1
 
     gain = loss_current_node # without bounds
