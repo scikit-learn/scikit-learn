@@ -162,7 +162,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     Attributes
     ----------
     models_ : list of tuples
-        Verified list of (name, naive Bayes model, column(s)),
+        List of (name, fitted naive Bayes model, column(s)),
         based on `self.models`.
 
     classes_ : ndarray of shape (n_classes,)
