@@ -694,5 +694,5 @@ def test_encoders_has_categorical_tags(Encoder):
 def test_encoders_does_not_support_none_values(Encoder):
     values = [["a"], [None]]
     with pytest.raises(TypeError, match="Encoders require their input to be "
-                                        "strings or numbers."):
+                                        "uniformly strings or numbers."):
         Encoder().fit(values)
