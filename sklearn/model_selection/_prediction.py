@@ -1,6 +1,11 @@
 from inspect import signature
+import numbers
 
 import numpy as np
+from joblib import Parallel, delayed
+
+from ._split import check_cv
+from ._split import StratifiedShuffleSplit
 
 from ..base import clone
 from ..base import BaseEstimator
@@ -12,6 +17,7 @@ from ..metrics import confusion_matrix
 from ..metrics import roc_curve
 from ..preprocessing import LabelEncoder
 from ..utils import check_array
+from ..utils import _safe_indexing
 from ..utils.multiclass import check_classification_targets
 from ..utils.multiclass import type_of_target
 from ..utils.validation import check_is_fitted
@@ -32,7 +38,7 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         The classifier, fitted or not fitted, from which we want to optimize
         the decision threshold used during `predict`.
 
-    objective_metric : callable, {"tpr", "tnr"} or ndarray of shape (2, 2), \
+    objective_metric : callable or {"tpr", "tnr"} \
             default=balanced_accuracy_score
         The objective metric to be optimized. Can be one of:
 
@@ -40,36 +46,71 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         * `"tpr"`: find the decision threshold for a true positive ratio (TPR)
           of `objective_value`;
         * `"tnr"`: find the decision threshold for a true negative ratio (TNR)
-          of `objective_value`;
-        * `"cost_matrix"`: find the decision threshold which minimize the total
-           cost using the cost matrix given in `objective_value`.
+          of `objective_value`.
 
     objective_metric_params : dict, default=None
         Some extra parameters to pass to `objective_metric`.
 
     objective_value : float, default=None
         The value associated with the `objective_metric` metric for which we
-        want to find the decision threshold. When
-        `objective_metric='cost_matrix'`, this parameter should be a 2x2 cost
-        matrix with the same organization than a
-        :func:`sklearn.metrics.confusion_matrix`: the count of true negatives
-        is :math:`C_{0,0}`, false negatives is :math:`C_{1,0}`, true positives
-        is :math:`C_{1,1}` and false positives is :math:`C_{0,1}`.
+        want to find the decision threshold when `objective_metric` is equal to
+        `"tpr"` or `"tnr"`.
 
     method : {"auto", "decision_function", "predict_proba"}, default="auto"
         Methods by the classifier `base_estimator` corresponding to the
         decision function for which we want to find a threshold. It can be:
 
-        * if `"auto"`, it will try to invoke, for each estimator,
+        * if `"auto"`, it will try to invoke, for each classifier,
           `"decision_function` or `"predict_proba"` in that order.
         * otherwise, one of `"predict_proba"` or `"decision_function"`.
-          If the method is not implemented by the estimator, it will raise an
+          If the method is not implemented by the classifier, it will raise an
           error.
+
+    n_threshold : int, default=1000
+        The number of decision threshold to use when discretizing the output
+        of the classifier `method`.
 
     pos_label : int or str, default=None
         The label of the positive class. When `pos_label=None`, if `y_true` is
         in `{-1, 1}` or `{0, 1}`, `pos_label` is set to 1, otherwise an error
         will be raised.
+
+    cv : int, float, cross-validation generator, iterable or "prefit", \
+            default=None
+        Determines the cross-validation splitting strategy used in
+        `cross_val_predict` to train classifier. Possible inputs for cv are:
+
+        * None, to use the default 5-fold stratified K-fold cross validation;
+        * An integer number, to specify the number of folds in a stratified
+          k-fold;
+        * A float number, to specify a single shuffle split. The floating
+          number should be in (0, 1) and represent the size of the validation
+          set;
+        * An object to be used as a cross-validation generator;
+        * An iterable yielding train, test splits;
+        * "prefit", to bypass the cross-validation.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    refit : "auto" or bool, default="auto"
+        Whether or not to refit the classifier on the entire training set once
+        the decision threshold has been found. By default, `refit="auto"` is
+        equivalent to `refit=False` when `cv` is a float number using a single
+        shuffle split or `cv="prefit"` otherwise `refit=True` in all other
+        cases. Note that forcing `refit=False` on cross-validation having more
+        than a single split will raise an error. Similarly, `refit=True` in
+        conjunction with `cv="prefit"` will raise an error.
+
+    random_state : int or RandomState, default=None
+        Controls the randomness of the training and testing indices produced
+        when `cv` is a single shuffle split (i.e., giving a float number).
+        See :term:`Glossary <random_state>`.
+
+    n_jobs : int, default=None
+        The number of jobs to run in parallel all `estimators` `fit`.
+        `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
+        using all processors. See Glossary for more details.
 
     Attributes
     ----------
@@ -134,14 +175,24 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         objective_metric_params=None,
         objective_value=None,
         method="auto",
-        pos_label=None
+        n_threshold=1000,
+        pos_label=None,
+        cv=None,
+        refit="auto",
+        random_state=None,
+        n_jobs=None,
     ):
         self.base_estimator = base_estimator
         self.objective_metric = objective_metric
         self.objective_metric_params = objective_metric_params
         self.objective_value = objective_value
         self.method = method
+        self.n_threshold = n_threshold
         self.pos_label = pos_label
+        self.cv = cv
+        self.refit = refit
+        self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def _validate_parameters(self):
         """Validate the input parameters."""
@@ -169,19 +220,13 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                     f"'base_estimator' does not implement {self.method}."
                 )
             self._method = self.method
-        if (self.objective_metric not in ("tpr", "tnr", "cost_matrix") and
+        if (self.objective_metric not in ("tpr", "tnr") and
                 self.objective_value is not None):
             raise ValueError(
                 f"When 'objective_metric' is a scoring function, "
                 f"'objective_value' should be None. Got "
                 f"{self.objective_metric} instead."
             )
-        elif self.objective_metric == "cost_matrix":
-            if self.objective_value.shape != (2, 2):
-                raise ValueError(
-                    f"When 'objective_metric' is a cost matrix, it must be of "
-                    f"shape (2, 2). Got {self.objective_value.shape} instead."
-                )
 
         # ensure binary classification if `pos_label` is not specified
         # `classes.dtype.kind` in ('O', 'U', 'S') is required to avoid
@@ -205,6 +250,13 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         else:
             self._pos_label = self.pos_label
 
+        if (not isinstance(self.n_threshold, numbers.Integral) or
+                self.n_threshold < 0):
+            raise ValueError(
+                f"'n_threshold' should be a strictly positive integer. "
+                f"Got {self.n_threshold} instead."
+            )
+
     @staticmethod
     def _validate_data(X, y):
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -214,10 +266,118 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(f'Expected target of binary type. Got {y_type}.')
         return X, y
 
+    def _check_cv_refit(self, cv, refit, y, random_state):
+        if isinstance(cv, numbers.Real) and 0 < cv < 1:
+            cv = StratifiedShuffleSplit(
+                n_splits=1, test_size=cv, random_state=random_state
+            )
+            refit = False if refit == "auto" else refit
+        elif cv == "prefit":
+            if refit is True:
+                raise ValueError("When cv='prefit', refit cannot be True.")
+            refit = False
+        else:
+            cv = check_cv(cv, y=y, classifier=True)
+            if refit is False:
+                raise ValueError(
+                    "When cv has several folds, refit cannot be False"
+                )
+            refit = True
+        return cv, refit
+
     @staticmethod
-    def cost_sensitive_score(y_true, y_pred, cost_matrix):
-        cm = confusion_matrix(y_true, y_pred) * cost_matrix
-        return np.diag(cm) / cm.sum()
+    def _fit_and_score(estimator, X, y, train_idx, val_idx, predict_method,
+                       score_method, score_params, pos_label_encoded):
+        if train_idx is not None:
+            X_train = _safe_indexing(X, train_idx)
+            X_val = _safe_indexing(X, val_idx)
+            y_train = _safe_indexing(y, train_idx)
+            y_val = _safe_indexing(y, val_idx)
+
+            estimator.fit(X_train, y_train)
+        else:
+            X_val, y_val = X, y
+
+        y_score = getattr(estimator, predict_method)(X_val)
+        if y_score.ndim == 2:
+            y_score = y_score[:, pos_label_encoded]
+
+        if score_method in ("tnr", "tpr"):
+            fpr, tpr, potential_thresholds = roc_curve(
+                y_val, y_score, pos_label=pos_label_encoded
+            )
+            score_thresholds = tpr
+            if score_method == "tnr":
+                score_thresholds = (1 - fpr)[::-1]
+                potential_thresholds = potential_thresholds[::-1]
+        else:
+            params = {} if score_params is None else score_params
+            if "pos_label" in signature(score_method).parameters:
+                params["pos_label"] = pos_label_encoded
+            # `np.unique` is already sorting the value, no need to call
+            #  `potential_thresholds.sort()`
+            potential_thresholds = np.unique(y_score)
+            score_thresholds = np.array([
+                score_method(y_val, (y_score >= th).astype(int), **params)
+                for th in potential_thresholds
+            ])
+
+        return potential_thresholds, score_thresholds
+
+    @staticmethod
+    def _find_decision_threshold(thresholds, scores, n_thresholds,
+                                 objective_score):
+        min_threshold = np.min([th.min() for th in thresholds])
+        max_threshold = np.max([th.max() for th in thresholds])
+        ascending = thresholds[0].argmin() == 0
+        start = min_threshold if ascending else max_threshold
+        stop = max_threshold if ascending else min_threshold
+        thresholds_interpolated = np.linspace(start, stop, num=n_thresholds)
+        mean_score = np.mean(
+            [np.interp(thresholds_interpolated,
+                       thresholds[fold_idx], scores[fold_idx])
+             for fold_idx in range(len(scores))],
+            axis=0
+        )
+        if objective_score == "highest":
+            threshold_idx = mean_score.argmax()
+        else:
+            threshold_idx = np.searchsorted(mean_score, objective_score)
+        return thresholds_interpolated[threshold_idx]
+
+    # @staticmethod
+    # def _find_best_threshold(thresholds, scores, n_thresholds):
+    #     min_threshold = np.min([th.min() for th in thresholds])
+    #     max_threshold = np.max([th.max() for th in thresholds])
+    #     thresholds_interpolated = np.linspace(
+    #         min_threshold, max_threshold, num=n_thresholds
+    #     )
+    #     scores_interpolated = np.array(
+    #         [np.interp(thresholds_interpolated, thresholds[fold_idx],
+    #                    scores[fold_idx])
+    #          for fold_idx in range(len(scores))]
+    #     )
+    #     return thresholds_interpolated[
+    #         np.mean(scores_interpolated, axis=0).argmax()
+    #     ]
+
+    # @staticmethod
+    # def _find_closest_threshold(thresholds, scores, n_thresholds,
+    #                             objective_score):
+    #     min_threshold = np.min([th.min() for th in thresholds])
+    #     max_threshold = np.max([th.max() for th in thresholds])
+    #     ascending = thresholds[0].argmin() == 0
+    #     start = min_threshold if ascending else max_threshold
+    #     stop = max_threshold if ascending else min_threshold
+    #     thresholds_interpolated = np.linspace(start, stop, num=n_thresholds)
+    #     mean_score = np.mean(
+    #         [np.interp(thresholds_interpolated,
+    #                    thresholds[fold_idx], scores[fold_idx])
+    #          for fold_idx in range(len(scores))],
+    #         axis=0
+    #     )
+    #     threshold_idx = np.searchsorted(mean_score, objective_score)
+    #     return thresholds_interpolated[threshold_idx]
 
     def fit(self, X, y):
         """Find the decision threshold.
@@ -238,11 +398,22 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         X, y = self._validate_data(X, y)
 
-        try:
+        cv, refit = self._check_cv_refit(
+            self.cv, self.refit, y, self.random_state
+        )
+
+        # Start by fitting the final estimator
+        if refit:
+            self._estimator = clone(self.base_estimator).fit(X, y)
+        elif cv == "prefit":
             check_is_fitted(self.base_estimator, attributes=["classes_"])
             self._estimator = self.base_estimator
-        except NotFittedError:
-            self._estimator = clone(self.base_estimator).fit(X, y)
+        else:  # single shuffle split CV
+            train_idx, _ = next(cv.split(X, y))
+            X_train = _safe_indexing(X, train_idx)
+            y_train = _safe_indexing(y, train_idx)
+            self._estimator = clone(self.base_estimator).fit(X_train, y_train)
+
         self.classes_ = self._estimator.classes_
         if len(self.classes_) == 1:
             raise ValueError(
@@ -264,42 +435,30 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             self.classes_ == self._pos_label
         ).item(0)
 
-        y_score = getattr(self._estimator, self._method)(X)
-        if self.objective_metric in ("tnr", "tpr"):
-            fpr, tpr, thresholds = roc_curve(
-                y_encoded, y_score, pos_label=self._pos_label_encoded
-            )
-            metric = tpr
-            if self.objective_metric == "tnr":
-                tnr, thresholds = (1 - fpr)[::-1], thresholds[::-1]
-                metric = tnr
-
-            threshold_idx = np.searchsorted(
-                metric, self.objective_value
-            )
-            self.decision_threshold_ = thresholds[threshold_idx]
+        if cv == "prefit" or not refit:
+            model = self._estimator
+            splits = ([None, range(len(X))],)
         else:
-            if y_score.ndim == 2:
-                y_score = y_score[:, self._pos_label_encoded]
-            # `np.unique` is already sorting the value, no need to call
-            #  `thresholds.sort()`
-            thresholds = np.unique(y_score)
-            scores = []
-            params = ({} if self.objective_metric_params is None
-                      else self.objective_metric_params)
-            if callable(self.objective_metric):
-                metric_func = self.objective_metric
-                metric_signature = signature(metric_func)
-                if "pos_label" in metric_signature.parameters:
-                    params["pos_label"] = self._pos_label_encoded
-            else:
-                metric_func = self.cost_sensitive_score
-                params["cost_matrix"] = self.objective_value
-            for th in thresholds:
-                scores.append(metric_func(
-                    y_encoded, (y_score >= th).astype(int), **params)
-                )
-            self.decision_threshold_ = thresholds[np.argmax(scores)]
+            model = clone(self.base_estimator)
+            splits = cv.split(X, y)
+
+        thresholds, scores = zip(*Parallel(n_jobs=self.n_jobs)(
+            delayed(self._fit_and_score)(
+                model, X, y_encoded, train_idx, val_idx,
+                self._method,
+                self.objective_metric, self.objective_metric_params,
+                self._pos_label_encoded
+            )
+            for train_idx, val_idx in splits
+        ))
+
+        if self.objective_metric in ("tnr", "tpr"):
+            objective_value = self.objective_value
+        else:
+            objective_value = "highest"
+        self.decision_threshold_ = self._find_decision_threshold(
+            thresholds, scores, self.n_threshold, objective_value
+        )
 
         return self
 
