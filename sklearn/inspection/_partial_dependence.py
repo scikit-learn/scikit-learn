@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 from collections.abc import Iterable
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -478,6 +479,12 @@ def partial_dependence(estimator, X, features, response_method='auto',
         -1, *[val.shape[0] for val in values])
 
     if kind == 'average':
+        warnings.warn(
+            "A Bunch will be returned in place of 'predictions' from 0.25 with "
+            "partial dependence results accessible via the 'average' key.",
+            FutureWarning
+        )
+        # TODO 0.25: Return a Bunch in place of averaged_predictions
         return averaged_predictions, values
     elif kind == 'individual':
         return Bunch(individual=predictions), values
