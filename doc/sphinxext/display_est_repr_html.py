@@ -28,8 +28,7 @@ class DisplayEstimatorRepr(Directive):
         exec(code)
         sys.stdout, sys.stderr = orig_stdout, orig_stderr
 
-        return "".join(['<div style="font-size: 1.1em;display: inline-block">',
-                        output.getvalue(), err.getvalue(), "</div>"])
+        return f"{output.getvalue()}{err.getvalue()}"
 
     def run(self):
         output = []
@@ -40,17 +39,17 @@ class DisplayEstimatorRepr(Directive):
         input_code['language'] = 'python'
         output.append(input_code)
 
-        onlynode_html = addnodes.only(expr='html')
-        onlynode_html += nodes.raw('', code_results, format='html')
-        output.append(onlynode_html)
+        html_node = nodes.raw('', code_results, format='html')
+        output.append(html_node)
 
-        onlynode_latex = addnodes.only(expr='latex')
-        onlynode_latex += nodes.raw('', code_results, format='html')
-        onlynode_latex += nodes.note('The HTML output of this code snippet '
-                                     'can only been seen on the HTML version '
-                                     'of the docs.')
-        output.append(onlynode_latex)
-
+        code_results_latex = r"""
+        \begin{sphinxadmonition}{note}{Note:}
+        The HTML output of this code snippet can only been seen on the HTML
+        version of the documentation
+        \end{sphinxadmonition}
+        """
+        latex_node = nodes.raw('', code_results_latex, format='latex')
+        output.append(latex_node)
         return output
 
 

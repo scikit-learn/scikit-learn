@@ -236,9 +236,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _sk_repr_html(self, final_estimator):
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock('parallel', estimators, names,
-                                 dash_wrapped=False)
-        serial = _VisualBlock('serial', (parallel, final_estimator),
-                               ('', ''), dash_wrapped=False)
+                                dash_wrapped=False)
+        serial = _VisualBlock('serial', (parallel, final_estimator), ('', ''),
+                              dash_wrapped=False)
         return _VisualBlock('serial', [serial], [str(self)])
 
 
