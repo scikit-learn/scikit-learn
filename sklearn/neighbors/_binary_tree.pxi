@@ -157,7 +157,8 @@ from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from ._typedefs import DTYPE, ITYPE
 
 from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+                             euclidean_dist_to_rdist, euclidean_rdist_to_dist,
+                             filtered_euclidean_rdist)
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -1195,6 +1196,14 @@ cdef class BinaryTree:
         else:
             return self.dist_metric.rdist(x1, x2, size)
 
+    cdef inline DTYPE_t rdist_filter(self, DTYPE_t* x1, DTYPE_t* x2,
+                                     DTYPE_t* rads,
+                                     ITYPE_t size) nogil except -1:
+        if self.euclidean:
+            return filtered_euclidean_rdist(x1, x2, rads, size)
+        else:
+            raise NotImplementedError("filter only for euclidean distance")
+
     cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
                               ITYPE_t idx_end) except -1:
         """Recursively build the tree.
@@ -1553,6 +1562,99 @@ cdef class BinaryTree:
             free(distances)
 
 
+    def query_filtered(
+              self, X, radiuses,
+              k=1, return_distance=True, sort_results=True):
+        """
+        query the tree for the k nearest neighbors
+        while for some dimensions only filter for
+        a given radian
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            An array of points to query
+        radiuses : array-like of shape n_features
+            Where it is a positive number, that dimension
+            is only used for filtering
+            in other dimensions distance is measured
+        k : int, default=1
+            The number of nearest neighbors to return
+        return_distance : bool, default=True
+            if True, return a tuple (d, i) of distances and indices
+            if False, return array i
+        sort_results : bool, default=True
+            if True, then distances and indices of each point are sorted
+            on return, so that the first column contains the closest points.
+            Otherwise, neighbors are returned in an arbitrary order.
+
+        Returns
+        -------
+        i    : if return_distance == False
+        (d,i) : if return_distance == True
+
+        d : ndarray of shape X.shape[:-1] + k, dtype=double
+            Each entry gives the list of distances to the neighbors of the
+            corresponding point.
+
+        i : ndarray of shape X.shape[:-1] + k, dtype=int
+            Each entry gives the list of indices of neighbors of the
+            corresponding point.
+        """
+        # XXX: we should allow X to be a pre-built tree.
+        X = check_array(X, dtype=DTYPE, order='C')
+
+        if X.shape[X.ndim - 1] != self.data.shape[1]:
+            raise ValueError("query data dimension must "
+                             "match training data dimension")
+
+        if self.data.shape[0] < k:
+            raise ValueError("k must be less than or equal "
+                             "to the number of training points")
+
+        # flatten X, and save original shape information
+        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
+        cdef DTYPE_t reduced_dist_LB
+        cdef ITYPE_t i
+        cdef DTYPE_t* pt
+
+        # set filters
+        # should probably check for filters to be same size as X
+        radiuses = check_array(radiuses, dtype=DTYPE, order='C')
+        np_filter = radiuses.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] filter_arr = get_memview_DTYPE_2D(np_filter)
+        cdef DTYPE_t* rads
+
+        # initialize heap for neighbors
+        cdef NeighborsHeap heap = NeighborsHeap(Xarr.shape[0], k)
+
+        self.n_trims = 0
+        self.n_leaves = 0
+        self.n_splits = 0
+
+        pt = &Xarr[0, 0]
+        rads = &filter_arr[0, 0]
+        with nogil:
+            for i in range(Xarr.shape[0]):
+                reduced_dist_LB = min_filter_rdist(self, 0, rads, pt)
+                self._query_filter_single_depthfirst(
+                                              0, pt, i, rads,
+                                              heap, reduced_dist_LB
+                )
+                pt += Xarr.shape[1]
+                rads += Xarr.shape[1]
+        distances, indices = heap.get_arrays(sort=sort_results)
+        distances = self.dist_metric.rdist_to_dist(distances)
+
+        # deflatten results
+        if return_distance:
+            return (distances.reshape(X.shape[:X.ndim - 1] + (k,)),
+                    indices.reshape(X.shape[:X.ndim - 1] + (k,)))
+        else:
+            return indices.reshape(X.shape[:X.ndim - 1] + (k,))
+
+
     def kernel_density(self, X, h, kernel='gaussian',
                        atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False):
@@ -1805,6 +1907,63 @@ cdef class BinaryTree:
                                               reduced_dist_LB_2)
                 self._query_single_depthfirst(i1, pt, i_pt, heap,
                                               reduced_dist_LB_1)
+        return 0
+
+    cdef int _query_filter_single_depthfirst(
+                                      self, ITYPE_t i_node,
+                                      DTYPE_t* pt, ITYPE_t i_pt,
+                                      DTYPE_t* rads,
+                                      NeighborsHeap heap,
+                                      DTYPE_t reduced_dist_LB) nogil except -1:
+        """Recursive Single-tree k-neighbors query, depth-first approach"""
+        cdef NodeData_t node_info = self.node_data[i_node]
+
+        cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
+        cdef ITYPE_t i, i1, i2
+        cdef DTYPE_t* data = &self.data[0, 0]
+
+        #------------------------------------------------------------
+        # Case 1: query point is outside node radius:
+        #         trim it from the query
+        if reduced_dist_LB > heap.largest(i_pt):
+            self.n_trims += 1
+
+        #------------------------------------------------------------
+        # Case 2: this is a leaf node.  Update set of nearby points
+        elif node_info.is_leaf:
+            self.n_leaves += 1
+            for i in range(node_info.idx_start, node_info.idx_end):
+
+                dist_pt = filtered_euclidean_rdist(
+                                     pt,
+                                     &self.data[self.idx_array[i], 0],
+                                     rads,
+                                     self.data.shape[1])
+
+                if dist_pt < heap.largest(i_pt):
+                    heap._push(i_pt, dist_pt, self.idx_array[i])
+
+        #------------------------------------------------------------
+        # Case 3: Node is not a leaf.  Recursively query subnodes
+        #         starting with the closest
+        else:
+            self.n_splits += 1
+            i1 = 2 * i_node + 1
+            i2 = i1 + 1
+            reduced_dist_LB_1 = min_filter_rdist(self, i1, rads, pt)
+            reduced_dist_LB_2 = min_filter_rdist(self, i2, rads, pt)
+
+            # recursively query subnodes
+            if reduced_dist_LB_1 <= reduced_dist_LB_2:
+                self._query_filter_single_depthfirst(i1, pt, i_pt, rads,
+                                                     heap, reduced_dist_LB_1)
+                self._query_filter_single_depthfirst(i2, pt, i_pt, rads,
+                                                     heap, reduced_dist_LB_2)
+            else:
+                self._query_filter_single_depthfirst(i2, pt, i_pt, rads,
+                                                     heap, reduced_dist_LB_2)
+                self._query_filter_single_depthfirst(i1, pt, i_pt, rads,
+                                                     heap, reduced_dist_LB_1)
         return 0
 
     cdef int _query_single_breadthfirst(self, DTYPE_t* pt,
