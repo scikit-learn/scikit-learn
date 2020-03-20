@@ -3,10 +3,14 @@ import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import compute_node_value
+from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 
 
 def is_increasing(a):
@@ -262,3 +266,74 @@ def test_input_error():
                   'for multiclass classification'
             ):
         gbdt.fit(X, y)
+
+
+def test_bounded_value_min_gain_to_split():
+    # The purpose of this test is to show that when computing the gain at a
+    # given split, the value of the current node should be properly bounded to
+    # respect the monotonic constraints, because it strongly interacts with
+    # min_gain_to_split. We build a simple example where gradients are [1, 1,
+    # 100, 1, 1] (hessians are all ones). The best split happens on the 3rd
+    # bin, and depending on whether the value of the node is bounded or not,
+    # the min_gain_to_split constraint is or isn't satisfied.
+    l2_regularization = 0
+    min_hessian_to_split = 0
+    min_samples_leaf = 1
+    n_bins = n_samples = 5
+    X_binned = np.arange(n_samples).reshape(-1, 1).astype(X_BINNED_DTYPE)
+    sample_indices = np.arange(n_samples, dtype=np.uint32)
+    all_hessians = np.ones(n_samples, dtype=G_H_DTYPE)
+    all_gradients = np.array([1, 1, 100, 1, 1], dtype=G_H_DTYPE)
+    sum_gradients = all_gradients.sum()
+    sum_hessians = all_hessians.sum()
+    hessians_are_constant = False
+
+    builder = HistogramBuilder(X_binned, n_bins, all_gradients,
+                               all_hessians, hessians_are_constant)
+    n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
+                                  dtype=np.uint32)
+    has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+        dtype=np.int8)
+    missing_values_bin_idx = n_bins - 1
+    children_lower_bound, children_upper_bound = -np.inf, np.inf
+
+    min_gain_to_split = 2000
+    splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
+                        has_missing_values, monotonic_cst, l2_regularization,
+                        min_hessian_to_split, min_samples_leaf,
+                        min_gain_to_split, hessians_are_constant)
+
+    histograms = builder.compute_histograms_brute(sample_indices)
+
+    # Since the gradient array is [1, 1, 100, 1, 1]
+    # the max possible gain happens on the 3rd bin (or equivalently in the 2nd)
+    # and is equal to about 1307, which less than min_gain_to_split = 2000, so
+    # the node is considered unsplittable (gain = -1)
+    current_lower_bound, current_upper_bound = -np.inf, np.inf
+    value = compute_node_value(sum_gradients, sum_hessians,
+                               current_lower_bound, current_upper_bound,
+                               l2_regularization)
+    # the unbounded value is equal to -sum_gradients / sum_hessians
+    assert value == pytest.approx(-104 / 5)
+    split_info = splitter.find_node_split(n_samples, histograms,
+                                          sum_gradients, sum_hessians, value,
+                                          lower_bound=children_lower_bound,
+                                          upper_bound=children_upper_bound)
+    assert split_info.gain == -1  # min_gain_to_split not respected
+
+    # here again the max possible gain is on the 3rd bin but we now cap the
+    # value of the node into [-10, inf].
+    # This means the gain is now about 2430 which is more than the
+    # min_gain_to_split constraint.
+    current_lower_bound, current_upper_bound = -10, np.inf
+    value = compute_node_value(sum_gradients, sum_hessians,
+                               current_lower_bound, current_upper_bound,
+                               l2_regularization)
+    assert value == -10
+    split_info = splitter.find_node_split(n_samples, histograms,
+                                          sum_gradients, sum_hessians, value,
+                                          lower_bound=children_lower_bound,
+                                          upper_bound=children_upper_bound)
+    assert split_info.gain > min_gain_to_split

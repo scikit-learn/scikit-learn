@@ -361,6 +361,7 @@ cdef class Splitter:
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians,
+            const Y_DTYPE_C value,
             const Y_DTYPE_C lower_bound=-np.inf,
             const Y_DTYPE_C upper_bound=np.inf,
             ):
@@ -379,6 +380,22 @@ cdef class Splitter:
             The sum of the gradients for each sample at the node.
         sum_hessians : float
             The sum of the hessians for each sample at the node.
+        value : float
+            The bounded value of the current node. We directly pass the value
+            instead of re-computing it from sum_gradients and sum_hessians,
+            because we need to compute the loss and the gain based on the
+            *bounded* value: computing the value from
+            sum_gradients / sum_hessians would give the unbounded value, and
+            the interaction with min_gain_to_split would not be correct
+            anymore. Side note: we can't use the lower_bound / upper_bound
+            parameters either because these refer to the bounds of the
+            children, not the bounds of the current node.
+        lower_bound : float
+            Lower bound for the children values for respecting the monotonic
+            constraints.
+        upper_bound : float
+            Upper bound for the children values for respecting the monotonic
+            constraints.
 
         Returns
         -------
@@ -419,9 +436,8 @@ cdef class Splitter:
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, has_missing_values[feature_idx],
                     histograms, n_samples, sum_gradients, sum_hessians,
-                    self.monotonic_cst[feature_idx],
-                    lower_bound, upper_bound,
-                    &split_infos[feature_idx])
+                    value, self.monotonic_cst[feature_idx],
+                    lower_bound, upper_bound, &split_infos[feature_idx])
 
                 if has_missing_values[feature_idx]:
                     # We need to explore both directions to check whether
@@ -430,9 +446,8 @@ cdef class Splitter:
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians,
-                        self.monotonic_cst[feature_idx],
-                        lower_bound, upper_bound,
-                        &split_infos[feature_idx])
+                        value, self.monotonic_cst[feature_idx],
+                        lower_bound, upper_bound, &split_infos[feature_idx])
 
             # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
@@ -478,6 +493,7 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C value,
             char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
@@ -519,11 +535,7 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        loss_current_node = _loss_from_value(
-            compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
-                               self.l2_regularization),
-            sum_gradients
-        )
+        loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(end):
             n_samples_left += histograms[feature_idx, bin_idx].count
@@ -595,6 +607,7 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C value,
             char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
@@ -635,11 +648,7 @@ cdef class Splitter:
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
 
-        loss_current_node = _loss_from_value(
-            compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
-                               self.l2_regularization),
-            sum_gradients
-        )
+        loss_current_node = _loss_from_value(value, sum_gradients)
 
         for bin_idx in range(start, -1, -1):
             n_samples_right += histograms[feature_idx, bin_idx + 1].count
@@ -746,19 +755,19 @@ cdef inline Y_DTYPE_C _split_gain(
         # account (if any).
         return -1
 
-    gain = loss_current_node # without bounds
-    gain -= _loss_from_value(value_left, sum_gradient_left)  # with bounds
-    gain -= _loss_from_value(value_right, sum_gradient_right)  # with bounds
-    # Note that the losses for both children are computed with bounded values,
-    # while the loss of the current node isn't. It's OK since all the gain
-    # comparisons will be made with the same loss_current_node anyway.
+    gain = loss_current_node
+    gain -= _loss_from_value(value_left, sum_gradient_left)
+    gain -= _loss_from_value(value_right, sum_gradient_right)
+    # Note that for the gain to be correct (and for min_gain_to_split to work
+    # as expected), we need all values to be bounded (current node, left child
+    # and right child).
 
     return gain
 
 cdef inline Y_DTYPE_C _loss_from_value(
         Y_DTYPE_C value,
         Y_DTYPE_C sum_gradient) nogil:
-    """Return loss of a node form its value
+    """Return loss of a node from its (bounded) value
 
     See Equation 6 of:
     XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016

@@ -345,7 +345,7 @@ class TreeGrower:
 
         node.split_info = self.splitter.find_node_split(
             node.n_samples, node.histograms, node.sum_gradients,
-            node.sum_hessians, node.children_lower_bound,
+            node.sum_hessians, node.value, node.children_lower_bound,
             node.children_upper_bound)
 
         if node.split_info.gain <= 0:  # no valid split
