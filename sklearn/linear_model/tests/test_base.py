@@ -218,8 +218,8 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     for col in range(1, 4):
         arr = np.random.randn(10)
         arr[:8] = 0
+        # all columns but the first column is sparse
         if col != 0:
-            # the first column is not sparse
             arr = pd.arrays.SparseArray(arr, fill_value=0)
         df[str(col)] = arr
 
