@@ -18,13 +18,13 @@ from abc import ABCMeta, abstractmethod
 from inspect import signature
 
 import numpy as np
+from scipy.special import comb
 
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import comb
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
