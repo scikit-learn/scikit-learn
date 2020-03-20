@@ -345,40 +345,6 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             threshold_idx = np.searchsorted(mean_score, objective_score)
         return thresholds_interpolated[threshold_idx]
 
-    # @staticmethod
-    # def _find_best_threshold(thresholds, scores, n_thresholds):
-    #     min_threshold = np.min([th.min() for th in thresholds])
-    #     max_threshold = np.max([th.max() for th in thresholds])
-    #     thresholds_interpolated = np.linspace(
-    #         min_threshold, max_threshold, num=n_thresholds
-    #     )
-    #     scores_interpolated = np.array(
-    #         [np.interp(thresholds_interpolated, thresholds[fold_idx],
-    #                    scores[fold_idx])
-    #          for fold_idx in range(len(scores))]
-    #     )
-    #     return thresholds_interpolated[
-    #         np.mean(scores_interpolated, axis=0).argmax()
-    #     ]
-
-    # @staticmethod
-    # def _find_closest_threshold(thresholds, scores, n_thresholds,
-    #                             objective_score):
-    #     min_threshold = np.min([th.min() for th in thresholds])
-    #     max_threshold = np.max([th.max() for th in thresholds])
-    #     ascending = thresholds[0].argmin() == 0
-    #     start = min_threshold if ascending else max_threshold
-    #     stop = max_threshold if ascending else min_threshold
-    #     thresholds_interpolated = np.linspace(start, stop, num=n_thresholds)
-    #     mean_score = np.mean(
-    #         [np.interp(thresholds_interpolated,
-    #                    thresholds[fold_idx], scores[fold_idx])
-    #          for fold_idx in range(len(scores))],
-    #         axis=0
-    #     )
-    #     threshold_idx = np.searchsorted(mean_score, objective_score)
-    #     return thresholds_interpolated[threshold_idx]
-
     def fit(self, X, y):
         """Find the decision threshold.
 
