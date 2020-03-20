@@ -125,20 +125,19 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 ###############################################################################
 
 ###############################################################################
-# In a similar manner, the boston housing data set is used to show the impact
+# In a similar manner, the wine recognition data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
-# targets to be predicted corresponds to the weighted distances to the five
-# Boston employment centers.
+# targets to be predicted corresponds to the Malic acid content of each sample.
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_wine
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
-dataset = load_boston()
-target = np.array(dataset.feature_names) == "DIS"
+dataset = load_wine()
+target = np.array(dataset.feature_names) == "malic_acid"
 X = dataset.data[:, np.logical_not(target)]
 y = dataset.data[:, target].squeeze()
 y_trans = quantile_transform(dataset.data[:, target],
-                             n_quantiles=300,
+                             n_quantiles=50,
                              output_distribution='normal',
                              copy=True).squeeze()
 
@@ -159,14 +158,14 @@ ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
 
-f.suptitle("Boston housing data: distance to employment centers", y=0.035)
+f.suptitle("Wine recognition data: malic_acid", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
-# the transform induces a decrease of the MAE.
+# the transform induces an increase in R\ :sup:`2` and decrease of the MAE.
 
 f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
 
@@ -175,33 +174,33 @@ regr.fit(X_train, y_train)
 y_pred = regr.predict(X_test)
 
 ax0.scatter(y_test, y_pred)
-ax0.plot([0, 10], [0, 10], '--k')
+ax0.plot([0, 5], [0, 5], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
 ax0.set_title('Ridge regression \n without target transformation')
-ax0.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
+ax0.text(1, 4.5, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax0.set_xlim([0, 10])
-ax0.set_ylim([0, 10])
+ax0.set_xlim([0, 5])
+ax0.set_ylim([0, 5])
 
 regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
-    transformer=QuantileTransformer(n_quantiles=300,
+    transformer=QuantileTransformer(n_quantiles=50,
                                     output_distribution='normal'))
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
 ax1.scatter(y_test, y_pred)
-ax1.plot([0, 10], [0, 10], '--k')
+ax1.plot([0, 5], [0, 5], '--k')
 ax1.set_ylabel('Target predicted')
 ax1.set_xlabel('True Target')
 ax1.set_title('Ridge regression \n with target transformation')
-ax1.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
+ax1.text(1, 4.5, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax1.set_xlim([0, 10])
-ax1.set_ylim([0, 10])
+ax1.set_xlim([0, 5])
+ax1.set_ylim([0, 5])
 
-f.suptitle("Boston housing data: distance to employment centers", y=0.035)
+f.suptitle("Wine recognition data: malic_acid", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 plt.show()
