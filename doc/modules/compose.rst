@@ -540,7 +540,7 @@ Visualizing Composite Estimators
 
 By default, estimators are displayed with a HTML representation when shown in a
 jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. An example of the HTML output can been seen below. 
+many estimators. An example of the HTML output can be seen below.
 
 .. display_estimator_repr_html::
 

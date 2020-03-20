@@ -5,7 +5,6 @@ import sys
 from docutils.parsers.rst import Directive
 from docutils import nodes
 from io import StringIO
-from sphinx import addnodes
 
 
 class DisplayEstimatorRepr(Directive):
@@ -55,3 +54,8 @@ class DisplayEstimatorRepr(Directive):
 
 def setup(app):
     app.add_directive('display_estimator_repr_html', DisplayEstimatorRepr)
+
+    return {
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

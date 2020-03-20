@@ -59,10 +59,6 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # * ``embarked``: categories encoded as strings ``{'C', 'S', 'Q'}``;
 # * ``sex``: categories encoded as strings ``{'female', 'male'}``;
 # * ``pclass``: ordinal integers ``{1, 2, 3}``.
-#
-# We create the preprocessing pipelines for both numeric and categorical data.
-# A HTML visualization of the created pipeline can be found in
-# :ref:`visualizing_composite_estimators`.
 
 numeric_features = ['age', 'fare']
 numeric_transformer = Pipeline(steps=[
@@ -88,6 +84,13 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
+
+###############################################################################
+# HTML representation of ``Pipeline``
+###############################################################################
+# When the ``Pipeline`` is printed out in a jupyter notebook an HTML
+# representation of the estimator is displayed as follows:
+clf
 
 ###############################################################################
 # Use ``ColumnTransformer`` by selecting column by data types

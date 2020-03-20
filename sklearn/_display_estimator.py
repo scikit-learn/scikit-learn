@@ -271,9 +271,7 @@ div.sk-label-container {
   text-align: center;
 }
 div.sk-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: inline-block;
   position: relative;
 }
 """.replace('  ', '').replace('\n', '')  # noqa
