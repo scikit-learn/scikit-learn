@@ -288,7 +288,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    kind : "average", "individual" or "both", default="average"
+    kind : {"average", "individual", "both"}, default="average"
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both individual lines and the
         average dependence at the same time.
