@@ -225,7 +225,7 @@ def test_tmp_fit(params):
     X, y = load_breast_cancer(return_X_y=True)
 
     estimator = make_pipeline(StandardScaler(), LogisticRegression()).fit(X, y)
-    model = CutoffClassifier(
+    CutoffClassifier(
         base_estimator=estimator,
         **params
     ).fit(X, y)

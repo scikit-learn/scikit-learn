@@ -11,9 +11,7 @@ from ..base import clone
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import MetaEstimatorMixin
-from ..exceptions import NotFittedError
 from ..metrics import balanced_accuracy_score
-from ..metrics import confusion_matrix
 from ..metrics import roc_curve
 from ..preprocessing import LabelEncoder
 from ..utils import check_array
