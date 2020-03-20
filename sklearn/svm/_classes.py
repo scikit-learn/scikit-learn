@@ -495,7 +495,8 @@ class SVC(BaseSVC):
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy.
+        ('ovo') is always used as multi-class strategy. The parameter is
+        ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -538,6 +539,7 @@ class SVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
+        TODO: link to it
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -700,7 +702,9 @@ class NuSVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2).
+        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
+        ('ovo') is always used as multi-class strategy. The parameter is
+        ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -743,6 +747,7 @@ class NuSVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the section about multi-class classification in
         the SVM section of the User Guide for details.
+        TODO: link to it
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal

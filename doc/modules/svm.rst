@@ -4,6 +4,9 @@
 Support Vector Machines
 =======================
 
+.. TODO: link references throughout the text
+.. TODO: add scaler to examples and docstrings
+
 .. currentmodule:: sklearn.svm
 
 **Support vector machines (SVMs)** are a set of supervised learning
@@ -49,7 +52,7 @@ Classification
 ==============
 
 :class:`SVC`, :class:`NuSVC` and :class:`LinearSVC` are classes
-capable of performing multi-class classification on a dataset.
+capable of performing binary and multi-class classification on a dataset.
 
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_svc_001.png
@@ -60,16 +63,16 @@ capable of performing multi-class classification on a dataset.
 :class:`SVC` and :class:`NuSVC` are similar methods, but accept
 slightly different sets of parameters and have different mathematical
 formulations (see section :ref:`svm_mathematical_formulation`). On the
-other hand, :class:`LinearSVC` is another implementation of Support
+other hand, :class:`LinearSVC` is another (faster) implementation of Support
 Vector Classification for the case of a linear kernel. Note that
-:class:`LinearSVC` does not accept keyword ``kernel``, as this is
-assumed to be linear. It also lacks some of the members of
+:class:`LinearSVC` does not accept parameter ``kernel``, as this is
+assumed to be linear. It also lacks some of the attributes of
 :class:`SVC` and :class:`NuSVC`, like ``support_``.
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
-:class:`LinearSVC` take as input two arrays: an array X of size ``[n_samples,
-n_features]`` holding the training samples, and an array y of class labels
-(strings or integers), size ``[n_samples]``::
+:class:`LinearSVC` take as input two arrays: an array `X` of shape
+`(n_samples, n_features)` holding the training samples, and an array `y` of
+class labels (strings or integers), of shape `[n_samples]`::
 
 
     >>> from sklearn import svm
@@ -83,6 +86,8 @@ After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
     array([1])
+
+.. TODO: What's the decision function?????
 
 SVMs decision function depends on some subset of the training data,
 called the support vectors. Some properties of these support vectors
@@ -105,9 +110,11 @@ can be found in members ``support_vectors_``, ``support_`` and
 Multi-class classification
 --------------------------
 
+.. TODO: ref to knerr et al??
+
 :class:`SVC` and :class:`NuSVC` implement the "one-against-one"
-approach (Knerr et al., 1990) for multi- class classification. If
-``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
+approach (Knerr et al., 1990) for multi-class classification. In total,
+``n_classes * (n_classes - 1) / 2``
 classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
 ``decision_function_shape`` option allows to monotically transform the results of the
@@ -128,8 +135,7 @@ n_classes)``.
     4
 
 On the other hand, :class:`LinearSVC` implements "one-vs-the-rest"
-multi-class strategy, thus training n_class models. If there are only
-two classes, only one model is trained::
+multi-class strategy, thus training `n_classes` models.
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y)
@@ -140,6 +146,10 @@ two classes, only one model is trained::
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
+.. TODO: should this be above?
+
+.. TODO ref Crammer and singer
+.. TODO what does consistent mean
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
@@ -149,32 +159,31 @@ In practice, one-vs-rest classification is usually preferred, since the results
 are mostly similar, but the runtime is significantly less.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
-have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
-Each row of the coefficients corresponds to one of the ``n_class`` many
+have the shape ``(n_classes, n_features)`` and ``(n_classes,)`` respectively.
+Each row of the coefficients corresponds to one of the ``n_classes``
 "one-vs-rest" classifiers and similar for the intercepts, in the
 order of the "one" class.
 
-In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
-is a little more involved. In the case of having a linear kernel, the
-attributes ``coef_`` and ``intercept_`` have the shape
-``[n_class * (n_class - 1) / 2, n_features]`` and
-``[n_class * (n_class - 1) / 2]`` respectively. This is similar to the
-layout for :class:`LinearSVC` described above, with each row now corresponding
+In the case of "one-vs-one" :class:`SVC` and :class:`NuSVC`, the layout of
+the attributes is a little more involved. In the case of a linear
+kernel, the attributes ``coef_`` and ``intercept_`` have the shape
+``(n_classes * (n_classes - 1) / 2, n_features)`` and ``(n_classes *
+(n_classes - 1) / 2)`` respectively. This is similar to the layout for
+:class:`LinearSVC` described above, with each row now corresponding
 to a binary classifier. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 
-The shape of ``dual_coef_`` is ``[n_class-1, n_SV]`` with
+The shape of ``dual_coef_`` is ``(n_classes-1, n_SV)`` with
 a somewhat hard to grasp layout.
 The columns correspond to the support vectors involved in any
-of the ``n_class * (n_class - 1) / 2`` "one-vs-one" classifiers.
-Each of the support vectors is used in ``n_class - 1`` classifiers.
-The ``n_class - 1`` entries in each row correspond to the dual coefficients
+of the ``n_classes * (n_classes - 1) / 2`` "one-vs-one" classifiers.
+Each of the support vectors is used in ``n_classes - 1`` classifiers.
+The ``n_classes - 1`` entries in each row correspond to the dual coefficients
 for these classifiers.
 
-This might be made more clear by an example:
-
-Consider a three class problem with class 0 having three support vectors
+This might be clearer with an example: consider a three class problem with
+class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
 :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
@@ -213,6 +222,8 @@ calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
+.. TODO: how is this different from just using the calibration module?
+
 Needless to say, the cross-validation involved in Platt scaling
 is an expensive operation for large datasets.
 In addition, the probability estimates may be inconsistent with the scores,
@@ -232,6 +243,8 @@ by default. You can set ``break_ties=True`` for the output of ``predict`` to be
 the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
 first class among the tied classes will always be returned; but have in mind
 that it comes with a computational cost.
+
+.. TODO: remove because we can't see anything and link to example instead
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
    :target: ../auto_examples/svm/plot_svm_tie_breaking.html
@@ -253,13 +266,15 @@ Unbalanced problems
 --------------------
 
 In problems where it is desired to give more importance to certain
-classes or certain individual samples keywords ``class_weight`` and
+classes or certain individual samples, the parameters ``class_weight`` and
 ``sample_weight`` can be used.
 
-:class:`SVC` (but not :class:`NuSVC`) implement a keyword
+:class:`SVC` (but not :class:`NuSVC`) implements the parameter
 ``class_weight`` in the ``fit`` method. It's a dictionary of the form
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
+
+.. TODO: Describe the figure, or remove
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
@@ -269,16 +284,18 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR`, :class:`LinearSVC`,
 :class:`LinearSVR` and :class:`OneClassSVM` implement also weights for
-individual samples in method ``fit`` through keyword ``sample_weight``. Similar
-to ``class_weight``, these set the parameter ``C`` for the i-th example to
-``C * sample_weight[i]``.
+individual samples in the `fit` method through the ``sample_weight`` parameter.
+Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
+example to ``C * sample_weight[i]``.
 
+.. TODO: Describe the figure, or remove
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
 
+.. TODO: SHould all these examples be here?
 
 .. topic:: Examples:
 
@@ -305,13 +322,16 @@ that lie beyond the margin. Analogously, the model produced by Support
 Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
+.. TODO: should this be ... because the cost function ignores samples whose
+prediction is close to their target?
 
 There are three different implementations of Support Vector Regression:
 :class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
 linear kernels, while :class:`NuSVR` implements a slightly different
-formulation than :class:`SVR` and :class:`LinearSVR`. See
-:ref:`svm_implementation_details` for further details.
+formulation than :class:`SVR` and :class:`LinearSVR`.
+
+.. TODO: linear kernel singular??
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -350,14 +370,14 @@ Support Vector Machines are powerful tools, but their compute and
 storage requirements increase rapidly with the number of training
 vectors. The core of an SVM is a quadratic programming problem (QP),
 separating support vectors from the rest of the training data. The QP
-solver used by this `libsvm`_-based implementation scales between
+solver used by the `libsvm`_-based implementation scales between
 :math:`O(n_{features} \times n_{samples}^2)` and
 :math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
 the `libsvm`_ cache is used in practice (dataset dependent). If the data
 is very sparse :math:`n_{features}` should be replaced by the average number
 of non-zero features in a sample vector.
 
-Also note that for the linear case, the algorithm used in
+For the linear case, the algorithm used in
 :class:`LinearSVC` by the `liblinear`_ implementation is much more
 efficient than its `libsvm`_-based :class:`SVC` counterpart and can
 scale almost linearly to millions of samples and/or features.
@@ -405,11 +425,12 @@ Tips on Practical Use
     to have mean 0 and variance 1. Note that the *same* scaling must be
     applied to the test vector to obtain meaningful results. See section
     :ref:`preprocessing` for more details on scaling and normalization.
+    .. TODO: rewrite that and say to use a pipeline
 
   * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
     approximates the fraction of training errors and support vectors.
 
-  * In :class:`SVC`, if data for classification are unbalanced (e.g. many
+  * In :class:`SVC`, if the data is unbalanced (e.g. many
     positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
@@ -457,15 +478,15 @@ The *kernel function* can be any of the following:
   * linear: :math:`\langle x, x'\rangle`.
 
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`, where
-    :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
+    :math:`d` is specified by parameter ``degree``, :math:`r` by ``coef0``.
 
   * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`, where :math:`\gamma` is
-    specified by keyword ``gamma``, must be greater than 0.
+    specified by parameter ``gamma``, must be greater than 0.
 
   * sigmoid :math:`\tanh(\gamma \langle x,x'\rangle + r)`,
     where :math:`r` is specified by ``coef0``.
 
-Different kernels are specified by keyword kernel at initialization::
+Different kernels are specified by the `kernel` parameter::
 
     >>> linear_svc = svm.SVC(kernel='linear')
     >>> linear_svc.kernel
@@ -495,8 +516,8 @@ classifiers, except that:
 Using Python functions as kernels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can also use your own defined kernels by passing a function to the
-keyword ``kernel`` in the constructor.
+You can use your own defined kernels by passing a function to the
+``kernel`` parameter.
 
 Your kernel must take as arguments two matrices of shape
 ``(n_samples_1, n_features)``, ``(n_samples_2, n_features)``
@@ -519,6 +540,9 @@ instance that will use that kernel::
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. TODO: wording
+.. TODO: How to predict on a testset?
+
 Set ``kernel='precomputed'`` and pass the Gram matrix instead of X in the fit
 method. At the moment, the kernel values between *all* training vectors and the
 test vectors must be provided.
@@ -537,7 +561,11 @@ test vectors must be provided.
     array([0, 1])
 
 Parameters of the RBF Kernel
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
+
+.. TODO: put that up?
+.. TODO: gamma isn't just fo rbf
+.. TODO: C is common to all, explain it somewhere else?
 
 When training an SVM with the *Radial Basis Function* (RBF) kernel, two
 parameters must be considered: ``C`` and ``gamma``.  The parameter ``C``,
@@ -589,6 +617,8 @@ vector :math:`y \in \{1, -1\}^n`, SVC solves the following primal problem:
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., n
 
+.. TODO: explain zeta_i
+
 Its dual is
 
 .. math::
@@ -605,10 +635,22 @@ where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
 is the kernel. Here training vectors are implicitly mapped into a higher
 (maybe infinite) dimensional space by the function :math:`\phi`.
 
+.. TODO: C is the upper bound???
 
-The decision function is:
+.. TODO: that's the predicted class rather than the decision function?
+
+The decision function for a given sample :math:`x` is:
 
 .. math:: \operatorname{sgn}(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
+
+These parameters can be accessed through the members ``dual_coef_``
+which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
+holds the support vectors, and ``intercept_`` which holds the independent
+term :math:`\rho`
+
+.. TODO: should rho be b?
+.. TODO: is the sum really through all the samples???? shouldn't this be just
+   the SVs?
 
 .. note::
 
@@ -620,11 +662,6 @@ The decision function is:
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
-
-This parameters can be accessed through the members ``dual_coef_``
-which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
-holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`\rho` :
 
 .. topic:: References:
 
