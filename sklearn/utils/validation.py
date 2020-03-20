@@ -451,10 +451,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        # throw warning if pandas dataframe is sparse
+        # throw warning if columns are sparse. If all columns are sparse, then
+        # array.sparse exist and sparsity will be perserved.
         with suppress(ImportError):
             from pandas.api.types import is_sparse
-            if array.dtypes.apply(is_sparse).any():
+            if (not hasattr(array, 'sparse') and
+                    array.dtypes.apply(is_sparse).any()):
                 warnings.warn(
                     "pandas.DataFrame with sparse columns found."
                     "It will be converted to a dense numpy array."
