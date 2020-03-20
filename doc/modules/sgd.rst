@@ -371,7 +371,7 @@ Different choices for :math:`L` entail different classifiers or regressors:
   :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
 - Least-Squares: Linear regression (Ridge or Lasso depending on
   :math:`R`).
-  :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i)^2`.
+  :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i))^2`.
 - Huber: less sensitive to outliers than least-squares. It is equivalent to
   least squares when :math:`|y_i - f(x_i)| \leq \varepsilon`, and
   :math:`L(y_i, f(x_i)) = \varepsilon |y_i - f(x_i)| - \frac{1}{2}
