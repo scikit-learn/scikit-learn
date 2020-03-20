@@ -188,7 +188,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
         .. versionadded:: 0.22
 
-    kind : "average", "individual" or "both", default="average"
+    kind : {"average", "individual", "both"}, default="average"
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both individual lines and the
         average dependence at the same time.
@@ -430,7 +430,7 @@ class PartialDependenceDisplay:
     deciles : dict
         Deciles for feature indices in ``features``.
 
-    kind : "average", "individual" or "both", default="average"
+    kind : {"average", "individual", "both"}, default="average"
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both individual lines and the
         average dependence at the same time.
