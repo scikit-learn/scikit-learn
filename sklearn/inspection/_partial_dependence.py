@@ -313,16 +313,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
             samples in X (or over the training data if ``method`` is
             'recursion').
         - kind='individual' or kind='both', Bunch
-            Attribute 'individual', ndarray
-                shape (n_outputs, n_instances, len(values[0]), len(values[1]),
-                    ...)
-                The predictions for all the points in the grid for all samples
-                in X.
-            Attribute 'average', ndarray
-                shape (n_outputs, len(values[0]), len(values[1]), ...)
-                The predictions for all the points in the grid, averaged over
-                all samples in X (or over the training data if ``method`` is
-                'recursion'). Only available when kind='both'.
+            Key 'individual', ndarray
+            shape (n_outputs, n_instances, len(values[0]), len(values[1]), ...)
+            The predictions for all the points in the grid for all samples
+            in X.
+            Key 'average', ndarray
+            shape (n_outputs, len(values[0]), len(values[1]), ...)
+            The predictions for all the points in the grid, averaged over
+            all samples in X (or over the training data if ``method`` is
+            'recursion'). Only available when kind='both'.
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
