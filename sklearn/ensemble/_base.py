@@ -40,6 +40,12 @@ def _fit_single_estimator(estimator, X, y, sample_weight=None,
     return estimator
 
 
+def _predict_single_estimator(estimator, X, method):
+    """Private function used to generate prediction of a prefit estimator."""
+    func = getattr(estimator, method)
+    return func(X)
+
+
 def _set_random_states(estimator, random_state=None):
     """Set fixed random_state parameters for an estimator.
 
