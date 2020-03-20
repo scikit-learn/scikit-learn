@@ -94,7 +94,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
     if monotonic_cst == MonotonicConstraint.NO_CST:
         return
 
-    def dfs(node):  # dfs = depth first search
+    def recursively_check_children_node_values(node):
         if node.is_leaf:
             return
         if node is not grower.root and node is node.parent.left_child:
@@ -117,10 +117,10 @@ def assert_children_values_bounded(grower, monotonic_cst):
                             sibling.left_child.value >=
                             sibling.right_child.value)
 
-        dfs(node.left_child)
-        dfs(node.right_child)
+        recursively_check_children_node_values(node.left_child)
+        recursively_check_children_node_values(node.right_child)
 
-    dfs(grower.root)
+    recursively_check_children_node_values(grower.root)
 
 
 @pytest.mark.parametrize('seed', range(3))
