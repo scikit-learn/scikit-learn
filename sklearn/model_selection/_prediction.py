@@ -165,7 +165,7 @@ class CutoffClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     CutoffClassifier(...)
     >>> y_pred = model_optimized.predict(X_test)
     >>> print(f"Score: {balanced_accuracy_score(y_test, y_pred):.3f}")
-    Score: 0.962
+    Score: 0.972
     """
 
     def __init__(
