@@ -208,17 +208,18 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():
-    # Warning is raised only when some of the columns is sparse
     pd = pytest.importorskip('pandas')
     # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
     if LooseVersion(pd.__version__) < '0.24.0':
         pytest.skip("pandas 0.24+ required.")
 
-    df = pd.DataFrame()
-    for col in range(4):
+    # Warning is raised only when some of the columns is sparse
+    df = pd.DataFrame({'0': np.random.randn(10)})
+    for col in range(1, 4):
         arr = np.random.randn(10)
         arr[:8] = 0
         if col != 0:
+            # the first column is not sparse
             arr = pd.arrays.SparseArray(arr, fill_value=0)
         df[str(col)] = arr
 
