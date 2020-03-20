@@ -20,6 +20,7 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
+from ..utils import Bunch
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
@@ -304,19 +305,23 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     Returns
     -------
-    predictions : ndarray or tuple of ndarray
-        - kind='average',
+    predictions : ndarray or Bunch
+        - kind='average', ndarray
             shape (n_outputs, len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid, averaged over all
             samples in X (or over the training data if ``method`` is
             'recursion').
-        - kind='individual',
-            shape (n_outputs, n_instances, len(values[0]), len(values[1]),...)
-            The predictions for all the points in the grid for all samples
-            in X.
-        - kind='both', tuple of ndarray
-            Tuple containing the results when kind='average' and
-            kind='individual'
+        - kind='individual' or kind='both', Bunch
+            Attribute 'individual', ndarray
+                shape (n_outputs, n_instances, len(values[0]), len(values[1]),
+                    ...)
+                The predictions for all the points in the grid for all samples
+                in X.
+            Attribute 'average', ndarray
+                shape (n_outputs, len(values[0]), len(values[1]), ...)
+                The predictions for all the points in the grid, averaged over
+                all samples in X (or over the training data if ``method`` is
+                'recursion'). Only available when kind='both'.
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
@@ -475,6 +480,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if kind == 'average':
         return averaged_predictions, values
     elif kind == 'individual':
-        return predictions, values
+        return Bunch(individual=predictions), values
     else:  # kind='both'
-        return (averaged_predictions, predictions), values
+        output = Bunch(average=averaged_predictions, individual=predictions)
+        return output, values

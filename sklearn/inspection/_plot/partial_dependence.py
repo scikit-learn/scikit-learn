@@ -336,8 +336,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result, _ = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result[0].shape[0] if kind == 'both'
-               else pd_result.shape[0])
+    n_tasks = (pd_result.shape[0] if kind == 'average'
+               else pd_result.individual.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
             raise ValueError(
@@ -350,7 +350,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for pd_result, values in pd_results:
-        preds = pd_result[1] if kind == 'both' else pd_result
+        preds = pd_result if kind == 'average' else pd_result.individual
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -399,7 +399,7 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : list of (ndarray, ndarray)
+    pd_results : list of (ndarray or Bunch, ndarray)
         Results of :func:`~sklearn.inspection.partial_dependence` for
         ``features``. Each tuple corresponds to a (averaged_predictions, grid).
 
@@ -564,10 +564,10 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
         n_sampled = 1
         if self.kind == 'individual':
-            n_instances = len(self.pd_results[0][0][0])
+            n_instances = len(self.pd_results[0][0].individual[0])
             n_sampled = self._get_sample_count(n_instances)
         elif self.kind == 'both':
-            n_instances = len(self.pd_results[0][0][1][0])
+            n_instances = len(self.pd_results[0][0].individual[0])
             n_sampled = self._get_sample_count(n_instances) + 1
 
         if isinstance(ax, plt.Axes):
@@ -635,12 +635,12 @@ class PartialDependenceDisplay:
             avg_preds = None
             preds = None
             if self.kind == 'individual':
-                preds = pd_result
+                preds = pd_result.individual
             elif self.kind == 'average':
                 avg_preds = pd_result
             else:  # kind='both'
-                avg_preds = pd_result[0]
-                preds = pd_result[1]
+                avg_preds = pd_result.average
+                preds = pd_result.individual
 
             if len(values) == 1:
                 if self.kind == 'individual' or self.kind == 'both':

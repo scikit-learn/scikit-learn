@@ -107,10 +107,10 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     if kind == 'average':
         assert pdp.shape == expected_pdp_shape
     elif kind == 'individual':
-        assert pdp.shape == expected_ice_shape
+        assert pdp.individual.shape == expected_ice_shape
     else:  # 'both'
-        assert pdp[0].shape == expected_pdp_shape
-        assert pdp[1].shape == expected_ice_shape
+        assert pdp.average.shape == expected_pdp_shape
+        assert pdp.individual.shape == expected_ice_shape
 
     expected_axes_shape = (len(features), grid_resolution)
     assert axes is not None
