@@ -1544,13 +1544,15 @@ functions or non-estimator constructors.
         ``random_state``'s value may be:
 
         None (default)
-            Use the global random state from :mod:`numpy.random`.
+            Use the global random state instance from :mod:`numpy.random`.
+            Calling :term:`fit` or :term:`split` multiple times will reuse
+            the same instance, and will produce different results.
 
         An integer
             Use a new random number generator seeded by the given integer.
-            To make a randomized algorithm deterministic (i.e. running it
-            multiple times will produce the same result), an arbitrary
-            integer ``random_state`` can be used. However, it may be
+            Using an int will produce the same results across different calls
+            to :term:`fit` or :term:`split`.
+            However, it may be
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
@@ -1558,9 +1560,9 @@ functions or non-estimator constructors.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
-            of the same random state instance. Calling fit multiple times
-            will reuse the same instance, and will produce different
-            results.
+            of that same random state instance. Calling :term:`fit` or
+            :term:`split` multiple times will reuse the same instance, and
+            will produce different results.
 
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
