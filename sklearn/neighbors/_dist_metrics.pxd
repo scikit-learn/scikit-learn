@@ -3,12 +3,16 @@
 #cython: wraparound=False
 #cython: cdivision=True
 
+import numpy as np
+
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow
 
 from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from ._typedefs import DTYPE, ITYPE
+
+cdef DTYPE_t INF = np.inf
 
 ######################################################################
 # Inline distance functions
@@ -32,6 +36,21 @@ cdef inline DTYPE_t euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp
+    return d
+
+
+cdef inline DTYPE_t filtered_euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
+                                             DTYPE_t* rs,
+                                             ITYPE_t size) nogil except -1:
+    cdef DTYPE_t tmp, d=0
+    cdef np.intp_t j
+    for j in range(size):
+        if rs[j] >= 0:
+            if fabs(x1[j] - x2[j]) > rs[j]:
+                return INF
+        else:
+            tmp = x1[j] - x2[j]
+            d += tmp * tmp
     return d
 
 
