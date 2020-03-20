@@ -165,7 +165,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
-# the transform induces an increase in R\ :sup:`2` and decrease of the MAE.
+# the transform induces an increase in R^2 and decrease of the MAE.
 
 f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
 
