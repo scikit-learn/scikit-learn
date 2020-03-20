@@ -499,7 +499,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     # handles pandas sparse by checking for sparse attribute
-    if hasattr(array, 'sparse'):
+    # handles pandas sparse by checking for sparse attribute
+    if hasattr(array, 'sparse') and array.ndim > 1:
         array = array.sparse.to_coo()
 
     if sp.issparse(array):
