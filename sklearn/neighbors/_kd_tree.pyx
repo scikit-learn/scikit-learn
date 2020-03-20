@@ -111,6 +111,28 @@ cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
     return rdist
 
 
+cdef DTYPE_t min_filter_rdist(BinaryTree tree,
+                              ITYPE_t i_node,
+                              DTYPE_t* rs,
+                              DTYPE_t* pt) nogil except -1:
+    cdef ITYPE_t n_features = tree.data.shape[1]
+    cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
+    cdef ITYPE_t j
+    for j in range(n_features):
+        d_lo = tree.node_bounds[0, i_node, j] - pt[j]
+        d_hi = pt[j] - tree.node_bounds[1, i_node, j]
+        d = (d_lo + fabs(d_lo) + d_hi + fabs(d_hi)) * 0.5
+        if rs[j] >= 0:
+            if d > rs[j]:
+                return INF
+        else:
+            if tree.dist_metric.p == INF:
+                rdist = fmax(rdist, d)
+            else:
+                rdist += pow(d, tree.dist_metric.p)
+    return rdist
+
+
 cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
     """Compute the minimum distance between a point and a node"""
     if tree.dist_metric.p == INF:
