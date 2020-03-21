@@ -215,7 +215,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest pytest-cov flake8
+       $ pip install cython pytest pytest-cov flake8 mypy
 
 5. Install scikit-learn in editable mode::
 
@@ -363,6 +363,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
 6. Follow the :ref:`coding-guidelines`.
 
+
 7. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
    for developers can be found in the :ref:`developers-utils` page.
@@ -407,6 +408,16 @@ You can check for common programming errors with the following tools:
     $ pytest --cov sklearn path/to/tests_for_package
 
   see also :ref:`testing_coverage`
+
+* The use of type annotations is encouraged but is not mandatory. See [mypy
+  quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html) for
+  an introduction, as well as [pandas contributing documentation](
+  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
+  for a style guidelines. Whether you add type annotation or not::
+
+    mypy --ignore-missing-import sklearn
+
+  must not produce new errors in your pull request.
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
