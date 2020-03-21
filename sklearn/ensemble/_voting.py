@@ -119,6 +119,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
 
+        .. versionchanged:: 0.21
+            The ``'drop'`` is accepted, in addition to ``None``.
+
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
            support will be dropped in 0.24. Use the string ``'drop'`` instead.
@@ -362,6 +365,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         ``set_params``.
+
+        .. versionchanged:: 0.21
+            The ``'drop'`` is accepted, in addition to ``None``.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and

@@ -534,6 +534,10 @@ class KNeighborsMixin:
         """Finds the K-neighbors of a point.
         Returns indices of and distances to the neighbors of each point.
 
+        .. versionchanged:: 0.21
+            Now raises ``NotFittedError``, rather than ``AttributeError``,
+            when called before ``fit``.
+
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
@@ -708,6 +712,10 @@ class KNeighborsMixin:
                          mode='connectivity'):
         """Computes the (weighted) graph of k-Neighbors for points in X
 
+        .. versionchanged:: 0.21
+            Now raises ``NotFittedError``, rather than ``AttributeError``,
+            when called before ``fit``.
+
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
@@ -837,6 +845,10 @@ class RadiusNeighborsMixin:
 
         The result points are *not* necessarily sorted by distance to their
         query point.
+
+        .. versionchanged:: 0.21
+            Now raises ``NotFittedError``, rather than ``AttributeError``,
+            when called before ``fit``.
 
         Parameters
         ----------
@@ -1007,6 +1019,10 @@ class RadiusNeighborsMixin:
 
         Neighborhoods are restricted the points at a distance lower than
         radius.
+
+        .. versionchanged:: 0.21
+            Now raises ``NotFittedError``, rather than ``AttributeError``,
+            when called before ``fit``.
 
         Parameters
         ----------

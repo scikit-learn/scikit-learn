@@ -49,6 +49,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     .. versionadded:: 0.20
 
+    .. versionchanged:: 0.21
+        This class is no longer an experimental feature.
+
     Parameters
     ----------
     transformers : list of tuples
