@@ -692,7 +692,19 @@ def test_encoders_has_categorical_tags(Encoder):
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_does_not_support_none_values(Encoder):
+    values = [["a"], [1]]
+    expected_msg = (
+        r"Encoders require their input to be uniformly strings or numbers\. "
+        r"Got: \['int', 'str'\]\."
+    )
+    with pytest.raises(TypeError, match=expected_msg):
+        Encoder().fit(values)
+
+    # Special case with extra missing value imputation suggestion:
     values = [["a"], [None]]
-    with pytest.raises(TypeError, match="Encoders require their input to be "
-                                        "uniformly strings or numbers."):
+    expected_msg = (
+        r'SimpleImputer\(strategy="constant", missing_values=None, '
+        r'fill_value="missing"\)'
+    )
+    with pytest.raises(TypeError, match=expected_msg):
         Encoder().fit(values)

@@ -109,13 +109,22 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     """
     if values.dtype == object:
         try:
-            res = _encode_python(values, uniques, encode)
+            return _encode_python(values, uniques, encode)
         except TypeError:
-            types = sorted(t.__qualname__
-                           for t in set(type(v) for v in values))
-            raise TypeError("Encoders require their input to be uniformly "
-                            f"strings or numbers. Got {types}")
-        return res
+            unique_types = set(type(v) for v in values)
+            type_names = sorted(t.__qualname__ for t in unique_types)
+            error_msg = ("Encoders require their input to be uniformly "
+                         f"strings or numbers. Got: {type_names}.")
+            if unique_types == {str, type(None)}:
+                # Be extra helpful to the use for this common case:
+                error_msg += (
+                    '\nPreprocess the features with sklearn.impute.'
+                    'SimpleImputer(strategy="constant", missing_values=None, '
+                    'fill_value="missing") to deal with None-encoded '
+                    'missing values in other-wise string encoded categorical'
+                    'data.'
+                )
+            raise TypeError(error_msg)
     else:
         return _encode_numpy(values, uniques, encode,
                              check_unknown=check_unknown)
