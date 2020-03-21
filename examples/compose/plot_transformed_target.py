@@ -125,19 +125,21 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 ###############################################################################
 
 ###############################################################################
-# In a similar manner, the wine recognition data set is used to show the impact
+# In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
-# targets to be predicted corresponds to the Malic acid content of each sample.
+# targets to be predicted is the selling price of each house.
 
-from sklearn.datasets import load_wine
+from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
-dataset = load_wine()
-target = np.array(dataset.feature_names) == "malic_acid"
-X = dataset.data[:, np.logical_not(target)]
-y = dataset.data[:, target].squeeze()
-y_trans = quantile_transform(dataset.data[:, target],
-                             n_quantiles=50,
+ames = datasets.fetch_openml(name="house_prices", as_frame=True)
+# keep only numeric columns
+X = ames.data.select_dtypes(np.number)
+# remove columns with NaN or Inf values
+X = X.drop(columns=['LotFrontage','GarageYrBlt', 'MasVnrArea'])
+y = ames.target
+y_trans = quantile_transform(y.to_frame(),
+                             n_quantiles=900,
                              output_distribution='normal',
                              copy=True).squeeze()
 
@@ -158,14 +160,14 @@ ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
 
-f.suptitle("Wine recognition data: malic_acid", y=0.035)
+f.suptitle("Ames housing data: selling price", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
-# the transform induces an increase in R^2 and decrease of the MAE.
+# the transform induces an increase in R^2 and large decrease of the MAE.
 
 f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
 
@@ -173,34 +175,36 @@ regr = RidgeCV()
 regr.fit(X_train, y_train)
 y_pred = regr.predict(X_test)
 
-ax0.scatter(y_test, y_pred)
-ax0.plot([0, 5], [0, 5], '--k')
+ax0.scatter(y_test, y_pred, s=8)
+ax0.plot([0, 8e5], [0, 8e5], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
-ax0.set_title('Ridge regression \n without target transformation')
-ax0.text(1, 4.5, r'$R^2$=%.2f, MAE=%.2f' % (
+ax0.set_title('Ridge regression \n without target transformation', pad=18)
+ax0.text(4e4, 74e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax0.set_xlim([0, 5])
-ax0.set_ylim([0, 5])
+ax0.set_xlim([0, 8e5])
+ax0.set_ylim([0, 8e5])
+ax0.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
 
 regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
-    transformer=QuantileTransformer(n_quantiles=50,
+    transformer=QuantileTransformer(n_quantiles=900,
                                     output_distribution='normal'))
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
-ax1.scatter(y_test, y_pred)
-ax1.plot([0, 5], [0, 5], '--k')
+ax1.scatter(y_test, y_pred, s=8)
+ax1.plot([0, 8e5], [0, 8e5], '--k')
 ax1.set_ylabel('Target predicted')
 ax1.set_xlabel('True Target')
-ax1.set_title('Ridge regression \n with target transformation')
-ax1.text(1, 4.5, r'$R^2$=%.2f, MAE=%.2f' % (
+ax1.set_title('Ridge regression \n with target transformation', pad=18)
+ax1.text(4e4, 74e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax1.set_xlim([0, 5])
-ax1.set_ylim([0, 5])
+ax1.set_xlim([0, 8e5])
+ax1.set_ylim([0, 8e5])
+ax1.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
 
-f.suptitle("Wine recognition data: malic_acid", y=0.035)
+f.suptitle("Ames housing data: selling price", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 plt.show()
