@@ -33,6 +33,7 @@ def clf_boston(boston):
     return clf
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
 def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     # Test partial dependence plot function.
@@ -93,6 +94,7 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("kind, subsample, shape", [
     ('average', None, (1, 3)),
     ('individual', None, (1, 3, 506)),
@@ -116,6 +118,7 @@ def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
     assert disp.contours_[0, 2] is None
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [('dataframe', None),
@@ -182,6 +185,7 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
     assert ax.get_ylabel() == "ZN"
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
@@ -217,6 +221,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     assert ax.get_ylabel() == "ZN"
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("kind, lines", [
     ('average', 1), ('individual', 506), ('both', 507)
 ])
@@ -248,6 +253,7 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     assert len(disp2.axes_[0, 1].get_lines()) == 2 * lines
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
                                                     boston, nrows, ncols):
@@ -275,6 +281,7 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
             disp.plot(ax=ax_format)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
@@ -303,6 +310,7 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
                                 feature_names=boston.feature_names, ax=ax)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
                                                     boston):
     # second call to plot does not change the feature names from the first
@@ -321,6 +329,7 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
         assert ax.get_xlabel() == feature_names[i]
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_multiclass(pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -372,6 +381,7 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2,
                                               random_state=0)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("target", [0, 1])
 def test_plot_partial_dependence_multioutput(pyplot, target):
     # Test partial dependence plot function on multi-output input.
@@ -396,6 +406,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame(boston.data, columns=boston.feature_names)
@@ -411,6 +422,7 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
 dummy_classification_data = make_classification(random_state=0)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data, {"target": None, 'features': [0]},
@@ -454,6 +466,7 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
         plot_partial_dependence(estimator, X, **params)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("params, err_msg", [
     ({'target': 4, 'features': [0]},
      'target not in est.classes_, got 4'),
@@ -471,6 +484,7 @@ def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
         plot_partial_dependence(clf, iris.data, **params)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_fig_deprecated(pyplot):
     # Make sure fig object is correctly used if not None
     X, y = make_regression(n_samples=50, random_state=0)

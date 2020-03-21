@@ -62,6 +62,7 @@ multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
 iris = load_iris()
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('Estimator, method, data', [
     (GradientBoostingClassifier, 'auto', binary_classification_data),
     (GradientBoostingClassifier, 'auto', multiclass_classification_data),
@@ -290,6 +291,7 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         np.testing.assert_allclose(pdp_forest, pdp_tree)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('est', (
     GradientBoostingClassifier(random_state=0),
     HistGradientBoostingClassifier(random_state=0),
@@ -316,6 +318,7 @@ def test_recursion_decision_function(est, target_feature):
     assert_allclose(preds_1, preds_2, atol=1e-7)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('est', (
     LinearRegression(),
     GradientBoostingRegressor(random_state=0),
@@ -385,6 +388,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
     [(KMeans(),
@@ -479,6 +483,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
         partial_dependence(estimator, df, features)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
@@ -492,6 +497,7 @@ def test_partial_dependence_X_list(estimator):
 
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 @ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.
@@ -510,6 +516,7 @@ def test_warning_recursion_non_constant_init():
         partial_dependence(gbc, X, [0], method='recursion')
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
@@ -548,6 +555,7 @@ def test_hist_gbdt_sw_not_supported():
 
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 @ignore_warnings(category=FutureWarning)
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_partial_dependence_pipeline():
     # check that the partial dependence support pipeline
     iris = load_iris()
@@ -574,6 +582,7 @@ def test_partial_dependence_pipeline():
     )
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator",
     [LogisticRegression(max_iter=1000, random_state=0),
@@ -634,6 +643,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
         assert_allclose(values_pipe[1], values_clf[1])
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "features, expected_pd_shape",
     [(0, (3, 10)),
