@@ -20,11 +20,10 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-
-from sklearn import ensemble
-from sklearn import datasets
+import numpy as np
+from sklearn import datasets, ensemble
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
@@ -98,7 +97,7 @@ for i, y_pred in enumerate(clf.staged_predict(X_test)):
 
 fig = plt.figure(figsize=(12, 8))
 
-plt.subplot(1, 2, 1)
+plt.subplot(1, 3, 1)
 plt.title('Deviance')
 plt.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
          label='Training Set Deviance')
@@ -109,23 +108,31 @@ plt.xlabel('Boosting Iterations')
 plt.ylabel('Deviance')
 
 ##############################################################################
-# Plot impurity-based feature importance
+# Plot feature importance
 # -------------------------------------
 #
 # Careful, impurity-based feature importances can be misleading for
-# high cardinality features (many unique values). See
-# :func:`sklearn.inspection.permutation_importance` as an alternative.
+# high cardinality features (many unique values).
 
 feature_importance = clf.feature_importances_
-# make importances relative to max importance
-feature_importance = 100.0 * (feature_importance / feature_importance.max())
 sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
-plt.subplot(1, 2, 2)
+plt.subplot(1, 3, 2)
 plt.barh(pos, feature_importance[sorted_idx], align='center')
 plt.yticks(pos, np.array(diabetes.feature_names)[sorted_idx])
-plt.xlabel('Relative Importance')
-plt.title('Variable Importance')
+plt.title('Feature Importance (MDI)')
+
+##############################################################################
+# As an alternative, the permutation importances of ``clf`` are computed on a
+# held out test set. See :ref:`permutation_importance` for more details.
+
+result = permutation_importance(clf, X_test, y_test, n_repeats=10,
+                                random_state=42, n_jobs=2)
+sorted_idx = result.importances_mean.argsort()
+plt.subplot(1, 3, 3)
+plt.boxplot(result.importances[sorted_idx].T,
+           vert=False, labels=np.array(diabetes.feature_names)[sorted_idx])
+plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 
 plt.show()
