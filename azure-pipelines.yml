@@ -28,7 +28,7 @@ jobs:
           echo "Skipping linting"
           exit 0
         else
-          source activate flake8_env
+          conda activate flake8_env
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
@@ -38,7 +38,7 @@ jobs:
           echo "Skipping linting"
           exit 0
         else
-          source activate flake8_env
+          conda activate flake8_env
           mypy sklearn/ --ignore-missing-imports
         fi
       displayName: Run mypy

@@ -2144,6 +2144,8 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
+# mypy error: "Callable[[VarArg(Any), KwArg(Any)], Any]" has no attribute
+# "__test__"
 train_test_split.__test__ = False   # type: ignore
 
 

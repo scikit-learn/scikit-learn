@@ -167,6 +167,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 
+    # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `training_data_` was deprecated in version 0.22 and"
         " will be removed in 0.24."

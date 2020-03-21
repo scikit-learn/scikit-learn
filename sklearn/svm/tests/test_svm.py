@@ -28,6 +28,7 @@ from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
+# mypy error: Module 'sklearn.svm' has no attribute '_libsvm'
 from sklearn.svm import _libsvm  # type: ignore
 
 # toy sample

@@ -34,6 +34,7 @@ with warnings.catch_warnings():
     PUBLIC_MODULES = set([
         pckg[1] for pckg in walk_packages(
             prefix='sklearn.',
+            # mypy error: Module has no attribute "__path__"
             path=sklearn.__path__)  # type: ignore
         if not ("._" in pckg[1] or ".tests." in pckg[1])
     ])

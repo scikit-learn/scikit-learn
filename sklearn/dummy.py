@@ -395,6 +395,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
+    # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
@@ -622,6 +623,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
+    # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "

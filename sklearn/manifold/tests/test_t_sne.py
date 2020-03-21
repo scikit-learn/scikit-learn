@@ -21,6 +21,7 @@ from sklearn.manifold._t_sne import _kl_divergence_bh
 from sklearn.manifold._t_sne import _gradient_descent
 from sklearn.manifold._t_sne import trustworthiness
 from sklearn.manifold import TSNE
+# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from sklearn.manifold import _barnes_hut_tsne  # type: ignore
 from sklearn.manifold._utils import _binary_search_perplexity
 from sklearn.datasets import make_blobs

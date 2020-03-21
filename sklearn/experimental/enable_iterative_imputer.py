@@ -15,5 +15,6 @@ as an attribute of the impute module::
 from ..impute._iterative import IterativeImputer
 from .. import impute
 
+# mypy error: Module has no attribute "IterativeImputer"
 impute.IterativeImputer = IterativeImputer  # type: ignore
 impute.__all__ += ['IterativeImputer']
