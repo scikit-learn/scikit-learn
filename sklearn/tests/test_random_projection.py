@@ -30,8 +30,8 @@ all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
 all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
 all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
-all_RandomProjection = set(all_SparseRandomProjection
-                           + all_DenseRandomProjection)
+all_RandomProjection = set(all_SparseRandomProjection +
+                           all_DenseRandomProjection)
 
 
 # Make some random data with uniformly located non zero entries with

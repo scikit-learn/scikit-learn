@@ -23,10 +23,8 @@ from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
 
 if typing.TYPE_CHECKING:
-    # Workaround for type checkers (e.g. mypy) to avoid
-    # import errors for experimenal estimators.
-    # TODO: remove the above check once the estimator is no longer
-    #       experimental.
+    # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
+    # TODO: remove this check once the estimator is no longer experimental.
     from ._hist_gradient_boosting.gradient_boosting import (  # noqa
         HistGradientBoostingRegressor, HistGradientBoostingClassifier
     )

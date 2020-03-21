@@ -15,7 +15,7 @@ from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
-from typing import Dict, Any
+from typing import Dict, Any, Type
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -1260,11 +1260,7 @@ def test_min_impurity_decrease():
             assert tree.min_impurity_decrease == 0.1
 
 
-# mypy error: Variable
-# "sklearn.ensemble.tests.test_forest.DEFAULT_JOBLIB_BACKEND" is not valid type
-# mypy note: See
-# https://mypy.readthedocs.io/en/latest/common_issues.html#variables-vs-type-aliases
-# mypy error: Invalid base class "DEFAULT_JOBLIB_BACKEND"
+# mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
 class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
     def __init__(self, *args, **kwargs):
         self.count = 0
