@@ -131,7 +131,7 @@ result = permutation_importance(clf, X_test, y_test, n_repeats=10,
 sorted_idx = result.importances_mean.argsort()
 plt.subplot(1, 3, 3)
 plt.boxplot(result.importances[sorted_idx].T,
-           vert=False, labels=np.array(diabetes.feature_names)[sorted_idx])
+            vert=False, labels=np.array(diabetes.feature_names)[sorted_idx])
 plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 
