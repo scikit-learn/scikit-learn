@@ -132,11 +132,11 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
-ames = datasets.fetch_openml(name="house_prices", as_frame=True)
+ames = fetch_openml(name="house_prices", as_frame=True)
 # keep only numeric columns
 X = ames.data.select_dtypes(np.number)
 # remove columns with NaN or Inf values
-X = X.drop(columns=['LotFrontage','GarageYrBlt', 'MasVnrArea'])
+X = X.drop(columns=['LotFrontage', 'GarageYrBlt', 'MasVnrArea'])
 y = ames.target
 y_trans = quantile_transform(y.to_frame(),
                              n_quantiles=900,
@@ -184,7 +184,7 @@ ax0.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax0.set_xlim([0, 7e5])
 ax0.set_ylim([0, 7e5])
-ax0.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
+ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
@@ -202,7 +202,7 @@ ax1.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax1.set_xlim([0, 7e5])
 ax1.set_ylim([0, 7e5])
-ax1.ticklabel_format(axis="x", style="sci", scilimits=(0,0))
+ax1.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
 
 f.suptitle("Ames housing data: selling price", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
