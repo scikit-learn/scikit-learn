@@ -32,14 +32,6 @@ cdef packed struct node_struct:
     X_BINNED_DTYPE_C bin_threshold
 
 
-cpdef Y_DTYPE_C compute_node_value(
-    Y_DTYPE_C sum_gradient,
-    Y_DTYPE_C sum_hessian,
-    Y_DTYPE_C lower_bound,
-    Y_DTYPE_C upper_bound,
-    Y_DTYPE_C l2_regularization) nogil
-
-
 cpdef enum MonotonicConstraint:
     NO_CST = 0
     POS = 1

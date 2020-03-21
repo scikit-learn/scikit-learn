@@ -5,8 +5,10 @@ from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
-from sklearn.ensemble._hist_gradient_boosting.common import compute_node_value
-from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
+from sklearn.ensemble._hist_gradient_boosting.splitting import (
+    Splitter,
+    compute_node_value
+)
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.utils._testing import skip_if_32bit
 

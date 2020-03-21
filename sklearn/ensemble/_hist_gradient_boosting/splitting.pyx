@@ -25,7 +25,6 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
-from .common cimport compute_node_value
 from .common cimport MonotonicConstraint
 
 
@@ -362,8 +361,8 @@ cdef class Splitter:
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians,
             const Y_DTYPE_C value,
-            const Y_DTYPE_C lower_bound=-np.inf,
-            const Y_DTYPE_C upper_bound=np.inf,
+            const Y_DTYPE_C lower_bound=-INFINITY,
+            const Y_DTYPE_C upper_bound=INFINITY,
             ):
         """For each feature, find the best bin to split on at a given node.
 
@@ -408,7 +407,8 @@ cdef class Splitter:
             int n_features = self.n_features
             split_info_struct split_info
             split_info_struct * split_infos
-            const unsigned char [:] has_missing_values = self.has_missing_values
+            const unsigned char [::1] has_missing_values = self.has_missing_values
+            const char [::1] monotonic_cst = self.monotonic_cst
 
         with nogil:
 
@@ -436,7 +436,7 @@ cdef class Splitter:
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, has_missing_values[feature_idx],
                     histograms, n_samples, sum_gradients, sum_hessians,
-                    value, self.monotonic_cst[feature_idx],
+                    value, monotonic_cst[feature_idx],
                     lower_bound, upper_bound, &split_infos[feature_idx])
 
                 if has_missing_values[feature_idx]:
@@ -446,7 +446,7 @@ cdef class Splitter:
                     self._find_best_bin_to_split_right_to_left(
                         feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians,
-                        value, self.monotonic_cst[feature_idx],
+                        value, monotonic_cst[feature_idx],
                         lower_bound, upper_bound, &split_infos[feature_idx])
 
             # then compute best possible split among all features
@@ -790,3 +790,32 @@ cdef inline unsigned char sample_goes_left(
         or (
             bin_value <= split_bin_idx
         ))
+
+
+cpdef inline Y_DTYPE_C compute_node_value(
+        Y_DTYPE_C sum_gradient,
+        Y_DTYPE_C sum_hessian,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
+        Y_DTYPE_C l2_regularization) nogil:
+    """Compute a node's value.
+
+    The value is capped in the [lower_bound, upper_bound] interval to respect
+    monotonic constraints. Shrinkage is ignored.
+
+    See Equation 5 of:
+    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
+    https://arxiv.org/abs/1603.02754
+    """
+
+    cdef:
+        Y_DTYPE_C value 
+
+    value = -sum_gradient / (sum_hessian + l2_regularization + 1e-15)
+
+    if value < lower_bound:
+        value = lower_bound
+    elif value > upper_bound:
+        value = upper_bound
+
+    return value

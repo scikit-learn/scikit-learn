@@ -17,7 +17,6 @@ from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
-from .common import compute_node_value
 from .common import MonotonicConstraint
 
 
@@ -233,6 +232,7 @@ class TreeGrower:
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
+        self.l2_regularization = l2_regularization
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
@@ -318,9 +318,11 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        self.root.value = compute_node_value(
-            sum_gradients, sum_hessians, float('-inf'), float('+inf'),
-            self.splitter.l2_regularization)
+        # Value hard-coded here. Sharing compute_node_value() between the
+        # splitting.pyx and this files creates strong Python interactions and
+        # slows down the code.
+        self.root.value = -sum_gradients / (
+            sum_hessians + self.l2_regularization + 1e-15)
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
