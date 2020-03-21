@@ -15,7 +15,7 @@ from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
-from typing import Dict, Any, Type
+from typing import Dict, Any
 
 import numpy as np
 from scipy.sparse import csr_matrix
