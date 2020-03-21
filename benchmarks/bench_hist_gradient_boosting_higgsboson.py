@@ -75,7 +75,7 @@ est = HistGradientBoostingClassifier(loss='binary_crossentropy',
                                      max_iter=n_trees,
                                      max_bins=max_bins,
                                      max_leaf_nodes=n_leaf_nodes,
-                                     n_iter_no_change=None,
+                                     early_stopping=False,
                                      random_state=0,
                                      verbose=1)
 est.fit(data_train, target_train)
