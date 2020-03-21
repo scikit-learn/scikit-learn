@@ -180,7 +180,7 @@ ax0.plot([0, 7e5], [0, 7e5], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
 ax0.set_title('Ridge regression \n without target transformation', pad=18)
-ax0.text(4e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
+ax0.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax0.set_xlim([0, 7e5])
 ax0.set_ylim([0, 7e5])
@@ -198,7 +198,7 @@ ax1.plot([0, 7e5], [0, 7e5], '--k')
 ax1.set_ylabel('Target predicted')
 ax1.set_xlabel('True Target')
 ax1.set_title('Ridge regression \n with target transformation', pad=18)
-ax1.text(4e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
+ax1.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax1.set_xlim([0, 7e5])
 ax1.set_ylim([0, 7e5])
