@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 import copy
 import numpy as np
 import pandas as pd
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .exceptions import NotFittedError
