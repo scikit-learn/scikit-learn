@@ -116,7 +116,8 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
             error_msg = ("Encoders require their input to be uniformly "
                          f"strings or numbers. Got: {type_names}.")
             if unique_types == {str, type(None)}:
-                # Be extra helpful to the user for this specific yet common case:
+                # Be extra helpful to the user for this specific yet common
+                # case:
                 error_msg += (
                     '\nPreprocess the features with sklearn.impute.'
                     'SimpleImputer(strategy="constant", missing_values=None, '
