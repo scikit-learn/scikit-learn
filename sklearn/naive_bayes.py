@@ -753,7 +753,8 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, alphaCorrection=True, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, alphaCorrection=True,
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.alphaCorrection = alphaCorrection
         self.fit_prior = fit_prior
@@ -861,8 +862,8 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, alphaCorrection=True, fit_prior=True, class_prior=None,
-                 norm=False):
+    def __init__(self, alpha=1.0, alphaCorrection=True, fit_prior=True,
+                 class_prior=None, norm=False):
         self.alpha = alpha
         self.alphaCorrection = alphaCorrection
         self.fit_prior = fit_prior
@@ -980,8 +981,8 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, alphaCorrection=True, binarize=.0, fit_prior=True,
-                 class_prior=None):
+    def __init__(self, alpha=1.0, alphaCorrection=True, binarize=.0,
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.alphaCorrection = alphaCorrection
         self.binarize = binarize
@@ -1096,7 +1097,8 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, alphaCorrection=True, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, alphaCorrection=True, fit_prior=True,
+                 class_prior=None):
         self.alpha = alpha
         self.alphaCorrection = alphaCorrection
         self.fit_prior = fit_prior
