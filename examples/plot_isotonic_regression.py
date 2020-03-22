@@ -15,7 +15,7 @@ presented.
 The plot on the right-hand side shows the model prediction function that
 results from the linear interpolation of thresholds points. The thresholds
 points are a subset of the training input observations and their matching
-target values as computed by the isotonic non-parametric fit.
+target values are computed by the isotonic non-parametric fit.
 
 """
 print(__doc__)
