@@ -167,24 +167,34 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
-# the transform induces an increase in R^2 and large decrease of the MAE.
+# the transform induces an increase in R^2 and large decrease of the MAE. The
+# residual plot (predicted target - true target vs predicted target) without
+# target transformation takes on a curved, 'reverse smile' shape due to
+# residual values that tend to vary depending on the value of predicted target.
+# With target transformation, the shape is more linear indicating better model
+# fit.
 
-f, (ax0, ax1) = plt.subplots(1, 2, sharey=True)
+f, (ax0, ax1) = plt.subplots(2, 2, sharey='row')
 
 regr = RidgeCV()
 regr.fit(X_train, y_train)
 y_pred = regr.predict(X_test)
 
-ax0.scatter(y_test, y_pred, s=8)
-ax0.plot([0, 7e5], [0, 7e5], '--k')
-ax0.set_ylabel('Target predicted')
-ax0.set_xlabel('True Target')
-ax0.set_title('Ridge regression \n without target transformation', pad=18)
-ax0.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
+ax0[0].scatter(y_pred, y_test, s=8)
+ax0[0].plot([0, 7e5], [0, 7e5], '--k')
+ax0[0].set_ylabel('True target')
+ax0[0].set_xlabel('Predicted target')
+ax0[0].set_title('Ridge regression \n without target transformation', pad=18)
+ax0[0].text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax0.set_xlim([0, 7e5])
-ax0.set_ylim([0, 7e5])
-ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+ax0[0].set_xlim([0, 7e5])
+ax0[0].set_ylim([0, 7e5])
+ax0[0].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+
+ax1[0].scatter(y_pred, (y_pred - y_test), s=8)
+ax1[0].set_ylabel('Residual')
+ax1[0].set_xlabel('Predicted target')
+ax1[0].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
@@ -193,18 +203,23 @@ regr_trans = TransformedTargetRegressor(
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
-ax1.scatter(y_test, y_pred, s=8)
-ax1.plot([0, 7e5], [0, 7e5], '--k')
-ax1.set_ylabel('Target predicted')
-ax1.set_xlabel('True Target')
-ax1.set_title('Ridge regression \n with target transformation', pad=18)
-ax1.text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
+ax0[1].scatter(y_pred, y_test, s=8)
+ax0[1].plot([0, 7e5], [0, 7e5], '--k')
+ax0[1].set_ylabel('True target')
+ax0[1].set_xlabel('Predicted target')
+ax0[1].set_title('Ridge regression \n with target transformation', pad=18)
+ax0[1].text(3e4, 64e4, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
-ax1.set_xlim([0, 7e5])
-ax1.set_ylim([0, 7e5])
-ax1.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
+ax0[1].set_xlim([0, 7e5])
+ax0[1].set_ylim([0, 7e5])
+ax0[1].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
+
+ax1[1].scatter(y_pred, (y_pred - y_test), s=8)
+ax1[1].set_ylabel('Residual')
+ax1[1].set_xlabel('Predicted target')
+ax1[1].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 f.suptitle("Ames housing data: selling price", y=0.035)
-f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+f.tight_layout(rect=[0.05, 0.05, 1, 1.7])
 
 plt.show()
