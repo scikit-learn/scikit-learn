@@ -202,22 +202,26 @@ class TreeGrower:
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
         if monotonic_cst is None:
+            self.with_monotonic_cst = False
             monotonic_cst = np.full(shape=X_binned.shape[1],
                                     fill_value=MonotonicConstraint.NO_CST,
                                     dtype=np.int8)
         else:
+            self.with_monotonic_cst = True
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
 
-        if monotonic_cst.shape[0] != X_binned.shape[1]:
-            raise ValueError(
-                "monotonic_cst has shape {} but the input data "
-                "X has {} features.".format(
-                    monotonic_cst.shape[0], X_binned.shape[1]
+            if monotonic_cst.shape[0] != X_binned.shape[1]:
+                raise ValueError(
+                    "monotonic_cst has shape {} but the input data "
+                    "X has {} features.".format(
+                        monotonic_cst.shape[0], X_binned.shape[1]
+                    )
                 )
-            )
-        if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
-            raise ValueError(
-                "monotonic_cst must be None or an array-like of -1, 0 or 1.")
+            if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
+                raise ValueError(
+                    "monotonic_cst must be None or an array-like of "
+                    "-1, 0 or 1."
+                    )
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
@@ -431,23 +435,24 @@ class TreeGrower:
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
-        # Set value bounds for respecting monotonic constraints
-        # See test_nodes_values() for details
-        if (self.monotonic_cst[node.split_info.feature_idx] ==
-                MonotonicConstraint.NO_CST):
-            lower_left = lower_right = node.children_lower_bound
-            upper_left = upper_right = node.children_upper_bound
-        else:
-            middle = (left_child_node.value + right_child_node.value) / 2
+        if self.with_monotonic_cst:
+            # Set value bounds for respecting monotonic constraints
+            # See test_nodes_values() for details
             if (self.monotonic_cst[node.split_info.feature_idx] ==
-                    MonotonicConstraint.POS):
-                lower_left, upper_left = node.children_lower_bound, middle
-                lower_right, upper_right = middle, node.children_upper_bound
-            else:  # NEG
-                lower_left, upper_left = middle, node.children_upper_bound
-                lower_right, upper_right = node.children_lower_bound, middle
-        left_child_node.set_children_bounds(lower_left, upper_left)
-        right_child_node.set_children_bounds(lower_right, upper_right)
+                    MonotonicConstraint.NO_CST):
+                lower_left = lower_right = node.children_lower_bound
+                upper_left = upper_right = node.children_upper_bound
+            else:
+                mid = (left_child_node.value + right_child_node.value) / 2
+                if (self.monotonic_cst[node.split_info.feature_idx] ==
+                        MonotonicConstraint.POS):
+                    lower_left, upper_left = node.children_lower_bound, mid
+                    lower_right, upper_right = mid, node.children_upper_bound
+                else:  # NEG
+                    lower_left, upper_left = mid, node.children_upper_bound
+                    lower_right, upper_right = node.children_lower_bound, mid
+            left_child_node.set_children_bounds(lower_left, upper_left)
+            right_child_node.set_children_bounds(lower_right, upper_right)
 
         # Compute histograms of children, and compute their best possible split
         # (if needed)
