@@ -54,18 +54,23 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
         return uniques
 
 
-def _encode_python(values, uniques=None, encode=False):
+def _encode_python(values, uniques=None, encode=False, check_unknown=True):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
+    n_uniques = len(uniques)
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
+        if check_unknown:
+            try:
+                encoded = np.array([table[v] for v in values])
+            except KeyError as e:
+                raise ValueError("y contains previously unseen labels: %s"
+                                % str(e))
+        else:
+            encoded = np.array([table[v] if v in table else n_uniques for v in values ])
+        
         return uniques, encoded
     else:
         return uniques

@@ -2,18 +2,17 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
+import pandas as pd
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-
-# from .base import _transform_selected
-# from .label import _encode, _encode_check_unknown
-
-# range = six.moves.range
 from ._label import _encode, _encode_check_unknown
+
 
 __all__ = [
     'OneHotEncoder',
@@ -28,7 +27,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=False):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -42,17 +41,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None)
+            X_temp = check_array(
+                X, dtype=None, force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
                 X = check_array(X, dtype=np.object)
             else:
                 X = X_temp
-            needs_validation = False
-        else:
-            # pandas dataframe, do validation later column by column, in order
-            # to keep the dtype information to be used in the encoder.
-            needs_validation = True
+
+        # pandas dataframe, do validation later column by column, in order
+        # to keep the dtype information to be used in the encoder.
 
         n_samples, n_features = X.shape
         X_columns = []
@@ -60,7 +58,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
-                             force_all_finite=needs_validation)
+                             force_all_finite=force_all_finite)
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
@@ -73,7 +71,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        # ignore NaNs during fit
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite=False)
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -85,7 +84,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _encode(Xi)
+                cats = _encode(Xi[pd.notna(Xi)])
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -93,16 +92,23 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi, cats)
+                    diff = _encode_check_unknown(Xi[pd.notna(Xi)], cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+    def _transform(self, X, handle_unknown='error', handle_missing='warn'):
+        force_all_finite = True
+        if handle_missing == 'warn':
+            warnings.warn("In the future (v0.23) onwards handle_missing = 'indicator'"
+                          "will be used by default. Pass handle_missing=None to"
+                          "silence this warning for now.", FutureWarning)
+        elif handle_missing in ['indicator', 'all-zero']:
+            force_all_finite = False
 
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite)
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
 
@@ -118,17 +124,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
+            # NaNs don't count as unknown categories
+            na_valid_mask = valid_mask | pd.isna(Xi)
 
-            if not np.all(valid_mask):
+            if not np.all(na_valid_mask):
                 if handle_unknown == 'error':
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
                     # cast Xi into the largest string type necessary
                     # to handle different lengths of numpy strings
                     if (self.categories_[i].dtype.kind in ('U', 'S')
@@ -136,8 +140,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.astype(self.categories_[i].dtype)
                     else:
                         Xi = Xi.copy()
-
+                    
+                    if handle_missing == 'indicator':
+                        valid_mask = na_valid_mask
                     Xi[~valid_mask] = self.categories_[i][0]
+                    # Set the problematic rows to an acceptable value and
+                    # continue `The rows are marked `X_mask` and will be
+                    # removed later.
+                    X_mask[:, i] = valid_mask
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
@@ -222,6 +232,12 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
+    handle_missing : {'indicator', 'all-zero'}, default=None
+        Specify how to handle missing categorical features (NaN) in the training data 
+
+        - None : Raises an error in the presence of NaN (the default).
+        - 'indicator': Represent with a separate one-hot column.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -252,21 +268,6 @@ class OneHotEncoder(_BaseEncoder):
     sklearn.preprocessing.MultiLabelBinarizer : Transforms between iterable of
       iterables and a multilabel format, e.g. a (samples x classes) binary
       matrix indicating the presence of a class label.
-
-    handle_missing : all-missing, all-zero or category
-        What should be done to missing values. Should be one of:
-
-        'all-missing':
-            Replace with a row of NaNs
-
-        'all-zero:
-            Replace with a row of zeros
-
-        'category:
-            Represent with a separate one-hot column
-
-    missing_values: NaN or None
-        What should be considered as a missing value?
 
     Examples
     --------
@@ -310,65 +311,13 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 1., 0.]])
     """
 
-    # def __init__(self, n_values=None, categorical_features=None,
-    #              categories=None, sparse=True, dtype=np.float64,
-    #              handle_unknown='error', missing_values="NaN", handle_missing="all-missing"):
     def __init__(self, categories='auto', drop=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error'):
+                 dtype=np.float64, handle_unknown='error', handle_missing='indicator'):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-    #     self.n_values = n_values
-    #     self.categorical_features = categorical_features
-    #     self.missing_values = missing_values
-    #     self.handle_missing = handle_missing
-
-    # # Deprecated attributes
-
-    # @property
-    # @deprecated("The ``active_features_`` attribute was deprecated in version "
-    #             "0.20 and will be removed 0.22.")
-    # def active_features_(self):
-    #     check_is_fitted(self, 'categories_')
-    #     return self._active_features_
-
-    # @property
-    # @deprecated("The ``feature_indices_`` attribute was deprecated in version "
-    #             "0.20 and will be removed 0.22.")
-    # def feature_indices_(self):
-    #     check_is_fitted(self, 'categories_')
-    #     return self._feature_indices_
-
-    # @property
-    # @deprecated("The ``n_values_`` attribute was deprecated in version "
-    #             "0.20 and will be removed 0.22.")
-    # def n_values_(self):
-    #     check_is_fitted(self, 'categories_')
-    #     return self._n_values_
-
-    # def _handle_deprecations(self, X):
-
-    #     # internal version of the attributes to handle deprecations
-    #     self._categories = getattr(self, '_categories', None)
-    #     self._categorical_features = getattr(self, '_categorical_features',
-    #                                          None)
-
-    #     # user manually set the categories or second fit -> never legacy mode
-    #     if self.categories is not None or self._categories is not None:
-    #         self._legacy_mode = False
-    #         if self.categories is not None:
-    #             self._categories = self.categories
-
-    #     # categories not set -> infer if we need legacy mode or not
-    #     elif self.n_values is not None and self.n_values != 'auto':
-    #         msg = (
-    #             "Passing 'n_values' is deprecated in version 0.20 and will be "
-    #             "removed in 0.22. You can use the 'categories' keyword "
-    #             "instead. 'n_values=n' corresponds to 'categories=[range(n)]'."
-    #         )
-    #         warnings.warn(msg, DeprecationWarning)
-    #         self._legacy_mode = True
+        self.handle_missing = handle_missing
         self.drop = drop
 
     def _validate_keywords(self):
@@ -393,7 +342,7 @@ class OneHotEncoder(_BaseEncoder):
                 return np.zeros(len(self.categories_), dtype=np.object)
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=np.object)
+                                 for cats in self.categories_], dtype=np.object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -492,7 +441,8 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_int, X_mask = self._transform(
+            X, handle_unknown=self.handle_unknown, handle_missing=self.handle_missing)
 
         n_samples, n_features = X_int.shape
 
