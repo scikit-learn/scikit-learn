@@ -3,6 +3,7 @@ from io import StringIO
 
 import pytest
 
+from sklearn import config_context
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.impute import SimpleImputer
@@ -13,6 +14,8 @@ from sklearn.pipeline import FeatureUnion
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import VotingClassifier
 from sklearn.feature_selection import SelectPercentile
+from sklearn.cluster import Birch
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
@@ -72,7 +75,7 @@ def test_get_visual_block_pipeline():
                                    'do_nothing: passthrough',
                                    'do_nothing_more: passthrough',
                                    'classifier: LogisticRegression']
-    assert est_html_info.name_details is None
+    assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
 def test_get_visual_block_feature_union():
@@ -148,11 +151,8 @@ def test_display_estimator_pipeline():
 
     expected_strings = [
       'passthrough</label>',
-      'div class=\"sk-toggleable__content\"><pre>SimpleImputer'
-      '(strategy=\'median\')',
-      '<pre>SimpleImputer(missing_values=\'empty\', strategy=\'constant\')'
-      '</pre>',
-      '(\'one-hot\', OneHotEncoder',
+      'div class=\"sk-toggleable__content\"><pre>SimpleImputer(strategy',
+      '(\'one-hot\',',
       'preprocessor: ColumnTransformer</label>',
       '<pre>[\'a\', \'b\', \'c\', \'d\', \'e\']</pre>',
       '<pre>LogisticRegression(random_state=1)</pre>',
@@ -163,6 +163,8 @@ def test_display_estimator_pipeline():
 
     for expected_string in expected_strings:
         assert expected_string in html_output
+
+    assert str(pipe) in html_output
 
 
 def test_display_estimator_ovo_classifier():
@@ -181,8 +183,7 @@ def test_stacking_classsifer(final_estimator):
 
     html_output = _estimator_repr_html(clf)
 
-    assert "('mlp', MLPClassifier(alpha=0.001)" in html_output
-    assert "('tree', DecisionTreeClassifier()" in html_output
+    assert str(clf) in html_output
     if final_estimator is None:
         assert "LogisticRegression()</pre>" in html_output
     else:
@@ -196,9 +197,29 @@ def test_stacking_regressor(final_estimator):
 
     html_output = _estimator_repr_html(reg)
 
-    assert "('svr', LinearSVR()" in html_output
-    print(html_output)
+    assert str(reg.estimators[0][0]) in html_output
+    assert "LinearSVR</label>" in html_output
     if final_estimator is None:
         assert "RidgeCV</label>" in html_output
     else:
         assert final_estimator.__class__.__name__ in html_output
+
+
+def test_estimator_birch():
+    # birch uses another estimator
+    birch = Birch(n_clusters=AgglomerativeClustering(n_clusters=3))
+    html_output = _estimator_repr_html(birch)
+
+    # inner estimator only prints the changes
+    assert '<pre>AgglomerativeClustering(n_clusters=3)</pre>' in html_output
+    assert '<pre>Birch(' in html_output
+
+
+@pytest.mark.parametrize('print_changed_only', [True, False])
+def test_one_estimator_print_change_only(print_changed_only):
+    pca = PCA(n_components=10)
+
+    with config_context(print_changed_only=print_changed_only):
+        pca_repr = str(pca)
+        html_output = _estimator_repr_html(pca)
+        assert pca_repr in html_output

@@ -1,4 +1,5 @@
 from sklearn._config import config_context
+from sklearn._config import get_config
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO
@@ -14,24 +15,23 @@ class _VisualBlock:
         kind of HTML block
 
     estimators : list of estimators or `_VisualBlock`s or a single estimator
-        If kind is in ('parallel', 'serial'), then `estimators` is a list of
+        If kind != 'single', then `estimators` is a list of
         estimators.
         If kind == 'single', then `estimators` is a single estimator.
 
     names : list of str
-        If kind in ('parallel', 'serial'), then `names` corresponds to
-        estimators
-        If kind is 'single', then `names` is a single string corresponding to
+        If kind != 'single', then `names` corresponds to estimators.
+        If kind == 'single', then `names` is a single string corresponding to
         the single estimator.
 
     name_details : list of str, str, or None, default=None
-        If kind == 'parallel', then `name_details` corresponds to `names`.
+        If kind != 'single', then `name_details` corresponds to `names`.
         If kind == 'single', then `name_details` is a single string
         corresponding to the single estimator.
-        `name_details` is not used when kind == 'single'.
 
     dash_wrapped : bool, default=True
         If true, wrapped HTML element will be wrapped with a dashed border.
+        Only active when kind != 'single'.
     """
     def __init__(self, kind, estimators, *, names=None, name_details=None,
                  dash_wrapped=True):
@@ -47,6 +47,9 @@ class _VisualBlock:
 
         self.names = names
         self.name_details = name_details
+
+    def _sk_repr_html(self):
+        return self
 
 
 def _write_label_html(out, name, name_details,
@@ -77,9 +80,7 @@ def _get_visual_block(estimator):
     with suppress(AttributeError):
         return estimator._sk_repr_html()
 
-    if isinstance(estimator, _VisualBlock):
-        return estimator
-    elif isinstance(estimator, str):
+    if isinstance(estimator, str):
         return _VisualBlock('single', estimator,
                             names=estimator, name_details=estimator)
     elif estimator is None:
@@ -90,6 +91,7 @@ def _get_visual_block(estimator):
     if hasattr(estimator, 'get_params'):
         estimators = []
         for key, value in estimator.get_params().items():
+            # Only look at the estimators in the first layer
             if '__' not in key and hasattr(value, 'get_params'):
                 estimators.append(value)
         if len(estimators):
@@ -100,26 +102,30 @@ def _get_visual_block(estimator):
                         name_details=str(estimator))
 
 
-def _write_estimator_html(out, estimator, estimator_label, first_call=False):
+def _write_estimator_html(out, estimator, estimator_label,
+                          estimator_label_details, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
-    with config_context(print_changed_only=not first_call):
+    if first_call:
         est_block = _get_visual_block(estimator)
+    else:
+        # deeper calls will only show the changes
+        with config_context(print_changed_only=True):
+            est_block = _get_visual_block(estimator)
 
     if est_block.kind == 'serial':
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
-        # write label of current if name is given
         if estimator_label:
-            with config_context(print_changed_only=True):
-                _write_label_html(out, estimator_label, str(estimator))
+            _write_label_html(out, estimator_label, estimator_label_details)
 
         out.write('<div class="sk-serial">')
-        est_infos = zip(est_block.estimators, est_block.names)
-        for est, name in est_infos:
-            _write_estimator_html(out, est, name)
+        est_infos = zip(est_block.estimators, est_block.names,
+                        est_block.name_details)
+        for est, name, name_details in est_infos:
+            _write_estimator_html(out, est, name, name_details)
         out.write('</div></div>')  # sk-serial sk-item
 
     elif est_block.kind == 'parallel':
@@ -128,21 +134,17 @@ def _write_estimator_html(out, estimator, estimator_label, first_call=False):
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if estimator_label:
-            with config_context(print_changed_only=True):
-                _write_label_html(out, estimator_label, str(estimator))
+            _write_label_html(out, estimator_label, estimator_label_details)
 
         out.write('<div class="sk-parallel">')
         est_infos = zip(est_block.estimators, est_block.names,
                         est_block.name_details)
-
         for est, name, name_details in est_infos:
             out.write('<div class="sk-parallel-item">')
-            # name is associated with the parallel element
-            if name:
-                _write_label_html(out, name, name_details)
-            out.write('<div class="sk-serial">')
-            _write_estimator_html(out, est, '')
-            out.write('</div></div>')  # sk-parallel-item sk-serial
+            # wrap element in a serial visualblock
+            serial_block = _VisualBlock('serial', [est], dash_wrapped=False)
+            _write_estimator_html(out, serial_block, name, name_details)
+            out.write('</div>')  # sk-parallel-item
         out.write('</div></div>')  # sk-parallel sk-item
 
     elif est_block.kind == 'single':
@@ -311,7 +313,7 @@ def _estimator_repr_html(estimator):
                   f'<style>{_STYLE}</style></head><body>'
                   f'<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
-                              first_call=True)
+                              str(estimator), first_call=True)
         out.write('</div></div></body></html>')
 
         html_output = out.getvalue()

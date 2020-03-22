@@ -643,8 +643,11 @@ class Pipeline(_BaseComposition):
             # Is an estimator
             return f'{name}: {est.__class__.__name__}'
         names = [_get_name(name, est) for name, est in self.steps]
+        name_details = [str(est) for est in estimators]
         return _VisualBlock('serial', estimators,
-                            names=names, dash_wrapped=False)
+                            names=names,
+                            name_details=name_details,
+                            dash_wrapped=False)
 
 
 def _name_estimators(estimators):
