@@ -104,6 +104,7 @@ class DataConversionWarning(UserWarning):
     DataConversionWarning('Data was converted to boolean for metric jaccard')
 
 
+    # pylint: disable=line-too-long
     >>> from sklearn.utils import validation
     >>> Y = [[1],[2],[3]]
     >>> import warnings
@@ -116,10 +117,9 @@ class DataConversionWarning(UserWarning):
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
-    DataConversionWarning('A column-vector y was passed when a 1d array was
-    expected. Please change the shape of y to (n_samples, ),
-    for example using ravel().')
+    DataConversionWarning('A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().')
 
+    # pylint: enable=line-too-long
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
     """
