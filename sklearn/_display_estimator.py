@@ -1,5 +1,4 @@
 from sklearn._config import config_context
-from sklearn._config import get_config
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO

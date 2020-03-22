@@ -21,7 +21,6 @@ from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from ._display_estimator import _estimator_repr_html
-from ._display_estimator import _VisualBlock
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
