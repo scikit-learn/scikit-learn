@@ -633,7 +633,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     def _sk_repr_html(self):
         names, transformers, name_details = zip(*self.transformers)
-        return _VisualBlock('parallel', transformers, names, name_details)
+        return _VisualBlock('parallel', transformers,
+                            names=names, name_details=name_details)
 
 
 def _check_X(X):

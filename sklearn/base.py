@@ -416,10 +416,6 @@ class BaseEstimator:
     def _repr_html_(self):
         return _estimator_repr_html(self)
 
-    def _sk_repr_html(self):
-        return _VisualBlock('single', self, self.__class__.__name__,
-                             str(self))
-
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""

@@ -182,6 +182,7 @@ def test_stacking_classsifer(final_estimator):
     html_output = _estimator_repr_html(clf)
 
     assert "('mlp', MLPClassifier(alpha=0.001)" in html_output
+    assert "('tree', DecisionTreeClassifier()" in html_output
     if final_estimator is None:
         assert "LogisticRegression()</pre>" in html_output
     else:

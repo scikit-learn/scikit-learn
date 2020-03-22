@@ -1,5 +1,6 @@
 from sklearn._config import config_context
 from contextlib import closing
+from contextlib import suppress
 from io import StringIO
 import uuid
 
@@ -32,35 +33,20 @@ class _VisualBlock:
     dash_wrapped : bool, default=True
         If true, wrapped HTML element will be wrapped with a dashed border.
     """
-    def __init__(self, kind, estimators, names, name_details=None,
+    def __init__(self, kind, estimators, *, names=None, name_details=None,
                  dash_wrapped=True):
         self.kind = kind
         self.estimators = estimators
-        self.names = names
         self.dash_wrapped = dash_wrapped
 
-        if self.kind == 'parallel' and name_details is None:
-            name_details = (None, ) * len(names)
+        if self.kind in ('parallel', 'serial'):
+            if names is None:
+                names = (None, ) * len(estimators)
+            if name_details is None:
+                name_details = (None, ) * len(estimators)
 
+        self.names = names
         self.name_details = name_details
-
-
-def _get_visual_block(estimator):
-    """Generate information about how to display an estimator.
-    """
-    if isinstance(estimator, _VisualBlock):
-        return estimator
-    elif isinstance(estimator, str):
-        return _VisualBlock('single', estimator, estimator, estimator)
-    elif estimator is None:
-        return _VisualBlock('single', estimator, 'None', 'None')
-    # looks like a meta estimator
-    elif (hasattr(estimator, 'estimator') and
-            hasattr(getattr(estimator, 'estimator'), 'get_params')):
-        wrapped_estimator = getattr(estimator, 'estimator')
-        wrapped_name = wrapped_estimator.__class__.__name__
-        return _VisualBlock('serial', [wrapped_estimator], [wrapped_name])
-    return estimator._sk_repr_html()
 
 
 def _write_label_html(out, name, name_details,
@@ -85,16 +71,36 @@ def _write_label_html(out, name, name_details,
     out.write('</div></div>')  # outer_class inner_class
 
 
-def _write_named_label_html(out, estimator, name):
-    """Write label with details based on name"""
-    if not name or isinstance(estimator, _VisualBlock):
-        return
-    with config_context(print_changed_only=True):
-        name_details = str(estimator)
-    _write_label_html(out, name, name_details)
+def _get_visual_block(estimator):
+    """Generate information about how to display an estimator.
+    """
+    with suppress(AttributeError):
+        return estimator._sk_repr_html()
+
+    if isinstance(estimator, _VisualBlock):
+        return estimator
+    elif isinstance(estimator, str):
+        return _VisualBlock('single', estimator,
+                            names=estimator, name_details=estimator)
+    elif estimator is None:
+        return _VisualBlock('single', estimator,
+                            names='None', name_details='None')
+
+    # check if estimator looks like a meta estimator wraps estimators
+    if hasattr(estimator, 'get_params'):
+        estimators = []
+        for key, value in estimator.get_params().items():
+            if '__' not in key and hasattr(value, 'get_params'):
+                estimators.append(value)
+        if len(estimators):
+            return _VisualBlock('parallel', estimators, names=None)
+
+    return _VisualBlock('single', estimator,
+                        names=estimator.__class__.__name__,
+                        name_details=str(estimator))
 
 
-def _write_estimator_html(out, estimator, name, first_call=False):
+def _write_estimator_html(out, estimator, estimator_label, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
     with config_context(print_changed_only=not first_call):
@@ -105,7 +111,10 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
-        _write_named_label_html(out, estimator, name)
+        # write label of current if name is given
+        if estimator_label:
+            with config_context(print_changed_only=True):
+                _write_label_html(out, estimator_label, str(estimator))
 
         out.write('<div class="sk-serial">')
         est_infos = zip(est_block.estimators, est_block.names)
@@ -118,14 +127,19 @@ def _write_estimator_html(out, estimator, name, first_call=False):
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
-        _write_named_label_html(out, estimator, name)
-        out.write('<div class="sk-parallel">')
+        if estimator_label:
+            with config_context(print_changed_only=True):
+                _write_label_html(out, estimator_label, str(estimator))
 
+        out.write('<div class="sk-parallel">')
         est_infos = zip(est_block.estimators, est_block.names,
                         est_block.name_details)
+
         for est, name, name_details in est_infos:
             out.write('<div class="sk-parallel-item">')
-            _write_label_html(out, name, name_details)
+            # name is associated with the parallel element
+            if name:
+                _write_label_html(out, name, name_details)
             out.write('<div class="sk-serial">')
             _write_estimator_html(out, est, '')
             out.write('</div></div>')  # sk-parallel-item sk-serial
