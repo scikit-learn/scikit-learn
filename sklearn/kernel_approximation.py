@@ -19,9 +19,10 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
+from .utils.validation import check_non_negative, _deprecate_positional_args
 
 
-class RBFSampler(BaseEstimator, TransformerMixin):
+class RBFSampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -44,6 +45,18 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    random_offset_ : ndarray of shape (n_components,), dtype=float64
+        Random offset used to compute the projection in the `n_components`
+        dimensions of the feature space.
+
+    random_weights_ : ndarray of shape (n_features, n_components),\
+        dtype=float64
+        Random projection directions drawn from the Fourier transform
+        of the RBF kernel.
+
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import RBFSampler
@@ -52,15 +65,9 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
-    >>> clf = SGDClassifier(max_iter=5)
+    >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
     >>> clf.fit(X_features, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+    SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
 
@@ -72,10 +79,10 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     [1] "Weighted Sums of Random Kitchen Sinks: Replacing
     minimization with randomization in learning" by A. Rahimi and
     Benjamin Recht.
-    (http://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
-
-    def __init__(self, gamma=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
@@ -97,7 +104,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -121,7 +128,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -131,7 +138,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -162,14 +169,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     ...                                  n_components=10,
     ...                                  random_state=0)
     >>> X_features = chi2_feature.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=10)
+    >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+    SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
 
@@ -185,8 +187,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
-
-    def __init__(self, skewedness=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, skewedness=1., n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
         self.random_state = random_state
@@ -208,7 +210,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X)
+        X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -233,7 +235,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -250,7 +252,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
+class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
@@ -274,6 +276,12 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
+    Attributes
+    ----------
+    sample_interval_ : float
+        Stored sampling interval. Specified as a parameter if sample_steps not
+        in {1,2,3}.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -282,16 +290,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> X, y = load_digits(return_X_y=True)
     >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
     >>> X_transformed = chi2sampler.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=5, random_state=0)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
     >>> clf.fit(X_transformed, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=0, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
-    >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
-    0.9543...
+    SGDClassifier(max_iter=5, random_state=0)
+    >>> clf.score(X_transformed, y)
+    0.9499...
 
     Notes
     -----
@@ -315,8 +318,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
     2011
     """
-
-    def __init__(self, sample_steps=2, sample_interval=None):
+    @_deprecate_positional_args
+    def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
@@ -334,7 +337,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
+        check_non_negative(X, 'X in AdditiveChi2Sampler.fit')
+
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -355,7 +360,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
@@ -366,14 +371,12 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, "sample_interval_", msg=msg)
+        check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
+        check_non_negative(X, 'X in AdditiveChi2Sampler.transform')
         sparse = sp.issparse(X)
 
-        # check if X has negative values. Doesn't play well with np.log.
-        if ((X.data if sparse else X) < 0).any():
-            raise ValueError("Entries of X must be non-negative.")
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
@@ -435,14 +438,20 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         return sp.hstack(X_new)
 
+    def _more_tags(self):
+        return {'stateless': True,
+                'requires_positive_X': True}
 
-class Nystroem(BaseEstimator, TransformerMixin):
+
+class Nystroem(TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
     using a subset of the data as basis.
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -494,20 +503,16 @@ class Nystroem(BaseEstimator, TransformerMixin):
     --------
     >>> from sklearn import datasets, svm
     >>> from sklearn.kernel_approximation import Nystroem
-    >>> digits = datasets.load_digits(n_class=9)
-    >>> data = digits.data / 16.
+    >>> X, y = datasets.load_digits(n_class=9, return_X_y=True)
+    >>> data = X / 16.
     >>> clf = svm.LinearSVC()
     >>> feature_map_nystroem = Nystroem(gamma=.2,
     ...                                 random_state=1,
     ...                                 n_components=300)
     >>> data_transformed = feature_map_nystroem.fit_transform(data)
-    >>> clf.fit(data_transformed, digits.target)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
-    >>> clf.score(data_transformed, digits.target) # doctest: +ELLIPSIS
+    >>> clf.fit(data_transformed, y)
+    LinearSVC()
+    >>> clf.score(data_transformed, y)
     0.9987...
 
     References
@@ -529,7 +534,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
+    @_deprecate_positional_args
+    def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
@@ -547,10 +553,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_feature)
+        X : array-like of shape (n_samples, n_features)
             Training data.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
@@ -589,7 +595,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to transform.
 
         Returns
@@ -597,7 +603,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
@@ -611,7 +617,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not callable(self.kernel):
+        if not callable(self.kernel) and self.kernel != 'precomputed':
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
@@ -619,10 +625,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
             if (self.gamma is not None or
                     self.coef0 is not None or
                     self.degree is not None):
-                warnings.warn(
-                    "Passing gamma, coef0 or degree to Nystroem when using a"
-                    " callable kernel is deprecated in version 0.19 and will"
-                    " raise an error in 0.21, as they are ignored. Use "
-                    "kernel_params instead.", DeprecationWarning)
+                raise ValueError("Don't pass gamma, coef0 or degree to "
+                                 "Nystroem if using a callable "
+                                 "or precomputed kernel")
 
         return params

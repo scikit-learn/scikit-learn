@@ -64,7 +64,7 @@ y_pred = clf.predict(xx)
 # Plot the function, the prediction and the 90% confidence interval based on
 # the MSE
 fig = plt.figure()
-plt.plot(xx, f(xx), 'g:', label=u'$f(x) = x\,\sin(x)$')
+plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X, y, 'b.', markersize=10, label=u'Observations')
 plt.plot(xx, y_pred, 'r-', label=u'Prediction')
 plt.plot(xx, y_upper, 'k-')

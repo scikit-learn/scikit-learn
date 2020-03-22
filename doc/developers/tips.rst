@@ -14,23 +14,8 @@ such as `TamperMonkey`_ or `GreaseMonkey`_; to set up userscripts you must have
 one of these extensions installed, enabled and running.  We provide userscripts
 as GitHub gists; to install them, click on the "Raw" button on the gist page.
 
-.. _TamperMonkey: https://tampermonkey.net
-.. _GreaseMonkey: http://www.greasespot.net
-
-
-.. _viewing_rendered_html_documentation:
-
-Viewing the rendered HTML documentation for a pull request
-----------------------------------------------------------
-
-We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, instructions are provided in the :ref:`documentation
-section of the contributor guide <contribute_documentation>`. To save you a few
-clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
-that adds a button to every PR. After installing the userscript, navigate to
-any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
-appear in the top-right area.
+.. _TamperMonkey: https://tampermonkey.net/
+.. _GreaseMonkey: https://www.greasespot.net/
 
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
@@ -61,6 +46,9 @@ integration, consider `this browser extension
 <https://github.com/codecov/browser-extension>`_. The coverage of each line
 will be displayed as a color background behind the line number.
 
+
+.. _pytest_tips:
+
 Useful pytest aliases and flags
 -------------------------------
 
@@ -89,6 +77,22 @@ When a unit test fails, the following tricks can make debugging easier:
      shell alias to::
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+
+Other `pytest` options that may become useful include:
+
+  - ``-x`` which exits on the first failed test
+  - ``--lf`` to rerun the tests that failed on the previous run
+  - ``--ff`` to rerun all previous tests, running the ones that failed first
+  - ``-s`` so that pytest does not capture the output of ``print()``
+    statements
+  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
+    errors.
+
+Since our continuous integration tests will error if
+``FutureWarning`` isn't properly caught,
+it is also recommended to run ``pytest`` along with the
+``-Werror::FutureWarning`` flag.
 
 .. _saved_replies:
 
@@ -164,10 +168,10 @@ Issue/Comment: Linking to comments
 
         Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
 
-PR-NEW: Better description
+PR-NEW: Better description and title
     ::
 
-        Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
 
 PR-NEW: Fix #
     ::
@@ -177,7 +181,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](http://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -192,7 +196,7 @@ PR-WIP: Regression test needed
 PR-WIP: PEP8
     ::
 
-        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in Travis CI. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
 
 PR-MRG: Patience
     ::
@@ -202,7 +206,7 @@ PR-MRG: Patience
 PR-MRG: Add to what's new
     ::
 
-        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
 
 PR: Don't change unrelated
     ::
@@ -244,8 +248,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: http://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: http://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference

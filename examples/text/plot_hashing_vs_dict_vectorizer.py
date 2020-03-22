@@ -17,8 +17,6 @@ for FeatureHasher is to be expected due to hash collisions.
 
 # Author: Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
 from collections import defaultdict
 import re
 import sys
@@ -79,7 +77,8 @@ except ValueError:
 
 
 print("Loading 20 newsgroups training data")
-raw_data = fetch_20newsgroups(subset='train', categories=categories).data
+raw_data, _ = fetch_20newsgroups(subset='train', categories=categories,
+                                 return_X_y=True)
 data_size_mb = sum(len(s.encode('utf-8')) for s in raw_data) / 1e6
 print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
 print()

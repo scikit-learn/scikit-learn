@@ -1,4 +1,4 @@
-"""
+r"""
 ==============================================
 Scaling the regularization parameter for SVCs
 ==============================================
@@ -112,8 +112,7 @@ X_2 += 5 * rnd.randn(n_samples, n_features // 5)
 clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),
              np.logspace(-2.3, -1.3, 10), X_1, y_1),
-            (LinearSVC(penalty='l2', loss='squared_hinge', dual=True,
-                       tol=1e-4),
+            (LinearSVC(penalty='l2', loss='squared_hinge', dual=True),
              np.logspace(-4.5, -2, 10), X_2, y_2)]
 
 colors = ['navy', 'cyan', 'darkorange']
