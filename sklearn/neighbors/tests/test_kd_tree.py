@@ -4,7 +4,12 @@ from sklearn.neighbors import KDTree
 
 DIMENSION = 3
 
-METRICS = {"euclidean": {}, "manhattan": {}, "chebyshev": {}, "minkowski": dict(p=3)}
+METRICS = {
+    "euclidean": {},
+    "manhattan": {},
+    "chebyshev": {},
+    "minkowski": dict(p=3),
+}
 
 
 def test_kd_tree_filter_query():
@@ -64,10 +69,13 @@ def test_kd_tree_filter_query():
     dist, ind = tree2.query_filtered(queries, filter_radiuses, k=1)
 
     for q, rad, i, bi, d, bd in zip(
-        queries, filter_radiuses, ind[:, 0], bf_ind[:, 0], dist[:, 0], bf_dist[:, 0]
+        queries,
+        filter_radiuses,
+        ind[:, 0],
+        bf_ind[:, 0],
+        dist[:, 0],
+        bf_dist[:, 0],
     ):
-        _dist_inds = rad < 0
-        _filt_inds = rad >= 0
         if (rad < 0).any():
             assert i == bi
         assert d == bd
