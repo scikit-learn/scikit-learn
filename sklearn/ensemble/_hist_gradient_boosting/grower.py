@@ -322,7 +322,7 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        self.root.value = 0  # We never going to need it anyway
+        self.root.value = 0  # We're never going to need it anyway
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
