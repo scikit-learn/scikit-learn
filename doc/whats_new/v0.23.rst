@@ -409,7 +409,7 @@ Changelog
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
-  matrix from a pandas DataFrame with containing only `SparseArray`s.
+  matrix from a pandas DataFrame that contains only `SparseArray`s.
   :pr:`16728` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`

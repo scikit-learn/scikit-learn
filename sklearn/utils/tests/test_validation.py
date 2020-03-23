@@ -1155,25 +1155,20 @@ def test_check_fit_params(indices):
     )
 
 
-def test_check_sparse_pandas_default():
+@pytest.mark.parametrize('sp_format', [True, 'csr', 'csc', 'coo', 'bsr'])
+def test_check_sparse_pandas_sp_format(sp_format):
+    # check_array converts pandas dataframe with only sparse arrays into
+    # sparse matrix
     pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
-    result = check_array(sdf, accept_sparse=True)
-
-    # by default pandas converts to coo
-    assert sp.issparse(result)
-    assert result.format == 'coo'
-    assert_allclose_dense_sparse(sp_mat, result)
-
-
-@pytest.mark.parametrize('sp_format', ['csr', 'csc', 'coo', 'bsr'])
-def test_check_sparse_pandas_sp_formts(sp_format):
-    pd = pytest.importorskip("pandas")
-    sp_mat = _sparse_random_matrix(10, 3)
-    sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
-
     result = check_array(sdf, accept_sparse=sp_format)
+
+    if sp_format is True:
+        # by default pandas converts to coo when accept_sparse is True
+        sp_format = 'coo'
+
+    assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)

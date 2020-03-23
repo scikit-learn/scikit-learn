@@ -452,7 +452,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if columns are sparse. If all columns are sparse, then
-        # array.sparse exist and sparsity will be perserved.
+        # array.sparse exists and sparsity will be perserved (later).
         with suppress(ImportError):
             from pandas.api.types import is_sparse
             if (not hasattr(array, 'sparse') and
@@ -500,8 +500,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         estimator_name = "Estimator"
     context = " by %s" % estimator_name if estimator is not None else ""
 
-    # handles pandas sparse by checking for sparse attribute
+    # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, 'sparse') and array.ndim > 1:
+        # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
 
     if sp.issparse(array):
