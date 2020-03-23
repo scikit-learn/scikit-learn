@@ -884,7 +884,7 @@ Class APIs and Estimator Types
         that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
-        is that the pre fitted estimator will lose its model if the
+        is that the pre-fitted estimator will lose its model if the
         meta-estimator is cloned.  A meta-estimator should have ``fit`` called
         before prediction, even if all contained estimators are pre-fitted.
 
