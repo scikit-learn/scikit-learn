@@ -135,7 +135,7 @@ interested to look at `scikit-learn-contrib
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
-Code maintenance cost, and we need to balance the amount of
+Code comes with maintenance cost, and we need to balance the amount of
 code we have with the size of the team (and add to this the fact that
 complexity scales non linearly with the number of features).
 The package relies on core developers using their free time to
