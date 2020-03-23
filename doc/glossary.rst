@@ -1322,7 +1322,7 @@ Methods
         to facilitate numerical stability.
 
     ``predict_proba``
-        A method in :term:`classifiers` and :term:`clusters` that can
+        A method in :term:`classifiers` and :term:`clusterers` that can
         return probability estimates for each class/cluster.  Its input is
         usually only some observed data, :term:`X`.
 
