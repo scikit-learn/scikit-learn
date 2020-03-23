@@ -4,29 +4,26 @@ the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/m
 -->
 
 #### Reference Issues/PRs
-<!--
-Example: Fixes #1234. See also #3456.
-Please use keywords (e.g., Fixes) to create link to the issues or pull requests
-you resolved, so that they will automatically be closed when your pull request
-is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
--->
+
+Issue Number: 13990
+Issue: Add 3-fold split method train/val/test
+
+Issue Link: https://github.com/scikit-learn/scikit-learn/issues/13990
+We had created issue number 16342 which was closed and marked as duplicate
+Link For Closed Issue:https://github.com/scikit-learn/scikit-learn/issues/16342 
 
 
 #### What does this implement/fix? Explain your changes.
 
+We have introduced an additional functionality in the existing function of train_test_split. Now the Target(Y) and Response(X) can be split three ways i.e. into train set / validation set / test set. 
+This is an additional optional functionality and does not hamper the existing functionality.  
+	- only if function is called with the optional parameter "validation_size", then the function returns 3 subsets. Otherwise the existing functionality to return two subsets for each input array is retained. 
+
+The test_split.py is also changed in order to test the new functionality 
 
 #### Any other comments?
 
-
-<!--
-Please be aware that we are a loose team of volunteers so patience is
-necessary; assistance handling other issues is very welcome. We value
-all user contributions, no matter how minor they are. If we are slow to
-review, either the pull request needs some benchmarking, tinkering,
-convincing, etc. or more likely the reviewers are simply busy. In either
-case, we ask for your understanding during the review process.
-For more information, see our FAQ on this topic:
-http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention.
-
-Thanks for contributing!
--->
+Fixes were made in the file fixes.py to resolve import issues due to different scipy versions. 
+Source Code link: https://github.com/rbewoor/scikit-learn
+Different use cases were tested using the script Test_Cases_SciKit-Learn.ipynb in the folder Dedicated_Test_Cases
+Link https://github.com/rbewoor/scikit-learn/blob/master/Dedicated_Test_Cases/Test_Cases_SciKit-Learn.ipynb
