@@ -316,13 +316,12 @@ class TreeGrower:
             depth=depth,
             sample_indices=self.splitter.partition,
             sum_gradients=sum_gradients,
-            sum_hessians=sum_hessians
+            sum_hessians=sum_hessians,
+            value=0  # will never be used
         )
 
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
-
-        self.root.value = 0  # We're never going to need it anyway
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
