@@ -462,8 +462,8 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
 
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
 
-    # with pytest.raises(ValueError, match="Input contains NaN"):
-    #     ohe.fit(X)
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
@@ -480,7 +480,8 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
 
 
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, 2]]).T,
-                               np.array([['a', 'b', np.nan, 'b']], dtype=object).T],
+                               np.array([['a', 'b', np.nan, 'b']],
+                                        dtype=object).T],
                          ids=['numeric', 'object'])
 @pytest.mark.parametrize("as_data_frame", [False, True],
                          ids=['array', 'dataframe'])
@@ -490,14 +491,17 @@ def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
         pd = pytest.importorskip('pandas')
         X = pd.DataFrame(X)
 
-    # enc_ind = OneHotEncoder(
-    #     categories='auto', sparse=False, handle_missing='indicator')
-    # exp_ind = np.array([[1,   0,  0],
-    #                     [0,   1,  0],
-    #                     [0,   0,  1],
-    #                     [0,   1,  0]], dtype='int64')
-    # print(enc_ind.fit_transform(X))
-    # assert_array_equal(enc_ind.fit_transform(X), exp_ind.astype('float64'))
+    X_inv = np.array(X, dtype=object)
+    X_inv[2, 0] = None
+
+    enc_ind = OneHotEncoder(
+        categories='auto', sparse=False, handle_missing='indicator')
+    exp_ind = np.array([[1,   0,  0],
+                        [0,   1,  0],
+                        [0,   0,  1],
+                        [0,   1,  0]], dtype='int64')
+    assert_array_equal(enc_ind.fit_transform(X), exp_ind.astype('float64'))
+    assert_array_equal(enc_ind.inverse_transform(exp_ind), X_inv)
 
     enc_zero = OneHotEncoder(
         categories='auto', sparse=False, handle_missing='all-zero')
@@ -506,9 +510,6 @@ def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
                          [0,   0],
                          [0,   1]], dtype='int64')
     assert_array_equal(enc_zero.fit_transform(X), exp_zero.astype('float64'))
-
-    X_inv = np.array(X, dtype=object)
-    X_inv[2, 0] = None
     assert_array_equal(enc_zero.inverse_transform(exp_zero), X_inv)
 
 
@@ -574,8 +575,8 @@ def test_ordinal_encoder_inverse():
 def test_ordinal_encoder_raise_missing(X):
     ohe = OrdinalEncoder()
 
-    # with pytest.raises(ValueError, match="Input contains NaN"):
-    #     ohe.fit(X)
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
@@ -670,15 +671,15 @@ def test_one_hot_encoder_drop_manual():
 @pytest.mark.parametrize(
     "X_fit, params, err_msg",
     [([["Male"], ["Female"]], {'drop': 'second'},
-     "Wrong input for parameter `drop`"),
+      "Wrong input for parameter `drop`"),
      ([["Male"], ["Female"]], {'drop': 'first', 'handle_unknown': 'ignore'},
-     "`handle_unknown` must be 'error'"),
+      "`handle_unknown` must be 'error'"),
      ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
       {'drop': np.asarray('b', dtype=object)},
-     "Wrong input for parameter `drop`"),
+      "Wrong input for parameter `drop`"),
      ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
       {'drop': ['ghi', 3, 59]},
-     "The following categories were supposed")]
+      "The following categories were supposed")]
 )
 def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
     enc = OneHotEncoder(**params)
@@ -728,4 +729,4 @@ def test_encoders_does_not_support_none_values(Encoder):
     values = [["a"], [None]]
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
-        Encoder().fit_transform(values)
+        Encoder().fit(values)

@@ -67,10 +67,11 @@ def _encode_python(values, uniques=None, encode=False, check_unknown=True):
                 encoded = np.array([table[v] for v in values])
             except KeyError as e:
                 raise ValueError("y contains previously unseen labels: %s"
-                                % str(e))
+                                 % str(e))
         else:
-            encoded = np.array([table[v] if v in table else n_uniques for v in values ])
-        
+            encoded = np.array(
+                [table[v] if v in table else n_uniques for v in values])
+
         return uniques, encoded
     else:
         return uniques
@@ -114,7 +115,8 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     """
     if values.dtype == object:
         try:
-            res = _encode_python(values, uniques, encode, check_unknown=check_unknown)
+            res = _encode_python(values, uniques, encode,
+                                 check_unknown=check_unknown)
         except TypeError:
             types = sorted(t.__qualname__
                            for t in set(type(v) for v in values))

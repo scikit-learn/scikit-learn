@@ -2,17 +2,14 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
 from ..utils.fixes import _object_dtype_isnan
+from ..utils.validation import check_is_fitted
 from ._label import _encode, _encode_check_unknown
-
 
 __all__ = [
     'OneHotEncoder',
@@ -93,7 +90,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
                     # NaNs don't count as categoreis during fit
-                    diff = _encode_check_unknown(Xi[~_object_dtype_isnan(Xi)], cats)
+                    diff = _encode_check_unknown(
+                        Xi[~_object_dtype_isnan(Xi)], cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
@@ -101,11 +99,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error', handle_missing=None):
-        X_list, n_samples, n_features = self._check_X(
-            X)
-        # from now on, either X is w.o. NaNs or w. NaNs yet handle_missing != None. 
-        # in the later case, since we'll handle NaNs separately, 
-        # NaNs don't count as unknown categories
+        X_list, n_samples, n_features = self._check_X(X)
+        # from now on, either X is w.o. NaNs
+        #              or w. NaNs yet handle_missing != None.
+        # since we'll handle NaNs separately so that it does not intefere
+        # with handle_unknown, we won't count NaNs as unknown categories
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
 
@@ -137,7 +135,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.astype(self.categories_[i].dtype)
                     else:
                         Xi = Xi.copy()
-                    
+
                     if handle_missing == 'indicator':
                         valid_mask = na_valid_mask
                     Xi[~valid_mask] = self.categories_[i][0]
@@ -150,6 +148,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
                                  check_unknown=False)
             X_int[:, i] = encoded
+
+            if (self.handle_missing == 'indicator' and
+                    _object_dtype_isnan(Xi).sum() > 0):
+                self.categories_[i] = np.append(
+                    np.array(self.categories_[i], dtype=object), None)
 
         return X_int, X_mask
 
@@ -230,7 +233,8 @@ class OneHotEncoder(_BaseEncoder):
         will be denoted as None.
 
     handle_missing : {'indicator', 'all-zero'}, default=None
-        Specify how to handle missing categorical features (NaN) in the training data 
+        Specify how to handle missing categorical features (NaN) in the
+        training data
 
         - None : Raise an error in the presence of NaN (the default).
         - 'indicator': Represent with a separate one-hot column.
@@ -310,7 +314,8 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', drop=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error', handle_missing=None):
+                 dtype=np.float64, handle_unknown='error',
+                 handle_missing=None):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
@@ -340,8 +345,9 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop == 'first':
                 return np.zeros(len(self.categories_), dtype=np.object)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else None
-                                 for cats in self.categories_], dtype=np.object)
+                return np.array(
+                    [0 if len(cats) == 2 else None
+                     for cats in self.categories_], dtype=np.object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -441,7 +447,8 @@ class OneHotEncoder(_BaseEncoder):
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(
-            X, handle_unknown=self.handle_unknown, handle_missing=self.handle_missing)
+            X, handle_unknown=self.handle_unknown,
+            handle_missing=self.handle_missing)
 
         n_samples, n_features = X_int.shape
 
@@ -485,7 +492,6 @@ class OneHotEncoder(_BaseEncoder):
             return out.toarray()
         else:
             return out
-
 
     def inverse_transform(self, X):
         """
@@ -549,7 +555,8 @@ class OneHotEncoder(_BaseEncoder):
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-            if self.handle_unknown == 'ignore' or self.handle_missing == 'all-zero':
+            if (self.handle_unknown == 'ignore' or
+                    self.handle_missing == 'all-zero'):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
@@ -674,7 +681,8 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64, handle_missing=None):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 handle_missing=None):
         self.categories = categories
         self.dtype = dtype
         self.handle_missing = handle_missing
