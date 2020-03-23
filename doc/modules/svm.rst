@@ -6,6 +6,9 @@ Support Vector Machines
 
 .. TODO: link references throughout the text
 .. TODO: add scaler to examples and docstrings
+.. TODO: WTF is the shrinking parameter??? (see libsvm paper)
+.. TODO: Describe tol parameter
+.. TODO: Describe max_iter parameter
 
 .. currentmodule:: sklearn.svm
 
@@ -222,16 +225,23 @@ calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
-.. TODO: how is this different from just using the calibration module?
+.. note::
 
-Needless to say, the cross-validation involved in Platt scaling
+  The same probability calibration procedure is available for all estimators
+  via the :class:`~sklearn.calibration.CalibratedClassifierCV` (see
+  :ref:`calibration`). In the case of :class:`SVC` and :class:`NuSVC`, this
+  procedure is builtin in `libsvm` which is used under the hood, so it does
+  not rely on scikit-learn's
+  :class:`~sklearn.calibration.CalibratedClassifierCV`.
+
+The cross-validation involved in Platt scaling
 is an expensive operation for large datasets.
-In addition, the probability estimates may be inconsistent with the scores,
-in the sense that the "argmax" of the scores
-may not be the argmax of the probabilities.
-(E.g., in binary classification,
-a sample may be labeled by ``predict`` as belonging to a class
-that has probability <½ according to ``predict_proba``.)
+In addition, the probability estimates may be inconsistent with the scores:
+
+- the "argmax" of the scores may not be the argmax of the probabilities
+- in binary classification, a sample may be labeled by ``predict`` as
+  belonging to a class that has probability <½ according to ``predict_proba``.
+
 Platt's method is also known to have theoretical issues.
 If confidence scores are required, but these do not have to be probabilities,
 then it is advisable to set ``probability=False``
@@ -389,7 +399,7 @@ Tips on Practical Use
 
   * **Avoiding data copy**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
     :class:`NuSVR`, if the data passed to certain methods is not C-ordered
-    contiguous, and double precision, it will be copied before calling the
+    contiguous and double precision, it will be copied before calling the
     underlying C implementation. You can check whether a given numpy array is
     C-contiguous by inspecting its ``flags`` attribute.
 
@@ -398,7 +408,7 @@ Tips on Practical Use
     array will be copied and converted to the liblinear internal sparse data
     representation (double precision floats and int32 indices of non-zero
     components). If you want to fit a large-scale linear classifier without
-    copying a dense numpy C-contiguous double precision array as input we
+    copying a dense numpy C-contiguous double precision array as input, we
     suggest to use the :class:`SGDClassifier
     <sklearn.linear_model.SGDClassifier>` class instead.  The objective
     function can be configured to be almost the same as the :class:`LinearSVC`
@@ -410,9 +420,11 @@ Tips on Practical Use
     recommended to set ``cache_size`` to a higher value than the default of
     200(MB), such as 500(MB) or 1000(MB).
 
+
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    .. TODO: phrasing + make sure decreasing C = more regularization
     
     :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
@@ -446,9 +458,9 @@ Tips on Practical Use
 
     The underlying :class:`LinearSVC` implementation uses a random number
     generator to select features when fitting the model with a dual coordinate
-    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon,
+    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon
     to have slightly different results for the same input data. If that
-    happens, try with a smaller tol parameter. This randomness can also be
+    happens, try with a smaller `tol` parameter. This randomness can also be
     controlled with the ``random_state`` parameter. When ``dual`` is
     set to ``False`` the underlying implementation of :class:`LinearSVC` is
     not random and ``random_state`` has no effect on the results.
@@ -456,7 +468,7 @@ Tips on Practical Use
   * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
     weights is different from zero and contribute to the decision function.
-    Increasing ``C`` yields a more complex model (more feature are selected).
+    Increasing ``C`` yields a more complex model (more features are selected).
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
@@ -588,8 +600,8 @@ is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 Mathematical formulation
 ========================
 
-A support vector machine constructs a hyper-plane or set of hyper-planes
-in a high or infinite dimensional space, which can be used for
+.. TODO: cite Bishop chapter which is great
+
 classification, regression or other tasks. Intuitively, a good
 separation is achieved by the hyper-plane that has the largest distance
 to the nearest training data points of any class (so-called functional
