@@ -45,8 +45,14 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 
+from sklearn.exceptions import NotFittedError
+
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
+X_dummy_classification = np.random.choice([0, 1], (20, 2))
+y_dummy_classification = np.prod(X_dummy_classification, axis=1)
+X_dummy_regression = np.random.rand(20, 2)
+y_dummy_regression =np.sum(X_dummy_regression, axis=1)
 
 
 @pytest.mark.parametrize(
@@ -491,3 +497,79 @@ def test_stacking_cv_influence(stacker, X, y):
     with pytest.raises(AssertionError, match='Not equal'):
         assert_allclose(stacker_cv_3.final_estimator_.coef_,
                         stacker_cv_5.final_estimator_.coef_)
+
+
+class ProdClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, idx):
+        self.idx_ = idx
+        self.n_features_in_ = 0
+
+    def fit(self, X, y=None):
+        return self
+
+    def predict(self, X):
+        if not self.idx_:
+            return np.prod(X, axis=1)
+        else:
+            return np.prod(X[:, self.idx_], axis=1)
+
+
+class SumRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self, idx):
+        self.idx_ = idx
+        self.n_features_in_ = 0
+
+    def fit(self, X, y=None):
+        return self
+
+    def predict(self, X):
+        if not self.idx_:
+            return np.sum(X, axis=1)
+        else:
+            return np.sum(X[:, self.idx_], axis=1)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [(StackingClassifier(
+        estimators=[('d0', ProdClassifier([0])),
+                    ('d1', ProdClassifier([1]))],
+        cv="prefit",
+        final_estimator=ProdClassifier([0, 1])),
+      X_dummy_classification, y_dummy_classification),
+     (StackingRegressor(
+         estimators=[('d0', SumRegressor([0])),
+                     ('d1', SumRegressor([1]))],
+         cv="prefit",
+         final_estimator=SumRegressor([0, 1])),
+      X_dummy_regression, y_dummy_regression)],
+    ids=['StackingClassifier', 'StackingRegressor']
+)
+def test_stacking_prefit(stacker, X, y):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=42
+    )
+    stacker.fit(X_train, y_train)
+    y_pred = stacker.predict(X_test)
+    np.testing.assert_array_almost_equal(y_test, y_pred)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y, type_err",
+    [(StackingClassifier(
+        estimators=[('lr', LogisticRegression()),
+                    ('svm', SVC(max_iter=5e4))],
+        cv="prefit"),
+     X_dummy_classification, y_dummy_classification,
+     NotFittedError),
+     (StackingRegressor(
+         estimators=[('lr', LinearRegression()),
+                     ('svm', LinearSVR(random_state=42))],
+         cv="prefit"),
+      X_dummy_regression,
+      y_dummy_regression,
+      NotFittedError)]
+)
+def test_stacking_prefit_error(stacker, X, y, type_err):
+    with pytest.raises(type_err):
+        stacker.fit(X, y)
