@@ -389,7 +389,7 @@ Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
 The homogeneous NumPy and SciPy data objects currently expected are most
 efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
-types, therefore, reduces maintenance cost and encourages usage of efficient
+types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
 
 Do you plan to implement transform for target y in a pipeline?

@@ -112,7 +112,7 @@ General Concepts
 
         Public API only
             The behavior of objects accessed through private identifiers
-            (those beginning ``_``) maybe changed arbitrarily between
+            (those beginning ``_``) may be changed arbitrarily between
             versions.
         As documented
             We will generally assume that the users have adhered to the
@@ -570,7 +570,7 @@ General Concepts
         attributes on the estimator instance, and conventionally start with an
         alphabetic character and end with an alphanumeric character.  Each
         estimator's constructor parameters are described in the estimator's
-        docstring.z
+        docstring.
 
         We do not use parameters in the statistical sense, where parameters are
         values that specify a model and can be estimated from data. What we
@@ -881,7 +881,7 @@ Class APIs and Estimator Types
         In a meta-estimator's :term:`fit` method, any contained estimators
         should be :term:`cloned` before they are fit (although FIXME: Pipeline
         and FeatureUnion do not do this currently). An exception to this is
-        that an estimator may explicitly document that it accepts a pre fitted
+        that an estimator may explicitly document that it accepts a pre-fitted
         estimator (e.g. using ``prefit=True`` in
         :class:`feature_selection.SelectFromModel`). One known issue with this
         is that the pre fitted estimator will lose its model if the
@@ -1250,7 +1250,7 @@ Methods
     ``partial_fit``
         Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
         repeatedly calling ``partial_fit`` does not clear the model, but
-        updates it with for the data provided. The portion of data
+        updates it with the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
         Each mini-batch must be of consistent shape, etc. In iterative
         estimators, ``partial_fit`` often only performs a single iteration.
@@ -1278,7 +1278,7 @@ Methods
         NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
-        Predicts each sample, usually only taking :term:`X` as
+        Makes a prediction for each sample, usually only taking :term:`X` as
         input (but see under regressor output conventions below). In a
         :term:`classifier` or :term:`regressor`, this prediction is in the same
         target space used in fitting (e.g. one of {'red', 'amber', 'green'} if
@@ -1322,7 +1322,7 @@ Methods
         to facilitate numerical stability.
 
     ``predict_proba``
-        A method in :term:`classifiers` and :term:`clusterers` that can
+        A method in :term:`classifiers` and :term:`clusters` that can
         return probability estimates for each class/cluster.  Its input is
         usually only some observed data, :term:`X`.
 
@@ -1599,7 +1599,7 @@ functions or non-estimator constructors.
     ``warm_start``
 
         When fitting an estimator repeatedly on the same dataset, but for
-        multiple parameter values (such as to find the value-maximizing
+        multiple parameter values (such as to find the value maximizing
         performance as in :ref:`grid search <grid_search>`), it may be possible
         to reuse aspects of the model learned from the previous parameter value,
         saving time.  When ``warm_start`` is true, the existing :term:`fitted`
@@ -1743,7 +1743,7 @@ See concept :term:`sample property`.
     ``Y``
         Denotes data that may be observed at training time as the dependent
         variable in learning, but which is unavailable at prediction time, and
-        is usually the :term:`target` of prediction.  The notation maybe
+        is usually the :term:`target` of prediction.  The notation may be
         uppercase to denote that it is a matrix, representing
         :term:`multi-output` targets, for instance; but usually we use ``y``
         and sometimes do so even when multiple outputs are assumed.
