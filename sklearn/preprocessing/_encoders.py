@@ -27,7 +27,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, force_all_finite=False):
+    def _check_X(self, X):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -42,7 +42,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(
-                X, dtype=None, force_all_finite=force_all_finite)
+                X, dtype=None, force_all_finite=self.force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
                 X = check_array(X, dtype=np.object)
@@ -58,7 +58,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
-                             force_all_finite=force_all_finite)
+                             force_all_finite=self.force_all_finite)
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
@@ -71,8 +71,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
-        # ignore NaNs during fit
-        X_list, n_samples, n_features = self._check_X(X, force_all_finite=False)
+        X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -84,6 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
+                # NaNs don't count as categoreis during fit
                 cats = _encode(Xi[~_object_dtype_isnan(Xi)])
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
@@ -92,6 +92,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
+                    # NaNs don't count as categoreis during fit
                     diff = _encode_check_unknown(Xi[~_object_dtype_isnan(Xi)], cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
@@ -100,12 +101,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error', handle_missing=None):
-        if handle_missing is None:
-            force_all_finite = True
-        else:
-            force_all_finite = False
-
-        X_list, n_samples, n_features = self._check_X(X, force_all_finite)
+        X_list, n_samples, n_features = self._check_X(
+            X)
         # from now on, either X is w.o. NaNs or w. NaNs yet handle_missing != None. 
         # in the later case, since we'll handle NaNs separately, 
         # NaNs don't count as unknown categories
@@ -125,7 +122,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
             # NaNs don't count as unknown categories
-            na_valid_mask = valid_mask | pd.isna(Xi)
+            na_valid_mask = valid_mask | _object_dtype_isnan(Xi)
 
             if not np.all(valid_mask):
                 if not np.all(na_valid_mask) and handle_unknown == 'error':
@@ -318,8 +315,9 @@ class OneHotEncoder(_BaseEncoder):
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-        self.handle_missing = handle_missing
         self.drop = drop
+        self.handle_missing = handle_missing
+        self.force_all_finite = True if handle_missing is None else 'allow-nan'
 
     def _validate_keywords(self):
         if self.handle_unknown not in ('error', 'ignore'):
@@ -488,43 +486,6 @@ class OneHotEncoder(_BaseEncoder):
         else:
             return out
 
-    # def transform(self, X):
-    #     """Transform X using one-hot encoding.
-
-    #     Parameters
-    #     ----------
-    #     X : array-like, shape [n_samples, n_features]
-    #         The data to encode.
-
-    #     Returns
-    #     -------
-    #     X_out : sparse matrix if sparse=True else a 2-d array
-    #         Transformed input.
-    #     """
-
-    #     if not self.handle_missing or self.handle_missing not in ["all-missing",
-    #                                                               "all-zero", "category"]:
-    #         raise ValueError("Wrong 'handle_missing' value specified. "
-    #                          "'handle_missing' should be one of either "
-    #                          "['all-missing', 'all-zero', 'category']. "
-    #                          "Getting {0}".format(self.handle_missing))
-    #     missing_indices = np.argwhere(np.isnan(X)) if self.missing_values == "NaN" else \
-    #         np.argwhere(X == self.missing_values)
-    #     if self.handle_missing == "all-missing":
-    #         for i in missing_indices:
-    #             X[i] = np.nan
-    #     if self.handle_missing == "all-zero":
-    #         for i in missing_indices:
-    #             X[i] = 0
-    #     else:
-    #         # Replace with a seperate one-hot column
-    #         pass
-
-    #     if self._legacy_mode:
-    #         return _transform_selected(X, self._legacy_transform,
-    #                                    self.dtype,
-    #                                    self._categorical_features, copy=True)
-    #     return self._transform_new(X)
 
     def inverse_transform(self, X):
         """
@@ -588,7 +549,7 @@ class OneHotEncoder(_BaseEncoder):
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-            if self.handle_unknown == 'ignore':
+            if self.handle_unknown == 'ignore' or self.handle_missing == 'all-zero':
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
@@ -713,9 +674,11 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, handle_missing=None):
         self.categories = categories
         self.dtype = dtype
+        self.handle_missing = handle_missing
+        self.force_all_finite = True if handle_missing is None else 'allow-nan'
 
     def fit(self, X, y=None):
         """

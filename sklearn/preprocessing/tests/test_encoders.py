@@ -507,6 +507,10 @@ def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
                          [0,   1]], dtype='int64')
     assert_array_equal(enc_zero.fit_transform(X), exp_zero.astype('float64'))
 
+    X_inv = np.array(X, dtype=object)
+    X_inv[2, 0] = None
+    assert_array_equal(enc_zero.inverse_transform(exp_zero), X_inv)
+
 
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
