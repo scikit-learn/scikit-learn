@@ -2425,7 +2425,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, norm="avg",
+def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
                      n_bins=10, pos_label=None, reduce_bias=True):
     """Compute calibration loss.
 
@@ -2499,6 +2499,10 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="avg",
     if pos_label is None:
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
+    if norm == "l2":
+        reduce_bias = True
+    else:
+        reduce_bias = False
 
     loss = 0.
     count = 0.
@@ -2528,7 +2532,6 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="avg",
                             / delta_count)
         count += delta_count
         if reduce_bias:
-            norm = "l2"
             delta_debias = avg_pred_true*(avg_pred_true-1) * delta_count
             delta_debias /= y_true.shape[0]*delta_count-1
             if not np.isnan(delta_debias):
