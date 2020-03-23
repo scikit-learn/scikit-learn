@@ -886,7 +886,7 @@ Class APIs and Estimator Types
         :class:`feature_selection.SelectFromModel`). One known issue with this
         is that the pre fitted estimator will lose its model if the
         meta-estimator is cloned.  A meta-estimator should have ``fit`` called
-        before prediction, even if all contained estimators are pre fitted.
+        before prediction, even if all contained estimators are pre-fitted.
 
         In cases where a meta-estimator's primary behaviors (e.g.
         :term:`predict` or :term:`transform` implementation) are functions of
