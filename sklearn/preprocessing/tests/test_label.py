@@ -653,4 +653,6 @@ def test_encode_check_unknown():
     values = np.array(['a', 'b', 'c', 'd'], dtype=object)
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=False)
+        _encode(values, uniques, encode=True, check_unknown=True)
+
+    _encode(values, uniques, encode=True, check_unknown=False)
