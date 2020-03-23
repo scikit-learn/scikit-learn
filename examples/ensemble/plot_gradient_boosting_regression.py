@@ -118,6 +118,12 @@ plt.show()
 # high cardinality features (many unique values). As an alternative,
 # the permutation importances of ``clf`` are computed on a
 # held out test set. See :ref:`permutation_importance` for more details.
+#
+# In this case, the two methods agree to identify the same top 2 features
+# as strongly predictive features but not in the same order. The third most
+# predictive feature, "bp", is also the same for the 2 methods. The remaining
+# features are less predictive and the error bars of the permutation plot
+# show that they overlap with 0.
 
 feature_importance = clf.feature_importances_
 sorted_idx = np.argsort(feature_importance)
