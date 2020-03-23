@@ -317,7 +317,7 @@ class TreeGrower:
             sample_indices=self.splitter.partition,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
-            value=0  
+            value=0
         )
 
         self.root.partition_start = 0
