@@ -1541,17 +1541,19 @@ functions or non-estimator constructors.
         mean that randomization is always used, as it may be dependent on
         another parameter, e.g. ``shuffle``, being set.
 
-        ``random_state``'s value may be:
+        The passed value will have an effect on the reproducibility of the
+        results returned by the function (:term:`fit`, :term:`split`, or any
+        other function like :func:`~sklearn.cluster.k_means`). `random_state`'s
+        value may be:
 
         None (default)
             Use the global random state instance from :mod:`numpy.random`.
-            Calling :term:`fit` or :term:`split` multiple times will reuse
+            Calling the function multiple times will reuse
             the same instance, and will produce different results.
 
         An integer
             Use a new random number generator seeded by the given integer.
-            Using an int will produce the same results across different calls
-            to :term:`fit` or :term:`split`.
+            Using an int will produce the same results across different calls.
             However, it may be
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
@@ -1560,8 +1562,8 @@ functions or non-estimator constructors.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
-            of that same random state instance. Calling :term:`fit` or
-            :term:`split` multiple times will reuse the same instance, and
+            of that same random state instance. Calling the function
+            multiple times will reuse the same instance, and
             will produce different results.
 
         :func:`utils.check_random_state` is used internally to validate the
