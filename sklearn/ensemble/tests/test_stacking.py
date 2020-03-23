@@ -52,7 +52,7 @@ X_iris, y_iris = load_iris(return_X_y=True)
 X_dummy_classification = np.random.choice([0, 1], (20, 2))
 y_dummy_classification = np.prod(X_dummy_classification, axis=1)
 X_dummy_regression = np.random.rand(20, 2)
-y_dummy_regression =np.sum(X_dummy_regression, axis=1)
+y_dummy_regression = np.sum(X_dummy_regression, axis=1)
 
 
 @pytest.mark.parametrize(

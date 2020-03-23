@@ -179,9 +179,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                 if est != 'drop'
             )
         else:
-            # To ensure that the data provided to each estimator are the same, we
-            # need to set the random state of the cv if there is one and we need to
-            # take a copy.
+            # To ensure that the data provided to each estimator are the same,
+            # we need to set the random state of the cv if there is one and we
+            # need to take a copy.
             cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
             if hasattr(cv, 'random_state') and cv.random_state is None:
                 cv.random_state = np.random.RandomState()
