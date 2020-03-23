@@ -114,7 +114,7 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     """
     if values.dtype == object:
         try:
-            res = _encode_python(values, uniques, encode)
+            res = _encode_python(values, uniques, encode, check_unknown=check_unknown)
         except TypeError:
             types = sorted(t.__qualname__
                            for t in set(type(v) for v in values))

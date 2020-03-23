@@ -462,8 +462,8 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
 
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
 
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
+    # with pytest.raises(ValueError, match="Input contains NaN"):
+    #     ohe.fit(X)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
@@ -477,6 +477,35 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
+
+
+@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, 2]]).T,
+                               np.array([['a', 'b', np.nan, 'b']], dtype=object).T],
+                         ids=['numeric', 'object'])
+@pytest.mark.parametrize("as_data_frame", [False, True],
+                         ids=['array', 'dataframe'])
+@pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
+def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
+    if as_data_frame:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+
+    # enc_ind = OneHotEncoder(
+    #     categories='auto', sparse=False, handle_missing='indicator')
+    # exp_ind = np.array([[1,   0,  0],
+    #                     [0,   1,  0],
+    #                     [0,   0,  1],
+    #                     [0,   1,  0]], dtype='int64')
+    # print(enc_ind.fit_transform(X))
+    # assert_array_equal(enc_ind.fit_transform(X), exp_ind.astype('float64'))
+
+    enc_zero = OneHotEncoder(
+        categories='auto', sparse=False, handle_missing='all-zero')
+    exp_zero = np.array([[1,   0],
+                         [0,   1],
+                         [0,   0],
+                         [0,   1]], dtype='int64')
+    assert_array_equal(enc_zero.fit_transform(X), exp_zero.astype('float64'))
 
 
 @pytest.mark.parametrize("X", [
@@ -541,8 +570,8 @@ def test_ordinal_encoder_inverse():
 def test_ordinal_encoder_raise_missing(X):
     ohe = OrdinalEncoder()
 
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
+    # with pytest.raises(ValueError, match="Input contains NaN"):
+    #     ohe.fit(X)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
@@ -613,43 +642,6 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
-
-
-# def test_categorical_encoder_stub():
-#     from sklearn.preprocessing import CategoricalEncoder
-#     assert_raises(RuntimeError, CategoricalEncoder, encoding='ordinal')
-
-
-# def test_one_hot_encoder_invalid_handle_missing():
-#     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-#     y = np.array([[4, 1, 1]])
-#      # Test that one hot encoder raises error for unknown features
-#     # present during transform.
-#     oh = OneHotEncoder(handle_unknown='error', handle_missing='abcde')
-#     oh.fit(X)
-#     assert_raises(ValueError, oh.transform, y)
-
-
-# def test_one_hot_encoder_missing_values_none_handle_missing_passed():
-#     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-#     y = np.array([[4, 1, 1]])
-#      # Test that one hot encoder raises error for unknown features
-#     # present during transform.
-#     oh = OneHotEncoder(handle_unknown='error', missing_values=None,handle_missing='abcde')
-#     oh.fit(X)
-#     assert_raises(ValueError, oh.transform, y)
-
-
-# def test_one_hot_encoder_handle_missing_all_zeros():
-#     pass
-
-
-# def test_one_hot_encoder_handle_missing_all_missing():
-#     pass
-
-
-# def test_one_hot_encoder_handle_missing_category():
-#     pass
 
 
 def test_one_hot_encoder_drop_manual():
@@ -732,4 +724,4 @@ def test_encoders_does_not_support_none_values(Encoder):
     values = [["a"], [None]]
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
-        Encoder().fit(values)
+        Encoder().fit_transform(values)

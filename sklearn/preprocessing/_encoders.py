@@ -5,12 +5,12 @@
 import warnings
 
 import numpy as np
-import pandas as pd
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import _object_dtype_isnan
 from ._label import _encode, _encode_check_unknown
 
 
@@ -84,7 +84,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _encode(Xi[pd.notna(Xi)])
+                cats = _encode(Xi[~_object_dtype_isnan(Xi)])
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -92,23 +92,23 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi[pd.notna(Xi)], cats)
+                    diff = _encode_check_unknown(Xi[~_object_dtype_isnan(Xi)], cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', handle_missing='warn'):
-        force_all_finite = True
-        if handle_missing == 'warn':
-            warnings.warn("In the future (v0.23) onwards handle_missing = 'indicator'"
-                          "will be used by default. Pass handle_missing=None to"
-                          "silence this warning for now.", FutureWarning)
-        elif handle_missing in ['indicator', 'all-zero']:
+    def _transform(self, X, handle_unknown='error', handle_missing=None):
+        if handle_missing is None:
+            force_all_finite = True
+        else:
             force_all_finite = False
 
         X_list, n_samples, n_features = self._check_X(X, force_all_finite)
+        # from now on, either X is w.o. NaNs or w. NaNs yet handle_missing != None. 
+        # in the later case, since we'll handle NaNs separately, 
+        # NaNs don't count as unknown categories
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
 
@@ -127,8 +127,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # NaNs don't count as unknown categories
             na_valid_mask = valid_mask | pd.isna(Xi)
 
-            if not np.all(na_valid_mask):
-                if handle_unknown == 'error':
+            if not np.all(valid_mask):
+                if not np.all(na_valid_mask) and handle_unknown == 'error':
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
@@ -235,8 +235,9 @@ class OneHotEncoder(_BaseEncoder):
     handle_missing : {'indicator', 'all-zero'}, default=None
         Specify how to handle missing categorical features (NaN) in the training data 
 
-        - None : Raises an error in the presence of NaN (the default).
+        - None : Raise an error in the presence of NaN (the default).
         - 'indicator': Represent with a separate one-hot column.
+        - 'all-zero': Replace with a row of zeros
 
     Attributes
     ----------
@@ -312,7 +313,7 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', drop=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error', handle_missing='indicator'):
+                 dtype=np.float64, handle_unknown='error', handle_missing=None):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
