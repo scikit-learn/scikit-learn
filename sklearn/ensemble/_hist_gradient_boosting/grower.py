@@ -322,11 +322,7 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        # Value hard-coded here. Sharing compute_node_value() between the
-        # splitting.pyx and this files creates strong Python interactions and
-        # slows down the code.
-        self.root.value = -sum_gradients / (
-            sum_hessians + self.l2_regularization + 1e-15)
+        self.root.value = 0  # We never going to need it anyway
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
