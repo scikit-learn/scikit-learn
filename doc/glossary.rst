@@ -1192,7 +1192,7 @@ Methods
     ``fit_predict``
         Used especially for :term:`unsupervised`, :term:`transductive`
         estimators, this fits the model and returns the predictions (similar to
-        :term:`predict`) on the training data. In clusters, these predictions
+        :term:`predict`) on the training data. In clusterers, these predictions
         are also stored in the :term:`labels_` attribute, and the output of
         ``.fit_predict(X)`` is usually equivalent to ``.fit(X).predict(X)``.
         The parameters to ``fit_predict`` are the same as those to ``fit``.
