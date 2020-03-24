@@ -180,8 +180,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator, *,
-                 n_estimators=100,
+                 base_estimator,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -480,8 +480,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator, *,
-                 n_estimators=100,
+                 base_estimator,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -735,8 +735,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator, *,
-                 n_estimators=100,
+                 base_estimator,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -1148,8 +1148,8 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
     @_deprecate_positional_args
-    def __init__(self, *,
-                 n_estimators=100,
+    def __init__(self,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1439,8 +1439,8 @@ class RandomForestRegressor(ForestRegressor):
     [-8.32987858]
     """
     @_deprecate_positional_args
-    def __init__(self, *,
-                 n_estimators=100,
+    def __init__(self,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1750,8 +1750,8 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
     @_deprecate_positional_args
-    def __init__(self, *,
-                 n_estimators=100,
+    def __init__(self,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -2031,8 +2031,8 @@ class ExtraTreesRegressor(ForestRegressor):
     0.2708...
     """
     @_deprecate_positional_args
-    def __init__(self, *,
-                 n_estimators=100,
+    def __init__(self,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -2228,8 +2228,8 @@ class RandomTreesEmbedding(BaseForest):
     max_features = 1
 
     @_deprecate_positional_args
-    def __init__(self, *,
-                 n_estimators=100,
+    def __init__(self,
+                 n_estimators=100, *,
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,

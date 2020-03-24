@@ -29,7 +29,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
     @abstractmethod
-    def __init__(self, *, loss, learning_rate, max_iter, max_leaf_nodes,
+    def __init__(self, loss, *, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  warm_start, early_stopping, scoring, validation_fraction,
                  n_iter_no_change, tol, verbose, random_state):
@@ -867,7 +867,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
 
     @_deprecate_positional_args
-    def __init__(self, *, loss='least_squares', learning_rate=0.1,
+    def __init__(self, loss='least_squares', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, early_stopping='auto', scoring='loss',
@@ -1060,7 +1060,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
                      'auto')
 
     @_deprecate_positional_args
-    def __init__(self, *, loss='auto', learning_rate=0.1, max_iter=100,
+    def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, warm_start=False,
                  early_stopping='auto', scoring='loss',

@@ -66,8 +66,7 @@ class VerboseReporter:
         (when iteration mod verbose_mod is zero).; if larger than 1 then output
         is printed for each update.
     """
-    @_deprecate_positional_args
-    def __init__(self, *, verbose):
+    def __init__(self, verbose):
         self.verbose = verbose
 
     def init(self, est, begin_at_stage=0):
