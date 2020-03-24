@@ -224,6 +224,8 @@ how to set up your git repository:
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
 
+.. _upstream:
+
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
    synchronized with the latest changes::
@@ -357,20 +359,12 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    and pass for the PR code.
 
 5. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command::
+   code that you changed, you can run the following command (see
+   to set up the remote :ref:`upstream` branch)::
 
         git diff upstream/master -u -- "*.py" | flake8 --diff
-        
-    or `make flake8-diff` which should work on unix-like system.
 
-   which requires you to have set up the remote `upstream` branch to the main
-   scikit-learn repository::
-
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
-
-  `flake8 path_to_file` would work but would look for any PEP8 violation in
-   the file. Please avoid reformatting parts of the file that your pull request
-   doesn't change, as it distracts from code review.
+   or `make flake8-diff` which should work on unix-like system.
 
 6. Follow the :ref:`coding-guidelines`.
 
