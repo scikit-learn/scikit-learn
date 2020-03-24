@@ -2269,7 +2269,7 @@ def test_calibration_loss():
     assert_raises(ValueError, calibration_loss, y_true, y_pred[1:])
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, calibration_loss, y_true, y_pred - 1.)
-    #assert_raises(ValueError, calibration_loss, y_true, y_pred, norm="foo")
+    assert_raises(ValueError, calibration_loss, y_true, y_pred, norm="foo")
 
     # general case
     y_true = np.array([0, 0, 1, 1])
@@ -2277,10 +2277,10 @@ def test_calibration_loss():
 
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="max"),
-                         0.25)
+        0.25)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
-                         0.25)
+        0.25)
 
     # edge case with one element per bin only
     ratio = 4
@@ -2289,10 +2289,10 @@ def test_calibration_loss():
 
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="max"),
-                         0.75)
+        0.75)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
-                        0.375)
+        0.375)
 
     # edge case with one bin only
     ratio = 1.
@@ -2301,10 +2301,10 @@ def test_calibration_loss():
 
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="max"),
-                         0.)
+        0.)
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
-                         0.)
+        0.)
 
 
 def test_balanced_accuracy_score_unseen():
