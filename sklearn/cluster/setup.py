@@ -13,6 +13,7 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
+
     config.add_extension('_dbscan_inner',
                          sources=['_dbscan_inner.pyx'],
                          include_dirs=[numpy.get_include()],
@@ -24,14 +25,19 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_k_means_elkan',
-                         sources=['_k_means_elkan.pyx'],
+    config.add_extension('_k_means_fast',
+                         sources=['_k_means_fast.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('_k_means_fast',
-                         sources=['_k_means_fast.pyx'],
-                         include_dirs=numpy.get_include(),
+    config.add_extension('_k_means_lloyd',
+                         sources=['_k_means_lloyd.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
+    config.add_extension('_k_means_elkan',
+                         sources=['_k_means_elkan.pyx'],
+                         include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
     config.add_subpackage('tests')

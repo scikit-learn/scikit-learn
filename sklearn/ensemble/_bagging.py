@@ -16,7 +16,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_array, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
@@ -82,7 +82,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run "
                   "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
-        random_state = np.random.RandomState(seeds[i])
+        random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False,
                                              random_state=random_state)
 
@@ -278,9 +278,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = check_X_y(
-            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
-            multi_output=True
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False, multi_output=True
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
@@ -405,9 +405,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(
-                random_state, self.bootstrap_features, self.bootstrap,
+                seed, self.bootstrap_features, self.bootstrap,
                 self.n_features_, self._n_samples, self._max_features,
                 self._max_samples)
 
