@@ -2456,7 +2456,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
         Norm method.
 
     n_bins : int, optional (default=10)
-       The number of bins to compute error on. 
+       The number of bins to compute error on.
 
     pos_label : int or str, optional (default=None)
         Label of the positive class. If None, the maximum label is used as
@@ -2526,7 +2526,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
             delta_count = float(sample_weight[i_start:i_end].sum())
             avg_pred_true = (np.dot(y_true[i_start:i_end],
                                     sample_weight[i_start:i_end])
-                            / delta_count)
+                             / delta_count)
             bin_centroid = (np.dot(y_prob[i_start:i_end],
                                    sample_weight[i_start:i_end])
                             / delta_count)
