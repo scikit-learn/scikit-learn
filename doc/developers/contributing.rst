@@ -181,12 +181,12 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers. 
-  
-  One easy way to find an issue to work on is by applying the "help wanted" 
-  label in your search. This lists all the issues that have been unclaimed 
-  so far. In order to claim an issue for yourself, please comment exactly 
-  ``take`` on it for the CI to automatically assign the issue to you.  
+  to get some feedbacks from core developers.
+
+  One easy way to find an issue to work on is by applying the "help wanted"
+  label in your search. This lists all the issues that have been unclaimed
+  so far. In order to claim an issue for yourself, please comment exactly
+  ``take`` on it for the CI to automatically assign the issue to you.
 
 How to contribute
 -----------------
@@ -223,6 +223,8 @@ how to set up your git repository:
 
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
+
+.. _upstream:
 
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
@@ -356,10 +358,13 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
-   system, you can run `make flake8-diff`. `flake8 path_to_file`, would work
-   for any system, but please avoid reformatting parts of the file that your
-   pull request doesn't change, as it distracts from code review.
+5. **Make sure that your PR does not add PEP8 violations**. To check the
+   code that you changed, you can run the following command (see
+   :ref:`above <upstream>` to set up the upstream remote)::
+
+        git diff upstream/master -u -- "*.py" | flake8 --diff
+
+   or `make flake8-diff` which should work on unix-like system.
 
 6. Follow the :ref:`coding-guidelines`.
 
@@ -662,7 +667,7 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of a list, use ``of`` as a delimiter: 
+    5. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``.
     6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
