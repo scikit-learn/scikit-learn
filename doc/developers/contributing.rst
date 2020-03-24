@@ -356,7 +356,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. To check only the
+5. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command::
 
         git diff upstream/master -u -- "*.py" | flake8 --diff
