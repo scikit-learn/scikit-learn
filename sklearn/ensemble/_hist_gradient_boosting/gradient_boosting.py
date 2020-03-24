@@ -29,8 +29,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 warm_start, early_stopping, scoring, validation_fraction,
-                 n_iter_no_change, tol, verbose, random_state):
+                 monotonic_cst, warm_start, early_stopping, scoring,
+                 validation_fraction, n_iter_no_change, tol, verbose,
+                 random_state):
         self.loss = loss
         self.learning_rate = learning_rate
         self.max_iter = max_iter
@@ -39,6 +40,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
+        self.monotonic_cst = monotonic_cst
         self.warm_start = warm_start
         self.early_stopping = early_stopping
         self.scoring = scoring
@@ -81,6 +83,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not (2 <= self.max_bins <= 255):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
+
+        if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
+            raise ValueError(
+                'monotonic constraints are not supported for '
+                'multiclass classification.'
+                )
 
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
@@ -352,12 +360,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
-
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
                     n_bins=n_bins,
                     n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
+                    monotonic_cst=self.monotonic_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
@@ -790,6 +798,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -867,16 +880,18 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
-                 warm_start=False, early_stopping='auto', scoring='loss',
-                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
+                 monotonic_cst=None, warm_start=False, early_stopping='auto',
+                 scoring='loss', validation_fraction=0.1,
+                 n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, early_stopping=early_stopping,
-            scoring=scoring, validation_fraction=validation_fraction,
+            monotonic_cst=monotonic_cst, early_stopping=early_stopping,
+            warm_start=warm_start, scoring=scoring,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 
@@ -978,6 +993,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
+    monotonic_cst : array-like of int of shape (n_features), default=None
+        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        and 0 respectively correspond to a positive constraint, negative
+        constraint and no constraint. Read more in the :ref:`User Guide
+        <monotonic_cst_gbdt>`.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1058,8 +1078,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=255, warm_start=False,
-                 early_stopping='auto', scoring='loss',
+                 l2_regularization=0., max_bins=255, monotonic_cst=None,
+                 warm_start=False, early_stopping='auto', scoring='loss',
                  validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
@@ -1067,8 +1087,9 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            warm_start=warm_start, early_stopping=early_stopping,
-            scoring=scoring, validation_fraction=validation_fraction,
+            monotonic_cst=monotonic_cst, warm_start=warm_start,
+            early_stopping=early_stopping, scoring=scoring,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
 
