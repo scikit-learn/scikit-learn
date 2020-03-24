@@ -23,6 +23,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import _object_dtype_isnan
 
 
 __all__ = [
@@ -58,8 +59,8 @@ def _encode_python(values, uniques=None, encode=False, check_unknown=True):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-    n_uniques = len(uniques)
+    uniques = np.array(uniques, dtype=values.dtype)
+    n_uniques = (~_object_dtype_isnan(uniques)).sum()
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
         if check_unknown:

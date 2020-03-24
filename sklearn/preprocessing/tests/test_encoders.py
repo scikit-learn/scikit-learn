@@ -496,14 +496,20 @@ def test_one_hot_encoder_handle_missing(
         pd = pytest.importorskip('pandas')
         X = pd.DataFrame(X)
 
-    X_inv = np.array(X, dtype=object)
-    X_inv[2, 0] = None
-
     enc = OneHotEncoder(
         categories='auto', sparse=False,
         handle_unknown=handle_unknown, handle_missing=handle_missing)
     assert_array_equal(enc.fit_transform(X), expected)
-    assert_array_equal(enc.inverse_transform(expected), X_inv)
+
+    exp_inv = enc.inverse_transform(expected)
+    # replace np.nan with None to compare
+    # if being more precise, handle_missing = 'ignore' will return None
+    #                  while handle_missing = 'indicator' will return NaN
+    exp_inv = np.array(exp_inv, dtype=object)
+    exp_inv[2, 0] = None
+    X_inv = np.array(X, dtype=object)
+    X_inv[2, 0] = None
+    assert_array_equal(exp_inv, X_inv)
 
 
 @pytest.mark.parametrize("X_tr, X_ts", [
@@ -519,7 +525,7 @@ def test_one_hot_encoder_handle_missing_transform(
         X_tr, X_ts, as_data_frame, handle_unknown, handle_missing):
     if as_data_frame:
         pd = pytest.importorskip('pandas')
-        X = pd.DataFrame(X_tr)
+        X_tr = pd.DataFrame(X_tr)
 
     enc = OneHotEncoder(
         categories='auto', sparse=False,

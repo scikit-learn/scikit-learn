@@ -42,7 +42,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 X, dtype=None, force_all_finite=self.force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=np.object)
+                X = check_array(X, dtype=np.object,
+                                force_all_finite=self.force_all_finite)
             else:
                 X = X_temp
 
@@ -79,14 +80,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            nan_mask = _object_dtype_isnan(Xi)
             # check the presence of NaNs during fit
-            self.nan_fit = True if np.any(nan_mask) else False
+            nan_mask = _object_dtype_isnan(Xi)
 
             if self.categories == 'auto':
                 # _encode(np.array(['a', 'b', np.nan], dtype='object'))
                 # throws TypeError
-                # NaNs don't count as categoreis during fit
+                # add back np.nan later if handle_missing = 'indicator'
                 cats = _encode(Xi[~nan_mask])
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
@@ -100,6 +100,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+
+            if self.handle_missing == 'indicator' and np.any(nan_mask):
+                cats = np.append(cats, np.nan)
+
             self.categories_.append(cats)
 
     def _transform(self, X):
@@ -121,15 +125,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            nan_mask = _object_dtype_isnan(Xi)
-            
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
             # NaNs don't count as unknown categories
-            nan_valid_mask = valid_mask | nan_mask
+            nan_valid_mask = valid_mask | _object_dtype_isnan(Xi)
 
             if not np.all(valid_mask):
-                if not np.all(nan_valid_mask) and self.handle_unknown == 'error':
+                if (not np.all(nan_valid_mask)
+                        and self.handle_unknown == 'error'):
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
@@ -156,11 +159,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
                                  check_unknown=False)
             X_int[:, i] = encoded
-
-            if (self.handle_missing == 'indicator' and
-                    np.any(nan_mask) and self.nan_fit):
-                self.categories_[i] = np.append(
-                    np.array(self.categories_[i], dtype=object), None)
 
         return X_int, X_mask
 
