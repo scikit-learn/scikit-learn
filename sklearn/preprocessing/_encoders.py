@@ -67,7 +67,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error'):
+    def _fit(self, X):
         X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories != 'auto':
@@ -79,26 +79,30 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
+            nan_mask = _object_dtype_isnan(Xi)
+            # check the presence of NaNs during fit
+            self.nan_fit = True if np.any(nan_mask) else False
+
             if self.categories == 'auto':
+                # _encode(np.array(['a', 'b', np.nan], dtype='object'))
+                # throws TypeError
                 # NaNs don't count as categoreis during fit
-                cats = _encode(Xi[~_object_dtype_isnan(Xi)])
+                cats = _encode(Xi[~nan_mask])
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
                     if not np.all(np.sort(cats) == cats):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
-                if handle_unknown == 'error':
-                    # NaNs don't count as categoreis during fit
-                    diff = _encode_check_unknown(
-                        Xi[~_object_dtype_isnan(Xi)], cats)
+                if self.handle_unknown == 'error':
+                    diff = _encode_check_unknown(Xi[~nan_mask], cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', handle_missing=None):
+    def _transform(self, X):
         X_list, n_samples, n_features = self._check_X(X)
         # from now on, either X is w.o. NaNs
         #              or w. NaNs yet handle_missing != None.
@@ -117,13 +121,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
+            nan_mask = _object_dtype_isnan(Xi)
+            
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
             # NaNs don't count as unknown categories
-            na_valid_mask = valid_mask | _object_dtype_isnan(Xi)
+            nan_valid_mask = valid_mask | nan_mask
 
             if not np.all(valid_mask):
-                if not np.all(na_valid_mask) and handle_unknown == 'error':
+                if not np.all(nan_valid_mask) and self.handle_unknown == 'error':
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
@@ -136,8 +142,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     else:
                         Xi = Xi.copy()
 
-                    if handle_missing == 'indicator':
-                        valid_mask = na_valid_mask
+                    if self.handle_missing == 'indicator':
+                        valid_mask = nan_valid_mask
+                    # handle_missing='ignore' and handle_error='ignore
+                    # are essentially the same
                     Xi[~valid_mask] = self.categories_[i][0]
                     # Set the problematic rows to an acceptable value and
                     # continue `The rows are marked `X_mask` and will be
@@ -150,7 +158,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_int[:, i] = encoded
 
             if (self.handle_missing == 'indicator' and
-                    _object_dtype_isnan(Xi).sum() > 0):
+                    np.any(nan_mask) and self.nan_fit):
                 self.categories_[i] = np.append(
                     np.array(self.categories_[i], dtype=object), None)
 
@@ -232,13 +240,13 @@ class OneHotEncoder(_BaseEncoder):
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None.
 
-    handle_missing : {'indicator', 'all-zero'}, default=None
+    handle_missing : {'indicator', 'ignore'}, default=None
         Specify how to handle missing categorical features (NaN) in the
         training data
 
         - None : Raise an error in the presence of NaN (the default).
         - 'indicator': Represent with a separate one-hot column.
-        - 'all-zero': Replace with a row of zeros
+        - 'ignore': Replace with a row of zeros
 
     Attributes
     ----------
@@ -403,7 +411,7 @@ class OneHotEncoder(_BaseEncoder):
         self
         """
         self._validate_keywords()
-        self._fit(X, handle_unknown=self.handle_unknown)
+        self._fit(X)
         self.drop_idx_ = self._compute_drop_idx()
         return self
 
@@ -446,9 +454,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(
-            X, handle_unknown=self.handle_unknown,
-            handle_missing=self.handle_missing)
+        X_int, X_mask = self._transform(X)
 
         n_samples, n_features = X_int.shape
 
@@ -556,7 +562,7 @@ class OneHotEncoder(_BaseEncoder):
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
             if (self.handle_unknown == 'ignore' or
-                    self.handle_missing == 'all-zero'):
+                    self.handle_missing == 'ignore'):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():
@@ -682,9 +688,11 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', dtype=np.float64,
-                 handle_missing=None):
+                 handle_unknown='error', handle_missing=None):
         self.categories = categories
         self.dtype = dtype
+        # TODO: handle unknown and missing for OrdinalEncoder
+        self.handle_unknown = handle_unknown
         self.handle_missing = handle_missing
         self.force_all_finite = True if handle_missing is None else 'allow-nan'
 

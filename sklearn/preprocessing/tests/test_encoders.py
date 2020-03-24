@@ -479,14 +479,19 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
         ohe.transform(X)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, 2]]).T,
-                               np.array([['a', 'b', np.nan, 'b']],
-                                        dtype=object).T],
+@pytest.mark.parametrize("X", [
+    np.array([[1, 2, np.nan, 2]]).T,
+    np.array([['a', 'b', np.nan, 'b']], dtype=object).T],
                          ids=['numeric', 'object'])
 @pytest.mark.parametrize("as_data_frame", [False, True],
                          ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
-def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
+@pytest.mark.parametrize("handle_missing, expected", [
+    ('indicator', np.array(
+        [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [0., 1., 0.]])),
+    ('ignore', np.array([[1., 0.], [0., 1.], [0., 0.], [0., 1.]]))])
+def test_one_hot_encoder_handle_missing(
+        X, as_data_frame, handle_unknown, handle_missing, expected):
     if as_data_frame:
         pd = pytest.importorskip('pandas')
         X = pd.DataFrame(X)
@@ -494,23 +499,35 @@ def test_one_hot_encoder_handle_missing(X, as_data_frame, handle_unknown):
     X_inv = np.array(X, dtype=object)
     X_inv[2, 0] = None
 
-    enc_ind = OneHotEncoder(
-        categories='auto', sparse=False, handle_missing='indicator')
-    exp_ind = np.array([[1,   0,  0],
-                        [0,   1,  0],
-                        [0,   0,  1],
-                        [0,   1,  0]], dtype='int64')
-    assert_array_equal(enc_ind.fit_transform(X), exp_ind.astype('float64'))
-    assert_array_equal(enc_ind.inverse_transform(exp_ind), X_inv)
+    enc = OneHotEncoder(
+        categories='auto', sparse=False,
+        handle_unknown=handle_unknown, handle_missing=handle_missing)
+    assert_array_equal(enc.fit_transform(X), expected)
+    assert_array_equal(enc.inverse_transform(expected), X_inv)
 
-    enc_zero = OneHotEncoder(
-        categories='auto', sparse=False, handle_missing='all-zero')
-    exp_zero = np.array([[1,   0],
-                         [0,   1],
-                         [0,   0],
-                         [0,   1]], dtype='int64')
-    assert_array_equal(enc_zero.fit_transform(X), exp_zero.astype('float64'))
-    assert_array_equal(enc_zero.inverse_transform(exp_zero), X_inv)
+
+@pytest.mark.parametrize("X_tr, X_ts", [
+    (np.array([[1, 2, 2]]).T, np.array([[1, np.nan]]).T),
+    (np.array([['a', 'b', 'b']], dtype=object).T,
+     np.array([['a', np.nan]], dtype=object).T)],
+                         ids=['numeric', 'object'])
+@pytest.mark.parametrize("as_data_frame", [False, True],
+                         ids=['array', 'dataframe'])
+@pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
+@pytest.mark.parametrize("handle_missing", ['indicator', 'ignore'])
+def test_one_hot_encoder_handle_missing_transform(
+        X_tr, X_ts, as_data_frame, handle_unknown, handle_missing):
+    if as_data_frame:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X_tr)
+
+    enc = OneHotEncoder(
+        categories='auto', sparse=False,
+        handle_unknown=handle_unknown, handle_missing=handle_missing).fit(X_tr)
+
+    exp = np.array([[1., 0.],
+                    [0., 0.]])
+    assert_array_equal(enc.transform(X_ts), exp)
 
 
 @pytest.mark.parametrize("X", [
