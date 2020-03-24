@@ -540,6 +540,7 @@ class SVC(BaseSVC):
         non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
         TODO: link to it
+        TODO: These are the signed coeff, i.e. multiplied by the target
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal

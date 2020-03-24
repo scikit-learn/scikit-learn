@@ -90,12 +90,10 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-.. TODO: What's the decision function?????
-
-SVMs decision function depends on some subset of the training data,
-called the support vectors. Some properties of these support vectors
-can be found in members ``support_vectors_``, ``support_`` and
-``n_support``::
+SVMs decision function (detailed in the :ref:`mathematical_formulation`)
+depends on some subset of the training data, called the support vectors. Some
+properties of these support vectors can be found in attributes
+``support_vectors_``, ``support_`` and ``n_support``::
 
     >>> # get support vectors
     >>> clf.support_vectors_
@@ -602,12 +600,15 @@ Mathematical formulation
 
 .. TODO: cite Bishop chapter which is great
 
+A support vector machine constructs a hyper-plane or set of hyper-planes in a
+high or infinite dimensional space, which can be used for
 classification, regression or other tasks. Intuitively, a good
 separation is achieved by the hyper-plane that has the largest distance
 to the nearest training data points of any class (so-called functional
 margin), since in general the larger the margin the lower the
-generalization error of the classifier.
-
+generalization error of the classifier. The figure below shows the decision
+function for a separable problem, with three samples within the margin
+boundaries, called "support vectors":
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
@@ -617,21 +618,30 @@ SVC
 ---
 
 Given training vectors :math:`x_i \in \mathbb{R}^p`, i=1,..., n, in two classes, and a
-vector :math:`y \in \{1, -1\}^n`, SVC solves the following primal problem:
+vector :math:`y \in \{1, -1\}^n`, our goal is to find :math:`w \in
+\mathbb{R}^p` and :math:`b \in \mathbb{R}` such that the prediction given by
+:math:`\text{sign} (w^T\phi(x) + b)` is correct for most samples.
 
+SVC solves the following primal problem:
 
 .. math::
 
     \min_ {w, b, \zeta} \frac{1}{2} w^T w + C \sum_{i=1}^{n} \zeta_i
 
-
-
     \textrm {subject to } & y_i (w^T \phi (x_i) + b) \geq 1 - \zeta_i,\\
     & \zeta_i \geq 0, i=1, ..., n
 
-.. TODO: explain zeta_i
+Intuitively, we're trying to maximize the margin (by minimizing
+:math:`||w||^2 = w^Tw`), while incurring a penalty when a sample is
+misclassified or within the margin boundary. Ideally, the value :math:`y_i
+(w^T \phi (x_i) + b)` would be :math:`\geq 1` for all samples, which
+indicates a perfect prediction. But problems are usually not always perfectly
+separable, so we allow some samples to be at a distance :math:`\zeta_i` from
+their correct margin boundary. The penalty term `C` controls the strengh of
+this penalty, and as a result, acts as an inverse regularization parameter
+(see note below).
 
-Its dual is
+The dual problem to the primal is
 
 .. math::
 
@@ -641,28 +651,27 @@ Its dual is
    \textrm {subject to } & y^T \alpha = 0\\
    & 0 \leq \alpha_i \leq C, i=1, ..., n
 
-where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
-:math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
+where :math:`e` is the vector of all ones,
+and :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
 :math:`Q_{ij} \equiv y_i y_j K(x_i, x_j)`, where :math:`K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
-is the kernel. Here training vectors are implicitly mapped into a higher
-(maybe infinite) dimensional space by the function :math:`\phi`.
+is the kernel. The terms :math:`\alpha_i` are called the dual coefficients.
+This dual representation highlights the fact that training vectors are
+implicitly mapped into a higher (maybe infinite)
+dimensional space by the function :math:`\phi`.
 
-.. TODO: C is the upper bound???
+Once the optimization problem is solved, the output of
+:term:`decision_function` for a given sample :math:`x` becomes:
 
-.. TODO: that's the predicted class rather than the decision function?
+.. math:: \sum_{i\in SV} y_i \alpha_i K(x_i, x) + b,
 
-The decision function for a given sample :math:`x` is:
+and the predicted class correspond to its sign. We only need to sum over the
+support vectors (i.e. the samples that lie within the margin) because the
+dual coefficients :math:`\alpha_i` are zero for the other samples.
 
-.. math:: \operatorname{sgn}(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
-
-These parameters can be accessed through the members ``dual_coef_``
+These parameters can be accessed through the attributes ``dual_coef_``
 which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`\rho`
-
-.. TODO: should rho be b?
-.. TODO: is the sum really through all the samples???? shouldn't this be just
-   the SVs?
+term :math:`b`
 
 .. note::
 
@@ -687,18 +696,37 @@ term :math:`\rho`
    <https://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
+LinearSVC
+---------
 
+The primal problem can equivalently be formulated as
+
+.. math::
+
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, y_i (w^T \phi(x_i) + b)),
+
+where we make use of the `hinge loss
+<https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
+directly optimized by :class:`LinearSVC`, but unlike the dual form, this one
+does not involve inner products between samples, so the infamous kernel trick
+cannot be applied. This is why only the linear kernel is supported by
+:class:`LinearSVC` (:math:`\phi` is the identity function.
 
 NuSVC
 -----
 
-We introduce a new parameter :math:`\nu` which controls the number of
-support vectors and training errors. The parameter :math:`\nu \in (0,
-1]` is an upper bound on the fraction of training errors and a lower
-bound of the fraction of support vectors.
+.. TODO: cite https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf
 
-It can be shown that the :math:`\nu`-SVC formulation is a reparameterization
-of the :math:`C`-SVC and therefore mathematically equivalent.
+The :math:`\nu`-SVC formulation is a reparameterization of the :math:`C`-SVC
+and therefore mathematically equivalent.
+
+We introduce a new parameter :math:`\nu` (instead of :math:`C`) which
+controls the number of support vectors and *margin errors*:
+:math:`\nu \in (0, 1]` is an upper bound on the fraction of margin errors and
+a lower bound of the fraction of support vectors. A margin error corresponds
+to a sample that lies on the wrong side of its margin boundary: it is either
+misclassified, or it is correctly classified but does not lie beyond the
+margin.
 
 
 SVR
@@ -736,12 +764,12 @@ is the kernel. Here training vectors are implicitly mapped into a higher
 
 The decision function is:
 
-.. math:: \sum_{i=1}^n (\alpha_i - \alpha_i^*) K(x_i, x) + \rho
+.. math:: \sum_{i=1}^n (\alpha_i - \alpha_i^*) K(x_i, x) + b
 
-These parameters can be accessed through the members ``dual_coef_``
+These parameters can be accessed through the attribute ``dual_coef_``
 which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
-term :math:`\rho`
+term :math:`b`
 
 .. topic:: References:
 
