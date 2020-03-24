@@ -184,6 +184,11 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`15582` by `Nicolas Hug`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
   where the attribute `estimators_samples_` did not generate the proper indices
