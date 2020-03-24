@@ -360,6 +360,8 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    code that you changed, you can run the following command::
 
         git diff upstream/master -u -- "*.py" | flake8 --diff
+        
+    or `make flake8-diff` which should work on unix-like system.
 
    which requires you to have set up the remote `upstream` branch to the main
    scikit-learn repository::
