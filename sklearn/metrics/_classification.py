@@ -2514,7 +2514,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
         sample_weight = sample_weight[remapping]
 
     i_thres = np.searchsorted(y_prob,
-                                np.arange(0, 1, 1./n_bins)).tolist()
+                              np.arange(0, 1, 1./n_bins)).tolist()
     i_thres.append(y_true.shape[0])
     for i, i_start in enumerate(i_thres[:-1]):
         i_end = i_thres[i+1]
@@ -2526,9 +2526,9 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
             delta_count = float(sample_weight[i_start:i_end].sum())
             avg_pred_true = (np.dot(y_true[i_start:i_end],
                                     sample_weight[i_start:i_end])
-                                / delta_count)
+                            / delta_count)
             bin_centroid = (np.dot(y_prob[i_start:i_end],
-                                    sample_weight[i_start:i_end])
+                                   sample_weight[i_start:i_end])
                             / delta_count)
         count += delta_count
         if reduce_bias:
