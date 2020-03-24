@@ -360,7 +360,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
 
 5. **Make sure that your PR does not add PEP8 violations**. To check the
    code that you changed, you can run the following command (see
-   to set up the remote :ref:`upstream` branch)::
+    :ref:`above <upstream>` to set up the upstream remote)::
 
         git diff upstream/master -u -- "*.py" | flake8 --diff
 
