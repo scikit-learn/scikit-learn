@@ -4,7 +4,6 @@
 Support Vector Machines
 =======================
 
-.. TODO: add scaler to examples and docstrings
 .. TODO: WTF is the shrinking parameter??? (see libsvm paper)
 .. TODO: Describe tol parameter
 .. TODO: Describe max_iter parameter
@@ -89,7 +88,7 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-SVMs decision function (detailed in the :ref:`mathematical_formulation`)
+SVMs decision function (detailed in the :ref:`svm_mathematical_formulation`)
 depends on some subset of the training data, called the support vectors. Some
 properties of these support vectors can be found in attributes
 ``support_vectors_``, ``support_`` and ``n_support``::
@@ -397,22 +396,29 @@ Tips on Practical Use
 
 
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
-    choice.  If you have a lot of noisy observations you should decrease it.
-    It corresponds to regularize more the estimation.
-    .. TODO: phrasing
+    choice.  If you have a lot of noisy observations you should decrease it:
+    decreasing C corresponds to more regularization.
     
     :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
     threshold. Meanwhile, larger ``C`` values will take more time to train, 
-    sometimes up to 10 times longer, as shown by Fan et al. (2008)
+    sometimes up to 10 times longer, as shown in [#3]_.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
     attribute on the input vector X to [0,1] or [-1,+1], or standardize it
     to have mean 0 and variance 1. Note that the *same* scaling must be
-    applied to the test vector to obtain meaningful results. See section
-    :ref:`preprocessing` for more details on scaling and normalization.
-    .. TODO: rewrite that and say to use a pipeline
+    applied to the test vector to obtain meaningful results. This can be done
+    easily by using a :class:`~sklearn.pipeline.Pipeline`::
+
+        >>> from sklearn.pipeline import make_pipeline
+        >>> from sklearn.preprocessing import StandardScaler
+        >>> from sklearn.svm import SVC
+
+        >>> clf = make_pipeline(StandardScaler(), SVC())
+    
+    See section :ref:`preprocessing` for more details on scaling and
+    normalization.
 
   * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
     approximates the fraction of training errors and support vectors.

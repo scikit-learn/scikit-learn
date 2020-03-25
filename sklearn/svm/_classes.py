@@ -159,15 +159,20 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = LinearSVC(random_state=0, tol=1e-5)
+    >>> clf = make_pipeline(StandardScaler(),
+    ...                     LinearSVC(random_state=0, tol=1e-5))
     >>> clf.fit(X, y)
-    LinearSVC(random_state=0, tol=1e-05)
-    >>> print(clf.coef_)
-    [[0.085... 0.394... 0.498... 0.375...]]
-    >>> print(clf.intercept_)
-    [0.284...]
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
+
+    >>> print(clf.named_steps['linearsvc'].coef_)
+    [[0.141443   0.52678403 0.67978681 0.49307509]]
+    >>> print(clf.named_steps['linearsvc'].intercept_)
+    [0.16935944]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
@@ -322,17 +327,23 @@ class LinearSVR(RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn.svm import LinearSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = LinearSVR(random_state=0, tol=1e-5)
+    >>> regr = make_pipeline(StandardScaler(),
+    ...                      LinearSVR(random_state=0, tol=1e-5))
     >>> regr.fit(X, y)
-    LinearSVR(random_state=0, tol=1e-05)
-    >>> print(regr.coef_)
-    [16.35... 26.91... 42.30... 60.47...]
-    >>> print(regr.intercept_)
-    [-4.29...]
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
+
+    >>> print(regr.named_steps['linearsvr'].coef_)
+    [18.58284419 27.02366194 44.35792369 64.52256231]
+    >>> print(regr.named_steps['linearsvr'].intercept_)
+    [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-4.29...]
+    [-2.38421844]
+
 
     See also
     --------
@@ -579,12 +590,16 @@ class SVC(BaseSVC):
     Examples
     --------
     >>> import numpy as np
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
-    >>> clf = SVC(gamma='auto')
+    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
     >>> clf.fit(X, y)
-    SVC(gamma='auto')
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))])
+
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -790,10 +805,12 @@ class NuSVC(BaseSVC):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.svm import NuSVC
-    >>> clf = NuSVC()
+    >>> clf = make_pipeline(StandardScaler(), NuSVC())
     >>> clf.fit(X, y)
-    NuSVC()
+    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -939,14 +956,18 @@ class SVR(RegressorMixin, BaseLibSVM):
     Examples
     --------
     >>> from sklearn.svm import SVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> regr = SVR(C=1.0, epsilon=0.2)
+    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
     >>> regr.fit(X, y)
-    SVR(epsilon=0.2)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svr', SVR(epsilon=0.2))])
+
 
     See also
     --------
@@ -1079,14 +1100,17 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     Examples
     --------
     >>> from sklearn.svm import NuSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> regr = NuSVR(C=1.0, nu=0.1)
+    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
     >>> regr.fit(X, y)
-    NuSVR(nu=0.1)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('nusvr', NuSVR(nu=0.1))])
 
     See also
     --------
