@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -27,7 +27,6 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
-from ..utils.fixes import logsumexp
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets

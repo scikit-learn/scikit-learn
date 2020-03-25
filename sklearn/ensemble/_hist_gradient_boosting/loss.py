@@ -9,11 +9,7 @@ classification.
 from abc import ABC, abstractmethod
 
 import numpy as np
-from scipy.special import expit, xlogy
-try:  # logsumexp was moved from mist to special in 0.19
-    from scipy.special import logsumexp
-except ImportError:
-    from scipy.misc import logsumexp
+from scipy.special import expit, logsumexp, xlogy
 
 from .common import Y_DTYPE
 from .common import G_H_DTYPE
