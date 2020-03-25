@@ -83,7 +83,7 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
 
 ###############################################################################
 # Impute the missing data and score
-###############################################################################
+# ########################################
 # Now we will write a function which will score the results on the differently
 # prepared data. Let's look at each imputer separately
 #
