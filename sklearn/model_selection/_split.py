@@ -1,7 +1,4 @@
 """
-This is to test pull request, ignore this change.
-"""
-"""
 The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
@@ -11,6 +8,8 @@ functions to split the data based on a preset strategy.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
+
+# This is for testing pull request.
 
 from collections.abc import Iterable
 import warnings
