@@ -1458,7 +1458,7 @@ class ShuffleSplit(BaseShuffleSplit):
             ind_test = permutation[:n_test]
             ind_train = permutation[n_test:(n_test + n_train)]
             ind_validation = permutation[(n_test + n_train):(n_test
-                + n_train + n_validation)]
+                                                + n_train + n_validation)]
             yield ind_train, ind_test, ind_validation
 
 
@@ -1551,8 +1551,8 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test, group_validation in \
-        super()._iter_indices(X=classes):
+        for group_train, group_test, \
+        group_validation in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
             train = np.flatnonzero(np.in1d(group_indices, group_train))
@@ -1741,7 +1741,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
                 validation.extend(perm_indices_class_i[n_i[i] + t_i[i]:n_i[i]
-                    + t_i[i] + v_i[i]])
+                                                            + t_i[i] + v_i[i]])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1837,7 +1837,7 @@ def _validate_shuffle_split(n_samples, test_size, train_size, validation_size,
         raise ValueError('Invalid value for test_size: {}'.format(test_size))
     if validation_size is not None and validation_size_type not in ('i', 'f'):
         raise ValueError('Invalid value for '
-            'validation_size: {}'.format(validation_size))
+                         'validation_size: {}'.format(validation_size))
 
     if (train_size_type == 'f' and test_size_type == 'f' and
             validation_size_type == 'f' and
@@ -1894,24 +1894,23 @@ def _validate_shuffle_split(n_samples, test_size, train_size, validation_size,
                          ' and/or validation_size.'
                          % (n_train + n_test + n_validation, n_samples))
 
-    n_train,n_test,n_validation = int(n_train),int(n_test),int(n_validation)
+    n_train, n_test, n_validation = int(n_train), int(n_test), \
+    int(n_validation)
 
     if n_train == 0:
         raise ValueError(
             'With n_samples={}, test_size={}, train_size={} and '
             'validation_size={}, the resulting train set will be empty. '
-            'Adjust any of the aforementioned '
-            'parameters.'.format(n_samples, test_size, train_size,
-                validation_size)
+            'Adjust any of the aforementioned parameters'
+            '.'.format(n_samples, test_size, train_size, validation_size)
         )
 
     if n_test == 0:
         raise ValueError(
             'With n_samples={}, test_size={}, train_size={} and '
             'validation_size={}, the resulting test set will be empty. '
-            'Adjust any of the aforementioned '
-            'parameters.'.format(n_samples, test_size, train_size,
-                validation_size)
+            'Adjust any of the aforementioned parameters'
+            '.'.format(n_samples, test_size, train_size, validation_size)
         )
 
     return n_train, n_test, n_validation
@@ -2262,8 +2261,9 @@ def train_test_split(*arrays, **options):
 
     n_samples = _num_samples(arrays[0])
     n_train, n_test, n_validation = _validate_shuffle_split(n_samples,
-        test_size, train_size, validation_size, default_test_size=0.25,
-        default_validation_size=0.0)
+                                        test_size, train_size, validation_size,
+                                        default_test_size=0.25,
+                                        default_validation_size=0.0)
 
     if shuffle is False:
         if stratify is not None:
@@ -2291,11 +2291,11 @@ def train_test_split(*arrays, **options):
 
     if n_validation == 0:
         return list(chain.from_iterable((_safe_indexing(a, train),
-            _safe_indexing(a, test)) for a in arrays))
+                            _safe_indexing(a, test)) for a in arrays))
     else:
         return list(chain.from_iterable((_safe_indexing(a, train),
-            _safe_indexing(a, test),
-            _safe_indexing(a, validation)) for a in arrays))
+                            _safe_indexing(a, test),
+                            _safe_indexing(a, validation)) for a in arrays))
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
 train_test_split.__test__ = False

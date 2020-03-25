@@ -154,7 +154,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=None,"
-        " train_size=None, validation_size=None)")
+                " train_size=None, validation_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
@@ -608,7 +608,8 @@ def test_shuffle_split_default_test_size(split_class, train_size, exp_train,
     X = np.ones(10)
     y = np.ones(10)
 
-    X_train,X_test,X_val = next(split_class(train_size=train_size).split(X, y))
+    X_train, X_test, X_val = next(
+                                split_class(train_size=train_size).split(X, y))
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -665,8 +666,10 @@ def test_stratified_shuffle_split_respects_test_size():
     test_size = 5
     train_size = 10
     validation_size = 0
-    sss = StratifiedShuffleSplit(6, test_size=test_size, train_size=train_size,
-        validation_size=validation_size, random_state=0).split(np.ones(len(y)), y)
+    sss = StratifiedShuffleSplit(6, test_size=test_size,
+                                train_size=train_size,
+                                validation_size=validation_size,
+                                random_state=0).split(np.ones(len(y)), y)
     for train, test, validation in sss:
         assert len(train) == train_size
         assert len(test) == test_size
@@ -734,7 +737,7 @@ def test_stratified_shuffle_split_even():
         test_counts = [0] * n_samples
         n_splits_actual = 0
         for train, test, validation in splits.split(X=np.ones(n_samples),
-            y=groups):
+                                                    y=groups):
             n_splits_actual += 1
             for counter, ids in [(train_counts, train), (test_counts, test)]:
                 for id in ids:
@@ -1556,7 +1559,8 @@ def test_shuffle_split_empty_trainset(CVSplitter):
     X, y = [[1]], [0]  # 1 sample
     with pytest.raises(
             ValueError,
-            match='With n_samples=1, test_size=0.99, train_size=None and validation_size=0.0, '
+            match='With n_samples=1, test_size=0.99, train_size=None '
+            'and validation_size=0.0, '
             'the resulting train set will be empty'):
         next(cv.split(X, y, groups=[1]))
 
@@ -1565,14 +1569,16 @@ def test_train_test_split_empty_trainset():
     X, = [[1]]  # 1 sample
     with pytest.raises(
             ValueError,
-            match='With n_samples=1, test_size=0.99, train_size=None and validation_size=0.0, '
+            match='With n_samples=1, test_size=0.99, train_size=None '
+            'and validation_size=0.0, '
             'the resulting train set will be empty'):
         train_test_split(X, test_size=.99)
 
     X = [[1], [1], [1]]  # 3 samples, ask for more than 2 thirds
     with pytest.raises(
             ValueError,
-            match='With n_samples=3, test_size=0.67, train_size=None and validation_size=0.0, '
+            match='With n_samples=3, test_size=0.67, train_size=None '
+            'and validation_size=0.0, '
             'the resulting train set will be empty'):
         train_test_split(X, test_size=.67)
 
