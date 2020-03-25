@@ -35,7 +35,7 @@ print(__doc__)
 #
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
-# dataset is much larger with 20640 entires and 8 features and we will need to
+# dataset is much larger with 20640 entries and 8 features and we will need to
 # fetch it. We will only use the first 500 entries for sake of speeding up the
 # calculations but feel free to use the whole dataset.
 #
@@ -280,7 +280,7 @@ for j in xval:
     ax2.barh(j, mses_california[j], xerr=stds_california[j],
              color=colors[j], alpha=0.6, align='center')
 
-# plot Ames results
+# plot California results
 
 ax2.set_title('Imputation Techniques with California Data')
 ax2.set_yticks(xval)
