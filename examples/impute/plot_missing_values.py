@@ -67,7 +67,7 @@ def add_missing_values(X_full, y_full):
     rng.shuffle(missing_samples)
     missing_features = rng.randint(0, n_features, n_missing_samples)
     X_missing = X_full.copy()
-    X_missing[missing_samples, missing_features] = 0
+    X_missing[missing_samples, missing_features] = np.nan
     y_missing = y_full.copy()
 
     return X_missing, y_missing
