@@ -74,7 +74,7 @@ assumed to be linear. It also lacks some of the attributes of
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC` take as input two arrays: an array `X` of shape
 `(n_samples, n_features)` holding the training samples, and an array `y` of
-class labels (strings or integers), of shape `[n_samples]`::
+class labels (strings or integers), of shape `(n_samples)`::
 
 
     >>> from sklearn import svm
@@ -151,13 +151,11 @@ multi-class strategy, thus training `n_classes` models.
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
 
-.. TODO ref Crammer and singer
-
 Note that the :class:`LinearSVC` also implements an alternative multi-class
-strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
-using the option ``multi_class='crammer_singer'``.
-In practice, one-vs-rest classification is usually preferred, since the results
-are mostly similar, but the runtime is significantly less.
+strategy, the so-called multi-class SVM formulated by Crammer and Singer
+[#8]_, by using the option ``multi_class='crammer_singer'``. In practice,
+one-vs-rest classification is usually preferred, since the results are mostly
+similar, but the runtime is significantly less.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``(n_classes, n_features)`` and ``(n_classes,)`` respectively.
@@ -675,10 +673,8 @@ cannot be applied. This is why only the linear kernel is supported by
 NuSVC
 -----
 
-.. TODO: cite https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf
-
-The :math:`\nu`-SVC formulation is a reparameterization of the :math:`C`-SVC
-and therefore mathematically equivalent.
+The :math:`\nu`-SVC formulation [#7]_ is a reparameterization of the
+:math:`C`-SVC and therefore mathematically equivalent.
 
 We introduce a new parameter :math:`\nu` (instead of :math:`C`) which
 controls the number of support vectors and *margin errors*:
@@ -769,3 +765,10 @@ used, please refer to their respective papers.
       Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
       Volume 14 Issue 3, August 2004, p. 199-222.
 
+   .. [#7] Schölkopf et. al `New Support Vector Algorithms
+      <https://www.stat.purdue.edu/~yuzhu/stat598m3/Papers/NewSVM.pdf>`_
+    
+   .. [#8] Crammer and Singer `On the Algorithmic Implementation ofMulticlass
+      Kernel-based Vector Machines
+      <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_,
+      JMLR 2001.
