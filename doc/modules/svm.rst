@@ -4,7 +4,6 @@
 Support Vector Machines
 =======================
 
-.. TODO: link references throughout the text
 .. TODO: add scaler to examples and docstrings
 .. TODO: WTF is the shrinking parameter??? (see libsvm paper)
 .. TODO: Describe tol parameter
@@ -223,9 +222,9 @@ per-class scores for each sample (or a single score per sample in the binary
 case). When the constructor option ``probability`` is set to ``True``,
 class membership probability estimates (from the methods ``predict_proba`` and
 ``predict_log_proba``) are enabled. In the binary case, the probabilities are
-calibrated using Platt scaling: logistic regression on the SVM's scores,
+calibrated using Platt scaling [#1]_: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
-In the multiclass case, this is extended as per Wu et al. (2004).
+In the multiclass case, this is extended as per [#2]_.
 
 .. note::
 
@@ -242,7 +241,8 @@ In addition, the probability estimates may be inconsistent with the scores:
 
 - the "argmax" of the scores may not be the argmax of the probabilities
 - in binary classification, a sample may be labeled by ``predict`` as
-  belonging to a class that has probability <½ according to ``predict_proba``.
+  belonging to a class that has probability < 0.5 according to
+  ``predict_proba``.
 
 Platt's method is also known to have theoretical issues.
 If confidence scores are required, but these do not have to be probabilities,
@@ -257,18 +257,6 @@ first class among the tied classes will always be returned; but have in mind
 that it comes with a computational cost. See
 :ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an example on
 tie breaking.
-
-.. topic:: References:
-
- * Wu, Lin and Weng,
-   `"Probability estimates for multi-class classification by pairwise coupling"
-   <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
-   JMLR 5:975-1005, 2004.
- 
- 
- * Platt
-   `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -369,16 +357,16 @@ Support Vector Machines are powerful tools, but their compute and
 storage requirements increase rapidly with the number of training
 vectors. The core of an SVM is a quadratic programming problem (QP),
 separating support vectors from the rest of the training data. The QP
-solver used by the `libsvm`_-based implementation scales between
+solver used by the `libsvm`-based implementation scales between
 :math:`O(n_{features} \times n_{samples}^2)` and
 :math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
-the `libsvm`_ cache is used in practice (dataset dependent). If the data
+the `libsvm` cache is used in practice (dataset dependent). If the data
 is very sparse :math:`n_{features}` should be replaced by the average number
 of non-zero features in a sample vector.
 
 For the linear case, the algorithm used in
-:class:`LinearSVC` by the `liblinear`_ implementation is much more
-efficient than its `libsvm`_-based :class:`SVC` counterpart and can
+:class:`LinearSVC` by the `liblinear` implementation is much more
+efficient than its `libsvm`-based :class:`SVC` counterpart and can
 scale almost linearly to millions of samples and/or features.
 
 
@@ -461,13 +449,6 @@ Tips on Practical Use
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
-
-.. topic:: References:
-
- * Fan, Rong-En, et al.,
-   `"LIBLINEAR: A library for large linear classification."
-   <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
-   Journal of machine learning research 9.Aug (2008): 1871-1874.
 
 .. _svm_kernels:
 
@@ -590,8 +571,6 @@ test vectors must be provided.
 Mathematical formulation
 ========================
 
-.. TODO: cite Bishop chapter which is great
-
 A support vector machine constructs a hyper-plane or set of hyper-planes in a
 high or infinite dimensional space, which can be used for
 classification, regression or other tasks. Intuitively, a good
@@ -605,6 +584,9 @@ boundaries, called "support vectors":
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
+
+We recommend [#5]_ and [#6]_ as good references for the theory and
+practicalities of SVMs.
 
 SVC
 ---
@@ -667,24 +649,12 @@ term :math:`b`
 
 .. note::
 
-    While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
+    While SVM models derived from `libsvm` and `liblinear` use ``C`` as
     regularization parameter, most other estimators use ``alpha``. The exact
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
     estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
-
-.. topic:: References:
-
- * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_,
-   I. Guyon, B. Boser, V. Vapnik - Advances in neural information
-   processing 1993.
-
-
- * `"Support-vector networks"
-   <https://link.springer.com/article/10.1007%2FBF00994018>`_,
-   C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 LinearSVC
 ---------
@@ -761,32 +731,41 @@ which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` w
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
 
-.. topic:: References:
-
- * `"A Tutorial on Support Vector Regression"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_,
-   Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
-   Volume 14 Issue 3, August 2004, p. 199-222. 
-
-
 .. _svm_implementation_details:
 
 Implementation details
 ======================
 
-Internally, we use `libsvm`_ and `liblinear`_ to handle all
+Internally, we use `libsvm` [#4]_ and `liblinear` [#3]_ to handle all
 computations. These libraries are wrapped using C and Cython.
-
-.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
+For a description of the implementation and details of the algorithms
+used, please refer to their respective papers.
 
 .. topic:: References:
 
-  For a description of the implementation and details of the algorithms
-  used, please refer to
+   .. [#1] Platt `"Probabilistic outputs for SVMs and comparisons to
+      regularized likelihood methods"
+      <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
-    - `LIBSVM: A Library for Support Vector Machines
+   .. [#2] Wu, Lin and Weng, `"Probability estimates for multi-class
+      classification by pairwise coupling"
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_, JMLR
+      5:975-1005, 2004.
+ 
+   .. [#3] Fan, Rong-En, et al.,
+      `"LIBLINEAR: A library for large linear classification."
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+      Journal of machine learning research 9.Aug (2008): 1871-1874.
+
+   .. [#4] Chang and Lin, `LIBSVM: A Library for Support Vector Machines
       <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
-    - `LIBLINEAR -- A Library for Large Linear Classification
-      <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
+   .. [#5] Bishop, `Pattern recognition and machine learning
+      <https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf>`_,
+      chapter 7 Sparse Kernel Machines
+
+   .. [#6] `"A Tutorial on Support Vector Regression"
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_,
+      Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
+      Volume 14 Issue 3, August 2004, p. 199-222.
+
