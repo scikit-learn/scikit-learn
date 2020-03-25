@@ -484,9 +484,6 @@ Different kernels are specified by the `kernel` parameter::
 Parameters of the RBF Kernel
 ----------------------------
 
-.. TODO: gamma isn't just fo rbf
-.. TODO: C is common to all, explain it somewhere else?
-
 When training an SVM with the *Radial Basis Function* (RBF) kernel, two
 parameters must be considered: ``C`` and ``gamma``.  The parameter ``C``,
 common to all SVM kernels, trades off misclassification of training examples
