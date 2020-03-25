@@ -393,7 +393,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     Download it if necessary.
 
     =================   =======================
-    Classes                                5749
+    Classes                                   2
     Samples total                         13233
     Dimensionality                         5828
     Features            real, between 0 and 255
@@ -461,7 +461,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
             output.
         target : numpy array of shape (2200,). Shape depends on ``subset``.
             Labels associated to each pair of images.
-            The two label values being different persons or the same person.
+            The two label values being "different persons" or the "same person."
         DESCR : string
             Description of the Labeled Faces in the Wild (LFW) dataset.
 
