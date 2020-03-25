@@ -529,7 +529,7 @@ class SVC(BaseSVC):
 
     random_state : int or RandomState instance, default=None
         Controls the pseudo random number generation for shuffling the data for
-        probability estimates.
+        probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -545,13 +545,13 @@ class SVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
-        Coefficients of the support vector in the decision function.
+        Dual coefficients of the support vector in the decision
+        function (see :ref:`sgd_mathematical_formulation`), multiplied by
+        their targets.
         For multiclass, coefficient for all 1-vs-1 classifiers.
         The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in the
-        SVM section of the User Guide for details.
-        TODO: link to it
-        TODO: These are the signed coeff, i.e. multiplied by the target
+        non-trivial. See the :ref:`multi-class section of the User Guide
+        <svm_multi_class>` for details.
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -742,10 +742,9 @@ class NuSVC(BaseSVC):
 
     random_state : int or RandomState instance, default=None
         Controls the pseudo random number generation for shuffling the data for
-        probability estimates.
+        probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
-        TODO: ignored when...
 
     Attributes
     ----------
@@ -759,12 +758,13 @@ class NuSVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
-        Coefficients of the support vector in the decision function.
+        Dual coefficients of the support vector in the decision
+        function (see :ref:`sgd_mathematical_formulation`), multiplied by
+        their targets.
         For multiclass, coefficient for all 1-vs-1 classifiers.
         The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in
-        the SVM section of the User Guide for details.
-        TODO: link to it
+        non-trivial. See the :ref:`multi-class section of the User Guide
+        <svm_multi_class>` for details.
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
