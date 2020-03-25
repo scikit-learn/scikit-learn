@@ -139,7 +139,6 @@ stds_diabetes = np.zeros(5)
 # -----------------------------------------------------------------------------
 # First, we want to estimate the score on the original data
 #
-#
 
 
 def get_full_score(X_full, y_full):
