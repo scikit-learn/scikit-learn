@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from time import time
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -16,7 +17,6 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
