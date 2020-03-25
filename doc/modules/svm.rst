@@ -106,6 +106,12 @@ properties of these support vectors can be found in attributes
     >>> clf.n_support_
     array([1, 1]...)
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+
 .. _svm_multi_class:
 
 Multi-class classification
@@ -203,6 +209,9 @@ Then ``dual_coef_`` looks like this:
 |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
 +------------------------+------------------------+------------------+
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
 
 .. _scores_probabilities:
 
@@ -245,13 +254,9 @@ unlike ``decision_function``, the ``predict`` method does not try to break ties
 by default. You can set ``break_ties=True`` for the output of ``predict`` to be
 the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
 first class among the tied classes will always be returned; but have in mind
-that it comes with a computational cost.
-
-.. TODO: remove because we can't see anything and link to example instead
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
-   :target: ../auto_examples/svm/plot_svm_tie_breaking.html
-   :align: center
+that it comes with a computational cost. See
+:ref:`sphx_glr_auto_examples_svm_plot_svm_tie_breaking.py` for an example on
+tie breaking.
 
 .. topic:: References:
 
@@ -276,8 +281,8 @@ classes or certain individual samples, the parameters ``class_weight`` and
 ``class_weight`` in the ``fit`` method. It's a dictionary of the form
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
-
-.. TODO: Describe the figure, or remove
+The figure below illustrates the decision boundary of an unbalanced problem,
+with and without weight correction.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
@@ -289,24 +294,19 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 :class:`LinearSVR` and :class:`OneClassSVM` implement also weights for
 individual samples in the `fit` method through the ``sample_weight`` parameter.
 Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
-example to ``C * sample_weight[i]``.
-
-.. TODO: Describe the figure, or remove
+example to ``C * sample_weight[i]``, which will encourage the classifier to
+get these samples right. The figure below illustrates the effect of sample
+weighting on the decision boundary. The size of the circles is proportional
+to the sample weights:
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
 
-.. TODO: SHould all these examples be here?
-
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
- * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
- * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
 
 
@@ -323,18 +323,14 @@ above) depends only on a subset of the training data, because the cost
 function for building the model does not care about training points
 that lie beyond the margin. Analogously, the model produced by Support
 Vector Regression depends only on a subset of the training data,
-because the cost function for building the model ignores any training
-data close to the model prediction.
-.. TODO: should this be ... because the cost function ignores samples whose
-prediction is close to their target?
+because the cost function ignores samples whose prediction is close to their
+target.
 
 There are three different implementations of Support Vector Regression:
 :class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
-linear kernels, while :class:`NuSVR` implements a slightly different
+the linear kernel, while :class:`NuSVR` implements a slightly different
 formulation than :class:`SVR` and :class:`LinearSVR`.
-
-.. TODO: linear kernel singular??
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -417,7 +413,7 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
-    .. TODO: phrasing + make sure decreasing C = more regularization
+    .. TODO: phrasing
     
     :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
@@ -500,6 +496,29 @@ Different kernels are specified by the `kernel` parameter::
     >>> rbf_svc.kernel
     'rbf'
 
+Parameters of the RBF Kernel
+----------------------------
+
+.. TODO: gamma isn't just fo rbf
+.. TODO: C is common to all, explain it somewhere else?
+
+When training an SVM with the *Radial Basis Function* (RBF) kernel, two
+parameters must be considered: ``C`` and ``gamma``.  The parameter ``C``,
+common to all SVM kernels, trades off misclassification of training examples
+against simplicity of the decision surface. A low ``C`` makes the decision
+surface smooth, while a high ``C`` aims at classifying all training examples
+correctly.  ``gamma`` defines how much influence a single training example has.
+The larger ``gamma`` is, the closer other examples must be to be affected.
+
+Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
+is advised to use :class:`sklearn.model_selection.GridSearchCV` with 
+``C`` and ``gamma`` spaced exponentially far apart to choose good values.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+
 
 Custom Kernels
 --------------
@@ -565,28 +584,6 @@ test vectors must be provided.
     >>> clf.predict(gram)
     array([0, 1])
 
-Parameters of the RBF Kernel
-----------------------------
-
-.. TODO: put that up?
-.. TODO: gamma isn't just fo rbf
-.. TODO: C is common to all, explain it somewhere else?
-
-When training an SVM with the *Radial Basis Function* (RBF) kernel, two
-parameters must be considered: ``C`` and ``gamma``.  The parameter ``C``,
-common to all SVM kernels, trades off misclassification of training examples
-against simplicity of the decision surface. A low ``C`` makes the decision
-surface smooth, while a high ``C`` aims at classifying all training examples
-correctly.  ``gamma`` defines how much influence a single training example has.
-The larger ``gamma`` is, the closer other examples must be to be affected.
-
-Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`sklearn.model_selection.GridSearchCV` with 
-``C`` and ``gamma`` spaced exponentially far apart to choose good values.
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 
@@ -793,5 +790,3 @@ computations. These libraries are wrapped using C and Cython.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
       <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
-
-
