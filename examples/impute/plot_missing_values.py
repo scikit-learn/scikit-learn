@@ -60,7 +60,7 @@ def add_missing_values(X_full, y_full):
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
-    n_missing_samples = int(np.floor(n_samples * missing_rate))
+    n_missing_samples = int(n_samples * missing_rate)
     missing_samples = np.hstack((np.zeros(n_samples - n_missing_samples,
                                           dtype=np.bool),
                                  np.ones(n_missing_samples,
