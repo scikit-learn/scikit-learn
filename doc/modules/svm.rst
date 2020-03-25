@@ -4,7 +4,6 @@
 Support Vector Machines
 =======================
 
-.. TODO: WTF is the shrinking parameter??? (see libsvm paper)
 .. TODO: Describe tol parameter
 .. TODO: Describe max_iter parameter
 
@@ -419,6 +418,14 @@ Tips on Practical Use
     
     See section :ref:`preprocessing` for more details on scaling and
     normalization.
+  
+  .. _shrinking::
+
+  * Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
+    number of iterations is large, then shrinking can shorten the training
+    time. However, if we loosely solve the optimization problem (e.g., by
+    using a large stopping tolerance), the code without using shrinking may
+    be much faster*
 
   * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
     approximates the fraction of training errors and support vectors.
@@ -546,25 +553,26 @@ instance that will use that kernel::
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO: wording
-.. TODO: How to predict on a testset?
-
-Set ``kernel='precomputed'`` and pass the Gram matrix instead of X in the fit
-method. At the moment, the kernel values between *all* training vectors and the
-test vectors must be provided.
+You can pass pre-computed kernels by using the ``kernel='precomputed'``
+option. You should then pass Gram matrix instead of X to the `fit` and
+`predict` methods. The kernel values between *all* training vectors and the
+test vectors must be provided:
 
     >>> import numpy as np
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split 
     >>> from sklearn import svm
-    >>> X = np.array([[0, 0], [1, 1]])
-    >>> y = [0, 1]
+    >>> X, y = make_classification(n_samples=10, random_state=0)
+    >>> X_train , X_test , y_train, y_test = train_test_split(X, y, random_state=0)
     >>> clf = svm.SVC(kernel='precomputed')
     >>> # linear kernel computation
-    >>> gram = np.dot(X, X.T)
-    >>> clf.fit(gram, y)
+    >>> gram_train = np.dot(X_train, X_train.T)
+    >>> clf.fit(gram_train, y_train)
     SVC(kernel='precomputed')
     >>> # predict on training examples
-    >>> clf.predict(gram)
-    array([0, 1])
+    >>> gram_test = np.dot(X_test, X_train.T)
+    >>> clf.predict(gram_test)
+    array([0, 1, 0])
 
 
 .. _svm_mathematical_formulation:

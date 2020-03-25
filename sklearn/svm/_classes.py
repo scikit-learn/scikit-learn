@@ -472,6 +472,7 @@ class SVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -686,6 +687,7 @@ class NuSVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -917,6 +919,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
@@ -1061,6 +1064,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking>`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -1188,6 +1192,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
