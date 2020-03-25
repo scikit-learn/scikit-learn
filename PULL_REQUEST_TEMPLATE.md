@@ -35,3 +35,5 @@ Link For Closed Issue:https://github.com/scikit-learn/scikit-learn/issues/16342
 Link https://github.com/rbewoor/scikit-learn/blob/master/Dedicated_Test_Cases/Test_Cases_SciKit-Learn.ipynb
 
 4) On 24.04.2020: Uploaded new "sklearn/model_selection/_split.py" and "sklearn/model_selection/tests/test_split.py" versions with code indentation correction for 80 characters per line. No such changes required for "sklearn/utils/fixes.py" and "sklearn/base.py" as all lines within 80 character limit.
+
+5) On 25.04.2020: Uploaded further corrections to test_split.py and _split.py.
