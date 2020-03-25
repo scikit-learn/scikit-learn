@@ -1551,13 +1551,13 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test, group_val in super()._iter_indices(X=classes):
+        for grp_train, grp_test, grp_val in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
-            train = np.flatnonzero(np.in1d(group_indices, group_train))
-            test = np.flatnonzero(np.in1d(group_indices, group_test))
+            train = np.flatnonzero(np.in1d(group_indices, grp_train))
+            test = np.flatnonzero(np.in1d(group_indices, grp_test))
             validation = np.flatnonzero(np.in1d(group_indices,
-                                                group_val))
+                                                grp_val))
 
             yield train, test, validation
 
@@ -1894,8 +1894,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size, validation_size,
                          ' and/or validation_size.'
                          % (n_train + n_test + n_validation, n_samples))
 
-    n_train, n_test, n_validation = int(n_train), int(n_test), \
-                                    int(n_validation)
+    n_train, n_test = int(n_train), int(n_test)
+    n_validation = int(n_validation)
 
     if n_train == 0:
         raise ValueError(
@@ -2260,11 +2260,11 @@ def train_test_split(*arrays, **options):
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-    n_train, n_test, \
-    n_validation = _validate_shuffle_split(n_samples, test_size, train_size,
-                                           validation_size,
-                                           default_test_size=0.25,
-                                           default_validation_size=0.0)
+    n_train, n_test, n_validation \
+    = _validate_shuffle_split(n_samples, test_size, train_size,
+                              validation_size,
+                              default_test_size=0.25,
+                              default_validation_size=0.0)
 
     if shuffle is False:
         if stratify is not None:
