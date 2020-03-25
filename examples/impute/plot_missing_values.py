@@ -55,7 +55,7 @@ y_california = y_california[:500]
 
 
 def add_missing_values(X_full, y_full):
-    n_samples = X_full.shape[0]
+    n_samples, n_features = X_full.shape
     n_features = X_full.shape[1]
 
     # Add missing values in 75% of the lines
