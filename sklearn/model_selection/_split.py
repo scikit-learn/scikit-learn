@@ -1551,14 +1551,13 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test, group_validation in \
-        super()._iter_indices(X=classes):
+        for group_train, group_test, group_val in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
             train = np.flatnonzero(np.in1d(group_indices, group_train))
             test = np.flatnonzero(np.in1d(group_indices, group_test))
             validation = np.flatnonzero(np.in1d(group_indices,
-                                                group_validation))
+                                                group_val))
 
             yield train, test, validation
 
@@ -2263,7 +2262,7 @@ def train_test_split(*arrays, **options):
     n_samples = _num_samples(arrays[0])
     n_train, n_test, \
     n_validation = _validate_shuffle_split(n_samples, test_size, train_size,
-                                           validation_size, 
+                                           validation_size,
                                            default_test_size=0.25,
                                            default_validation_size=0.0)
 
@@ -2294,12 +2293,12 @@ def train_test_split(*arrays, **options):
     if n_validation == 0:
         return list(chain.from_iterable((_safe_indexing(a, train),
                                          _safe_indexing(a, test))
-                                         for a in arrays))
+                                        for a in arrays))
     else:
         return list(chain.from_iterable((_safe_indexing(a, train),
                                          _safe_indexing(a, test),
                                          _safe_indexing(a, validation))
-                                         for a in arrays))
+                                        for a in arrays))
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
 train_test_split.__test__ = False
