@@ -730,6 +730,7 @@ class NuSVC(BaseSVC):
         probability estimates.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+        TODO: ignored when...
 
     Attributes
     ----------

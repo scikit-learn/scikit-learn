@@ -111,16 +111,14 @@ properties of these support vectors can be found in attributes
 Multi-class classification
 --------------------------
 
-.. TODO: ref to knerr et al??
-
-:class:`SVC` and :class:`NuSVC` implement the "one-against-one"
-approach (Knerr et al., 1990) for multi-class classification. In total,
+:class:`SVC` and :class:`NuSVC` implement the "one-versus-one"
+approach for multi-class classification. In total,
 ``n_classes * (n_classes - 1) / 2``
 classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to monotically transform the results of the
-"one-against-one" classifiers to a decision function of shape ``(n_samples,
-n_classes)``.
+``decision_function_shape`` option allows to monotonically transform the
+results of the "one-versus-one" classifiers to a "one-vs-rest" decision
+function of shape ``(n_samples, n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
@@ -147,15 +145,12 @@ multi-class strategy, thus training `n_classes` models.
 
 See :ref:`svm_mathematical_formulation` for a complete description of
 the decision function.
-.. TODO: should this be above?
 
 .. TODO ref Crammer and singer
-.. TODO what does consistent mean
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
-using the option ``multi_class='crammer_singer'``. This method is consistent,
-which is not true for one-vs-rest classification.
+using the option ``multi_class='crammer_singer'``.
 In practice, one-vs-rest classification is usually preferred, since the results
 are mostly similar, but the runtime is significantly less.
 
@@ -682,8 +677,6 @@ term :math:`b`
     estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
     the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
-.. TODO multiclass case ?/
-
 .. topic:: References:
 
  * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
@@ -766,7 +759,7 @@ The decision function is:
 
 .. math:: \sum_{i=1}^n (\alpha_i - \alpha_i^*) K(x_i, x) + b
 
-These parameters can be accessed through the attribute ``dual_coef_``
+These parameters can be accessed through the attributes ``dual_coef_``
 which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
