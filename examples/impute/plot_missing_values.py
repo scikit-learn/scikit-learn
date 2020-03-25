@@ -113,7 +113,7 @@ REGRESSOR = RandomForestRegressor(random_state=0)
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
-        make_union(imputer, MissingIndicator(missing_values=0)),
+        make_union(imputer, MissingIndicator(missing_values=np.nan)),
         REGRESSOR)
     impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                     scoring='neg_mean_squared_error',
@@ -223,7 +223,7 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
 #
 
 def get_impute_iterative(X_missing, y_missing):
-    imputer = IterativeImputer(missing_values=0,
+    imputer = IterativeImputer(missing_values=np.nan,
                                random_state=0,
                                n_nearest_features=5,
                                sample_posterior=True)
@@ -271,13 +271,11 @@ ax1.set_xlabel('MSE')
 ax1.invert_yaxis()
 ax1.set_yticklabels(x_labels)
 
-# plot california results
+# plot california dataset results
 ax2 = plt.subplot(122)
 for j in xval:
     ax2.barh(j, mses_california[j], xerr=stds_california[j],
              color=colors[j], alpha=0.6, align='center')
-
-# plot California results
 
 ax2.set_title('Imputation Techniques with California Data')
 ax2.set_yticks(xval)
