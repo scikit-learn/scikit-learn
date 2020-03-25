@@ -46,7 +46,7 @@ from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import load_diabetes
 
 
-rng = np.random.RandomState(0)
+rng = np.random.RandomState(42)
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
