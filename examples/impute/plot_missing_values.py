@@ -243,7 +243,7 @@ mses_california = mses_california * -1
 
 ###############################################################################
 # Plot the results
-##################
+# ################
 #
 # Finally we are going to visualize the score
 #
