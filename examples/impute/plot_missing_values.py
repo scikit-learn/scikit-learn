@@ -10,7 +10,7 @@ In this example we will investigate different imputation techniques:
 
 - imputation by the constant 0 value
 - imputation by the mean value of each feature combined with a missing-ness
-indicator auxiliary variable
+  indicator auxiliary variable
 - k nearest neighbor imputation
 - iterative imputation
 
