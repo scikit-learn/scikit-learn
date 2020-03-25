@@ -897,7 +897,7 @@ based on permutation of the features.
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduces two new experimental implementations of
+Scikit-learn 0.21 introduced two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -1049,6 +1049,51 @@ Implementation detail: taking sample weights into account amounts to
 multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
+
+.. _monotonic_cst_gbdt:
+
+Monotonic Constraints
+---------------------
+
+Depending on the problem at hand, you may have prior knowledge indicating
+that a given feature should in general have a positive (or negative) effect
+on the target value. For example, all else being equal, a higher credit
+score should increase the probability of getting approved for a loan.
+Monotonic constraints allow you to incorporate such prior knowledge into the
+model.
+
+A positive monotonic constraint is a constraint of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
+where :math:`F` is the predictor with two features.
+
+Similarly, a negative monotonic constraint is of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
+
+Note that monotonic constraints only constraint the output "all else being
+equal". Indeed, the following relation **is not enforced** by a positive
+constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+
+You can specify a monotonic constraint on each feature using the
+`monotonic_cst` parameter. For each feature, a value of 0 indicates no
+constraint, while -1 and 1 indicate a negative and positive constraint,
+respectively::
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> from sklearn.ensemble import HistGradientBoostingRegressor
+
+  ... # positive, negative, and no constraint on the 3 features
+  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
+
+In a binary classification context, imposing a monotonic constraint means
+that the feature is supposed to have a positive / negative effect on the
+probability to belong to the positive class. Monotonic constraints are not
+supported for multiclass context.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
 Low-level parallelism
 ---------------------
