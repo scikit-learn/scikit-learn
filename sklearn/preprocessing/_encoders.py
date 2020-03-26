@@ -421,7 +421,8 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X, needs_feature_names_in=True).check_X(X)
+        data_wrap = (_DataAdapter(needs_feature_names_in=True).fit(X)
+                     .get_transformer(X))
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -466,7 +467,7 @@ class OneHotEncoder(_BaseEncoder):
         if not self.sparse:
             out = out.toarray()
 
-        return df_adapter.transform(out, self.get_feature_names)
+        return data_wrap.transform(out, self.get_feature_names)
 
     def inverse_transform(self, X):
         """
@@ -694,10 +695,10 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X_int, _ = self._transform(X)
         output = X_int.astype(self.dtype, copy=False)
-        return df_adapter.transform(output)
+        return data_wrap.transform(output)
 
     def inverse_transform(self, X):
         """

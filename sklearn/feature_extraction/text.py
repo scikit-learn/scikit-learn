@@ -1191,9 +1191,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._validate_params()
         self._validate_vocabulary()
-        df_adapter = _DataAdapter(raw_documents,
-                                  needs_feature_names_in=False).check_X(
-                                      raw_documents)
+        data_wrap = (_DataAdapter(needs_feature_names_in=False)
+                     .fit(raw_documents).get_transformer(raw_documents))
 
         max_df = self.max_df
         min_df = self.min_df
@@ -1225,7 +1224,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
             self.vocabulary_ = vocabulary
 
-        return df_adapter.transform(X, self.get_feature_names)
+        return data_wrap.transform(X, self.get_feature_names)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1248,15 +1247,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, "
                 "string object received.")
         self._check_vocabulary()
-        df_adapter = _DataAdapter(X, needs_feature_names_in=False).check_X(
-            raw_documents)
+        data_wrap = (_DataAdapter(needs_feature_names_in=False)
+                     .fit(raw_documents).get_transformer(raw_documents))
 
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
         if self.binary:
             X.data.fill(1)
 
-        return df_adapter.transform(X, self.get_feature_names)
+        return data_wrap.transform(X, self.get_feature_names)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1473,7 +1472,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
@@ -1502,7 +1501,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     @property
     def idf_(self):

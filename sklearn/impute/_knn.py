@@ -203,7 +203,7 @@ class KNNImputer(_BaseImputer):
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):
@@ -234,7 +234,7 @@ class KNNImputer(_BaseImputer):
             # No missing values in X
             # Remove columns where the training data is all nan
             out = X[:, valid_mask]
-            return df_adapter.transform(out, get_output_feature_names)
+            return data_wrap.transform(out, get_output_feature_names)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -307,4 +307,4 @@ class KNNImputer(_BaseImputer):
             pass
 
         out = super()._concatenate_indicator(X[:, valid_mask], X_indicator)
-        return df_adapter.transform(out, get_output_feature_names)
+        return data_wrap.transform(out, get_output_feature_names)

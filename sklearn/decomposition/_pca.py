@@ -379,7 +379,8 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        df_adapter = _DataAdapter(X, needs_feature_names_in=False).check_X(X)
+        data_wrap = (_DataAdapter(needs_feature_names_in=False)
+                     .fit(X).get_transformer(X))
 
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]
@@ -394,7 +395,7 @@ class PCA(_BasePCA):
         def get_feature_names_out():
             return [f'pca{i}' for i in range(U.shape[1])]
 
-        return df_adapter.transform(U, get_feature_names_out)
+        return data_wrap.transform(U, get_feature_names_out)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""

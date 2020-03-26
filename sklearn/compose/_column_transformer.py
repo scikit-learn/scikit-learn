@@ -533,13 +533,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Xs, transformers = zip(*result)
 
-        adapter = _ManyDataAdapter(Xs).check_X(Xs)
+        data_wrap = _ManyDataAdapter().fit(Xs).get_transformer(Xs)
         # determine if concatenated output will be sparse or not
         self._check_sparse_output(Xs)
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return adapter.transform(self._hstack(list(Xs)))
+        return data_wrap.transform(self._hstack(list(Xs)))
 
     def _check_sparse_output(self, Xs):
         def _get_Xtype(X):
@@ -633,8 +633,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        adapter = _ManyDataAdapter(Xs).check_X(Xs)
-        return adapter.transform(self._hstack(list(Xs)))
+        data_wrap = _ManyDataAdapter().fit(Xs).get_transformer(Xs)
+        return data_wrap.transform(self._hstack(list(Xs)))
 
     def _hstack(self, Xs):
         """Stacks Xs horizontally.

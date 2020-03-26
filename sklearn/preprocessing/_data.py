@@ -407,13 +407,13 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X *= self.scale_
         X += self.min_
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     def inverse_transform(self, X):
         """Undo the scaling of X according to feature_range.
@@ -788,7 +788,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Copy the input X or not.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
 
         copy = copy if copy is not None else self.copy
         X = self._validate_data(X, reset=False,
@@ -808,7 +808,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X -= self.mean_
             if self.with_std:
                 X /= self.scale_
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
@@ -998,7 +998,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data that should be scaled.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1007,7 +1007,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             inplace_column_scale(X, 1.0 / self.scale_)
         else:
             X /= self.scale_
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1249,7 +1249,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1262,7 +1262,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                 X -= self.center_
             if self.with_scaling:
                 X /= self.scale_
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1548,7 +1548,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        df_adapter = _DataAdapter(needs_feature_names_in=True).fit(X)
+        data_wrap = (_DataAdapter(needs_feature_names_in=True).fit(X)
+                     .get_transformer(X))
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
 
@@ -1645,7 +1646,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     new_index.append(current_col)
                     index = new_index
 
-        return df_adapter.transform(XP, self.get_feature_names)
+        return data_wrap.transform(XP, self.get_feature_names)
 
 
 def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
@@ -1835,7 +1836,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -2541,7 +2542,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
         self._check_is_fitted(X)
 
@@ -2804,7 +2805,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         output = self._fit(X, y, force_transform=True)
         return df_adapter.transform(output)
 
@@ -2852,7 +2853,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The transformed data.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(X).check_X(X)
+        data_wrap = _DataAdapter().fit(X).get_transformer(X)
         X = self._check_input(X, in_fit=False, check_positive=True,
                               check_shape=True)
 
@@ -2866,7 +2867,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if self.standardize:
             X = self._scaler.transform(X)
 
-        return df_adapter.transform(X)
+        return data_wrap.transform(X)
 
     def inverse_transform(self, X):
         """Apply the inverse power transformation using the fitted lambdas.
