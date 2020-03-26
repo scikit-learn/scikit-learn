@@ -31,7 +31,7 @@ class _DataTransformer:
 
     def transform(self, X, get_feature_names_out=_one_to_one):
         array_out = get_config()['array_out']
-        if array_out == 'default':
+        if array_out == 'default' or not self.n_samples:
             return X
 
         feature_names_in = self.feature_names_in
@@ -78,6 +78,7 @@ class _DataAdapter:
         return self.fit(X).get_transformer(X)
 
     def fit(self, X):
+        # When X is None -> do not save any feature names
         if get_config()['array_out'] == 'default' or X is None:
             self.feature_names_in_ = None
             return self
@@ -89,11 +90,14 @@ class _DataAdapter:
         """Get metadata for X that will be transformed"""
         # TODO: It is possible to check for column name consistency here
         dims, index = None, None
-        n_samples = _num_samples(X)
+
+        try:
+            n_samples = _num_samples(X)
+        except TypeError:
+            return _DataTransformer(None, 0, index, dims)
 
         if get_config()['array_out'] == 'default':
-            return _DataTransformer(self.feature_names_in_,
-                                    n_samples, index, dims)
+            return _DataTransformer(self.feature_names_in_, 0, index, dims)
 
         if hasattr(X, "columns"):
             # dataframe
