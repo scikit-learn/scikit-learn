@@ -173,7 +173,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     [[0.141...   0.526... 0.679... 0.493...]]
 
     >>> print(clf.named_steps['linearsvc'].intercept_)
-    [0.16935944]
+    [0.1693...]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
