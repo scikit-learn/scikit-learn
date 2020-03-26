@@ -112,7 +112,7 @@ def _write_estimator_html(out, estimator, estimator_label,
         with config_context(print_changed_only=True):
             est_block = _get_visual_block(estimator)
 
-    if est_block.kind == 'serial':
+    if est_block.kind in ('serial', 'parallel'):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
@@ -120,32 +120,22 @@ def _write_estimator_html(out, estimator, estimator_label,
         if estimator_label:
             _write_label_html(out, estimator_label, estimator_label_details)
 
-        out.write('<div class="sk-serial">')
+        kind = est_block.kind
+        out.write(f'<div class="sk-{kind}">')
         est_infos = zip(est_block.estimators, est_block.names,
                         est_block.name_details)
+
         for est, name, name_details in est_infos:
-            _write_estimator_html(out, est, name, name_details)
-        out.write('</div></div>')  # sk-serial sk-item
+            if kind == 'serial':
+                _write_estimator_html(out, est, name, name_details)
+            else:  # parallel
+                out.write('<div class="sk-parallel-item">')
+                # wrap element in a serial visualblock
+                serial_block = _VisualBlock('serial', [est], dash_wrapped=False)
+                _write_estimator_html(out, serial_block, name, name_details)
+                out.write('</div>')  # sk-parallel-item
 
-    elif est_block.kind == 'parallel':
-        dashed_wrapped = first_call or est_block.dash_wrapped
-        dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
-        out.write(f'<div class="sk-item{dash_cls}">')
-
-        if estimator_label:
-            _write_label_html(out, estimator_label, estimator_label_details)
-
-        out.write('<div class="sk-parallel">')
-        est_infos = zip(est_block.estimators, est_block.names,
-                        est_block.name_details)
-        for est, name, name_details in est_infos:
-            out.write('<div class="sk-parallel-item">')
-            # wrap element in a serial visualblock
-            serial_block = _VisualBlock('serial', [est], dash_wrapped=False)
-            _write_estimator_html(out, serial_block, name, name_details)
-            out.write('</div>')  # sk-parallel-item
-        out.write('</div></div>')  # sk-parallel sk-item
-
+        out.write('</div></div>')
     elif est_block.kind == 'single':
         _write_label_html(out, est_block.names, est_block.name_details,
                           outer_class="sk-item", inner_class="sk-estimator",
