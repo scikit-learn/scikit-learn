@@ -679,6 +679,8 @@ does not involve inner products between samples, so the infamous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
 :class:`LinearSVC` (:math:`\phi` is the identity function).
 
+.. _nu_svc:
+
 NuSVC
 -----
 

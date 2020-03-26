@@ -657,9 +657,9 @@ class NuSVC(BaseSVC):
     Parameters
     ----------
     nu : float, default=0.5
-        An upper bound on the fraction of training errors and a lower
-        bound of the fraction of support vectors. Should be in the
-        interval (0, 1].
+        An upper bound on the fraction of margin errors (see :ref:`User Guide
+        <nu_svc>`) and a lower bound of the fraction of support vectors.
+        Should be in the interval (0, 1].
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
          Specifies the kernel type to be used in the algorithm.
