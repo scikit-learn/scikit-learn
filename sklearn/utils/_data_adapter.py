@@ -105,6 +105,7 @@ class _DataAdapter:
 
     def get_transformer(self, X):
         """Get metadata for X that will be transformed"""
+        # TODO: It is possible to check for column name consistency here
         dims, index = None, None
         n_samples = _num_samples(X)
 
