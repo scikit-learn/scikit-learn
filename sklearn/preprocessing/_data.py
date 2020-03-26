@@ -2866,7 +2866,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if self.standardize:
             X = self._scaler.transform(X)
 
-        return X
+        return df_adapter.transform(X)
 
     def inverse_transform(self, X):
         """Apply the inverse power transformation using the fitted lambdas.

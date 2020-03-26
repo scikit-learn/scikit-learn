@@ -24,7 +24,6 @@ from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
 from ._config import config_context
-from .utils._data_adapter import _ManyDataAdapter
 
 __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 

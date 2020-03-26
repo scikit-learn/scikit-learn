@@ -12,9 +12,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
