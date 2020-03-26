@@ -125,7 +125,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         data_wrap = (_DataAdapter(needs_feature_names_in=False)
-                     .fit(X).get_transformer(X))
+                     .fit_get_transformer(X))
 
         X = check_array(X)
         if self.mean_ is not None:

@@ -8,6 +8,19 @@ def _one_to_one(feature_names_in):
     return feature_names_in
 
 
+def _get_feature_names(X):
+
+    if hasattr(X, "columns"):
+        return np.array(X.columns, dtype=object)
+
+    elif hasattr(X, "dims") and isinstance(X.dims, tuple):
+        # xarray DataArray
+        if len(X.dims) != 2:
+            raise ValueError("XArray.DataArray must be 2D")
+
+        return np.array(X.coords[X.dims[1]], dtype=object)
+
+
 class _DataTransformer:
 
     def __init__(self, df_adapter, n_samples, index, dims):
@@ -18,7 +31,7 @@ class _DataTransformer:
 
     def transform(self, X, get_feature_names_out=_one_to_one):
         array_out = get_config()['array_out']
-        if array_out == 'ndarray':
+        if array_out == 'default':
             return X
 
         if self.n_samples != _num_samples(X):
@@ -26,7 +39,12 @@ class _DataTransformer:
                              "as transform")
 
         if self.df_adapter.needs_feature_names_in:
-            if self.df_adapter.feature_names_in_ is None:
+            feature_names_in = self.df_adapter.feature_names_in_
+            if feature_names_in is None:
+                # try to get feature names from X
+                feature_names_in = _get_feature_names(X)
+
+            if feature_names_in is None:
                 feature_names_out = None
             else:
                 feature_names_out = get_feature_names_out(
@@ -34,6 +52,10 @@ class _DataTransformer:
         else:
             # feature names are not required
             feature_names_out = get_feature_names_out()
+
+        # no names found
+        if feature_names_out is None:
+            return X
 
         if array_out == 'pandas':
             import pandas as pd
@@ -68,34 +90,25 @@ class _DataAdapter:
     def __init__(self, needs_feature_names_in=True):
         self.needs_feature_names_in = needs_feature_names_in
 
+    def fit_get_transformer(self, X):
+        return self.fit(X).get_transformer(X)
+
     def fit(self, X):
         self.feature_names_in_ = None
-        if get_config()['array_out'] == 'ndarray':
+        if get_config()['array_out'] == 'default':
             return self
 
         if self.needs_feature_names_in:
-            self.feature_names_in_ = self._get_feature_names(X)
+            self.feature_names_in_ = _get_feature_names(X)
 
         return self
-
-    def _get_feature_names(self, X):
-
-        if hasattr(X, "columns"):
-            return np.array(X.columns, dtype=object)
-
-        elif hasattr(X, "dims") and isinstance(X.dims, tuple):
-            # xarray DataArray
-            if len(X.dims) != 2:
-                raise ValueError("XArray.DataArray must be 2D")
-
-            return np.array(X.coords[X.dims[1]], dtype=object)
 
     def get_transformer(self, X):
         """Get metadata for X that will be transformed"""
         dims, index = None, None
         n_samples = _num_samples(X)
 
-        if get_config()['array_out'] == 'ndarray':
+        if get_config()['array_out'] == 'default':
             return _DataTransformer(self, n_samples, index, dims)
 
         if hasattr(X, "columns"):
@@ -116,9 +129,6 @@ class _ManyDataAdapter(_DataAdapter):
 
     def fit(self, Xs):
         """Xs is a list of arrays or matrics"""
-        if get_config()['array_out'] == 'ndarray':
-            return
-
         self.adapters = [
             _DataAdapter(needs_feature_names_in=True).fit(X) for X in Xs]
 

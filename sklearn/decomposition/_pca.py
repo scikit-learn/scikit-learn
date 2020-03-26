@@ -380,7 +380,7 @@ class PCA(_BasePCA):
         C-ordered array, use 'np.ascontiguousarray'.
         """
         data_wrap = (_DataAdapter(needs_feature_names_in=False)
-                     .fit(X).get_transformer(X))
+                     .fit_get_transformer(X))
 
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]

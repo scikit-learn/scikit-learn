@@ -7,7 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': False,
-    'array_out': 'ndarray',
+    'array_out': 'default',
 }
 
 
@@ -60,7 +60,7 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
-    array_out : {'ndarray', 'pandas'}, optional
+    array_out : {'default', 'pandas', 'xarray'}, optional
         Kind of array output for transformers
 
     See Also
