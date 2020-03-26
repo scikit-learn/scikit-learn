@@ -419,7 +419,7 @@ Tips on Practical Use
     See section :ref:`preprocessing` for more details on scaling and
     normalization.
   
-  .. _shrinking::
+  .. _shrinking:
 
   * Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
     number of iterations is large, then shrinking can shorten the training
