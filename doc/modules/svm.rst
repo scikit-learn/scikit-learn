@@ -227,7 +227,7 @@ In the multiclass case, this is extended as per [#2]_.
   The same probability calibration procedure is available for all estimators
   via the :class:`~sklearn.calibration.CalibratedClassifierCV` (see
   :ref:`calibration`). In the case of :class:`SVC` and :class:`NuSVC`, this
-  procedure is builtin in `libsvm` which is used under the hood, so it does
+  procedure is builtin in `libsvm`_ which is used under the hood, so it does
   not rely on scikit-learn's
   :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
@@ -314,7 +314,8 @@ There are three different implementations of Support Vector Regression:
 :class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
 the linear kernel, while :class:`NuSVR` implements a slightly different
-formulation than :class:`SVR` and :class:`LinearSVR`.
+formulation than :class:`SVR` and :class:`LinearSVR`. See
+:ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -351,16 +352,16 @@ Support Vector Machines are powerful tools, but their compute and
 storage requirements increase rapidly with the number of training
 vectors. The core of an SVM is a quadratic programming problem (QP),
 separating support vectors from the rest of the training data. The QP
-solver used by the `libsvm`-based implementation scales between
+solver used by the `libsvm`_-based implementation scales between
 :math:`O(n_{features} \times n_{samples}^2)` and
 :math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
-the `libsvm` cache is used in practice (dataset dependent). If the data
+the `libsvm`_ cache is used in practice (dataset dependent). If the data
 is very sparse :math:`n_{features}` should be replaced by the average number
 of non-zero features in a sample vector.
 
 For the linear case, the algorithm used in
-:class:`LinearSVC` by the `liblinear` implementation is much more
-efficient than its `libsvm`-based :class:`SVC` counterpart and can
+:class:`LinearSVC` by the `liblinear`_ implementation is much more
+efficient than its `libsvm`_-based :class:`SVC` counterpart and can
 scale almost linearly to millions of samples and/or features.
 
 
@@ -376,7 +377,7 @@ Tips on Practical Use
 
     For :class:`LinearSVC` (and :class:`LogisticRegression
     <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
-    array will be copied and converted to the liblinear internal sparse data
+    array will be copied and converted to the `liblinear`_ internal sparse data
     representation (double precision floats and int32 indices of non-zero
     components). If you want to fit a large-scale linear classifier without
     copying a dense numpy C-contiguous double precision array as input, we
@@ -635,10 +636,12 @@ The dual problem to the primal is
 where :math:`e` is the vector of all ones,
 and :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
 :math:`Q_{ij} \equiv y_i y_j K(x_i, x_j)`, where :math:`K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
-is the kernel. The terms :math:`\alpha_i` are called the dual coefficients.
+is the kernel. The terms :math:`\alpha_i` are called the dual coefficients,
+and they are upper-bounded by :math:`C`.
 This dual representation highlights the fact that training vectors are
 implicitly mapped into a higher (maybe infinite)
-dimensional space by the function :math:`\phi`.
+dimensional space by the function :math:`\phi`: see `kernel trick
+<https://en.wikipedia.org/wiki/Kernel_method>`_.
 
 Once the optimization problem is solved, the output of
 :term:`decision_function` for a given sample :math:`x` becomes:
@@ -656,7 +659,7 @@ term :math:`b`
 
 .. note::
 
-    While SVM models derived from `libsvm` and `liblinear` use ``C`` as
+    While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
     regularization parameter, most other estimators use ``alpha``. The exact
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
@@ -761,10 +764,14 @@ by :class:`LinearSVR`.
 Implementation details
 ======================
 
-Internally, we use `libsvm` [#4]_ and `liblinear` [#3]_ to handle all
+Internally, we use `libsvm`_ [#4]_ and `liblinear`_ [#3]_ to handle all
 computations. These libraries are wrapped using C and Cython.
 For a description of the implementation and details of the algorithms
 used, please refer to their respective papers.
+
+
+.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
