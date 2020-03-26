@@ -146,6 +146,10 @@ Changelog
   applies the correct inverse transform to the transformed data. :pr:`16655`
   by :user:`Lewis Ball <lrjball>`.
 
+- |Fix| Fixed bug that was causing :class:`decomposition.KernelPCA` to sometimes
+  raise `invalid value encountered in multiply` during `fit`.
+  :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -179,6 +183,11 @@ Changelog
   is 'auto', which enables early stopping if there are at least 10,000
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`15582` by `Nicolas Hug`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
