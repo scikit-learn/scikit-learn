@@ -334,8 +334,6 @@ floating point values instead of integer values::
 
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
-
-
 .. _svm_outlier_detection:
 
 Density estimation, novelty detection
@@ -668,7 +666,7 @@ term :math:`b`
 LinearSVC
 ---------
 
-The primal problem can equivalently be formulated as
+The primal problem can be equivalently formulated as
 
 .. math::
 
@@ -679,7 +677,7 @@ where we make use of the `hinge loss
 directly optimized by :class:`LinearSVC`, but unlike the dual form, this one
 does not involve inner products between samples, so the infamous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
-:class:`LinearSVC` (:math:`\phi` is the identity function.
+:class:`LinearSVC` (:math:`\phi` is the identity function).
 
 NuSVC
 -----
@@ -713,7 +711,12 @@ vector :math:`y \in \mathbb{R}^n` :math:`\varepsilon`-SVR solves the following p
                           & w^T \phi (x_i) + b - y_i \leq \varepsilon + \zeta_i^*,\\
                           & \zeta_i, \zeta_i^* \geq 0, i=1, ..., n
 
-Its dual is
+Here, we are penalizing samples whose prediction is at least :math:`\varepsilon`
+away from their true target. These samples penalize the objective by
+:math:`\zeta_i` or :math:`\zeta_i*`, depending on whether their prediction
+lie above or below the :math:`\varepsilon` tube.
+
+The dual problem is
 
 .. math::
 
@@ -723,20 +726,33 @@ Its dual is
    \textrm {subject to } & e^T (\alpha - \alpha^*) = 0\\
    & 0 \leq \alpha_i, \alpha_i^* \leq C, i=1, ..., n
 
-where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
+where :math:`e` is the vector of all ones,
 :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
 :math:`Q_{ij} \equiv K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
 is the kernel. Here training vectors are implicitly mapped into a higher
 (maybe infinite) dimensional space by the function :math:`\phi`.
 
-The decision function is:
+The prediction is:
 
-.. math:: \sum_{i=1}^n (\alpha_i - \alpha_i^*) K(x_i, x) + b
+.. math:: \sum_{i \in SV}(\alpha_i - \alpha_i^*) K(x_i, x) + b
 
 These parameters can be accessed through the attributes ``dual_coef_``
 which holds the difference :math:`\alpha_i - \alpha_i^*`, ``support_vectors_`` which
 holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`b`
+
+LinearSVR
+---------
+
+The primal problem can be equivalently formulated as
+
+.. math::
+
+    \min_ {w, b} \frac{1}{2} w^T w + C \sum_{i=1}\max(0, |y_i - (w^T \phi(x_i) + b)| - \varepsilon),
+
+where we make use of the epsilon-insensitive loss, i.e. errors of less than
+:math:`\varepsilon` are ignored. This is the form that is directly optimized
+by :class:`LinearSVR`.
 
 .. _svm_implementation_details:
 
