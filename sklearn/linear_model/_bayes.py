@@ -118,17 +118,17 @@ class BayesianRidge(RegressorMixin, LinearModel):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
-    X_offset_ : array-like (length = n_samples) 
+    X_offset_ : array-like (length = n_samples)
         The eventually weighted mean of regressors X, used to center X in
         the _pre_process_data function.
     
-    X_scale_ : float, default = 64 
+    X_scale_ : float, default = 64
         L2-norm of X utilized in equation self.normalize:
         X = (X - self.X_offset_) divided by (self.X_scale_)
 
-    y_offset_ : array_like, shape (n_samples, ) 
+    y_offset_ : array_like, shape (n_samples, )
         The weighted mean of y, used to center y in the _pre_process_data
-        function.  
+        function.
 
     Examples
     --------
