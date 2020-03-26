@@ -23,8 +23,8 @@ def _get_feature_names(X):
 
 class _DataTransformer:
 
-    def __init__(self, df_adapter, n_samples, index, dims):
-        self.df_adapter = df_adapter
+    def __init__(self, feature_names_in, n_samples, index, dims):
+        self.feature_names_in = feature_names_in
         self.n_samples = n_samples
         self.index = index
         self.dims = dims
@@ -34,26 +34,13 @@ class _DataTransformer:
         if array_out == 'default':
             return X
 
-        if self.n_samples != _num_samples(X):
-            raise ValueError("The number of samples in fit must be the same "
-                             "as transform")
+        feature_names_in = self.feature_names_in
+        if feature_names_in is None:
+            feature_names_in = _get_feature_names(X)
 
-        if self.df_adapter.needs_feature_names_in:
-            feature_names_in = self.df_adapter.feature_names_in_
-            if feature_names_in is None:
-                # try to get feature names from X
-                feature_names_in = _get_feature_names(X)
+        feature_names_out = get_feature_names_out(feature_names_in)
 
-            if feature_names_in is None:
-                feature_names_out = None
-            else:
-                feature_names_out = get_feature_names_out(
-                    self.df_adapter.feature_names_in_)
-        else:
-            # feature names are not required
-            feature_names_out = get_feature_names_out()
-
-        # no names found
+        # no names are found
         if feature_names_out is None:
             return X
 
@@ -87,20 +74,15 @@ class _DataTransformer:
 
 
 class _DataAdapter:
-    def __init__(self, needs_feature_names_in=True):
-        self.needs_feature_names_in = needs_feature_names_in
-
     def fit_get_transformer(self, X):
         return self.fit(X).get_transformer(X)
 
     def fit(self, X):
-        self.feature_names_in_ = None
-        if get_config()['array_out'] == 'default':
+        if get_config()['array_out'] == 'default' or X is None:
+            self.feature_names_in_ = None
             return self
 
-        if self.needs_feature_names_in:
-            self.feature_names_in_ = _get_feature_names(X)
-
+        self.feature_names_in_ = _get_feature_names(X)
         return self
 
     def get_transformer(self, X):
@@ -110,7 +92,8 @@ class _DataAdapter:
         n_samples = _num_samples(X)
 
         if get_config()['array_out'] == 'default':
-            return _DataTransformer(self, n_samples, index, dims)
+            return _DataTransformer(self.feature_names_in_,
+                                    n_samples, index, dims)
 
         if hasattr(X, "columns"):
             # dataframe
@@ -121,17 +104,15 @@ class _DataAdapter:
             if len(dims) != 2:
                 raise ValueError("XArray.DataArray must be 2D")
             index = X.coords[dims[0]]
-        return _DataTransformer(self, n_samples, index, dims)
+        return _DataTransformer(self.feature_names_in_,
+                                n_samples, index, dims)
 
 
 class _ManyDataAdapter(_DataAdapter):
-    def __init__(self):
-        super().__init__(needs_feature_names_in=True)
 
     def fit(self, Xs):
         """Xs is a list of arrays or matrics"""
-        self.adapters = [
-            _DataAdapter(needs_feature_names_in=True).fit(X) for X in Xs]
+        self.adapters = [_DataAdapter().fit(X) for X in Xs]
 
         feature_name_ins = [adapter.feature_names_in_
                             for adapter in self.adapters]
@@ -153,4 +134,5 @@ class _ManyDataAdapter(_DataAdapter):
         index = first_transformer.index
         dims = first_transformer.dims
 
-        return _DataTransformer(self, n_samples, index, dims)
+        return _DataTransformer(self.feature_names_in_,
+                                n_samples, index, dims)

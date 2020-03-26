@@ -1548,8 +1548,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        data_wrap = (_DataAdapter(needs_feature_names_in=True)
-                     .fit_get_transformer(X))
+        data_wrap = _DataAdapter().fit_get_transformer(X)
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
 

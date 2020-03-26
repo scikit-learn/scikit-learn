@@ -421,8 +421,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        data_wrap = (_DataAdapter(needs_feature_names_in=True)
-                     .fit_get_transformer(X))
+        data_wrap = _DataAdapter().fit_get_transformer(X)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 

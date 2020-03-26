@@ -1191,8 +1191,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._validate_params()
         self._validate_vocabulary()
-        data_wrap = (_DataAdapter(needs_feature_names_in=False)
-                     .fit_get_transformer(raw_documents))
 
         max_df = self.max_df
         min_df = self.min_df
@@ -1200,6 +1198,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         vocabulary, X = self._count_vocab(raw_documents,
                                           self.fixed_vocabulary_)
+        # Fitting with None results in no feature names saved.
+        data_wrap = _DataAdapter().fit(None).get_transformer(X)
 
         if self.binary:
             X.data.fill(1)
@@ -1224,7 +1224,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
             self.vocabulary_ = vocabulary
 
-        return data_wrap.transform(X, self.get_feature_names)
+        def get_output_feature_names(feature_names_in):
+            return self.get_feature_names()
+
+        return data_wrap.transform(X, get_output_feature_names)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1247,15 +1250,19 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, "
                 "string object received.")
         self._check_vocabulary()
-        data_wrap = (_DataAdapter(needs_feature_names_in=False)
-                     .fit_get_transformer(raw_documents))
-
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
+
+        # Fitting with None results in no feature names saved.
+        data_wrap = _DataAdapter().fit(None).get_transformer(X)
+
         if self.binary:
             X.data.fill(1)
 
-        return data_wrap.transform(X, self.get_feature_names)
+        def get_output_feature_names(feature_names_in):
+            return self.get_feature_names()
+
+        return data_wrap.transform(X, get_output_feature_names)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.

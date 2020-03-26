@@ -741,6 +741,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return data_wrap.transform(imputer_mask, self._get_feature_names_out)
 
     def _get_feature_names_out(self, feature_names_in):
+        if feature_names_in is None:
+            return None
         if self.features_.size < self._n_features:
             feature_names_in = feature_names_in[self.features_]
 
