@@ -1840,7 +1840,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
-        return df_adapter.transform(output)
+        return data_wrap.transform(output)
 
     def _more_tags(self):
         return {'stateless': True}
@@ -2547,7 +2547,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         self._check_is_fitted(X)
 
         output = self._transform(X, inverse=False)
-        return df_adapter.transform(output)
+        return data_wrap.transform(output)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -2807,7 +2807,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     def fit_transform(self, X, y=None):
         data_wrap = _DataAdapter().fit(X).get_transformer(X)
         output = self._fit(X, y, force_transform=True)
-        return df_adapter.transform(output)
+        return data_wrap.transform(output)
 
     def _fit(self, X, y=None, force_transform=False):
         X = self._check_input(X, in_fit=True, check_positive=True,
