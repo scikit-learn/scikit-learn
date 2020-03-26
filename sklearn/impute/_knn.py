@@ -203,7 +203,7 @@ class KNNImputer(_BaseImputer):
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):

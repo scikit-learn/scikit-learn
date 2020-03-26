@@ -1191,8 +1191,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._validate_params()
         self._validate_vocabulary()
-        df_adapter = _DataAdapter(needs_feature_names_in=False).fit(
-            raw_documents)
+        df_adapter = _DataAdapter(raw_documents,
+                                  needs_feature_names_in=False).check_X(
+                                      raw_documents)
 
         max_df = self.max_df
         min_df = self.min_df
@@ -1247,7 +1248,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, "
                 "string object received.")
         self._check_vocabulary()
-        df_adapter = _DataAdapter(needs_feature_names_in=False).fit(
+        df_adapter = _DataAdapter(X, needs_feature_names_in=False).check_X(
             raw_documents)
 
         # use the same matrix-building strategy as fit_transform
@@ -1472,7 +1473,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)

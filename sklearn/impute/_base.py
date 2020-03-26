@@ -407,7 +407,7 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
@@ -694,7 +694,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         check_is_fitted(self)
         X = self._validate_input(X, in_fit=False)
 
@@ -732,7 +732,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:

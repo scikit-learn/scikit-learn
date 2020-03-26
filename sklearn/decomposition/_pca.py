@@ -379,7 +379,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        df_adapter = _DataAdapter(needs_feature_names_in=False).fit(X)
+        df_adapter = _DataAdapter(X, needs_feature_names_in=False).check_X(X)
 
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]

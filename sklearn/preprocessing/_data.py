@@ -407,7 +407,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -788,7 +788,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Copy the input X or not.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
 
         copy = copy if copy is not None else self.copy
         X = self._validate_data(X, reset=False,
@@ -998,7 +998,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data that should be scaled.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1249,7 +1249,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             The data used to scale along the specified axis.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1835,7 +1835,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -2541,7 +2541,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
         self._check_is_fitted(X)
 
@@ -2804,7 +2804,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         output = self._fit(X, y, force_transform=True)
         return df_adapter.transform(output)
 
@@ -2852,7 +2852,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The transformed data.
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter().fit(X)
+        df_adapter = _DataAdapter(X).check_X(X)
         X = self._check_input(X, in_fit=False, check_positive=True,
                               check_shape=True)
 

@@ -124,7 +124,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self)
-        df_adapter = _DataAdapter(needs_feature_names_in=False).fit(X)
+        df_adapter = _DataAdapter(X, needs_feature_names_in=False).check_X(X)
 
         X = check_array(X)
         if self.mean_ is not None:
