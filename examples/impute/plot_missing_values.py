@@ -100,7 +100,7 @@ from sklearn.pipeline import make_pipeline, make_union
 
 
 N_SPLITS = 5
-REGRESSOR = RandomForestRegressor(random_state=0)
+regressor = RandomForestRegressor(random_state=0)
 
 ###############################################################################
 # Missing information
