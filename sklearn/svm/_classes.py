@@ -170,7 +170,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                     ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
 
     >>> print(clf.named_steps['linearsvc'].coef_)
-    [[0.141443   0.52678403 0.67978681 0.49307509]]
+    [[0.141...   0.526... 0.679... 0.493...]]
+
     >>> print(clf.named_steps['linearsvc'].intercept_)
     [0.16935944]
     >>> print(clf.predict([[0, 0, 0, 0]]))
