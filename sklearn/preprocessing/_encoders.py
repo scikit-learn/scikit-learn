@@ -9,6 +9,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
+from ..utils._data_adapter import _DataAdapter
 
 from ._label import _encode, _encode_check_unknown
 
@@ -421,6 +422,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
+        df_adapter = _DataAdapter(needs_feature_names_in=True).fit(X)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -463,9 +465,9 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, feature_indices[-1]),
                                 dtype=self.dtype)
         if not self.sparse:
-            return out.toarray()
-        else:
-            return out
+            out = out.toarray()
+
+        return df_adapter.transform(out, self.get_feature_names)
 
     def inverse_transform(self, X):
         """
@@ -693,8 +695,10 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
+        df_adapter = _DataAdapter().fit(X)
         X_int, _ = self._transform(X)
-        return X_int.astype(self.dtype, copy=False)
+        output = X_int.astype(self.dtype, copy=False)
+        return df_adapter.transform(output)
 
     def inverse_transform(self, X):
         """

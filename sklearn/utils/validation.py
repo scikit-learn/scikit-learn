@@ -454,7 +454,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # throw warning if pandas dataframe is sparse
         with suppress(ImportError):
             from pandas.api.types import is_sparse
-            if array.dtypes.apply(is_sparse).any():
+            if (not hasattr(array, 'sparse') and
+                    array.dtypes.apply(is_sparse).any()):
                 warnings.warn(
                     "pandas.DataFrame with sparse columns found."
                     "It will be converted to a dense numpy array."
@@ -497,6 +498,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     else:
         estimator_name = "Estimator"
     context = " by %s" % estimator_name if estimator is not None else ""
+
+    # handles pandas sparse by checking for sparse attribute
+    if hasattr(array, 'sparse') and array.ndim > 1:
+        array = array.sparse.to_coo()
+
+    # xarray's pydata/sparse
+    if hasattr(array, 'coords') and hasattr(array.data, 'to_scipy_sparse'):
+        array = array.data.to_scipy_sparse()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)

@@ -24,6 +24,8 @@ from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from .._config import get_config
+from ..utils._data_adapter import _ManyDataAdapter
 
 
 __all__ = [
@@ -455,7 +457,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                     y=y,
                     weight=weight,
                     message_clsname='ColumnTransformer',
-                    message=self._log_message(name, idx, len(transformers)))
+                    message=self._log_message(name, idx, len(transformers)),
+                    config=get_config())
                 for idx, (name, trans, column, weight) in enumerate(
                         self._iter(fitted=fitted, replace_strings=True), 1))
         except ValueError as e:
@@ -530,20 +533,50 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Xs, transformers = zip(*result)
 
+        adapter = _ManyDataAdapter().fit(Xs)
         # determine if concatenated output will be sparse or not
-        if any(sparse.issparse(X) for X in Xs):
-            nnz = sum(X.nnz if sparse.issparse(X) else X.size for X in Xs)
-            total = sum(X.shape[0] * X.shape[1] if sparse.issparse(X)
-                        else X.size for X in Xs)
-            density = nnz / total
-            self.sparse_output_ = density < self.sparse_threshold
-        else:
-            self.sparse_output_ = False
-
+        self._check_sparse_output(Xs)
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return self._hstack(list(Xs))
+        return adapter.transform(self._hstack(list(Xs)))
+
+    def _check_sparse_output(self, Xs):
+        def _get_Xtype(X):
+            # pandas sparse dataframe
+            if hasattr(X, "iloc") and hasattr(X, "sparse"):
+                return 'pd'
+            # xarray sparse
+            if hasattr(X, 'data') and hasattr(X.data, 'to_scipy_sparse'):
+                return 'xr'
+            if sparse.issparse(X):
+                return 'sp'
+            return 'dense'
+
+        Xs_types = [(X, _get_Xtype(X)) for X in Xs]
+
+        # all dense
+        if all(X_type == 'dense' for _, X_type in Xs_types):
+            self.sparse_output_ = False
+            return
+
+        nnz = 0.0
+        total = 0.0
+        for X, X_type in Xs_types:
+            if X_type == 'pd':
+                nnz += X.sparse.density * X.size
+                total += X.size
+            elif X_type == 'sp':
+                nnz += X.nnz
+                total += np.prod(X.shape)
+            elif X_type == 'xr':
+                nnz += X.data.nnz
+                total += X.data.size
+            else:
+                nnz += X.size
+                total += X.size
+        density = nnz / total
+        self.sparse_output_ = density < self.sparse_threshold
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -600,7 +633,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        return self._hstack(list(Xs))
+        adapter = _ManyDataAdapter().fit(Xs)
+        return adapter.transform(self._hstack(list(Xs)))
 
     def _hstack(self, Xs):
         """Stacks Xs horizontally.
@@ -627,8 +661,16 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
             return sparse.hstack(converted_Xs).tocsr()
         else:
-            Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
-            return np.hstack(Xs)
+            output = []
+            for X in Xs:
+                # xarray sparse
+                if hasattr(X, 'coords') and hasattr(X.data, "todense"):
+                    output.append(X.data.todense())
+                elif sparse.issparse(X):
+                    output.append(X.toarray())
+                else:
+                    output.append(X)
+            return np.hstack(output)
 
 
 def _check_X(X):

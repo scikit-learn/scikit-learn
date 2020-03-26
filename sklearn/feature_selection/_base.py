@@ -12,6 +12,7 @@ from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
 from ..utils import check_array, safe_mask
+from ..utils._data_adapter import _DataAdapter
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -71,6 +72,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        df_adapter = _DataAdapter().fit(X)
         tags = self._get_tags()
         X = check_array(X, dtype=None, accept_sparse='csr',
                         force_all_finite=not tags.get('allow_nan', True))
@@ -82,7 +84,14 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return X[:, safe_mask(X, mask)]
+
+        _safe_mask = safe_mask(X, mask)
+
+        def get_feature_names_out(feature_names_in):
+            return feature_names_in[_safe_mask]
+
+        out = X[:, _safe_mask]
+        return df_adapter.transform(out, get_feature_names_out)
 
     def inverse_transform(self, X):
         """

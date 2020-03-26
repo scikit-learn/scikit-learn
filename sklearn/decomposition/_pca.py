@@ -25,6 +25,7 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils._data_adapter import _DataAdapter
 
 
 def _assess_dimension(spectrum, rank, n_samples, n_features):
@@ -378,6 +379,8 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
+        df_adapter = _DataAdapter(needs_feature_names_in=False).fit(X)
+
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]
 
@@ -388,7 +391,10 @@ class PCA(_BasePCA):
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components_]
 
-        return U
+        def get_feature_names_out():
+            return [f'pca{i}' for i in range(U.shape[1])]
+
+        return df_adapter.transform(U, get_feature_names_out)
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""

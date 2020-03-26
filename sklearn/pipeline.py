@@ -23,6 +23,8 @@ from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
+from ._config import config_context
+from .utils._data_adapter import _ManyDataAdapter
 
 __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
@@ -709,12 +711,16 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
-    # if we have a weight for this transformer, multiply output
-    if weight is None:
-        return res
-    return res * weight
+def _transform_one(transformer, X, y, weight, config=None, **fit_params):
+    if config is None:
+        config = {}
+
+    with config_context(**config):
+        res = transformer.transform(X)
+        # if we have a weight for this transformer, multiply output
+        if weight is None:
+            return res
+        return res * weight
 
 
 def _fit_transform_one(transformer,
@@ -723,21 +729,26 @@ def _fit_transform_one(transformer,
                        weight,
                        message_clsname='',
                        message=None,
+                       config=None,
                        **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
     with the fitted transformer. If ``weight`` is not ``None``, the result will
     be multiplied by ``weight``.
     """
-    with _print_elapsed_time(message_clsname, message):
-        if hasattr(transformer, 'fit_transform'):
-            res = transformer.fit_transform(X, y, **fit_params)
-        else:
-            res = transformer.fit(X, y, **fit_params).transform(X)
+    if config is None:
+        config = {}
 
-    if weight is None:
-        return res, transformer
-    return res * weight, transformer
+    with config_context(**config):
+        with _print_elapsed_time(message_clsname, message):
+            if hasattr(transformer, 'fit_transform'):
+                res = transformer.fit_transform(X, y, **fit_params)
+            else:
+                res = transformer.fit(X, y, **fit_params).transform(X)
+
+        if weight is None:
+            return res, transformer
+        return res * weight, transformer
 
 
 def _fit_one(transformer,
@@ -746,12 +757,16 @@ def _fit_one(transformer,
              weight,
              message_clsname='',
              message=None,
+             config=None,
              **fit_params):
     """
     Fits ``transformer`` to ``X`` and ``y``.
     """
-    with _print_elapsed_time(message_clsname, message):
-        return transformer.fit(X, y, **fit_params)
+    if config is None:
+        config = {}
+    with config_context(**config):
+        with _print_elapsed_time(message_clsname, message):
+            return transformer.fit(X, y, **fit_params)
 
 
 class FeatureUnion(TransformerMixin, _BaseComposition):

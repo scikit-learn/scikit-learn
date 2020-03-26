@@ -7,6 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': False,
+    'array_out': 'ndarray',
 }
 
 
@@ -27,7 +28,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None):
+               print_changed_only=None, array_out=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -59,6 +60,9 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
+    array_out : {'ndarray', 'pandas'}, optional
+        Kind of array output for transformers
+
     See Also
     --------
     config_context: Context manager for global scikit-learn configuration
@@ -70,6 +74,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
+    if array_out is not None:
+        _global_config['array_out'] = array_out
 
 
 @contextmanager

@@ -16,6 +16,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
+from ..utils._data_adapter import _DataAdapter
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -406,6 +407,7 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
+        df_adapter = _DataAdapter().fit(X)
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
@@ -420,6 +422,7 @@ class SimpleImputer(_BaseImputer):
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
+            valid_mask = slice(None)
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
@@ -456,7 +459,17 @@ class SimpleImputer(_BaseImputer):
 
             X[coordinates] = values
 
-        return super()._concatenate_indicator(X, X_indicator)
+        def get_feature_names_out(feature_names_in):
+            imputed_names = feature_names_in[valid_mask]
+            if self.indicator_ is None:
+                return imputed_names
+
+            indicator_names = self.indicator_._get_feature_names_out(
+                feature_names_in)
+            return np.r_[imputed_names, indicator_names]
+
+        out = super()._concatenate_indicator(X, X_indicator)
+        return df_adapter.transform(out, get_feature_names_out)
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
@@ -681,6 +694,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
+        df_adapter = _DataAdapter().fit(X)
         check_is_fitted(self)
         X = self._validate_input(X, in_fit=False)
 
@@ -700,7 +714,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             if self.features_.size < self._n_features:
                 imputer_mask = imputer_mask[:, self.features_]
 
-        return imputer_mask
+        return df_adapter.transform(imputer_mask, self._get_feature_names_out)
 
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for X.
@@ -718,12 +732,21 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
+        df_adapter = _DataAdapter().fit(X)
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:
             imputer_mask = imputer_mask[:, self.features_]
 
-        return imputer_mask
+        return df_adapter.transform(imputer_mask, self._get_feature_names_out)
+
+    def _get_feature_names_out(self, feature_names_in):
+        if self.features_.size < self._n_features:
+            feature_names_in = feature_names_in[self.features_]
+
+        feature_names_in = np.array([f'mask_{name}'
+                                     for name in feature_names_in])
+        return feature_names_in
 
     def _more_tags(self):
         return {'allow_nan': True,

@@ -57,6 +57,7 @@ from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 from sklearn import datasets
+from sklearn import config_context
 
 iris = datasets.load_iris()
 
@@ -2506,3 +2507,66 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
+
+
+@pytest.mark.parametrize('Transformer', [
+    MaxAbsScaler, MinMaxScaler, Normalizer, PowerTransformer,
+    QuantileTransformer, RobustScaler, StandardScaler
+])
+def test_one_to_one_feature_mapping(Transformer):
+    pd = pytest.importorskip("pandas")
+    n_samples, n_features = 1000, 10
+    feature_names = [f'feat_{i}' for i in range(n_features)]
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples, n_features)
+    df = pd.DataFrame(X, columns=feature_names)
+
+    with config_context(array_out='pandas'):
+        df_trans = Transformer().fit_transform(df)
+
+    assert isinstance(df_trans, pd.DataFrame)
+    assert_array_equal(df_trans.columns, df.columns)
+
+
+@pytest.mark.parametrize('transformer', [
+    StandardScaler(with_mean=False),
+    RobustScaler(with_centering=False),
+    MaxAbsScaler(),
+    Normalizer(),
+    QuantileTransformer()])
+def test_one_to_one_feature_mapping_sparse(transformer):
+    pd = pytest.importorskip("pandas")
+    n_samples, n_features = 1000, 10
+    feature_names = [f'feat_{i}' for i in range(n_features)]
+
+    X = sparse_random(n_samples, n_features, random_state=42)
+    df = pd.DataFrame.sparse.from_spmatrix(X, columns=feature_names)
+
+    with config_context(array_out='pandas'):
+        df_trans = transformer.fit_transform(df)
+
+    assert isinstance(df_trans, pd.DataFrame)
+    assert_array_equal(df_trans.columns, df.columns)
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_polynomial_feature_names_pandas(is_sparse):
+    pd = pytest.importorskip("pandas")
+    X = np.arange(30).reshape(10, 3)
+    feature_names = ["a", "b", "c"]
+
+    if is_sparse:
+        X_sp = sparse.csr_matrix(X)
+        df = pd.DataFrame.sparse.from_spmatrix(X_sp, columns=feature_names)
+    else:
+        df = pd.DataFrame(X, columns=feature_names)
+
+    poly = PolynomialFeatures(degree=2, include_bias=True).fit(df)
+    feature_names = poly.get_feature_names(feature_names)
+
+    with config_context(array_out='pandas'):
+        df_trans = poly.transform(df)
+
+    assert isinstance(df_trans, pd.DataFrame)
+    assert_array_equal(df_trans.columns, feature_names)

@@ -14,6 +14,7 @@ from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
+from ..utils._data_adapter import _DataAdapter
 
 
 class KNNImputer(_BaseImputer):
@@ -202,6 +203,7 @@ class KNNImputer(_BaseImputer):
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
+        df_adapter = _DataAdapter().fit(X)
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):
@@ -220,10 +222,19 @@ class KNNImputer(_BaseImputer):
         mask_fit_X = self._mask_fit_X
         valid_mask = ~np.all(mask_fit_X, axis=0)
 
+        def get_output_feature_names(feature_names_in):
+            imputed_names = feature_names_in[valid_mask]
+            if self.indicator_ is None:
+                return imputed_names
+            indicator_names = self.indicator_._get_feature_names_out(
+                feature_names_in)
+            return np.r_[imputed_names, indicator_names]
+
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
-            return X[:, valid_mask]
+            out = X[:, valid_mask]
+            return df_adapter.transform(out, get_output_feature_names)
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -295,4 +306,5 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        out = super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        return df_adapter.transform(out, get_output_feature_names)
