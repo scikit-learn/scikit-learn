@@ -586,12 +586,15 @@ separation is achieved by the hyper-plane that has the largest distance
 to the nearest training data points of any class (so-called functional
 margin), since in general the larger the margin the lower the
 generalization error of the classifier. The figure below shows the decision
-function for a separable problem, with three samples within the margin
-boundaries, called "support vectors":
+function for a linearly separable problem, with three samples on the
+margin boundaries, called "support vectors":
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
+
+In general, when the problem isn't linearly separable, the support vectors
+are the samples *within* the margin boundaries.
 
 We recommend [#5]_ and [#6]_ as good references for the theory and
 practicalities of SVMs.
