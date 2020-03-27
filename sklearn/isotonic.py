@@ -168,7 +168,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     X_max_ : float
         Maximum value of input array `X_` for right bound.
 
-    X_thresholds_ : array-like of shape (n_thresholds,)
+    X_thresholds_ : ndarray of shape (n_thresholds,)
         De-duplicated ascending `X` values suitable to interpolate
         the y = f(X) monotonic function.
 
