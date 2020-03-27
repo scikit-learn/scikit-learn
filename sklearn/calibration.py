@@ -21,9 +21,10 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_array, indexable, column_or_1d
-from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
+from .utils import check_X_y, check_array, indexable, column_or_1d, \
+    compute_class_weight
+from .utils.validation import check_is_fitted, check_consistent_length, \
+    _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -100,10 +101,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None,
+                 class_weight=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -145,13 +148,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            base_estimator = LinearSVC(random_state=0)
+            base_estimator = LinearSVC(random_state=0,
+                                       class_weight=self.class_weight)
         else:
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
             calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method)
+                base_estimator, method=self.method,
+                class_weight=self.class_weight)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -178,7 +183,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_)
+                    this_estimator, method=self.method, classes=self.classes_,
+                    class_weight=self.class_weight)
                 sw = None if sample_weight is None else sample_weight[test]
                 calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
                 self.calibrated_classifiers_.append(calibrated_classifier)
@@ -278,10 +284,12 @@ class _CalibratedClassifier:
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
+    def __init__(self, base_estimator, *, method='sigmoid', classes=None,
+                 class_weight=None):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
+        self.class_weight = class_weight
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -329,6 +337,20 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
+
+        if len(self.classes_) == 1:
+            class_weight_sample = np.ones(len(y))
+        else:
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+            class_weight_sample = np.where(y, self.class_weight_[1],
+                                           self.class_weight_[0])
+        if sample_weight is not None:
+            check_consistent_length(X, y, sample_weight)
+            combined_sample_weight = class_weight_sample * sample_weight
+        else:
+            combined_sample_weight = class_weight_sample
+
         Y = label_binarize(y, self.classes_)
 
         df, idx_pos_class = self._preproc(X)
@@ -342,7 +364,7 @@ class _CalibratedClassifier:
             else:
                 raise ValueError('method should be "sigmoid" or '
                                  '"isotonic". Got %s.' % self.method)
-            calibrator.fit(this_df, Y[:, k], sample_weight)
+            calibrator.fit(this_df, Y[:, k], combined_sample_weight)
             self.calibrators_.append(calibrator)
 
         return self
