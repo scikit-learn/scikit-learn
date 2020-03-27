@@ -1,6 +1,5 @@
 from contextlib import closing
 from io import StringIO
-from itertools import chain
 
 import pytest
 
@@ -202,6 +201,7 @@ def test_stacking_classsifer(final_estimator):
         assert "LogisticRegression()</pre>" in html_output
     else:
         assert final_estimator.__class__.__name__ in html_output
+
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
 def test_stacking_regressor(final_estimator):

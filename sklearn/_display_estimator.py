@@ -131,7 +131,8 @@ def _write_estimator_html(out, estimator, estimator_label,
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
                 # wrap element in a serial visualblock
-                serial_block = _VisualBlock('serial', [est], dash_wrapped=False)
+                serial_block = _VisualBlock('serial', [est],
+                                            dash_wrapped=False)
                 _write_estimator_html(out, serial_block, name, name_details)
                 out.write('</div>')  # sk-parallel-item
 
