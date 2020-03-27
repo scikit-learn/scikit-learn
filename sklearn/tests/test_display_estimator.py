@@ -1,5 +1,6 @@
 from contextlib import closing
 from io import StringIO
+from itertools import chain
 
 import pytest
 
@@ -23,6 +24,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RationalQuadratic
 from sklearn._display_estimator import _write_label_html
 from sklearn._display_estimator import _get_visual_block
 from sklearn._display_estimator import _estimator_repr_html
@@ -30,6 +33,7 @@ from sklearn._display_estimator import _estimator_repr_html
 
 @pytest.mark.parametrize("checked", [True, False])
 def test_write_label_html(checked):
+    # Test checking logic and labeling
     name = "LogisticRegression"
     tool_tip = "hello-world"
 
@@ -45,6 +49,7 @@ def test_write_label_html(checked):
 
 @pytest.mark.parametrize('est', ['passthrough', 'drop', None])
 def test_get_visual_block_single_str_none(est):
+    # Test estimators that are represnted by strings
     est_html_info = _get_visual_block(est)
     assert est_html_info.kind == 'single'
     assert est_html_info.estimators == est
@@ -125,7 +130,7 @@ def test_display_estimator_pipeline():
     cat_trans = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='constant',
                                   missing_values='empty')),
-        ('one-hot', OneHotEncoder())
+        ('one-hot', OneHotEncoder(drop='first'))
     ])
 
     preprocess = ColumnTransformer([
@@ -149,29 +154,38 @@ def test_display_estimator_pipeline():
     ])
     html_output = _estimator_repr_html(pipe)
 
-    expected_strings = [
-      'passthrough</label>',
-      'div class=\"sk-toggleable__content\"><pre>SimpleImputer(strategy',
-      '(\'one-hot\',',
-      'preprocessor: ColumnTransformer</label>',
-      '<pre>[\'a\', \'b\', \'c\', \'d\', \'e\']</pre>',
-      '<pre>LogisticRegression(random_state=1)</pre>',
-      '<pre>SelectPercentile()</pre>',
-      '>TruncatedSVD</label>',
-      '<pre>TruncatedSVD(n_components=3)',
-    ]
-
-    for expected_string in expected_strings:
-        assert expected_string in html_output
-
+    # top level estimators show estimator with changes
     assert str(pipe) in html_output
+    for _, est in pipe.steps:
+        assert (f"<div class=\"sk-toggleable__content\">"
+                f"<pre>{str(est)}") in html_output
 
+    # all other estimators are shown with only its changes
+    with config_context(print_changed_only=True):
+        assert str(num_trans['pass']) in html_output
+        assert 'passthrough</label>' in html_output
+        assert str(num_trans['imputer']) in html_output
 
-def test_display_estimator_ovo_classifier():
-    ovo = OneVsOneClassifier(LinearSVC())
-    html_output = _estimator_repr_html(ovo)
-    assert "pre>OneVsOneClassifier(estimator=LinearSVC" in html_output
-    assert "LinearSVC</label>" in html_output
+        for _, _, cols in preprocess.transformers:
+            assert f"<pre>{cols}</pre>" in html_output
+
+        # feature union
+        for name, _ in feat_u.transformer_list:
+            assert f"<label>{name}</label>" in html_output
+
+        pca = feat_u.transformer_list[0][1]
+        assert f"<pre>{str(pca)}</pre>" in html_output
+
+        tsvd = feat_u.transformer_list[1][1]
+        first = tsvd['first']
+        select = tsvd['select']
+        assert f"<pre>{str(first)}</pre>" in html_output
+        assert f"<pre>{str(select)}</pre>" in html_output
+
+        # voting classifer
+        for name, est in clf.estimators:
+            assert f"<label>{name}</label>" in html_output
+            assert f"<pre>{str(est)}</pre>" in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
@@ -189,12 +203,10 @@ def test_stacking_classsifer(final_estimator):
     else:
         assert final_estimator.__class__.__name__ in html_output
 
-
 @pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
 def test_stacking_regressor(final_estimator):
     reg = StackingRegressor(
         estimators=[('svr', LinearSVR())], final_estimator=final_estimator)
-
     html_output = _estimator_repr_html(reg)
 
     assert str(reg.estimators[0][0]) in html_output
@@ -205,14 +217,44 @@ def test_stacking_regressor(final_estimator):
         assert final_estimator.__class__.__name__ in html_output
 
 
-def test_estimator_birch():
-    # birch uses another estimator
+def test_birch_duck_typing_meta():
+    # Test duck typing meta estimators with Birch
     birch = Birch(n_clusters=AgglomerativeClustering(n_clusters=3))
     html_output = _estimator_repr_html(birch)
 
-    # inner estimator only prints the changes
-    assert '<pre>AgglomerativeClustering(n_clusters=3)</pre>' in html_output
-    assert '<pre>Birch(' in html_output
+    # inner estimator shows only the changes
+    with config_context(print_changed_only=True):
+        assert f"<pre>{str(birch.n_clusters)}" in html_output
+        assert "AgglomerativeClustering</label>" in html_output
+
+    # outer estimator contains all changes
+    assert f"<pre>{str(birch)}" in html_output
+
+
+def test_ovo_classifier_duck_typing_meta():
+    # Test duck typing metaestimators with OVO
+    ovo = OneVsOneClassifier(LinearSVC(penalty='l1'))
+    html_output = _estimator_repr_html(ovo)
+
+    # inner estimator shows only the changes
+    with config_context(print_changed_only=True):
+        assert f"<pre>{str(ovo.estimator)}" in html_output
+        assert "LinearSVC</label>" in html_output
+
+    # outter estimator
+    assert f"<pre>{str(ovo)}" in html_output
+
+
+def test_duck_typing_nested_estimator():
+    # Test duck typing metaestimators with GP
+    kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1)
+    gp = GaussianProcessRegressor(kernel=kernel)
+    html_output = _estimator_repr_html(gp)
+
+    with config_context(print_changed_only=True):
+        assert f"<pre>{str(gp.kernel)}" in html_output
+
+    assert f"<pre>{str(gp)}" in html_output
 
 
 @pytest.mark.parametrize('print_changed_only', [True, False])
