@@ -94,7 +94,7 @@ class Pipeline(_BaseComposition):
     ...                                                     random_state=0)
     >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
     >>> # The pipeline can be used as any other estimator
-    >>> # and avoids leaking the testset into the train set
+    >>> # and avoids leaking the test set into the train set
     >>> pipe.fit(X_train, y_train)
     Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
     >>> pipe.score(X_test, y_test)
