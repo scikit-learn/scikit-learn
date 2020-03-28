@@ -171,6 +171,23 @@ class SkipTestWarning(UserWarning):
 class UndefinedMetricWarning(UserWarning):
     """Warning used when the metric is invalid
 
+    Examples
+    --------
+    >>> from sklearn.metrics import r2_score
+    >>> from sklearn.exceptions import UndefinedMetricWarning
+    >>> import warnings
+    >>> warnings.simplefilter('always', UndefinedMetricWarning)
+    >>> y_true = [3]
+    >>> y_pred = [3]
+    >>> with warnings.catch_warnings(record=True) as w:
+    ...     try:
+    ...         r2_score(y_true, y_pred)
+    ...     except ValueError:
+    ...         pass
+    ...     print(repr(w[-1].message))
+    nan
+    UndefinedMetricWarning('R^2 score is not well-defined with less than two samples.')
+
     .. versionchanged:: 0.18
        Moved from sklearn.base.
     """
