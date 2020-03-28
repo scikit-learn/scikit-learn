@@ -2957,9 +2957,10 @@ def train_test_val_split(*arrays, **options):
                                          _safe_indexing(a, test),
                                          _safe_indexing(a, val))
                                         for a in arrays))
-# Tell nose that train_test_split is not a test.
+# Tell nose that train_test_val_split is not a test.
 # (Needed for external libraries that may use nose.)
 train_test_val_split.__test__ = False
+
 
 
 def _build_repr(self):
