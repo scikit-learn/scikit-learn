@@ -1,6 +1,8 @@
 import os
 import sys
 import numpy as np
+from numpy.testing import assert_allclose, assert_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 
@@ -16,10 +18,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
