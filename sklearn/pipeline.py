@@ -84,47 +84,21 @@ class Pipeline(_BaseComposition):
 
     Examples
     --------
-    >>> from sklearn import svm
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_classification
-    >>> from sklearn.feature_selection import SelectKBest
-    >>> from sklearn.feature_selection import f_regression
+    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.pipeline import Pipeline
-    >>> # generate some data to play with
-    >>> X, y = make_classification(
-    ...     n_informative=5, n_redundant=0, random_state=42)
-    >>> # ANOVA SVM-C
-    >>> anova_filter = SelectKBest(f_regression, k=5)
-    >>> clf = svm.SVC(kernel='linear')
-    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
-    >>> # You can set the parameters using the names issued
-    >>> # For instance, fit using a k of 10 in the SelectKBest
-    >>> # and a parameter 'C' of the svm
-    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    Pipeline(steps=[('anova', SelectKBest(...)), ('svc', SVC(...))])
-    >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)
-    0.83
-    >>> # getting the selected features chosen by anova_filter
-    >>> anova_svm['anova'].get_support()
-    array([False, False,  True,  True, False, False,  True,  True, False,
-           True, False,  True,  True, False,  True, False,  True,  True,
-           False, False])
-    >>> # Another way to get selected features chosen by anova_filter
-    >>> anova_svm.named_steps.anova.get_support()
-    array([False, False,  True,  True, False, False,  True,  True, False,
-           True, False,  True,  True, False,  True, False,  True,  True,
-           False, False])
-    >>> # Indexing can also be used to extract a sub-pipeline.
-    >>> sub_pipeline = anova_svm[:1]
-    >>> sub_pipeline
-    Pipeline(steps=[('anova', SelectKBest(...))])
-    >>> coef = anova_svm[-1].coef_
-    >>> anova_svm['svc'] is anova_svm[-1]
-    True
-    >>> coef.shape
-    (1, 10)
-    >>> sub_pipeline.inverse_transform(coef).shape
-    (1, 20)
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=0)
+    >>> pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
+    >>> # The pipeline can be used as any other estimator
+    >>> # and avoids leaking the test set into the train set
+    >>> pipe.fit(X_train, y_train)
+    Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
+    >>> pipe.score(X_test, y_test)
+    0.88
     """
 
     # BaseEstimator interface
