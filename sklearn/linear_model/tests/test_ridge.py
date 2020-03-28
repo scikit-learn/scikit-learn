@@ -1329,4 +1329,3 @@ def test_ridge_sag_with_X_fortran():
 def test_ridge_alpha_boundary_warning():
     clf = RidgeCV(alphas=[1e-1, 1])
     assert_warns(UserWarning, clf.fit, X_diabetes, y_diabetes)
-
