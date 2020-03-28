@@ -111,6 +111,23 @@ class EfficiencyWarning(UserWarning):
     to some reason which may be included as a part of the warning message.
     This may be subclassed into a more specific Warning class.
 
+    Examples
+    --------
+    >>> from sklearn.neighbors import NearestNeighbors
+    >>> import warnings
+    >>> warnings.simplefilter('always', EfficiencyWarning)
+    >>> samples = [[1., 1., .5], [0., 0., 0.], [0., .5, 0.]]
+    >>> neigh = NearestNeighbors(n_neighbors=1)
+    >>> neigh.fit(samples)
+    >>> X = [[1., 0., 1.], [0., 1., 0.]]
+    >>> with warnings.catch_warnings(record=True) as w:
+    ...     try:
+    ...         neigh.kneighbors(X)
+    ...     except EfficiencyWarning as e:
+    ...         print(repr(e))
+    EfficiencyWarning('The input centres are not sorted, which is probably a
+    result of a precomputed sparse input which was not sorted by data..')
+
     .. versionadded:: 0.18
     """
 
