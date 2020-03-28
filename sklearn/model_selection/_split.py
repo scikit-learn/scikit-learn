@@ -203,7 +203,7 @@ class LeavePOut(BaseCrossValidator):
     ``KFold(n_splits=n_samples // p)`` which creates non-overlapping test sets.
 
     Due to the high number of iterations which grows combinatorically with the
-    number of samples this cross_validation method can be very costly. For
+    number of samples this cross-validation method can be very costly. For
     large datasets one should favor :class:`KFold`, :class:`StratifiedKFold`
     or :class:`ShuffleSplit`.
 
