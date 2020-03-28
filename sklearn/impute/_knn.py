@@ -189,8 +189,7 @@ class KNNImputer(_BaseImputer):
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
 
-        missing_mask = self._mask_fit_X
-        super()._fit_indicator(missing_mask)
+        super()._fit_indicator(self._mask_fit_X)
 
         return self
 
