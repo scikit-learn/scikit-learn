@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _print_elapsed_time
+from .utils import Bunch, _print_elapsed_time, _get_props_from_objs
 from .utils.validation import (check_memory, _check_method_props,
                                _validate_required_props)
 
@@ -264,12 +264,11 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        props : list of strings
-            a list of strings, which is the union of all required parameters
-            of the pipeline steps.
+        props_request: dict
+            A union of the requested props by pipeline steps.
         """
         _, estimators = zip(*self.steps)
-        return self._get_props_from_objs(estimators)
+        return _get_props_from_objs(estimators)
 
     def set_props_request(self, props):
         """Raises an error, props_request should be set at the step level.
@@ -288,7 +287,8 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        _validate_required_props(self, fit_params, 'fit')
+        required_props = self.get_props_request().fit
+        _validate_required_props(required_props, fit_params)
 
         for (step_idx,
              name,
@@ -318,8 +318,11 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
 
-            step_fit_params = _check_method_props(transformer, fit_params,
-                                                  'fit', validate=False)
+            transformer_fit_props = transformer.get_props_request().fit
+            step_fit_params = _check_method_props(
+                transformer_fit_props, fit_params,
+                validate=False)
+            print(f"{transformer} got {list(step_fit_params.keys())}")
 
             # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
@@ -334,8 +337,10 @@ class Pipeline(_BaseComposition):
         if self._final_estimator == 'passthrough':
             return X, {}
 
-        step_fit_params = _check_method_props(self[-1], fit_params,
-                                              'fit', validate=False)
+        est_props = self[-1].get_props_request().fit
+        step_fit_params = _check_method_props(est_props, fit_params,
+                                              validate=False)
+        print(f"{self[-1]} got {list(step_fit_params.keys())}")
         return X, step_fit_params
 
     def fit(self, X, y=None, **fit_params):

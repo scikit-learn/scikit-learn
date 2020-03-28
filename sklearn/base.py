@@ -17,7 +17,7 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT
+from .utils import _IS_32BIT, Bunch
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 
@@ -162,12 +162,20 @@ class _PropsRequest:
             The key to the top level dict is the method for which the prop is
             used. Under each key, there is a dict list of required properties,
             or a dict of mapping of the form
-            ``{method_parameter: provided_parameter}``, or None.
+            ``{provided_prop: method_param}``, or None.
         """
+        res = Bunch(fit={}, predict={}, transform={}, score={}, split={},
+                    fit_transform={})
         try:
-            return self._props_request
+            props = self._props_request
+            for method, m_props in props.items():
+                if isinstance(m_props, dict):
+                    res[method] = m_props
+                else:
+                    res[method] = {x: x for x in m_props}
+            return res
         except AttributeError:
-            return {}
+            return res
 
     def set_props_request(self, props):
         """Set required data properties.
@@ -178,7 +186,7 @@ class _PropsRequest:
             The key to the top level dict is the method for which the prop is
             used. Under each key, there is a dict list of required properties,
             or a dict of mapping of the form
-            ``{method_parameter: provided_parameter}``.
+            ``{provided_prop: method_param}``.
             ``None`` empties the required props.
 
         Returns
@@ -220,33 +228,6 @@ class _PropsRequest:
                     self._props_request[method] = \
                         list(set(self._props_request[method]))
         return self
-
-    def _get_props_request_mapping(self, method):
-        try:
-            props = self.get_props_request()
-            m_props = props.get(method, {})
-            if isinstance(m_props, dict):
-                return m_props
-            return {x: x for x in m_props}
-        except AttributeError:
-            return {}
-
-    def _get_expected_method_props(self, method):
-        try:
-            props = self._get_props_request_mapping(method)
-            return list(set(props.keys()))
-        except AttributeError:
-            return []
-
-    def _get_expected_props(self):
-        res = []
-        props = self.get_props_request()
-        try:
-            for method in props.keys():
-                res.extend(self._get_expected_method_props(method))
-        except AttributeError:
-            pass
-        return res
 
 
 class BaseEstimator(_PropsRequest):

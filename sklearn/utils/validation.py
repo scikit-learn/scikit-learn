@@ -1337,7 +1337,7 @@ def _check_fit_params(X, fit_params, indices=None):
     return fit_params_validated
 
 
-def _validate_required_props(obj, given_props, method):
+def _validate_required_props(required_props, given_props):
     """Checks if all the required props are given.
 
     Parameters
@@ -1356,19 +1356,19 @@ def _validate_required_props(obj, given_props, method):
     -------
     None
     """
-    try:
-        required_props = obj._get_expected_method_props(method)
-    except AttributeError:
-        required_props = []
-    required_props = set(required_props)
-    given_props = set(given_props.keys())
-    if required_props != given_props:
+    print("=========$$$ _validate_required_props")
+    print(required_props)
+    print(list(given_props.keys()))
+    if isinstance(required_props, dict):
+        required_props = required_props.values()
+    if set(required_props) != set(given_props.keys()):
         raise ValueError("Requested properties are: {}, but {} "
                          "provided".format(list(required_props),
                                            list(given_props)))
+    print("=========$$$/")
 
 
-def _check_method_props(obj, props, method, validate=True):
+def _check_method_props(required_props, props, validate=True):
     """Maps the given props to what ``obj``'s ``method`` needs.
 
     Parameters
@@ -1390,33 +1390,17 @@ def _check_method_props(obj, props, method, validate=True):
     Returns
     -------
     mapping: dict
-        A mapping with keys as required props and values as provided ones.
+        A mapping with keys as required props and values as provided ones,
+        which can be used to be passed as ``**kwargs`` to the _method_.
     """
+    print('========== _check_method_props')
+    print(required_props)
+    print(list(props.keys()))
     props = {key: value for key, value in props.items() if value is not None}
     if validate:
-        _validate_required_props(obj, props, method)
-    try:
-        required_props = obj._get_props_request_mapping(method)
-    except AttributeError:
-        required_props = {}
-    res = {key: props[value] for key, value
+        _validate_required_props(required_props, props)
+    res = {value: props[key] for key, value
            in required_props.items()}
+    print(res)
+    print("=========/")
     return res
-
-
-def _get_props_from_objs(self, objs):
-    props_request = {}
-    for obj in objs:
-        try:
-            step_props = obj.get_props_request()
-            for method in step_props:
-                m_props = obj._get_props_request_mapping(method).values()
-                if method not in props_request:
-                    props_request[method] = []
-                props_request[method].extend(m_props)
-                props_request[method] = list(set(props_request[method]))
-        except AttributeError:
-            warnings.warn("{} doesn't implement "
-                            "prop_request API".format(obj), UserWarning)
-            pass
-    return props_request

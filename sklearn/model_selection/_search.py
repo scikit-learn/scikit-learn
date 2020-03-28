@@ -31,7 +31,7 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
-from ..utils import check_random_state
+from ..utils import check_random_state, _get_props_from_objs
 from ..utils.random import sample_without_replacement
 from ..utils.validation import (indexable, check_is_fitted, _check_fit_params,
                                 _check_method_props)
@@ -631,7 +631,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.estimator, scoring=self.scoring)
         objs = [self.estimator, self.cv]
         objs.extend(scorers.values())
-        props = self._get_props_from_objs(objs)
+        props = _get_props_from_objs(objs)
         if 'fit' not in props:
             props['fit'] = []
         if 'split' in props:
@@ -667,12 +667,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         if groups is not None:
             fit_params.update({'groups': groups})
-        fit_params = _check_method_props(self, fit_params, 'fit')
+        _fit_params = _check_method_props(
+            self.estimator.get_props_request().fit, fit_params, validate=False)
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
         scorers, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
+        _score_params = _check_method_props(scorers, fit_params, 'score',
+                                            validate=False)
 
         if self.multimetric_:
             if self.refit is not False and (
@@ -694,7 +697,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
-        fit_params = _check_fit_params(X, fit_params)
+        _fit_params = _check_fit_params(X, _fit_params)
 
         n_splits = cv.get_n_splits(X, y, groups)
 
@@ -704,7 +707,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                             pre_dispatch=self.pre_dispatch)
 
         fit_and_score_kwargs = dict(scorer=scorers,
-                                    fit_params=fit_params,
+                                    fit_params=_fit_params,
                                     return_train_score=self.return_train_score,
                                     return_n_test_samples=True,
                                     return_times=True,
@@ -782,9 +785,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.best_params_))
             refit_start_time = time.time()
             if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+                self.best_estimator_.fit(X, y, **_fit_params)
             else:
-                self.best_estimator_.fit(X, **fit_params)
+                self.best_estimator_.fit(X, **_fit_params)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 

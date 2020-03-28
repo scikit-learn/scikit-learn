@@ -169,7 +169,7 @@ class _BaseScorer(_PropsRequest):
 
         if sample_weight is not None:
             kwargs.update({'sample_weight': sample_weight})
-        kwargs = _check_method_props(self, kwargs, 'score')
+        kwargs = _check_method_props(self.get_props_request().score, kwargs)
 
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            **kwargs)
@@ -619,7 +619,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs).set_props_request(request_props)
+    return cls(score_func, sign, kwargs).set_props_request(
+        {"score": request_props})
 
 
 # Standard regression scores

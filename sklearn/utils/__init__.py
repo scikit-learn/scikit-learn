@@ -1232,3 +1232,39 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _get_props_from_objs(objs):
+    """Extracts the required props from a list of objects.
+
+    This is useful for meta-estimators such as ``Pipeline``.
+
+    Parameters
+    ----------
+    objs: list of objects
+      List of objects from which required props should be extracted.
+
+    Returns
+    -------
+    props_request: dict
+        A union of the requested props by the given objects.
+    """
+    props_request = Bunch(fit={}, predict={}, transform={}, score={}, split={},
+                          fit_transform={})
+    print("------- _get_props_from_objs")
+    print(objs)
+    if not isinstance(objs, (set, tuple, list)):
+        objs = [objs]
+    for obj in objs:
+        try:
+            obj_props = obj.get_props_request()
+            print(obj_props)
+            for method, m_props in obj_props.items():
+                props_request[method].update({x: x for x in m_props})
+        except AttributeError:
+            warnings.warn("{} doesn't implement "
+                          "prop_request API".format(obj), UserWarning)
+            pass
+    print(props_request)
+    print('-----------/')
+    return props_request
