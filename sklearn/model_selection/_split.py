@@ -2959,8 +2959,8 @@ def train_test_val_split(*arrays, **options):
                                         for a in arrays))
 # Tell nose that train_test_val_split is not a test.
 # (Needed for external libraries that may use nose.)
-train_test_val_split.__test__ = False
 
+train_test_val_split.__test__ = False
 
 
 def _build_repr(self):
