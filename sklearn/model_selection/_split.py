@@ -2874,7 +2874,7 @@ def train_test_val_split(*arrays, **options):
            [8, 9]])
     >>> y_test
     [1, 4]
-    >>> x_val
+    >>> X_val
     array([[6, 7]])
     >>> y_val
     [3]
@@ -2938,6 +2938,8 @@ def train_test_val_split(*arrays, **options):
                                         for a in arrays))
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
+
+
 train_test_val_split.__test__ = False
 
 
