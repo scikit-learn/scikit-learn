@@ -184,6 +184,11 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`15582` by `Nicolas Hug`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
   where the attribute `estimators_samples_` did not generate the proper indices
@@ -407,6 +412,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray`s.
+  :pr:`16728` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
