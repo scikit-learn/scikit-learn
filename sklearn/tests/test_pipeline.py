@@ -417,7 +417,7 @@ def test_pipeline_methods_pca_tsne():
     assert_array_almost_equal(pipeline_emb, separate_emb)
 
     error_estimator = NoTrans()
-    pipe_error = make_pipeline()
+    pipe_error = make_pipeline(error_estimator)
 
     msg = ("Last step of Pipeline should implement fit, "
            "fit_transform or be the string 'passthrough'. "
