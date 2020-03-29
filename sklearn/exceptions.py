@@ -114,6 +114,7 @@ class EfficiencyWarning(UserWarning):
     Examples
     --------
     >>> from sklearn.neighbors import NearestNeighbors
+    >>> from sklearn.exceptions import EfficiencyWarning
     >>> import warnings
     >>> warnings.simplefilter('always', EfficiencyWarning)
     >>> samples = [[1., 1., .5], [0., 0., 0.], [0., .5, 0.]]
@@ -123,8 +124,9 @@ class EfficiencyWarning(UserWarning):
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         neigh.kneighbors(X)
-    ...     except EfficiencyWarning as e:
-    ...         print(repr(e))
+    ...     except EfficiencyWarning:
+    ...         pass
+    ...     print(repr(w[-1].message))
     EfficiencyWarning('The input centres are not sorted, which is probably a
     result of a precomputed sparse input which was not sorted by data..')
 
