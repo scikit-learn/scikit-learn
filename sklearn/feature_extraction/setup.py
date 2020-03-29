@@ -12,8 +12,8 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     if platform.python_implementation() != 'PyPy':
-        config.add_extension('_hashing',
-                             sources=['_hashing.pyx'],
+        config.add_extension('_hashing_fast',
+                             sources=['_hashing_fast.pyx'],
                              include_dirs=[numpy.get_include()],
                              libraries=libraries)
     config.add_subpackage("tests")

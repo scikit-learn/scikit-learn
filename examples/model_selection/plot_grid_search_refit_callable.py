@@ -8,7 +8,7 @@ finding a decent accuracy within 1 standard deviation of the best accuracy
 score while minimising the number of PCA components [1].
 
 The figure shows the trade-off between cross-validated score and the number
-of PCA components. The balanced case is when n_components=6 and accuracy=0.80,
+of PCA components. The balanced case is when n_components=10 and accuracy=0.88,
 which falls into the range within 1 standard deviation of the best accuracy
 score.
 
@@ -77,11 +77,11 @@ def best_low_complexity(cv_results):
 
 pipe = Pipeline([
         ('reduce_dim', PCA(random_state=42)),
-        ('classify', LinearSVC(random_state=42)),
+        ('classify', LinearSVC(random_state=42, C=0.01)),
 ])
 
 param_grid = {
-    'reduce_dim__n_components': [2, 4, 6, 8]
+    'reduce_dim__n_components': [6, 8, 10, 12, 14]
 }
 
 grid = GridSearchCV(pipe, cv=10, n_jobs=1, param_grid=param_grid,
