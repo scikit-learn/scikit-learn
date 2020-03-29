@@ -566,7 +566,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     where::
 
-            alpha = a + b and l1_ratio = a / (a + b)
+            alpha = a + 2 * b and l1_ratio = a / (a + 2 * b)
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
