@@ -9,6 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import NotFittedError
 import joblib
 
 
@@ -235,3 +236,20 @@ def test_pickling(tmpdir, sample_weight):
     scores_pickled = kde.score_samples(X)
 
     assert_allclose(scores, scores_pickled)
+
+
+def check_estimators_unfitted(name):
+    """Check that predict raises an exception in an unfitted estimator.
+    Unfitted estimators should raise a NotFittedError.
+    """
+    n_samples, n_features = (100, 3)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    Y = rng.randn(n_samples, n_features)
+
+    kde = KernelDensity()
+
+    for method in ("score_samples", "score", "sample"):
+        if hasattr(kde, method):
+            assert_raises(NotFittedError, getattr(kde, method), X)
+
