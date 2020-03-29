@@ -341,7 +341,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 verbose=False):
+                 random_state=0, verbose=False):
 
         self.damping = damping
         self.max_iter = max_iter
@@ -350,6 +350,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
+        self.random_state = random_state
 
     @property
     def _pairwise(self):
@@ -392,7 +393,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             affinity_propagation(
                 self.affinity_matrix_, self.preference, max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose, return_n_iter=True)
+                copy=self.copy, verbose=self.verbose, return_n_iter=True,
+                random_state=self.random_state)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
