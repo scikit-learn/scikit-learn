@@ -280,7 +280,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         See :term:`random_state`.
 
         .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0. 
+            this parameter was previously hardcoded as 0.
 
     verbose : bool, default=False
         Whether to be verbose.
