@@ -47,6 +47,10 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |API| The ``random_state`` parameter has been added to the 
+  :class:`cluster.AffinityPropagation`. :pr:`xxxx` by :user:`rcwoolston`
+  and :user:`Chiara Marmo <cmarmo>`.
+
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.

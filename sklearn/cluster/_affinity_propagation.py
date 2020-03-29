@@ -275,6 +275,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         ``euclidean`` are supported. 'euclidean' uses the
         negative squared euclidean distance between points.
 
+    random_state : int, np.random.RandomStateInstance or None, default: None
+        Pseudo-random number generator to control the starting state.
+        See :term:`random_state`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0. 
+
     verbose : bool, default=False
         Whether to be verbose.
 
