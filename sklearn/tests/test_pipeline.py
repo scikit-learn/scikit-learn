@@ -417,11 +417,13 @@ def test_pipeline_methods_pca_tsne():
     assert_array_almost_equal(pipeline_emb, separate_emb)
 
     error_estimator = NoTrans()
-    msg = ("Last step of Pipeline should implement fit, "
-           "fit_transform or be the string 'passthrough'. "
-           "'%s' (type %s) doesn't" % (error_estimator, type(error_estimator)))
+    msg = ("All intermediate steps should be "
+           "transformers and implement fit and "
+           "transform, fit_transform or be the string "
+           "'passthrough'. '%s' (type %s) doesn't"
+           % (error_estimator, type(error_estimator)))
     with pytest.raises(TypeError, match=re.escape(msg)):
-        make_pipeline(error_estimator)
+        make_pipeline(error_estimator, 'passthrough')
 
 
 
