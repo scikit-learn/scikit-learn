@@ -4,11 +4,11 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
-
+from scipy.special import comb
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
-from scipy.special import comb
+
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
