@@ -16,7 +16,6 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
@@ -555,12 +554,11 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.  Note that different initializations might result in
-        different local minima of the cost function.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator. Pass an int for reproducible
+        results across multiple function calls. Note that different
+        initializations might result in different local minima of the cost
+        function. See :term: `Glossary <random_state>`.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -662,11 +660,12 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.method == 'barnes_hut':
-            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr'],
+                                    ensure_min_samples=2,
+                                    dtype=[np.float32, np.float64])
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                    dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "

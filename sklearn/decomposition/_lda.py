@@ -13,13 +13,11 @@ Link: https://github.com/blei-lab/onlineldavb
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln
+from scipy.special import gammaln, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
-from ..utils.fixes import logsumexp
+from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
 
@@ -193,7 +191,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     evaluate_every : int, optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
-        set it to 0 or negative number to not evalute perplexity in
+        set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
@@ -222,11 +220,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     verbose : int, optional (default=0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -469,7 +465,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
-    def _check_non_neg_array(self, X, whom):
+    def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
 
         check X format and make sure no negative value in X.
@@ -479,7 +475,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         X :  array-like or sparse matrix
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, reset=reset_n_features,
+                                accept_sparse='csr')
         check_non_negative(X, whom)
         return X
 
@@ -498,13 +495,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X,
+        first_time = not hasattr(self, 'components_')
+
+        # In theory reset should be equal to `first_time`, but there are tests
+        # checking the input number of feature and they expect a specific
+        # string, which is not the same one raised by check_n_features. So we
+        # don't check n_features_in_ here for now (it's done with adhoc code in
+        # the estimator anyway).
+        # TODO: set reset=first_time when addressing reset in
+        # predict/transform/etc.
+        reset_n_features = True
+        X = self._check_non_neg_array(X, reset_n_features,
                                       "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
         # initialize parameters or check
-        if not hasattr(self, 'components_'):
+        if first_time:
             self._init_latent_vars(n_features)
 
         if n_features != self.components_.shape[1]:
@@ -542,7 +549,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
+        X = self._check_non_neg_array(X, reset_n_features=True,
+                                      whom="LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
@@ -611,7 +619,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         # make sure feature size is the same in fitted model and in X
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
             raise ValueError(
@@ -735,7 +745,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
+        X = self._check_non_neg_array(X, reset_n_features=True,
+                                      whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
@@ -764,8 +775,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._check_non_neg_array(X,
-                                      "LatentDirichletAllocation.perplexity")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
             doc_topic_distr = self._unnormalized_transform(X)
