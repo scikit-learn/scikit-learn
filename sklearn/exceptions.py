@@ -125,7 +125,7 @@ class EfficiencyWarning(UserWarning):
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         neigh.kneighbors(X, return_distance=False)
-    ...     except ValueError:
+    ...     except IndexError:
     ...         pass
     ...     print(repr(w[-1].message))
     EfficiencyWarning('The input centres are not sorted, which is probably a
