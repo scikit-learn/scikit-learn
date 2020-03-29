@@ -1617,6 +1617,8 @@ class _BaseRidgeCV(LinearModel):
             self.alpha_ = gs.best_estimator_.alpha
             self.best_score_ = gs.best_score_
 
+        min_alpha = min(self.alphas)
+        max_alpha = max(self.alphas)
         if self.alpha_ in [min_alpha, max_alpha]:
             warnings.warn("The optimal value for the regularization parameter "
                           "'alpha' was {}\n which lies at a boundary of the "
