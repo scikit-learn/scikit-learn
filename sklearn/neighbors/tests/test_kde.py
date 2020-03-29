@@ -245,11 +245,9 @@ def check_estimators_unfitted(name):
     n_samples, n_features = (100, 3)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
-    Y = rng.randn(n_samples, n_features)
 
     kde = KernelDensity()
 
     for method in ("score_samples", "score", "sample"):
         if hasattr(kde, method):
             assert_raises(NotFittedError, getattr(kde, method), X)
-
