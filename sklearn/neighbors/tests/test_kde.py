@@ -248,6 +248,6 @@ def check_estimators_unfitted(name):
 
     kde = KernelDensity()
 
-    for method in ("score_samples", "score", "sample"):
+    for method in ("score_samples", "sample"):
         if hasattr(kde, method):
             assert_raises(NotFittedError, getattr(kde, method), X)
