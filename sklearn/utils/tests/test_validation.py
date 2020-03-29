@@ -43,6 +43,7 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
+    column_or_1d,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 
@@ -1172,3 +1173,8 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
+
+
+def test_sparse_matrix_to_numpy():
+    y = sp.csr_matrix((13, 1))
+    column_or_1d(y)
