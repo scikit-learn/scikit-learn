@@ -198,7 +198,7 @@ def test_affinity_propagation_random_status():
     centers76 = ap.cluster_centers_
 
     centers_diff = centers0 - centers76
-    assert centers_diff != np.zeros(len(centers_diff))
+    assert not np.array_equal(centers_diff, np.zeros(len(centers_diff)))
 
 
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
