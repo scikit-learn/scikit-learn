@@ -107,20 +107,20 @@ or categorical attributes, using an implementation of Gower Similarity.
 
 Where:
 
-x, y : array_like (1, n_features) are the observations to be compared.
+`x, y` : array_like of shape (n_features,) are the observations to be compared.
 
-s(x, y) : Calculates the similarity of all features (for k = 1 to n_features)
+`s(x, y)` : Calculates the similarity of all features (for k = 1 to n_features)
 of x and y, as described by the expressions:
 
-    s(x_k, y_k) = 0, if k represents a boolean or categorical attribute,
+    `s(x[k], y[k]) = 0`, if k represents a boolean or categorical attribute,
     and they are equal.
 
-    s(x_k, y_k) = 1, if k represents a boolean or categorical attribute,
+    `s(x[k], y[k]) = 1`, if k represents a boolean or categorical attribute,
     and they are unequal.
 
-    s(x_k, y_k) = abs(x_k - y_k), if k represents a numerical attribute.
+    `s(x[k], y[k]) = abs(x[k] - y[k])`, if k represents a numerical attribute.
 
-    s(x_k, y_k) = 0, if x_k or y_k are missing.
+    `s(x[k], y[k]) = 0`, if `x[k]` or `y[k]` are missing.
 
 
 The Gower formula combines a Manhattan (L1) distance for numeric features
