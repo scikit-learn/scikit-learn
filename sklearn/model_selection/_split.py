@@ -1585,7 +1585,7 @@ class ShuffleSplitVal(BaseShuffleSplitVal):
     ShuffleSplitVal(n_splits=5, random_state=0, test_size=0.25,
     ...             train_size=None, val_size=0.2)
     >>> for train_index, test_index, val_index in rs.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index, "VAL:", 
+    ...     print("TRAIN:", train_index, "TEST:", test_index, "VAL:",
     ...           val_index)
     TRAIN: [1 3 0] TEST: [5 2] VAL: [4]
     TRAIN: [4 0 2] TEST: [1 3] VAL: [5]
