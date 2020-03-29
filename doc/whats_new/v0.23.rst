@@ -48,7 +48,7 @@ Changelog
 ......................
 
 - |API| The ``random_state`` parameter has been added to the 
-  :class:`cluster.AffinityPropagation`. :pr:`xxxx` by :user:`rcwoolston`
+  :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
   and :user:`Chiara Marmo <cmarmo>`.
 
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
