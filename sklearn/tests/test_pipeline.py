@@ -404,10 +404,11 @@ def test_pipeline_methods_pca_tsne():
 
     pca_for_pipeline = PCA(n_components=2, random_state=0)
     tsne_for_pipeline = TSNE(random_state=0)
-    msg = ("Intermediate step .*\\bTSNE\\b.* does not have "
-           "transform, pipeline is not reusable on test data.")
+    msg = ("Intermediate step '%s' (type %s) does not have "
+           "transform, pipeline is not reusable on test data."
+           % (tsne_for_pipeline, type(tsne_for_pipeline)))
 
-    with pytest.warns(UserWarning, match=msg):
+    with pytest.warns(UserWarning, match=re.escape(msg)):
         pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
                              'passthrough')
 
@@ -421,7 +422,7 @@ def test_pipeline_methods_pca_tsne():
     msg = ("Last step of Pipeline should implement fit, "
            "fit_transform or be the string 'passthrough'. "
            "'%s' (type %s) doesn't" % (error_estimator, type(error_estimator)))
-    with pytest.raises(TypeError, match=msg):
+    with pytest.raises(TypeError, match=re.escape(msg)):
         pipe_error.fit_transform(iris.data)
 
 
