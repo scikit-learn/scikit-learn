@@ -124,12 +124,12 @@ class EfficiencyWarning(UserWarning):
     >>> X = [[1., 0., 1.], [0., 1., 0.]]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
-    ...         neigh.kneighbors(X)
-    ...     except EfficiencyWarning:
+    ...         neigh.kneighbors(X, return_distance=False)
+    ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
     EfficiencyWarning('The input centres are not sorted, which is probably a
-    result of a precomputed sparse input which was not sorted by data..')
+    result of a precomputed sparse input which was not sorted by data.')
 
     .. versionadded:: 0.18
     """
