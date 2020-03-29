@@ -363,7 +363,7 @@ Changelog
 
 - |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
   will now accept value 'if_binary' and will drop the first category of
-  each feature with two categories. :pr:`#16245`
+  each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
