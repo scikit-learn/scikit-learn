@@ -181,6 +181,26 @@ def test_equal_similarities_and_preferences():
     assert _equal_similarities_and_preferences(S, np.array(0))
 
 
+def test_affinity_propagation_random_status():
+    # Significance of random_state parameter
+    rng = np.random.RandomState(42)
+    X = rng.rand(40, 10)
+    y = (4 * rng.rand(40)).astype(np.int)
+
+    # random_state = 0
+    ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=0)
+    ap.fit(X, y)
+    centers0 = ap.cluster_centers_
+
+    # random_state = 76
+    ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=76)
+    ap.fit(X, y)
+    centers76 = ap.cluster_centers_
+
+    centers_diff = centers0 - centers76
+    assert centers_diff != np.zeros(len(centers_diff))
+
+
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])
 def test_affinity_propagation_convergence_warning_dense_sparse(centers):
