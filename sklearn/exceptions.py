@@ -120,7 +120,7 @@ class EfficiencyWarning(UserWarning):
     >>> samples = [[1., 1., .5], [0., 0., 0.], [0., .5, 0.]]
     >>> neigh = NearestNeighbors(n_neighbors=1)
     >>> neigh.fit(samples)
-    NearestNeighbors(...)
+    NearestNeighbors(n_neighbors=1)
     >>> X = [[1., 0., 1.], [0., 1., 0.]]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
