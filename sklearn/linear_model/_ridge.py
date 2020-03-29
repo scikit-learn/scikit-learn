@@ -1615,18 +1615,17 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
-            min_alpha = min(self.alphas)
-            max_alpha = max(self.alphas)
-            if (self.alpha_ in [min_alpha, max_alpha]) * self.boundary_warning:
-                warnings.warn(
-                    "The optimal value for "
-                    "the regularization parameter 'alpha' was {} "
-                    "which lies at a boundary of the explored range "
-                    "(between {} and {}). Consider setting the 'alphas' "
-                    "parameter to explore a wider range. "
-                    .format(self.alpha_, min_alpha, max_alpha))
-
             self.best_score_ = gs.best_score_
+
+        if self.alpha_ in [min_alpha, max_alpha]:
+            warnings.warn("The optimal value for the regularization parameter "
+                          "'alpha' was {}\n which lies at a boundary of the "
+                          "explored range (between {} and {}).\n Consider "
+                          "setting the 'alphas' parameter to explore a "
+                          "wider range.\n To ignore warnings try running "
+                          "\nimport warnings "
+                          "\nwarnings.filterwarnings('ignore')"
+                          .format(self.alpha_, min_alpha, max_alpha))
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
