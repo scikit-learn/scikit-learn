@@ -60,13 +60,11 @@ np.random.seed(0)
 #
 # First we are loading both datasets.
 # Note 1: For the 20 newsgroups we are using fetch_20newsgroups_vectorized
-# which returns ready-to-use features. (TODO: add link:
-# https://scikit-learn.org/0.19/modules/generated/sklearn.datasets.fetch_20newsgroups_vectorized.html#sklearn.datasets.fetch_20newsgroups_vectorized)
-# ). You can alternatively use  also use fetch_20newsgroups and make your own
-# feature extraction.
-# Note 2: X for the 20 newsgropus dataset is a sparse matrix while diabetes
-# dataset is a numpy array.
+# which returns ready-to-use features. (TODO: add link:).
+# Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
+# diabetes dataset is a numpy array.
 #
+
 
 def generate_data(case):
     """Generate regression/classification data."""
@@ -92,7 +90,8 @@ classification_data = generate_data('classification', sparse=True)
 # Choose parameters
 # -----------------------------
 #
-# Here, we are choosing different configuration to test for three different
+# Now, we will set all the parameters which we will use for the estimators.
+# Here, we are choosing different configuration to test three different
 # estimators: SGDClassifier, NuSVR and GradientBoostingRegressor. For each
 # estimator we are selecting 'changing_param': the parameter which will vary
 # (l1_ratio, nu and n_estimators respectively).
@@ -135,17 +134,18 @@ classification_data = generate_data('classification', sparse=True)
      'n_samples': 30},
 ]
 
+
 ##############################################################################
 # Benchmark influence
 # -------------------
-# Here we are writing a function which will receive a dictionary of parameters:
+# Here ware writing a function which will receive a dictionary of parameters:
 # estimator: name of the estimator to run
 # tuned_params
 # changing_param:
 # changing_param_values
 # complexity_label:
 # data:
-# 
+#
 
 
 def benchmark_influence(conf):
@@ -175,6 +175,11 @@ def benchmark_influence(conf):
             complexity, conf['prediction_performance_label'], pred_score,
             elapsed_time))
     return prediction_powers, prediction_times, complexities
+
+
+
+
+
 
 
 ##############################################################################
