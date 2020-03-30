@@ -19,7 +19,8 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import arrayfuncs, as_float_array
+# mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
+from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
