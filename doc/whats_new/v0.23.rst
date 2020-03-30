@@ -47,7 +47,7 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |API| The ``random_state`` parameter has been added to the 
+- |API| The ``random_state`` parameter has been added to 
   :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
   and :user:`Chiara Marmo <cmarmo>`.
 
