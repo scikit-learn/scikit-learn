@@ -2526,6 +2526,9 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
     debias = np.zeros(n_bins)
     for i, i_start in enumerate(threshold_indices[:-1]):
         i_end = threshold_indices[i+1]
+        # ignore empty bins
+        if i_end == i_start:
+            continue
         delta_count[i] = float(sample_weight[i_start:i_end].sum())
         avg_pred_true[i] = (np.dot(y_true[i_start:i_end],
                                    sample_weight[i_start:i_end])
@@ -2537,17 +2540,17 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
         if norm == "l2" and reduce_bias:
             delta_debias = avg_pred_true[i] * (avg_pred_true[i] - 1) \
                            * delta_count[i]
-            delta_debias /= y_true.shape[0] * delta_count[i] - 1
+            delta_debias /= (y_true.shape[0] * delta_count[i] - 1)
             debias[i] = delta_debias
 
     if norm == "max":
         loss = np.max(np.abs(avg_pred_true - bin_centroid))
     elif norm == "l1":
         delta_loss = np.abs(avg_pred_true - bin_centroid) * delta_count
-        loss = np.sum(delta_loss)/count
+        loss = np.sum(delta_loss) / count
     elif norm == "l2":
         delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
-        loss = np.sum(delta_loss)/count
+        loss = np.sum(delta_loss) / count
         if reduce_bias:
             loss += np.sum(debias)
         loss = np.sqrt(max(loss, 0.))
