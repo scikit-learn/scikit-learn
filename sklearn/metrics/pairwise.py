@@ -25,6 +25,7 @@ from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils import is_scalar_nan
+from ..utils import _safe_indexing
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
@@ -32,6 +33,7 @@ from ..utils._mask import _get_mask
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 from ..utils.fixes import _object_dtype_isnan
+from ..preprocessing import MinMaxScaler
 
 # Utility Functions
 def _return_float_dtype(X, Y):
@@ -836,32 +838,30 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     Parameters
     ----------
-    X : array-like, or pandas.DataFrame, shape (n_samples, n_features)
+    X : {array-like, pandas.DataFrame} of shape (n_samples, n_features)
 
-    Y : array-like, or pandas.DataFrame, optional,
-        shape (n_samples, n_features)
+    Y : {array-like, pandas.DataFrame} of shape (n_samples, n_features), \
+        default=None
 
-    categorical_features : array-like, optional, shape (n_features)
-        Indicates with True/False whether a column is a categorical attribute.
-        This is useful when categorical atributes are represented as integer
-        values. Categorical ordinal attributes are treated as numeric, and
-        must be marked as false.
+    categorical_features : array-like of str, array-like of int, \
+            array-like of bool, slice or callable, default=None
+        Indexes the data on its second axis. Integers are interpreted as
+        positional columns, while strings can reference DataFrame columns
+        by name.
+        A callable is passed the input data `X` and can return any of the
+        above. To select multiple columns by name or dtype, you can use
+        :obj:`make_column_selector`.
 
-        Alternatively, the categorical_features array can be represented only
-        with the numerical indexes of the categorical attribtes.
+        By default all non-numeric columns are considered categorical.
 
-        If the categorical_features array is not provided, by default all
-        non-numeric columns are considered categorical.
-
-    scale : boolean, list or array, optional (default=True)
+    scale : bool, default=True
         Indicates if the numerical columns will be scaled between 0 and 1.
         If false, it is assumed the numerical columns are already scaled.
-        If a list or array, it must countain the ranges of values from
-        numerical columns.
+        The scaling factors, _i.e._ min and max, are taken from ``X``.
 
     Returns
     -------
-    similarities : ndarray, shape (n_samples_X, n_samples_Y)
+    distances : ndarray of shape (n_samples_X, n_samples_Y)
 
     References
     ----------
@@ -871,6 +871,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     Notes
     -----
     The numeric feature ranges are determined from both X and Y.
+
+    Categorical ordinal attributes should be treated as numeric for the purpose
+    of Gower similarity.
 
     Current implementation does not support sparse matrices.
 
@@ -887,172 +890,54 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     * Different from the original similarity S, this implementation
     returns 1-S.
     """
+    def _n_cols(X):
+        # TODO: improve this, and add it to validation.py?
+        if hasattr(X, 'shape'):
+            return X.shape[1]
+        return np.asarray(X).shape[1]
+    
+    def _nanmanhatan(x, y):
+        return np.abs(np.nansum(x - y))
+    
+    def _non_nans(x, y):
+        return np.sum(~np.isnan(x) & ~np.isnan(y))
+    
+    def _nanhamming(x, y):
+        return np.sum(x != y) - np.sum(np.isnan(x) | np.isnan(y))
+    
     if issparse(X) or issparse(Y):
         raise TypeError("Gower distance does not support sparse matrices")
-
-    if not isinstance(scale, (bool, list, np.ndarray)):
-        raise TypeError("Parameter scale must be boolean, list, or ndarray")
 
     if X is None or len(X) == 0:
         raise ValueError("X can not be None or empty")
 
-    # It is necessary to convert to ndarray in advance to define the dtype
-    # as np.object, otherwise numeric columns will be converted to string
-    # if there are other string columns.
-    if not isinstance(X, np.ndarray):
-        X = np.asarray(X, dtype=np.object)
-
-    if Y is not None and not isinstance(Y, np.ndarray):
-        Y = np.asarray(Y, dtype=np.object)
-
-    X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
-                                 force_all_finite=False)
-
-    X = np.asarray(X, dtype=np.object)
-
-    cat_mask = _detect_categorical_features(X, categorical_features)
-    num_mask = ~ cat_mask
-
-    # Calculates the min and max values, and if requested, scale the
-    # input values in order to obtain the distances between 0 and 1,
-    # as proposed by the Gower's paper.
-    ranges = 1
-    if np.any(num_mask):
-        process_scale = False
-        if isinstance(scale, bool):
-            process_scale = scale
-        else:
-            if len(np.asarray(scale).flatten()) != X[:, num_mask].shape[1]:
-                raise ValueError("Length of scale parameter must be equal "
-                                 "to the number of numerical columns.")
-            process_scale = True
-
-        ranges, min, max = _precompute_gower_params(X, Y, scale, num_mask)
-
-        # avoid division by zero when all values in the column are the same
-        ranges[ranges == 0] = 1
-
-        # check if the data is pre-scaled when scale=False
-        if not process_scale and (np.min(min) < 0 or np.max(max) > 1):
-            raise ValueError("Input data is not scaled between 0 and 1.")
-
-    D = np.zeros((X.shape[0], Y.shape[0]), dtype=np.float)
-
-    for i in range(X.shape[0]):
-        j_start = i
-
-        # For non square results
-        if X.shape[0] != Y.shape[0] or X is not Y:
-            j_start = 0
-
-        # Makes the comparisson for np.nan for arrays with dtype=np.object,
-        # this is necessary as some deployments returns True for
-        # np.nan == np.nan
-        cat_nan_cols = (_object_dtype_isnan(X[i, cat_mask]) |
-                        _object_dtype_isnan(Y[j_start:, cat_mask]))
-
-        # Calculates the similarities for categorical columns
-        cat_dists = ((X[i, cat_mask] != Y[j_start:, cat_mask]) | cat_nan_cols)
-        # Calculates the Manhattan distances for numerical columns
-        num_dists = abs(X[i, num_mask] -
-                        Y[j_start:, num_mask]) / ranges
-
-        # Calculates the number of non missing columns
-        non_missing = X.shape[1] - (cat_nan_cols.sum(axis=1) +
-                                    _object_dtype_isnan(num_dists).sum(axis=1)
-                                    .astype(np.float32))
-
-        # This is to avoid ZeroDivisionError
-        non_missing[non_missing == 0] = np.nan
-
-        # Gets the final results
-        total = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
-
-        results = total / non_missing
-
-        D[i, j_start:] = results
-        if X is Y:
-            D[i:, j_start] = results
-
-    return D
-
-
-def _detect_categorical_features(X, categorical_features=None):
-    """Identifies the numerical and non-numerical (categorical) columns
-    of an array.
-
-    Parameters
-    ----------
-    X : array-like, or pandas.DataFrame, shape (n_samples, n_features)
-
-    categorical_features : array-like, optional, shape (n_features)
-        Indicates with True/False whether a column is a categorical attribute.
-
-        Alternatively, the categorical_features array can be represented only
-        with the numerical indexes of the categorical attribtes.
-
-        If the categorical_features array is None, they will be automatically
-        detected in X. Numerical columns are identified as a subtype of
-        np.number, whilist categorical columns are not a subtype of np.number.
-
-    Returns
-    -------
-    categorical_features_mask : ndarray, shape (n_features)
-
-    """
-    # Automatic detection of categorical features
-    if categorical_features is None:
-        categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
-
-        def detect_cat(x):
-            if not np.isnan(x):
-                if np.issubdtype(type(x), np.number):
-                    raise ValueError(False)
-                else:
-                    raise ValueError(True)
-
-        f_test = np.frompyfunc(detect_cat, 1, 1)
-        for col in range(np.shape(X)[1]):
-            try:
-                # This identifies categorical and numerical columns,
-                # A TypeError or ValueError(True) means it is a categorical
-                # column.
-
-                # This test was disabled because some deployments are returning
-                # nan instead of 0 in columns with nan values:
-                # if np.nansum(X[:, col]) > 0:
-                f_test(X[:, col])
-            except ValueError as e:
-                categorical_features[col] = e.args[0]
-            except TypeError:
-                categorical_features[col] = True
+    if callable(categorical_features):
+        cols = categorical_features(X)
     else:
-        categorical_features = np.asarray(categorical_features)
-        if np.issubdtype(categorical_features.dtype, np.integer):
-            new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
-            new_categorical_features[categorical_features] = True
-            categorical_features = new_categorical_features
-    return categorical_features
+        cols = categorical_features
 
+    X_cat = _safe_indexing(X, cols, axis=1)
+    X_num = _safe_indexing(X, cols, axis=1, inverse=True)
+    Y_cat = _safe_indexing(Y, cols, axis=1)
+    Y_num = _safe_indexing(Y, cols, axis=1, inverse=True)
 
-def _precompute_gower_params(X, Y, scale, num_mask):
-    """Precompute data-derived metric parameters for gower distances
-    """
-    X_num = X[:, num_mask].astype(np.float32)
-    min = np.nanmin(X_num, axis=0)
-    max = np.nanmax(X_num, axis=0)
+    X_num, Y_num = check_pairwise_arrays(X_num, Y_num, precomputed=False,
+                                         force_all_finite=False)
+    X_cat, Y_cat = check_pairwise_arrays(X_cat, Y_cat, precomputed=False,
+                                         dtype=np.object,
+                                         force_all_finite=False)
+    if scale:
+        trs = MinMaxScaler().fit(X_num)
+        X_num = trs.transform(X_num)
+        Y_num = trs.transform(Y_num)
 
-    if X is not Y and Y is not None:
-        Y_num = Y[:, num_mask].astype(np.float32)
-        min = np.minimum(np.nanmin(Y_num, axis=0), min)
-        max = np.maximum(np.nanmax(Y_num, axis=0), max)
-
-    if scale is None or type(scale) is bool:
-        scale = np.abs(max - min)
-    elif isinstance(scale, list):
-        scale = np.asarray(scale)
-
-    return scale, min, max
+    nan_manhatan = distance.cdist(X_num, Y_num, _nanmanhatan)
+    nan_hamming = distance.cdist(X_cat, Y_cat, _nanhamming)
+    valid_num = distance.cdist(X_num, Y_num, _non_nans)
+    valid_cat = distance.cdist(X_cat, Y_cat, _non_nans)
+    
+    D = (nan_manhatan + nan_hamming) / (valid_num + valid_cat)
+    return D
 
 
 # Paired distances

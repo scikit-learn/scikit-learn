@@ -167,7 +167,7 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def _array_indexing(array, key, key_dtype, axis):
+def _array_indexing(array, key, key_dtype, axis, inverse):
     """Index an array or scipy.sparse consistently across NumPy version."""
     if np_version < (1, 12) or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
@@ -176,10 +176,14 @@ def _array_indexing(array, key, key_dtype, axis):
             key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
+    if inverse:
+        mask = np.ones(len(X), bool)
+        mask[key] = False
+        key = mask
     return array[key] if axis == 0 else array[:, key]
 
 
-def _pandas_indexing(X, key, key_dtype, axis):
+def _pandas_indexing(X, key, key_dtype, axis, inverse):
     """Index a pandas dataframe or a series."""
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
@@ -190,11 +194,23 @@ def _pandas_indexing(X, key, key_dtype, axis):
         key = list(key)
     # check whether we should index with loc or iloc
     indexer = X.iloc if key_dtype == 'int' else X.loc
+    if inverse:
+        if key_dtype == 'int':
+            mask = np.ones(len(X), bool)
+            mask[key] = False
+            key = mask
+        else:
+            key = X.columns.difference(key)
     return indexer[:, key] if axis else indexer[key]
 
 
-def _list_indexing(X, key, key_dtype):
+def _list_indexing(X, key, key_dtype, inverse):
     """Index a Python list."""
+    if inverse:
+        mask = np.ones(len(X), bool)
+        mask[key] = False
+        key = mask
+
     if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
         return X[key]
@@ -317,7 +333,7 @@ def safe_indexing(X, indices, axis=0):
     return _safe_indexing(X, indices, axis)
 
 
-def _safe_indexing(X, indices, axis=0):
+def _safe_indexing(X, indices, axis=0, inverse=False):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -347,6 +363,9 @@ def _safe_indexing(X, indices, axis=0):
     axis : int, default=0
         The axis along which `X` will be subsampled. `axis=0` will select
         rows while `axis=1` will select columns.
+    inverse : bool, default=False
+        Whether to select the given columns or deselect them and return the
+        rest.
 
     Returns
     -------
@@ -388,11 +407,14 @@ def _safe_indexing(X, indices, axis=0):
         )
 
     if hasattr(X, "iloc"):
-        return _pandas_indexing(X, indices, indices_dtype, axis=axis)
+        return _pandas_indexing(X, indices, indices_dtype, axis=axis,
+                                inverse=inverse)
     elif hasattr(X, "shape"):
-        return _array_indexing(X, indices, indices_dtype, axis=axis)
+        return _array_indexing(X, indices, indices_dtype, axis=axis,
+                               inverse=inverse)
     else:
-        return _list_indexing(X, indices, indices_dtype)
+        return _list_indexing(X, indices, indices_dtype,
+                              inverse=inverse)
 
 
 def _get_column_indices(X, key):

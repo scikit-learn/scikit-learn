@@ -103,7 +103,7 @@ or categorical attributes, using an implementation of Gower Similarity.
 
 .. math::
 
-    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i\text{ is not missing or }y_i\text{ is not missing}\}|}
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i\text{is not missing or}y_i\text{is not missing}\}|}
 
 Where:
 
@@ -130,8 +130,8 @@ for categorical and numeric data.
 .. topic:: References:
 
     * Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its 
-    Properties, Biometrics, Vol. 27, No. 4. (Dec., 1971), pp. 857-871.
-    http://members.cbio.mines-paristech.fr/~jvert/svn/bibli/local/Gower1971general.pdf
+      Properties, Biometrics, Vol. 27, No. 4. (Dec., 1971), pp. 857-871.
+      http://members.cbio.mines-paristech.fr/~jvert/svn/bibli/local/Gower1971general.pdf
 
 .. _linear_kernel:
 
