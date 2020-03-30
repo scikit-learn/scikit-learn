@@ -440,6 +440,8 @@ def load_iris(return_X_y=False, as_frame=False):
         filename: str
             The path to the location of the data.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -551,6 +553,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
             The full description of the dataset.
         filename: str
             The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -666,6 +670,9 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The names of target classes.
+
+            .. versionadded:: 0.20
+
         frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
@@ -885,6 +892,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
             The path to the location of the data.
         target_filename: str
             The path to the location of the target.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
