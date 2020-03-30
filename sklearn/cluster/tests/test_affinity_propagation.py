@@ -186,7 +186,7 @@ def test_affinity_propagation_random_state():
     # Generate sample data
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=300, centers=centers,
-                            cluster_std=0.5, random_state=0)
+                                cluster_std=0.5, random_state=0)
     # random_state = 0
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=0)
     ap.fit(X)
@@ -198,7 +198,7 @@ def test_affinity_propagation_random_state():
     centers76 = ap.cluster_centers_
 
     abs_val_diff = np.sum((centers0 - centers76) * (centers0 - centers76))
-    
+
     assert abs_val_diff > 0.01
 
 
