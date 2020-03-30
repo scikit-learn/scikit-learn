@@ -6,14 +6,22 @@ Model Complexity Influence
 Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
-Here we will use two datasets:
+Here, we will use two datasets:
 
     - Diabetes dataset for regression. This dataset consists of 10 measurements
       taken from diabetes patients. The task is to predict the disease
-      progression.
+      progression TODO: add link
     - 20 Newsgroups dataset for classification. This dataset consists of
-      newsgroup posts. The task is to predict on which out of 20 topics each
-      post is written on.
+      newsgroup posts. The task is to predict on which (out of 20 topics) the
+      post is written.
+
+We will use three different estimators:
+    - SGDClassifier (for classification data) which implements stochastic
+      gradient descent learning TODO: add link
+    - NuSVR (for regression data) which implements Nu support vector regression
+      TODO: add link
+    - GradientBoostingRegressor (for regression data) which builds an additive
+      model in a forward stage-wise fashionTODO: add link
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters. Next, we will measure the influence on both
@@ -50,13 +58,13 @@ np.random.seed(0)
 # Load the data
 # -------------
 #
-# This function is loading one of our dataset and returns the train and test
-# data.
-# For the 20 newsgroups we are using fetch_20newsgroups_vectorized which
-# returns ready-to-use features. (TODO: add link:
+# First we are loading both datasets.
+# Note 1: For the 20 newsgroups we are using fetch_20newsgroups_vectorized
+# which returns ready-to-use features. (TODO: add link:
 # https://scikit-learn.org/0.19/modules/generated/sklearn.datasets.fetch_20newsgroups_vectorized.html#sklearn.datasets.fetch_20newsgroups_vectorized)
-# ).
-# Note that X for the 20 newsgropus dataset is a sparse matrix while diabetes
+# ). You can alternatively use  also use fetch_20newsgroups and make your own
+# feature extraction.
+# Note 2: X for the 20 newsgropus dataset is a sparse matrix while diabetes
 # dataset is a numpy array.
 #
 
@@ -76,13 +84,68 @@ def generate_data(case):
             'y_test': y_test}
     return data
 
+regression_data = generate_data('regression')
+classification_data = generate_data('classification', sparse=True)
+
 
 ##############################################################################
+# Choose parameters
+# -----------------------------
 #
-# --------------------------------
+# Here, we are choosing different configuration to test for three different
+# estimators: SGDClassifier, NuSVR and GradientBoostingRegressor. For each
+# estimator we are selecting 'changing_param': the parameter which will vary
+# (l1_ratio, nu and n_estimators respectively).
 #
-#
-#
+
+ configurations = [
+    {'estimator': SGDClassifier,
+     'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
+                      'modified_huber', 'fit_intercept': True, 'tol': 1e-3},
+     'changing_param': 'l1_ratio',
+     'changing_param_values': [0.25, 0.5, 0.75, 0.9],
+     'complexity_label': 'non_zero coefficients',
+     'complexity_computer': _count_nonzero_coefficients,
+     'prediction_performance_computer': hamming_loss,
+     'prediction_performance_label': 'Hamming Loss (Misclassification Ratio)',
+     'postfit_hook': lambda x: x.sparsify(),
+     'data': classification_data,
+     'n_samples': 30},
+    {'estimator': NuSVR,
+     'tuned_params': {'C': 1e3, 'gamma': 2 ** -15},
+     'changing_param': 'nu',
+     'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
+     'complexity_label': 'n_support_vectors',
+     'complexity_computer': lambda x: len(x.support_vectors_),
+     'data': regression_data,
+     'postfit_hook': lambda x: x,
+     'prediction_performance_computer': mean_squared_error,
+     'prediction_performance_label': 'MSE',
+     'n_samples': 30},
+    {'estimator': GradientBoostingRegressor,
+     'tuned_params': {'loss': 'ls'},
+     'changing_param': 'n_estimators',
+     'changing_param_values': [10, 50, 100, 200, 500],
+     'complexity_label': 'n_trees',
+     'complexity_computer': lambda x: x.n_estimators,
+     'data': regression_data,
+     'postfit_hook': lambda x: x,
+     'prediction_performance_computer': mean_squared_error,
+     'prediction_performance_label': 'MSE',
+     'n_samples': 30},
+]
+
+##############################################################################
+# Benchmark influence
+# -------------------
+# Here we are writing a function which will receive a dictionary of parameters:
+# estimator: name of the estimator to run
+# tuned_params
+# changing_param:
+# changing_param_values
+# complexity_label:
+# data:
+# 
 
 
 def benchmark_influence(conf):
@@ -157,44 +220,8 @@ def _count_nonzero_coefficients(estimator):
 
 # #############################################################################
 # Main code
-regression_data = generate_data('regression')
-classification_data = generate_data('classification', sparse=True)
-configurations = [
-    {'estimator': SGDClassifier,
-     'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
-                      'modified_huber', 'fit_intercept': True, 'tol': 1e-3},
-     'changing_param': 'l1_ratio',
-     'changing_param_values': [0.25, 0.5, 0.75, 0.9],
-     'complexity_label': 'non_zero coefficients',
-     'complexity_computer': _count_nonzero_coefficients,
-     'prediction_performance_computer': hamming_loss,
-     'prediction_performance_label': 'Hamming Loss (Misclassification Ratio)',
-     'postfit_hook': lambda x: x.sparsify(),
-     'data': classification_data,
-     'n_samples': 30},
-    {'estimator': NuSVR,
-     'tuned_params': {'C': 1e3, 'gamma': 2 ** -15},
-     'changing_param': 'nu',
-     'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
-     'complexity_label': 'n_support_vectors',
-     'complexity_computer': lambda x: len(x.support_vectors_),
-     'data': regression_data,
-     'postfit_hook': lambda x: x,
-     'prediction_performance_computer': mean_squared_error,
-     'prediction_performance_label': 'MSE',
-     'n_samples': 30},
-    {'estimator': GradientBoostingRegressor,
-     'tuned_params': {'loss': 'ls'},
-     'changing_param': 'n_estimators',
-     'changing_param_values': [10, 50, 100, 200, 500],
-     'complexity_label': 'n_trees',
-     'complexity_computer': lambda x: x.n_estimators,
-     'data': regression_data,
-     'postfit_hook': lambda x: x,
-     'prediction_performance_computer': mean_squared_error,
-     'prediction_performance_label': 'MSE',
-     'n_samples': 30},
-]
+
+
 
 ##############################################################################
 #
