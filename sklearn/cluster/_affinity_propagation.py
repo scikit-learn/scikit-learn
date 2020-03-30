@@ -32,7 +32,7 @@ def _equal_similarities_and_preferences(S, preference):
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False, random_state=0):
+                         return_n_iter=False, random_state=None):
     """Perform Affinity Propagation Clustering of data
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -75,6 +75,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     random_state : int or np.random.RandomStateInstance, default: None
         Pseudo-random number generator to control the starting state.
         See :term:`random_state`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
 
     Returns
     -------
@@ -275,7 +278,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         ``euclidean`` are supported. 'euclidean' uses the
         negative squared euclidean distance between points.
 
-    random_state : int, np.random.RandomStateInstance or None, default: None
+    random_state : int or np.random.RandomStateInstance, default: None
         Pseudo-random number generator to control the starting state.
         See :term:`random_state`.
 
@@ -348,7 +351,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 random_state=0, verbose=False):
+                 random_state=None, verbose=False):
 
         self.damping = damping
         self.max_iter = max_iter
