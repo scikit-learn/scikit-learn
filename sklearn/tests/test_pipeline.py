@@ -426,7 +426,6 @@ def test_pipeline_methods_pca_tsne():
         make_pipeline(error_estimator, 'passthrough')
 
 
-
 def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
     # test that the fit_predict on pipeline yields same results as applying
