@@ -183,22 +183,23 @@ def test_equal_similarities_and_preferences():
 
 def test_affinity_propagation_random_state():
     # Significance of random_state parameter
-    rng = np.random.RandomState(42)
-    X = rng.rand(40, 10)
-    y = (4 * rng.rand(40)).astype(np.int)
-
+    # Generate sample data
+    centers = [[1, 1], [-1, -1], [1, -1]]
+    X, labels_true = make_blobs(n_samples=300, centers=centers,
+                            cluster_std=0.5, random_state=0)
     # random_state = 0
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=0)
-    ap.fit(X, y)
+    ap.fit(X)
     centers0 = ap.cluster_centers_
 
     # random_state = 76
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=76)
-    ap.fit(X, y)
+    ap.fit(X)
     centers76 = ap.cluster_centers_
 
-    centers_diff = centers0 - centers76
-    assert not np.array_equal(centers_diff, np.zeros(len(centers_diff)))
+    abs_val_diff = np.sum((centers0 - centers76) * (centers0 - centers76))
+    
+    assert abs_val_diff > 0.01
 
 
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
