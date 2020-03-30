@@ -247,12 +247,12 @@ def test_ovo_classifier_duck_typing_meta():
 
 def test_duck_typing_nested_estimator():
     # Test duck typing metaestimators with GP
-    kernel = 1.0 * RationalQuadratic(length_scale=1.0, alpha=0.1)
+    kernel = RationalQuadratic(length_scale=1.0, alpha=0.1)
     gp = GaussianProcessRegressor(kernel=kernel)
     html_output = _estimator_repr_html(gp)
 
     with config_context(print_changed_only=True):
-        assert f"<pre>{str(gp.kernel)}" in html_output
+        assert f"<pre>{str(kernel)}" in html_output
 
     assert f"<pre>{str(gp)}" in html_output
 
