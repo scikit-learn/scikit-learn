@@ -351,7 +351,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 random_state=None, verbose=False):
+                 verbose=False, random_state=None):
 
         self.damping = damping
         self.max_iter = max_iter
