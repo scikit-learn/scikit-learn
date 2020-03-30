@@ -40,7 +40,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.parasite_axes import host_subplot
 from mpl_toolkits.axisartist.axislines import Axes
-from scipy.sparse.csr import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils import shuffle
@@ -82,8 +81,21 @@ def generate_data(case):
             'y_test': y_test}
     return data
 
+
 regression_data = generate_data('regression')
-classification_data = generate_data('classification', sparse=True)
+classification_data = generate_data('classification')
+
+
+##############################################################################
+#
+# --------------------------------
+#
+#
+#
+
+def _count_nonzero_coefficients(estimator):
+    a = estimator.coef_.toarray()
+    return np.count_nonzero(a)
 
 
 ##############################################################################
@@ -97,7 +109,7 @@ classification_data = generate_data('classification', sparse=True)
 # (l1_ratio, nu and n_estimators respectively).
 #
 
- configurations = [
+configurations = [
     {'estimator': SGDClassifier,
      'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
                       'modified_huber', 'fit_intercept': True, 'tol': 1e-3},
@@ -176,18 +188,13 @@ def benchmark_influence(conf):
             elapsed_time))
     return prediction_powers, prediction_times, complexities
 
-
-
-
-
-
-
 ##############################################################################
 #
 # --------------------------------
 #
 #
 #
+
 
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
@@ -208,32 +215,22 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     host.legend(loc='upper right')
     host.axis["left"].label.set_color(p1.get_color())
     par1.axis["right"].label.set_color(p2.get_color())
-    plt.title('Influence of Model Complexity - %s' % conf['estimator'].__name__)
+    plt.title('Influence of Model Complexity - %s' % conf['estimator'].
+              __name__)
     plt.show()
 
-
-##############################################################################
-#
-# --------------------------------
-#
-#
-#
-
-def _count_nonzero_coefficients(estimator):
-    a = estimator.coef_.toarray()
-    return np.count_nonzero(a)
 
 # #############################################################################
 # Main code
 
 
-
 ##############################################################################
 #
 # --------------------------------
 #
 #
 #
+
 
 for conf in configurations:
     prediction_performances, prediction_times, complexities = \
