@@ -197,7 +197,7 @@ def test_affinity_propagation_random_state():
     ap.fit(X)
     centers76 = ap.cluster_centers_
 
-    abs_val_diff = np.sum((centers0 - centers76) * (centers0 - centers76))
+    abs_val_diff = np.sum((centers0 - centers76) ** 2)
 
     assert abs_val_diff > 0.01
 
