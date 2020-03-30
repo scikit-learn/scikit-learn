@@ -353,7 +353,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 verbose=False, random_state=None):
+                 verbose=False, random_state='warning'):
 
         self.damping = damping
         self.max_iter = max_iter
@@ -362,6 +362,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
+        if random_state == 'warning':
+            random_state = 0
+            warnings.warn(("'random_state' has been introduced in 0.23. "
+                           "It could be manually set. "
+                           "Its value is defaulted to 0, will be 'None' "
+                           "from 0.25."), FutureWarning)
         self.random_state = random_state
 
     @property
