@@ -2247,6 +2247,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="max"),
         0.)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=ratio, norm="l2",
+                         reduce_bias=False), 0.)
 
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     assert_almost_equal(
@@ -2255,6 +2258,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="max"),
         0.25)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=ratio, norm="l2",
+                         reduce_bias=False), 0.25)
 
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
     sample_weight = np.array([1, 1, 1, 1] + [3, 3, 3, 3])
@@ -2265,6 +2271,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, sample_weight=sample_weight,
                          n_bins=ratio, norm="max"), 0.25)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, sample_weight=sample_weight,
+                         n_bins=ratio, norm="l2", reduce_bias=False), 0.2165063)
 
     assert_raises(ValueError, calibration_loss, y_true, y_pred[1:])
     assert_raises(ValueError, calibration_loss, y_true, y_pred + 1.)
@@ -2281,6 +2290,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
         0.25)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=ratio, norm="l2",
+                         reduce_bias=False), .25)
 
     # edge case with one element per bin only
     ratio = 4
@@ -2293,6 +2305,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
         0.375)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=ratio, norm="l2",
+                         reduce_bias=False), 0.4677071)
 
     # edge case with one bin only
     ratio = 1.
@@ -2305,6 +2320,9 @@ def test_calibration_loss():
     assert_almost_equal(
         calibration_loss(y_true, y_pred, n_bins=ratio, norm="l1"),
         0.)
+    assert_almost_equal(
+        calibration_loss(y_true, y_pred, n_bins=ratio, norm="l2",
+                         reduce_bias=False), 0.)
 
 
 def test_balanced_accuracy_score_unseen():

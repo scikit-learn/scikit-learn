@@ -2496,13 +2496,14 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
     if any(y_prob < 0) or any(y_prob > 1):
         raise ValueError("y_prob has values outside of [0, 1] range")
 
+    norm_options = ('l1', 'l2', 'max')
+    if norm not in norm_options:
+        raise ValueError('norm has to be one of ' +
+                         str(norm_options))
+
     if pos_label is None:
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
-    if norm == "l2":
-        reduce_bias = True
-    else:
-        reduce_bias = False
 
     loss = 0.
     count = 0.
@@ -2546,8 +2547,6 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
             delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
             if not np.isnan(delta_loss):
                 loss += delta_loss
-        else:
-            raise ValueError("norm is neither 'l1', 'l2' nor 'max'")
     if norm == "l1":
         loss /= count
     if norm == "l2":
