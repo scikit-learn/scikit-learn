@@ -2513,45 +2513,40 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
     y_prob = y_prob[remapping]
     if sample_weight is not None:
         sample_weight = sample_weight[remapping]
+    else:
+        sample_weight = np.ones(y_true.shape[0])
 
     i_thres = np.searchsorted(y_prob,
                               np.arange(0, 1, 1./n_bins)).tolist()
     i_thres.append(y_true.shape[0])
+
+    avg_pred_true = np.zeros(len(i_thres)-1)
+    bin_centroid = np.zeros(len(i_thres)-1)
+    debias = np.zeros(len(i_thres)-1)
     for i, i_start in enumerate(i_thres[:-1]):
         i_end = i_thres[i+1]
-        if sample_weight is None:
-            delta_count = float(i_end - i_start)
-            avg_pred_true = y_true[i_start:i_end].sum() / delta_count
-            bin_centroid = y_prob[i_start:i_end].sum() / delta_count
-        else:
-            delta_count = float(sample_weight[i_start:i_end].sum())
-            avg_pred_true = (np.dot(y_true[i_start:i_end],
-                                    sample_weight[i_start:i_end])
-                             / delta_count)
-            bin_centroid = (np.dot(y_prob[i_start:i_end],
+        delta_count = float(sample_weight[i_start:i_end].sum())
+        avg_pred_true[i] = (np.dot(y_true[i_start:i_end],
                                    sample_weight[i_start:i_end])
                             / delta_count)
+        bin_centroid[i] = (np.dot(y_prob[i_start:i_end],
+                                  sample_weight[i_start:i_end])
+                           / delta_count)
         count += delta_count
         if reduce_bias:
-            delta_debias = avg_pred_true*(avg_pred_true-1) * delta_count
+            delta_debias = avg_pred_true[i]*(avg_pred_true[i]-1) * delta_count
             delta_debias /= y_true.shape[0]*delta_count-1
-            if not np.isnan(delta_debias):
-                debias += delta_debias
-        if norm == "max":
-            loss = max(loss, abs(avg_pred_true - bin_centroid))
-        elif norm == "l1":
-            delta_loss = abs(avg_pred_true - bin_centroid) * delta_count
-            if not np.isnan(delta_loss):
-                loss += delta_loss
-        elif norm == "l2":
-            delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
-            if not np.isnan(delta_loss):
-                loss += delta_loss
-    if norm == "l1":
-        loss /= count
-    if norm == "l2":
-        loss /= count
+            debias[i] = delta_debias
+
+    if norm == "max":
+        loss = np.max(np.abs(avg_pred_true - bin_centroid))
+    elif norm == "l1":
+        delta_loss = np.abs(avg_pred_true - bin_centroid) * delta_count
+        loss = np.sum(delta_loss)/count
+    elif norm == "l2":
+        delta_loss = (avg_pred_true - bin_centroid)**2 * delta_count
+        loss = np.sum(delta_loss)/count
         if reduce_bias:
-            loss += debias
+            loss += np.sum(debias)
         loss = np.sqrt(max(loss, 0.))
     return loss
