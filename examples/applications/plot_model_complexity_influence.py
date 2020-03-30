@@ -44,17 +44,23 @@ from sklearn.metrics import hamming_loss
 
 
 # Initialize random generator
-np.random.seed(42)
+np.random.seed(0)
 
 ##############################################################################
 # Load the data
 # -------------
 #
-# First we will write the function for loading either of our two datasets:
-# diabetes or 20Newsgroups
+# This function is loading one of our dataset and returns the train and test
+# data.
+# For the 20 newsgroups we are using fetch_20newsgroups_vectorized which
+# returns ready-to-use features. (TODO: add link:
+# https://scikit-learn.org/0.19/modules/generated/sklearn.datasets.fetch_20newsgroups_vectorized.html#sklearn.datasets.fetch_20newsgroups_vectorized)
+# ).
+# Note that X for the 20 newsgropus dataset is a sparse matrix while diabetes
+# dataset is a numpy array.
 #
 
-def generate_data(case, sparse=False):
+def generate_data(case):
     """Generate regression/classification data."""
     if case == 'regression':
         X, y = datasets.load_diabetes(return_X_y=True)
@@ -66,14 +72,6 @@ def generate_data(case, sparse=False):
     X_train, y_train = X[:offset], y[:offset]
     X_test, y_test = X[offset:], y[offset:]
 
-    if sparse:
-        X_train = csr_matrix(X_train)
-        X_test = csr_matrix(X_test)
-    else:
-        X_train = np.array(X_train)
-        X_test = np.array(X_test)
-    y_test = np.array(y_test)
-    y_train = np.array(y_train)
     data = {'X_train': X_train, 'X_test': X_test, 'y_train': y_train,
             'y_test': y_test}
     return data
