@@ -2522,20 +2522,21 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
 
     avg_pred_true = np.zeros(len(i_thres)-1)
     bin_centroid = np.zeros(len(i_thres)-1)
+    delta_count = np.zeros(len(i_thres)-1)
     debias = np.zeros(len(i_thres)-1)
     for i, i_start in enumerate(i_thres[:-1]):
         i_end = i_thres[i+1]
-        delta_count = float(sample_weight[i_start:i_end].sum())
+        delta_count[i] = float(sample_weight[i_start:i_end].sum())
         avg_pred_true[i] = (np.dot(y_true[i_start:i_end],
                                    sample_weight[i_start:i_end])
-                            / delta_count)
+                            / delta_count[i])
         bin_centroid[i] = (np.dot(y_prob[i_start:i_end],
                                   sample_weight[i_start:i_end])
-                           / delta_count)
-        count += delta_count
+                           / delta_count[i])
+        count += delta_count[i]
         if reduce_bias:
-            delta_debias = avg_pred_true[i]*(avg_pred_true[i]-1) * delta_count
-            delta_debias /= y_true.shape[0]*delta_count-1
+            delta_debias = avg_pred_true[i]*(avg_pred_true[i]-1) * delta_count[i]
+            delta_debias /= y_true.shape[0]*delta_count[i]-1
             debias[i] = delta_debias
 
     if norm == "max":
