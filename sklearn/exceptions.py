@@ -122,10 +122,11 @@ class EfficiencyWarning(UserWarning):
     >>> neigh.fit(samples)
     NearestNeighbors(n_neighbors=1)
     >>> X = [[1., 0., 1.], [0., 1., 0.]]
+    >>> neigh.effective_metric_ = 'precomputed'
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         neigh.kneighbors(X, return_distance=False)
-    ...     except IndexError('list index out of range'):
+    ...     except IndexError:
     ...         pass
     ...     print(repr(w[-1].message))
     EfficiencyWarning('The input centres are not sorted, which is probably a
