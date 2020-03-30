@@ -9,7 +9,7 @@
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..utils import check_X_y, safe_sqr
+from ..utils import safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted

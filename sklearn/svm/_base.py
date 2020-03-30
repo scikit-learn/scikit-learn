@@ -3,14 +3,16 @@ import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from . import _libsvm as libsvm
-from .import _liblinear as liblinear
-from . import _libsvm_sparse as libsvm_sparse
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from . import _libsvm as libsvm  # type: ignore
+from .import _liblinear as liblinear  # type: ignore
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
-from ..utils import column_or_1d, check_X_y
+from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
