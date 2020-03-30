@@ -280,6 +280,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     random_state : int or np.random.RandomStateInstance, default: None
         Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
         See :term:`random_state`.
 
         .. versionadded:: 0.23
