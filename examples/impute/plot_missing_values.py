@@ -114,7 +114,7 @@ regressor = RandomForestRegressor(random_state=0)
 def get_scores_for_imputer(imputer, X_missing, y_missing):
     estimator = make_pipeline(
         make_union(imputer, MissingIndicator(missing_values=np.nan)),
-        REGRESSOR)
+        regressor)
     impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                     scoring='neg_mean_squared_error',
                                     cv=N_SPLITS)
@@ -140,7 +140,7 @@ stds_diabetes = np.zeros(5)
 
 
 def get_full_score(X_full, y_full):
-    full_scores = cross_val_score(REGRESSOR, X_full, y_full,
+    full_scores = cross_val_score(regressor, X_full, y_full,
                                   scoring='neg_mean_squared_error',
                                   cv=N_SPLITS)
     return full_scores.mean(), full_scores.std()
