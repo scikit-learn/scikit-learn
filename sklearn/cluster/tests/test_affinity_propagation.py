@@ -181,7 +181,7 @@ def test_equal_similarities_and_preferences():
     assert _equal_similarities_and_preferences(S, np.array(0))
 
 
-def test_affinity_propagation_random_status():
+def test_affinity_propagation_random_state():
     # Significance of random_state parameter
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
