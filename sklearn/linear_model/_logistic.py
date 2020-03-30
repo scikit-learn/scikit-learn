@@ -729,10 +729,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0 = w0.ravel()
         target = Y_multi
         if solver == 'lbfgs':
-            func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
+            def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
-            func = lambda x, *args: _multinomial_loss(x, *args)[0]
-            grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
+            def func(x, *args): return _multinomial_loss(x, *args)[0]
+            def grad(x, *args): return _multinomial_loss_grad(x, *args)[1]
             hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
@@ -741,7 +741,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
-            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            def grad(x, *args): return _logistic_loss_and_grad(x, *args)[1]
             hess = _logistic_grad_hess
         warm_start_sag = {'coef': np.expand_dims(w0, axis=1)}
 
@@ -1306,8 +1306,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
-                        raise ValueError("l1_ratio must be between 0 and 1;"
-                                         " got (l1_ratio=%r)" % self.l1_ratio)
+                raise ValueError("l1_ratio must be between 0 and 1;"
+                                 " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
