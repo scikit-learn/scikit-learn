@@ -2501,13 +2501,14 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
         raise ValueError('norm has to be one of ' +
                          str(norm_options))
 
+    n_bins = int(n_bins)
+
     if pos_label is None:
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
 
     loss = 0.
     count = 0.
-    debias = 0.
     remapping = np.argsort(y_prob)
     y_true = y_true[remapping]
     y_prob = y_prob[remapping]
@@ -2516,16 +2517,15 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
     else:
         sample_weight = np.ones(y_true.shape[0])
 
-    i_thres = np.searchsorted(y_prob,
-                              np.arange(0, 1, 1./n_bins)).tolist()
-    i_thres.append(y_true.shape[0])
-
-    avg_pred_true = np.zeros(len(i_thres)-1)
-    bin_centroid = np.zeros(len(i_thres)-1)
-    delta_count = np.zeros(len(i_thres)-1)
-    debias = np.zeros(len(i_thres)-1)
-    for i, i_start in enumerate(i_thres[:-1]):
-        i_end = i_thres[i+1]
+    threshold_indices = np.searchsorted(y_prob,
+                                        np.arange(0, 1, 1./n_bins)).tolist()
+    threshold_indices.append(y_true.shape[0])
+    avg_pred_true = np.zeros(n_bins)
+    bin_centroid = np.zeros(n_bins)
+    delta_count = np.zeros(n_bins)
+    debias = np.zeros(n_bins)
+    for i, i_start in enumerate(threshold_indices[:-1]):
+        i_end = threshold_indices[i+1]
         delta_count[i] = float(sample_weight[i_start:i_end].sum())
         avg_pred_true[i] = (np.dot(y_true[i_start:i_end],
                                    sample_weight[i_start:i_end])
@@ -2534,9 +2534,10 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
                                   sample_weight[i_start:i_end])
                            / delta_count[i])
         count += delta_count[i]
-        if reduce_bias:
-            delta_debias = avg_pred_true[i]*(avg_pred_true[i]-1) * delta_count[i]
-            delta_debias /= y_true.shape[0]*delta_count[i]-1
+        if norm == "l2" and reduce_bias:
+            delta_debias = avg_pred_true[i] * (avg_pred_true[i] - 1) \
+                           * delta_count[i]
+            delta_debias /= y_true.shape[0] * delta_count[i] - 1
             debias[i] = delta_debias
 
     if norm == "max":
