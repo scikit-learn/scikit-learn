@@ -16,6 +16,7 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from ._bagging import BaseBagging
@@ -181,8 +182,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  n_estimators=100,
                  max_samples="auto",
                  contamination="auto",
