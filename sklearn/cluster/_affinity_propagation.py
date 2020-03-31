@@ -75,7 +75,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     random_state : int or np.random.RandomStateInstance, default: 0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
-        See :term:`random_state`.
+        See the :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.23
             this parameter was previously hardcoded as 0.
@@ -290,7 +290,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     random_state : int or np.random.RandomStateInstance, default: 0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
-        See :term:`random_state`.
+        See the :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.23
             this parameter was previously hardcoded as 0.
