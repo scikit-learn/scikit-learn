@@ -121,7 +121,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     X_offset_ : array-like (length = n_samples)
         The eventually weighted mean of regressors X, used to center X in
         the _pre_process_data function.
-    
+
     X_scale_ : float, default = 64
         L2-norm of X utilized in equation self.normalize:
         X = (X - self.X_offset_) divided by (self.X_scale_)
