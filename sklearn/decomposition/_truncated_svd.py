@@ -14,6 +14,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _deprecate_positional_args
+
 
 __all__ = ["TruncatedSVD"]
 
@@ -116,7 +118,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components

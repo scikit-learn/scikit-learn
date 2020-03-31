@@ -25,6 +25,7 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 def _assess_dimension(spectrum, rank, n_samples, n_features):
@@ -324,7 +325,7 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)
     [6.30061...]
     """
-
+    @_deprecate_positional_args
     def __init__(self, n_components=None, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='auto',
                  random_state=None):

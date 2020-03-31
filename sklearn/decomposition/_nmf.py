@@ -19,6 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _deprecate_positional_args
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -1232,8 +1233,8 @@ class NMF(TransformerMixin, BaseEstimator):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    def __init__(self, n_components=None, init=None, solver='cd',
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False):
