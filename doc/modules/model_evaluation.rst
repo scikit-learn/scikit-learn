@@ -1620,10 +1620,10 @@ Here is a small example of usage of this function:::
         C. Ferri, J. Hernandez-Orallo, R. Modroiu. Pattern Recognition Letters,
         Volume 30, Issue 1, 2009.
 <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-
   * [3] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
         Ma. Advances in Neural Information Processing Systems (NeurIPS),
         2019 <https://arxiv.org/abs/1909.10155>`_
+
 
 .. _multilabel_ranking_metrics:
 
