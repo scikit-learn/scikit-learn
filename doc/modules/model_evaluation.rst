@@ -1560,29 +1560,27 @@ measures the overall discrepancy per bin between
 (2) the frequencies of the positive class in the actual outcome in the same
 bin.
 
-When ``sliding_window`` is set to ``False``, bins are an evenly spaced binning
-over predicted probabilities and thus never overlap.
-When ``sliding_window`` is set to ``True``, bins ... and thus might overlap.
 The lower the calibration loss is for a set of predictions, the
 better the predictions are calibrated.
 
-The aggregation method ``reducer`` can be either:
+The aggregation method ``norm`` can be either:
 
-- ``'avg'``: this computes :math:`\sum_k P_k \delta_k`.
-  When the ``sliding_window`` is set to ``False`` this is
-  the expected calibration error (ECE) in [1].
-  When the ``sliding_window`` is set to ``True`` this is
-  calB in [2].
+- ``'l1'``: this computes :math:`\sum_k P_k \delta_k`.
+  This is the expected calibration error (ECE) defined in [1].
+- ``'l2'``: this computes :math:`\sqrt{\sum_k P_k \delta_k^2}`
+  the square root of the squared calibration error with
+  the "plugin" estimator if ``reduce_bias`` is set to ``False``, or
+  or with the "debiased" estimator (adding a non-positive term in the sum)
+  if ``reduce_bias`` is set to ``True`` [3].
 - ``'max'`` this computes :math:`\max_k \delta_k`.
-  This is the maximum calibration error
-  (MCE) in [1].
+  This is the maximum calibration error (MCE) defined in [1].
 
 Here :math:`k` spans all bins,
 :math:`P_k = \dfrac{\sum_{t\in b_k} w_t}{\sum_t w_t}` denotes the (normalized)
 weight of bin :math:`k` and
-:math:`\delta_k = \dfrac{|\sum_{t\in b_k} w_t o_t - \sum_{t\in b_k} w_t f_t|}{\sum_{t\in b_k} w_t}` denotes
-the absolute difference between the average frequency of positive class and the
-average predicted probability of positive class in bin :math:`k`.
+:math:`\delta_k = \dfrac{|\sum_{t\in b_k} w_t o_t - \sum_{t\in b_k} w_t f_t|}{\sum_{t\in b_k} w_t}`
+denotes the absolute difference between the average frequency of positive class
+and the average predicted probability of positive class in bin :math:`k`.
 
 The calibration loss is appropriate for binary and categorical outcomes
 that can be structured as true or false, but is inappropriate for ordinal
@@ -1617,11 +1615,15 @@ Here is a small example of usage of this function:::
   * [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
         of Modern Neural Networks. Proceedings of the 34th International
         Conference on Machine Learning, PMLR 70:1321-1330, 2017.
-        <http://proceedings.mlr.press/v70/guo17a.html>`
+        <http://proceedings.mlr.press/v70/guo17a.html>`_
   * [2] `An experimental comparison of performance measures for classification.
-        C.Ferri, J.Hernandez-Orallo, R.Modroiu. Pattern Recognition Letters,
+        C. Ferri, J. Hernandez-Orallo, R. Modroiu. Pattern Recognition Letters,
         Volume 30, Issue 1, 2009.
-   <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`
+<https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+
+  * [3] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
+        Ma. Advances in Neural Information Processing Systems (NeurIPS),
+        2019 <https://arxiv.org/abs/1909.10155>`_
 
 .. _multilabel_ranking_metrics:
 
