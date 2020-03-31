@@ -141,6 +141,12 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
+    if random_state == 'warning':
+        random_state = 0
+        warnings.warn(("'random_state' has been introduced in 0.23. "
+                       "It could be manually set. "
+                       "Its value is defaulted to 0, will be 'None' "
+                       "from 0.25."), FutureWarning)
     random_state = check_random_state(random_state)
 
     # Place preference on the diagonal of S
@@ -362,12 +368,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
-        if random_state == 'warning':
-            random_state = 0
-            warnings.warn(("'random_state' has been introduced in 0.23. "
-                           "It could be manually set. "
-                           "Its value is defaulted to 0, will be 'None' "
-                           "from 0.25."), FutureWarning)
         self.random_state = random_state
 
     @property

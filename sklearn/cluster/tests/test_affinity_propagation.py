@@ -83,7 +83,7 @@ def test_affinity_propagation_predict():
 def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.
-    af = AffinityPropagation(affinity="euclidean", random_state=24)
+    af = AffinityPropagation(affinity="euclidean")
     with pytest.raises(ValueError):
         af.predict(X)
 
@@ -206,15 +206,14 @@ def test_affinity_propagation_random_state():
 
 # FIXME: to be removed in 0.25
 def test_affinity_propagation_random_state_warning():
-
     # test that a warning is raised when random_state is not defined.
+    X = np.array([[0, 0], [1, 1], [-2, -2]])
     match = ("'random_state' has been introduced in 0.23. "
              "It could be manually set. "
              "Its value is defaulted to 0, will be 'None' "
              "from 0.25.")
     with pytest.warns(FutureWarning, match=match):
-        AffinityPropagation()
-
+        AffinityPropagation().fit(X)
 
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])
