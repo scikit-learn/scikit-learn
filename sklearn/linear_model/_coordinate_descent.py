@@ -973,6 +973,11 @@ class Lasso(ElasticNet):
     n_iter_ : int or list of int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+        
+    dual_gap_ : ndarray, shape ()
+        The dual gap at the end of the optimization for the optimal alpha
+        (``alpha_``). Dual Gap represents the difference between the primal 
+        and dual solutions.
 
     Examples
     --------

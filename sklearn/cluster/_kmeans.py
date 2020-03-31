@@ -1498,6 +1498,9 @@ class MiniBatchKMeans(KMeans):
         centers are more easily reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
+    
+    n_iter : int
+        Number of iterations run.
 
     Attributes
     ----------
@@ -1513,6 +1516,17 @@ class MiniBatchKMeans(KMeans):
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
         neighbor.
+        
+    Counts_ : array like, shape (k,)
+        An array of samples that can be randomly reassigned if the existing
+        sample cluster is no longer valid or helpfulfor finding the centroids.
+
+    init_size_ : int, default=None
+        Number of samples to randomly sample for speeding up the initialization
+        (sometimes at the expense of accuracy): the only algorithm is 
+        initialized by running a batch KMeans on a random subset of the data. 
+        This needs to be larger than n_clusters.
+
 
     See Also
     --------

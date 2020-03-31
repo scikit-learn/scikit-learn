@@ -846,6 +846,18 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     y_scores_ : array, [n_samples, n_components]
         Y scores.
 
+    x_mean_ : array, [p]
+        The mean for each predictor.
+
+    y_mean_ : array, [q]
+        The mean for each response variable.
+
+    x_std_ : array, [p]
+        The standard deviation for each predictor.
+
+    y_std_ : array, [q]
+        The standard deviation for each response variable.
+        
     Examples
     --------
     >>> import numpy as np

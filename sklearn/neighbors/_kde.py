@@ -70,7 +70,15 @@ class KernelDensity(BaseEstimator):
         Additional parameters to be passed to the tree for use with the
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
+        
 
+    Attributes
+    ----------
+    tree_ : obj 
+        Return object of TREE_DICT dictionary to determine type of tree. Will
+        use KD Tree if possible and then will try to use Ball Tree. 
+        
+    
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
