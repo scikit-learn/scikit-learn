@@ -110,7 +110,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
+    def __init__(self, base_estimator, *, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator
