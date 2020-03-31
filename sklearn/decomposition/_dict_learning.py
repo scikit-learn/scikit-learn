@@ -17,7 +17,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -1013,7 +1013,8 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     """
     _required_parameters = ["dictionary"]
 
-    def __init__(self, dictionary, transform_algorithm='omp',
+    @_deprecate_positional_args
+    def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
@@ -1183,7 +1184,8 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     SparsePCA
     MiniBatchSparsePCA
     """
-    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=None, code_init=None, dict_init=None, verbose=False,
@@ -1388,7 +1390,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_components=None, alpha=1, n_iter=1000,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
                  dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
