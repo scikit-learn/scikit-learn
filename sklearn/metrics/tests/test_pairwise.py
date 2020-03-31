@@ -47,6 +47,7 @@ from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
+from sklearn.compose import make_column_selector
 
 
 def test_pairwise_distances():
@@ -925,36 +926,38 @@ def test_cosine_distances():
     assert np.all(D <= 2.)
 
 
+def test_gower_distance_input_validation():
+    with pytest.raises(TypeError, match="support sparse matrices"):
+        gower_distances(csr_matrix((2, 2)))
+    with pytest.raises(ValueError, match="X can not be None or empty"):
+        gower_distances(None)
+
+
 def test_gower_distances():
     # Test the pairwise Gower distances computation.
-    # For each test, a set of (non optmized) simple python commands is
+    # For each test, a set of (non optimized) simple python commands is
     # provided, to explain how those expected values are calculated,
     # and to provide proofs that the expected values are correct.
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
-    with pytest.raises(TypeError):
-        gower_distances(csr_matrix((2, 2)))
-    with pytest.raises(ValueError):
-        gower_distances(None)
+    pd = pytest.importorskip("pandas")
 
-    X = [['M', False, 222.22, 1],
-         ['F', True, 333.22, 2],
-         ['M', True, 1934.0, 4],
-         [np.nan, np.nan, np.nan, np.nan]]
+    X = pd.DataFrame([['M', False, 222.22, 1],
+                      ['F', True, 333.22, 2],
+                      ['M', True, 1934.0, 4],
+                      [np.nan, np.nan, np.nan, np.nan]])
 
-    with pytest.raises(TypeError):
-        gower_distances(X, scale=1)
-
-    with pytest.raises(ValueError):
-        D = gower_distances(X, scale=[1])
-        print(D)
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        gower_distances(X, scale=True)
 
     # No errors are expected to be raised here
-    D = gower_distances(X, scale=[np.nan, np.nan])
-    D = gower_distances(X, scale=np.array([1, 1]))
-
-    D = gower_distances(X)
+    D = gower_distances(X, scale=False,
+                        categorical_features=make_column_selector(
+                            dtype_include=["category", "object"]))
+    D = gower_distances(X, scale=True,
+                        categorical_features=make_column_selector(
+                            dtype_include=["category", "object"]))
 
     # These are the normalized values for X above
     X = [['M', False, 0.0, 0.0],
@@ -980,7 +983,11 @@ def test_gower_distances():
 
     # Calculates D with normalization, then results must be the same without
     # normalization
-    assert_array_almost_equal(D, gower_distances(X, scale=False))
+    X = pd.DataFrame(X)
+    D_normalized = gower_distances(X, scale=False,
+                                   categorical_features=make_column_selector(
+                                       dtype_include=["category", "object"]))
+    assert_array_almost_equal(D, D_normalized)
 
     # The values must be the same, when using the categorical_values
     # parameter
@@ -1018,7 +1025,7 @@ def test_gower_distances():
     X = [[1, 4141.22, False, 'ABC'],
          [1, 4141.22, False, 'ABC']]
 
-    D = gower_distances(X)
+    D = gower_distances(X, categorical_features=[2, 3])
     D_expected = [[0.0, 0.0], [0.0, 0.0]]
     # An array of zeros is expected as distance, when comparing two
     # observations with same values.
@@ -1039,7 +1046,7 @@ def test_gower_distances():
             D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
                                 [1, 0][X[i][1] == X[j][1]]) / 2
 
-    D = gower_distances(X)
+    D = gower_distances(X, categorical_features=[0, 1])
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1133,7 +1140,7 @@ def test_gower_distances():
     Y = np.array([['United Kingdom', 0.090909, 0.0, 0.500109, True]],
                  dtype=object)
 
-    D = gower_distances(X, Y)
+    D = gower_distances(X, Y, categorical_features=[0, 3], scale=True)
 
     # Simplified calculation of Gower distance for expected values
     D_expected = np.zeros((3, 1))

@@ -177,7 +177,7 @@ def _array_indexing(array, key, key_dtype, axis, inverse):
     if isinstance(key, tuple):
         key = list(key)
     if inverse:
-        mask = np.ones(len(X), bool)
+        mask = np.ones(array.shape[0] if axis == 0 else array.shape[1], bool)
         mask[key] = False
         key = mask
     return array[key] if axis == 0 else array[:, key]
@@ -196,10 +196,11 @@ def _pandas_indexing(X, key, key_dtype, axis, inverse):
     indexer = X.iloc if key_dtype == 'int' else X.loc
     if inverse:
         if key_dtype == 'int':
-            mask = np.ones(len(X), bool)
+            mask = np.ones(X.shape[0] if axis == 0 else X.shape[1], bool)
             mask[key] = False
             key = mask
         else:
+            # we reject string keys for rows
             key = X.columns.difference(key)
     return indexer[:, key] if axis else indexer[key]
 

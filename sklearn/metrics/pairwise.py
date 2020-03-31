@@ -895,18 +895,27 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         if hasattr(X, 'shape'):
             return X.shape[1]
         return np.asarray(X).shape[1]
-    
+
     def _nanmanhatan(x, y):
         return np.abs(np.nansum(x - y))
-    
+
     def _non_nans(x, y):
-        return np.sum(~np.isnan(x) & ~np.isnan(y))
-    
+        return np.sum(~_object_dtype_isnan(x) & ~_object_dtype_isnan(y))
+
     def _nanhamming(x, y):
-        return np.sum(x != y) - np.sum(np.isnan(x) | np.isnan(y))
-    
+        return np.sum(x != y) - np.sum(
+            _object_dtype_isnan(x) | _object_dtype_isnan(y))
+
     if issparse(X) or issparse(Y):
         raise TypeError("Gower distance does not support sparse matrices")
+
+    # TODO: this should be more like check_array(..., accept_pandas=True)
+    if (X is not None and not hasattr(X, 'iloc')
+            and not hasattr(X, '__array__')):
+        X = check_array(X, dtype=np.object, force_all_finite=False)
+    if (Y is not None and not hasattr(Y, 'iloc')
+            and not hasattr(Y, '__array__')):
+        Y = check_array(Y, dtype=np.object, force_all_finite=False)
 
     if X is None or len(X) == 0:
         raise ValueError("X can not be None or empty")
@@ -915,28 +924,54 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         cols = categorical_features(X)
     else:
         cols = categorical_features
+    if cols is None:
+        cols = []
 
     X_cat = _safe_indexing(X, cols, axis=1)
     X_num = _safe_indexing(X, cols, axis=1, inverse=True)
-    Y_cat = _safe_indexing(Y, cols, axis=1)
-    Y_num = _safe_indexing(Y, cols, axis=1, inverse=True)
+    #print(X_cat)
+    #print(X_num)
+    if Y is not None:
+        Y_cat = _safe_indexing(Y, cols, axis=1)
+        Y_num = _safe_indexing(Y, cols, axis=1, inverse=True)
+    else:
+        Y_cat = Y_num = None
 
-    X_num, Y_num = check_pairwise_arrays(X_num, Y_num, precomputed=False,
-                                         force_all_finite=False)
-    X_cat, Y_cat = check_pairwise_arrays(X_cat, Y_cat, precomputed=False,
-                                         dtype=np.object,
-                                         force_all_finite=False)
-    if scale:
-        trs = MinMaxScaler().fit(X_num)
-        X_num = trs.transform(X_num)
-        Y_num = trs.transform(Y_num)
+    if _n_cols(X_num):
+        X_num, Y_num = check_pairwise_arrays(X_num, Y_num, precomputed=False,
+                                             dtype=float,
+                                             force_all_finite=False)
+        if scale:
+            trs = MinMaxScaler().fit(X_num)
+            X_num = trs.transform(X_num)
+            Y_num = trs.transform(Y_num)
 
-    nan_manhatan = distance.cdist(X_num, Y_num, _nanmanhatan)
-    nan_hamming = distance.cdist(X_cat, Y_cat, _nanhamming)
-    valid_num = distance.cdist(X_num, Y_num, _non_nans)
-    valid_cat = distance.cdist(X_cat, Y_cat, _non_nans)
-    
-    D = (nan_manhatan + nan_hamming) / (valid_num + valid_cat)
+        nan_manhatan = distance.cdist(X_num, Y_num, _nanmanhatan)
+        valid_num = distance.cdist(X_num, Y_num, _non_nans)
+    else:
+        nan_manhatan = valid_num = None
+
+    if _n_cols(X_cat):
+        X_cat, Y_cat = check_pairwise_arrays(X_cat, Y_cat, precomputed=False,
+                                             dtype=np.object,
+                                             force_all_finite=False)
+        nan_hamming = distance.cdist(X_cat, Y_cat, _nanhamming)
+        valid_cat = distance.cdist(X_cat, Y_cat, _non_nans)
+    else:
+        nan_hamming = valid_cat = None
+
+    #print(nan_manhatan)
+    #print(valid_num)
+    #print(nan_hamming)
+    #print(valid_cat)
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        if valid_num is not None and valid_cat is not None:
+            D = (nan_manhatan + nan_hamming) / (valid_num + valid_cat)
+        elif valid_num is not None:
+            D = nan_manhatan / valid_num
+        else:
+            D = nan_hamming / valid_cat
     return D
 
 
