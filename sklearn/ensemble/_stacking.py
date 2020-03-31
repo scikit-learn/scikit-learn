@@ -38,7 +38,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     """Base class for stacking method."""
 
     @abstractmethod
-    def __init__(self, estimators, *, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
@@ -368,7 +368,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, *, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
@@ -606,7 +606,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, *, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  n_jobs=None, passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
