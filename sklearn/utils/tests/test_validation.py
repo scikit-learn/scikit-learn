@@ -297,6 +297,7 @@ def test_check_array():
             X_checked = check_array(X, dtype=dtype,
                                     accept_sparse=accept_sparse, copy=copy)
         if (dtype is object or sp.isspmatrix_dok(X)) and len(w):
+            # XXX unreached code as of v0.22
             message = str(w[0].message)
             messages = ["object dtype is not supported by sparse matrices",
                         "Can't check dok sparse matrix for nan or inf."]
@@ -1152,3 +1153,22 @@ def test_check_fit_params(indices):
         result['sparse-col'],
         _safe_indexing(fit_params['sparse-col'], indices_)
     )
+
+
+@pytest.mark.parametrize('sp_format', [True, 'csr', 'csc', 'coo', 'bsr'])
+def test_check_sparse_pandas_sp_format(sp_format):
+    # check_array converts pandas dataframe with only sparse arrays into
+    # sparse matrix
+    pd = pytest.importorskip("pandas")
+    sp_mat = _sparse_random_matrix(10, 3)
+
+    sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    result = check_array(sdf, accept_sparse=sp_format)
+
+    if sp_format is True:
+        # by default pandas converts to coo when accept_sparse is True
+        sp_format = 'coo'
+
+    assert sp.issparse(result)
+    assert result.format == sp_format
+    assert_allclose_dense_sparse(sp_mat, result)

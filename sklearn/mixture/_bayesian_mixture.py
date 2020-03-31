@@ -15,7 +15,6 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
 
 
 def _log_dirichlet_norm(dirichlet_concentration):

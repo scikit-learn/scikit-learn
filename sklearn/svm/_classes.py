@@ -1,11 +1,9 @@
-import warnings
 import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
@@ -217,9 +215,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -395,9 +393,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -828,6 +826,15 @@ class NuSVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state)
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_class_weight_classifiers': 'class_weight is ignored.'
+            }
+        }
+
 
 class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
@@ -930,8 +937,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y)
+    >>> regr = SVR(C=1.0, epsilon=0.2)
+    >>> regr.fit(X, y)
     SVR(epsilon=0.2)
 
     See also
@@ -963,14 +970,16 @@ class SVR(RegressorMixin, BaseLibSVM):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
@@ -1070,8 +1079,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)
+    >>> regr = NuSVR(C=1.0, nu=0.1)
+    >>> regr.fit(X, y)
     NuSVR(nu=0.1)
 
     See also
@@ -1297,14 +1306,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property

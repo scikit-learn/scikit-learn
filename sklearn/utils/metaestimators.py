@@ -2,6 +2,7 @@
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
+from typing import List, Any
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
@@ -17,6 +18,8 @@ __all__ = ['if_delegate_has_method']
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
     """Handles parameter management for classifiers composed of named estimators.
     """
+    steps: List[Any]
+
     @abstractmethod
     def __init__(self):
         pass

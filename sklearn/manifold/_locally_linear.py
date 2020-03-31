@@ -652,7 +652,7 @@ class LocallyLinearEmbedding(TransformerMixin,
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X, dtype=float)
+        X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
