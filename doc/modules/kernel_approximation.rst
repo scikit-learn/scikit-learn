@@ -155,16 +155,15 @@ TensorSketch Method for Polynomial Kernel Approximation
 The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialSampler`, is a
 scalable, data-independent method for polynomial kernel approximation. This method
 obtains a Count Sketch [CCF2002]_ of the outer product of two vectors (or a vector with
-itself), which an be used as an approximation of the polynomial kernel feature space.
+itself), which can be used as an approximation of the polynomial kernel feature space.
 In particular, instead of explicitly computing the outer product, TensorSketch
 computes the Count Sketch of the vectors and then uses polynomial multiplication
 via the Fast Fourier Transform to compute the Count Sketch of their outer product.
 
 Conveniently, the training phase of TensorSketch simply consists of initializing
 some random variables, thus being a data-independent method. In addition, this
-method can transform samples in :math:`\mathcal{O}(n(d + k \text{log} k))`, where
-:math:`n` is the number of samples, :math:`d` the dimension of input samples
-and :math:`k` the desired output dimension, determined by (``n_components``).
+method can transform samples in :math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}}))`, where
+:math:`n_{\text{components}}` is the desired output dimension, determined by ``n_components``.
 
 .. topic:: Examples:
 

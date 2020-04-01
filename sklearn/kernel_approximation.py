@@ -43,8 +43,8 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         Dimensionality of the output feature space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
+        If int, random_state is the seed used by the random number generator.
+        If RandomState instance, random_state is the random number generator.
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
@@ -92,7 +92,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -106,7 +106,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         random_state = check_random_state(self.random_state)
 
         if sp.issparse(X) and self.coef0 != 0:
-            X = sp.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))],
+            X = sp.hstack([X, np.sqrt(self.coef0) * np.ones((X.shape[0], 1))],
                           format="csc")
 
         elif not sp.issparse(X) and self.coef0 != 0:
