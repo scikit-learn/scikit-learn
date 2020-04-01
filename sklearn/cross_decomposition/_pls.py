@@ -480,7 +480,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
+            Test samples, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         copy : boolean, default True
