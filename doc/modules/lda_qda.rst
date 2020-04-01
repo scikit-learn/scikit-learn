@@ -84,10 +84,12 @@ According to the model above, the log of the posterior is:
 
 .. math::
 
-    \log P(y=k | x) = \log P(y=k | x) + \log P(y = k) =
-    -\frac{1}{2} \log |\Sigma_k| -\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k) + \log P(y = k) + Cst.
+    \log P(y=k | x) &= \log P(x | y=k) + \log P(y = k) + Cst \\
+    &= -\frac{1}{2} \log |\Sigma_k| -\frac{1}{2} (x-\mu_k)^t \Sigma_k^{-1} (x-\mu_k) + \log P(y = k) + Cst,
 
-The predicted class is the one that maximises this quantity.
+where the constant term :math:`Cst` corresponds to the denominator
+:math:`P(x)`, in addition to other constant terms from the Gaussian. The
+predicted class is the one that maximises this log-posterior.
 
 .. note:: **Relation with Gaussian Naive Bayes**
 
@@ -204,7 +206,7 @@ The 'svd' solver is the default solver used for
 the only available solver for
 :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`.
 It can perform both classification and transform (for LDA).
-As it does not rely on the calculation of the covariance matrix the 'svd'
+As it does not rely on the calculation of the covariance matrix, the 'svd'
 solver may be preferable in situations where the number of features is large.
 The 'svd' solver cannot be used with shrinkage.
 For QDA, the use of the SVD solver relies on the fact that the covariance
