@@ -196,7 +196,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
     """Mean absolute percentage error regression loss
 
     Note here that we do not represent the output as a percentage in range
-    [0, 100]. Instead, we represent it in range [0, 1]. Read more in the
+    [0, 100]. Instead, we represent it in range [0, 1/eps]. Read more in the
     :ref:`User Guide <mean_absolute_percentage_error>`.
 
     Parameters
@@ -223,7 +223,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
 
     Returns
     -------
-    loss : float or ndarray of floats in the range [0, 1]
+    loss : float or ndarray of floats in the range [0, 1/eps]
         If multioutput is 'raw_values', then mean absolute percentage error
         is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
