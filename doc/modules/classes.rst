@@ -708,9 +708,9 @@ Plotting
 
    kernel_approximation.AdditiveChi2Sampler
    kernel_approximation.Nystroem
+   kernel_approximation.PolynomialSampler
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
-   kernel_approximation.PolynomialSampler
 
 .. _kernel_ridge_ref:
 

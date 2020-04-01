@@ -149,11 +149,27 @@ above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called :math:`c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
 
-TensorSketch Method for Polynomial Kernel Approximation
---------------------------------------------------------
+Polynomial Kernel Approximation via Tensor Sketch
+-------------------------------------------------
+
+`The polynomial kernel <https://scikit-learn.org/stable/modules/metrics.html#polynomial-kernel>`_,
+is a popular type of kernel function given by:
+
+.. math::
+
+        k(x, y) = (\gamma x^\top y +c_0)^d
+
+where:
+
+    * ``x``, ``y`` are the input vectors
+    * ``d`` is the kernel degree
+
+Intuitively, the feature space of the polynomial kernel of degree `d`
+consists in all possible degree-`d` products among input features, which enables
+learning algorithms using this kernel to account for interactions between features.
 
 The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialSampler`, is a
-scalable, data-independent method for polynomial kernel approximation. This method
+scalable, data distribution-independent method for polynomial kernel approximation. This method
 obtains a Count Sketch [CCF2002]_ of the outer product of two vectors (or a vector with
 itself), which can be used as an approximation of the polynomial kernel feature space.
 In particular, instead of explicitly computing the outer product, TensorSketch
