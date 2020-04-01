@@ -90,10 +90,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Returns
     -------
-    core_samples : array-like [n_core_samples]
+    core_samples : ndarray of shape (n_core_samples,)
         Indices of core samples.
 
-    labels : array-like [n_samples]
+    labels : ndarray of shape (n_samples,)
         Cluster labels for each point.  Noisy samples are given the label -1.
 
     See also
@@ -208,13 +208,13 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    core_sample_indices_ : array-like of shape (n_core_samples,)
+    core_sample_indices_ : ndarray of shape (n_core_samples,)
         Indices of core samples.
 
-    components_ : array-like of shape (n_core_samples, n_features)
+    components_ : ndarray of shape (n_core_samples, n_features)
         Copy of each core sample found by training.
 
-    labels_ : array-like of shape (n_samples)
+    labels_ : ndarray of shape (n_samples)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 
@@ -373,7 +373,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             ``metric='precomputed'``. If a sparse matrix is provided, it will
             be converted into a sparse ``csr_matrix``.
 
-        sample_weight : array of shape (n_samples,), default=None
+        sample_weight : array-like of shape (n_samples,), default=None
             Weight of each sample, such that a sample with a weight of at least
             ``min_samples`` is by itself a core sample; a sample with a
             negative weight may inhibit its eps-neighbor from being core.
