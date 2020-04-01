@@ -22,7 +22,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import _safe_indexing
-from ..utils import check_array, check_X_y, column_or_1d
+from ..utils import check_array, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -793,11 +793,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -889,6 +890,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    ...                                                     random_state=1)
+    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
+    >>> clf.predict_proba(X_test[:1])
+    array([[0.038..., 0.961...]])
+    >>> clf.predict(X_test[:5, :])
+    array([1, 0, 1, 0, 1])
+    >>> clf.score(X_test, y_test)
+    0.8...
+
     Notes
     -----
     MLPClassifier trains iteratively since at each time step
@@ -942,8 +960,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
-                         multi_output=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -1185,11 +1203,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -1277,6 +1296,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(n_samples=200, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=1)
+    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
+    >>> regr.predict(X_test[:2])
+    array([-0.9..., -7.1...])
+    >>> regr.score(X_test, y_test)
+    0.4...
+
     Notes
     -----
     MLPRegressor trains iteratively since at each time step
@@ -1350,8 +1383,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y

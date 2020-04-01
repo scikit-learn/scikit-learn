@@ -19,10 +19,11 @@ from math import log
 
 import numpy as np
 from scipy import sparse as sp
+from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array, check_consistent_length
-from ...utils.fixes import comb, _astype_copy_false
+from ...utils.fixes import _astype_copy_false
 
 
 def _comb2(n):
@@ -645,7 +646,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
-    return mi.sum()
+    return np.clip(mi.sum(), 0.0, None)
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred,

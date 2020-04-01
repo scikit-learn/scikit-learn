@@ -67,7 +67,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
@@ -223,7 +223,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         self.X_ = X
         check_classification_targets(y)
 

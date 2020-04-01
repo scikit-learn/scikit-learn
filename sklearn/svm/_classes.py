@@ -1,13 +1,12 @@
-import warnings
 import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils.deprecation import deprecated
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -88,14 +87,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data for the dual coordinate descent (if ``dual=True``). When
-        ``dual=False`` the underlying implementation of :class:`LinearSVC`
-        is not random and ``random_state`` has no effect on the results. If
-        int, random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        the dual coordinate descent (if ``dual=True``). When ``dual=False`` the
+        underlying implementation of :class:`LinearSVC` is not random and
+        ``random_state`` has no effect on the results.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_iter : int, default=1000
         The maximum number of iterations to be run.
@@ -218,9 +215,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -299,11 +296,9 @@ class LinearSVR(RegressorMixin, LinearModel):
         properly in a multithreaded context.
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     max_iter : int, default=1000
         The maximum number of iterations to be run.
@@ -398,9 +393,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -521,11 +516,10 @@ class SVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
-        the data for probability estimates. If int, random_state is the
-        seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -727,11 +721,10 @@ class NuSVC(BaseSVC):
         .. versionadded:: 0.22
 
     random_state : int or RandomState instance, default=None
-        The seed of the pseudo random number generator used when shuffling
-        the data for probability estimates. If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        Controls the pseudo random number generation for shuffling the data for
+        probability estimates.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -832,6 +825,15 @@ class NuSVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
             random_state=random_state)
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method',
+                'check_class_weight_classifiers': 'class_weight is ignored.'
+            }
+        }
 
 
 class SVR(RegressorMixin, BaseLibSVM):
@@ -935,8 +937,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y)
+    >>> regr = SVR(C=1.0, epsilon=0.2)
+    >>> regr.fit(X, y)
     SVR(epsilon=0.2)
 
     See also
@@ -967,6 +969,22 @@ class SVR(RegressorMixin, BaseLibSVM):
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The probA_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
+    @property
+    def probA_(self):
+        return self._probA
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The probB_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
+    @property
+    def probB_(self):
+        return self._probB
 
 
 class NuSVR(RegressorMixin, BaseLibSVM):
@@ -1061,8 +1079,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)
+    >>> regr = NuSVR(C=1.0, nu=0.1)
+    >>> regr.fit(X, y)
     NuSVR(nu=0.1)
 
     See also
@@ -1287,3 +1305,19 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The probA_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
+    @property
+    def probA_(self):
+        return self._probA
+
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "The probB_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
+    @property
+    def probB_(self):
+        return self._probB
