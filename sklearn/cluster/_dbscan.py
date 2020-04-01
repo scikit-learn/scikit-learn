@@ -29,8 +29,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Parameters
     ----------
-    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features), or \
-            array of shape (n_samples, n_samples)
+    X : {array-like, sparse (CSR) matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
         A feature array, or array of distances between samples if
         ``metric='precomputed'``.
 
@@ -60,7 +60,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
         .. versionadded:: 0.19
 
-    algorithm : input: {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
@@ -185,7 +185,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.19
 
-    algorithm : input: {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
