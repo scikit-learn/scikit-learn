@@ -33,7 +33,7 @@ def test_affinity_propagation():
     preference = np.median(S) * 10
     # Compute Affinity Propagation
     cluster_centers_indices, labels = affinity_propagation(
-        S, preference=preference)
+        S, preference=preference, random_state=39)
 
     n_clusters_ = len(cluster_centers_indices)
 
@@ -57,7 +57,7 @@ def test_affinity_propagation():
 
     # Test also with no copy
     _, labels_no_copy = affinity_propagation(S, preference=preference,
-                                             copy=False)
+                                             copy=False, random_state=74)
     assert_array_equal(labels, labels_no_copy)
 
     # Test input validation
@@ -131,7 +131,7 @@ def test_affinity_propagation_equal_mutual_similarities():
 
     # setting different preferences
     cluster_center_indices, labels = assert_no_warnings(
-        affinity_propagation, S, preference=[-20, -10])
+        affinity_propagation, S, preference=[-20, -10], random_state=37)
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
