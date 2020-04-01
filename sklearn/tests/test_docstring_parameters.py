@@ -169,7 +169,6 @@ def test_tabs():
                                     % modname)
 
 
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -199,6 +198,10 @@ def test_fit_docstring_attributes(name, Estimator):
 
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
+
+    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
 
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
