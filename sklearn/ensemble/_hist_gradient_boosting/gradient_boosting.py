@@ -227,14 +227,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
             raw_predictions += self._baseline_prediction
 
-            # initialize gradients and hessians (empty arrays).
-            # shape = (n_trees_per_iteration, n_samples).
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_,
-                sample_weight=sample_weight_train
-            )
-
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
             self._predictors = predictors = []
@@ -324,13 +316,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                  sample_weight_small_train) = self._get_small_trainset(
                     X_binned_train, y_train, sample_weight_train,
                     self._random_seed)
-
-            # Initialize the gradients and hessians
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                sample_weight=sample_weight_train,
-                prediction_dim=self.n_trees_per_iteration_
-            )
 
             # Get the predictors from the previous fit
             predictors = self._predictors
