@@ -346,7 +346,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
-    >>> clustering = AffinityPropagation(random_state=5).fit(X)
+    >>> clustering = AffinityPropagation(affinity='euclidean',
+    ...                                  convergence_iter=15, copy=True,
+    ...                                  damping=0.5, max_iter=200,
+    ...                                  preference=None,random_state=5,
+    ...                                  verbose=False).fit(X)
     >>> clustering
     AffinityPropagation(affinity='euclidean', convergence_iter=15, copy=True,
     ...                 damping=0.5, max_iter=200, preference=None,
