@@ -287,6 +287,9 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         ``euclidean`` are supported. 'euclidean' uses the
         negative squared euclidean distance between points.
 
+    verbose : bool, default=False
+        Whether to be verbose.
+
     random_state : int or np.random.RandomStateInstance, default: 0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
@@ -294,10 +297,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.23
             this parameter was previously hardcoded as 0.
-
-    verbose : bool, default=False
-        Whether to be verbose.
-
 
     Attributes
     ----------
@@ -315,23 +314,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations taken to converge.
-
-    Examples
-    --------
-    >>> from sklearn.cluster import AffinityPropagation
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
-    >>> clustering = AffinityPropagation().fit(X)
-    >>> clustering
-    AffinityPropagation()
-    >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1])
-    >>> clustering.predict([[0, 0], [4, 4]])
-    array([0, 1])
-    >>> clustering.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
 
     Notes
     -----
@@ -357,6 +339,25 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
+    Examples
+    --------
+    >>> from sklearn.cluster import AffinityPropagation
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AffinityPropagation(random_state=5).fit(X)
+    >>> clustering
+    AffinityPropagation(affinity='euclidean', convergence_iter=15, copy=True,
+    ...                 damping=0.5, max_iter=200, preference=None,
+    ...                 random_state=5, verbose=False)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clustering.predict([[0, 0], [4, 4]])
+    array([0, 1])
+    >>> clustering.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
     """
     @_deprecate_positional_args
     def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
