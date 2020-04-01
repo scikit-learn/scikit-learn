@@ -169,6 +169,7 @@ def test_tabs():
                                     % modname)
 
 
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('name, Estimator',
                          all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
