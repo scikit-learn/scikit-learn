@@ -395,7 +395,7 @@ def test_pipeline_methods_preprocessing_svm():
 
 
 def test_pipeline_methods_pca_tsne():
-    # test that a only fit_transform needs to be present in order to
+    # test that only fit_transform needs to be present in order to
     # run a pipeline with fit_transform.
     # Don't require transform to be present, explicitly.
     pca = PCA(n_components=2, random_state=0)
