@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 import math
-import pickle
 
 import numpy as np
 import pytest
@@ -12,20 +11,9 @@ import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
-
-
-def test_masked_array_obj_dtype_pickleable():
-    marr = MaskedArray([1, None, 'a'], dtype=object)
-
-    for mask in (True, False, [0, 1, 0]):
-        marr.mask = mask
-        marr_pickled = pickle.loads(pickle.dumps(marr))
-        assert_array_equal(marr.data, marr_pickled.data)
-        assert_array_equal(marr.mask, marr_pickled.mask)
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))

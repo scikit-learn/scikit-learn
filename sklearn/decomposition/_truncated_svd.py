@@ -14,6 +14,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
+
 
 __all__ = ["TruncatedSVD"]
 
@@ -56,11 +59,10 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
         may have large slowly decaying spectrum.
 
-    random_state : int, RandomState instance or None, optional, default = None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used during randomized svd. Pass an int for reproducible results across
+        multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
@@ -85,17 +87,19 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD
+    >>> from scipy.sparse import random as sparse_random
     >>> from sklearn.random_projection import sparse_random_matrix
-    >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
+    >>> X = sparse_random(100, 100, density=0.01, format='csr',
+    ...                   random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> print(svd.explained_variance_ratio_)
-    [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    [0.0646... 0.0633... 0.0639... 0.0535... 0.0406...]
     >>> print(svd.explained_variance_ratio_.sum())
-    0.249...
+    0.286...
     >>> print(svd.singular_values_)
-    [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    [1.553... 1.512...  1.510... 1.370... 1.199...]
 
     See also
     --------
@@ -115,7 +119,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
@@ -156,8 +161,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'],
-                        ensure_min_features=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
+                                ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
@@ -208,6 +213,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Reduced version of X. This will always be a dense array.
         """
         X = check_array(X, accept_sparse='csr')
+        check_is_fitted(self)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):

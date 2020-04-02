@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 
+# XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
     norm = kernel_norm(h, X.shape[1], kernel) / X.shape[0]
@@ -202,6 +203,17 @@ def test_kde_sample_weights():
                     kde.fit(X, sample_weight=(scale_factor * weights))
                     scores_scaled_weight = kde.score_samples(test_points)
                     assert_allclose(scores_scaled_weight, scores_weight)
+
+
+def test_sample_weight_invalid():
+    # Check sample weighting raises errors.
+    kde = KernelDensity()
+    data = np.reshape([1., 2., 3.], (-1, 1))
+
+    sample_weight = [0.1, -0.2, 0.3]
+    expected_err = "sample_weight must have positive values"
+    with pytest.raises(ValueError, match=expected_err):
+        kde.fit(data, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize('sample_weight', [None, [0.1, 0.2, 0.3]])

@@ -111,7 +111,10 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         try:
             res = _encode_python(values, uniques, encode)
         except TypeError:
-            raise TypeError("argument must be a string or number")
+            types = sorted(t.__qualname__
+                           for t in set(type(v) for v in values))
+            raise TypeError("Encoders require their input to be uniformly "
+                            f"strings or numbers. Got {types}")
         return res
     else:
         return _encode_numpy(values, uniques, encode,
@@ -175,6 +178,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     not the input `X`.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
+
+    .. versionadded:: 0.12
 
     Attributes
     ----------

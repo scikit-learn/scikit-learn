@@ -38,6 +38,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
@@ -272,7 +273,7 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
 
 class NoWeightClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
-        self.clf = DummyClassifier()
+        self.clf = DummyClassifier(strategy='stratified')
         return self.clf.fit(X, y)
 
 
@@ -284,10 +285,6 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
      (y_iris,
       {'estimators': []},
       ValueError, "Invalid 'estimators' attribute,"),
-     (y_iris,
-      {'estimators': [('lr', LinearRegression()),
-                      ('svm', LinearSVC(max_iter=5e4))]},
-      ValueError, 'should be a classifier'),
      (y_iris,
       {'estimators': [('lr', LogisticRegression()),
                       ('svm', SVC(max_iter=5e4))],
@@ -301,14 +298,7 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
       {'estimators': [('lr', LogisticRegression()),
                       ('cor', LinearSVC(max_iter=5e4))],
        'final_estimator': NoWeightClassifier()},
-      TypeError, 'does not support sample weight'),
-     (y_iris,
-      {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
-      ValueError, 'All estimators are dropped'),
-     (y_iris,
-      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
-       'final_estimator': RandomForestRegressor()},
-      ValueError, 'parameter should be a classifier.')]
+      TypeError, 'does not support sample weight')]
 )
 def test_stacking_classifier_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
@@ -327,9 +317,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
       {'estimators': []},
       ValueError, "Invalid 'estimators' attribute,"),
      (y_diabetes,
-      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())]},
-      ValueError, 'should be a regressor'),
-     (y_diabetes,
       {'estimators': [('lr', LinearRegression()),
                       ('cor', NoWeightRegressor())]},
       TypeError, 'does not support sample weight'),
@@ -337,14 +324,7 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
       {'estimators': [('lr', LinearRegression()),
                       ('cor', LinearSVR())],
        'final_estimator': NoWeightRegressor()},
-      TypeError, 'does not support sample weight'),
-     (y_diabetes,
-      {'estimators': [('lr', 'drop'), ('svm', 'drop')]},
-      ValueError, 'All estimators are dropped'),
-     (y_diabetes,
-      {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
-       'final_estimator': RandomForestClassifier()},
-      ValueError, 'parameter should be a regressor.')]
+      TypeError, 'does not support sample weight')]
 )
 def test_stacking_regressor_error(y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
@@ -352,55 +332,6 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         reg.fit(
             scale(X_diabetes), y, sample_weight=np.ones(X_diabetes.shape[0])
         )
-
-
-@pytest.mark.parametrize(
-    "stacking_estimator",
-    [StackingClassifier(estimators=[('lr', LogisticRegression()),
-                                    ('svm', LinearSVC())]),
-     StackingRegressor(estimators=[('lr', LinearRegression()),
-                                   ('svm', LinearSVR(max_iter=1e4))])]
-)
-def test_stacking_named_estimators(stacking_estimator):
-    stacking_estimator.fit(scale(X_iris), y_iris)
-    estimators = stacking_estimator.named_estimators_
-    assert len(estimators) == 2
-    assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
-
-
-@pytest.mark.parametrize(
-    "stacking_estimator",
-    [StackingClassifier(estimators=[('lr', LogisticRegression()),
-                                    ('rf', RandomForestClassifier()),
-                                    ('svm', LinearSVC())]),
-     StackingRegressor(estimators=[('lr', LinearRegression()),
-                                   ('rf', RandomForestRegressor()),
-                                   ('svm', LinearSVR(max_iter=1e4))])]
-)
-def test_stacking_named_estimators_dropped(stacking_estimator):
-    stacking_estimator.set_params(rf='drop')
-    stacking_estimator.fit(scale(X_iris), y_iris)
-    estimators = stacking_estimator.named_estimators_
-    assert 'rf' not in estimators.keys()
-    assert len(estimators) == 2
-    assert sorted(list(estimators.keys())) == sorted(['lr', 'svm'])
-
-
-@pytest.mark.parametrize(
-    "stacking_estimator",
-    [StackingClassifier(estimators=[('lr', LogisticRegression()),
-                                    ('svm', LinearSVC())]),
-     StackingRegressor(estimators=[('lr', LinearRegression()),
-                                   ('svm', LinearSVR())])]
-)
-def test_stacking_set_get_params(stacking_estimator):
-    params = stacking_estimator.get_params()
-    assert 'lr' in list(params.keys())
-    assert 'svm' in list(params.keys())
-
-    stacking_estimator.set_params(lr='drop')
-    params = stacking_estimator.get_params()
-    assert params['lr'] == 'drop'
 
 
 @pytest.mark.parametrize(
@@ -507,6 +438,19 @@ def test_stacking_with_sample_weight(stacker, X, y):
     y_pred_biased = stacker.predict(X_test)
 
     assert np.abs(y_pred_no_weight - y_pred_biased).sum() > 0
+
+
+def test_stacking_classifier_sample_weight_fit_param():
+    # check sample_weight is passed to all invocations of fit
+    stacker = StackingClassifier(
+        estimators=[
+            ('lr', CheckingClassifier(expected_fit_params=['sample_weight']))
+        ],
+        final_estimator=CheckingClassifier(
+            expected_fit_params=['sample_weight']
+        )
+    )
+    stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")

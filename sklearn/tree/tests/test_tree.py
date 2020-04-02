@@ -3,7 +3,6 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from functools import partial
 from itertools import product
 import struct
 
@@ -13,7 +12,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -24,8 +23,8 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
 
@@ -129,8 +128,8 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
-                                    random_state=0).toarray()
+X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
+                                     random_state=0).toarray()
 
 
 DATASETS = {
@@ -804,7 +803,7 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         assert est.min_impurity_split is None, (
-            "Failed, min_impurity_split = {0} > 1e-7".format(
+            "Failed, min_impurity_split = {0} != None".format(
                 est.min_impurity_split))
         try:
             assert_warns(FutureWarning, est.fit, X, y)
@@ -1121,15 +1120,8 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(101)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(99)
-    with pytest.raises(ValueError):
+    expected_err = r"Singleton.* cannot be considered a valid collection"
+    with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
 
@@ -1823,15 +1815,6 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-def test_decision_tree_memmap():
-    # check that decision trees supports read-only buffer (#13626)
-    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
-    y = np.zeros(10)
-
-    with TempMemmap((X, y)) as (X_read_only, y_read_only):
-        DecisionTreeClassifier().fit(X_read_only, y_read_only)
-
-
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
@@ -1963,3 +1946,21 @@ def test_classes_deprecated():
 
     with pytest.warns(FutureWarning, match=match):
         assert len(clf.n_classes_) == clf.n_outputs_
+
+
+def check_apply_path_readonly(name):
+    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
+                                                          copy=False))
+    y_readonly = create_memmap_backed_data(np.array(y_small,
+                                                    dtype=tree._tree.DTYPE))
+    est = ALL_TREES[name]()
+    est.fit(X_readonly, y_readonly)
+    assert_array_equal(est.predict(X_readonly),
+                       est.predict(X_small))
+    assert_array_equal(est.decision_path(X_readonly).todense(),
+                       est.decision_path(X_small).todense())
+
+
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_apply_path_readonly_all_trees(name):
+    check_apply_path_readonly(name)

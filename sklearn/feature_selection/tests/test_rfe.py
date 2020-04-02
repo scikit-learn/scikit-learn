@@ -2,6 +2,7 @@
 Testing Recursive feature elimination
 """
 
+import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
@@ -29,8 +30,8 @@ class MockClassifier:
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
-        assert len(X) == len(Y)
+    def fit(self, X, y):
+        assert len(X) == len(y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
@@ -41,18 +42,17 @@ class MockClassifier:
     decision_function = predict
     transform = predict
 
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
+    def score(self, X=None, y=None):
+        return 0.
 
     def get_params(self, deep=True):
         return {'foo_param': self.foo_param}
 
     def set_params(self, **params):
         return self
+
+    def _get_tags(self):
+        return {}
 
 
 def test_rfe_features_importance():
@@ -369,3 +369,37 @@ def test_rfe_cv_groups():
     )
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
+
+
+@pytest.mark.parametrize("cv", [
+    None,
+    5
+])
+def test_rfe_allow_nan_inf_in_x(cv):
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    # add nan and inf value to X
+    X[0][0] = np.NaN
+    X[0][1] = np.Inf
+
+    clf = MockClassifier()
+    if cv is not None:
+        rfe = RFECV(estimator=clf, cv=cv)
+    else:
+        rfe = RFE(estimator=clf)
+    rfe.fit(X, y)
+    rfe.transform(X)
+
+
+@pytest.mark.parametrize('ClsRFE', [
+    RFE,
+    RFECV
+    ])
+def test_multioutput(ClsRFE):
+    X = np.random.normal(size=(10, 3))
+    y = np.random.randint(2, size=(10, 2))
+    clf = RandomForestClassifier(n_estimators=5)
+    rfe_test = ClsRFE(clf)
+    rfe_test.fit(X, y)

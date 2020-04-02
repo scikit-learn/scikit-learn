@@ -7,7 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_array, check_random_state, check_consistent_length
+from ..utils import check_array, check_random_state
+from ..utils.validation import _check_sample_weight
 
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
@@ -84,7 +85,6 @@ class KernelDensity(BaseEstimator):
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
     >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X)
-    KernelDensity(...)
     >>> log_density = kde.score_samples(X[:3])
     >>> log_density
     array([-1.52955942, -1.51462041, -1.60244657])
@@ -152,16 +152,10 @@ class KernelDensity(BaseEstimator):
             Returns instance of object.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = check_array(X, order='C', dtype=DTYPE)
+        X = self._validate_data(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,
-                                        ensure_2d=False)
-            if sample_weight.ndim != 1:
-                raise ValueError("the shape of sample_weight must be ({0},),"
-                                 " but was {1}".format(X.shape[0],
-                                                       sample_weight.shape))
-            check_consistent_length(X, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X, DTYPE)
             if sample_weight.min() <= 0:
                 raise ValueError("sample_weight must have positive values")
 
@@ -236,11 +230,11 @@ class KernelDensity(BaseEstimator):
         n_samples : int, optional
             Number of samples to generate. Defaults to 1.
 
-        random_state : int, RandomState instance or None. default to None
-            If int, random_state is the seed used by the random number
-            generator; If RandomState instance, random_state is the random
-            number generator; If None, the random number generator is the
-            RandomState instance used by `np.random`.
+        random_state : int, RandomState instance, default=None
+            Determines random number generation used to generate
+            random samples. Pass an int for reproducible results
+            across multiple function calls.
+            See :term: `Glossary <random_state>`.
 
         Returns
         -------

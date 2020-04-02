@@ -149,11 +149,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         If the loss on a sample is greater than the ``residual_threshold``,
         then this sample is classified as an outlier.
 
-    random_state : int, RandomState instance or None, optional, default None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        The generator used to initialize the centers.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -247,7 +246,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             `max_trials` randomly chosen sub-samples.
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
 
@@ -320,13 +319,15 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             raise ValueError("%s does not support sample_weight. Samples"
                              " weights are only used for the calibration"
                              " itself." % estimator_name)
-        sample_weight = _check_sample_weight(sample_weight, X)
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         n_inliers_best = 1
         score_best = -np.inf
         inlier_mask_best = None
         X_inlier_best = None
         y_inlier_best = None
+        inlier_best_idxs_subset = None
         self.n_skips_no_inliers_ = 0
         self.n_skips_invalid_data_ = 0
         self.n_skips_invalid_model_ = 0
@@ -403,6 +404,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             inlier_mask_best = inlier_mask_subset
             X_inlier_best = X_inlier_subset
             y_inlier_best = y_inlier_subset
+            inlier_best_idxs_subset = inlier_idxs_subset
 
             max_trials = min(
                 max_trials,
@@ -440,7 +442,13 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
                               ConvergenceWarning)
 
         # estimate final model using all inliers
-        base_estimator.fit(X_inlier_best, y_inlier_best)
+        if sample_weight is None:
+            base_estimator.fit(X_inlier_best, y_inlier_best)
+        else:
+            base_estimator.fit(
+                X_inlier_best,
+                y_inlier_best,
+                sample_weight=sample_weight[inlier_best_idxs_subset])
 
         self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best

@@ -6,6 +6,7 @@ import numbers
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
+from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
@@ -115,9 +116,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         estimator is of dimension 2.
 
     max_features : int or None, optional
-        The maximum number of features selected scoring above ``threshold``.
-        To disable ``threshold`` and only select based on ``max_features``,
-        set ``threshold=-np.inf``.
+        The maximum number of features to select.
+        To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
 
@@ -130,6 +130,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold_ : float
         The threshold value used for feature selection.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
 
     Examples
     --------
@@ -249,3 +253,21 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.estimator_.n_features_in_
+
+    def _more_tags(self):
+        estimator_tags = self.estimator._get_tags()
+        return {'allow_nan': estimator_tags.get('allow_nan', True)}
