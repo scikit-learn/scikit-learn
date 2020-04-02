@@ -1547,7 +1547,7 @@ def check_estimators_pickle(name, estimator_orig):
 
     assert X.shape[1] <= 5, "Few features; lots overhead in small msg"
     actual_bytes = len(pickled_estimator)
-    est_bytes = sys.getsizeof(estimator)
+    est_bytes = estimator.nbytes
     assert actual_bytes <= 3 * est_bytes
 
     result = dict()
@@ -1574,9 +1574,8 @@ def check_estimators_pickle_many_features(name, estimator_orig):
     estimator.fit(X, y)
 
     encoded_bytes = len(pickle.dumps(estimator))
-    estimated_bytes = sys.getsizeof(estimator)
-    # ARDRegression: rel=0.15
-    assert encoded_bytes == pytest.approx(estimated_bytes, rel=0.05)
+    estimated_bytes = estimator.nbytes
+    assert encoded_bytes == pytest.approx(estimated_bytes, rel=0.20)
 
 
 @ignore_warnings(category=FutureWarning)
