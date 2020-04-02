@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -28,7 +29,6 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
@@ -203,6 +203,7 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
+        X, y = self._validate_data(X, y)
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
@@ -472,7 +473,7 @@ class _BaseDiscreteNB(_BaseNB):
         return check_array(X, accept_sparse='csr')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse='csr')
+        return self._validate_data(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -1146,18 +1147,19 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes,
                                    sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_X(self, X):
         X = check_array(X, dtype='int', accept_sparse=False,
                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
-        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
-                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
+                                   force_all_finite=True)
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):

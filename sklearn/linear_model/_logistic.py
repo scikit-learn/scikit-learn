@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -27,11 +27,8 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
-from ..utils.fixes import logsumexp
 from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
@@ -732,10 +729,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0 = w0.ravel()
         target = Y_multi
         if solver == 'lbfgs':
-            func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
+            def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
-            func = lambda x, *args: _multinomial_loss(x, *args)[0]
-            grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
+            def func(x, *args): return _multinomial_loss(x, *args)[0]
+            def grad(x, *args): return _multinomial_loss_grad(x, *args)[1]
             hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
@@ -744,7 +741,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
-            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            def grad(x, *args): return _logistic_loss_and_grad(x, *args)[1]
             hess = _logistic_grad_hess
         warm_start_sag = {'coef': np.expand_dims(w0, axis=1)}
 
@@ -1309,8 +1306,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
-                        raise ValueError("l1_ratio must be between 0 and 1;"
-                                         " got (l1_ratio=%r)" % self.l1_ratio)
+                raise ValueError("l1_ratio must be between 0 and 1;"
+                                 " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
@@ -1339,8 +1336,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=_dtype,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -1812,9 +1810,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 "LogisticRegressionCV."
             )
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=np.float64,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight

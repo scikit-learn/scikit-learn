@@ -20,7 +20,6 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -357,7 +356,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

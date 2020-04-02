@@ -80,6 +80,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
+    yield check_sample_weights_shape
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
@@ -280,6 +281,8 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
+    if not tags["no_validation"]:
+        yield check_n_features_in
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -355,6 +358,32 @@ def _generate_class_checks(Estimator):
     yield from _generate_instance_checks(name, estimator)
 
 
+def _mark_xfail_checks(estimator, check, pytest):
+    """Mark estimator check pairs with xfail"""
+    if isinstance(estimator, type):
+        # try to construct estimator to get tags, if it is unable to then
+        # return the estimator class
+        try:
+            xfail_checks = _safe_tags(_construct_instance(estimator),
+                                      '_xfail_test')
+        except Exception:
+            return estimator, check
+    else:
+        xfail_checks = _safe_tags(estimator, '_xfail_test')
+
+    if not xfail_checks:
+        return estimator, check
+
+    check_name = _set_check_estimator_ids(check)
+    msg = xfail_checks.get(check_name, None)
+
+    if msg is None:
+        return estimator, check
+
+    return pytest.param(
+        estimator, check, marks=pytest.mark.xfail(reason=msg))
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -373,11 +402,17 @@ def parametrize_with_checks(estimators):
     decorator : `pytest.mark.parametrize`
     """
     import pytest
-    return pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for estimator in estimators),
-        ids=_set_check_estimator_ids)
+
+    checks_generator = chain.from_iterable(
+        check_estimator(estimator, generate_only=True)
+        for estimator in estimators)
+
+    checks_with_marks = (
+        _mark_xfail_checks(estimator, check, pytest)
+        for estimator, check in checks_generator)
+
+    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+                                   ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):
@@ -765,6 +800,31 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
+def check_sample_weights_shape(name, estimator_orig):
+    # check that estimators raise an error if sample_weight
+    # shape mismatches the input
+    if (has_fit_parameter(estimator_orig, "sample_weight") and
+            not (hasattr(estimator_orig, "_pairwise")
+                 and estimator_orig._pairwise)):
+        estimator = clone(estimator_orig)
+        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                      [2, 1], [2, 1], [2, 1], [2, 1],
+                      [3, 3], [3, 3], [3, 3], [3, 3],
+                      [4, 1], [4, 1], [4, 1], [4, 1]])
+        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                      1, 1, 1, 1, 2, 2, 2, 2])
+        y = _enforce_estimator_tags_y(estimator, y)
+
+        estimator.fit(X, y, sample_weight=np.ones(len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones(2*len(y)))
+
+        assert_raises(ValueError, estimator.fit, X, y,
+                      sample_weight=np.ones((len(y), 2)))
+
+
+@ignore_warnings(category=FutureWarning)
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
@@ -1032,13 +1092,6 @@ def check_methods_subset_invariance(name, estimator_orig):
 
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
-        # TODO remove cases when corrected
-        if (name, method) in [('NuSVC', 'decision_function'),
-                              ('SparsePCA', 'transform'),
-                              ('MiniBatchSparsePCA', 'transform'),
-                              ('DummyClassifier', 'predict'),
-                              ('BernoulliRBM', 'score_samples')]:
-            raise SkipTest(msg)
 
         if hasattr(estimator, method):
             result_full, result_by_batch = _apply_on_subsets(
@@ -2243,13 +2296,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-    if name == "NuSVC":
-        # the sparse version has a parameter that doesn't do anything
-        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
-    if name.endswith("NB"):
-        # NaiveBayes classifiers have a somewhat different interface.
-        # FIXME SOON!
-        raise SkipTest
 
     if _safe_tags(classifier_orig, 'binary_only'):
         problems = [2]
@@ -2601,6 +2647,22 @@ def _enforce_estimator_tags_y(estimator, y):
     return y
 
 
+def _enforce_estimator_tags_x(estimator, X):
+    # Estimators with a `_pairwise` tag only accept
+    # X of shape (`n_samples`, `n_samples`)
+    if hasattr(estimator, '_pairwise'):
+        X = X.dot(X.T)
+    # Estimators with `1darray` in `X_types` tag only accept
+    # X of shape (`n_samples`,)
+    if '1darray' in _safe_tags(estimator, 'X_types'):
+        X = X[:, 0]
+    # Estimators with a `requires_positive_X` tag only accept
+    # strictly positive data
+    if _safe_tags(estimator, 'requires_positive_X'):
+        X -= X.min()
+    return X
+
+
 @ignore_warnings(category=FutureWarning)
 def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
@@ -2871,3 +2933,41 @@ def check_fit_idempotent(name, estimator_orig):
                 atol=max(tol, 1e-9), rtol=max(tol, 1e-7),
                 err_msg="Idempotency check failed for method {}".format(method)
             )
+
+
+def check_n_features_in(name, estimator_orig):
+    # Make sure that n_features_in_ attribute doesn't exist until fit is
+    # called, and that its value is correct.
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    assert not hasattr(estimator, 'n_features_in_')
+    estimator.fit(X, y)
+    if hasattr(estimator, 'n_features_in_'):
+        assert estimator.n_features_in_ == X.shape[1]
+    else:
+        warnings.warn(
+            "As of scikit-learn 0.23, estimators should expose a "
+            "n_features_in_ attribute, unless the 'no_validation' tag is "
+            "True. This attribute should be equal to the number of features "
+            "passed to the fit method. "
+            "An error will be raised from version 0.25 when calling "
+            "check_estimator(). "
+            "See SLEP010: "
+            "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
+            FutureWarning
+        )
