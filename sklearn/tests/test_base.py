@@ -537,7 +537,8 @@ def test_sizeof():
     init = sys.getsizeof(est)
     assert init <= 200
 
-    est.fit(*make_classification(n_features=1000))
+    X, y = make_classification(n_features=1000)
+    est.fit(X, y)
     usage = sum(
         getattr(est, name).nbytes
         for name in ["singular_", "intercept_", "coef_"]
