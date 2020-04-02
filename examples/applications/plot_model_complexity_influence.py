@@ -92,7 +92,7 @@ classification_data = generate_data('classification')
 #
 # Now, it's the time to choose the parameters for each of our estimators. We
 # make a dictionary with all the necessary values.
-# 'changing_param' is the name of the parameter we are going to vary. We are 
+# 'changing_param' is the name of the parameter we are going to vary. We are
 # 'changing_param_vaues' is the list of the those varying values.
 # 'complexity_label'
 # 'complexity_computer'
@@ -109,6 +109,7 @@ classification_data = generate_data('classification')
 def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.toarray()
     return np.count_nonzero(a)
+
 
 configurations = [
     {'estimator': SGDClassifier,
@@ -155,7 +156,7 @@ configurations = [
 # collecting the prediction times, prediction powers and
 # complexities for each of the changing value.
 # In each lap we will set the new estimator with set 'tuned_params' and the
-# updated changing param value. 
+# updated changing param value.
 #
 
 
@@ -191,7 +192,6 @@ def benchmark_influence(conf):
 ##############################################################################
 # Run the code and plot the results
 # ---------------------------------
-# 
 #
 #
 
