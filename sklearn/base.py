@@ -337,9 +337,12 @@ class BaseEstimator:
 
 
 def _sizeof(cls):
-    #  return sum(x.nbytes if hasattr(x, 'nbytes') else sys.getsizeof(x)
-    #  for x in cls.__dict__.values())
-    return sum(sys.getsizeof(x) for x in cls.__dict__.values())
+    return sum(
+            x.nbytes
+            if hasattr(x, "nbytes") and not callable(x.nbytes)
+            else sys.getsizeof(x)
+            for x in cls.__dict__.values()
+    )
 
 
 class ClassifierMixin:
