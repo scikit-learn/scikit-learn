@@ -69,7 +69,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> ps = PolynomialSampler(degree=3, random_state=1)
     >>> X_features = ps.fit_transform(X)
-    >>> clf = clf = SGDClassifier(max_iter=10, tol=1e-3)
+    &gt;&gt;&gt; clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
@@ -118,14 +118,9 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
-        if sp.issparse(X) and self.coef0 != 0:
-            X = sp.hstack([X, np.sqrt(self.coef0) * np.ones((X.shape[0], 1))],
-                          format="csc")
-
-        elif not sp.issparse(X) and self.coef0 != 0:
-            X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
-
         n_features = X.shape[1]
+        if self.coef0 != 0:
+            n_features += 1
 
         self.indexHash_ = random_state.randint(0, high=self.n_components,
                                                size=(self.degree, n_features))
