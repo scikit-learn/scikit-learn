@@ -12,8 +12,8 @@ Here, we will use two datasets:
       taken from diabetes patients. The task is to predict the disease
       progression TODO: add link
     - 20 Newsgroups dataset for classification. This dataset consists of
-      newsgroup posts. The task is to predict on which (out of 20 topics) the
-      post is written.
+      newsgroup posts. The task is to predict on which (out of 20 topics) is
+      the post
 
 We will use three different estimators:
     - SGDClassifier (for classification data) which implements stochastic
@@ -87,27 +87,28 @@ classification_data = generate_data('classification')
 
 
 ##############################################################################
+# Choose parameters
+# -----------------------------
 #
-# --------------------------------
-#
-#
+# Now, it's the time to choose the parameters for each of our estimators. We
+# make a dictionary with all the necessary values.
+# 'changing_param' is the name of the parameter we are going to vary. We are 
+# 'changing_param_vaues' is the list of the those varying values.
+# 'complexity_label'
+# 'complexity_computer'
+# prediction_performance_computer
+# prediction_performance_label
+# postfit_hook'
+# data: depending on the estimator we will pass either classification or
+#       regression data
+# n_samples
+# estimator we are selecting 'changing_param': the parameter which will vary
+# (l1_ratio, nu and n_estimators respectively).
 #
 
 def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.toarray()
     return np.count_nonzero(a)
-
-
-##############################################################################
-# Choose parameters
-# -----------------------------
-#
-# Now, we will set all the parameters which we will use for the estimators.
-# Here, we are choosing different configuration to test three different
-# estimators: SGDClassifier, NuSVR and GradientBoostingRegressor. For each
-# estimator we are selecting 'changing_param': the parameter which will vary
-# (l1_ratio, nu and n_estimators respectively).
-#
 
 configurations = [
     {'estimator': SGDClassifier,
@@ -150,13 +151,11 @@ configurations = [
 ##############################################################################
 # Benchmark influence
 # -------------------
-# Here ware writing a function which will receive a dictionary of parameters:
-# estimator: name of the estimator to run
-# tuned_params
-# changing_param:
-# changing_param_values
-# complexity_label:
-# data:
+# Finally we can calculate the influence of the changing params. We will be
+# collecting the prediction times, prediction powers and
+# complexities for each of the changing value.
+# In each lap we will set the new estimator with set 'tuned_params' and the
+# updated changing param value. 
 #
 
 
@@ -170,6 +169,7 @@ def benchmark_influence(conf):
     for param_value in conf['changing_param_values']:
         conf['tuned_params'][conf['changing_param']] = param_value
         estimator = conf['estimator'](**conf['tuned_params'])
+
         print("Benchmarking %s" % estimator)
         estimator.fit(conf['data']['X_train'], conf['data']['y_train'])
         conf['postfit_hook'](estimator)
@@ -189,9 +189,9 @@ def benchmark_influence(conf):
     return prediction_powers, prediction_times, complexities
 
 ##############################################################################
-#
-# --------------------------------
-#
+# Run the code and plot the results
+# ---------------------------------
+# 
 #
 #
 
@@ -222,13 +222,9 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
 # #############################################################################
 # Main code
-
-
-##############################################################################
-#
 # --------------------------------
-#
-#
+# Now that all the functions are set we will run all the estimators and plot
+# the results
 #
 
 
