@@ -110,7 +110,6 @@ def swiss(X):
         The transformed data.
     """
     temp = logistic_sigmoid(X, out=X)
-    
     return temp*X
 
 ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
