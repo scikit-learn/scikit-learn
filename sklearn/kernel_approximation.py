@@ -127,7 +127,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
         self.bitHash_ = random_state.choice(a=[-1., 1.],
                                             size=(self.degree, n_features)
-                                            ).astype(np.float32)
+                                            )
         return self
 
     def transform(self, X):
@@ -158,14 +158,14 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
             raise ValueError("Number of features of test samples does not"
                              " match that of training samples.")
 
-        Ps = np.zeros((X.shape[0], self.degree, self.n_components))
+        count_sketches = np.zeros((X.shape[0], self.degree, self.n_components))
 
         if sp.issparse(X):
             for j in range(X.shape[1]):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
-                    Ps[:, d, iHashIndex] += \
+                    count_sketches[:, d, iHashIndex] += \
                         (iHashBit * X[:, j]).toarray().ravel()
 
         else:
@@ -173,11 +173,15 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
-                    Ps[:, d, iHashIndex] += iHashBit * X[:, j]
+                    count_sketches[:, d, iHashIndex] += iHashBit * X[:, j]
 
-        Ps = fftpack.fft(Ps, axis=2, overwrite_x=True)
-        temps = np.prod(Ps, axis=1)
-        data_sketch = np.real(fftpack.ifft(temps, overwrite_x=True))
+        # For each same, compute a count sketch of phi(x) using the polynomial
+        # multiplication (via FFT) of p count sketches of x.
+        count_sketches_fft = fftpack.fft(count_sketches, axis=2,
+                                         overwrite_x=True)
+        count_sketches_fft_prod = np.prod(count_sketches_fft, axis=1)
+        data_sketch = np.real(fftpack.ifft(count_sketches_fft_prod,
+                                           overwrite_x=True))
 
         return data_sketch
 
