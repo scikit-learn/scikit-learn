@@ -177,8 +177,9 @@ computes the Count Sketch of the vectors and then uses polynomial multiplication
 via the Fast Fourier Transform to compute the Count Sketch of their outer product.
 
 Conveniently, the training phase of TensorSketch simply consists of initializing
-some random variables, thus being a data-independent method. In addition, this
-method can transform samples in :math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}}))`, where
+some random variables, thus being a independent of the distribution of data.
+In addition, this method can transform samples in
+:math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}}))`, where
 :math:`n_{\text{components}}` is the desired output dimension, determined by ``n_components``.
 
 .. topic:: Examples:

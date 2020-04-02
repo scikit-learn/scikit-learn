@@ -25,19 +25,21 @@ from .utils.validation import check_non_negative
 
 
 class PolynomialSampler(BaseEstimator, TransformerMixin):
-    """Implements Tensor Sketch [1], which approximates the feature map
-    of the polynomial kernel by efficiently computing a Count Sketch [2]
-    of the outer product of a vector with itself.
+    """ Polynomial kernel approximation via Tensor Sketch.
+
+    Implements Tensor Sketch [1], which approximates the feature map
+    of the polynomial kernel (K(x,y) = <x,y+coef0>^degree) by efficiently
+    computing a Count Sketch [2] of the outer product of a vector with itself.
 
     Parameters
     ----------
     degree : int
         Degree of the homogeneous polynomial kernel whose feature map
-        will be approximated. The kernel is K(x,y) = <x,y+coef0>^degree.
+        will be approximated.
 
     coef0 : int
         Constant term of the polynomial kernel whose feature map
-        will be approximated. The kernel is K(x,y) = <x,y+coef0>^degree.
+        will be approximated.
 
     n_components : int
         Dimensionality of the output feature space.
@@ -47,6 +49,17 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator.
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    Attributes
+    ----------
+    indexHash_ : ndarray of shape (degree, n_features), dtype=int64
+        Array of indexes in range [0, n_components) used to represent
+        the 2-wise independent hash functions for Count Sketch computation.
+
+    bitHash_ : ndarray of shape (degree, n_features), dtype=float32
+        Array with random entries in {+1, -1}, used to represent
+        the 2-wise independent hash functions for Count Sketch computation.
+
 
     Examples
     --------
@@ -87,8 +100,8 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Fit the model with X.
 
-        Initializes the internal variables. The method is data-independent,
-        so we only care about the dimension of samples in X.
+        Initializes the internal variables. The method needs no information
+        about the distribution of data, so we only care about n_features in X.
 
         Parameters
         ----------
