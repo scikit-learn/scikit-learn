@@ -95,9 +95,25 @@ def softmax(X):
 
     return X
 
+def swiss(X):
+    """Compute the f(x)=x*sigmoid(x)
+    
+    Parameters
+    ----------------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The input data.
+        
+    Returns
+    ----------------
+    computed_X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The transformed data.
+       """
+    temp=logistic_sigmoid(X, out=X)
+    return temp*X
+
 
 ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
-               'relu': relu, 'softmax': softmax}
+               'relu': relu, 'softmax': softmax,'swiss':swiss}
 
 
 def inplace_identity_derivative(Z, delta):
