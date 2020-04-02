@@ -95,6 +95,7 @@ def softmax(X):
 
     return X
 
+
 def swiss(X):
     """Compute the f(x)=x*sigmoid(x)
 
