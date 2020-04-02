@@ -15,6 +15,7 @@ from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 __all__ = ["TruncatedSVD"]
@@ -212,6 +213,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             Reduced version of X. This will always be a dense array.
         """
         X = check_array(X, accept_sparse='csr')
+        check_is_fitted(self)
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
