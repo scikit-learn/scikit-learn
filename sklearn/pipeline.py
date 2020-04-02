@@ -876,7 +876,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                 (t, type(t)))
             elif not hasattr(t, "transform"):
                 warnings.warn("Intermediate step '%s' (type %s) does not have "
-                              "transform" % (t, type(t)))
+                              "transform.  This FeatureUnion will not be "
+                              "usable with test data" % (t, type(t)))
 
     def _iter(self):
         """
