@@ -18,7 +18,7 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array, check_X_y
+from .utils import check_array
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax

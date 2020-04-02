@@ -15,7 +15,7 @@ from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_X_y, check_array
+from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
 
 
@@ -486,7 +486,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
             log_likelihood_gradient_dims = \
-                0.5 * np.einsum("ijl,ijk->kl", tmp, K_gradient)
+                0.5 * np.einsum("ijl,jik->kl", tmp, K_gradient)
             log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
 
         if eval_gradient:

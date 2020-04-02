@@ -17,7 +17,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
@@ -25,7 +25,8 @@ from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 
-from . import _cd_fast as cd_fast
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from . import _cd_fast as cd_fast  # type: ignore
 
 
 def _set_order(X, y, order='C'):

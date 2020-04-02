@@ -14,7 +14,7 @@ from scipy.special import erf, expit
 from ..base import BaseEstimator, ClassifierMixin, clone
 from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
