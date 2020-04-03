@@ -1040,7 +1040,7 @@ def test_column_transformer_no_estimators_set_params():
 
 
 def test_column_transformer_callable_specifier():
-    # assert that function gets the full array / dataframe
+    # assert that function gets the full array
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_first = np.array([[0, 1, 2]]).T
 
@@ -1055,7 +1055,13 @@ def test_column_transformer_callable_specifier():
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == [0]
 
+
+def test_column_transformer_callable_specifier_dataframe():
+    # assert that function gets the full dataframe
     pd = pytest.importorskip('pandas')
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_first = np.array([[0, 1, 2]]).T
+
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
 
     def func(X):
@@ -1185,6 +1191,18 @@ def test_column_transformer_mask_indexing(array_type):
     )
     X_trans = column_transformer.fit_transform(X)
     assert X_trans.shape == (3, 2)
+
+
+def test_n_features_in():
+    # make sure n_features_in is what is passed as input to the column
+    # transformer.
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    ct = ColumnTransformer([('a', DoubleTrans(), [0]),
+                            ('b', DoubleTrans(), [1])])
+    assert not hasattr(ct, 'n_features_in_')
+    ct.fit(X)
+    assert ct.n_features_in_ == 2
 
 
 @pytest.mark.parametrize('cols, pattern, include, exclude', [

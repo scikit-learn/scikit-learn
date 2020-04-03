@@ -17,7 +17,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
@@ -25,7 +25,8 @@ from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
 
-from . import _cd_fast as cd_fast
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from . import _cd_fast as cd_fast  # type: ignore
 
 
 def _set_order(X, y, order='C'):
@@ -751,9 +752,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # when bypassing checks
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = check_X_y(X, y, accept_sparse='csc',
-                             order='F', dtype=[np.float64, np.float32],
-                             copy=X_copied, multi_output=True, y_numeric=True)
+            X, y = self._validate_data(X, y, accept_sparse='csc',
+                                       order='F',
+                                       dtype=[np.float64, np.float32],
+                                       copy=X_copied, multi_output=True,
+                                       y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
@@ -1197,8 +1200,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                            copy=False)
+            X = self._validate_data(X, accept_sparse='csc',
+                                    dtype=[np.float64, np.float32], copy=False)
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
                    not np.may_share_memory(reference_to_old_X.data, X.data)):
@@ -1209,8 +1212,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                 copy_X = False
             del reference_to_old_X
         else:
-            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                            order='F', copy=copy_X)
+            X = self._validate_data(X, accept_sparse='csc',
+                                    dtype=[np.float64, np.float32], order='F',
+                                    copy=copy_X)
             copy_X = False
 
         if X.shape[0] != y.shape[0]:
@@ -1831,8 +1835,8 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = check_array(X, dtype=[np.float64, np.float32], order='F',
-                        copy=self.copy_X and self.fit_intercept)
+        X = self._validate_data(X, dtype=[np.float64, np.float32], order='F',
+                                copy=self.copy_X and self.fit_intercept)
         y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):

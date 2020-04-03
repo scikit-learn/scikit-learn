@@ -65,7 +65,6 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     classes_
-
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
@@ -96,6 +95,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             assert self.check_X(X)
         if self.check_y is not None:
             assert self.check_y(y)
+        self.n_features_in_ = len(X)
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:

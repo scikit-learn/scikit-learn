@@ -83,6 +83,8 @@ master!) with all the desired changes::
 
 	$ git rebase -i upstream/0.999.2
 
+Do not forget to add a commit updating sklearn.__version__.
+
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
@@ -213,6 +215,24 @@ The following GitHub checklist might be helpful in a release PR::
       #15847)
     * [ ] announce on mailing list and on twitter
 
+Merging Pull Requests
+---------------------
+
+Individual commits are squashed when a Pull Request (PR) is merged on Github.
+Before merging,
+
+- the resulting commit title can be edited if necessary. Note
+  that this will rename the PR title by default.
+- the detailed description, containing the titles of all the commits, can
+  be edited or deleted.
+- for PRs with multiple code contributors care must be taken to keep
+  the `Co-authored-by: name <name@example.com>` tags in the detailed
+  description. This will mark the PR as having `multiple co-authors
+  <https://help.github.com/en/github/committing-changes-to-your-project/creating-a-commit-with-multiple-authors>`_.
+  Whether code contributions are significanly enough to merit co-authorship is
+  left to the maintainer's discretion, same as for the "what's new" entry.
+
+
 The scikit-learn.org web site
 -----------------------------
 
@@ -268,6 +288,14 @@ submodule/subpackage of the public subpackage, e.g.
 ``sklearn/ensemble/_hist_gradient_boosting/`` or
 ``sklearn/impute/_iterative.py``. This is needed so that pickles still work
 in the future when the features aren't experimental anymore
+
+To avoid type checker (e.g. mypy) errors a direct import of experimenal
+estimators should be done in the parent module, protected by the
+``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
+or `sklearn/impute/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/impute/__init__.py>`_
+for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
