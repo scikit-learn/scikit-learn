@@ -18,7 +18,7 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, logger
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
@@ -572,7 +572,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg = "[CV%s] END " % progress_msg
         result_msg = params_msg + ("; " if params_msg else "")
         if verbose > 2:
-            result_msg += "score=%f, " % test_score
+            result_msg += "scores=%s, " % test_scores
         result_msg += "total time=%s" % logger.short_format_time(total_time)
 
         # Right align the result_msg

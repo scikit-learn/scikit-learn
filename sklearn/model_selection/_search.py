@@ -673,6 +673,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
+        pre_dispatch = self.pre_dispatch
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
@@ -703,10 +704,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        X, y,
                                                        train=train, test=test,
                                                        parameters=parameters,
+                                                       split_progress=(
+                                                           split_i, n_splits),
+                                                       param_progress=(
+                                                           param_i,
+                                                           n_candidates),
                                                        **fit_and_score_kwargs)
-                               for parameters, (train, test)
-                               in product(candidate_params,
-                                          cv.split(X, y, groups)))
+          for (param_i, parameters), (split_i, (train, test)) in product(
+              enumerate(candidate_params), enumerate(cv.split(X, y, groups))))
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
