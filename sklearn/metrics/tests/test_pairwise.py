@@ -1132,15 +1132,13 @@ def test_gower_distances():
     assert_array_almost_equal(D * 2, manhattan_distances(X))
 
     # Test to obtain a non-squared distance matrix
-    X = np.array([['Syria', 1.0, 0.0, 0.0, True],
-                  ['Ireland', 0.181818, 0.0, 1, False],
-                  ['United Kingdom', 0.0, 0.0, 0.160377, False]],
-                 dtype=object)
+    X = [['Syria', 1.0, 0.0, 0.0, True],
+         ['Ireland', 0.181818, 0.0, 1, False],
+         ['United Kingdom', 0.0, 0.0, 0.160377, False]]
 
-    Y = np.array([['United Kingdom', 0.090909, 0.0, 0.500109, True]],
-                 dtype=object)
+    Y = [['United Kingdom', 0.090909, 0.0, 0.500109, True]]
 
-    D = gower_distances(X, Y, categorical_features=[0, 3], scale=True)
+    D = gower_distances(X, Y, categorical_features=[0, 4], scale=False)
 
     # Simplified calculation of Gower distance for expected values
     D_expected = np.zeros((3, 1))
@@ -1204,12 +1202,7 @@ def test_gower_distances():
     D = gower_distances(X)
     assert_array_almost_equal(D_expected, D)
 
-    # Test warnings for unexpected non-normalized data
-    X = [[1, 20], [0, -10.0]]
-    with pytest.raises(ValueError):
-        gower_distances(X, scale=False)
-
-    # Test X and Y with diferent ranges of numeric values
+    # Test X and Y with different ranges of numeric values
     X = [[9222.22, -11],
          [41934.0, -44],
          [1, 1]]
@@ -1218,7 +1211,7 @@ def test_gower_distances():
          [1934.0, 4],
          [3000, 3000]]
 
-    D = gower_distances(X, Y)
+    D = gower_distances(X, Y, scale=True)
 
     # The expected normalized values above are:
     Xn = [[0.22403432, 0.010841],
@@ -1244,17 +1237,10 @@ def test_gower_distances():
     D = gower_distances(X, Y)
     assert_array_almost_equal(D_expected, D)
 
-    # Test gower robustness after slice the data, with its original ranges
-    D = gower_distances(X, Y[1:2],  scale=[42156.22, 3044.0])
-    assert_array_almost_equal(D_expected[:, 1:2], D)
-
     # an assertion error is expected here, because there is no scale
     D = gower_distances(X, Y[1:2])
     with pytest.raises(AssertionError):
         assert_array_almost_equal(D_expected[:, 1:2], D)
-
-    D = gower_distances(X, Y[0:1], scale=[42156.22, 3044.0])
-    assert_array_almost_equal(D_expected[:, 0:1], D)
 
     # an assertion error is expected here, because there is no scale
     D = gower_distances(X, Y[0:1])
@@ -1265,7 +1251,7 @@ def test_gower_distances():
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
     assert_array_almost_equal(D_expected, D)
 
-    # Test X and Y with diferent ranges of numeric values, categorical values,
+    # Test X and Y with different ranges of numeric values, categorical values,
     # and using pairwise_distances
     X = [[9222.22, -11, 'M', 1],
          [41934.0, -44, 'F', 1],
@@ -1295,11 +1281,17 @@ def test_gower_distances():
             # by observation, attribute by attribute.
             D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
                                  abs(Xn[i][1] - Yn[j][1]) +
-                                 [1, 0][Xn[i][2] == Yn[j][2]] +
+                                 ([1, 0][Xn[i][2] == Yn[j][2]]
+                                  if (Xn[i][2] == Xn[i][2] and
+                                      Yn[i][2] == Yn[i][2]) else 0) +
                                  abs(Xn[i][3] - Yn[j][3])) /
                                 non_missing_cols[i])
 
-    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
+    # pairwise_distances will convert the input to strings and np.nan would
+    # therefore be 'nan'. Passing DataFrames will avoid that.
+    D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
+                           n_jobs=2,
+                           categorical_features=[2])
     assert_array_almost_equal(D_expected, D)
 
     # Test categorical_values passed in kwargs
@@ -1311,12 +1303,16 @@ def test_gower_distances():
             # by observation, attribute by attribute.
             D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
                                  abs(Xn[i][1] - Yn[j][1]) +
-                                 [1, 0][Xn[i][2] == Yn[j][2]] +
+                                 ([1, 0][Xn[i][2] == Yn[j][2]]
+                                  if (Xn[i][2] == Xn[i][2] and
+                                      Yn[i][2] == Yn[i][2]) else 0) +
                                  [1, 0][Xn[i][3] == Yn[j][3]]) /
                                 non_missing_cols[i])
 
-    D = pairwise_distances(X, Y, metric='gower', n_jobs=2,
-                           categorical_features=[False, False, True, True])
+    # TODO: boolean array with safe_indexing doesn't work?
+    D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
+                           n_jobs=2,
+                           categorical_features=[2, 3])
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1358,7 +1354,7 @@ def test_gower_distances():
 
     X[0] = np.nan
     Y[0] = np.nan
-    D = gower_distances(X, Y)
+    D = gower_distances(X, Y, categorical_features=[0])
     assert_array_equal(D_expected, D)
 
     X = np.full((15, 1), True, dtype=np.object)
@@ -1376,7 +1372,6 @@ def test_gower_distances():
     Y[0] = np.nan
     D = gower_distances(X, Y)
     assert_array_equal(D_expected, D)
-
 
 
 def test_haversine_distances():
@@ -1400,7 +1395,6 @@ def test_haversine_distances():
     err_msg = "Haversine distance only valid in 2 dimensions"
     with pytest.raises(ValueError, match=err_msg):
         haversine_distances(X)
-
 
 
 # Paired distances

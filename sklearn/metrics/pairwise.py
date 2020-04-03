@@ -21,6 +21,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
+from ..utils.validation import check_consistent_length
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
@@ -34,6 +35,7 @@ from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 from ..utils.fixes import _object_dtype_isnan
 from ..preprocessing import MinMaxScaler
+
 
 # Utility Functions
 def _return_float_dtype(X, Y):
@@ -831,7 +833,33 @@ def cosine_distances(X, Y=None):
     return S
 
 
-def gower_distances(X, Y=None, categorical_features=None, scale=True):
+def _split_categorical_numerical(X, categorical_features):
+    # the following bit is done before check_pairwise_array to avoid converting
+    # numerical data to object dtype. First we split the data into categorical
+    # and numerical, then we do check_array
+
+    # TODO: this should be more like check_array(..., accept_pandas=True)
+    if (X is not None and not hasattr(X, 'iloc')
+            and not hasattr(X, '__array__')):
+        X = check_array(X, dtype=np.object, force_all_finite=False)
+
+    if callable(categorical_features) and X is not None:
+        cols = categorical_features(X)
+    else:
+        cols = categorical_features
+    if cols is None:
+        cols = []
+
+    if X is not None:
+        X_cat = _safe_indexing(X, cols, axis=1)
+        X_num = _safe_indexing(X, cols, axis=1, inverse=True)
+    else:
+        X_cat = X_num = None
+    return X_cat, X_num
+
+
+def gower_distances(X, Y=None, categorical_features=None, scale=True,
+                    min_values=None, scale_factor=None):
     """Compute the distances between the observations in X and Y,
     that may contain mixed types of data, using an implementation
     of Gower formula.
@@ -857,7 +885,18 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     scale : bool, default=True
         Indicates if the numerical columns will be scaled between 0 and 1.
         If false, it is assumed the numerical columns are already scaled.
-        The scaling factors, _i.e._ min and max, are taken from ``X``.
+        The scaling factors, _i.e._ min and max, are taken from both ``X`` and
+        ``Y``.
+
+    min_values : ndarray of shape (n_features,), default=None
+        Per feature adjustment for minimum. Equivalent to
+        ``min_values - X.min(axis=0) * scale_factor``
+        If provided, ``scale_factor`` should be provided as well.
+
+    scale_factor : ndarray of shape (n_features,), default=None
+        Per feature relative scaling of the data. Equivalent to
+        ``(max_values - min_values) / (X.max(axis=0) - X.min(axis=0))``
+        If provided, ``min_values`` should be provided as well.
 
     Returns
     -------
@@ -870,8 +909,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     Notes
     -----
-    The numeric feature ranges are determined from both X and Y.
-
     Categorical ordinal attributes should be treated as numeric for the purpose
     of Gower similarity.
 
@@ -897,7 +934,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         return np.asarray(X).shape[1]
 
     def _nanmanhatan(x, y):
-        return np.abs(np.nansum(x - y))
+        return np.nansum(np.abs(x - y))
 
     def _non_nans(x, y):
         return np.sum(~_object_dtype_isnan(x) & ~_object_dtype_isnan(y))
@@ -909,40 +946,34 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     if issparse(X) or issparse(Y):
         raise TypeError("Gower distance does not support sparse matrices")
 
-    # TODO: this should be more like check_array(..., accept_pandas=True)
-    if (X is not None and not hasattr(X, 'iloc')
-            and not hasattr(X, '__array__')):
-        X = check_array(X, dtype=np.object, force_all_finite=False)
-    if (Y is not None and not hasattr(Y, 'iloc')
-            and not hasattr(Y, '__array__')):
-        Y = check_array(Y, dtype=np.object, force_all_finite=False)
-
     if X is None or len(X) == 0:
         raise ValueError("X can not be None or empty")
 
-    if callable(categorical_features):
-        cols = categorical_features(X)
-    else:
-        cols = categorical_features
-    if cols is None:
-        cols = []
+    if scale:
+        if (scale_factor is None) != (min_values is None):
+            raise ValueError("min_value and scale_factor should be provided "
+                             "together.")
+    X_cat, X_num = _split_categorical_numerical(X, categorical_features)
+    Y_cat, Y_num = _split_categorical_numerical(Y, categorical_features)
 
-    X_cat = _safe_indexing(X, cols, axis=1)
-    X_num = _safe_indexing(X, cols, axis=1, inverse=True)
-    #print(X_cat)
-    #print(X_num)
-    if Y is not None:
-        Y_cat = _safe_indexing(Y, cols, axis=1)
-        Y_num = _safe_indexing(Y, cols, axis=1, inverse=True)
-    else:
-        Y_cat = Y_num = None
+    if min_values is not None:
+        min_values = np.asarray(min_values)
+        scale_factor = np.asarray(scale_factor)
+        check_consistent_length(min_values, scale_factor,
+                                np.ndarray(shape=(_n_cols(X_num), 0)))
 
     if _n_cols(X_num):
         X_num, Y_num = check_pairwise_arrays(X_num, Y_num, precomputed=False,
                                              dtype=float,
                                              force_all_finite=False)
         if scale:
-            trs = MinMaxScaler().fit(X_num)
+            scale_data = X_num if Y_num is X_num else np.vstack((X_num, Y_num))
+            if scale_factor is None:
+                trs = MinMaxScaler().fit(scale_data)
+            else:
+                trs = MinMaxScaler()
+                trs.scale_ = scale_factor
+                trs.min_ = min_values
             X_num = trs.transform(X_num)
             Y_num = trs.transform(Y_num)
 
@@ -960,11 +991,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     else:
         nan_hamming = valid_cat = None
 
-    #print(nan_manhatan)
-    #print(valid_num)
-    #print(nan_hamming)
-    #print(valid_cat)
-
+    # based on whether there are categorical and/or numerical data present,
+    # we compute the distance metric
+    # Division by zero and nans warnings are ignored since they are expected
     with np.errstate(divide='ignore', invalid='ignore'):
         if valid_num is not None and valid_cat is not None:
             D = (nan_manhatan + nan_hamming) / (valid_num + valid_cat)
@@ -1578,18 +1607,27 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == 'gower':
-        categorical_features = None
-        if 'categorical_features' in kwds:
-            categorical_features = kwds['categorical_features']
+        categorical_features = kwds.get('categorical_features', None)
 
-        num_mask = ~ _detect_categorical_features(X, categorical_features)
+        _, X_num = _split_categorical_numerical(X, categorical_features)
+        _, Y_num = _split_categorical_numerical(Y, categorical_features)
 
-        scale = None
-        if 'scale' in kwds:
-            scale = kwds['scale']
-        scale, _, _ = _precompute_gower_params(X, Y, scale, num_mask)
+        scale = kwds.get('scale', True)
+        if not scale:
+            return {'min_values': None, 'scale_factor': None, 'scale': False}
 
-        return {'scale': scale}
+        scale_factor = kwds.get('scale_factor', None)
+        min_values = kwds.get('min_values', None)
+        if min_values is None:
+            data = X_num if Y is X or Y is None else np.vstack((X_num, Y_num))
+            trs = MinMaxScaler().fit(data)
+            min_values = trs.min_
+            scale_factor = trs.scale_
+
+        return {'min_values': min_values,
+                'scale_factor': scale_factor,
+                'scale': True}
+
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
             V = np.var(X, axis=0, ddof=1)
@@ -1883,11 +1921,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None,
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         if metric == 'gower':
+            """
             # These convertions are necessary for matrices with string values
             if not isinstance(X, np.ndarray):
                 X = np.asarray(X, dtype=np.object)
             if Y is not None and not isinstance(Y, np.ndarray):
                 Y = np.asarray(Y, dtype=np.object)
+            """
             params = _precompute_metric_params(X, Y, metric=metric, **kwds)
             kwds.update(**params)
 
