@@ -69,7 +69,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> ps = PolynomialSampler(degree=3, random_state=1)
     >>> X_features = ps.fit_transform(X)
-    &gt;&gt;&gt; clf = SGDClassifier(max_iter=10, tol=1e-3)
+    >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
@@ -125,9 +125,8 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         self.indexHash_ = random_state.randint(0, high=self.n_components,
                                                size=(self.degree, n_features))
 
-        self.bitHash_ = random_state.choice(a=[-1., 1.],
-                                            size=(self.degree, n_features)
-                                            )
+        self.bitHash_ = random_state.choice(a=[-1, 1],
+                                            size=(self.degree, n_features))
         return self
 
     def transform(self, X):
