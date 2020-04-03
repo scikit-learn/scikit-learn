@@ -382,3 +382,15 @@ Changelog
 - |Fix| :class:`cluster.AgglomerativeClustering` add specific error when 
   distance matrix is not square and `affinity=precomputed`. 
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
+:mod:`sklearn.svm`
+....................
+
+- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+  ``predict``, ``predict_proba``, ``decision_function``, ``cross_validation``,
+  ``libsvm_sparse_train``, ``libsvm_sparse_predict``, 
+  ``libsvm_sparse_predict_proba`` and ``libsvm_sparse_decision_function``
+  methods of
+  :class:`svm.SVC` and :class:`svm.SVR`.
+  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
+
