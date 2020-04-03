@@ -1,9 +1,11 @@
 """
-Benchmarks of with vs without CSR conversion
+Benchmarks of with vs without CSR conversion   
 
-The performances are evaluated in various input dimensions. The input array X is a n x n square matrix. 
+The performances are evaluated in various input dimensions.   
 
-Time is calculated by runing the transform 10 times respectively for each method. 
+The input array X is a n x n square matrix.
+
+Time is calculated by runing the transform 10 times respectively for each method.
 
 Performance Comparison
 ======================
@@ -48,5 +50,5 @@ if __name__ == '__main__':
     print("-" * (sum(header_len) + 2))
     for dim in range(1000, 10000, 1000):
         print("%s %s %s" % ( ("%d" % dim).center(header_len[0]),
-                                ("%.4fs" % benchmark_converted_transform(dim)).center(header_len[1]),
-                                ("%.4fs" % benchmark_direct_transform(dim)).center(header_len[2])))
+                            ("%.4fs" % benchmark_converted_transform(dim)).center(header_len[1]),
+                            ("%.4fs" % benchmark_direct_transform(dim)).center(header_len[2])))
