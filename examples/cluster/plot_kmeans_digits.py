@@ -39,12 +39,12 @@ from sklearn.preprocessing import scale
 
 np.random.seed(42)
 
-digits = load_digits()
-data = scale(digits.data)
+X_digits, y_digits = load_digits(return_X_y=True)
+data = scale(X_digits)
 
 n_samples, n_features = data.shape
-n_digits = len(np.unique(digits.target))
-labels = digits.target
+n_digits = len(np.unique(y_digits))
+labels = y_digits
 
 sample_size = 300
 

@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://scipy.github.io/old-wiki/pages/PerformanceTips
+https://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -94,14 +94,14 @@ loads and prepare you data and then use the IPython integrated profiler
 for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
-of the scikit. Let us setup a new IPython session and load the digits
+of scikit-learn. Let us setup a new IPython session and load the digits
 dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
   In [2]: from sklearn.datasets import load_digits
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
 Before starting the profiling session and engaging in tentative
 optimization iterations, it is important to measure the total execution
@@ -200,9 +200,10 @@ Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition import NMF
+    ... : from sklearn.decomposition._nmf import _nls_subproblem
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
@@ -227,13 +228,13 @@ Now restart IPython and let us use this new toy::
      178                                               # values justified in the paper
      179        48          144      3.0      0.0      alpha = 1
      180        48          113      2.4      0.0      beta = 0.1
-     181       638         1880      2.9      0.1      for n_iter in xrange(1, max_iter + 1):
+     181       638         1880      2.9      0.1      for n_iter in range(1, max_iter + 1):
      182       638       195133    305.9     10.2          grad = np.dot(WtW, H) - WtV
      183       638       495761    777.1     25.9          proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
      184       638         2449      3.8      0.1          if proj_gradient < tol:
      185        48          130      2.7      0.0              break
      186
-     187      1474         4474      3.0      0.2          for inner_iter in xrange(1, 20):
+     187      1474         4474      3.0      0.2          for inner_iter in range(1, 20):
      188      1474        83833     56.9      4.4              Hn = H - alpha * grad
      189                                                       # Hn = np.where(Hn > 0, Hn, 0)
      190      1474       194239    131.8     10.1              Hn = _pos(Hn)
@@ -250,7 +251,7 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
@@ -328,6 +329,27 @@ memory alignment, direct blas calls...
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
+Using OpenMP
+------------
+
+Since scikit-learn can be built without OpenMP, it's necessary to
+protect each direct call to OpenMP. This can be done using the following
+syntax::
+
+  # importing OpenMP
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+      cimport openmp
+
+  # calling OpenMP
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+      max_threads = openmp.omp_get_max_threads()
+  ELSE:
+      max_threads = 1
+
+.. note::
+
+   Protecting the parallel loop, ``prange``, is already done by cython.
+
 
 .. _profiling-compiled-extension:
 
@@ -339,26 +361,16 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------
 
 Easy profiling without special compilation options use yep:
 
-- https://pypi.python.org/pypi/yep
+- https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
-.. note::
-
-  google-perftools provides a nice 'line by line' report mode that
-  can be triggered with the ``--lines`` option. However this
-  does not seem to work correctly at the time of writing. This
-  issue can be tracked on the `project issue tracker
-  <https://github.com/gperftools/gperftools>`_.
-
-
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -369,27 +381,35 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
+``yep`` can be used to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report::
+
+  # Run yep to profile some python script
+  python -m yep -c my_file.py
+
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.prof
+
+.. note::
+
+   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   a profiling report 'line by line'.
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://pythonhosted.org/joblib
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts for cross validation
-==============================================================
+A simple algorithmic trick: warm restarts
+=========================================
 
-TODO: demonstrate the warm restart tricks for cross validation of linear
-regression with Coordinate Descent.
+See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_

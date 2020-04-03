@@ -61,17 +61,17 @@ clf.fit(X, y)
 # Make the prediction on the meshed x-axis
 y_pred = clf.predict(xx)
 
-# Plot the function, the prediction and the 90% confidence interval based on
+# Plot the function, the prediction and the 95% confidence interval based on
 # the MSE
 fig = plt.figure()
-plt.plot(xx, f(xx), 'g:', label=u'$f(x) = x\,\sin(x)$')
+plt.plot(xx, f(xx), 'g:', label=r'$f(x) = x\,\sin(x)$')
 plt.plot(X, y, 'b.', markersize=10, label=u'Observations')
 plt.plot(xx, y_pred, 'r-', label=u'Prediction')
 plt.plot(xx, y_upper, 'k-')
 plt.plot(xx, y_lower, 'k-')
 plt.fill(np.concatenate([xx, xx[::-1]]),
          np.concatenate([y_upper, y_lower[::-1]]),
-         alpha=.5, fc='b', ec='None', label='90% prediction interval')
+         alpha=.5, fc='b', ec='None', label='95% prediction interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)

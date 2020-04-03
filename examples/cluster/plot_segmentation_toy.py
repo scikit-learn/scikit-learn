@@ -74,7 +74,7 @@ graph.data = np.exp(-graph.data / graph.data.std())
 # Force the solver to be arpack, since amg is numerically
 # unstable on this example
 labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
-label_im = -np.ones(mask.shape)
+label_im = np.full(mask.shape, -1.)
 label_im[mask] = labels
 
 plt.matshow(img)
@@ -92,7 +92,7 @@ graph = image.img_to_graph(img, mask=mask)
 graph.data = np.exp(-graph.data / graph.data.std())
 
 labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
-label_im = -np.ones(mask.shape)
+label_im = np.full(mask.shape, -1.)
 label_im[mask] = labels
 
 plt.matshow(img)

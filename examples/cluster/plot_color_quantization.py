@@ -61,7 +61,7 @@ labels = kmeans.predict(image_array)
 print("done in %0.3fs." % (time() - t0))
 
 
-codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
+codebook_random = shuffle(image_array, random_state=0)[:n_colors]
 print("Predicting color indices on the full image (random)")
 t0 = time()
 labels_random = pairwise_distances_argmin(codebook_random,
@@ -84,21 +84,18 @@ def recreate_image(codebook, labels, w, h):
 # Display all results, alongside original image
 plt.figure(1)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Original image (96,615 colors)')
 plt.imshow(china)
 
 plt.figure(2)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Quantized image (64 colors, K-Means)')
 plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
 plt.figure(3)
 plt.clf()
-ax = plt.axes([0, 0, 1, 1])
 plt.axis('off')
 plt.title('Quantized image (64 colors, Random)')
 plt.imshow(recreate_image(codebook_random, labels_random, w, h))

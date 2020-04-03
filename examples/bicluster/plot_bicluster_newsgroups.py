@@ -22,37 +22,35 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
-from __future__ import print_function
-
 from collections import defaultdict
 import operator
-import re
 from time import time
 
 import numpy as np
 
-from sklearn.cluster.bicluster import SpectralCoclustering
+from sklearn.cluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.externals.six import iteritems
-from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
 
 print(__doc__)
 
 
-def number_aware_tokenizer(doc):
-    """ Tokenizer that maps all numeric tokens to a placeholder.
+def number_normalizer(tokens):
+    """ Map all numeric tokens to a placeholder.
 
     For many applications, tokens that begin with a number are not directly
     useful, but the fact that such a token exists can be relevant.  By applying
     this form of dimensionality reduction, some methods may perform better.
     """
-    token_pattern = re.compile(u'(?u)\\b\\w\\w+\\b')
-    tokens = token_pattern.findall(doc)
-    tokens = ["#NUMBER" if token[0] in "0123456789_" else token
-              for token in tokens]
-    return tokens
+    return ("#NUMBER" if token[0].isdigit() else token for token in tokens)
+
+
+class NumberNormalizingVectorizer(TfidfVectorizer):
+    def build_tokenizer(self):
+        tokenize = super().build_tokenizer()
+        return lambda doc: list(number_normalizer(tokenize(doc)))
 
 
 # exclude 'comp.os.ms-windows.misc'
@@ -67,8 +65,7 @@ categories = ['alt.atheism', 'comp.graphics',
 newsgroups = fetch_20newsgroups(categories=categories)
 y_true = newsgroups.target
 
-vectorizer = TfidfVectorizer(stop_words='english', min_df=5,
-                             tokenizer=number_aware_tokenizer)
+vectorizer = NumberNormalizingVectorizer(stop_words='english', min_df=5)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
 kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
@@ -116,7 +113,7 @@ def most_common(d):
 
     Like Counter.most_common in Python >=2.7.
     """
-    return sorted(iteritems(d), key=operator.itemgetter(1), reverse=True)
+    return sorted(d.items(), key=operator.itemgetter(1), reverse=True)
 
 
 bicluster_ncuts = list(bicluster_ncut(i)
