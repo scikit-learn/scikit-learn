@@ -572,8 +572,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg = "[CV%s] END " % progress_msg
         result_msg = params_msg + ("; " if params_msg else "")
         if verbose > 2:
-            result_msg += "scores=%s, " % test_scores
-        result_msg += "total time=%s" % logger.short_format_time(total_time)
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += " %s: (" % scorer_name
+                    if return_train_score:
+                        result_msg += "train=%.3f, " % train_scores[scorer_name]
+                    result_msg += "test=%.3f)" % test_scores[scorer_name]
+        result_msg += " total time=%s" % logger.short_format_time(total_time)
 
         # Right align the result_msg
         end_msg += "." * (80 - len(end_msg) - len(result_msg))
