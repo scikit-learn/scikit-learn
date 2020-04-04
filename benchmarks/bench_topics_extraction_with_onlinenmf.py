@@ -33,6 +33,9 @@ import zipfile as zp
 from bs4 import BeautifulSoup
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+#from nmf import NMF
+from sklearn.decomposition.nmf_original import NMFOriginal
+#from nmf_original import non_negative_factorization
 from sklearn.decomposition import NMF
 
 n_samples = range(10000, 20000, 2000)
@@ -56,7 +59,7 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/cmarmo/software/tests/minibatchNMF/blogs.zip") as myzip:
+with zp.ZipFile("/home/parietal/cmarmo/bench/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -138,7 +141,7 @@ for bj in range(len(batch_size)):
             " with tf-idf features, n_samples=%d and n_features=%d..."
           % (n_samples[i], n_features[j]))
       t0 = time()
-      nmf = NMF(n_components=n_components, random_state=1,
+      nmf = NMFOriginal(n_components=n_components, random_state=1,
                 beta_loss='kullback-leibler', solver='mu', max_iter=1000,
                 alpha=.1, l1_ratio=.5).fit(tfidf)
       timesKL[i] = time() - t0
