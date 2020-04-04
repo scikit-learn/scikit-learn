@@ -22,8 +22,7 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import (check_is_fitted, check_array, check_X_y,
-                                check_scalar)
+from ..utils.validation import check_is_fitted, check_array, check_scalar
 from ..exceptions import ConvergenceWarning
 
 
@@ -113,7 +112,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         A pseudo random number generator object or a seed for it if int. If
         ``init='random'``, ``random_state`` is used to initialize the random
         transformation. If ``init='pca'``, ``random_state`` is passed as an
-        argument to PCA when initializing the transformation.
+        argument to PCA when initializing the transformation. Pass an int
+        for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
@@ -298,7 +299,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
