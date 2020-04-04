@@ -81,7 +81,6 @@ static void info(const char *fmt,...)
 static void info(const char *fmt,...) {}
 #endif
 
-
 class l2r_lr_fun: public function
 {
 public:
@@ -3069,4 +3068,3 @@ void set_print_string_function(void (*print_func)(const char*))
 	else
 		liblinear_print_string = print_func;
 }
-
