@@ -1624,9 +1624,7 @@ class _BaseRidgeCV(LinearModel):
                           "lies at a boundary of the explored range "
                           "(between {min_alpha} and {max_alpha}).\n Consider "
                           "setting the 'alphas' parameter to explore a "
-                          "wider range.\n To ignore warnings try running "
-                          "\nimport warnings "
-                          "\nwarnings.filterwarnings('ignore')")
+                          "wider range. ")
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
