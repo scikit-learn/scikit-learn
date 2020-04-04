@@ -394,14 +394,14 @@ Changelog
   It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
   generates 31bits/63bits random numbers on all platforms. In addition, the
   crude "modulo" postprocessor used to get a random number in a bounded
-  interval was replaced by the tweaked Lemire method as
-  suggested by `this blog post
-  <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  interval was replaced by the tweaked Lemire method as suggested by `this blog
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`.
   Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
   :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
-  is affected.
+  is affected. In particular users can expect a better convergence when the
+  number of samples (LibSVM) or the number of features (LibLinear) is large.
   :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 - |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
