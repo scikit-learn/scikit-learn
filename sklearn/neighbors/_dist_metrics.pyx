@@ -85,6 +85,7 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'russellrao': RussellRaoDistance,
                   'sokalmichener': SokalMichenerDistance,
                   'sokalsneath': SokalSneathDistance,
+                  'levenshtein': LevenshteinDistance,
                   'haversine': HaversineDistance,
                   'pyfunc': PyFuncDistance}
 
@@ -382,6 +383,8 @@ cdef class DistanceMetric:
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+        
+        
 
         Xarr = np.asarray(X, dtype=DTYPE, order='C')
         if Y is None:
@@ -954,6 +957,32 @@ cdef class SokalSneathDistance(DistanceMetric):
     be treated as False.
 
     .. math::
+       D(x, y) = \frac{N_{TF} + N_{FT}}{N_{TT} / 2 + N_{TF} + N_{FT}}
+    """
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                             ITYPE_t size) nogil except -1:
+        cdef int tf1, tf2, ntt = 0, n_neq = 0
+        cdef np.intp_t j
+        for j in range(size):
+            tf1 = x1[j] != 0
+            tf2 = x2[j] != 0
+            n_neq += (tf1 != tf2)
+            ntt += (tf1 and tf2)
+        return n_neq / (0.5 * ntt + n_neq)
+
+#------------------------------------------------------------
+# Levenshtein Distance (string)
+#  D(x, y) = ...
+# BORIS FUNCTION HERE
+cdef class LevenshteinDistance(DistanceMetric):
+    r"""Levenshtein Distance
+
+    Levenshtein distance is an edit distance between two strings.
+    For a given pair of strings s1 and s2 it specifies the number
+    of operations required to change s1 to s2 (or vice versa)
+
+    .. math::
+       #TODO
        D(x, y) = \frac{N_{TF} + N_{FT}}{N_{TT} / 2 + N_{TF} + N_{FT}}
     """
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,

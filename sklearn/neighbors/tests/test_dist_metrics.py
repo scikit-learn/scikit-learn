@@ -157,6 +157,7 @@ def test_haversine_metric():
     assert_array_almost_equal(haversine.dist_to_rdist(D1),
                               np.sin(0.5 * D2) ** 2)
 
+# BORIS TEST FUNCTION HERE
 def test_levenshtein_distance():
 
     def levenshtein_cahsed(x1, x2):
