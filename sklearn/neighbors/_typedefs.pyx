@@ -18,7 +18,7 @@ ITYPE = np.intp  # WARNING: this should match ITYPE_t in typedefs.pxd
 DTYPE = np.float64  # WARNING: this should match DTYPE_t in typedefs.pxd
 
 # BORIS
-UTYPE = np.unicode # WARNING: this should match UTYPE_t in typedefs.pxd
+UTYPE = np.unicode_ # WARNING: this should match UTYPE_t in typedefs.pxd
 
 # some handy constants
 cdef DTYPE_t INF = np.inf

@@ -49,7 +49,7 @@ from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from ._typedefs import DTYPE, ITYPE
+from ._typedefs import DTYPE, ITYPE, UTYPE
 
 
 ######################################################################
@@ -383,8 +383,7 @@ cdef class DistanceMetric:
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
-        
-        
+    
 
         Xarr = np.asarray(X, dtype=DTYPE, order='C')
         if Y is None:
@@ -985,16 +984,126 @@ cdef class LevenshteinDistance(DistanceMetric):
        #TODO
        D(x, y) = \frac{N_{TF} + N_{FT}}{N_{TT} / 2 + N_{TF} + N_{FT}}
     """
-    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) nogil except -1:
-        cdef int tf1, tf2, ntt = 0, n_neq = 0
-        cdef np.intp_t j
-        for j in range(size):
-            tf1 = x1[j] != 0
-            tf2 = x2[j] != 0
-            n_neq += (tf1 != tf2)
-            ntt += (tf1 and tf2)
-        return n_neq / (0.5 * ntt + n_neq)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def pairwise(self, X, Y=None):
+        """Compute the pairwise distances between X and Y
+
+        This is a convenience routine for the sake of testing.  For many
+        metrics, the utilities in scipy.spatial.distance.cdist and
+        scipy.spatial.distance.pdist will be faster.
+
+        Parameters
+        ----------
+        X : array_like
+            Array of shape (Nx, ), representing Nx strings
+        Y : array_like (optional)
+            Array of shape (Ny, ), representing Ny strings
+            If not specified, then Y=X.
+        Returns
+        -------
+        dist : ndarray
+            The shape (Nx, Ny) array of pairwise distances between strings in
+            X and Y.
+        """
+        cdef np.ndarray[object, ndim=1, mode='c'] Xarr
+        cdef np.ndarray[object, ndim=1, mode='c'] Yarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+
+        
+        
+        
+        print("inside levenshtein", self.__class__)
+
+        Xarr = np.asarray(X, dtype=np.object_, order='C')
+        if Y is None:
+            Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
+                         dtype=DTYPE, order='C')
+            self.n_pdist(Xarr,
+                       Darr)
+        else:
+            Yarr = np.asarray(Y, dtype=np.object_, order='C')
+            Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
+                         dtype=DTYPE, order='C')
+            self.n_cdist(Xarr,
+                       Yarr,
+                       Darr)
+        return Darr
+
+
+    ###########################################################################################
+
+    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                      ITYPE_t size) nogil except -1:
+        """Compute the distance between vectors x1 and x2
+
+        This should be overridden in a base class.
+        """
+        return -999
+
+    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                       ITYPE_t size) nogil except -1:
+        """Compute the reduced distance between vectors x1 and x2.
+
+        This can optionally be overridden in a base class.
+
+        The reduced distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the reduced distance is the squared-euclidean
+        distance.
+        """
+        return self.dist(x1, x2, size)
+
+    cdef int n_pdist(self, char[::1] X, DTYPE_t[:, ::1] D) except -1:
+        """compute the pairwise distances between points in X"""
+        print("inside pdist")
+        cdef ITYPE_t i1, i2
+        for i1 in range(X.shape[0]):
+            for i2 in range(i1, X.shape[0]):
+                D[i1, i2] = self.dist(&X[i1, 0], &X[i2, 0], X.shape[1])
+                D[i2, i1] = D[i1, i2]
+        return 0
+
+    cdef int n_cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+                   DTYPE_t[:, ::1] D) except -1:
+        """compute the cross-pairwise distances between arrays X and Y"""
+        cdef ITYPE_t i1, i2
+        if X.shape[1] != Y.shape[1]:
+            raise ValueError('X and Y must have the same second dimension')
+        for i1 in range(X.shape[0]):
+            for i2 in range(Y.shape[0]):
+                D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
+        return 0
+    ###########################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #------------------------------------------------------------

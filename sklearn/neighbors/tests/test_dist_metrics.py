@@ -160,16 +160,17 @@ def test_haversine_metric():
 # BORIS TEST FUNCTION HERE
 def test_levenshtein_distance():
 
-    def levenshtein_cahsed(x1, x2):
+    def levenshtein_cashed(x1, x2):
         results = {}
         results[("cat", "cat")] = 0.0
         results[("cat", "hat")] = 1.0
         results[("hat", "hat")] = 0.0
-        results[("hat", "hat")] = 1.0
+        results[("hat", "cat")] = 1.0
 
         return results[(x1, x2)]
 
-    X = np.array([["cat", "hat"]], dtype=np.unicode_)
+    X = np.array(["cat", "hat"], dtype=np.unicode_, order="C")
+    print(X)
     levenshtein = DistanceMetric.get_metric("levenshtein")
 
     D1 = levenshtein.pairwise(X)
@@ -177,7 +178,7 @@ def test_levenshtein_distance():
 
     for i, x1 in enumerate(X):
         for j, x2 in enumerate(X):
-            D2[i, j] = levenshtein_cahsed(x1, x2)
+            D2[i, j] = levenshtein_cashed(x1, x2)
 
     assert_array_almost_equal(D1, D2)
     

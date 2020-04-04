@@ -8,7 +8,7 @@ cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow
 
 from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from ._typedefs import DTYPE, ITYPE
+from ._typedefs import DTYPE, ITYPE, UTYPE
 
 ######################################################################
 # Inline distance functions
