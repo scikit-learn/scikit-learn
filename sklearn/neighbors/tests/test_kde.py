@@ -238,16 +238,13 @@ def test_pickling(tmpdir, sample_weight):
     assert_allclose(scores, scores_pickled)
 
 
-def check_estimators_unfitted(name):
-    """Check that predict raises an exception in an unfitted estimator.
-    Unfitted estimators should raise a NotFittedError.
-    """
-    n_samples, n_features = (100, 3)
+@pytest.mark.parametrize('method', ['score_samples', 'sample'])
+def test_check_is_fitted(method):
+    # Check that predict raises an exception in an unfitted estimator.
+    # Unfitted estimators should raise a NotFittedError.
     rng = np.random.RandomState(0)
-    X = rng.randn(n_samples, n_features)
-
+    X = rng.randn(10, 2)
     kde = KernelDensity()
 
-    for method in ("score_samples", "sample"):
-        if hasattr(kde, method):
-            assert_raises(NotFittedError, getattr(kde, method), X)
+    with pytest.raises(NotFittedError):
+        getattr(kde, method)(X)
