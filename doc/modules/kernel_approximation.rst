@@ -152,7 +152,7 @@ For a motivation for this mapping and the mathematical details see [LS2010]_.
 Polynomial Kernel Approximation via Tensor Sketch
 -------------------------------------------------
 
-`The polynomial kernel <https://scikit-learn.org/stable/modules/metrics.html#polynomial-kernel>`_,
+The `polynomial kernel <https://scikit-learn.org/stable/modules/metrics.html#polynomial-kernel>`_
 is a popular type of kernel function given by:
 
 .. math::
@@ -177,9 +177,9 @@ computes the Count Sketch of the vectors and then uses polynomial multiplication
 via the Fast Fourier Transform to compute the Count Sketch of their outer product.
 
 Conveniently, the training phase of TensorSketch simply consists of initializing
-some random variables, thus being a independent of the distribution of data.
+some random variables, thus being independent of the distribution of data.
 In addition, this method can transform samples in
-:math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}}))`, where
+:math:`\mathcal{O}(n_{\text{samples}}(n_{\text{features}} + n_{\text{components}} \log(n_{\text{components}})))`, where
 :math:`n_{\text{components}}` is the desired output dimension, determined by ``n_components``.
 
 .. topic:: Examples:
