@@ -157,6 +157,30 @@ def test_haversine_metric():
     assert_array_almost_equal(haversine.dist_to_rdist(D1),
                               np.sin(0.5 * D2) ** 2)
 
+def test_levenshtein_distance():
+
+    def levenshtein_cahsed(x1, x2):
+        results = {}
+        results[("cat", "cat")] = 0.0
+        results[("cat", "hat")] = 1.0
+        results[("hat", "hat")] = 0.0
+        results[("hat", "hat")] = 1.0
+
+        return results[(x1, x2)]
+
+    X = np.array([["cat", "hat"]], dtype=np.unicode_)
+    levenshtein = DistanceMetric.get_metric("levenshtein")
+
+    D1 = levenshtein.pairwise(X)
+    D2 = np.zeros_like(D1)
+
+    for i, x1 in enumerate(X):
+        for j, x2 in enumerate(X):
+            D2[i, j] = levenshtein_cahsed(x1, x2)
+
+    assert_array_almost_equal(D1, D2)
+    
+
 
 def test_pyfunc_metric():
     X = np.random.random((10, 3))
