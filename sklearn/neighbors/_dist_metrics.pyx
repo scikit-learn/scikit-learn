@@ -1118,10 +1118,9 @@ cdef class LevenshteinDistance(DistanceMetric):
 
         cdef int int_i, int_j
         with gil:
-            print("printing matrix")
             for int_i in range(0, n_rows):
                 for int_j in range(0, n_cols):
-                    print(self.mat_ptr[int_i * n_rows + int_j], end=' ')
+                    print(self.mat_ptr[int_i * n_cols + int_j], end=' ')
                 print()#'''
     ###########################################################################################
 
@@ -1163,9 +1162,9 @@ cdef class LevenshteinDistance(DistanceMetric):
 
         self.mat_ptr[0] = 0.0
 
-        for int_i in range(1, n_rows):
-            for int_j in range(1, n_cols):
-                self.mat_ptr[int_i * n_rows + int_j] = 0.0   
+        for int_i in range(0, n_rows):
+            for int_j in range(0, n_cols):
+                self.mat_ptr[int_i * n_cols + int_j] = 0.0   
 
         with gil:
             print("empty matrix")
@@ -1175,7 +1174,7 @@ cdef class LevenshteinDistance(DistanceMetric):
         double_i = 1.0
         # fill the first column with increasing values
         for int_i in range(1, n_rows):
-            self.mat_ptr[int_i * n_rows] = double_i
+            self.mat_ptr[int_i * n_cols] = double_i
             double_i = double_i + 1.0
 
         with gil:
@@ -1186,7 +1185,7 @@ cdef class LevenshteinDistance(DistanceMetric):
         double_j = 1.0
         # fill the first row with increasing values
         for int_j in range(1, n_cols):
-            self.mat_ptr[int_i * n_rows + int_j] = double_j
+            self.mat_ptr[int_i * n_cols + int_j] = double_j
             double_j = double_j + 1.0
 
         with gil:
@@ -1208,18 +1207,18 @@ cdef class LevenshteinDistance(DistanceMetric):
 
         for int_i in range(1, n_rows):
             for int_j in range(1, n_cols):
-                option1 = self.mat_ptr[(int_i-1) * n_rows + (int_j-1)]
+                option1 = self.mat_ptr[(int_i-1) * n_cols + (int_j-1)]
                 # The strings are 0 indexed
                 if (x1[int_i-1] != x2[int_j-1]):
                     option1 = option1 + 1.0
 
 
-                option2 = self.mat_ptr[(int_i-1) * n_rows + int_j] + 1
-                option3 = self.mat_ptr[int_i * n_rows + (int_j-1)] + 1
+                option2 = self.mat_ptr[(int_i-1) * n_cols + int_j] + 1
+                option3 = self.mat_ptr[int_i * n_cols + (int_j-1)] + 1
 
                 '''with gil:
                     print(int_i, int_j, "op1: ", option1, "op2: ", option2,"op3: ", option3)'''
-                self.mat_ptr[int_i * n_rows + int_j] = self.lev_min(self.lev_min(option1, option2), 
+                self.mat_ptr[int_i * n_cols + int_j] = self.lev_min(self.lev_min(option1, option2), 
                                                                     option3)
 
         with gil:
@@ -1230,7 +1229,7 @@ cdef class LevenshteinDistance(DistanceMetric):
             print()
 
 
-        return self.mat_ptr[s1_length * n_rows + s2_length]
+        return self.mat_ptr[s1_length * n_cols + s2_length]
 
 
 
@@ -1246,12 +1245,10 @@ cdef class LevenshteinDistance(DistanceMetric):
 
 
 
-    '''cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+    cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
                    DTYPE_t[:, ::1] D) except -1:
         """compute the cross-pairwise distances between arrays X and Y"""
         cdef ITYPE_t i1, i2
-        if X.shape[1] != Y.shape[1]:
-            raise ValueError('X and Y must have the same second dimension')
         for i1 in range(X.shape[0]):
             for i2 in range(Y.shape[0]):
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])

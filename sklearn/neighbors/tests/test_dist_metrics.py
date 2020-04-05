@@ -198,7 +198,7 @@ def test_levenshtein_distance():
 
         return results[(x1, x2)]
 
-    X = np.array(["cats", "hat", "cat", "encyclopedia"], dtype=np.unicode_, order="C")
+    X = np.array(["cats", "hat", "cat", "cyclops"], dtype=np.unicode_, order="C")
     
 
     levenshtein = DistanceMetric.get_metric("levenshtein")
@@ -212,7 +212,7 @@ def test_levenshtein_distance():
 
     assert_array_almost_equal(D1, D2)
 
-    Y = np.array(["hat", "cats", "cat", "cyclops"], dtype=np.unicode_, order="C")
+    Y = np.array(["hat", "cats", "cat", "encyclopedia"], dtype=np.unicode_, order="C")
 
     D1 = levenshtein.pairwise(X, Y)
     D2 = np.zeros_like(D1)
