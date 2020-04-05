@@ -1218,21 +1218,48 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                               algorithm=algorithm,
                               metric=metric, metric_params=metric_params)
                 continue
+            if (algorithm == 'ball_tree' and 
+                    metric not in neighbors.BallTree.valid_metrics):
+                assert_raises(ValueError,
+                              neighbors.NearestNeighbors,
+                              algorithm=algorithm,
+                              metric=metric, metric_params=metric_params)
+                continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
 
-            # Haversine distance only accepts 2D data
-            feature_sl = (slice(None, 2)
-                          if metric == 'haversine' else slice(None))
+            
+            if (metric == 'levenshtein'):
+                # Levenshtein distance needs strings as input, and currently only
+                # supports brute force
+                X_lev = np.array([['cat'], 
+                                  ['hats'], 
+                                  ['cats'], 
+                                  ['hello'],
+                                  ['goodbye']])
 
-            neigh.fit(X[:, feature_sl])
-            results[algorithm] = neigh.kneighbors(test[:, feature_sl],
-                                                  return_distance=True)
+                test_lev = np.array([['cat'], 
+                                     ['hats'], 
+                                     ['cats'], 
+                                     ['hello'],
+                                     ['mats']])                
+                neigh.fit(X_lev)
+                results[algorithm] = neigh.kneighbors(test_lev, return_distance=True)
+            else:
+                # Haversine distance only accepts 2D data
+                feature_sl = (slice(None, 2)
+                            if metric == 'haversine' else slice(None))
+            
 
-        assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
-        assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
+                neigh.fit(X[:, feature_sl])
+                results[algorithm] = neigh.kneighbors(test[:, feature_sl],
+                                                      return_distance=True)                
+        if (metric != 'levenshtein'):
+            assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
+            assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
+            
         if 'kd_tree' in results:
             assert_array_almost_equal(results['brute'][0],
                                       results['kd_tree'][0])
