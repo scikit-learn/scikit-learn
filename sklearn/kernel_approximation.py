@@ -54,7 +54,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         Dimensionality of the output feature space.
 
     random_state : int, RandomState instance, default=None
-        Determines random number generation for indexHash_ and bitHash_
+        Determines random number generation for indexHash and bitHash
         initialization. Pass an int for reproducible results across multiple
         function calls. See :term:`Glossary <random_state>`.
 
