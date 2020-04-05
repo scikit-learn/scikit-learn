@@ -31,13 +31,13 @@ import matplotlib.gridspec as gridspec
 import zipfile as zp
 from bs4 import BeautifulSoup
 
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition.nmf_original import NMFOriginal
 from sklearn.decomposition import NMF
 
 n_samples = range(10000, 20000, 2000)
 n_features = range(2000, 10000, 2000)
-batch_size = range(400, 1000, 200) 
+batch_size = range(400, 1000, 200)
 n_components = 10
 
 # Load the The Blog Authorship Corpus dataset
@@ -122,14 +122,14 @@ for bj in range(len(batch_size)):
             timesmbKL[i] = time() - t0
             print("done in %0.3fs." % (timesmbKL[i]))
 
-        ax.append(fig.add_subplot(spec[bj,j], xlabel=xlabel, ylabel= ylabel))
+        ax.append(fig.add_subplot(spec[bj, j], xlabel=xlabel, ylabel=ylabel))
         plt.grid(True)
 
         str1 = "NMF"
         str2 = "Online NMF"
         ax_index = j+bj*(len(n_features)-1)
-        ax[ax_index].plot(n_samples, timesKL, marker='o', label = str1)
-        ax[ax_index].plot(n_samples, timesmbKL, marker='o', label = str2)
+        ax[ax_index].plot(n_samples, timesKL, marker='o', label=str1)
+        ax[ax_index].plot(n_samples, timesmbKL, marker='o', label=str2)
 
         ax[ax_index].xaxis.set_major_formatter(ticker.EngFormatter())
 
@@ -153,4 +153,4 @@ for bj in range(len(batch_size)):
                                           va='center')
 
 plt.savefig('bench_topics.png')
-#plt.show()
+# plt.show()
