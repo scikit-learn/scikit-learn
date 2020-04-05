@@ -710,6 +710,7 @@ def haversine_distances(X, Y=None):
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
+
 def levenshtein_distances(X, Y=None):
     """Compute the Levenshtein distance between samples in X and Y
 
@@ -750,6 +751,7 @@ def levenshtein_distances(X, Y=None):
     """
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('levenshtein').pairwise(X, Y)
+
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
