@@ -42,14 +42,6 @@ else:
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
-if sp_version >= (1, 3):
-    # Preserves earlier default choice of pinvh cutoff `cond` value.
-    # Can be removed once issue #14055 is fully addressed.
-    from ..externals._scipy_linalg import pinvh
-else:
-    # mypy error: Name 'pinvh' already defined (possibly by an import)
-    from scipy.linalg import pinvh  # type: ignore  # noqa
-
 
 def _object_dtype_isnan(X):
     return X != X

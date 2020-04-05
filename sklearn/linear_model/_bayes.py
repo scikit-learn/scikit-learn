@@ -12,7 +12,7 @@ from scipy import linalg
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
-from ..utils.fixes import pinvh
+from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 
 
@@ -553,17 +553,13 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.scores_ = list()
         coef_old_ = None
 
-        # Compute sigma and mu (using Woodbury matrix identity)
         def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
-            sigma_ = pinvh(np.eye(n_samples) / alpha_ +
-                           np.dot(X[:, keep_lambda] *
-                           np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                           X[:, keep_lambda].T))
-            sigma_ = np.dot(sigma_, X[:, keep_lambda] *
-                            np.reshape(1. / lambda_[keep_lambda], [1, -1]))
-            sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
-                              X[:, keep_lambda].T, sigma_)
-            sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
+            # See slides as referenced in the docstring note
+            X_keep = X[:, keep_lambda]
+            gram = np.dot(X_keep.T, X_keep)
+            eye = np.eye(gram.shape[0])
+            sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
+            sigma_ = pinvh(sigma_inv)
             return sigma_
 
         def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
@@ -605,9 +601,15 @@ class ARDRegression(RegressorMixin, LinearModel):
                 break
             coef_old_ = np.copy(coef_)
 
-        # update sigma and mu using updated parameters from the last iteration
-        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
-        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            if not keep_lambda.any():
+                break
+
+        if keep_lambda.any():
+            # update sigma and mu using updated params from the last iteration
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+        else:
+            sigma_ = np.array([]).reshape(0, 0)
 
         self.coef_ = coef_
         self.alpha_ = alpha_
@@ -642,6 +644,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
+            if self.alpha_ < 0:
+                raise ValueError(
+                    f"alpha_ is negative ({self.alpha_}), "
+                    "cannot compute std dev. Try training with "
+                    "more samples."
+                )
             if self.normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
