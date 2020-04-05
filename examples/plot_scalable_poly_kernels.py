@@ -85,11 +85,12 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # :class:`PolynomialSampler` with different values for `n_components`, showing
 # that these kernel feature approximations improve the accuracy of linear
 # classification. Note that, since the original samples have 54 features,
-# the explicit feature map of the polynomial kernel of degree four would have
-# 54^4 features. Thanks to :class:`PolynomialSampler`, we can condense most of
-# the discriminative information of that feature space into a much more
-# compact representation. We repeat the experiment 5 times to compensate
-# for the stochastic nature of :class:`PolynomialSampler`.
+# the explicit feature map of the polynomial kernel of degree four would
+# have approximately 8.5 million features (precisely, 54^4). Thanks to
+# :class:`PolynomialSampler`, we can condense most of the discriminative
+# information of that feature space into a much more compact representation.
+# We repeat the experiment 5 times to compensate for the stochastic nature
+# of :class:`PolynomialSampler`.
 
 n_runs = 5
 for n_components in [250, 500, 1000, 2000]:
