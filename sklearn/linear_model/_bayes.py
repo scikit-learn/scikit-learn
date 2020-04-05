@@ -644,12 +644,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self.alpha_ < 0:
-                raise ValueError(
-                    f"alpha_ is negative ({self.alpha_}), "
-                    "cannot compute std dev. Try training with "
-                    "more samples."
-                )
             if self.normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
