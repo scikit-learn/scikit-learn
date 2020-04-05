@@ -576,7 +576,7 @@ def test_assess_dimension_bad_rank():
     n_samples = 10
     for rank in (0, 5):
         with pytest.raises(ValueError,
-                        match=r"should be in \[1, n_features - 1\]"):
+                           match=r"should be in \[1, n_features - 1\]"):
             _assess_dimension(spectrum, rank, n_samples)
 
 
