@@ -1231,7 +1231,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                metric_params=metric_params)
 
             if (metric == 'levenshtein'):
-                # Levenshtein distance needs strings as input, 
+                # Levenshtein distance needs strings as input,
                 # and currently only supports brute force
                 X_lev = np.array([['cat'],
                                   ['hats'],
@@ -1245,7 +1245,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                      ['hello'],
                                      ['mats']])
                 neigh.fit(X_lev)
-                results[algorithm] = neigh.kneighbors(test_lev, 
+                results[algorithm] = neigh.kneighbors(test_lev,
                                                       return_distance=True)
             else:
                 # Haversine distance only accepts 2D data
@@ -1256,9 +1256,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                 results[algorithm] = neigh.kneighbors(test[:, feature_sl],
                                                       return_distance=True)
         if (metric != 'levenshtein'):
-            assert_array_almost_equal(results['brute'][0], 
+            assert_array_almost_equal(results['brute'][0],
                                       results['ball_tree'][0])
-            assert_array_almost_equal(results['brute'][1], 
+            assert_array_almost_equal(results['brute'][1],
                                       results['ball_tree'][1])
 
         if 'kd_tree' in results:
@@ -1309,9 +1309,9 @@ def test_valid_brute_metric_for_auto_algorithm():
                     nn.fit(X)
                     nn.kneighbors(X)
                 else:
-                    X_string = np.array([['cats'], 
-                                         ['cat'], 
-                                         ['hat'], 
+                    X_string = np.array([['cats'],
+                                         ['cat'],
+                                         ['hat'],
                                          ['hello']])
                     nn.fit(X_string)
                     nn.kneighbors(X_string)
