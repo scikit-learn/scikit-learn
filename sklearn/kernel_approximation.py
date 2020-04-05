@@ -31,15 +31,19 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     of the polynomial kernel::
 
         K(X, Y) = (<X, Y> + coef0)^degree
-    
+
     by efficiently computing a Count Sketch of the outer product of a
     vector with itself. Read more in the
     :ref:`User Guide <polynomial_kernel_approx>`.
 
     Parameters
     ----------
+    gamma : float
+        Parameter of the polynomial kernel whose feature map
+        will be approximated.
+
     degree : int
-        Degree of the homogeneous polynomial kernel whose feature map
+        Degree of the polynomial kernel whose feature map
         will be approximated.
 
     coef0 : int
@@ -49,11 +53,10 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     n_components : int
         Dimensionality of the output feature space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator.
-        If RandomState instance, random_state is the random number generator.
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for indexHash_ and bitHash_
+        initialization. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -79,8 +82,10 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     1.0
     """
 
-    def __init__(self, degree=2, coef0=0, n_components=100, random_state=None):
+    def __init__(self, gamma=1., degree=2, coef0=0, n_components=100,
+                 random_state=None):
 
+        self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
         self.n_components = n_components
@@ -135,33 +140,39 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         check_is_fitted(self)
         X = check_array(X, accept_sparse="csc")
 
+        X_gamma = np.sqrt(self.gamma) * X
+
         if sp.issparse(X) and self.coef0 != 0:
-            X = sp.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))],
-                          format="csc")
+            X_gamma = sp.hstack([X_gamma, np.sqrt(self.coef0) *
+                                 np.ones((X_gamma.shape[0], 1))],
+                                format="csc")
 
-        elif not sp.issparse(X) and self.coef0 != 0:
-            X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
+        elif not sp.issparse(X_gamma) and self.coef0 != 0:
+            X_gamma = np.hstack([X_gamma, np.sqrt(self.coef0) *
+                                 np.ones((X_gamma.shape[0], 1))])
 
-        if X.shape[1] != self.indexHash_.shape[1]:
+        if X_gamma.shape[1] != self.indexHash_.shape[1]:
             raise ValueError("Number of features of test samples does not"
                              " match that of training samples.")
 
-        count_sketches = np.zeros((X.shape[0], self.degree, self.n_components))
+        count_sketches = np.zeros(
+            (X_gamma.shape[0], self.degree, self.n_components))
 
-        if sp.issparse(X):
-            for j in range(X.shape[1]):
+        if sp.issparse(X_gamma):
+            for j in range(X_gamma.shape[1]):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
                     count_sketches[:, d, iHashIndex] += \
-                        (iHashBit * X[:, j]).toarray().ravel()
+                        (iHashBit * X_gamma[:, j]).toarray().ravel()
 
         else:
-            for j in range(X.shape[1]):
+            for j in range(X_gamma.shape[1]):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
-                    count_sketches[:, d, iHashIndex] += iHashBit * X[:, j]
+                    count_sketches[:, d, iHashIndex] += \
+                        iHashBit * X_gamma[:, j]
 
         # For each same, compute a count sketch of phi(x) using the polynomial
         # multiplication (via FFT) of p count sketches of x.

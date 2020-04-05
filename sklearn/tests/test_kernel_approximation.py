@@ -57,6 +57,22 @@ def test_polynomial_sampler():
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
 
+    # compute exact kernel for gamma=0.1, degree=2, coef0=3
+    kernel = (0.1 * np.dot(X, Y.T)+3)**2
+
+    # approximate kernel mapping
+    ps_transform = PolynomialSampler(n_components=4000, gamma=0.1, coef0=3,
+                                     degree=2, random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    error = kernel - kernel_approx
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
+    np.abs(error, out=error)
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
+
     # Should also work with sparse input data
     X_trans = ps_transform.fit_transform(csr_matrix(X))
     Y_trans = ps_transform.transform(csr_matrix(Y))
