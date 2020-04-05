@@ -2133,10 +2133,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                                 ", ".join(map(str, y_pred))))
 
     # training set performance
-    if name != "ComplementNB":
-        # This is a pathological data set for ComplementNB.
-        # For some specific cases 'ComplementNB' predicts less classes
-        # than expected
+    if not _safe_tags(classifier_orig, 'poor_score'):
         assert_array_equal(np.unique(y), np.unique(y_pred))
     assert_array_equal(classes, classifier.classes_,
                        err_msg="Unexpected classes_ attribute for %r: "
@@ -2336,7 +2333,8 @@ def check_class_weight_classifiers(name, classifier_orig):
         y_pred = classifier.predict(X_test)
         # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
         #      0.88 (Issue #9111)
-        assert np.mean(y_pred == 0) > 0.87
+        if not _safe_tags(classifier_orig, 'poor_score'):
+            assert np.mean(y_pred == 0) > 0.87
 
 
 @ignore_warnings(category=FutureWarning)
