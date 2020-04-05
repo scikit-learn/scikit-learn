@@ -362,12 +362,13 @@ def test_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
 
 
-def test_decision_function_shape():
-    # check that decision_function_shape='ovr' gives
+@pytest.mark.parametrize('SVM', (svm.SVC, svm.NuSVC))
+def test_decision_function_shape(SVM):
+    # check that decision_function_shape='ovr' or 'ovo' gives
     # correct shape and is consistent with predict
 
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovr').fit(iris.data, iris.target)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovr').fit(iris.data, iris.target)
     dec = clf.decision_function(iris.data)
     assert dec.shape == (len(iris.data), 3)
     assert_array_equal(clf.predict(iris.data), np.argmax(dec, axis=1))
@@ -376,17 +377,20 @@ def test_decision_function_shape():
     X, y = make_blobs(n_samples=80, centers=5, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovr').fit(X_train, y_train)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovr').fit(X_train, y_train)
     dec = clf.decision_function(X_test)
     assert dec.shape == (len(X_test), 5)
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
-    clf = svm.SVC(kernel='linear', C=0.1,
-                  decision_function_shape='ovo').fit(X_train, y_train)
+    clf = SVM(kernel='linear',
+              decision_function_shape='ovo').fit(X_train, y_train)
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
+
+    with pytest.raises(ValueError, match="must be either 'ovr' or 'ovo'"):
+        SVM(decision_function_shape='bad').fit(X_train, y_train)
 
 
 def test_svr_predict():
