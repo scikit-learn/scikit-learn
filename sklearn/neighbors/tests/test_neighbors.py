@@ -1199,7 +1199,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
                ('mahalanobis', dict(VI=VI)),
-               ('haversine', {})]
+               ('haversine', {}),
+               ('levenshtein', {})]
     algorithms = ['brute', 'ball_tree', 'kd_tree']
     X = rng.rand(n_samples, n_features)
 
@@ -1276,8 +1277,14 @@ def test_valid_brute_metric_for_auto_algorithm():
                                             algorithm='auto',
                                             metric=metric)
             if metric != 'haversine':
-                nn.fit(X)
-                nn.kneighbors(X)
+                if metric != 'levenshtein':
+                    nn.fit(X)
+                    nn.kneighbors(X)
+                else:
+                    X_string = np.array([['cats'], ['cat'], ['hat'], ['hello']])
+                    nn.fit(X_string)
+                    nn.kneighbors(X_string)
+                    print('levenshtein')
             else:
                 nn.fit(X[:, :2])
                 nn.kneighbors(X[:, :2])

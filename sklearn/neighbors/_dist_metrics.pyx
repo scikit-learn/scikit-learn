@@ -49,7 +49,7 @@ from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from ._typedefs import DTYPE, ITYPE, UTYPE
+from ._typedefs import DTYPE, ITYPE
 
 
 ######################################################################
@@ -186,6 +186,16 @@ cdef class DistanceMetric:
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
     =================  =======================  ===============================
+
+    **Metrics intended for strings:**  These metrics are intended to measure the
+    similarity between strings
+
+    #TODO
+    =============  ====================  ========================================
+    identifier     class name            distance function
+    -------------  --------------------  ----------------------------------------
+    "levenshtein"  LevenshteinDistance   ``N_unequal(x, y) / N_tot``
+    =============  ====================  ========================================
 
     **User-defined distance:**
 
@@ -1007,13 +1017,14 @@ cdef class LevenshteinDistance(DistanceMetric):
         cdef int max_length = 0
 
         for i in range(python_array.shape[0]):
-            current_length = len(python_array[i])
+            current_string = python_array[i][0]
+            current_length = len(current_string)
             if (current_length > max_length):
                 max_length = current_length
 
             for j in range(current_length):
-                if (python_array[i][j] not in char_map):
-                    char_map[python_array[i][j]] = char_id
+                if (current_string[j] not in char_map):
+                    char_map[current_string[j]] = char_id
                     char_id += 1.0
 
 
@@ -1024,11 +1035,11 @@ cdef class LevenshteinDistance(DistanceMetric):
                        order='C')
 
         for i in range(Parr.shape[0]):
-            current_string = python_array[i]
-            current_length = len(python_array[i])
+            current_string = python_array[i][0]
+            current_length = len(current_string)
             
             for j in range(current_length):
-                Parr[i][j] = char_map[python_array[i][j]]
+                Parr[i][j] = char_map[current_string[j]]
 
         return Parr, char_map, char_id
 
@@ -1095,7 +1106,7 @@ cdef class LevenshteinDistance(DistanceMetric):
             Sarr = np.zeros((Xarr.shape[1]+1, Yarr.shape[1]+1),
                          dtype=DTYPE, order='C')
             
-            print(Sarr.shape[0], Sarr.shape[1])
+            #print(Sarr.shape[0], Sarr.shape[1])
 
             self.mat_ptr = get_mat_ptr(Sarr)
             self.cdist(get_memview_DTYPE_2D(Xarr),
@@ -1154,7 +1165,7 @@ cdef class LevenshteinDistance(DistanceMetric):
 
         n_rows = s1_length + 1
         n_cols = s2_length + 1
-        with gil:
+        '''with gil:
             print("s1 length: ", s1_length)
             print("s2 length: ", s2_length)#'''
 
@@ -1166,9 +1177,9 @@ cdef class LevenshteinDistance(DistanceMetric):
             for int_j in range(0, n_cols):
                 self.mat_ptr[int_i * n_cols + int_j] = 0.0   
 
-        with gil:
+        '''with gil:
             print("empty matrix")
-        self.print_matrix(n_rows, n_cols) 
+        self.print_matrix(n_rows, n_cols) #'''
 
         int_j = 0
         double_i = 1.0
@@ -1177,9 +1188,9 @@ cdef class LevenshteinDistance(DistanceMetric):
             self.mat_ptr[int_i * n_cols] = double_i
             double_i = double_i + 1.0
 
-        with gil:
+        '''with gil:
             print("filled first column")
-        self.print_matrix(n_rows, n_cols) 
+        self.print_matrix(n_rows, n_cols) #'''
 
         int_i = 0
         double_j = 1.0
@@ -1188,11 +1199,11 @@ cdef class LevenshteinDistance(DistanceMetric):
             self.mat_ptr[int_i * n_cols + int_j] = double_j
             double_j = double_j + 1.0
 
-        with gil:
+        '''with gil:
             print("filled first row")
-        self.print_matrix(n_rows, n_cols)
+        self.print_matrix(n_rows, n_cols)#'''
 
-        with gil:
+        '''with gil:
             print("x1: ", end='')
             for int_i in range(s1_length):
                 print(x1[int_i], end= ' ')
@@ -1221,26 +1232,15 @@ cdef class LevenshteinDistance(DistanceMetric):
                 self.mat_ptr[int_i * n_cols + int_j] = self.lev_min(self.lev_min(option1, option2), 
                                                                     option3)
 
-        with gil:
+        '''with gil:
             print("filled matrix")
         self.print_matrix(n_rows, n_cols)
         with gil:
             print()
-            print()
+            print()#'''
 
 
         return self.mat_ptr[s1_length * n_cols + s2_length]
-
-
-
-    '''cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
-        """compute the pairwise distances between points in X"""
-        cdef ITYPE_t i1, i2
-        for i1 in range(X.shape[0]):
-            for i2 in range(i1, X.shape[0]):
-                D[i1, i2] = self.dist(&X[i1, 0], &X[i2, 0], X.shape[1])
-                D[i2, i1] = D[i1, i2]
-        return 0#'''
 
 
 

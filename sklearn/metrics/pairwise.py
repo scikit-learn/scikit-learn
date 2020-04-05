@@ -711,6 +711,82 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def levenshtein_distances(X, Y=None):
+    """Compute the Levenshtein distance between samples in X and Y
+
+    blurb
+
+    .. math::
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples_1, 1)
+
+    Y : array_like, shape (n_samples_2, 1), optional
+
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+
+    Examples
+    --------
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> from math import radians
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> bsas_in_radians = [radians(_) for _ in bsas]
+    >>> paris_in_radians = [radians(_) for _ in paris]
+    >>> result = haversine_distances([bsas_in_radians, paris_in_radians])
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    array([[    0.        , 11099.54035582],
+           [11099.54035582,     0.        ]])
+    """
+    from sklearn.neighbors import DistanceMetric
+    return DistanceMetric.get_metric('levenshtein').pairwise(X, Y)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -1300,6 +1376,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'manhattan': manhattan_distances,
     'precomputed': None,  # HACK: precomputed is always allowed, never called
     'nan_euclidean': nan_euclidean_distances,
+    'levenshtein': levenshtein_distances
 }
 
 
@@ -1400,7 +1477,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
-                  'nan_euclidean', 'haversine']
+                  'nan_euclidean', 'haversine', 'levenshtein']
 
 _NAN_METRICS = ['nan_euclidean']
 

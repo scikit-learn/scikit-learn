@@ -12,9 +12,6 @@ cdef enum:
 #  WARNING: ITYPE_t must be a signed integer type or you will have a bad time!
 ctypedef np.intp_t ITYPE_t  # WARNING: should match ITYPE in typedefs.pyx
 
-# Unicode type
-# BORIS
-#ctypedef char* UTYPE_t  # WARNING: should match UTYPE in typedefs.pyx
 
 # Fused type for certain operations
 ctypedef fused DITYPE_t:
