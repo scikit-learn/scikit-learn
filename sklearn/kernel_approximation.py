@@ -30,7 +30,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     Implements Tensor Sketch, which approximates the feature map
     of the polynomial kernel::
 
-        K(X, Y) = (<X, Y> + coef0)^degree
+        K(X, Y) = (gamma * <X, Y> + coef0)^degree
 
     by efficiently computing a Count Sketch of the outer product of a
     vector with itself. Read more in the
