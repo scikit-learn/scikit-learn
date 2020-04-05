@@ -25,11 +25,16 @@ from .utils.validation import check_non_negative
 
 
 class PolynomialSampler(BaseEstimator, TransformerMixin):
-    """ Polynomial kernel approximation via Tensor Sketch.
+    """Polynomial kernel approximation via Tensor Sketch.
 
-    Implements Tensor Sketch [1], which approximates the feature map
-    of the polynomial kernel (K(x,y) = <x,y+coef0>^degree) by efficiently
-    computing a Count Sketch [2] of the outer product of a vector with itself.
+    Implements Tensor Sketch, which approximates the feature map
+    of the polynomial kernel::
+
+        K(X, Y) = (<X, Y> + coef0)^degree
+    
+    by efficiently computing a Count Sketch of the outer product of a
+    vector with itself. Read more in the
+    :ref:`User Guide <polynomial_kernel_approx>`.
 
     Parameters
     ----------
@@ -59,8 +64,6 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     bitHash_ : ndarray of shape (degree, n_features), dtype=float32
         Array with random entries in {+1, -1}, used to represent
         the 2-wise independent hash functions for Count Sketch computation.
-
-
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialSampler
@@ -74,20 +77,6 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
-
-    References
-    ----------
-
-    [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
-    kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
-    international conference on Knowledge discovery and data mining
-    (pp. 239-247) (http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
-
-    [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002). Finding frequent
-    items in data streams. In International Colloquium on Automata,
-    Languages, and Programming (pp. 693-703). Springer, Berlin, Heidelberg.
-    (http://www.vldb.org/pvldb/1/1454225.pdf)
-
     """
 
     def __init__(self, degree=2, coef0=0, n_components=100, random_state=None):
@@ -186,7 +175,6 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
-
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 

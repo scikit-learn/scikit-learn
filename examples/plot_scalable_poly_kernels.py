@@ -115,8 +115,8 @@ for n_components in [250, 500, 1000, 2000]:
 
 ##############################################################################
 # Train a kernelized SVM to see how well :class:`PolynomialSampler`
-# is approximating the performance of the kernel. This of course may take some
-# time, as the SVC class has a relatively poor scalability. This is the
+# is approximating the performance of the kernel. This, of course, may take
+# some time, as the SVC class has a relatively poor scalability. This is the
 # reason why kernel approximators are so useful:
 
 from sklearn.svm import SVC
@@ -178,10 +178,9 @@ plt.show()
 # References
 # ==========
 #
-# [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
-# kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
-# international conference on Knowledge discovery and data mining (pp. 239-247)
-# (https://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
+# [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
+# explicit feature maps." KDD '13 (2013).
+# https://doi.org/10.1145/2487575.2487591
 #
 # [2] LIBSVM binary datasets repository
-# (https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html)
+# https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
