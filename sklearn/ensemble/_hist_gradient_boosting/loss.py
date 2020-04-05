@@ -317,8 +317,7 @@ class Poisson(BaseLoss):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
-        target = np.empty_like(raw_predictions, dtype=Y_DTYPE)
-        target = np.exp(raw_predictions)
+        target = np.exp(raw_predictions, dtype=Y_DTYPE)
         return target
 
 
