@@ -332,6 +332,15 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+class PoorScoreLogisticRegression(LogisticRegression):
+    def decision_function(self, X):
+        scores = super().decision_function(X)
+        return np.zeros_like(scores)
+
+    def _more_tags(self):
+        return {"poor_score": True}
+
+
 def test_not_an_array_array_function():
     np_version = _parse_version(np.__version__)
     if np_version < (1, 17):
@@ -464,6 +473,9 @@ def test_check_estimator():
     msg = 'negative y values not supported!'
     assert_raises_regex(ValueError, msg, check_estimator,
                         RequiresPositiveYRegressor)
+
+    # Does not raise error on classifier with poor_score tag
+    check_estimator(PoorScoreLogisticRegression)
 
 
 def test_check_outlier_corruption():
