@@ -570,38 +570,32 @@ def test_pca_n_components_mostly_explained_variance_ratio():
     assert pca2.n_components_ == X.shape[1]
 
 
-def test_infer_dim_bad_spec():
-    # Test a spectrum that drops to near zero for PR #16224
+def test_assess_dimension_bad_rank():
+    # Test error when tested rank not in [1, n_features - 1]
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
     n_samples = 10
-    ret = _infer_dimension(spectrum, n_samples)
-    assert ret == 1
+    for rank in (0, 5):
+        with pytest.raises(ValueError,
+                        match=r"should be in \[1, n_features - 1\]"):
+            _assess_dimension(spectrum, rank, n_samples)
 
 
-def test_assess_dimension_error_rank_greater_than_features():
-    # Test error when tested rank is greater than the number of features
-    # for PR #16224
+def test_small_eigenvalues_mle():
+    # Test rank associated with tiny eigenvalues are given a log-likelihood of
+    # -inf. The inferred rank will be 1
     spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
-    n_samples = 10
-    rank = 5
-    with pytest.raises(ValueError,
-                       match=r"should be in \[1, n_features - 1\]"):
-        _assess_dimension(spectrum, rank, n_samples)
 
+    assert _assess_dimension(spectrum, rank=1, n_samples=10) > -np.inf
 
-def test_assess_dimension_small_eigenvalues():
-    # Test tiny eigenvalues appropriately when using 'mle'
-    # for  PR #16224
-    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
-    n_samples = 10
     for rank in (2, 3):
-        ret = _assess_dimension(spectrum, rank, n_samples)
-        assert ret == -np.inf
+        assert _assess_dimension(spectrum, rank, 10) == -np.inf
+
+    assert _infer_dimension(spectrum, 10) == 1
 
 
-def test_infer_dim_mle():
-    # Test small eigenvalues when 'mle' with pathological 'X' dataset
-    # for PR #16224
+def test_mle_redundant_data():
+    # Test 'mle' with pathological X: only one relevant feature should give a
+    # rank of 1
     X, _ = datasets.make_classification(n_features=20,
                                         n_informative=1, n_repeated=18,
                                         n_redundant=1, n_clusters_per_class=1,
@@ -612,7 +606,7 @@ def test_infer_dim_mle():
 
 def test_fit_mle_too_few_samples():
     # Tests that an error is raised when the number of samples is smaller
-    # than the number of features during an mle fit for PR #16224
+    # than the number of features during an mle fit
     X, _ = datasets.make_classification(n_samples=20, n_features=21,
                                         random_state=42)
 

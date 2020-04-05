@@ -138,7 +138,7 @@ Changelog
   handles small eigenvalues, and does not infer 0 as the correct number of
   components. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
   :user:`Gelavizh Ahmadi <gelavizh1>` and :user:`Marija Vlajic Wheeler
-  <marijavlajic>` and :pr:`todo` by `Nicolas Hug`_.
+  <marijavlajic>` and :pr:`16841` by `Nicolas Hug`_.
 
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.

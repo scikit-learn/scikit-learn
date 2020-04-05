@@ -95,7 +95,10 @@ def _assess_dimension(spectrum, rank, n_samples):
 
 
 def _infer_dimension(spectrum, n_samples):
-    """Infers the dimension of a dataset with a given spectrum."""
+    """Infers the dimension of a dataset with a given spectrum.
+
+    The returned value will be in [1, n_features - 1].
+    """
     ll = np.empty_like(spectrum)
     ll[0] = -np.inf  # we don't want to return n_components = 0
     for rank in range(1, spectrum.shape[0]):
