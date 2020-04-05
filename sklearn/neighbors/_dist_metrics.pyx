@@ -653,6 +653,7 @@ cdef class MahalanobisDistance(DistanceMetric):
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
 
+        # BORIS HERE
         self.mat = np.asarray(VI, dtype=float, order='C')
         self.mat_ptr = get_mat_ptr(self.mat)
 
@@ -985,6 +986,7 @@ cdef class LevenshteinDistance(DistanceMetric):
        D(x, y) = \frac{N_{TF} + N_{FT}}{N_{TT} / 2 + N_{TF} + N_{FT}}
     """
 
+    
 
 
 
@@ -995,7 +997,40 @@ cdef class LevenshteinDistance(DistanceMetric):
 
 
 
+    def make_compatible_array_from_string_array(self, python_array, char_map=None, start_id=1.0):
+        if (char_map is None):
+            char_map = {}
 
+        char_id = start_id
+
+        cdef ITYPE_t i, j
+        cdef int max_length = 0
+
+        for i in range(python_array.shape[0]):
+            current_length = len(python_array[i])
+            if (current_length > max_length):
+                max_length = current_length
+
+            for j in range(current_length):
+                if (python_array[i][j] not in char_map):
+                    char_map[python_array[i][j]] = char_id
+                    char_id += 1.0
+
+
+        # Create X array
+        Parr = np.full(shape=(python_array.shape[0], max_length+1), 
+                       fill_value=0.0,
+                       dtype=DTYPE, 
+                       order='C')
+
+        for i in range(Parr.shape[0]):
+            current_string = python_array[i]
+            current_length = len(python_array[i])
+            
+            for j in range(current_length):
+                Parr[i][j] = char_map[python_array[i][j]]
+
+        return Parr, char_map, char_id
 
 
 
@@ -1019,65 +1054,199 @@ cdef class LevenshteinDistance(DistanceMetric):
             The shape (Nx, Ny) array of pairwise distances between strings in
             X and Y.
         """
-        cdef np.ndarray[object, ndim=1, mode='c'] Xarr
-        cdef np.ndarray[object, ndim=1, mode='c'] Yarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
 
-        
-        
-        
-        print("inside levenshtein", self.__class__)
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Sarr
 
-        Xarr = np.asarray(X, dtype=np.object_, order='C')
+        #print(X)
+        
+
+        
+        
+        
+        
+        
+        #print("inside levenshtein", self.__class__)
+
+        Xarr, char_map, char_id = self.make_compatible_array_from_string_array(X)
+        #print(char_map)
+        #print(Xarr)
+
         if Y is None:
             Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.n_pdist(Xarr,
-                       Darr)
+            Sarr = np.zeros((Xarr.shape[1]+1, Xarr.shape[1]+1),
+                         dtype=DTYPE, order='C')
+
+            self.mat_ptr = get_mat_ptr(Sarr)
+
+            self.pdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Darr))
         else:
-            Yarr = np.asarray(Y, dtype=np.object_, order='C')
+            Yarr, char_map, char_id = self.make_compatible_array_from_string_array(Y, 
+                                                                                   char_map, 
+                                                                                   char_id)
+            #Yarr = np.asarray(Y, dtype=DTYPE, order='C')
             Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.n_cdist(Xarr,
-                       Yarr,
-                       Darr)
+
+            Sarr = np.zeros((Xarr.shape[1]+1, Yarr.shape[1]+1),
+                         dtype=DTYPE, order='C')
+            
+            print(Sarr.shape[0], Sarr.shape[1])
+
+            self.mat_ptr = get_mat_ptr(Sarr)
+            self.cdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Yarr),
+                       get_memview_DTYPE_2D(Darr))
         return Darr
 
 
     ###########################################################################################
 
-    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                      ITYPE_t size) nogil except -1:
-        """Compute the distance between vectors x1 and x2
 
-        This should be overridden in a base class.
-        """
-        return -999
+    cdef inline DTYPE_t lev_min(self, DTYPE_t val1, DTYPE_t val2) nogil:
+        if (val1 < val2):
+            return val1
+        else:
+            return val2
 
-    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                       ITYPE_t size) nogil except -1:
-        """Compute the reduced distance between vectors x1 and x2.
+    ###########################################################################################
+    cdef inline void print_matrix(self, int n_rows, int n_cols) nogil:
 
-        This can optionally be overridden in a base class.
+        cdef int int_i, int_j
+        with gil:
+            print("printing matrix")
+            for int_i in range(0, n_rows):
+                for int_j in range(0, n_cols):
+                    print(self.mat_ptr[int_i * n_rows + int_j], end=' ')
+                print()#'''
+    ###########################################################################################
 
-        The reduced distance is any measure that yields the same rank as the
-        distance, but is more efficient to compute.  For example, for the
-        Euclidean metric, the reduced distance is the squared-euclidean
-        distance.
-        """
-        return self.dist(x1, x2, size)
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                             ITYPE_t size) nogil except -1:
+        
+        # initialize our values
+        cdef DTYPE_t double_i, double_j, option1, option2, option3
 
-    cdef int n_pdist(self, char[::1] X, DTYPE_t[:, ::1] D) except -1:
+        # indexes and lengths of the two strings x1 and x2
+        cdef int int_i, int_j, s1_length, s2_length, n_cols, n_rows
+
+
+        s1_length = 0
+        s2_length = 0
+
+        # reset
+        double_i = 1.0
+        double_j = 1.0
+        
+        int_i = 0
+        int_j = 0
+
+        while (x1[int_i] != 0.0):
+            s1_length = s1_length + 1
+            int_i = int_i + 1
+
+        while (x2[int_j] != 0.0):
+            s2_length = s2_length + 1
+            int_j = int_j + 1
+
+        n_rows = s1_length + 1
+        n_cols = s2_length + 1
+        with gil:
+            print("s1 length: ", s1_length)
+            print("s2 length: ", s2_length)#'''
+
+        
+
+        self.mat_ptr[0] = 0.0
+
+        for int_i in range(1, n_rows):
+            for int_j in range(1, n_cols):
+                self.mat_ptr[int_i * n_rows + int_j] = 0.0   
+
+        with gil:
+            print("empty matrix")
+        self.print_matrix(n_rows, n_cols) 
+
+        int_j = 0
+        double_i = 1.0
+        # fill the first column with increasing values
+        for int_i in range(1, n_rows):
+            self.mat_ptr[int_i * n_rows] = double_i
+            double_i = double_i + 1.0
+
+        with gil:
+            print("filled first column")
+        self.print_matrix(n_rows, n_cols) 
+
+        int_i = 0
+        double_j = 1.0
+        # fill the first row with increasing values
+        for int_j in range(1, n_cols):
+            self.mat_ptr[int_i * n_rows + int_j] = double_j
+            double_j = double_j + 1.0
+
+        with gil:
+            print("filled first row")
+        self.print_matrix(n_rows, n_cols)
+
+        with gil:
+            print("x1: ", end='')
+            for int_i in range(s1_length):
+                print(x1[int_i], end= ' ')
+
+            print()
+            print("x2: ", end='')
+            for int_j in range(s2_length):
+                print(x2[int_j], end = ' ')
+            print()#'''
+
+
+
+        for int_i in range(1, n_rows):
+            for int_j in range(1, n_cols):
+                option1 = self.mat_ptr[(int_i-1) * n_rows + (int_j-1)]
+                # The strings are 0 indexed
+                if (x1[int_i-1] != x2[int_j-1]):
+                    option1 = option1 + 1.0
+
+
+                option2 = self.mat_ptr[(int_i-1) * n_rows + int_j] + 1
+                option3 = self.mat_ptr[int_i * n_rows + (int_j-1)] + 1
+
+                '''with gil:
+                    print(int_i, int_j, "op1: ", option1, "op2: ", option2,"op3: ", option3)'''
+                self.mat_ptr[int_i * n_rows + int_j] = self.lev_min(self.lev_min(option1, option2), 
+                                                                    option3)
+
+        with gil:
+            print("filled matrix")
+        self.print_matrix(n_rows, n_cols)
+        with gil:
+            print()
+            print()
+
+
+        return self.mat_ptr[s1_length * n_rows + s2_length]
+
+
+
+    '''cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
-        print("inside pdist")
         cdef ITYPE_t i1, i2
         for i1 in range(X.shape[0]):
             for i2 in range(i1, X.shape[0]):
                 D[i1, i2] = self.dist(&X[i1, 0], &X[i2, 0], X.shape[1])
                 D[i2, i1] = D[i1, i2]
-        return 0
+        return 0#'''
 
-    cdef int n_cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+
+
+
+    '''cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
                    DTYPE_t[:, ::1] D) except -1:
         """compute the cross-pairwise distances between arrays X and Y"""
         cdef ITYPE_t i1, i2
@@ -1086,7 +1255,7 @@ cdef class LevenshteinDistance(DistanceMetric):
         for i1 in range(X.shape[0]):
             for i2 in range(Y.shape[0]):
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-        return 0
+        return 0#'''
     ###########################################################################################
 
 

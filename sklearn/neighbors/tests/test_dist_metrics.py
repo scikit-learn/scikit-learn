@@ -162,15 +162,45 @@ def test_levenshtein_distance():
 
     def levenshtein_cashed(x1, x2):
         results = {}
-        results[("cat", "cat")] = 0.0
-        results[("cat", "hat")] = 1.0
+        results[("cats", "cats")] = 0.0
+        results[("cats", "hat")] = 2.0
         results[("hat", "hat")] = 0.0
+        results[("hat", "cats")] = 2.0
+        results[("cats", "cat")] = 1.0
+        results[("cat", "cats")] = 1.0
+        results[("cat", "cat")] = 0.0
         results[("hat", "cat")] = 1.0
+        results[("cat", "hat")] = 1.0
+
+        results[("cyclops", "cyclops")] = 0.0
+        results[("encyclopedia", "encyclopedia")] = 0.0
+
+        results[("cyclops", "encyclopedia")] = 6.0
+        results[("encyclopedia", "cyclops")] = 6.0
+
+        results[("cat", "encyclopedia")] = 11.0
+        results[("encyclopedia", "cat")] = 11.0
+
+        results[("cats", "encyclopedia")] = 11.0
+        results[("encyclopedia", "cats")] = 11.0
+
+        results[("hat", "encyclopedia")] = 12.0
+        results[("encyclopedia", "hat")] = 12.0
+
+        results[("cyclops", "cat")] = 6.0
+        results[("cat", "cyclops")] = 6.0
+
+        results[("cyclops", "cats")] = 5.0
+        results[("cats", "cyclops")] = 5.0
+
+        results[("cyclops", "hat")] = 7.0
+        results[("hat", "cyclops")] = 7.0
 
         return results[(x1, x2)]
 
-    X = np.array(["cat", "hat"], dtype=np.unicode_, order="C")
-    print(X)
+    X = np.array(["cats", "hat", "cat", "encyclopedia"], dtype=np.unicode_, order="C")
+    
+
     levenshtein = DistanceMetric.get_metric("levenshtein")
 
     D1 = levenshtein.pairwise(X)
@@ -181,6 +211,18 @@ def test_levenshtein_distance():
             D2[i, j] = levenshtein_cashed(x1, x2)
 
     assert_array_almost_equal(D1, D2)
+
+    Y = np.array(["hat", "cats", "cat", "cyclops"], dtype=np.unicode_, order="C")
+
+    D1 = levenshtein.pairwise(X, Y)
+    D2 = np.zeros_like(D1)
+
+    for i, x1 in enumerate(X):
+        for j, y2 in enumerate(Y):
+            D2[i, j] = levenshtein_cashed(x1, y2)
+
+    assert_array_almost_equal(D1, D2)
+
     
 
 
