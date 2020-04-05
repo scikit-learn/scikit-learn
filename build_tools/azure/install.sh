@@ -97,6 +97,10 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
+
+    # TODO: Remove pin when https://github.com/python-pillow/Pillow/issues/4518 gets fixed
+    python -m pip install "pillow>=4.3.0,!=7.1.0,!=7.1.1"
+
     python -m pip install pandas matplotlib pyamg scikit-image
     # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps

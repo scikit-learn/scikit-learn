@@ -146,6 +146,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
+        if hasattr(self, 'decision_function_shape'):
+            if self.decision_function_shape not in ('ovr', 'ovo'):
+                raise ValueError(
+                    f"decision_function_shape must be either 'ovr' or 'ovo', "
+                    f"got {self.decision_function_shape}."
+                )
+
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
