@@ -633,6 +633,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         Y : array-like of shape (n_samples, n_classes)
+
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
                 scikit-learn conventions.

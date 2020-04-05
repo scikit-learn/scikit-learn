@@ -143,6 +143,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     ----------
     n_components : int, optional (default=10)
         Number of topics.
+
         .. versionchanged:: 0.19
             ``n_topics `` was renamed to ``n_components``
 
