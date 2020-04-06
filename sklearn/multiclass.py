@@ -392,7 +392,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions.
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
