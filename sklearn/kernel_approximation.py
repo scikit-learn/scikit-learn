@@ -67,6 +67,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     bitHash_ : ndarray of shape (degree, n_features), dtype=float32
         Array with random entries in {+1, -1}, used to represent
         the 2-wise independent hash functions for Count Sketch computation.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialSampler
