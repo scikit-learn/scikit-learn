@@ -130,6 +130,7 @@ class EfficiencyWarning(UserWarning):
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
+    array(...)
     EfficiencyWarning('Precomputed sparse input was not sorted by data.')
 
     .. versionadded:: 0.18
