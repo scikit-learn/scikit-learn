@@ -42,6 +42,11 @@ from ._samples_generator import make_sparse_spd_matrix
 from ._samples_generator import make_gaussian_quantiles
 from ._samples_generator import make_biclusters
 from ._samples_generator import make_checkerboard
+from .samples_generator import make_log_regression
+from .samples_generator import make_sin_regression
+from .samples_generator import make_square_regression
+from .samples_generator import make_multiplicative_noise
+from .samples_generator import make_independent_noise
 from ._svmlight_format_io import load_svmlight_file
 from ._svmlight_format_io import load_svmlight_files
 from ._svmlight_format_io import dump_svmlight_file

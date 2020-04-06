@@ -289,6 +289,11 @@ Samples generator
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
+   datasets.make_log_regression
+   datasets.make_sin_regression
+   datasets.make_square_regression
+   datasets.make_multiplicative_noise
+   datasets.make_independent_noise
 
 
 .. _decomposition_ref:
@@ -837,21 +842,6 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
-Generalized linear models (GLM) for regression
-----------------------------------------------
-
-These models allow for response variables to have error distributions other
-than a normal distribution:
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.PoissonRegressor
-   linear_model.TweedieRegressor
-   linear_model.GammaRegressor
-
-
 Miscellaneous
 -------------
 
@@ -1345,9 +1335,6 @@ Model validation
 .. automodule:: sklearn.pipeline
    :no-members:
    :no-inherited-members:
-
-**User guide:** See the :ref:`combining_estimators` section for further
-details.
 
 .. currentmodule:: sklearn
 
