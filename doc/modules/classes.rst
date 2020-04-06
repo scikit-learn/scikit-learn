@@ -289,6 +289,11 @@ Samples generator
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
+   datasets.make_log_regression
+   datasets.make_sin_regression
+   datasets.make_square_regression
+   datasets.make_multiplicative_noise
+   datasets.make_independent_noise
 
 
 .. _decomposition_ref:

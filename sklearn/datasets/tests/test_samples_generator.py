@@ -29,6 +29,11 @@ from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
 from sklearn.datasets import make_biclusters
 from sklearn.datasets import make_checkerboard
+from sklearn.datasets import make_log_regression
+from sklearn.datasets import make_sin_regression
+from sklearn.datasets import make_square_regression
+from sklearn.datasets import make_multiplicative_noise
+from sklearn.datasets import make_independent_noise
 
 from sklearn.utils.validation import assert_all_finite
 
@@ -541,6 +546,17 @@ def test_make_circles():
     with pytest.raises(ValueError):
         make_circles(factor=1.)
 
+def test_nonlinear_regression_simulations():
+
+    n_samples = 1000
+    n_dimensions = 13
+
+    for sim in [make_independent_noise, make_log_regression,
+                make_multiplicative_noise, make_sin_regression,
+                make_square_regression]:
+        X, y = make_log_regression(n_samples, n_dimensions)
+        assert X.shape == (n_samples, n_dimensions), "X shape mismatch"
+        assert y.shape == (n_samples, n_dimensions), "Y shape mismatch"
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
