@@ -3,9 +3,11 @@ import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from . import _libsvm as libsvm
-from .import _liblinear as liblinear
-from . import _libsvm_sparse as libsvm_sparse
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from . import _libsvm as libsvm  # type: ignore
+from .import _liblinear as liblinear  # type: ignore
+from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
@@ -144,6 +146,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
+
+        if hasattr(self, 'decision_function_shape'):
+            if self.decision_function_shape not in ('ovr', 'ovo'):
+                raise ValueError(
+                    f"decision_function_shape must be either 'ovr' or 'ovo', "
+                    f"got {self.decision_function_shape}."
+                )
 
         if callable(self.kernel):
             check_consistent_length(X, y)

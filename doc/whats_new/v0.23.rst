@@ -363,7 +363,7 @@ Changelog
 
 - |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
   will now accept value 'if_binary' and will drop the first category of
-  each feature with two categories. :pr:`#16245`
+  each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
@@ -412,6 +412,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray`s.
+  :pr:`16728` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................

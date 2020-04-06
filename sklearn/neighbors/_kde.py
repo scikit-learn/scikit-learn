@@ -8,7 +8,7 @@ import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import check_array, check_random_state
-from ..utils.validation import _check_sample_weight
+from ..utils.validation import _check_sample_weight, check_is_fitted
 
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
@@ -184,6 +184,7 @@ class KernelDensity(BaseEstimator):
             probability densities, so values will be low for high-dimensional
             data.
         """
+        check_is_fitted(self)
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
@@ -241,6 +242,7 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of samples.
         """
+        check_is_fitted(self)
         # TODO: implement sampling for other valid kernel shapes
         if self.kernel not in ['gaussian', 'tophat']:
             raise NotImplementedError()
