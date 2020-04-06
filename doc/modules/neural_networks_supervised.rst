@@ -36,9 +36,9 @@ output.
    **Figure 1 : One hidden layer MLP.**
 
 The leftmost layer, known as the input layer, consists of a set of neurons
-:math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each
+:math:`\{x_i | x_1, x_2, ..., x_n\}` representing the input features. Each
 neuron in the hidden layer transforms the values from the previous layer with
-a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed
+a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_nx_n`, followed
 by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
 the hyperbolic tan function. The output layer receives the values from the
 last hidden layer and transforms them into output values.
