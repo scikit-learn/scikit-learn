@@ -115,22 +115,22 @@ class EfficiencyWarning(UserWarning):
     --------
     >>> from sklearn.neighbors import NearestNeighbors
     >>> from sklearn.exceptions import EfficiencyWarning
+    >>> from scipy.sparse import csr_matrix
     >>> import warnings
     >>> warnings.simplefilter('always', EfficiencyWarning)
-    >>> samples = [[1., 1., .5], [0., 0., 0.], [0., .5, 0.]]
+    >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> neigh = NearestNeighbors(n_neighbors=1)
     >>> neigh.fit(samples)
     NearestNeighbors(n_neighbors=1)
-    >>> X = [[1., 0., 1.], [0., 1., 0.]]
+    >>> X = csr_matrix([[0., 2., 0.], [1., 0., 1.], [3., 0., 1.]])
     >>> neigh.effective_metric_ = 'precomputed'
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         neigh.kneighbors(X, return_distance=False)
-    ...     except IndexError:
+    ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
-    EfficiencyWarning('The input centres are not sorted, which is probably a
-    result of a precomputed sparse input which was not sorted by data.')
+    EfficiencyWarning('Precomputed sparse input was not sorted by data.')
 
     .. versionadded:: 0.18
     """
