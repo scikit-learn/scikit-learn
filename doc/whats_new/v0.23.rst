@@ -25,6 +25,12 @@ random sampling procedures.
 - :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
   and :class:`ensemble.IsolationForest`. |Fix|
 
+- Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`.
+  |Efficiency| |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -296,7 +302,7 @@ Changelog
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
   :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
-  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
@@ -377,6 +383,26 @@ Changelog
 
 :mod:`sklearn.svm`
 ..................
+
+- |Fix| |Efficiency| Improved ``libsvm`` and ``liblinear`` random number
+  generators used to randomly select coordinates in the coordinate descent
+  algorithms. Platform-dependent C ``rand()`` was used, which is only able to
+  generate numbers up to ``32767`` on windows platform (see this `blog
+  post <https://codeforces.com/blog/entry/61587>`) and also has poor
+  randomization power as suggested by `this presentation
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`.
+  It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
+  generates 31bits/63bits random numbers on all platforms. In addition, the
+  crude "modulo" postprocessor used to get a random number in a bounded
+  interval was replaced by the tweaked Lemire method as suggested by `this blog
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
+  is affected. In particular users can expect a better convergence when the
+  number of samples (LibSVM) or the number of features (LibLinear) is large.
+  :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 - |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
   `probB_`, are now deprecated as they were not useful. :pr:`15558` by
