@@ -636,7 +636,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
             .. versionchanged:: 0.19
                 output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions.
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
 
