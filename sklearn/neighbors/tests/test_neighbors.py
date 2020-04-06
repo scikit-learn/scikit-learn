@@ -1309,6 +1309,7 @@ def test_valid_brute_metric_for_auto_algorithm():
                     nn.fit(X)
                     nn.kneighbors(X)
                 else:
+                    # Levenshtein distance requires string input
                     X_string = np.array([['cats'],
                                          ['cat'],
                                          ['hat'],
