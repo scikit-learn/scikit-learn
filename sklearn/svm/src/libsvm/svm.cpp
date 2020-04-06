@@ -2358,7 +2358,6 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
     if(param->random_seed >= 0)
     {
-        // srand(param->random_seed);
         set_seed(param->random_seed);
     }
 
@@ -2639,7 +2638,6 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int nr_class;
     if(param->random_seed >= 0)
     {
-        // srand(param->random_seed);
         set_seed(param->random_seed);
     }
 
