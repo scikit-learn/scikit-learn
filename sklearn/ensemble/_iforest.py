@@ -94,7 +94,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     behaviour : str, default='deprecated'
-        This parameter has not effect, is deprecated, and will be removed.
+        This parameter has no effect, is deprecated, and will be removed.
 
         .. versionadded:: 0.20
            ``behaviour`` is added in 0.20 for back-compatibility purpose.
