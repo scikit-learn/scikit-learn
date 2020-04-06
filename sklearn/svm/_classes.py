@@ -339,11 +339,11 @@ class LinearSVR(RegressorMixin, LinearModel):
                     ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
 
     >>> print(regr.named_steps['linearsvr'].coef_)
-    [18.58284419 27.02366194 44.35792369 64.52256231]
+    [18.582... 27.023... 44.357... 64.522...]
     >>> print(regr.named_steps['linearsvr'].intercept_)
     [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-2.38421844]
+    [-2.384...]
 
 
     See also
@@ -473,7 +473,7 @@ class SVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
-        See the :ref:`User Guide <shrinking>`.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -688,7 +688,7 @@ class NuSVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
-        See the :ref:`User Guide <shrinking>`.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -920,7 +920,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
-        See the :ref:`User Guide <shrinking>`.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
@@ -1065,7 +1065,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
-        See the :ref:`User Guide <shrinking>`.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -1193,7 +1193,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
-        See the :ref:`User Guide <shrinking>`.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).

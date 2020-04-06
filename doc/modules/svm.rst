@@ -237,8 +237,9 @@ In addition, the probability estimates may be inconsistent with the scores:
 
 - the "argmax" of the scores may not be the argmax of the probabilities
 - in binary classification, a sample may be labeled by ``predict`` as
-  belonging to a class that has probability < 0.5 according to
-  ``predict_proba``.
+  belonging to the positive class even if the output of `predict_proba` is
+  less than 0.5; and similarly, it could be labeled as negative even if the
+  output of `predict_proba` is more than 0.5.
 
 Platt's method is also known to have theoretical issues.
 If confidence scores are required, but these do not have to be probabilities,
@@ -418,7 +419,7 @@ Tips on Practical Use
     See section :ref:`preprocessing` for more details on scaling and
     normalization.
   
-  .. _shrinking:
+  .. _shrinking_svm:
 
   * Regarding the `shrinking` parameter, quoting [#4]_: *We found that if the
     number of iterations is large, then shrinking can shorten the training
@@ -681,7 +682,7 @@ The primal problem can be equivalently formulated as
 where we make use of the `hinge loss
 <https://en.wikipedia.org/wiki/Hinge_loss>`_. This is the form that is
 directly optimized by :class:`LinearSVC`, but unlike the dual form, this one
-does not involve inner products between samples, so the infamous kernel trick
+does not involve inner products between samples, so the famous kernel trick
 cannot be applied. This is why only the linear kernel is supported by
 :class:`LinearSVC` (:math:`\phi` is the identity function).
 
@@ -721,7 +722,7 @@ vector :math:`y \in \mathbb{R}^n` :math:`\varepsilon`-SVR solves the following p
 
 Here, we are penalizing samples whose prediction is at least :math:`\varepsilon`
 away from their true target. These samples penalize the objective by
-:math:`\zeta_i` or :math:`\zeta_i*`, depending on whether their prediction
+:math:`\zeta_i` or :math:`\zeta_i^*`, depending on whether their predictions
 lie above or below the :math:`\varepsilon` tube.
 
 The dual problem is
