@@ -660,7 +660,7 @@ def test_euclidean_distances():
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
-def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
+def test_euclidean_distances_cdist(dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
     # when X and Y != X are provided
     rng = np.random.RandomState(0)
