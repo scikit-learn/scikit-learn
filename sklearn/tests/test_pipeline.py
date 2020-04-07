@@ -564,6 +564,8 @@ def test_pipeline_slice():
     assert isinstance(pipe2, Pipeline)
     assert pipe2.steps == pipe.steps[:-1]
     assert 2 == len(pipe2.named_steps)
+    assert pipe2.memory == pipe.memory
+    assert pipe2.verbose == pipe.verbose
     assert_raises(ValueError, lambda: pipe[::-1])
 
 
