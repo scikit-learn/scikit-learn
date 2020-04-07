@@ -97,30 +97,29 @@ is equivalent to :func:`linear_kernel`, only slower.)
 
 Gower distances
 -----------------
-The function :func:`gower_distances` computes the distances between the
-observations in X and Y, that may contain combinations of numerical, boolean,
-or categorical attributes, using an implementation of Gower Similarity.
+
+The function :func:`~sklearn.metrics.pairwise.gower_distances` computes the
+distances between the observations in X and Y, that may contain combinations of
+numerical, boolean, or categorical attributes, using an implementation of Gower
+Similarity.
 
 .. math::
 
-    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i\text{is not missing or}y_i\text{is not missing}\}|}
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i != \text{missing} & y_i != \text{missing}\}|}
 
 Where:
 
 `x, y` : array_like of shape (n_features,) are the observations to be compared.
 
-`s(x, y)` : Calculates the similarity of all features (for k = 1 to n_features)
-of x and y, as described by the expressions:
+:math:`s(x_i, y_i)` : Calculates the distance as:
 
-    `s(x[k], y[k]) = 0`, if k represents a boolean or categorical attribute,
-    and they are equal.
+    :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
 
-    `s(x[k], y[k]) = 1`, if k represents a boolean or categorical attribute,
-    and they are unequal.
+    :math:`s(x_i, y_i) := x_i == y_i`, if :math:`i` represents a boolean or
+    categorical attribute.
 
-    `s(x[k], y[k]) = abs(x[k] - y[k])`, if k represents a numerical attribute.
-
-    `s(x[k], y[k]) = 0`, if `x[k]` or `y[k]` are missing.
+    :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
+    attribute.
 
 
 The Gower formula combines a Manhattan (L1) distance for numeric features
