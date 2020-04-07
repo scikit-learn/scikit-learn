@@ -1165,7 +1165,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """Learn the vocabulary dictionary and return term-document matrix.
+        """Learn the vocabulary dictionary and return document-term matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
         implemented.
@@ -1816,7 +1816,7 @@ class TfidfVectorizer(CountVectorizer):
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """Learn vocabulary and idf, return term-document matrix.
+        """Learn vocabulary and idf, return document-term matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
         implemented.
