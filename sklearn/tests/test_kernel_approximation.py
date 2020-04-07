@@ -33,8 +33,9 @@ def test_polynomial_sampler(X, Y, gamma, degree, coef0):
     kernel = (gamma * np.dot(X, Y.T) + coef0)**degree
 
     # approximate kernel mapping
-    ps_transform = PolynomialSampler(n_components=5000, gamma=gamma, coef0=coef0,
-                                     degree=degree, random_state=42)
+    ps_transform = PolynomialSampler(n_components=5000, gamma=gamma,
+                                     coef0=coef0, degree=degree,
+                                     random_state=42)
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
