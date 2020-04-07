@@ -289,6 +289,14 @@ submodule/subpackage of the public subpackage, e.g.
 ``sklearn/impute/_iterative.py``. This is needed so that pickles still work
 in the future when the features aren't experimental anymore
 
+To avoid type checker (e.g. mypy) errors a direct import of experimenal
+estimators should be done in the parent module, protected by the
+``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
+or `sklearn/impute/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/impute/__init__.py>`_
+for an example.
+
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py
 <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/experimental/tests/test_enable_hist_gradient_boosting.py>`_.
