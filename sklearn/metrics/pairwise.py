@@ -27,6 +27,7 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils import is_scalar_nan
 from ..utils import _safe_indexing
+from ..utils import _get_column_indices
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
@@ -838,23 +839,24 @@ def _split_categorical_numerical(X, categorical_features):
     # numerical data to object dtype. First we split the data into categorical
     # and numerical, then we do check_array
 
+    if X is None:
+        return None, None
+
     # TODO: this should be more like check_array(..., accept_pandas=True)
-    if (X is not None and not hasattr(X, 'iloc')
-            and not hasattr(X, '__array__')):
+    if not hasattr(X, "shape"):
         X = check_array(X, dtype=np.object, force_all_finite=False)
 
-    if callable(categorical_features) and X is not None:
+    if callable(categorical_features):
         cols = categorical_features(X)
     else:
         cols = categorical_features
     if cols is None:
         cols = []
 
-    if X is not None:
-        X_cat = _safe_indexing(X, cols, axis=1)
-        X_num = _safe_indexing(X, cols, axis=1, inverse=True)
-    else:
-        X_cat = X_num = None
+    col_idx = _get_column_indices(X, cols)
+    X_cat = _safe_indexing(X, col_idx, axis=1)
+    X_num = _safe_indexing(X, col_idx, axis=1, inverse=True)
+
     return X_cat, X_num
 
 
@@ -878,7 +880,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         by name.
         A callable is passed the input data `X` and can return any of the
         above. To select multiple columns by name or dtype, you can use
-        :obj:`make_column_selector`.
+        :obj:`~sklearn.compose.make_column_selector`.
 
         By default all non-numeric columns are considered categorical.
 
@@ -927,12 +929,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
     * Different from the original similarity S, this implementation
     returns 1-S.
     """
-    def _n_cols(X):
-        # TODO: improve this, and add it to validation.py?
-        if hasattr(X, 'shape'):
-            return X.shape[1]
-        return np.asarray(X).shape[1]
-
     def _nanmanhatan(x, y):
         return np.nansum(np.abs(x - y))
 
@@ -960,9 +956,9 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         min_values = np.asarray(min_values)
         scale_factor = np.asarray(scale_factor)
         check_consistent_length(min_values, scale_factor,
-                                np.ndarray(shape=(_n_cols(X_num), 0)))
+                                np.ndarray(shape=(X_num.shape[1], 0)))
 
-    if _n_cols(X_num):
+    if X_num.shape[1]:
         X_num, Y_num = check_pairwise_arrays(X_num, Y_num, precomputed=False,
                                              dtype=float,
                                              force_all_finite=False)
@@ -982,7 +978,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
     else:
         nan_manhatan = valid_num = None
 
-    if _n_cols(X_cat):
+    if X_cat.shape[1]:
         X_cat, Y_cat = check_pairwise_arrays(X_cat, Y_cat, precomputed=False,
                                              dtype=np.object,
                                              force_all_finite=False)

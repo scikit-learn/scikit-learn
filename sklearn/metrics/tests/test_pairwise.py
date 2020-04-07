@@ -1309,10 +1309,9 @@ def test_gower_distances():
                                  [1, 0][Xn[i][3] == Yn[j][3]]) /
                                 non_missing_cols[i])
 
-    # TODO: boolean array with safe_indexing doesn't work?
     D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
                            n_jobs=2,
-                           categorical_features=[2, 3])
+                           categorical_features=[False, False, True, True])
 
     assert_array_almost_equal(D_expected, D)
 
