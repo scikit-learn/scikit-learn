@@ -855,7 +855,7 @@ def _split_categorical_numerical(X, categorical_features):
 
     col_idx = _get_column_indices(X, cols)
     X_cat = _safe_indexing(X, col_idx, axis=1)
-    X_num = _safe_indexing(X, col_idx, axis=1, inverse=True)
+    X_num = _safe_indexing(X, col_idx, axis=1, complement=True)
 
     return X_cat, X_num
 

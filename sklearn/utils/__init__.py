@@ -167,23 +167,22 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def _array_indexing(array, key, key_dtype, axis, inverse):
+def _array_indexing(array, key, key_dtype, axis, complement):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < (1, 12) or issparse(array):
-        # FIXME: Remove the check for NumPy when using >= 1.12
+    if issparse(array):
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
             key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
-    if inverse:
+    if complement:
         mask = np.ones(array.shape[0] if axis == 0 else array.shape[1], bool)
         mask[key] = False
         key = mask
     return array[key] if axis == 0 else array[:, key]
 
 
-def _pandas_indexing(X, key, key_dtype, axis, inverse):
+def _pandas_indexing(X, key, key_dtype, axis, complement):
     """Index a pandas dataframe or a series."""
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
@@ -194,23 +193,27 @@ def _pandas_indexing(X, key, key_dtype, axis, inverse):
         key = list(key)
     # check whether we should index with loc or iloc
     indexer = X.iloc if key_dtype == 'int' else X.loc
-    if inverse:
-        if key_dtype == 'int':
-            mask = np.ones(X.shape[0] if axis == 0 else X.shape[1], bool)
-            mask[key] = False
-            key = mask
-        else:
+    if complement:
+        if key_dtype == 'str':
             # we reject string keys for rows
-            key = X.columns.difference(key)
+            key = _get_column_indices(X, key)
+        if isinstance(key, tuple):
+            key = list(key)
+        mask = np.ones(X.shape[0] if axis == 0 else X.shape[1], bool)
+        mask[key] = False
+        key = mask
     return indexer[:, key] if axis else indexer[key]
 
 
-def _list_indexing(X, key, key_dtype, inverse):
+def _list_indexing(X, key, key_dtype, complement):
     """Index a Python list."""
-    if inverse:
+    if complement:
+        if isinstance(key, tuple):
+            key = list(key)
         mask = np.ones(len(X), bool)
         mask[key] = False
         key = mask
+        key_dtype = 'bool'
 
     if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
@@ -334,7 +337,7 @@ def safe_indexing(X, indices, axis=0):
     return _safe_indexing(X, indices, axis)
 
 
-def _safe_indexing(X, indices, axis=0, inverse=False):
+def _safe_indexing(X, indices, axis=0, *, complement=False):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -364,7 +367,7 @@ def _safe_indexing(X, indices, axis=0, inverse=False):
     axis : int, default=0
         The axis along which `X` will be subsampled. `axis=0` will select
         rows while `axis=1` will select columns.
-    inverse : bool, default=False
+    complement : bool, default=False
         Whether to select the given columns or deselect them and return the
         rest.
 
@@ -409,13 +412,13 @@ def _safe_indexing(X, indices, axis=0, inverse=False):
 
     if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis,
-                                inverse=inverse)
+                                complement=complement)
     elif hasattr(X, "shape"):
         return _array_indexing(X, indices, indices_dtype, axis=axis,
-                               inverse=inverse)
+                               complement=complement)
     else:
         return _list_indexing(X, indices, indices_dtype,
-                              inverse=inverse)
+                              complement=complement)
 
 
 def _get_column_indices(X, key):
