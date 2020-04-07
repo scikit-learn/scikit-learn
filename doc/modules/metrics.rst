@@ -98,14 +98,14 @@ is equivalent to :func:`linear_kernel`, only slower.)
 Gower distances
 -----------------
 
-The function :func:`~sklearn.metrics.pairwise.gower_distances` computes the
-distances between the observations in X and Y, that may contain combinations of
-numerical, boolean, or categorical attributes, using an implementation of Gower
+The function :func:`~pairwise.gower_distances` computes the distances between
+the observations in X and Y, that may contain combinations of numerical,
+boolean, or categorical attributes, using an implementation of Gower
 Similarity.
 
 .. math::
 
-    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i != \text{missing} & y_i != \text{missing}\}|}
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i != \text{missing} \land y_i != \text{missing}\}|}
 
 Where:
 
@@ -115,7 +115,7 @@ Where:
 
     :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
 
-    :math:`s(x_i, y_i) := x_i == y_i`, if :math:`i` represents a boolean or
+    :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a boolean or
     categorical attribute.
 
     :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
