@@ -20,6 +20,7 @@ Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
+
 @pytest.mark.parametrize('X', [X, csr_matrix(X)])
 @pytest.mark.parametrize('Y', [Y, csr_matrix(Y)])
 @pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
