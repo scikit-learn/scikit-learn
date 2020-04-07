@@ -185,6 +185,7 @@ class UndefinedMetricWarning(UserWarning):
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
+    nan
     UndefinedMetricWarning('R^2 score is not well-defined with less than two
     samples.')
 
