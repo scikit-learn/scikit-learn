@@ -462,9 +462,9 @@ predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
 The function covers the multiclass classification case but not the binary and
 multilabel cases.
 
-If :math:`\hat{y}_{i,j}` is the predicted value of the :math:`i`-th sample for
-the :math:`j`-th largest predicted score and :math:`y_i` is the corresponding
-true value, then the fraction of correct predictions over
+If :math:`\hat{y}_{i,j}` is the predicted class corresponding to :math:`j`-th
+largest predicted score for the :math:`i`-th sample and :math:`y_i` is the
+corresponding true value, then the fraction of correct predictions over
 :math:`n_\text{samples}` is defined as
 
 .. math::
