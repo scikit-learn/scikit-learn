@@ -116,9 +116,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         estimator is of dimension 2.
 
     max_features : int or None, optional
-        The maximum number of features selected scoring above ``threshold``.
-        To disable ``threshold`` and only select based on ``max_features``,
-        set ``threshold=-np.inf``.
+        The maximum number of features to select.
+        To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
 
