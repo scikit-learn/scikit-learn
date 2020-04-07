@@ -124,7 +124,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     X_scale_ : float, default = 64
         L2-norm of X utilized in equation self.normalize:
-        X = (X - self.X_offset_) divided by (self.X_scale_)
+        `X = (X - self.X_offset_) / (self.X_scale_)`
 
     y_offset_ : array_like, shape (n_samples, )
         The weighted mean of y, used to center y in the _pre_process_data
