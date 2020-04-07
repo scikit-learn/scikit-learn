@@ -626,3 +626,15 @@ def test_mle_simple_case():
     pca_skl = PCA('mle', svd_solver='full')
     pca_skl.fit(X)
     assert pca_skl.n_components_ == n_dim - 1
+
+
+def test_assess_dimesion_rank_one():
+    # Make sure assess_dimension works properly on a matrix of rank 1
+    n_samples, n_features = 9, 6
+    X = np.ones((n_samples, n_features))  # rank 1 matrix
+    _, s, _ = np.linalg.svd(X, full_matrices=True)
+    assert sum(s[1:]) == 0  # except for rank 1, all eigenvalues are 0
+
+    assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
+    for rank in range(2, n_features):
+        assert _assess_dimension(s, rank, n_samples) == -np.inf
