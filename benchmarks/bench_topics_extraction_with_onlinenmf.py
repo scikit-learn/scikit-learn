@@ -37,8 +37,8 @@ from sklearn.decomposition import NMF
 
 n_samples = range(10000, 20000, 2000)
 n_features = range(2000, 10000, 2000)
-batch_size = range(400, 1000, 200)
-n_components = 10
+batch_size = 600
+n_components = range(10, 70, 20)
 
 # Load the The Blog Authorship Corpus dataset
 # from http://u.cs.biu.ac.il/~koppel/BlogCorpus.htm
@@ -64,7 +64,7 @@ print("done in %0.3fs." % (time() - t0))
 
 fig = plt.figure(constrained_layout=True, figsize=(22, 13))
 
-spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(batch_size),
+spec = gridspec.GridSpec(ncols=len(n_features), nrows=len(n_components),
                          figure=fig)
 
 ylabel = "Convergence time"
@@ -72,7 +72,7 @@ xlabel = "n_samples"
 
 ax = []
 
-for bj in range(len(batch_size)):
+for bj in range(len(n_components)):
     miny = 999999
     maxy = 0
     for j in range(len(n_features)):
@@ -102,7 +102,7 @@ for bj in range(len(batch_size)):
                   "with tf-idf features, n_samples=%d and n_features=%d..."
                   % (n_samples[i], n_features[j]))
             t0 = time()
-            nmf = NMFOriginal(n_components=n_components, random_state=1,
+            nmf = NMFOriginal(n_components=n_components[bj], random_state=1,
                               beta_loss='kullback-leibler', solver='mu',
                               max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
             timesKL[i] = time() - t0
@@ -114,8 +114,8 @@ for bj in range(len(batch_size)):
                   "tf-idf features, n_samples=%d and n_features=%d..."
                   % (n_samples[i], n_features[j]))
             t0 = time()
-            minibatch_nmf = NMF(n_components=n_components,
-                                batch_size=batch_size[bj],
+            minibatch_nmf = NMF(n_components=n_components[bj],
+                                batch_size=batch_size,
                                 random_state=1, beta_loss='kullback-leibler',
                                 solver='mu', max_iter=1000, alpha=.1,
                                 l1_ratio=.5).fit(tfidf)
@@ -127,7 +127,7 @@ for bj in range(len(batch_size)):
 
         str1 = "NMF"
         str2 = "Online NMF"
-        ax_index = j+bj*(len(n_features)-1)
+        ax_index = j+bj*len(n_features)
         ax[ax_index].plot(n_samples, timesKL, marker='o', label=str1)
         ax[ax_index].plot(n_samples, timesmbKL, marker='o', label=str2)
 
@@ -141,14 +141,14 @@ for bj in range(len(batch_size)):
         ax[ax_index].set_title(strdesc)
 
     for j in range(len(n_features)):
-        ax_index = j+bj*(len(n_features)-1)
+        ax_index = j+bj*len(n_features)
         ax[ax_index].set_ylim(miny-10, maxy+10)
 
-    ax[bj*(len(n_features)-1)+1].legend(bbox_to_anchor=(1.05, 1),
+    ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.05, 1),
                                         loc='upper left', borderaxespad=0.)
-    strbatch = "batch size: " + str(batch_size[bj]) + \
-               "\nn_components: " + str(n_components)
-    ax[bj*(len(n_features)-1)+1].annotate(strbatch, (1.05, 0.5),
+    strbatch = "batch size: " + str(batch_size) + \
+               "\nn_components: " + str(n_components[bj])
+    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.05, 0.5),
                                           xycoords='axes fraction',
                                           va='center')
 
