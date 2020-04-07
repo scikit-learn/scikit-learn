@@ -177,7 +177,7 @@ class UndefinedMetricWarning(UserWarning):
     >>> from sklearn.exceptions import UndefinedMetricWarning
     >>> import warnings
     >>> warnings.simplefilter('always', UndefinedMetricWarning)
-    >>> y_true = [3]
+    >>> y_true, y_pred = [3], [3]
     >>> y_pred = [3]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
