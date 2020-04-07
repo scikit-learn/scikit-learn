@@ -26,7 +26,11 @@ from ..ensemble._hist_gradient_boosting.gradient_boosting import (
 
 from .. import ensemble
 
-ensemble.HistGradientBoostingClassifier = HistGradientBoostingClassifier
-ensemble.HistGradientBoostingRegressor = HistGradientBoostingRegressor
+# use settattr to avoid mypy errors when monkeypatching
+setattr(ensemble, "HistGradientBoostingClassifier",
+        HistGradientBoostingClassifier)
+setattr(ensemble, "HistGradientBoostingRegressor",
+        HistGradientBoostingRegressor)
+
 ensemble.__all__ += ['HistGradientBoostingClassifier',
                      'HistGradientBoostingRegressor']

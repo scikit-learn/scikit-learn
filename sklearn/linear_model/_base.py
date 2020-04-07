@@ -26,7 +26,7 @@ from joblib import Parallel, delayed
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
@@ -498,8 +498,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         n_jobs_ = self.n_jobs
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         y_numeric=True, multi_output=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   y_numeric=True, multi_output=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
