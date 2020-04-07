@@ -20,62 +20,23 @@ Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
-
-def test_polynomial_sampler():
+@pytest.mark.parametrize('X', [X, csr_matrix(X)])
+@pytest.mark.parametrize('Y', [Y, csr_matrix(Y)])
+@pytest.mark.parametrize('gamma', [0.1, 1, 2.5])
+@pytest.mark.parametrize('degree', [1, 2, 4])
+@pytest.mark.parametrize('coef0', [0, 1, 4])
+def test_polynomial_sampler(X, Y, gamma, degree, coef0):
     # test that PolynomialSampler approximates polynomial
     # kernel on random data
 
-    # compute exact kernel for degree=2
-    kernel = np.dot(X, Y.T)**2
+    # compute exact kernel
+    kernel = (gamma * np.dot(X, Y.T) + coef0)**degree
 
     # approximate kernel mapping
-    ps_transform = PolynomialSampler(n_components=1000, degree=2,
-                                     random_state=42)
+    ps_transform = PolynomialSampler(n_components=5000, gamma=gamma, coef0=coef0,
+                                     degree=degree, random_state=42)
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
-    kernel_approx = np.dot(X_trans, Y_trans.T)
-
-    error = kernel - kernel_approx
-    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
-    np.abs(error, out=error)
-    assert np.max(error) <= 0.1  # nothing too far off
-    assert np.mean(error) <= 0.05  # mean is fairly close
-
-    # compute exact kernel for degree=3, coef0=4
-    kernel = (np.dot(X, Y.T)+4)**3
-
-    # approximate kernel mapping
-    ps_transform = PolynomialSampler(n_components=4000, coef0=4, degree=3,
-                                     random_state=42)
-    X_trans = ps_transform.fit_transform(X)
-    Y_trans = ps_transform.transform(Y)
-    kernel_approx = np.dot(X_trans, Y_trans.T)
-
-    error = kernel - kernel_approx
-    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
-    np.abs(error, out=error)
-    assert np.max(error) <= 0.1  # nothing too far off
-    assert np.mean(error) <= 0.05  # mean is fairly close
-
-    # compute exact kernel for gamma=0.1, degree=2, coef0=3
-    kernel = (0.1 * np.dot(X, Y.T)+3)**2
-
-    # approximate kernel mapping
-    ps_transform = PolynomialSampler(n_components=4000, gamma=0.1, coef0=3,
-                                     degree=2, random_state=42)
-    X_trans = ps_transform.fit_transform(X)
-    Y_trans = ps_transform.transform(Y)
-    kernel_approx = np.dot(X_trans, Y_trans.T)
-
-    error = kernel - kernel_approx
-    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
-    np.abs(error, out=error)
-    assert np.max(error) <= 0.1  # nothing too far off
-    assert np.mean(error) <= 0.05  # mean is fairly close
-
-    # Should also work with sparse input data
-    X_trans = ps_transform.fit_transform(csr_matrix(X))
-    Y_trans = ps_transform.transform(csr_matrix(Y))
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
