@@ -555,8 +555,8 @@ for regression which can be specified via the argument
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house price dataset
-(:func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the diabetes dataset
+(:func:`sklearn.datasets.load_diabetes`).
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
@@ -564,8 +564,6 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the impurity-based feature importances which can be
-obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -1345,18 +1343,18 @@ Usage
 
 The following example shows how to fit the VotingRegressor::
 
-   >>> from sklearn.datasets import load_boston
+   >>> from sklearn.datasets import load_diabetes
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> X, y = load_boston(return_X_y=True)
+   >>> X, y = load_diabetes(return_X_y=True)
 
    >>> # Training classifiers
-   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
-   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg1 = GradientBoostingRegressor(random_state=1)
+   >>> reg2 = RandomForestRegressor(random_state=1)
    >>> reg3 = LinearRegression()
    >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
@@ -1392,7 +1390,7 @@ list of names and estimators::
   >>> from sklearn.svm import SVR
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
-  ...               ('svr', SVR(C=1, gamma=1e-6))]
+  ...               ('svr', SVR())]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1407,8 +1405,10 @@ or :class:`StackingRegressor`, respectively::
 To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
-  >>> from sklearn.datasets import load_boston
-  >>> X, y = load_boston(return_X_y=True)
+  >>> from sklearn.datasets import fetch_california_housing
+  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> X = X[:500, :]
+  >>> y = y[:500]
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)
@@ -1434,21 +1434,21 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.81
+   R2 score: 0.78
 
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[28.78..., 28.43...  , 22.62...],
-         [35.96..., 32.58..., 23.68...],
-         [14.97..., 14.05..., 16.45...],
-         [25.19..., 25.54..., 22.92...],
-         [18.93..., 19.26..., 17.03... ]])
+  array([[2.52489823, 3.13842304, 1.67595292],
+        [1.20665281, 0.73108641, 1.39590041],
+        [1.47188265, 1.97367964, 1.65778224],
+        [3.61026558, 3.94513463, 1.66087316],
+        [2.11783106, 2.06977511, 2.15813681]])
 
-In practise, a stacking predictor predict as good as the best predictor of the
-base layer and even sometimes outputperform it by combining the different
-strength of the these predictors. However, training a stacking predictor is
+In practice, a stacking predictor predicts as good as the best predictor of the
+base layer and even sometimes outperforms it by combining the different
+strengths of the these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
@@ -1469,14 +1469,14 @@ computationally expensive.
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
-    ...                 ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))],
+    ...                 ('svr', SVR())],
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.83
+    R2 score: 0.77
 
 .. topic:: References
 
