@@ -45,9 +45,10 @@ from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, minmax_scale
 from sklearn.exceptions import DataConversionWarning
 from sklearn.compose import make_column_selector
+from sklearn.utils.validation import check_random_state
 
 
 def test_pairwise_distances():
@@ -932,8 +933,54 @@ def test_gower_distance_input_validation():
     with pytest.raises(ValueError, match="X can not be None or empty"):
         gower_distances(None)
 
+    pd = pytest.importorskip("pandas")
 
-def test_gower_distances():
+    X = pd.DataFrame([['M', False, 222.22, 1],
+                      ['F', True, 333.22, 2],
+                      ['M', True, 1934.0, 4],
+                      [np.nan, np.nan, np.nan, np.nan]])
+
+    # categorical features must be provided if any exist in the data
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        gower_distances(X, scale=True)
+
+
+def test_gower_distances_cdist_equivalence():
+    # test that gower is consistent with L1 and hamming on numerical and
+    # categorical only features respectively
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+
+    l1 = cdist(X, X, metric='minkowski', p=1) / 10
+    gower_numerical = gower_distances(
+        X, categorical_features=None, scale=False)
+    assert_array_almost_equal(l1, gower_numerical)
+
+    hamming = cdist(X, X, metric='hamming')
+    gower_categorical = gower_distances(
+        X, categorical_features=slice(0, 10))
+    assert_array_almost_equal(hamming, gower_categorical)
+
+    # a mixed categorical and numerical should be equivalent to the combination
+    # of L1 and hamming
+    l1 = cdist(X[:, 6:], X[:, 6:], metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], X[:, :6], metric='hamming')
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=False)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+
+    # test scaling of the numerical values
+    X_scaled = minmax_scale(X[:, 6:])
+    l1 = cdist(X_scaled, X_scaled, metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], X[:, :6], metric='hamming')
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+
+
+def _test_gower_distances():
     # Test the pairwise Gower distances computation.
     # For each test, a set of (non optimized) simple python commands is
     # provided, to explain how those expected values are calculated,
@@ -947,9 +994,6 @@ def test_gower_distances():
                       ['F', True, 333.22, 2],
                       ['M', True, 1934.0, 4],
                       [np.nan, np.nan, np.nan, np.nan]])
-
-    with pytest.raises(ValueError, match="could not convert string to float"):
-        gower_distances(X, scale=True)
 
     # No errors are expected to be raised here
     D = gower_distances(X, scale=False,
