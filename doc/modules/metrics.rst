@@ -98,9 +98,9 @@ is equivalent to :func:`linear_kernel`, only slower.)
 Gower distances
 -----------------
 
-The function :func:`~pairwise.gower_distances` computes the distances between
-the observations in X and Y, that may contain combinations of numerical,
-boolean, or categorical attributes, using an implementation of Gower
+The function :func:`~sklearn.metrics.pairwise.gower_distances` computes the
+distances between the observations in X and Y, that may contain combinations of
+numerical, boolean, or categorical attributes, using an implementation of Gower
 Similarity.
 
 .. math::
