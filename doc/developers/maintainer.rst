@@ -83,6 +83,8 @@ master!) with all the desired changes::
 
 	$ git rebase -i upstream/0.999.2
 
+Do not forget to add a commit updating sklearn.__version__.
+
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
@@ -286,6 +288,14 @@ submodule/subpackage of the public subpackage, e.g.
 ``sklearn/ensemble/_hist_gradient_boosting/`` or
 ``sklearn/impute/_iterative.py``. This is needed so that pickles still work
 in the future when the features aren't experimental anymore
+
+To avoid type checker (e.g. mypy) errors a direct import of experimenal
+estimators should be done in the parent module, protected by the
+``if typing.TYPE_CHECKING`` check. See `sklearn/ensemble/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/ensemble/__init__.py>`_,
+or `sklearn/impute/__init__.py
+<https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/impute/__init__.py>`_
+for an example.
 
 Please also write basic tests following those in
 `test_enable_hist_gradient_boosting.py

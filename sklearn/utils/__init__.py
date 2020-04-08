@@ -51,6 +51,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "DataConversionWarning"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -64,7 +65,8 @@ class Bunch(dict):
     They extend dictionaries by enabling values to be accessed by key,
     `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-
+    Examples
+    --------
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -76,7 +78,6 @@ class Bunch(dict):
     >>> b.c = 6
     >>> b['c']
     6
-
     """
 
     def __init__(self, **kwargs):
