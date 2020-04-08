@@ -205,6 +205,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         has_missing_values = (
             X_binned_train == self.bin_mapper_.missing_values_bin_idx_).any(
                 axis=0).astype(np.uint8)
+
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
