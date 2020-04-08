@@ -361,6 +361,13 @@ Changelog
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
 
+:mod:`sklearn.pipeline`
+............................
+
+- |Fix| A slice of a pipeline now inherits the parameters of the
+  original pipeline (`memory` and `verbose`).  :pr: `16868` by `Paweł
+  Biernat`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
