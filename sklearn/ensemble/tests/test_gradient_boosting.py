@@ -13,7 +13,6 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.base import BaseEstimator
 from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
@@ -344,10 +343,6 @@ def test_check_inputs():
     # Test input checks (shape and type of X and y).
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y + [0, 1])
-
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(ValueError, clf.fit, X, y,
-                  sample_weight=([1] * len(y)) + [0, 1])
 
     weight = [0, 0, 0, 1, 1, 1]
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
@@ -1170,9 +1165,10 @@ def test_non_uniform_weights_toy_edge_case_clf():
 
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
     dense = EstimatorClass(n_estimators=10, random_state=0,
-                           max_depth=2).fit(X, y)
+                           max_depth=2, min_impurity_decrease=1e-7).fit(X, y)
     sparse = EstimatorClass(n_estimators=10, random_state=0,
-                            max_depth=2).fit(X_sparse, y)
+                            max_depth=2,
+                            min_impurity_decrease=1e-7).fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))

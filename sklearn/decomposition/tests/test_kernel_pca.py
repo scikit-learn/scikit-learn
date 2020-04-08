@@ -7,6 +7,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
+from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -215,8 +216,6 @@ def test_kernel_pca_invalid_kernel():
         kpca.fit(X_fit)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -231,8 +230,6 @@ def test_gridsearch_pipeline():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -248,8 +245,6 @@ def test_gridsearch_pipeline_precomputed():
     assert grid_search.best_score_ == 1
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
@@ -288,3 +283,15 @@ def test_kernel_conditioning():
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.lambdas_.min() == 0
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
+
+
+@pytest.mark.parametrize("kernel",
+                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
+def test_kernel_pca_inverse_transform(kernel):
+    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+                       random_state=0)
+
+    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
+    X_trans = kp.fit_transform(X)
+    X_inv = kp.inverse_transform(X_trans)
+    assert_allclose(X, X_inv)

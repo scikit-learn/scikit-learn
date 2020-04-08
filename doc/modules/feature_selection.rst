@@ -152,14 +152,15 @@ The features are considered unimportant and removed, if the corresponding
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
-"0.1*mean".
+"0.1*mean". In combination with the `threshold` criteria, one can use the
+`max_features` parameter to set a limit on the number of features to select.
 
 For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_boston.py`: Selecting the two
-      most important features from the Boston dataset without knowing the
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`: Selecting the two
+      most important features from the diabetes dataset without knowing the
       threshold beforehand.
 
 .. _l1_feature_selection:
@@ -232,7 +233,7 @@ Tree-based feature selection
 
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
-feature importances, which in turn can be used to discard irrelevant
+impurity-based feature importances, which in turn can be used to discard irrelevant
 features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
 meta-transformer)::
 
