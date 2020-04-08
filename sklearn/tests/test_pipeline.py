@@ -557,9 +557,11 @@ def test_pipeline_fit_transform():
 
 
 def test_pipeline_slice():
-    pipe = Pipeline([('transf1', Transf()),
-                     ('transf2', Transf()),
-                     ('clf', FitParamT())])
+    pipe = Pipeline(
+        [("transf1", Transf()), ("transf2", Transf()), ("clf", FitParamT())],
+        memory="123",
+        verbose=True,
+    )
     pipe2 = pipe[:-1]
     assert isinstance(pipe2, Pipeline)
     assert pipe2.steps == pipe.steps[:-1]
