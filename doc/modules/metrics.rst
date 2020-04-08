@@ -105,26 +105,44 @@ Similarity.
 
 .. math::
 
-    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i != \text{missing} \land y_i != \text{missing}\}|}
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i \neq \text{missing} \land y_i \neq \text{missing}\}|}
 
 Where:
 
-`x, y` : array_like of shape (n_features,) are the observations to be compared.
+:math:`x, y` : array_like of shape (n_features,) are the observations to be compared.
 
 :math:`s(x_i, y_i)` : Calculates the distance as:
 
-    :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
+    - :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
 
-    :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a boolean or
+    - :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a boolean or
     categorical attribute.
 
-    :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
+    - :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
     attribute.
 
 
 The Gower formula combines a Manhattan (L1) distance for numeric features
 with Hamming distance for categorical features to obtain a general coefficient
 for categorical and numeric data.
+
+The :func:`gower_distances` function expects the user to specify the
+categorical features, otherwise it will assume all features are numerical. If
+the data is a `pandas.DataFrame`, you can use
+:func:`~sklearn.compose.make_column_selector` to select features::
+
+    >>> import pandas as pd
+    >>> from sklearn.compose import make_column_selector as selector
+    >>> from sklearn.metrics.pairwise import gower_distances
+    >>> X = pd.DataFrame(
+    ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
+    ...      'expert_rating': [5, 3, 4, 5],
+    ...      'user_rating': [4, 5, 4, 3]})
+    >>> gower_distances(X, categorical_features=selector(dtype_include=object))
+    array([[0.        , 0.5      , 0.5      , 0.5      ],
+           [0.5       , 0.       , 0.666... , 1.       ],
+           [0.5       , 0.666... , 0.       , 0.666... ],
+           [0.5       , 1.       , 0.666... , 0.       ]])
 
 .. topic:: References:
 
