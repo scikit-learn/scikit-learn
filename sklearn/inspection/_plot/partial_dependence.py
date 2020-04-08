@@ -560,7 +560,7 @@ class PartialDependenceDisplay:
                                                          axi.transAxes)
             ylim = axi.get_ylim()
             vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
-                                         color='k')
+                                         transform=trans, color='k')
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set
