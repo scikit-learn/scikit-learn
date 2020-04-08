@@ -365,8 +365,8 @@ Changelog
 ............................
 
 - |Fix| A slice of a pipeline now inherits the parameters of the
-  original pipeline (`memory` and `verbose`).  :pr: `16868` by `Paweł
-  Biernat`_.
+  original pipeline (`memory` and `verbose`).  :pr: `16868` by :user:`Paweł
+  Biernat <pwl>`.
 
 :mod:`sklearn.preprocessing`
 ............................
