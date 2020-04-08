@@ -626,9 +626,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                                        ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
-            self.kernel, self.optimizer, self.n_restarts_optimizer,
-            self.max_iter_predict, self.warm_start, self.copy_X_train,
-            self.random_state)
+            kernel=self.kernel,
+            optimizer=self.optimizer,
+            n_restarts_optimizer=self.n_restarts_optimizer,
+            max_iter_predict=self.max_iter_predict,
+            warm_start=self.warm_start,
+            copy_X_train=self.copy_X_train,
+            random_state=self.random_state)
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.size
