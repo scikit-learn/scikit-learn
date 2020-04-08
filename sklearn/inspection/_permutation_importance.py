@@ -109,13 +109,12 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     ...      [0, 9, 9],[0, 9, 9],[0, 9, 9]]
     >>> y = [1, 1, 1, 0, 0, 0]
     >>> clf = LogisticRegression().fit(X, y)
-    LogisticRegression(...)
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean
-    array([0.5, 0. , 0. ])
+    array([0.46666667, 0.        , 0.        ])
     >>> result.importances_std
-    array([0.2236068, 0.       , 0.       ])
+    array([0.22110832, 0.        , 0.        ])
     """
     if not hasattr(X, "iloc"):
         X = check_array(X, force_all_finite='allow-nan', dtype=None)
