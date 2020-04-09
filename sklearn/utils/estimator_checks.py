@@ -2989,7 +2989,7 @@ def strict_check(check):
             return check(*args, **kwargs)
         else:
             raise SkipTest(
-                f"strict mode is on and {check} is marked as strict"
+                f"strict mode is off and {check} is marked as strict"
             )
     return wrapper
 
