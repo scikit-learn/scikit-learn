@@ -86,7 +86,12 @@ classifiers = [
     LinearSVC(C=1.0),
     RandomForestClassifier(),
 ]
-labels = ["Logistic", "Naive Bayes", "Support Vector Classification", "Random Forest"]
+labels = [
+    "Logistic",
+    "Naive Bayes",
+    "Support Vector Classification",
+    "Random Forest",
+]
 markers = ["o", "^", "s", "d"]
 colors = ["blue", "red", "orange", "magenta"]
 
@@ -105,7 +110,9 @@ for i in range(2):
             _ax = plt.subplot2grid((4, 2), (i + 2, j))
             ax_ref = _ax  # reference ax for sharing X and Y axes
         else:
-            _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
+            _ax = plt.subplot2grid(
+                (4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref
+            )
         axes.append(_ax)
 
 
@@ -141,7 +148,12 @@ for k, (clf, label, marker, color, ax) in enumerate(
         label=label,
     )
 
-    ax.set(title=label, xlabel="Predicted P(Y=1)", ylabel="Count", xlim=(-0.02, 1.02))
+    ax.set(
+        title=label,
+        xlabel="Predicted P(Y=1)",
+        ylabel="Count",
+        xlim=(-0.02, 1.02),
+    )
     ax.grid()
 
 ax_cali.set(
