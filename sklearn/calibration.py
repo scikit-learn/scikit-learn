@@ -336,19 +336,12 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
-
-        if len(self.classes_) == 1:
-            class_weight_sample = np.ones(len(y))
-        else:
-            self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
-            class_weight_sample = np.where(y, self.class_weight_[1],
-                                           self.class_weight_[0])
-        if sample_weight is not None:
-            check_consistent_length(X, y, sample_weight)
-            combined_sample_weight = class_weight_sample * sample_weight
-        else:
-            combined_sample_weight = class_weight_sample
+        sample_weight = _check_sample_weight(sample_weight, X,
+                                             dtype=X.dtype)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  self.classes_, y)
+        combined_sample_weight = sample_weight * self.class_weight_[
+            self.label_encoder_.fit_transform(y)]
 
         Y = label_binarize(y, self.classes_)
 
