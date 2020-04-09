@@ -940,7 +940,13 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
             attributes = [attributes]
         attrs = all_or_any([hasattr(estimator, attr) for attr in attributes])
     else:
-        attrs = [v for v in vars(estimator)
+        properties = vars(estimator)
+        # properties to check here could be implemented as getter/setter or
+        # use the @property so vars() will return empty. dir() will return
+        # the correct results.
+        if not properties:
+            properties = dir(estimator)
+        attrs = [v for v in properties
                  if v.endswith("_") and not v.startswith("__")]
 
     if not attrs:
