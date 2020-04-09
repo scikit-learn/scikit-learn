@@ -53,9 +53,7 @@ import numpy as np
 from sklearn import datasets
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    brier_score_loss, f1_score, precision_score, recall_score
-)
+from sklearn.metrics import brier_score_loss, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
@@ -65,8 +63,7 @@ matplotlib.style.use("classic")
 # Create dataset of classification task with many redundant and few
 # informative features
 X, y = datasets.make_classification(
-    n_samples=100000, n_features=20, n_informative=2, n_redundant=10,
-    random_state=42
+    n_samples=100000, n_features=20, n_informative=2, n_redundant=10, random_state=42
 )
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -87,8 +84,7 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
                 _ax = plt.subplot2grid((4, 2), (i + 2, j))
                 ax_ref = _ax  # reference ax for sharing X and Y axes
             else:
-                _ax = plt.subplot2grid((4, 2), (i + 2, j),
-                                       sharex=ax_ref, sharey=ax_ref)
+                _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
             axes.append(_ax)
 
     classifiers = [
@@ -150,18 +146,19 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
             edgecolor="none",
         )
 
-        ax.set_xlabel("Predicted P(Y=1)")
-        ax.set_ylabel("Count")
-        ax.set_xlim(-0.02, 1.02)
-        ax.set_title(label)
+        ax.set(
+            title=label, xlabel="Predicted P(Y=1)", ylabel="Count", xlim=(-0.02, 1.02)
+        )
         ax.grid()
 
-    ax_cali.set_xlabel("Mean predicted value per bin")
-    ax_cali.set_ylabel("Fraction of positives per bin")
-    ax_cali.set_xlim(-0.02, 1.02)
-    ax_cali.set_ylim([-0.05, 1.05])
+    ax_cali.set(
+        title="Calibration plots  (reliability curve)",
+        xlabel="Mean predicted value per bin",
+        ylabel="Fraction of positives per bin",
+        xlim=(-0.02, 1.02),
+        ylim=(-0.05, 1.05),
+    )
     ax_cali.legend(loc="lower right", fontsize=12)
-    ax_cali.set_title("Calibration plots  (reliability curve)")
     ax_cali.grid()
 
     plt.tight_layout()
