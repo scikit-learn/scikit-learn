@@ -212,7 +212,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         check_is_fitted(self)
         return safe_sparse_dot(X, self.components_.T)
 
