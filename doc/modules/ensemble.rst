@@ -1441,10 +1441,10 @@ Note that it is also possible to get the output of the stacked outputs of the
 
   >>> reg.transform(X_test[:5])
   array([[2.52489823, 3.13842304, 1.67595292],
-        [1.20665281, 0.73108641, 1.39590041],
-        [1.47188265, 1.97367964, 1.65778224],
-        [3.61026558, 3.94513463, 1.66087316],
-        [2.11783106, 2.06977511, 2.15813681]])
+         [1.20665281, 0.73108641, 1.39590041],
+         [1.47188265, 1.97367964, 1.65778224],
+         [3.61026558, 3.94513463, 1.66087316],
+         [2.11783106, 2.06977511, 2.15813681]])
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
