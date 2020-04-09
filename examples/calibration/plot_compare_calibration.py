@@ -86,12 +86,7 @@ classifiers = [
     LinearSVC(C=1.0),
     RandomForestClassifier(),
 ]
-labels = [
-    "Logistic",
-    "Naive Bayes",
-    "Support Vector Classification",
-    "Random Forest"
-]
+labels = ["Logistic", "Naive Bayes", "Support Vector Classification", "Random Forest"]
 markers = ["o", "^", "s", "d"]
 colors = ["blue", "red", "orange", "magenta"]
 
@@ -108,10 +103,9 @@ for i in range(2):
     for j in range(2):
         if i == 0 and j == 0:
             _ax = plt.subplot2grid((4, 2), (i + 2, j))
-            ax_ref = _ax        # reference ax for sharing X and Y axes
+            ax_ref = _ax  # reference ax for sharing X and Y axes
         else:
-            _ax = plt.subplot2grid((4, 2), (i + 2, j),
-                                   sharex=ax_ref, sharey=ax_ref)
+            _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
         axes.append(_ax)
 
 
@@ -147,18 +141,17 @@ for k, (clf, label, marker, color, ax) in enumerate(
         label=label,
     )
 
-    ax.set_xlabel("Predicted P(Y=1)")
-    ax.set_ylabel("Count")
-    ax.set_xlim(-0.02, 1.02)
-    ax.set_title(label)
+    ax.set(title=label, xlabel="Predicted P(Y=1)", ylabel="Count", xlim=(-0.02, 1.02))
     ax.grid()
 
-ax_cali.set_xlabel("Mean predicted value per bin")
-ax_cali.set_ylabel("Fraction of positives per bin")
-ax_cali.set_xlim(-0.02, 1.02)
-ax_cali.set_ylim([-0.05, 1.05])
+ax_cali.set(
+    title="Calibration plots  (reliability curve)",
+    xlabel="Mean predicted value per bin",
+    ylabel="Fraction of positives per bin",
+    xlim=(-0.02, 1.02),
+    ylim=(-0.05, 1.05),
+)
 ax_cali.legend(loc="lower right", fontsize=12)
-ax_cali.set_title("Calibration plots  (reliability curve)")
 ax_cali.grid()
 
 plt.tight_layout()
