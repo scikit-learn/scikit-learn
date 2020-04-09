@@ -1,6 +1,7 @@
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
+from warnings import warn
 
 import numpy as np
 from scipy import sparse
@@ -8,6 +9,7 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from ..exceptions import DataConversionWarning
 
 from ._label import _encode, _encode_check_unknown
 
@@ -89,12 +91,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     if not np.all(np.sort(cats) == cats):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
-                if handle_unknown == 'error':
+                if handle_unknown in ('error', 'warning'):
                     diff = _encode_check_unknown(Xi, cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
-                        raise ValueError(msg)
+                        if handle_unknown == 'error':
+                            raise ValueError(msg)
+                        else:
+                            warn(msg, DataConversionWarning)
+
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
@@ -117,24 +123,28 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                                      return_mask=True)
 
             if not np.all(valid_mask):
-                if handle_unknown == 'error':
+                if handle_unknown in ('error', 'warning'):
                     msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
-                    raise ValueError(msg)
-                else:
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (self.categories_[i].dtype.kind in ('U', 'S')
-                            and self.categories_[i].itemsize > Xi.itemsize):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    else:
-                        Xi = Xi.copy()
+                    if handle_unknown == 'error':
+                        raise ValueError(msg)
+                    if handle_unknown == 'warning':
+                        warn(msg, DataConversionWarning)
 
-                    Xi[~valid_mask] = self.categories_[i][0]
+                # Set the problematic rows to an acceptable value and
+                # continue `The rows are marked `X_mask` and will be
+                # removed later.
+                X_mask[:, i] = valid_mask
+                # cast Xi into the largest string type necessary
+                # to handle different lengths of numpy strings
+                if (self.categories_[i].dtype.kind in ('U', 'S')
+                        and self.categories_[i].itemsize > Xi.itemsize):
+                    Xi = Xi.astype(self.categories_[i].dtype)
+                else:
+                    Xi = Xi.copy()
+
+                Xi[~valid_mask] = self.categories_[i][0]
+
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
@@ -211,13 +221,13 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore'}, default='error'
-        Whether to raise an error or ignore if an unknown categorical feature
-        is present during transform (default is to raise). When this parameter
-        is set to 'ignore' and an unknown category is encountered during
-        transform, the resulting one-hot encoded columns for this feature
-        will be all zeros. In the inverse transform, an unknown category
-        will be denoted as None.
+    handle_unknown : {'error', 'ignore', 'warning'}, default='error'
+        Whether to raise an error, warning or ignore if an unknown categorical
+        feature is present during transform (default is to raise). When this
+        parameter is set to 'ignore' and an unknown category is encountered
+        during transform, the resulting one-hot encoded columns for this
+        feature will be all zeros. In the inverse transform, an unknown
+        category will be denoted as None.
 
     Attributes
     ----------
@@ -301,9 +311,9 @@ class OneHotEncoder(_BaseEncoder):
         self.drop = drop
 
     def _validate_keywords(self):
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
+        if self.handle_unknown not in ('error', 'ignore', 'warning'):
+            msg = ("handle_unknown should be either 'error', 'warning' or "
+                   "'ignore', got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
         # If we have both dropped columns and ignored unknown
         # values, there will be ambiguous cells. This creates difficulties
@@ -528,7 +538,7 @@ class OneHotEncoder(_BaseEncoder):
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-            if self.handle_unknown == 'ignore':
+            if self.handle_unknown in ('ignore', 'warning'):
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 # ignored unknown categories: we have a row of all zero
                 if unknown.any():

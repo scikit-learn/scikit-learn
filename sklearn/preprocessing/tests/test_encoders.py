@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, DataConversionWarning
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 
@@ -58,6 +58,13 @@ def test_one_hot_encoder_handle_unknown():
     with pytest.raises(ValueError, match='Found unknown categories'):
         oh.transform(X2)
 
+    # Test that one hot encoder raises warning for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='warning')
+    oh.fit(X)
+    with pytest.warns(DataConversionWarning, match='Found unknown categories'):
+        oh.transform(X2)
+
     # Test the ignore option, ignores unknown features (giving all 0's)
     oh = OneHotEncoder(handle_unknown='ignore')
     oh.fit(X)
@@ -68,10 +75,28 @@ def test_one_hot_encoder_handle_unknown():
     # ensure transformed data was not modified in place
     assert_allclose(X2, X2_passed)
 
-    # Raise error if handle_unknown is neither ignore or error.
+    # Raise error if handle_unknown is neither ignore, warning or error.
     oh = OneHotEncoder(handle_unknown='42')
     with pytest.raises(ValueError, match='handle_unknown should be either'):
         oh.fit(X)
+
+
+def test_one_hot_encoder_handle_unknown_return_values():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    X2 = np.array([[4, 1, 1]])
+
+    oh_ignore = OneHotEncoder(handle_unknown='ignore', sparse=False)
+    oh_ignore.fit(X)
+    oh_warn = OneHotEncoder(handle_unknown='warning', sparse=False)
+    oh_warn.fit(X)
+
+    # transform returns the same value as handle_unknown='ignore'
+    assert_array_equal(oh_warn.transform(X), oh_warn.transform(X))
+    assert_array_equal(oh_warn.transform(X2), oh_ignore.transform(X2))
+
+    # inverse_transform returns the same value as handle_unknown='ignore'
+    assert_array_equal(oh_warn.inverse_transform(oh_warn.transform(X)),
+                       oh_warn.inverse_transform(oh_warn.transform(X)))
 
 
 def test_one_hot_encoder_not_fitted():
