@@ -87,23 +87,6 @@ class DataConversionWarning(UserWarning):
 
     Examples
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.metrics import pairwise_distances
-    >>> X = np.random.RandomState(0).rand(5,3)
-    >>> import warnings
-    >>> from sklearn.exceptions import DataConversionWarning
-    >>> warnings.simplefilter('always', DataConversionWarning)
-    >>> with warnings.catch_warnings(record=True) as w:
-    ...     try:
-    ...         # Will trigger warning as metric requires X.dtype=bool
-    ...         D = pairwise_distances(X, metric="jaccard")
-    ...     except ValueError:
-    ...         pass
-    ...     print(repr(w[-1].message))
-    DataConversionWarning('Data was converted to boolean for metric jaccard')
-
-
     >>> from sklearn.utils import validation
     >>> Y = [[1],[2],[3]]
     >>> import warnings
