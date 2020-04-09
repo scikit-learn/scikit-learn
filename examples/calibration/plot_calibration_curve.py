@@ -84,7 +84,9 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
                 _ax = plt.subplot2grid((4, 2), (i + 2, j))
                 ax_ref = _ax  # reference ax for sharing X and Y axes
             else:
-                _ax = plt.subplot2grid((4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref)
+                _ax = plt.subplot2grid(
+                    (4, 2), (i + 2, j), sharex=ax_ref, sharey=ax_ref
+                )
             axes.append(_ax)
 
     classifiers = [
@@ -147,7 +149,10 @@ def plot_calibration_curve(estimator, estimator_name, fig_index):
         )
 
         ax.set(
-            title=label, xlabel="Predicted P(Y=1)", ylabel="Count", xlim=(-0.02, 1.02)
+            title=label,
+            xlabel="Predicted P(Y=1)",
+            ylabel="Count",
+            xlim=(-0.02, 1.02),
         )
         ax.grid()
 
