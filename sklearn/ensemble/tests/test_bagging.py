@@ -78,30 +78,32 @@ def test_classification():
                               random_state=rng,
                               **params).fit(X_train, y_train).predict(X_test)
 
+
 @pytest.mark.parametrize(
     'sparse_format, params, method',
     product(
-     [csc_matrix, csr_matrix],
-     [{
-         "max_samples": 0.5,
-         "max_features": 2,
-         "bootstrap": True,
-         "bootstrap_features": True
-      }, {
-         "max_samples": 1.0,
-         "max_features": 4,
-         "bootstrap": True,
-         "bootstrap_features": True
-      }, {
-         "max_features": 2,
-         "bootstrap": False,
-         "bootstrap_features": True
-      }, {
-         "max_samples": 0.5,
-         "bootstrap": True,
-         "bootstrap_features": False
-      }],
-      ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']))
+        [csc_matrix, csr_matrix],
+        [{
+            "max_samples": 0.5,
+            "max_features": 2,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 1.0,
+            "max_features": 4,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_features": 2,
+            "bootstrap": False,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 0.5,
+            "bootstrap": True,
+            "bootstrap_features": False
+        }],
+        ['predict', 'predict_proba',
+         'predict_log_proba', 'decision_function']))
 def test_sparse_classification(sparse_format, params, method):
     # Check classification for various parameter settings on sparse input.
 
@@ -122,7 +124,8 @@ def test_sparse_classification(sparse_format, params, method):
     X_test_sparse = sparse_format(X_test)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape='ovr'),
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
         random_state=1,
         **params
     ).fit(X_train_sparse, y_train)
@@ -130,7 +133,8 @@ def test_sparse_classification(sparse_format, params, method):
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        base_estimator=CustomSVC(kernel="linear", decision_function_shape='ovr'),
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
         random_state=1,
         **params
     ).fit(X_train, y_train)
