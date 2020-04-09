@@ -6,6 +6,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from functools import wraps
 from itertools import chain
 from inspect import signature
 
@@ -57,6 +58,8 @@ from ..datasets import (load_iris, load_boston, make_blobs,
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+_USE_STRICT_MODE = True
+
 
 def _safe_tags(estimator, key=None):
     # if estimator doesn't have _get_tags, use _DEFAULT_TAGS
@@ -271,6 +274,7 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
+    yield some_strict_check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
@@ -415,7 +419,7 @@ def parametrize_with_checks(estimators):
                                    ids=_set_check_estimator_ids)
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(Estimator, generate_only=False, strict_mode=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -449,6 +453,9 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
+    global _USE_STRICT_MODE
+    _USE_STRICT_MODE = strict_mode
+
     if isinstance(Estimator, type):
         # got a class
         checks_generator = _generate_class_checks(Estimator)
@@ -2971,3 +2978,22 @@ def check_n_features_in(name, estimator_orig):
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
         )
+
+
+def strict_check(check):
+    # Decorator to skip test that are marked with the strict_check decorator
+    # when check_estimator was called with strict_mode=False
+    @wraps(check)
+    def wrapper(*args, **kwargs):
+        if _USE_STRICT_MODE:
+            return check(*args, **kwargs)
+        else:
+            raise SkipTest(
+                f"strict mode is on and {check} is marked as strict"
+            )
+    return wrapper
+
+
+@strict_check
+def some_strict_check(name, estimator_orig):
+    print("IN THE TEST")  # will be removed of course
