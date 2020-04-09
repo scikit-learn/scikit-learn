@@ -476,6 +476,8 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
             # being able to import pandas.
             warnings.warn(str(exception), SkipTestWarning)
 
+    _USE_STRICT_MODE = True  # set default back
+
 
 def _boston_subset(n_samples=200):
     global BOSTON
