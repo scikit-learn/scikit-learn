@@ -9,7 +9,7 @@
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..utils import check_X_y, safe_sqr
+from ..utils import safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
@@ -155,9 +155,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # self.scores_ will not be calculated when calling _fit through fit
 
         tags = self._get_tags()
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True),
-                         multi_output=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse="csc",
+            ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -491,9 +494,11 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
         tags = self._get_tags()
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True),
-                         multi_output=True)
+        X, y = self._validate_data(
+            X, y, accept_sparse="csr", ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))

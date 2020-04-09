@@ -147,7 +147,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
@@ -546,8 +546,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        ccp_path : Bunch
-            Dictionary-like object, with attributes:
+        ccp_path : :class:`~sklearn.utils.Bunch`
+            Dictionary-like object, with the following attributes.
 
             ccp_alphas : ndarray
                 Effective alphas of subtree during pruning.
@@ -1478,6 +1478,21 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.tree import ExtraTreeClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...    X, y, random_state=0)
+    >>> extra_tree = ExtraTreeClassifier(random_state=0)
+    >>> cls = BaggingClassifier(extra_tree, random_state=0).fit(
+    ...    X_train, y_train)
+    >>> cls.score(X_test, y_test)
+    0.8947...
     """
     def __init__(self,
                  criterion="gini",
