@@ -75,6 +75,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    class_weight : dict or 'balanced', default=None
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -263,6 +271,14 @@ class _CalibratedClassifier:
             Contains unique classes used to fit the base estimator.
             if None, then classes is extracted from the given target values
             in fit().
+
+    class_weight : dict or 'balanced', default=None
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     See also
     --------
