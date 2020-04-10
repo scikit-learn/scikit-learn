@@ -55,8 +55,8 @@ def _set_random_states(estimator, random_state=None):
 
     random_state : int or RandomState, default=None
         Pseudo-random number generator to control the generation of the random
-        integers.
-        Pass an int for reproducible output across multiple function calls.
+        integers. Pass an int for reproducible output across multiple function
+        calls.
         See :term:`Glossary <random_state>`.
 
     Notes
