@@ -546,6 +546,7 @@ def test_make_circles():
     with pytest.raises(ValueError):
         make_circles(factor=1.)
 
+
 def test_nonlinear_regression_simulations():
 
     n_samples = 1000
@@ -557,6 +558,7 @@ def test_nonlinear_regression_simulations():
         X, y = make_log_regression(n_samples, n_dimensions)
         assert X.shape == (n_samples, n_dimensions), "X shape mismatch"
         assert y.shape == (n_samples, n_dimensions), "Y shape mismatch"
+
 
 def test_make_circles_unbalanced():
     X, y = make_circles(n_samples=(2, 8))
