@@ -51,11 +51,11 @@ from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import (load_iris, load_boston, make_blobs,
+from ..datasets import (load_iris, load_diabetes, make_blobs,
                         make_multilabel_classification, make_regression)
 
 
-BOSTON = None
+DIABETES = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
 def _safe_tags(estimator, key=None):
@@ -470,15 +470,15 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _boston_subset(n_samples=200):
-    global BOSTON
-    if BOSTON is None:
-        X, y = load_boston(return_X_y=True)
+def _diabetes_subset(n_samples=200):
+    global DIABETES
+    if DIABETES is None:
+        X, y = load_diabetes(return_X_y=True)
         X, y = shuffle(X, y, random_state=0)
         X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
-        BOSTON = X, y
-    return BOSTON
+        DIABETES = X, y
+    return DIABETES
 
 
 @deprecated("set_checking_parameters is deprecated in version "
@@ -1222,7 +1222,7 @@ def check_transformer_data_not_an_array(name, transformer):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted(name, transformer):
-    X, y = _boston_subset()
+    X, y = _diabetes_subset()
 
     transformer = clone(transformer)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
@@ -2052,7 +2052,7 @@ def check_estimators_unfitted(name, estimator_orig):
     Unfitted estimators should raise a NotFittedError.
     """
     # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _boston_subset()
+    X, y = _diabetes_subset()
 
     estimator = clone(estimator_orig)
     for method in ('decision_function', 'predict', 'predict_proba',
@@ -2195,7 +2195,7 @@ def check_classifiers_classes(name, classifier_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig):
-    X, _ = _boston_subset()
+    X, _ = _diabetes_subset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
@@ -2224,7 +2224,7 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=FutureWarning)
 def check_regressors_train(name, regressor_orig, readonly_memmap=False,
                            X_dtype=np.float64):
-    X, y = _boston_subset()
+    X, y = _diabetes_subset()
     X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
@@ -2508,7 +2508,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
-    X, y = _boston_subset(n_samples=50)
+    X, y = _diabetes_subset(n_samples=50)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
@@ -2793,7 +2793,7 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not _safe_tags(e, "no_validation"):
