@@ -137,7 +137,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier, or a trained pipeline in which the last estimator
+        Fitted classifier, or a fitted pipeline in which the last estimator
         is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
