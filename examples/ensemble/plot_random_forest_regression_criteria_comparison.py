@@ -48,9 +48,10 @@ simulations = {
     "Independence": [make_independent_noise, None],
 }
 
+
 ###############################################################################
 def _train_forest(X, y, criterion):
-    """Fit a RandomForestRegressor with default parameters and specific criterion."""
+    """Fit RandomForestRegressor with default parameters & given criterion."""
     regr = RandomForestRegressor(
         n_estimators=500, criterion=criterion, max_features="sqrt", max_depth=5
     )
@@ -64,17 +65,17 @@ def _test_forest(X, y, regr):
     return mean_squared_error(y, y_pred)
 
 
-def _prep_data(sim_dict, simulation_name, max_n_samples, n_dimensions, n_trials):
+def _prep_data(sim_dict, sim_name, max_n_samples, n_dimensions, n_trials):
     """Generate train and test data for all trials."""
     # Get simulation parameters and validation dataset
-    sim, noise, (X_test, y_test) = simulations[simulation_name]
+    sim, noise, (X_test, y_test) = simulations[sim_name]
     n_samples = int(max_n_samples)
     n_dimensions = int(n_dimensions)
 
     np.random.seed(random_state)
     seeds = np.random.randint(1e8, size=n_trials)
 
-    sim_dict[simulation_name] = {}
+    sim_dict[sim_name] = {}
     for i in range(n_trials):
         # Sample training data
         if noise is not None:
@@ -86,9 +87,10 @@ def _prep_data(sim_dict, simulation_name, max_n_samples, n_dimensions, n_trials)
             )
         else:
             X_train, y_train = sim(
-                n_samples=n_samples, n_dimensions=n_dimensions, random_state=seeds[i]
+                n_samples=n_samples, n_dimensions=n_dimensions,
+                random_state=seeds[i]
             )
-        sim_dict[simulation_name][i] = (
+        sim_dict[sim_name][i] = (
             np.copy(X_train),
             np.copy(y_train),
             np.copy(X_test),
@@ -98,7 +100,7 @@ def _prep_data(sim_dict, simulation_name, max_n_samples, n_dimensions, n_trials)
 
 
 ###############################################################################
-def main(simulation_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
+def main(sim_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     """Measure the performance of RandomForest under simulation conditions.
     Parameters
     ----------
@@ -129,7 +131,7 @@ def main(simulation_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
         Which repeat of the same simulation parameter we're on. Ignored.
     Returns
     -------
-    simulation_name : str
+    sim_name : str
         Key from `simulations` dictionary.
     n_samples : int
         Number of training samples.
@@ -143,7 +145,7 @@ def main(simulation_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     runtime : float
         Runtime (in seconds).
     """
-    print(simulation_name, n_samples, criterion, n_dimensions, n_iter)
+    print(sim_name, n_samples, criterion, n_dimensions, n_iter)
 
     # Unpack training and testing data
     X_train, y_train, X_test, y_test = sim_data
@@ -161,7 +163,7 @@ def main(simulation_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     mse = _test_forest(X_test, y_test, regr)
     runtime = stop - start
 
-    return (simulation_name, n_samples, criterion, n_dimensions, mse, runtime)
+    return (sim_name, n_samples, criterion, n_dimensions, mse, runtime)
 
 
 ###############################################################################
@@ -192,7 +194,8 @@ for simulation_name, (sim, noise) in simulations.items():
         )
     else:
         X_test, y_test = sim(
-            n_samples=1000, n_dimensions=n_dimensions, random_state=random_state
+            n_samples=1000, n_dimensions=n_dimensions,
+            random_state=random_state
         )
     simulations[simulation_name].append((X_test, y_test))
 
@@ -203,16 +206,19 @@ print("Running simulations...")
 # Generate training and test data for simulations
 sim_data = {}
 for sim in simulation_names:
-    sim_data = _prep_data(sim_data, sim, sample_sizes[-1], n_dimensions, n_repeats)
+    sim_data = _prep_data(sim_data, sim, sample_sizes[-1],
+                          n_dimensions, n_repeats)
 
 # Run the simulations in parallel
 data = Parallel(n_jobs=-2)(
-    delayed(main)(sim_name, sim_data[sim_name][n_iter], n, crit, n_dimensions, n_iter)
+    delayed(main)(sim_name, sim_data[sim_name][n_iter], n, crit,
+                  n_dimensions, n_iter)
     for sim_name, n, crit, n_iter in params
 )
 
 # Save results as a DataFrame
-columns = ["simulation", "n_samples", "criterion", "n_dimensions", "mse", "runtime"]
+columns = ["simulation", "n_samples", "criterion", "n_dimensions",
+           "mse", "runtime"]
 df = pd.DataFrame(data, columns=columns)
 
 # Plot the results
