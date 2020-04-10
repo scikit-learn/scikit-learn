@@ -1346,6 +1346,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::

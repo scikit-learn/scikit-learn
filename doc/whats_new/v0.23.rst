@@ -25,6 +25,12 @@ random sampling procedures.
 - :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
   and :class:`ensemble.IsolationForest`. |Fix|
 
+- Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`.
+  |Efficiency| |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -133,10 +139,12 @@ Changelog
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
-- |Fix| :func:`decomposition._pca._assess_dimension` now correctly handles small
-   eigenvalues. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
-   :user:`Gelavizh Ahmadi <gelavizh1>` and
-   :user:`Marija Vlajic Wheeler <marijavlajic>`.
+
+- |Fix| :class:`decomposition.PCA` with `n_components='mle'` now correctly
+  handles small eigenvalues, and does not infer 0 as the correct number of
+  components. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
+  :user:`Gelavizh Ahmadi <gelavizh1>` and :user:`Marija Vlajic Wheeler
+  <marijavlajic>` and :pr:`16841` by `Nicolas Hug`_.
 
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
@@ -296,7 +304,7 @@ Changelog
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
   :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
-  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
@@ -363,7 +371,7 @@ Changelog
 
 - |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
   will now accept value 'if_binary' and will drop the first category of
-  each feature with two categories. :pr:`#16245`
+  each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
@@ -377,6 +385,26 @@ Changelog
 
 :mod:`sklearn.svm`
 ..................
+
+- |Fix| |Efficiency| Improved ``libsvm`` and ``liblinear`` random number
+  generators used to randomly select coordinates in the coordinate descent
+  algorithms. Platform-dependent C ``rand()`` was used, which is only able to
+  generate numbers up to ``32767`` on windows platform (see this `blog
+  post <https://codeforces.com/blog/entry/61587>`) and also has poor
+  randomization power as suggested by `this presentation
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`.
+  It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
+  generates 31bits/63bits random numbers on all platforms. In addition, the
+  crude "modulo" postprocessor used to get a random number in a bounded
+  interval was replaced by the tweaked Lemire method as suggested by `this blog
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
+  is affected. In particular users can expect a better convergence when the
+  number of samples (LibSVM) or the number of features (LibLinear) is large.
+  :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 - |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
   `probB_`, are now deprecated as they were not useful. :pr:`15558` by
@@ -412,6 +440,10 @@ Changelog
 - |Enhancement| add warning in :func:`utils.validation.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray`s.
+  :pr:`16728` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
