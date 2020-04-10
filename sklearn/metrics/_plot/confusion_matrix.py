@@ -137,8 +137,8 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier, or a fitted pipeline in which the last estimator
-        is a classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
