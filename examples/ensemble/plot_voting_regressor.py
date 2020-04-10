@@ -5,28 +5,28 @@ Plot individual and voting regression predictions
 
 .. currentmodule:: sklearn
 
-A voting regressor is an ensemble meta-estimator that fits several base
-regressors, each on the whole dataset. It then averages the individual
-predictions to form a final prediction.
+A voting regressor is an ensemble meta-estimator that fits base regressors each
+on the whole dataset. It, then, averages the individual predictions to form a
+final prediction.
 We will use three different regressors to predict the data:
 :class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
 :class:`~linear_model.LinearRegression`).
-The above 3 regressors will then be used for the
+Then, using them we will make voting regressor
 :class:`~ensemble.VotingRegressor`.
 
-Finally, we will plot the predictions made by all models for comparison.
+Finally, we will plot all of them for comparison.
 
-We will work with the diabetes dataset which consists of 10 features
-collected from a cohort of diabetes patients. The target is a quantitative
-measure of disease progression one year after baseline.
+We will work with the diabetes dataset which consists of the 10 features
+collected from a cohort of diabetes patients. The target is the disease
+progression after one year from the baseline.
 
 """
 print(__doc__)
 
 import matplotlib.pyplot as plt
 
-from sklearn.datasets import load_diabetes
+from sklearn import datasets
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
@@ -36,11 +36,11 @@ from sklearn.ensemble import VotingRegressor
 # Training classifiers
 # --------------------------------
 #
-# First, we will load the diabetes dataset and initiate a gradient boosting
-# regressor, a random forest regressor and a linear regression. Next, we will
-# use the 3 regressors to build the voting regressor:
+# First, we are going to load diabetes dataset and initiate gradient boosting
+# regressor, random forest regressor and linear regression. Next, we are going
+# to use each of them to build the voting regressor:
 
-X, y = load_diabetes(return_X_y=True)
+X, y = datasets.load_diabetes(return_X_y=True)
 
 # Train classifiers
 reg1 = GradientBoostingRegressor(random_state=1)
@@ -58,7 +58,8 @@ ereg.fit(X, y)
 # Making predictions
 # --------------------------------
 #
-# Now we will use each of the regressors to make the 20 first predictions.
+# Now we will use each of the regressors to make 20 first predictions about the
+# diabetes dataset.
 
 xt = X[:20]
 
@@ -72,7 +73,7 @@ pred4 = ereg.predict(xt)
 # --------------------------------
 #
 # Finally, we will visualize the 20 predictions. The red stars show the average
-# prediction made by :class:`~ensemble.VotingRegressor`.
+# prediction
 
 plt.figure()
 plt.plot(pred1, 'gd', label='GradientBoostingRegressor')
