@@ -10,6 +10,7 @@ from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import _deprecate_positional_args
 
 
 def _get_feature_importances(estimator, norm_order=1):
@@ -157,7 +158,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.48],
            [ 1.48]])
     """
-    def __init__(self, estimator, threshold=None, prefit=False,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, threshold=None, prefit=False,
                  norm_order=1, max_features=None):
         self.estimator = estimator
         self.threshold = threshold
