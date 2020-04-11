@@ -1353,8 +1353,8 @@ The following example shows how to fit the VotingRegressor::
    >>> X, y = load_diabetes(return_X_y=True)
 
    >>> # Training classifiers
-   >>> reg1 = GradientBoostingRegressor(random_state=1)
-   >>> reg2 = RandomForestRegressor(random_state=1)
+   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
+   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
    >>> reg3 = LinearRegression()
    >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
