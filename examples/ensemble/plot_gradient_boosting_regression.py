@@ -43,7 +43,7 @@ X, y = diabetes.data, diabetes.target
 #
 # Next, we will split our dataset to use 90% for training and leave the rest
 # for testing. We will also set the regression model parameters. You can play
-# with these parameters to see how the results change:
+# with these parameters to see how the results change.
 #
 # n_estimators : the number of boosting stages that will be performed.
 # Later, we will plot deviance against boosting iterations.
@@ -56,8 +56,8 @@ X, y = diabetes.data, diabetes.target
 #
 # learning_rate : how much the contribution of each tree will shrink.
 #
-# loss : loss function to optimize. Least squares function used in this case
-# however, there are many other options (see
+# loss : loss function to optimize. The least squares function is  used in this
+# case however, there are many other options (see
 # :class:`~sklearn.ensemble.GradientBoostingRegressor` ).
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -87,7 +87,7 @@ print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 # -------------------------------------
 #
 # Finally, we will visualize the results. To do that we will first compute the
-# test set deviance and then plot it against boosting iteration.
+# test set deviance and then plot it against boosting iterations.
 
 test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
 for i, y_pred in enumerate(reg.staged_predict(X_test)):
@@ -117,7 +117,7 @@ plt.show()
 #
 # For this example, the impurity-based and permutation methods identify the
 # same 2 strongly predictive features but not in the same order. The third most
-# predictive feature, ``bp``, is also the same for the 2 methods. The remaining
+# predictive feature, "bp", is also the same for the 2 methods. The remaining
 # features are less predictive and the error bars of the permutation plot
 # show that they overlap with 0.
 
