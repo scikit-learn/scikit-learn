@@ -6,13 +6,13 @@ Plot individual and voting regression predictions
 .. currentmodule:: sklearn
 
 A voting regressor is an ensemble meta-estimator that fits several base
-regressors, each on the whole dataset. It then averages the individual
+regressors, each on the whole dataset. Then it averages the individual
 predictions to form a final prediction.
 We will use three different regressors to predict the data:
 :class:`~ensemble.GradientBoostingRegressor`,
 :class:`~ensemble.RandomForestRegressor`, and
 :class:`~linear_model.LinearRegression`).
-The above 3 regressors will then be used for the
+Then the above 3 regressors will be used for the
 :class:`~ensemble.VotingRegressor`.
 
 Finally, we will plot the predictions made by all models for comparison.
