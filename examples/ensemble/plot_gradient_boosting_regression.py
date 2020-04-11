@@ -6,25 +6,25 @@ Gradient Boosting regression
 This example demonstrates Gradient Boosting to produce a predictive
 model from an ensemble of weak predictive models. Gradient boosting can be used
 for regression and classification problems. Here, we will train a model to
-tackle a diabetes regression task.
-
-We will obtain the results from
+tackle a diabetes regression task. We will obtain the results from
 :class:`~sklearn.ensemble.GradientBoostingRegressor` with least squares loss
 and 500 regression trees of depth 4.
 
+Note: For larger datasets (n_samples >= 10000), please refer to
+:class:`sklearn.ensemble.HistGradientBoostingRegressor`
 """
 print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Maria Telenczuk <https://github.com/maikia>
+#         Katrina Ni <https://github.com/nilichen>
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-
-from sklearn import ensemble
-from sklearn import datasets
+import numpy as np
+from sklearn import datasets, ensemble
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
@@ -47,23 +47,25 @@ X, y = diabetes.data, diabetes.target
 # regression model. You can play with those parameters to see how the
 # results change:
 #
-# Here:
-# n_estimators : is the number of boosting stages which will be performed.
-#     Later, we will plot and see how the deviance changes with those boosting
-#     operations.
-# max_depth : this limits the number of nodes in the tree. The best value
-#     depends on the interaction of the input variables.
-# min_samples_split : is the minimum number of samples required to split an
-#     internal node.
-# learning_rate: tells how much the contribution of each tree will shrink
-# loss: here, we decided to use least squeares as a loss function, however
-#     there are many other options (check
-#     :class:`~sklearn.ensemble.GradientBoostingRegressor` to see what are
-#     other possibilities)
+# n_estimators : the number of boosting stages which will be performed.
+# Later, we will plot and see how the deviance changes with those boosting
+# operations.
+#
+# max_depth : limits the number of nodes in the tree.
+# The best value depends on the interaction of the input variables.
+#
+# min_samples_split : the minimum number of samples required to split an
+# internal node.
+#
+# learning_rate : how much the contribution of each tree will shrink
+#
+# loss : here, we decided to use least squeares as a loss function.
+# However there are many other options (check
+# :class:`~sklearn.ensemble.GradientBoostingRegressor` to see what are
+# other possibilities)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                    test_size=0.1,
-                                                    random_state=13)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.1, random_state=13)
 
 params = {'n_estimators': 500,
           'max_depth': 4,
@@ -92,13 +94,11 @@ print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 # test set deviance and then plot it.
 
 test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
-
 for i, y_pred in enumerate(clf.staged_predict(X_test)):
     test_score[i] = clf.loss_(y_test, y_pred)
 
-fig = plt.figure(figsize=(12, 8))
-
-plt.subplot(1, 2, 1)
+fig = plt.figure(figsize=(6, 6))
+plt.subplot(1, 1, 1)
 plt.title('Deviance')
 plt.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
          label='Training Set Deviance')
@@ -107,25 +107,39 @@ plt.plot(np.arange(params['n_estimators']) + 1, test_score, 'r-',
 plt.legend(loc='upper right')
 plt.xlabel('Boosting Iterations')
 plt.ylabel('Deviance')
+fig.tight_layout()
+plt.show()
 
 ##############################################################################
-# Plot impurity-based feature importance
+# Plot feature importance
 # -------------------------------------
 #
 # Careful, impurity-based feature importances can be misleading for
-# high cardinality features (many unique values). See
-# :func:`sklearn.inspection.permutation_importance` as an alternative.
+# high cardinality features (many unique values). As an alternative,
+# the permutation importances of ``clf`` are computed on a
+# held out test set. See :ref:`permutation_importance` for more details.
+#
+# In this case, the two methods agree to identify the same top 2 features
+# as strongly predictive features but not in the same order. The third most
+# predictive feature, "bp", is also the same for the 2 methods. The remaining
+# features are less predictive and the error bars of the permutation plot
+# show that they overlap with 0.
 
 feature_importance = clf.feature_importances_
-# make importances relative to max importance
-feature_importance = 100.0 * (feature_importance / feature_importance.max())
 sorted_idx = np.argsort(feature_importance)
 pos = np.arange(sorted_idx.shape[0]) + .5
-plt.subplot(1, 2, 2)
+fig = plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
 plt.barh(pos, feature_importance[sorted_idx], align='center')
 plt.yticks(pos, np.array(diabetes.feature_names)[sorted_idx])
-plt.xlabel('Relative Importance')
-plt.title('Variable Importance')
-fig.tight_layout()
+plt.title('Feature Importance (MDI)')
 
+result = permutation_importance(clf, X_test, y_test, n_repeats=10,
+                                random_state=42, n_jobs=2)
+sorted_idx = result.importances_mean.argsort()
+plt.subplot(1, 2, 2)
+plt.boxplot(result.importances[sorted_idx].T,
+            vert=False, labels=np.array(diabetes.feature_names)[sorted_idx])
+plt.title("Permutation Importance (test set)")
+fig.tight_layout()
 plt.show()

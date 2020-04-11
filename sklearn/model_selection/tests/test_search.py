@@ -428,12 +428,14 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
-    param_dict = {"C": 1.0}
+    param_dict = {"C": 1}
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'int'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
@@ -447,8 +449,10 @@ def test_grid_search_bad_param_grid():
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'str'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
