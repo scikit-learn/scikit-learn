@@ -20,10 +20,9 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('nth_element',
-                         sources=['nth_element.pyx',
-                                  os.path.join('src', 'nth_element.cpp')],
-                         include_dirs=['src'],
+    config.add_extension('_nth_element',
+                         sources=['_nth_element.pyx'],
+                         include_dirs=[numpy.get_include()],
                          language="c++",
                          libraries=libraries)
 

@@ -159,10 +159,10 @@ from ._typedefs import DTYPE, ITYPE
 from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                              euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
+from ._nth_element cimport partition_node_indices
+
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
-
-from nth_element cimport partition_node_indices
 
 np.import_array()
 
