@@ -385,9 +385,10 @@ def _check_param_grid(param_grid):
 
             if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a sequence(but not a string) or"
-                                 " np.ndarray.".format(name))
+                raise ValueError("Parameter grid for parameter ({0}) needs to"
+                                 " be a list or numpy array, but got ({1})."
+                                 " Single values need to be wrapped in a list"
+                                 " with one element.".format(name, type(v)))
 
             if len(v) == 0:
                 raise ValueError("Parameter values for parameter ({0}) need "
