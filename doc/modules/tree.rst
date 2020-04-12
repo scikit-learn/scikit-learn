@@ -137,10 +137,7 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
-
-and the python package can be installed with
-
-    conda install python-graphviz
+and the python package can be installed with `conda install python-graphviz`.
 
 Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
 and the Python wrapper installed from pypi with `pip install graphviz`.
