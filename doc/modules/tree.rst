@@ -124,7 +124,7 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
-Once trained, you can plot the tree with the plot_tree function::
+Once trained, you can plot the tree with the :func:`plot_tree` function::
 
 
     >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
