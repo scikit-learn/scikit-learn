@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ..base import is_classifier, is_regressor
+from ..base import is_classifier, is_regressor, is_outlier_detector
 from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
@@ -302,9 +302,12 @@ def partial_dependence(estimator, X, features, response_method='auto',
     --------
     sklearn.inspection.plot_partial_dependence: Plot partial dependence
     """
-    if not (is_classifier(estimator) or is_regressor(estimator)):
+    if not (is_classifier(estimator) or
+            is_regressor(estimator) or
+            is_outlier_detector(estimator)):
         raise ValueError(
-            "'estimator' must be a fitted regressor or classifier."
+            "'estimator' must be a fitted regressor,"
+            " classifier or outlier_detector."
         )
 
     if isinstance(estimator, Pipeline):
