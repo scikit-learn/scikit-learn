@@ -18,6 +18,8 @@ import numpy as np
 
 from . import __version__
 from .utils import _IS_32BIT
+from .utils.validation import check_X_y
+from .utils.validation import check_array
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -31,6 +33,7 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
+    '_xfail_test': False,
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True}
@@ -48,7 +51,7 @@ def clone(estimator, safe=True):
     estimator : estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
 
-    safe : boolean, optional
+    safe : bool, default=True
         If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
@@ -98,10 +101,10 @@ def _pprint(params, offset=0, printer=repr):
     params : dict
         The dictionary to pretty print
 
-    offset : int
+    offset : int, default=0
         The offset in characters to add at the begin of each line.
 
-    printer : callable
+    printer : callable, default=repr
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -342,6 +345,72 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
+    def _check_n_features(self, X, reset):
+        """Set the `n_features_in_` attribute, or check against it.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+        reset : bool
+            If True, the `n_features_in_` attribute is set to `X.shape[1]`.
+            Else, the attribute must already exist and the function checks
+            that it is equal to `X.shape[1]`.
+        """
+        n_features = X.shape[1]
+
+        if reset:
+            self.n_features_in_ = n_features
+        else:
+            if not hasattr(self, 'n_features_in_'):
+                raise RuntimeError(
+                    "The reset parameter is False but there is no "
+                    "n_features_in_ attribute. Is this estimator fitted?"
+                )
+            if n_features != self.n_features_in_:
+                raise ValueError(
+                    'X has {} features, but this {} is expecting {} features '
+                    'as input.'.format(n_features, self.__class__.__name__,
+                                       self.n_features_in_)
+                )
+
+    def _validate_data(self, X, y=None, reset=True, **check_params):
+        """Validate input data and set or check the `n_features_in_` attribute.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
+            The input samples.
+        y : array-like of shape (n_samples,), default=None
+            The targets. If None, `check_array` is called on `X` and
+            `check_X_y` is called otherwise.
+        reset : bool, default=True
+            Whether to reset the `n_features_in_` attribute.
+            If False, the input will be checked for consistency with data
+            provided when reset was last True.
+        **check_params : kwargs
+            Parameters passed to :func:`sklearn.utils.check_array` or
+            :func:`sklearn.utils.check_X_y`.
+
+        Returns
+        -------
+        out : {ndarray, sparse matrix} or tuple of these
+            The validated input. A tuple is returned if `y` is not None.
+        """
+
+        if y is None:
+            X = check_array(X, **check_params)
+            out = X
+        else:
+            X, y = check_X_y(X, y, **check_params)
+            out = X, y
+
+        if check_params.get('ensure_2d', True):
+            self._check_n_features(X, reset=reset)
+
+        return out
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
@@ -436,7 +505,7 @@ class ClusterMixin:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -444,7 +513,7 @@ class ClusterMixin:
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         # non-optimized default implementation; override when a better
@@ -476,9 +545,9 @@ class BiclusterMixin:
 
         Returns
         -------
-        row_ind : np.array, dtype=np.intp
+        row_ind : ndarray, dtype=np.intp
             Indices of rows in the dataset that belong to the bicluster.
-        col_ind : np.array, dtype=np.intp
+        col_ind : ndarray, dtype=np.intp
             Indices of columns in the dataset that belong to the bicluster.
 
         """
@@ -509,12 +578,12 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array
+        data : array-like
             The data.
 
         Returns
         -------
-        submatrix : array
+        submatrix : ndarray
             The submatrix corresponding to bicluster i.
 
         Notes
@@ -540,10 +609,10 @@ class TransformerMixin:
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : ndarray of shape (n_samples, n_features)
             Training set.
 
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,), default=None
             Target values.
 
         **fit_params : dict
@@ -551,7 +620,7 @@ class TransformerMixin:
 
         Returns
         -------
-        X_new : numpy array of shape [n_samples, n_features_new]
+        X_new : ndarray array of shape (n_samples, n_features_new)
             Transformed array.
         """
         # non-optimized default implementation; override when a better
@@ -575,6 +644,9 @@ class DensityMixin:
         ----------
         X : array-like of shape (n_samples, n_features)
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         Returns
         -------
         score : float
@@ -593,7 +665,7 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -601,7 +673,7 @@ class OutlierMixin:
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor

@@ -15,11 +15,13 @@ from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
+from typing import Dict, Any
 
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
+from scipy.special import comb
 
 import pytest
 
@@ -47,7 +49,6 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.fixes import comb
 
 from sklearn.tree._classes import SPARSE_SPLITTERS
 
@@ -100,12 +101,12 @@ FOREST_TRANSFORMERS = {
     "RandomTreesEmbedding": RandomTreesEmbedding,
 }
 
-FOREST_ESTIMATORS = dict()
+FOREST_ESTIMATORS: Dict[str, Any] = dict()
 FOREST_ESTIMATORS.update(FOREST_CLASSIFIERS)
 FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
-FOREST_CLASSIFIERS_REGRESSORS = FOREST_CLASSIFIERS.copy()
+FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 
@@ -1259,7 +1260,8 @@ def test_min_impurity_decrease():
             assert tree.min_impurity_decrease == 0.1
 
 
-class MyBackend(DEFAULT_JOBLIB_BACKEND):
+# mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
+class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)
@@ -1333,6 +1335,15 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
     with pytest.raises(exc_type, match=exc_msg):
+        est.fit(X, y)
+
+
+def test_forest_y_sparse():
+    X = [[1, 2, 3]]
+    y = csr_matrix([4, 5, 6])
+    est = RandomForestClassifier()
+    msg = "sparse multilabel-indicator for y is not supported."
+    with pytest.raises(ValueError, match=msg):
         est.fit(X, y)
 
 

@@ -9,6 +9,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
+from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -383,3 +384,15 @@ def test_kernel_pca_time_and_equivalence():
 
     # Check that arpack reduces the time at least on one run
     assert min(avg_a_time / avg_ref_time) < 0.75
+
+
+@pytest.mark.parametrize("kernel",
+                         ["linear", "poly", "rbf", "sigmoid", "cosine"])
+def test_kernel_pca_inverse_transform(kernel):
+    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+                       random_state=0)
+
+    kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)
+    X_trans = kp.fit_transform(X)
+    X_inv = kp.inverse_transform(X_trans)
+    assert_allclose(X, X_inv)
