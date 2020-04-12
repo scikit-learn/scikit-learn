@@ -31,12 +31,13 @@ You can have a look at the other examples of this series,
 "Kernel PCA Solvers comparison benchmark 1/2", comparing execution times in
 more details.
 """
-from datetime import datetime
 
-print(__doc__)
+print(__doc__)  # noqa
 
 # Authors: Sylvain MARIE
 # License: BSD 3 clause
+
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
