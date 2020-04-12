@@ -136,14 +136,14 @@ Once trained, you can plot the tree with the plot_tree function::
 
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
 
-and the python package can be installed with 
+and the python package can be installed with
 
     conda install python-graphviz
-   
+
 Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
-and the Python wrapper installed from pypi with `pip install graphviz`. 
+and the Python wrapper installed from pypi with `pip install graphviz`.
 
 Below is an example graphviz export of the above tree trained on the entire
 iris dataset; the results are saved in an output file `iris.pdf`::
@@ -320,17 +320,6 @@ largest reduction in entropy.  This has a cost of
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
 
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
-
 
 Tips on practical use
 =====================
@@ -425,7 +414,7 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn
 implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
@@ -511,8 +500,8 @@ If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
 criteria to minimise as for determining locations for future
 splits are Mean Squared Error, which minimizes the L2 error
-using mean values at terminal nodes, and Mean Absolute Error, which 
-minimizes the L1 error using median values at terminal nodes. 
+using mean values at terminal nodes, and Mean Absolute Error, which
+minimizes the L1 error using median values at terminal nodes.
 
 Mean Squared Error:
 
@@ -526,9 +515,9 @@ Mean Absolute Error:
 
 .. math::
 
-    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+    median(y)_m = \underset{i \in N_m}{\mathrm{median}}(y_i)
 
-    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y}_m|
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - median(y)_m|
 
 where :math:`X_m` is the training data in node :math:`m`
 
@@ -571,7 +560,7 @@ be pruned. This process stops when the pruned tree's minimal
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
-  
+
 .. topic:: References:
 
     .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification

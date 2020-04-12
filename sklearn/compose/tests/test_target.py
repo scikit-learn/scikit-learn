@@ -7,14 +7,16 @@ from sklearn.base import TransformerMixin
 
 from sklearn.dummy import DummyRegressor
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
-from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.pipeline import Pipeline
+
+from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 
 from sklearn import datasets
 
@@ -35,7 +37,7 @@ def test_transform_target_regressor_error():
         regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
-    regr = TransformedTargetRegressor(regressor=Lasso(),
+    regr = TransformedTargetRegressor(regressor=OrthogonalMatchingPursuit(),
                                       transformer=StandardScaler())
     with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
                        "keyword argument 'sample_weight'"):
@@ -294,3 +296,39 @@ def test_transform_target_regressor_count_fit(check_inverse):
     )
     ttr.fit(X, y)
     assert ttr.transformer_.fit_counter == 1
+
+
+class DummyRegressorWithExtraFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the regressor
+        assert not check_input
+        return super().fit(X, y, sample_weight)
+
+
+def test_transform_target_regressor_pass_fit_parameters():
+    X, y = friedman
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y, check_input=False)
+    assert regr.transformer_.fit_counter == 1
+
+
+def test_transform_target_regressor_route_pipeline():
+    X, y = friedman
+
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+    estimators = [
+        ('normalize', StandardScaler()), ('est', regr)
+    ]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y, **{'est__check_input': False})
+
+    assert regr.transformer_.fit_counter == 1

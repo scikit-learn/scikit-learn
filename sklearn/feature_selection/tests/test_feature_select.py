@@ -8,16 +8,15 @@ from scipy import stats, sparse
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import safe_mask
 
-from sklearn.datasets.samples_generator import (make_classification,
-                                                make_regression)
+from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
     chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
     mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
@@ -553,7 +552,7 @@ def test_nans():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    for select in (SelectKBest(f_classif, 2),
+    for select in (SelectKBest(f_classif, k=2),
                    SelectPercentile(f_classif, percentile=67)):
         ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
