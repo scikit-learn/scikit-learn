@@ -742,6 +742,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
+    
+    return_distance : bool, default=False
+        Computes distances even if no distance_threshold is used. This can be 
+        used to make visualization easier but has impact on efficiency due to 
+        the addictional computational afford and used memory.
 
     Attributes
     ----------
@@ -784,7 +789,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', distance_threshold=None):
+                 linkage='ward', distance_threshold=None,
+                 return_distance=False):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -792,6 +798,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.return_distance = return_distance
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
@@ -868,7 +875,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = distance_threshold is not None
+        return_distance = distance_threshold is not None or self.return_distance
         out = memory.cache(tree_builder)(X, connectivity,
                                          n_clusters=n_clusters,
                                          return_distance=return_distance,
@@ -880,6 +887,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if return_distance:
             self.distances_ = out[-1]
+
+        if self.n_clusters is None:
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
         else:
