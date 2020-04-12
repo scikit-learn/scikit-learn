@@ -742,10 +742,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
-    
+
     return_distance : bool, default=False
-        Computes distances even if no distance_threshold is used. This can be 
-        used to make visualization easier but has impact on efficiency due to 
+        Computes distances even if no distance_threshold is used. This can be
+        used to make visualization easier but has impact on efficiency due to
         the addictional computational afford and used memory.
 
     Attributes
@@ -875,7 +875,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = distance_threshold is not None or self.return_distance
+        return_distance = distance_threshold is not None or \
+            self.return_distance
         out = memory.cache(tree_builder)(X, connectivity,
                                          n_clusters=n_clusters,
                                          return_distance=return_distance,
