@@ -56,9 +56,9 @@ The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
       generalise the data well. This is called overfitting. Mechanisms
-      such as pruning (not currently supported), setting the minimum
-      number of samples required at a leaf node or setting the maximum
-      depth of the tree are necessary to avoid this problem.
+      such as pruning, setting the minimum number of samples required
+      at a leaf node or setting the maximum depth of the tree are
+      necessary to avoid this problem.
 
     - Decision trees can be unstable because small variations in the
       data might result in a completely different tree being generated.
