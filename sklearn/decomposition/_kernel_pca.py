@@ -11,7 +11,6 @@ from scipy.sparse.linalg import eigsh
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip, randomized_svd
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
->>>>>>> 8122e77bee8414c787f4bcd730673d2c0e137d06
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
