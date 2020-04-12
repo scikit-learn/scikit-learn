@@ -75,7 +75,7 @@ iris = load_iris()
     (LogisticRegression, 'brute', binary_classification_data),
     (LogisticRegression, 'brute', multiclass_classification_data),
     (MultiTaskLasso, 'brute', multioutput_regression_data),
-    ])
+])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
 def test_output_shape(Estimator, method, data, grid_resolution,
@@ -379,7 +379,8 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
     "estimator, params, err_msg",
     [(KMeans(),
       {'features': [0]},
-      "'estimator' must be a fitted regressor or classifier"),
+      "'estimator' must be a fitted regressor,"
+      " classifier or outlier_detector."),
      (LinearRegression(),
       {'features': [0], 'response_method': 'predict_proba'},
       'The response_method parameter is ignored for regressors'),
