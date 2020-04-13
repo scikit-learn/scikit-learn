@@ -1172,3 +1172,20 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
+
+
+def test_check_array_pandas_categorical_encoding():
+    # check_array for pandas using pandas categorical dtype for encoding
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({'a': ['a', 'b', 'c', 'b'],
+                       'z': [1.0, 2.0, 3.0, 4.0]}, columns=['a', 'z'])
+    df['a'] = df['a'].astype('category')
+
+    result = check_array(df, use_pd_categorical_encoding=True)
+
+    expected = np.array([[0, 1, 2, 1], [1, 2, 3, 4]]).T
+    assert_allclose(expected, result)
+
+    y = np.ones(4)
+    X, y = check_X_y(df, y, use_pd_categorical_encoding=True)
+    assert_allclose(expected, X)

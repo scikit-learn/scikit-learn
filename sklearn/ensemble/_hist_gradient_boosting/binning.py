@@ -16,7 +16,7 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_thresholds(data, max_bins, subsample, random_state):
+def _find_binning_thresholds(data, max_bins, categorical=None):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -29,16 +29,9 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles.
-    subsample : int or None
-        If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly chosen to compute the quantiles. If ``None``, the whole data
-        is used.
-    random_state: int, RandomState instance or None
-        Pseudo-random number generator to control the random sub-sampling.
-        Pass an int for reproducible output across multiple
-        function calls.
-        See :term: `Glossary <random_state>`.
+        instead of the quantiles
+    categorical : ndarray of bool or None
+        Indicates categorical features
 
     Return
     ------
@@ -47,13 +40,13 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``.
     """
-    rng = check_random_state(random_state)
-    if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(data.shape[0], subsample, replace=False)
-        data = data.take(subset, axis=0)
-
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
+        # categorical feature
+        if categorical is not None and categorical[f_idx]:
+            binning_thresholds.append(None)
+            continue
+
         col_data = data[:, f_idx]
         # ignore missing values when computing bin thresholds
         missing_mask = np.isnan(col_data)
@@ -85,6 +78,93 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     return binning_thresholds
 
 
+def _find_categories(data, max_bins, categorical):
+    """Extract feature-wise categories from categorical data
+
+    Missing values and negative values are ignored. They will be considered
+    missing when ``_encode_categories`` is called.
+
+    Parameters
+    ----------
+    data : ndarray of shape (n_samples, n_features)
+        The data to bin.
+    max_bins: int
+        The maximum number of bins to use for non-missing values. If for a
+        given feature the number of unique values is less than ``max_bins``,
+        then those unique values will be used to compute the bin thresholds,
+        instead of the quantiles
+    categorical : ndarray of bool of shape (n_features,)
+        Indicates categorical features.
+
+    Return
+    ------
+    bin_categories : list of arrays or None
+        For each categorical feature, this gives the categories corresponding
+        to each bin.
+    """
+    data = data[:, categorical]
+    bin_categories = []
+    for f_idx in range(data.shape[1]):
+        col_data = data[:, f_idx]
+
+        categories, counts = np.unique(col_data, return_counts=True)
+
+        # sort by highest count
+        sorted_idx = np.argsort(-counts)
+        categories = categories[sorted_idx]
+
+        # nans and negative values will be considered missing
+        missing = np.isnan(categories)
+        negative = categories < 0
+        both = missing | negative
+        if both.any():
+            categories = categories[~both]
+
+        bin_categories.append(np.sort(categories[:max_bins]))
+
+    return bin_categories
+
+
+def _encode_categories(data, categorical_indices, bin_categories,
+                       missing_values_bin_idx, binned):
+    """Encode categories.
+
+    Missing values and unknown values are mapped to the missing bin.
+
+    Parameters
+    ----------
+    data : ndarray of shape (n_samples, n_features)
+        data to encoded.
+    categorical_indices : list of int
+        columns in ``data`` that are categorical.
+    bin_categories : list of arrays
+        categories learned during training that corresponds to
+        ``categorical_indices``.
+    missing_values_bin_idx : uint8
+        The index of the bin where missing values are mapped.
+    binned : ndarray, shape (n_samples, n_features)
+        Output array
+    """
+
+    for i, f_idx in enumerate(categorical_indices):
+        col_data = data[:, f_idx]
+        col_bin_cats = bin_categories[i]
+
+        binned[:, f_idx] = np.searchsorted(col_bin_cats, col_data)
+
+        # missing values
+        missing = np.isnan(col_data)
+        if missing.any():
+            binned[missing, f_idx] = missing_values_bin_idx
+
+        # unknown categories
+        unique_col_data = np.unique(col_data)
+        diff = np.setdiff1d(unique_col_data, col_bin_cats, assume_unique=True)
+        if diff.size:
+            invalid_mask = ~np.in1d(col_data, col_bin_cats)
+            binned[invalid_mask, f_idx] = missing_values_bin_idx
+
+
 class _BinMapper(TransformerMixin, BaseEstimator):
     """Transformer that maps a dataset into integer-valued bins.
 
@@ -111,6 +191,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
+    categorical : ndarray of bool of shape (n_features,), default=None
+        Indicates categorical features. If the number of features is
+        greater than ``n_bins``, then the top ``n_bins`` categories based on
+        cardinality are kept. All unknown and negative categories will be
+        considered missing.
     random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
@@ -123,6 +208,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         For each feature, gives the real-valued bin threhsolds. There are
         ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
         number of bins used for non-missing values.
+        If ``bin_thresholds_`` corresponds to a categorical feature, then
+        ``bin_thresholds_[categorical_index]`` is None.
+    bin_categories_ : list of arrays or None
+        For each categorical feature, this gives the categories corresponding
+        to each bin.
     n_bins_non_missing_ : array of uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
@@ -134,9 +224,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
     """
-    def __init__(self, n_bins=256, subsample=int(2e5), random_state=None):
+    def __init__(self, n_bins=256, subsample=int(2e5), categorical=None,
+                 random_state=None):
         self.n_bins = n_bins
         self.subsample = subsample
+        self.categorical = categorical
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -163,19 +255,45 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
-        self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, subsample=self.subsample,
-            random_state=self.random_state)
 
-        self.n_bins_non_missing_ = np.array(
-            [thresholds.shape[0] + 1 for thresholds in self.bin_thresholds_],
-            dtype=np.uint32)
+        rng = check_random_state(self.random_state)
+        subsample = self.subsample
+        if subsample is not None and X.shape[0] > subsample:
+            subset = rng.choice(X.shape[0], subsample, replace=False)
+            X = X.take(subset, axis=0)
+
+        self.bin_thresholds_ = _find_binning_thresholds(
+            X, max_bins, categorical=self.categorical)
+
+        if self.categorical is not None and np.sum(self.categorical) != 0:
+            self.bin_categories_ = _find_categories(
+                X, max_bins, categorical=self.categorical)
+        else:
+            self.bin_categories_ = []
+
+        n_bins_non_missing = []
+
+        if self.bin_categories_:
+            categorical_indices = np.flatnonzero(self.categorical)
+            cat_idx_to_bin = dict(zip(categorical_indices,
+                                      self.bin_categories_))
+
+        for i, thresholds in enumerate(self.bin_thresholds_):
+            if self.bin_categories_ and i in cat_idx_to_bin:
+                # category
+                n_bins_non_missing.append(cat_idx_to_bin[i].shape[0])
+            else:
+                # numerical
+                n_bins_non_missing.append(thresholds.shape[0] + 1)
+
+        self.n_bins_non_missing_ = np.array(n_bins_non_missing,
+                                            dtype=np.uint32)
 
         self.missing_values_bin_idx_ = self.n_bins - 1
 
         return self
 
-    def transform(self, X):
+    def transform(self, X, categorical_only=False):
         """Bin data X.
 
         Missing values will be mapped to the last bin.
@@ -185,11 +303,18 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X : array-like, shape (n_samples, n_features)
             The data to bin.
 
+        categorical_only : bool, default=False
+            Only returns the bin for categorical features.
+
         Returns
         -------
         X_binned : array-like, shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
+        if categorical_only and not self.bin_categories_:
+            raise ValueError("categorical_only=True can only be set when "
+                             "there are categorical features in fit")
+
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
@@ -198,7 +323,24 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 'to transform()'.format(self.n_bins_non_missing_.shape[0],
                                         X.shape[1])
             )
-        binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
-                     binned)
+
+        if not categorical_only:
+            binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
+            _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
+                         binned)
+            if self.bin_categories_:
+                categorical_indices = np.flatnonzero(self.categorical)
+                _encode_categories(X, categorical_indices,
+                                   self.bin_categories_,
+                                   self.missing_values_bin_idx_, binned)
+        else:
+            n_samples = X.shape[0]
+            n_categories = len(self.bin_categories_)
+            binned = np.zeros((n_samples, n_categories), dtype=X_BINNED_DTYPE,
+                              order='C')
+            _encode_categories(X[:, self.categorical],
+                               np.arange(n_categories),
+                               self.bin_categories_,
+                               self.missing_values_bin_idx_, binned)
+
         return binned

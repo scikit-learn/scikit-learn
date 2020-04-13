@@ -6,6 +6,7 @@ from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import r2_score
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -681,3 +682,103 @@ def test_single_node_trees(Est):
                for predictor in est._predictors)
     # Still gives correct predictions thanks to the baseline prediction
     assert_allclose(est.predict(X), y)
+
+
+@pytest.mark.parametrize("insert_missing", [False, True])
+def test_categorical_sanity(insert_missing):
+    # Test support categories with or without missing data
+    X, y = make_regression(n_samples=5000, n_features=20, random_state=0)
+
+    # even indicies are categorical
+    categorical = np.zeros(X.shape[1], dtype=bool)
+    categorical[::2] = 1
+
+    X[:, categorical] = KBinsDiscretizer(
+        encode='ordinal', n_bins=20).fit_transform(X[:, categorical])
+
+    if insert_missing:
+        rng = np.random.RandomState(42)
+        mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
+        X[mask] = np.nan
+
+    est = HistGradientBoostingRegressor(categorical=categorical,
+                                        random_state=0).fit(X, y)
+    assert_array_equal(est.categorical_features_, categorical)
+
+    y_pred = est.predict(X)
+    assert r2_score(y, y_pred) >= 0.8
+
+    X_test = np.zeros((1, X.shape[1]), dtype=float)
+    X_test[:, ::2] = 30  # unknown category
+    X_test[:, 10:] = np.nan  # sets the last 10 features to be missing
+
+    # Does not error on unknown or missing categories
+    est.predict(X_test)
+
+
+def test_categorical_pandas():
+    # Correctly intakes pandas dataframe for fitting and prediction
+
+    pd = pytest.importorskip("pandas")
+    n_samples, n_features = 5000, 20
+    X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                           random_state=0)
+
+    # even indicies are categorical
+    categorical = np.zeros(X.shape[1], dtype=bool)
+    categorical[::2] = 1
+
+    X[:, categorical] = KBinsDiscretizer(
+        encode='ordinal', n_bins=20).fit_transform(X[:, categorical])
+
+    df = pd.DataFrame(X,
+                      columns=[f'col_{i}' for i in range(n_features)])
+
+    # make columns pandas categoricals
+    categorical_indicies = np.flatnonzero(categorical)
+    rng = np.random.RandomState(42)
+    for idx in categorical_indicies:
+        df.iloc[:, idx] = df.iloc[:, idx].astype('category')
+
+        # insesrt some missing categories
+        mask = rng.binomial(1, 0.01, size=n_samples).astype(np.bool)
+        df.iloc[mask, idx] = np.nan
+
+    # uses strings for some categorical names
+    for idx in categorical_indicies[::2]:
+        df.iloc[:, idx] = (df.iloc[:, 0].cat.rename_categories(
+            [f'cat_name_{i}' for i in range(20)]))
+
+    est = HistGradientBoostingRegressor(categorical='pandas',
+                                        random_state=0).fit(df, y)
+    assert_array_equal(est.categorical_features_, categorical)
+
+    y_pred = est.predict(df)
+    assert r2_score(y, y_pred) >= 0.8
+
+    X_test = np.zeros((1, X.shape[1]), dtype=float)
+    X_test[:, ::2] = 30  # unknown category
+    X_test[:, 10:] = np.nan  # sets the last 10 features to be missing
+
+    # Does not error when using a numpy array as input for predict
+    est.predict(X_test)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_categorical_spec_errors(Est):
+    # Test errors when categories are specified incorrectly
+    X, y = make_classification(random_state=0, n_features=4)
+    categorical = [True, True, False, False, True]
+    est = Est(categorical=categorical)
+
+    msg = (r"categorical must be an array-like of bool with shape "
+           r"\(n_features,\)")
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
+
+    monotonic_cst = [0, -1, 0, 1]
+    categorical = [True, True, False, False]
+    msg = "categorical features can not have monotonic constraints"
+    with pytest.raises(ValueError, match=msg):
+        Est(categorical=categorical, monotonic_cst=monotonic_cst).fit(X, y)

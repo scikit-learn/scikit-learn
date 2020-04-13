@@ -10,6 +10,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.utils import check_random_state
 
 
 DATA = np.random.RandomState(42).normal(
@@ -21,8 +22,12 @@ def _find_binning_thresholds(data, max_bins=255, subsample=int(2e5),
                              random_state=None):
     # Just a redef to avoid having to pass arguments all the time (as the
     # function is private we don't use default values for parameters)
-    return _find_binning_thresholds_orig(data, max_bins, subsample,
-                                         random_state)
+    rng = check_random_state(random_state)
+    subsample = subsample
+    if subsample is not None and data.shape[0] > subsample:
+        subset = rng.choice(data.shape[0], subsample, replace=False)
+        data = data.take(subset, axis=0)
+    return _find_binning_thresholds_orig(data, max_bins)
 
 
 def test_find_binning_thresholds_regular_data():
@@ -312,3 +317,140 @@ def test_infinite_values():
 
     expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)
     assert_array_equal(bin_mapper.transform(X), expected_binned_X)
+
+
+@pytest.mark.parametrize("categorical", [None, np.array([False])])
+def test_categorical_transform_error_with_no_categoricals(categorical):
+    # Properties and
+    X = np.arange(10, dtype=float).reshape(-1, 1)
+    bin_mapper = _BinMapper(n_bins=5, categorical=categorical).fit(X)
+
+    assert len(bin_mapper.bin_categories_) == 0
+
+    msg = ("categorical_only=True can only be set when there are "
+           "categorical features")
+    with pytest.raises(ValueError, match=msg):
+        bin_mapper.transform(X, categorical_only=True)
+
+
+@pytest.mark.parametrize("n_bins", [7, 15, 256])
+def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
+    # test n_bins enough to hold all categories
+    X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
+                  [0] * 4 + [9] + [7] * 5], dtype=float).T
+
+    bin_mapper = _BinMapper(n_bins=n_bins, categorical=np.array([True])).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [6]
+    assert_allclose(bin_mapper.bin_categories_, [[0, 1, 4, 7, 9, 10]])
+
+    X_trans = bin_mapper.transform(
+        np.array([[10, 1, -1, 9, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T)
+
+    # missing, negative, and unknown values are mapped to the missing bin
+    miss_bin = n_bins - 1
+    expected_trans = np.array([[5, 1, miss_bin, 4, miss_bin, 3, 2,
+                                miss_bin, 0]]).T
+    assert_array_equal(X_trans, expected_trans)
+
+
+@pytest.mark.parametrize(
+    "n_bins, expected_trans, bin_categories",
+    [
+        (3, [2, 2, 2, 2, 2, 1, 2, 2, 0], [0, 7]),
+        (4, [2, 3, 3, 3, 3, 1, 3, 3, 0], [0, 7, 10]),
+        (5, [3, 1, 4, 4, 4, 2, 4, 4, 0], [0, 1, 7, 10]),
+        (6, [4, 1, 5, 5, 5, 3, 2, 5, 0], [0, 1, 4, 7, 10]),
+    ])
+def test_categorical_n_bins_less_than_cardinality(
+        n_bins, expected_trans, bin_categories):
+    # test when there is not enough bins only the top n_bins - 1 distinct
+    # values (based on cardinality) will have its own bin
+    X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
+                  [0] * 4 + [9] + [7] * 5], dtype=X_DTYPE).T
+    X_test = np.array([[10, 1, -1, 9, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T
+
+    bin_mapper = _BinMapper(n_bins=n_bins,
+                            categorical=np.array([True])).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [n_bins - 1]
+    assert_allclose(bin_mapper.bin_categories_, [bin_categories])
+    X_trans = bin_mapper.transform(X_test)
+
+    # missing, negative, unknown values are mapped to the missing bin
+    expected_trans = np.array([expected_trans]).T
+    assert_array_equal(X_trans, expected_trans)
+
+
+def test_categorical_n_bins_less_than_cardinality_ties():
+    # when there are not enough bins and the cardiality is the same
+    # the elements with a higher lexicon ordering will be choosen as
+    # categories
+    X = np.array([[1] * 4 + [2] * 4 + [3] * 4 +
+                  [4] * 2 + [5] * 2 + [6] * 1], dtype=X_DTYPE).T
+    X_test = np.array([[1, 2, 3, 4, 5, 6, 7]], dtype=X_DTYPE).T
+
+    # With 4 bins used for non missing values. categories 1, 2, 3, 4
+    # will have its own bin, the rest will be placed in the missing bin.
+    bin_mapper = _BinMapper(n_bins=5, categorical=np.array([True])).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [4]
+    assert_allclose(bin_mapper.bin_categories_, [[1, 2, 3, 4]])
+
+    X_trans = bin_mapper.transform(X_test)
+    expected_trans = np.array([[0, 1, 2, 3, 4, 4, 4]]).T
+    assert_array_equal(X_trans, expected_trans)
+
+    # With 3 bins usd for non missing values. categoires 1, 2
+    # will have its own bin, the rest will be placed in the missing bin.
+    bin_mapper = _BinMapper(n_bins=3, categorical=np.array([True])).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [2]
+    assert_allclose(bin_mapper.bin_categories_, [[1, 2]])
+
+    X_trans = bin_mapper.transform(X_test)
+    expected_trans = np.array([[0, 1, 2, 2, 2, 2, 2]]).T
+    assert_array_equal(X_trans, expected_trans)
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_categorical_default_categories_are_missing(missing_value):
+    # check that negative values are considered missing
+    X = np.array([[0] * 10 + [1] * 12 +
+                  [missing_value] * 13], dtype=X_DTYPE).T
+
+    bin_mapper = _BinMapper(n_bins=3, categorical=np.array([True])).fit(X)
+    assert bin_mapper.n_bins_non_missing_ == [2]
+    assert_array_equal(bin_mapper.bin_categories_, [[0, 1]])
+
+    X_test = np.array([[0, 1, missing_value, 2]], dtype=X_DTYPE).T
+    X_trans = bin_mapper.transform(X_test)
+    expected_trans = np.array([[0, 1, 2, 2]]).T
+    assert_array_equal(X_trans, expected_trans)
+
+
+@pytest.mark.parametrize(
+    "n_bins, n_bins_non_missing",
+    [(128, [10, 5]),
+     (256, [10, 5])]
+)
+def test_categorical_with_numerical_features(n_bins, n_bins_non_missing):
+    # check binmapper with mixed data
+    X1 = np.arange(10, 20).reshape(-1, 1)
+    X2 = np.arange(10, 15).reshape(-1, 1)
+    X2 = np.r_[X2, X2]
+    X = np.c_[X1, X2]
+
+    bin_mapper = _BinMapper(n_bins=n_bins,
+                            categorical=np.array([False, True])).fit(X)
+    assert_array_equal(bin_mapper.n_bins_non_missing_, n_bins_non_missing)
+    bin_thresholds = bin_mapper.bin_thresholds_
+
+    assert len(bin_thresholds) == 2
+    assert bin_thresholds[1] is None
+
+    bin_categories = bin_mapper.bin_categories_
+    assert len(bin_categories) == 1
+    assert_array_equal(bin_categories[0], np.arange(10, 15))
+
+    # check that transform on mixed data contains the same result
+    # as transform on the categorical
+    X_trans_all = bin_mapper.transform(X)
+    X_trans_cats = bin_mapper.transform(X, categorical_only=True)
+    assert_array_equal(X_trans_all[:, [1]], X_trans_cats)

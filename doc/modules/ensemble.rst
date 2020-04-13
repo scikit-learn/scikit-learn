@@ -1095,6 +1095,43 @@ supported for multiclass context.
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
+.. _categorical_support_gbdt:
+
+Categorical Support
+-------------------
+
+For datasets with categorical data, :class:`HistGradientBoostingClassifier`
+and :class:`HistGradientBoostingRegressor` has native support for splitting
+on categorical features. This is often better than one hot encoding because
+it leads to faster training times and trees with less depth. When splitting
+a node, the categorical feature will be split into two subsets: one going to
+the left child and the other going to the right child. First, the histogram
+for each categorical feature is first sorted according to the ratio:
+`sum of gradient / sum of hessian` in each bin. Then the best split is found 
+by considering splits along the stored histogram.
+
+If there are more more categorical features than `n_bins`, then the
+categorical features with the highest cardinality will be kept and the less
+frequent categories are considered missing. If there are missing values during
+training, the missing will be considered its own category. When predicting,
+categories that were unknown during fit time, will be consider missing.
+
+To enable categorical support, a boolean mask can be passed to the
+`categorical` parameter. In the following, the first feature will be
+treated as categorical and the second feature is nummerical::
+
+  >>> gbdt = HistGradientBoostingRegressor(categorical=[True, False])
+
+Another way to enable categorical support is to pass `'pandas'` to the
+`categorical` parameter. This will infer the categorical features using panda's
+categorical dtype during `fit`.
+
+  >>> gbdt = HistGradientBoostingRegressor(categorical='pandas')
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`
+
 Low-level parallelism
 ---------------------
 

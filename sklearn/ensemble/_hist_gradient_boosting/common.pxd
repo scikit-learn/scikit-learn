@@ -7,6 +7,8 @@ ctypedef np.npy_float64 X_DTYPE_C
 ctypedef np.npy_uint8 X_BINNED_DTYPE_C
 ctypedef np.npy_float64 Y_DTYPE_C
 ctypedef np.npy_float32 G_H_DTYPE_C
+ctypedef np.npy_uint32 X_BITSET_INNER_DTYPE_C
+ctypedef X_BITSET_INNER_DTYPE_C[8] X_BITSET_DTYPE_C
 
 cdef packed struct hist_struct:
     # Same as histogram dtype but we need a struct to declare views. It needs
@@ -19,6 +21,7 @@ cdef packed struct hist_struct:
 cdef packed struct node_struct:
     # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It
     # needs to be packed since by default numpy dtypes aren't aligned
+    X_BITSET_DTYPE_C cat_threshold
     Y_DTYPE_C value
     unsigned int count
     unsigned int feature_idx
@@ -30,6 +33,7 @@ cdef packed struct node_struct:
     unsigned int depth
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
+    unsigned char is_categorical
 
 
 cpdef enum MonotonicConstraint:

@@ -34,12 +34,15 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     """
     cdef:
         int feature_idx
+        X_DTYPE_C [:] binning_threshold
 
     for feature_idx in range(data.shape[1]):
-        _map_num_col_to_bins(data[:, feature_idx],
-                             binning_thresholds[feature_idx],
-                             missing_values_bin_idx,
-                             binned[:, feature_idx])
+        binning_threshold = binning_thresholds[feature_idx]
+        if binning_threshold is not None:
+            _map_num_col_to_bins(data[:, feature_idx],
+                                binning_threshold,
+                                missing_values_bin_idx,
+                                binned[:, feature_idx])
 
 
 cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,

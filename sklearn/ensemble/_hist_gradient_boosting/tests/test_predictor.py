@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing import assert_allclose
 from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
@@ -8,7 +9,8 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
-    G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
+    G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF, X_BINNED_DTYPE,
+    X_BITSET_INNER_DTYPE)
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -73,3 +75,51 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)
+
+
+def _construct_bitset(thresholds):
+    output = np.zeros(8, dtype=X_BITSET_INNER_DTYPE)
+
+    for thres in thresholds:
+        i1 = thres // 32
+        i2 = thres % 32
+        output[i1] |= X_BITSET_INNER_DTYPE(1) << X_BITSET_INNER_DTYPE(i2)
+
+    return output
+
+
+@pytest.mark.parametrize('thresholds, expected_predictions', [
+    ([0, 124, 240],  [1, 0, 0, 1, 1, 0]),
+    ([0, 4, 60],  [1, 1, 1, 0, 0, 0]),
+    ([124, 255],  [0, 0, 0, 1, 0, 1]),
+    ([10, 14],  [0, 0, 0, 0, 0, 0]),
+])
+def test_categorical_predictor(thresholds, expected_predictions):
+    # Test predictor outputs are correct with categorical features
+
+    cat_threshold = _construct_bitset(thresholds)
+    X = np.array([[0, 4, 60, 124, 240, 255]], dtype=X_BINNED_DTYPE).T
+    nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
+
+    # We just construct a simple tree with 1 root and 2 children
+    # parent node
+    nodes[0]['left'] = 1
+    nodes[0]['right'] = 2
+    nodes[0]['feature_idx'] = 0
+    nodes[0]['is_categorical'] = True
+    nodes[0]['cat_threshold'] = cat_threshold
+
+    # left child
+    nodes[1]['is_leaf'] = True
+    nodes[1]['value'] = 1
+
+    # right child
+    nodes[2]['is_leaf'] = True
+    nodes[2]['value'] = 0
+
+    predictor = TreePredictor(nodes)
+    # missing_values_bin_idx for categories because it is already encoded
+    # in cat_threshold
+    predictions = predictor.predict_binned(X, missing_values_bin_idx=255)
+
+    assert_allclose(predictions, expected_predictions)
