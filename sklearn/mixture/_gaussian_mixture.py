@@ -656,7 +656,7 @@ class GaussianMixture(BaseMixture):
             self.precisions_cholesky_ = linalg.cholesky(self.precisions_init,
                                                         lower=True)
         else:
-            self.precisions_cholesky_ = self.precisions_init
+            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
 
     def _m_step(self, X, log_resp):
         """M step.
