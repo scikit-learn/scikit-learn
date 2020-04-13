@@ -82,6 +82,11 @@ def clone(estimator, safe=True):
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
 
+    # copy callbacks
+    if hasattr(estimator, "_callbacks"):
+        # TODO: do we need to use the recusive setter here?
+        new_object._callbacks = estimator._callbacks
+
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
         param1 = new_object_params[name]
@@ -413,22 +418,37 @@ class BaseEstimator:
         return out
 
     def _set_callbacks(self, callbacks):
+        """Set callbacks for the estimator.
+
+        In the case of meta-estmators, callbacks are also set recursively
+        for all child estimators.
+        """
         from sklearn._callbacks import BaseCallback
         if isinstance(callbacks, BaseCallback):
             self._callbacks = [callbacks]
         else:
             self._callbacks = callbacks
 
-    def _fit_callbacks(self, X, y):
-        from ._callbacks import _eval_callbacks
+        for attr_name in getattr(self, "_required_parameters", []):
+            # likely a meta-estimator
+            if attr_name in ['steps', 'transformers']:
+                for attr in getattr(self, attr_name):
+                    if isinstance(attr, BaseEstimator):
+                        attr._set_callbacks(callbacks)
+                    elif (hasattr(attr, '__len__')
+                          and len(attr) >= 2
+                          and isinstance(attr[1], BaseEstimator)):
+                        attr[1]._set_callbacks(callbacks)
 
+    def _fit_callbacks(self, X, y):
+        """Send the signal to callbacks that the estimator is being fitted"""
         callbacks = getattr(self, '_callbacks', [])
 
         for callback in callbacks:
             callback.fit(self, X, y)
 
-
     def _eval_callbacks(self, **kwargs):
+        """Call callbacks, e.g. in each iteration of an iterative solver"""
         from ._callbacks import _eval_callbacks
 
         callbacks = getattr(self, '_callbacks', [])

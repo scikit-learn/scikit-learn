@@ -1,9 +1,17 @@
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 import pytest
 
-from sklearn.base import is_classifier, is_regressor, ClusterMixin
+from sklearn.datasets import load_iris
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.compose import make_column_transformer
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.base import is_classifier, is_regressor, ClusterMixin, clone
 from sklearn.datasets import load_iris
 from sklearn._callbacks import BaseCallback, _check_callback_params
 from sklearn.utils.testing import all_estimators, set_random_state
@@ -92,3 +100,53 @@ def test_callback(name, Estimator, iris):
     estimator.fit(X, y)
     if callback.n_fit_calls == 0:
         pytest.skip("callbacks not implemented")
+
+
+def check_has_callback(est, callback):
+    assert getattr(est, "_callbacks", None) is not None
+    assert est._callbacks[0] is callback
+    return True
+
+
+def test_set_callbacks_clone():
+    # Check that clone preserves callbacks
+    est = StandardScaler()
+    callback = CheckCallback()
+    est._set_callbacks(callback)
+    check_has_callback(est, callback)
+
+    est2 = clone(est)
+    check_has_callback(est2, callback)
+
+
+def test_set_callbacks():
+    # Check that callbacks are set recursively for meta-estimators
+
+    X, y = load_iris(return_X_y=True)
+
+    # check simple pipeline
+    callback = CheckCallback()
+    print(id(callback))
+    pipe = make_pipeline(StandardScaler(), LogisticRegression(max_iter=3))
+    pipe._set_callbacks(callback)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        pipe.fit(X, y)
+    check_has_callback(pipe, callback)
+    check_has_callback(pipe.named_steps['standardscaler'], callback)
+    check_has_callback(pipe.named_steps['logisticregression'], callback)
+
+
+    # check column transformer
+    callback = CheckCallback()
+    pipe = make_column_transformer(
+            (StandardScaler(), [0, 1]), (MinMaxScaler(), [2, 3]),
+    )
+
+    pipe._set_callbacks(callback)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        pipe.fit(X, y)
+    check_has_callback(pipe, callback)
+    check_has_callback(pipe.named_transformers_['standardscaler'], callback)
+    check_has_callback(pipe.named_transformers_['minmaxscaler'], callback)
