@@ -7,9 +7,6 @@ from scipy import sparse
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_almost_equal,
@@ -344,28 +341,3 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
-
-
-def test_calibration_invariance_with_ranking_metrics():
-    # non regression test for #16321
-    # Calibration does not change with ranking based metrics
-    X, y = make_classification(n_samples=1000, random_state=42)
-    X_train, X_, y_train, y_ = train_test_split(X, y, test_size=0.5,
-                                                random_state=42)
-    X_test, X_calib, y_test, y_calib = train_test_split(X_, y_, test_size=0.5,
-                                                        random_state=42)
-    clf = LogisticRegression(C=1.)
-    clf.fit(X_train, y_train)
-
-    y_pred = clf.predict_proba(X_test)
-
-    isotonic = CalibratedClassifierCV(clf, method='isotonic', cv='prefit')
-    isotonic.fit(X_calib, y_calib)
-    y_pred_calib = isotonic.predict_proba(X_test)
-
-    metrics = [roc_auc_score]
-
-    for metric in metrics:
-        non_calib_score = metric(y_test, y_pred[:, 1])
-        calib_score = metric(y_test, y_pred_calib[:, 1])
-        assert non_calib_score == pytest.approx(calib_score)

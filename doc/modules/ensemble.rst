@@ -1107,7 +1107,7 @@ it leads to faster training times and trees with less depth. When splitting
 a node, the categorical feature will be split into two subsets: one going to
 the left child and the other going to the right child. First, the histogram
 for each categorical feature is first sorted according to the ratio:
-`sum of gradient / sum of hessian` in each bin. Then the best split is found 
+`sum of gradient / sum of hessian` in each bin. Then the best split is found
 by considering splits along the stored histogram.
 
 If the cardinality of a categorical feature is greater than `max_bins`, then
