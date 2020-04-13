@@ -161,7 +161,9 @@ def _encode_categories(data, categorical_indices, bin_categories,
             binned[missing, f_idx] = missing_values_bin_idx
 
         # unknown categories
+        # TODO: calling unique alot of time, maybe this can be improved.
         unique_col_data = np.unique(col_data)
+
         diff = np.setdiff1d(unique_col_data, col_bin_cats, assume_unique=True)
         if diff.size:
             invalid_mask = ~np.in1d(col_data, col_bin_cats)
