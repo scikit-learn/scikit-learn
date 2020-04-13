@@ -305,7 +305,6 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                                 "the case step_size * alpha_scaled == 1")
 
     sag = sag64 if X.dtype == np.float64 else sag32
-    print(callbacks)
     num_seen, n_iter_ = sag(dataset, coef_init,
                             intercept_init, n_samples,
                             n_features, n_classes, tol,

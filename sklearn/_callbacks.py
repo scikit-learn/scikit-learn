@@ -1,8 +1,9 @@
 # License: BSD 3 clause
+from typing import List, Callable
 from abc import ABC, abstractmethod
 
 
-def _eval_callbacks(callbacks, **kwargs):
+def _eval_callbacks(callbacks: List[Callable], **kwargs) -> None:
     if callbacks is None:
         return
 
@@ -10,26 +11,11 @@ def _eval_callbacks(callbacks, **kwargs):
         callback(**kwargs)
 
 
-class Callback(ABC):
+class BaseCallback(ABC):
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y) -> None:
         pass
 
     @abstractmethod
-    def __call__(self, **kwargs):
+    def __call__(self, **kwargs) -> None:
         pass
-
-
-class ProgressBar(Callback):
-    def __init__(self):
-        self.pbar = None
-
-    def fit(X, y):
-        pass
-
-    def __call__(self, **kwargs):
-        from tqdm.auto import tqdm
-
-        if self.pbar is None:
-            self.pbar = tqdm(total=kwargs.get("n_iter_total"))
-        self.pbar.update(1)

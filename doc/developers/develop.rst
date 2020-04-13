@@ -716,3 +716,61 @@ The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
+
+Estimator callbacks
+===================
+
+To add (optional) support of callbacks, for instance to support progress
+bars or monitoring convergence, the estimator must implement the following
+points:
+
+- At the beginning of ``fit`` either explicitly call ``self._fit_callbacks(X,
+  y)`` or use ``self._validate_data(X, y)`` which
+  makes a ``self._fit_callbacks`` call internally.
+- For iterative solvers call ``self._eval_callbacks(n_iter=.., **kwargs)`` at
+  each iteration, where ``kwargs`` keys must be part of supported callback
+  arguments (cf. list below).
+
+User defined callbacks must extend the ``sklearn._callbacks.BaseCallback``
+absract base class. For instance some callbacks are implemented in the
+`sklearn-callbacks <https://github.com/rth/sklearn-callbacks>`_ package
+and can be used as follows,
+
+.. code::
+
+    from sklearn.linear_model import LogisticRegression
+    from sklearn_callbacks import ProgressBar
+
+    est = LogisticRegression()
+    pbar = ProgressBar()
+    est._set_callbacks(pbar)
+   
+    est.fit(X, y)   # will display a progress bar
+
+
+**Callback arguments**
+
+Following input parameters are supported:
+
+n_iter, int
+  current iteration number for iterative solvers.
+
+max_iter, int
+  maximum number of iterations for iterative solvers. If the estimator
+  has a ``max_iter`` init parameter, this will be inferred.
+
+loss, float or ordered dict
+  cost function value or error at a given iteration. When ordered dict,
+  multiple loss functions can given, with the default loss being the first
+  element.  Lower is better.
+
+score, float or ordered dict
+  same as ``loss`` parameter, but for evaluation metrics. Higher is better.
+
+validation_loss, float or ordered dict
+  cost function value or error at a given iteration, evaluated on the
+  validation set.
+
+validation_score, float or ordered dict
+  same as ``validation_loss`` parameter, but for evaluation metrics. Higher is
+  better.

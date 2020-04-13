@@ -61,7 +61,6 @@ def test_callback(name, Estimator, iris):
 
         def __call__(self, **kwargs):
             self.n_calls += 1
-            print(kwargs)
 
     callback = CheckCallback()
     estimator._set_callbacks([callback])

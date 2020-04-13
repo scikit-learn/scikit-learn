@@ -589,7 +589,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 t += 1
                 count += 1
 
-
             # report epoch information
             if verbose > 0:
                 with gil:
