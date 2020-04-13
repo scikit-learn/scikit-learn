@@ -12,7 +12,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 
-from ._label import _encode, _encode_check_unknown
+from ._label import _encode, _encode_check_unknown, _uniques
 
 
 __all__ = [
@@ -90,7 +90,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             result = None
             if self.categories == 'auto':
-                result = _encode(Xi, return_counts=return_counts)
+                result = _uniques(Xi, return_counts=return_counts)
                 cats = result["uniques"]
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
@@ -106,9 +106,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-            if return_counts:
-                if result is None:
-                    result = _encode(Xi, cats, return_counts=True)
+            if return_counts and result is None:
+                # result = _encode(Xi, cats, return_counts=True)
+
                 category_counts.append(result["counts"])
 
         if return_counts:

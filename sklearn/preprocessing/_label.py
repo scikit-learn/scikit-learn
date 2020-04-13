@@ -34,69 +34,8 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
-                  return_counts=False):
-    # only used in _encode below, see docstring there for details
-    if uniques is None:
-        unique_result = np.unique(values, return_inverse=encode,
-                                  return_counts=return_counts)
-        if encode and return_counts:
-            return {'uniques': unique_result[0],
-                    'encoded': unique_result[1],
-                    'counts': unique_result[2]}
-        elif encode:
-            return {'uniques': unique_result[0],
-                    'encoded': unique_result[1]}
-        elif return_counts:
-            return {'uniques': unique_result[0],
-                    'counts': unique_result[1]}
-        else:
-            return {'uniques': unique_result}
-
-    output = {'uniques': uniques}
-    if encode:
-        if check_unknown:
-            diff = _encode_check_unknown(values, uniques)
-            if diff:
-                raise ValueError("y contains previously unseen labels: %s"
-                                 % str(diff))
-        output['encoded'] = np.searchsorted(uniques, values)
-
-    if return_counts:
-        _, counts = np.unique(values, return_counts=True)
-        output['counts'] = counts
-
-    return output
-
-
-def _encode_python(values, uniques=None, encode=False, return_counts=False):
-    # only used in _encode below, see docstring there for details
-    output = {}
-    if uniques is None:
-        uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-
-    if return_counts:
-        uniques_dict = Counter(values)
-        counts = np.array([uniques_dict[item] for item in uniques],
-                          dtype=np.int)
-        output['counts'] = counts
-
-    output['uniques'] = uniques
-    if encode:
-        table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
-        output['encoded'] = encoded
-    return output
-
-
-def _encode(values, uniques=None, encode=False, check_unknown=True,
-            return_counts=False):
-    """Helper function to factorize (find uniques) and encode values.
+def _encode(values, uniques, check_unknown=True):
+    """Helper function encode values.
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
@@ -109,53 +48,85 @@ def _encode(values, uniques=None, encode=False, check_unknown=True,
     ----------
     values : array
         Values to factorize or encode.
-    uniques : array, optional
-        If passed, uniques are not determined from passed values (this
+    uniques : array
+        Uniques are not determined from passed values (this
         can be because the user specified categories, or because they
         already have been determined in fit).
-    encode : bool, default False
-        If True, also encode the values into integer codes based on `uniques`.
     check_unknown : bool, default True
         If True, check for values in ``values`` that are not in ``unique``
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
         twice.
-    return_counts: bool, default=False
-        Returns the counts of the unique items in values. If uniques of object
-        dtype is passed in, the order of the counts will match the
-        order of the uniques. All other dtypes will return counts that assume
-        that uniques is ordered.
 
     Returns
     -------
-    output :
-        Dictionary with attributes:
-
-        uniques :
-            If ``encode=False``. The unique values are sorted if the `uniques`
-            parameter was None (and thus inferred from the data).
-
-        encoded :
-            If ``encode=True``.
-
-        counts :
-            If ``return_counts``.
+    encoded : ndarray
+        Encoded values
     """
     if values.dtype == object:
+        table = {val: i for i, val in enumerate(uniques)}
         try:
-            res = _encode_python(values, uniques, encode,
-                                 return_counts=return_counts)
-        except TypeError:
-            types = sorted(t.__qualname__
-                           for t in set(type(v) for v in values))
-            raise TypeError("Encoders require their input to be uniformly "
-                            f"strings or numbers. Got {types}")
-        return res
+            return np.array([table[v] for v in values])
+        except KeyError as e:
+            raise ValueError(f"y contains previously unseen labels: {str(e)}")
     else:
-        return _encode_numpy(values, uniques, encode,
-                             check_unknown=check_unknown,
-                             return_counts=return_counts)
+        if check_unknown:
+            diff = _encode_check_unknown(values, uniques)
+            if diff:
+                raise ValueError(f"y contains previously unseen labels: "
+                                 f"{str(diff)}")
+        return np.searchsorted(uniques, values)
+
+
+def _uniques_python(values, return_counts):
+    # only used in _uniques below, see docstring there for details
+    try:
+        uniques = sorted(set(values))
+        uniques = np.array(uniques, dtype=values.dtype)
+    except TypeError:
+        types = sorted(t.__qualname__
+                       for t in set(type(v) for v in values))
+        raise TypeError("Encoders require their input to be uniformly "
+                        f"strings or numbers. Got {types}")
+
+    output = {"uniques": uniques}
+    if return_counts:
+        uniques_dict = Counter(values)
+        counts = np.array([uniques_dict[item] for item in uniques],
+                          dtype=np.int)
+        output['counts'] = counts
+    return output
+
+
+def _uniques_numpy(values, return_counts):
+    # only used in _uniques below, see docstring there for details
+    # thin wrapper around np.unique
+    if return_counts:
+        uniques, counts = np.unique(values, return_counts=return_counts)
+        return {"uniques": uniques, "counts": counts}
+    return {"uniques": np.unique(values)}
+
+
+def _uniques(values, return_counts=False):
+    """Helper function to factorize (find uniques)
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+
+    Parameters
+    ----------
+    dict : dic
+    values : ndarray
+        Values to factorize.
+
+    counts : ndarray
+        Counts corresponding to `values`.
+    """
+    if values.dtype == object:
+        return _uniques_python(values, return_counts)
+    else:  # numerical
+        return _uniques_numpy(values, return_counts)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -273,7 +244,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _encode(y)["uniques"]
+        self.classes_ = _uniques(y)["uniques"]
         return self
 
     def fit_transform(self, y):
@@ -289,7 +260,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        result = _encode(y, encode=True)
+        result = _uniques(y, encode=True)
         self.classes_ = result["uniques"]
         return result["encoded"]
 

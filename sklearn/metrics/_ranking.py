@@ -33,7 +33,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _encode
+from ..preprocessing._label import _uniques, _encode
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -457,7 +457,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     if labels is not None:
         labels = column_or_1d(labels)
-        classes = _encode(labels)["uniques"]
+        classes = _uniques(labels)["uniques"]
         if len(classes) != len(labels):
             raise ValueError("Parameter 'labels' must be unique")
         if not np.array_equal(classes, labels):
@@ -471,7 +471,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
     else:
-        classes = _encode(y_true)["uniques"]
+        classes = _uniques(y_true)["uniques"]
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of classes in y_true not equal to the number of "
@@ -482,8 +482,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError("sample_weight is not supported "
                              "for multiclass one-vs-one ROC AUC, "
                              "'sample_weight' must be None in this case.")
-        y_true_encoded = (_encode(y_true, uniques=classes, encode=True)
-                          ["encoded"])
+        y_true_encoded = _encode(y_true, classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
