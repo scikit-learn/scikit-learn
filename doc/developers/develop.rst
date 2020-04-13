@@ -774,3 +774,6 @@ validation_loss, float or ordered dict
 validation_score, float or ordered dict
   same as ``validation_loss`` parameter, but for evaluation metrics. Higher is
   better.
+
+coef: ndarray
+  coefficients of linear models.

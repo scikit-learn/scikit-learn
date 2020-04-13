@@ -612,8 +612,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     _eval_callbacks(callbacks,
                                     n_iter=epoch,
                                     loss=sumloss,
-                                    convergence_criterion="loss",
-                                    average_loss=sumloss / n_samples,
                                     validation_score=score)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
@@ -631,11 +629,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     best_loss = sumloss
 
                 with gil:
-                    _eval_callbacks(callbacks,
-                                    n_iter=epoch,
-                                    loss=sumloss,
-                                    convergence_criterion="loss",
-                                    average_loss=sumloss / n_samples)
+                    _eval_callbacks(callbacks, n_iter=epoch, loss=sumloss)
 
             # if there is no improvement several times in a row
             if no_improvement_count >= n_iter_no_change:

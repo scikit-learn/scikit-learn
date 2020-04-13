@@ -398,6 +398,7 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        self._fit_callbacks(X, y)
 
         if y is None:
             X = check_array(X, **check_params)
@@ -412,11 +413,20 @@ class BaseEstimator:
         return out
 
     def _set_callbacks(self, callbacks):
-        from sklearn._callbacks import Callback
-        if isinstance(callbacks, Callback):
+        from sklearn._callbacks import BaseCallback
+        if isinstance(callbacks, BaseCallback):
             self._callbacks = [callbacks]
         else:
             self._callbacks = callbacks
+
+    def _fit_callbacks(self, X, y):
+        from ._callbacks import _eval_callbacks
+
+        callbacks = getattr(self, '_callbacks', [])
+
+        for callback in callbacks:
+            callback.fit(self, X, y)
+
 
     def _eval_callbacks(self, **kwargs):
         from ._callbacks import _eval_callbacks
