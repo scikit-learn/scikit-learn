@@ -149,6 +149,9 @@ def _encode_categories(data, categorical_indices, bin_categories,
         Output array
     """
 
+    # TODO: This whole function can most likely be made faster with cython
+    # and prange
+
     for i, f_idx in enumerate(categorical_indices):
         col_data = data[:, f_idx]
         col_bin_cats = bin_categories[i]
