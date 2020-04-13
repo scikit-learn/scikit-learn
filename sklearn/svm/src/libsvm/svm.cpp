@@ -2846,6 +2846,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		sum -= model->rho[0];
 		*dec_values = sum;
 
+		NAMESPACE::Kernel::free_array();
 		if(model->param.svm_type == ONE_CLASS)
 			return (sum>0)?1:-1;
 		else
@@ -2908,9 +2909,9 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		free(kvalue);
 		free(start);
 		free(vote);
+		NAMESPACE::Kernel::free_array();
 		return model->label[vote_max_idx];
 	}
-	NAMESPACE::Kernel::free_array();
 }
 
 double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFunctions *blas_functions)
