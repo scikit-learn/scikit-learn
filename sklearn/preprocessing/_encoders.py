@@ -10,7 +10,6 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
 from ._label import _encode, _encode_check_unknown
@@ -223,6 +222,10 @@ class OneHotEncoder(_BaseEncoder):
         support when `min_frequency` or `max_categories` is set to combine
         infrequent categories.
 
+        However, dropping one category breaks the symmetry of the original
+        representation and can therefore induce a bias in downstream models,
+        for instance for penalized linear classification or regression models.
+
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
@@ -296,13 +299,13 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
-        be dropped for each feature.
-        ``drop_idx_[i] = -1`` if no category is to be dropped from the feature
-        with index ``i``, e.g. when `drop='if_binary'` and the feature isn't
-        binary
-
-        ``drop_idx_ = None`` if all the transformed features will be retained.
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+          to be dropped for each feature.
+        - ``drop_idx_[i] = None`` if no category is to be dropped from the
+          feature with index ``i``, e.g. when `drop='if_binary'` and the
+          feature isn't binary.
+        - ``drop_idx_ = None`` if all the transformed features will be
+          retained.
 
     infrequent_indices_ : list of shape (n_features,)
         Defined only when `min_frequency` or `max_categories` is set to a
@@ -426,10 +429,10 @@ class OneHotEncoder(_BaseEncoder):
             return None
         elif isinstance(self.drop, str):
             if self.drop == 'first':
-                return np.zeros(len(self.categories_), dtype=np.int_)
+                return np.zeros(len(self.categories_), dtype=np.object)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else -1
-                                for cats in self.categories_], dtype=np.int_)
+                return np.array([0 if len(cats) == 2 else None
+                                for cats in self.categories_], dtype=np.object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -464,7 +467,8 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(msg)
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=np.int_)
+                             zip(self.drop, self.categories_)],
+                            dtype=np.object)
 
     @property
     def _infrequent_enabled(self):
@@ -638,8 +642,8 @@ class OneHotEncoder(_BaseEncoder):
         """
         cats = self.categories_[i]
 
-        if self.drop is not None:
-            if self.drop_idx_[i] == -1:
+        if self.drop_idx_ is not None:
+            if self.drop_idx_[i] is None:
                 return cats
             return np.delete(cats, self.drop_idx_[i])
 
@@ -664,10 +668,10 @@ class OneHotEncoder(_BaseEncoder):
     @property
     def _n_transformed_features(self):
         """Number of transformed features."""
-        if self.drop is not None:
+        if self.drop_idx_ is not None:
             output = []
             for drop_idx, cats in zip(self.drop_idx_, self.categories_):
-                if drop_idx == -1:
+                if drop_idx is None:
                     output.append(len(cats))
                 else:
                     output.append(len(cats) - 1)
@@ -771,14 +775,14 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, n_features = X_int.shape
 
-        if self.drop is not None:
+        if self.drop_idx_ is not None:
             to_drop = self.drop_idx_.copy()
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
             keep_cells = X_int != to_drop
             for i, cats in enumerate(self.categories_):
                 # drop='if_binary' but feature isn't binary
-                if to_drop[i] == -1:
+                if to_drop[i] is None:
                     # set to cardinality to not drop from X_int
                     to_drop[i] = len(cats)
 
@@ -867,7 +871,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
-            labels = np.asarray(_argmax(sub, axis=1)).flatten()
+            labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
 
             if (self.handle_unknown == 'ignore' or
@@ -878,9 +882,9 @@ class OneHotEncoder(_BaseEncoder):
                 if unknown.any():
                     found_unknown[i] = unknown
             # drop will either be None or handle_unknown will be error. If
-            # self.drop is not None, then we can safely assume that all of
+            # self.drop_idx_ is not None, then we can safely assume that all of
             # the nulls in each column are the dropped value
-            elif self.drop is not None:
+            elif self.drop_idx_ is not None:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
                     X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
@@ -928,7 +932,8 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + '_' + str(t) for t in cats[i]]
+            names = [
+                input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

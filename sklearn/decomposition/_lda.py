@@ -13,15 +13,14 @@ Link: https://github.com/blei-lab/onlineldavb
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln
+from scipy.special import gammaln, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
-from ..utils.fixes import logsumexp
+from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
@@ -282,8 +281,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         https://github.com/blei-lab/onlineldavb
 
     """
-
-    def __init__(self, n_components=10, doc_topic_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,

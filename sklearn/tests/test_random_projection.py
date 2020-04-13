@@ -1,5 +1,6 @@
 
 import functools
+from typing import List, Any
 
 import numpy as np
 import scipy.sparse as sp
@@ -23,12 +24,12 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import DataDimensionalityWarning
 
-all_sparse_random_matrix = [_sparse_random_matrix]
-all_dense_random_matrix = [_gaussian_random_matrix]
+all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
+all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
 all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
-all_SparseRandomProjection = [SparseRandomProjection]
-all_DenseRandomProjection = [GaussianRandomProjection]
+all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
+all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
 

@@ -9,7 +9,7 @@ from scipy.stats.mstats import mquantiles
 from joblib import Parallel, delayed
 
 from .. import partial_dependence
-from ...base import is_classifier, is_regressor
+from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing

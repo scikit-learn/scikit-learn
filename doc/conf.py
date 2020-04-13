@@ -250,6 +250,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
+    'seaborn': ('https://seaborn.pydata.org/', None),
 }
 
 v = parse(release)
@@ -297,7 +298,7 @@ class SubSectionTitleOrder:
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
-    'show_memory': True,
+    'show_memory': False,
     'reference_url': {
         'sklearn': None},
     'examples_dirs': ['../examples'],
