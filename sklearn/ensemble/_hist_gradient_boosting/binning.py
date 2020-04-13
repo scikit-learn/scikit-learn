@@ -120,6 +120,9 @@ def _find_categories(data, max_bins, categorical):
         if both.any():
             categories = categories[~both]
 
+        # keep at most max_bins categories
+        # needs to be sorted, because `_encode_categories` will use
+        # np.searchsorted for encoding
         bin_categories.append(np.sort(categories[:max_bins]))
 
     return bin_categories
