@@ -413,6 +413,15 @@ class BaseEstimator:
         return out
 
     def _repr_html_(self):
+        """Build a HTML representation of an estimator.
+
+        Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
+
+        Returns
+        -------
+        html: str
+            HTML representation of estimator.
+        """
         return _estimator_repr_html(self)
 
 
