@@ -78,56 +78,6 @@ def _find_binning_thresholds(data, max_bins, categorical=None):
     return binning_thresholds
 
 
-def _find_categories(data, max_bins, categorical):
-    """Extract feature-wise categories from categorical data
-
-    Missing values and negative values are ignored. They will be considered
-    missing when ``_encode_categories`` is called.
-
-    Parameters
-    ----------
-    data : ndarray of shape (n_samples, n_features)
-        The data to bin.
-    max_bins: int
-        The maximum number of bins to use for non-missing values. If for a
-        given feature the number of unique values is less than ``max_bins``,
-        then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles
-    categorical : ndarray of bool of shape (n_features,)
-        Indicates categorical features.
-
-    Return
-    ------
-    bin_categories : list of arrays or None
-        For each categorical feature, this gives the categories corresponding
-        to each bin.
-    """
-    data = data[:, categorical]
-    bin_categories = []
-    for f_idx in range(data.shape[1]):
-        col_data = data[:, f_idx]
-
-        categories, counts = np.unique(col_data, return_counts=True)
-
-        # sort by highest count
-        sorted_idx = np.argsort(-counts)
-        categories = categories[sorted_idx]
-
-        # nans and negative values will be considered missing
-        missing = np.isnan(categories)
-        negative = categories < 0
-        both = missing | negative
-        if both.any():
-            categories = categories[~both]
-
-        # keep at most max_bins categories
-        # needs to be sorted, because `_encode_categories` will use
-        # np.searchsorted for encoding
-        bin_categories.append(np.sort(categories[:max_bins]))
-
-    return bin_categories
-
-
 class _BinMapper(TransformerMixin, BaseEstimator):
     """Transformer that maps a dataset into integer-valued bins.
 
