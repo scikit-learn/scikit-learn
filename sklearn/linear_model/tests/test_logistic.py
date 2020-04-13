@@ -1832,7 +1832,7 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     """Test that the multinomial classification is identifiable.
 
     A multinomial with c classes can be modeled with
-    probability_k = exp(X@coef_k) / sum(X@coef_l, l=1..c) for k=1..c.
+    probability_k = exp(X@coef_k) / sum(exp(X@coef_l), l=1..c) for k=1..c.
     This is not identifiable, unless one chooses a further constraint.
     According to [1], the maximum of the L2 penalized likelihood automatically
     satisfies the symmetric constraint:
@@ -1862,6 +1862,6 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     clf.fit(iris.data, target)
 
     # axis=0 is sum over classes
-    assert_array_almost_equal(clf.coef_.sum(axis=0), np.zeros(n_features))
+    assert_allclose(clf.coef_.sum(axis=0), np.zeros(n_features), atol=1e-11)
     if fit_intercept:
-        assert_array_almost_equal(clf.intercept_.sum(axis=0), 0)
+        clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
