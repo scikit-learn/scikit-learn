@@ -1110,11 +1110,12 @@ for each categorical feature is first sorted according to the ratio:
 `sum of gradient / sum of hessian` in each bin. Then the best split is found 
 by considering splits along the stored histogram.
 
-If there are more more categorical features than `n_bins`, then the
-categorical features with the highest cardinality will be kept and the less
-frequent categories are considered missing. If there are missing values during
-training, the missing will be considered its own category. When predicting,
-categories that were unknown during fit time, will be consider missing.
+If the cardinality of a categorical feature is greater than `max_bins`, then
+the top `max_bins` categories based on cardinality will be kept and the less
+frequent categories will be considered missing. If there are missing values
+during training, the missing will be considered its own category. When
+predicting, categories that were unknown during fit time, will be consider
+missing.
 
 To enable categorical support, a boolean mask can be passed to the
 `categorical` parameter. In the following, the first feature will be
