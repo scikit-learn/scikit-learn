@@ -12,7 +12,7 @@ import numpy as np
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
-from ._binning import _map_to_bins
+from ._binning import _map_to_bins, _map_cat_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
@@ -126,51 +126,6 @@ def _find_categories(data, max_bins, categorical):
         bin_categories.append(np.sort(categories[:max_bins]))
 
     return bin_categories
-
-
-def _encode_categories(data, categorical_indices, bin_categories,
-                       missing_values_bin_idx, binned):
-    """Encode categories.
-
-    Missing values and unknown values are mapped to the missing bin.
-
-    Parameters
-    ----------
-    data : ndarray of shape (n_samples, n_features)
-        data to encoded.
-    categorical_indices : list of int
-        columns in ``data`` that are categorical.
-    bin_categories : list of arrays
-        categories learned during training that corresponds to
-        ``categorical_indices``.
-    missing_values_bin_idx : uint8
-        The index of the bin where missing values are mapped.
-    binned : ndarray, shape (n_samples, n_features)
-        Output array
-    """
-
-    # TODO: This whole function can most likely be made faster with cython
-    # and prange
-
-    for i, f_idx in enumerate(categorical_indices):
-        col_data = data[:, f_idx]
-        col_bin_cats = bin_categories[i]
-
-        binned[:, f_idx] = np.searchsorted(col_bin_cats, col_data)
-
-        # missing values
-        missing = np.isnan(col_data)
-        if missing.any():
-            binned[missing, f_idx] = missing_values_bin_idx
-
-        # unknown categories
-        # TODO: calling unique alot of time, maybe this can be improved.
-        unique_col_data = np.unique(col_data)
-
-        diff = np.setdiff1d(unique_col_data, col_bin_cats, assume_unique=True)
-        if diff.size:
-            invalid_mask = ~np.in1d(col_data, col_bin_cats)
-            binned[invalid_mask, f_idx] = missing_values_bin_idx
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -338,17 +293,17 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                          binned)
             if self.bin_categories_:
                 categorical_indices = np.flatnonzero(self.categorical)
-                _encode_categories(X, categorical_indices,
-                                   self.bin_categories_,
-                                   self.missing_values_bin_idx_, binned)
+                _map_cat_to_bins(X, categorical_indices,
+                                 self.bin_categories_,
+                                 self.missing_values_bin_idx_, binned)
         else:
             n_samples = X.shape[0]
             n_categories = len(self.bin_categories_)
             binned = np.zeros((n_samples, n_categories), dtype=X_BINNED_DTYPE,
-                              order='C')
-            _encode_categories(X[:, self.categorical],
-                               np.arange(n_categories),
-                               self.bin_categories_,
-                               self.missing_values_bin_idx_, binned)
+                              order='F')
+            _map_cat_to_bins(X[:, self.categorical],
+                             np.arange(n_categories),
+                             self.bin_categories_,
+                             self.missing_values_bin_idx_, binned)
 
         return binned
