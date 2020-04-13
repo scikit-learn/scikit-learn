@@ -3,16 +3,10 @@ import pytest
 from pytest import approx
 
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeNode
-from sklearn.ensemble._hist_gradient_boosting.grower import \
-    _fill_predictor_node_array
-from sklearn.ensemble._hist_gradient_boosting.splitting import SplitInfo
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import \
-    PREDICTOR_RECORD_DTYPE, X_BITSET_INNER_DTYPE
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):

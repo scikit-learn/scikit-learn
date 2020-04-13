@@ -90,3 +90,4 @@ for key, title, ax in plot_info:
            color=['b', 'r'])
     ax.set(xlabel='Split number', title=title, xticks=[0, 1],
            xticklabels=['Native', "One Hot"])
+plt.show()
