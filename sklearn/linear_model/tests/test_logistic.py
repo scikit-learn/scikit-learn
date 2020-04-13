@@ -1862,6 +1862,6 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     clf.fit(iris.data, target)
 
     # axis=0 is sum over classes
-    assert_allclose(clf.coef_.sum(axis=0), np.zeros(n_features), atol=1e-11)
+    assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-11)
     if fit_intercept:
         clf.intercept_.sum(axis=0) == pytest.approx(0, abs=1e-15)
