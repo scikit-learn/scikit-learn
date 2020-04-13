@@ -31,6 +31,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -38,7 +39,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     """Base class for stacking method."""
 
     @abstractmethod
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
@@ -375,7 +376,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
@@ -619,8 +621,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 passthrough=False, verbose=0):
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
+                 n_jobs=None, passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,

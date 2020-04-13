@@ -287,25 +287,31 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
 
-    @deprecated("Attribute standard_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def standard_coef_(self):
         return self._standard_coef
 
-    @deprecated("Attribute standard_intercept_ was deprecated "
-                "in version 0.23 and will be removed in 0.25.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute standard_intercept_ was deprecated "
+        "in version 0.23 and will be removed in 0.25."
+    )
     @property
     def standard_intercept_(self):
         return self._standard_intercept
 
-    @deprecated("Attribute average_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_coef_(self):
         return self._average_coef
 
-    @deprecated("Attribute average_intercept_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_intercept_(self):
