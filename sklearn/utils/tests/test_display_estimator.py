@@ -25,9 +25,9 @@ from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RationalQuadratic
-from sklearn._display_estimator import _write_label_html
-from sklearn._display_estimator import _get_visual_block
-from sklearn._display_estimator import _estimator_repr_html
+from sklearn.utils._display_estimator import _write_label_html
+from sklearn.utils._display_estimator import _get_visual_block
+from sklearn.utils._display_estimator import _estimator_repr_html
 
 
 @pytest.mark.parametrize("checked", [True, False])

@@ -283,8 +283,10 @@ div.sk-container {
 """.replace('  ', '').replace('\n', '')  # noqa
 
 
-def _estimator_repr_html(estimator):
-    """Build a HTML representation of an estimator
+def estimator_repr_html(estimator):
+    """Build a HTML representation of an estimator.
+
+    Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
 
     Parameters
     ----------
@@ -293,9 +295,8 @@ def _estimator_repr_html(estimator):
 
     Returns
     -------
-    html: str or iPython HTML object
-        HTML representation of estimator. When called in jupyter notebook or
-        lab, a iPython HTML object is returned.
+    html: str
+        HTML representation of estimator.
     """
     with closing(StringIO()) as out:
         out.write(f'<!DOCTYPE html><html lang="en">'

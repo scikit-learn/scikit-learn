@@ -32,7 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
-from .._display_estimator import _VisualBlock
+from ..utils._display_estimator import _VisualBlock
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

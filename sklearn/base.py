@@ -20,7 +20,7 @@ from . import __version__
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from ._display_estimator import _estimator_repr_html
+from .utils._display_estimator import _estimator_repr_html
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
