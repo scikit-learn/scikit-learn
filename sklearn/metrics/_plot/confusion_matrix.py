@@ -124,68 +124,57 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, labels=None,
+def plot_confusion_matrix(estimator=None, X=None, y_pred=None, y_true=None, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
     """Plot Confusion Matrix.
-
     Read more in the :ref:`User Guide <confusion_matrix>`.
-
     Parameters
     ----------
-    estimator : estimator instance
+    estimator : estimator instance, default=None
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier.
-
+        in which the last estimator is a classifier. If None, y_pred must
+        be passed instead.
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
-
-    y : array-like of shape (n_samples,)
+    y_true : array-like of shape (n_samples,), defaule=None
         Target values.
-
+    y_pred : array_like of shape (n_samples,), defaule=None
+        Predictions. Used when the user already has the predictions and
+        doesn't provide the estimator.
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder or
         select a subset of labels. If `None` is given, those that appear at
         least once in `y_true` or `y_pred` are used in sorted order.
-
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
         normalized.
-
     display_labels : array-like of shape (n_classes,), default=None
         Target names used for plotting. By default, `labels` will be used if
         it is defined, otherwise the unique labels of `y_true` and `y_pred`
         will be used.
-
     include_values : bool, default=True
         Includes values in confusion matrix.
-
     xticks_rotation : {'vertical', 'horizontal'} or float, \
                         default='horizontal'
         Rotation of xtick labels.
-
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
         the format specification is 'd' or '.2g' whichever is shorter.
-
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
-
     ax : matplotlib Axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is
         created.
-
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
-
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -204,15 +193,20 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     """
     check_matplotlib_support("plot_confusion_matrix")
 
-    if not is_classifier(estimator):
-        raise ValueError("plot_confusion_matrix only supports classifiers")
-
-    y_pred = estimator.predict(X)
+    if estimator is not None:
+        if not is_classifier(estimator):
+            raise ValueError("plot_confusion_matrix only supports classifiers")
+        if X is None:
+            raise ValueError("Input must be passed when a classifier is set")
+        y_pred = estimator.predict(X)
+    else:
+        if y_pred is None:
+            raise ValueError("Preds must be passed when a classifier is not set")
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels, normalize=normalize)
 
     if display_labels is None:
-        if labels is None:
+        if labels is None and estimator is not None:
             display_labels = estimator.classes_
         else:
             display_labels = labels
