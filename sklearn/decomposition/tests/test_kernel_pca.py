@@ -124,36 +124,26 @@ def test_kernel_pca_sparse():
                 kpca.inverse_transform(X_pred_transformed)
 
 
-def test_kernel_pca_linear_kernel():
-    """ Tests that kPCA with a linear kernel is equivalent to PCA """
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
+                         ids="solver={}".format)
+@pytest.mark.parametrize("n_feats", [4, 10], ids="n_feats={}".format)
+def test_kernel_pca_linear_kernel(solver, n_feats):
+    """ Tests that kPCA with a linear kernel is equivalent to PCA for all
+    solvers"""
     rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((5, 4))
-    X_pred = rng.random_sample((2, 4))
+    X_fit = rng.random_sample((5, n_feats))
+    X_pred = rng.random_sample((2, n_feats))
 
     # for a linear kernel, kernel PCA should find the same projection as PCA
     # modulo the sign (direction)
     # fit only the first four components: fifth is near zero eigenvalue, so
     # can be trimmed due to roundoff error
+    n_comps = 3 if solver == "arpack" else 4
     assert_array_almost_equal(
-        np.abs(KernelPCA(4).fit(X_fit).transform(X_pred)),
-        np.abs(PCA(4).fit(X_fit).transform(X_pred)))
-
-
-def test_kernel_pca_linear_kernel2():
-    """ Tests that kPCA with a linear kernel is equivalent to PCA, for all
-    solvers"""
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((6, 10))
-    X_pred = rng.random_sample((2, 10))
-
-    # for a linear kernel, kernel PCA should find the same projection as PCA
-    # modulo the sign (direction)
-    for solver in ("auto", "dense", "arpack", "randomized"):
-        assert_array_almost_equal(
-            np.abs(KernelPCA(4, eigen_solver=solver).fit(X_fit)
-                   .transform(X_pred)),
-            np.abs(PCA(4, svd_solver=solver if solver != "dense" else "full")
-                   .fit(X_fit).transform(X_pred)))
+        np.abs(KernelPCA(n_comps, eigen_solver=solver).fit(X_fit)
+               .transform(X_pred)),
+        np.abs(PCA(n_comps, svd_solver=solver if solver != "dense" else "full")
+               .fit(X_fit).transform(X_pred)))
 
 
 def test_kernel_pca_n_components():
