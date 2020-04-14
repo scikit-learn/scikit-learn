@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.datasets import load_diabetes
+from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
@@ -11,9 +11,11 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
 
 
-@pytest.mark.parametrize('n_bins', [100, 150])
-def test_diabetes_dataset(n_bins):
-    X, y = load_diabetes(return_X_y=True)
+@pytest.mark.parametrize('n_bins', [200, 256])
+def test_california_dataset(n_bins):
+    X, y = fetch_california_housing(return_X_y=True)
+    X = X[:500, :]
+    y = y[:500]
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=42)
 
@@ -34,8 +36,8 @@ def test_diabetes_dataset(n_bins):
 
     predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
 
-    assert r2_score(y_train, predictor.predict(X_train)) > 0.69
-    assert r2_score(y_test, predictor.predict(X_test)) > 0.30
+    assert r2_score(y_train, predictor.predict(X_train)) > 0.81
+    assert r2_score(y_test, predictor.predict(X_test)) > 0.80
 
 
 @pytest.mark.parametrize('threshold, expected_predictions', [
