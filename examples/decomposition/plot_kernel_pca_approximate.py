@@ -31,7 +31,6 @@ You can have a look at the other examples of this series,
 "Kernel PCA Solvers comparison benchmark 1/2", comparing execution times in
 more details.
 """
-
 print(__doc__)  # noqa
 
 # Authors: Sylvain MARIE
@@ -57,7 +56,7 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 # ---------------------------------
 plt.ion()
 grid_size = 5
-n_components_range = [np.floor(np.exp((x / grid_size) * np.log(n_samples)))
+n_components_range = [np.round(np.exp((x / grid_size) * np.log(n_samples)))
                       for x in range(1, grid_size + 1)]
 plt.figure(figsize=(30, 20))
 
@@ -67,6 +66,7 @@ plt.subplot(2, nb_cols, 1, aspect='equal')
 plt.title("Original space")
 reds = y == 0
 blues = y == 1
+
 plt.scatter(X[reds, 0], X[reds, 1], c="red",
             s=20, edgecolor='k')
 plt.scatter(X[blues, 0], X[blues, 1], c="blue",
