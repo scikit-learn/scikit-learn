@@ -33,7 +33,7 @@ more details.
 """
 print(__doc__)  # noqa
 
-# Authors: Sylvain MARIE
+# Authors: Sylvain MARIE, Schneider Electric
 # License: BSD 3 clause
 
 from datetime import datetime
