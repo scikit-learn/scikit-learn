@@ -55,10 +55,17 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 # 2- Design experiment / Init plots
 # ---------------------------------
 plt.ion()
-grid_size = 5
-n_components_range = [np.round(np.exp((x / grid_size) * np.log(n_samples)))
-                      for x in range(1, grid_size + 1)]
 plt.figure(figsize=(30, 20))
+
+# Set this to true to create a logarithmic grid
+use_log_grid = False
+if use_log_grid:
+    grid_size = 4
+    n_components_range = [np.round(np.exp((x / grid_size) * np.log(n_samples)))
+                          for x in range(1, grid_size + 1)]
+else:
+    # hardcoded for the example gallery
+    n_components_range = [4, 40, 2000]
 
 # top left: original
 nb_cols = 1 + len(n_components_range)
