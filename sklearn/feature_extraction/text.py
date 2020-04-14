@@ -1165,7 +1165,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """Learn the vocabulary dictionary and return term-document matrix.
+        """Learn the vocabulary dictionary and return document-term matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
         implemented.
@@ -1333,7 +1333,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
-    zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
+    zero divisions: idf(t) = log [ (1 + n) / (1 + df(t)) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR
@@ -1816,7 +1816,7 @@ class TfidfVectorizer(CountVectorizer):
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """Learn vocabulary and idf, return term-document matrix.
+        """Learn vocabulary and idf, return document-term matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
         implemented.
