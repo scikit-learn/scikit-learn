@@ -10,6 +10,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.datasets import make_blobs
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -118,9 +119,9 @@ def test_kernel_pca_sparse():
             assert (X_pred_transformed.shape[1] ==
                          X_fit_transformed.shape[1])
 
-            # inverse transform
-            # X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            # assert X_pred2.shape == X_pred.shape)
+            # inverse transform: not available for sparse matrices
+            with pytest.raises(NotFittedError):
+                kpca.inverse_transform(X_pred_transformed)
 
 
 def test_kernel_pca_linear_kernel():
