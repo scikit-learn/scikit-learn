@@ -272,12 +272,19 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             self.alphas_ = U[:, :n_components]  # eigenvectors
             self.lambdas_ = S[:n_components]    # eigenvalues
 
-            # SVD does not guarantee that sign of u and v is the same. If they
-            # are different that means that the corresponding eigenvalue has
-            # the wrong sign, we have to fix it.
+            # Conversion of Singular values into Eigenvalues:
+            # Above we use SVD to get the eigenvalues decomposition.
+            # However SVD does not guarantee that sign of u and v is the same.
+            # If they are different, the corresponding *singular value* is not
+            # equal to the *eigenvalue*, it has the wrong sign. We have to
+            # take this into account to find the actual *eigenvalue*
             VU = np.dot(V[:n_components, :], U[:, :n_components])
             signs = np.sign(np.diag(VU))
             self.lambdas_ = self.lambdas_ * signs
+            # Note: the above is a mandatory operation to ensure a correct sign
+            # for *eigenvalues*, it has nothing to do with the optional
+            # `svd_flip` operation done below for all solvers to ensure
+            # deterministic signs for *eigenvectors*.
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
