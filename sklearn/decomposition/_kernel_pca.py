@@ -68,6 +68,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         less than the number of training samples, randomized (or arpack to a
         smaller extend) may be more efficient than the dense eigensolver.
         Randomized SVD is performed according to the method of Halko et al.
+
         auto :
             the solver is selected by a default policy based on `K.shape[0]`
             (the number of training samples) and `n_components`:
@@ -82,7 +83,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         arpack :
             run SVD truncated to n_components calling ARPACK solver using
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < `K.shape[0]` (the number of training samples)
+            0 < n_components < K.shape[0] (the number of training samples)
         randomized :
             run randomized SVD by the method of Halko et al.
 
