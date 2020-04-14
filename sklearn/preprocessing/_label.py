@@ -79,8 +79,8 @@ def _encode(values, uniques, check_unknown=True):
         return np.searchsorted(uniques, values)
 
 
-def _uniques_python(values, return_counts):
-    # only used in _uniques below, see docstring there for details
+def _unique_python(values, return_inverse, return_counts):
+    # Only used in _uniques below, see docstring there for details
     try:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -90,43 +90,50 @@ def _uniques_python(values, return_counts):
         raise TypeError("Encoders require their input to be uniformly "
                         f"strings or numbers. Got {types}")
 
-    output = {"uniques": uniques}
+    ret = (uniques, )
+
+    if return_inverse:
+        table = {val: i for i, val in enumerate(uniques)}
+        inverse = np.array([table[v] for v in values], dtype=values.dtype)
+        ret += (inverse, )
+
     if return_counts:
         uniques_dict = Counter(values)
         counts = np.array([uniques_dict[item] for item in uniques],
                           dtype=np.int)
-        output['counts'] = counts
-    return output
+        ret += (counts, )
+
+    if len(ret) == 1:
+        ret = ret[0]
+
+    return ret
 
 
-def _uniques_numpy(values, return_counts):
-    # only used in _uniques below, see docstring there for details
-    # thin wrapper around np.unique
-    if return_counts:
-        uniques, counts = np.unique(values, return_counts=return_counts)
-        return {"uniques": uniques, "counts": counts}
-    return {"uniques": np.unique(values)}
-
-
-def _uniques(values, return_counts=False):
-    """Helper function to factorize (find uniques)
+def _unique(values, return_inverse=False, return_counts=False):
+    """Helper function to find uniques with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
 
     Parameters
     ----------
-    dict : dic
-    values : ndarray
-        Values to factorize.
+    unique : ndarray
+        The sorted uniique values
 
-    counts : ndarray
-        Counts corresponding to `values`.
+    unique_inverse : ndarray
+        The indicies to reconstruct the original array from the unique array.
+        Only provided if `return_inverse` is True.
+
+    unique_counts : ndarray
+        The number of times each of the unique values comes up in the originial
+        array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
-        return _uniques_python(values, return_counts)
+        return _unique_python(values, return_inverse=return_inverse,
+                              return_counts=return_counts)
     else:  # numerical
-        return _uniques_numpy(values, return_counts)
+        return np.unique(values, return_inverse=return_inverse,
+                         return_counts=return_counts)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -244,7 +251,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _uniques(y)["uniques"]
+        self.classes_ = _unique(y)
         return self
 
     def fit_transform(self, y):
@@ -260,9 +267,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        result = _uniques(y, encode=True)
-        self.classes_ = result["uniques"]
-        return result["encoded"]
+        self.classes_, encoded = _unique(y, return_inverse=True)
+        return encoded
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -282,7 +288,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         if _num_samples(y) == 0:
             return np.array([])
 
-        return _encode(y, uniques=self.classes_, encode=True)["encoded"]
+        return _encode(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

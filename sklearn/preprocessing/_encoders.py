@@ -4,6 +4,7 @@
 
 import numbers
 import warnings
+from collections import Counter
 
 import numpy as np
 from scipy import sparse
@@ -12,13 +13,33 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 
-from ._label import _encode, _encode_check_unknown, _uniques
+from ._label import _encode, _encode_check_unknown, _unique
 
 
 __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
+
+
+def _get_counts(values, uniques):
+    """Get the number of times each of the values comes up `values`
+
+    For object dtypes, the counts returned will use the order passed in by
+    `uniques`.
+    For numerica dtypes, `uniques` is assumed to be ordered, such that it can
+    be used with `np.searchsorted`.
+    """
+    if values.dtype == object:
+        uniques_dict = Counter(values)
+        counts = np.array([uniques_dict[item] for item in uniques],
+                          dtype=np.int)
+        return counts
+
+    # numerical
+    uniq_values, counts = np.unique(values, return_counts=True)
+    indices_in_uniq = np.searchsorted(uniq_values, uniques)
+    return counts[indices_in_uniq]
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -88,10 +109,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
 
-            result = None
             if self.categories == 'auto':
-                result = _uniques(Xi, return_counts=return_counts)
-                cats = result["uniques"]
+                result = _unique(Xi, return_counts=return_counts)
+                if return_counts:
+                    cats, counts = result
+                    category_counts.append(counts)
+                else:
+                    cats = result
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -104,12 +128,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+                if return_counts:
+                    category_counts.append(_get_counts(Xi, cats))
+
             self.categories_.append(cats)
-
-            if return_counts and result is None:
-                # result = _encode(Xi, cats, return_counts=True)
-
-                category_counts.append(result["counts"])
 
         if return_counts:
             process_counts(category_counts, n_samples)
@@ -165,8 +187,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
-            encoded = _encode(Xi, self.categories_[i], encode=True,
-                              check_unknown=False)["encoded"]
+            encoded = _encode(Xi, self.categories_[i], check_unknown=False)
             X_int[:, i] = encoded
 
         return X_int, X_mask
@@ -665,8 +686,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.r_[cats[frequent_indices],
                      np.array([infrequent_cat], dtype=object)]
 
-    @property
-    def _n_transformed_features(self):
+    def _get_n_transformed_features(self):
         """Number of transformed features."""
         if self.drop_idx_ is not None:
             output = []
@@ -691,8 +711,7 @@ class OneHotEncoder(_BaseEncoder):
 
         return output
 
-    @property
-    def _transformed_categories(self):
+    def _get_transformed_categories(self):
         """Transformed categories."""
         return [self._compute_transformed_categories(i)
                 for i in range(len(self.categories_))]
@@ -790,7 +809,7 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        n_values = self._n_transformed_features
+        n_values = self._get_n_transformed_features()
 
         mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + n_values)
@@ -837,17 +856,18 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        n_transformed_features = sum(self._n_transformed_features)
+        transformed_features = self._get_transformed_categories()
+        n_features_out = sum(cats.shape[0] for cats in transformed_features)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
                "columns, got {1}.")
-        if X.shape[1] != n_transformed_features:
-            raise ValueError(msg.format(n_transformed_features, X.shape[1]))
+        if X.shape[1] != n_features_out:
+            raise ValueError(msg.format(n_features_out, X.shape[1]))
 
         # create resulting array of appropriate dtype
         dt = np.find_common_type([cat.dtype
-                                  for cat in self._transformed_categories], [])
+                                  for cat in transformed_features], [])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -859,8 +879,8 @@ class OneHotEncoder(_BaseEncoder):
             infrequent_indices = [None] * n_features
 
         for i in range(n_features):
-            n_categories = self._n_transformed_features[i]
-            cats = self._transformed_categories[i]
+            cats = transformed_features[i]
+            n_categories = cats.shape[0]
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
@@ -922,7 +942,7 @@ class OneHotEncoder(_BaseEncoder):
             Array of feature names.
         """
         check_is_fitted(self)
-        cats = self._transformed_categories
+        cats = self._get_transformed_categories()
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
         elif len(input_features) != len(cats):

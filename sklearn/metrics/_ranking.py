@@ -33,7 +33,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _uniques, _encode
+from ..preprocessing._label import _unique, _encode
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -457,7 +457,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     if labels is not None:
         labels = column_or_1d(labels)
-        classes = _uniques(labels)["uniques"]
+        classes = _unique(labels)
         if len(classes) != len(labels):
             raise ValueError("Parameter 'labels' must be unique")
         if not np.array_equal(classes, labels):
@@ -471,7 +471,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
     else:
-        classes = _uniques(y_true)["uniques"]
+        classes = _unique(y_true)
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of classes in y_true not equal to the number of "
