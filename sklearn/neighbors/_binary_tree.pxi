@@ -239,9 +239,10 @@ cdef NodeData_t[::1] get_memview_NodeData_1D(
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
 CLASS_DOC = \
-"""{BinaryTree} for fast generalized N-point problems
+"""
+{BinaryTree}(X, leaf_size=40, metric='minkowski', **kwargs)
 
-{BinaryTree}(X, leaf_size=40, metric='minkowski', \\**kwargs)
+{BinaryTree} for fast generalized N-point problems
 
 Parameters
 ----------
@@ -1158,16 +1159,16 @@ cdef class BinaryTree:
         self._update_sample_weight(n_samples, sample_weight_arr)
         self._update_memviews()
 
-    def get_tree_stats(self):
+    def _get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
 
-    def reset_n_calls(self):
+    def _reset_n_calls(self):
         self.n_calls = 0
 
-    def get_n_calls(self):
+    def _get_n_calls(self):
         return self.n_calls
 
-    def get_arrays(self):
+    def _get_arrays(self):
         return (self.data_arr, self.idx_array_arr,
                 self.node_data_arr, self.node_bounds_arr)
 
@@ -1362,7 +1363,8 @@ cdef class BinaryTree:
     def query_radius(self, X, r, int return_distance=False,
                      int count_only=False, int sort_results=False):
         """
-        query_radius(self, X, r, count_only = False):
+        query_radius(X, r, return_distance=False,
+        count_only=False, sort_results=False)
 
         query the tree for neighbors within a radius r
 
@@ -1694,7 +1696,10 @@ cdef class BinaryTree:
             return np.exp(log_density_arr)
 
     def two_point_correlation(self, X, r, dualtree=False):
-        """Compute the two-point correlation function
+        """
+        two_point_correlation(X, r, dualtree=False)
+
+        Compute the two-point correlation function
 
         Parameters
         ----------
