@@ -493,6 +493,7 @@ def test_parallel_regression():
                                                         random_state=rng)
 
     ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
 
     ensemble.set_params(n_jobs=1)
@@ -502,7 +503,7 @@ def test_parallel_regression():
     assert_array_almost_equal(y1, y2)
 
     ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                n_jobs=3,
+                                n_jobs=1,
                                 random_state=0).fit(X_train, y_train)
 
     y3 = ensemble.predict(X_test)
