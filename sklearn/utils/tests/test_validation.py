@@ -1175,6 +1175,7 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert_allclose_dense_sparse(sp_mat, result)
 
 
+# check if column_or_1d accepts sparse input PR#16800
 def test_sparse_matrix_to_numpy():
     y = sp.csr_matrix((13, 1))
     column_or_1d(y)

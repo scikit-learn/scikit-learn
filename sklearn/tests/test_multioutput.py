@@ -613,6 +613,7 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# check if MultiOutputRegressor accepts sparse 'y' input PR#16800
 def test_multioutput_use_sparse_y():
     X = sp.csr_matrix((13, 5))
     y = sp.csr_matrix((13, 2))
