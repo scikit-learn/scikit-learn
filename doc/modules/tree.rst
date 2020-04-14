@@ -500,6 +500,12 @@ Entropy:
 
     H(Q_m) = - \sum_k p_{mk} \log(p_{mk})
 
+HellingerDistance
+
+.. math::
+
+    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{1_left}}{N_{1_parent}}})^2+(\sqrt{\frac{N_{0_right}}{N_{0_parent}}}-\sqrt{\frac{N_{1_right}}{N_{1_parent}}})^2 }
+
 Misclassification:
 
 .. math::
