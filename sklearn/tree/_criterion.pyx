@@ -20,7 +20,6 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
-# cdef double INFINITY = np.inf
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
