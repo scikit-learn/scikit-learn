@@ -46,6 +46,7 @@ from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize, minmax_scale
+from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler
 from sklearn.exceptions import DataConversionWarning
 from sklearn.compose import make_column_selector
 from sklearn.utils.validation import check_random_state
@@ -970,6 +971,11 @@ def test_gower_distances_cdist_equivalence():
     assert_array_almost_equal(
         gower, (hamming * 6 + l1 * 4) / 10)
 
+
+def test_gower_distances_scaling():
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+
     # test scaling of the numerical values
     X_scaled = minmax_scale(X[:, 6:])
     l1 = cdist(X_scaled, X_scaled, metric='minkowski', p=1) / 4
@@ -979,51 +985,60 @@ def test_gower_distances_cdist_equivalence():
     assert_array_almost_equal(
         gower, (hamming * 6 + l1 * 4) / 10)
 
+    # test providing the scaling factors to gower_similarity
+    scaler = MinMaxScaler().fit(X[:, 6:])
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True, min_values=scaler.min_,
+                            scale_factor=scaler.scale_)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
 
-def _test_gower_distances():
-    # Test the pairwise Gower distances computation.
-    # For each test, a set of (non optimized) simple python commands is
-    # provided, to explain how those expected values are calculated,
-    # and to provide proofs that the expected values are correct.
-    #
-    # The calculation formula for Gower similarity is available in the
-    # user guide.
-    pd = pytest.importorskip("pandas")
+    # make sure given min_ and scale_ are used by providing wrong values and
+    # getting wrong distances as output
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True, min_values=scaler.min_,
+                            scale_factor=scaler.scale_ + 1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(
+            gower, (hamming * 6 + l1 * 4) / 10)
+
+
+@pytest.mark.parametrize('cat',
+                         [slice(0, 2),
+                          ['col_0', 'col_1'],
+                          [0, 1],
+                          make_column_selector(dtype_include=object),
+                          [True, True, False, False]])
+def test_gower_distances_dataframe(cat):
+    # test different ways of specifying categorical features on a DataFrame
+    pd = pytest.importorskip('pandas')
 
     X = pd.DataFrame([['M', False, 222.22, 1],
                       ['F', True, 333.22, 2],
-                      ['M', True, 1934.0, 4],
-                      [np.nan, np.nan, np.nan, np.nan]])
+                      ['M', True, 1934.0, 4]],
+                     columns=[f'col_{d}' for d in range(4)])
+    X_cat = OrdinalEncoder().fit_transform(X.iloc[:, :2])
+    X_num = np.array(X.iloc[:, 2:])
 
-    # No errors are expected to be raised here
-    D = gower_distances(X, scale=False,
-                        categorical_features=make_column_selector(
-                            dtype_include=["category", "object"]))
-    D = gower_distances(X, scale=True,
-                        categorical_features=make_column_selector(
-                            dtype_include=["category", "object"]))
+    l1 = cdist(X_num, X_num, metric='minkowski', p=1) / 2
+    hamming = cdist(X_cat, X_cat, metric='hamming')
+    gower = gower_distances(X, categorical_features=cat,
+                            scale=False)
+    assert_array_almost_equal(
+        gower, (hamming * 2 + l1 * 2) / 4)
 
-    # These are the normalized values for X above
-    X = [['M', False, 0.0, 0.0],
-         ['F', True, 0.06484477, 0.33333333],
-         ['M', True, 1.0, 1.0],
-         [np.nan, np.nan, np.nan, np.nan]]
 
-    # Simplified calculation of Gower distance for expected values
-    # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = np.asarray([4, 4, 4, 0])
-    D_expected = np.zeros((4, 4))
-    for i in range(0, 4):
-        for j in range(0, 4):
-            # The calculations below shows how it compares observation
-            # by observation, attribute by attribute.
-            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
-                                 [1, 0][X[i][1] == X[j][1]] +
-                                 abs(X[i][2] - X[j][2]) +
-                                 abs(X[i][3] - X[j][3])) /
-                                non_missing_cols[j])
+def test_gower_distances_nans():
+    pd = pytest.importorskip("pandas")
 
-    assert_array_almost_equal(D_expected, D)
+    rng = check_random_state(42)
+
+    # an all np.nan sample has an np.nan distance from other data points.
+    X = rng.rand(5, 10)
+    X[4, :] = np.nan
+    dists = gower_distances(X, categorical_features=slice(0, 6))
+    assert np.all(np.isnan(dists[4, :]))
+    assert np.all(np.isnan(dists[:, 4]))
 
     # Calculates D with normalization, then results must be the same without
     # normalization
