@@ -1,22 +1,23 @@
 """
-=========================================
-Kernel PCA Solvers comparison benchmark 1
-=========================================
+==========================================================
+Kernel PCA Solvers comparison benchmark: time vs n_samples
+==========================================================
 
 This benchmark shows that the approximate solvers provided in Kernel PCA can
 help drastically improve its execution speed when an approximate solution
-(small `n_components`) is acceptable. In many real-world datasets a few
-hundreds of principal components are indeed sufficient enough to capture the
-underlying distribution.
+(small `n_components`) is acceptable. In many real-world datasets the number of
+samples is very large, but a few hundreds of principal components are
+sufficient enough to capture the underlying distribution.
 
 Description:
 ------------
 An increasing number of examples is used to train a KernelPCA, between
 `min_n_samples` (default: 101) and `max_n_samples` (default: 4000) with
-`n_samples_grid_size` positions (default: 4). For each training sample size,
-KernelPCA models are trained for the various possible `eigen_solver` values.
-All of them are trained to obtain p principal components (default: 100).
-The execution times are displayed in a plot at the end of the experiment.
+`n_samples_grid_size` positions (default: 4). Samples have 2 features, and are
+generated using `make_circles`. For each training sample size, KernelPCA models
+are trained for the various possible `eigen_solver` values. All of them are
+trained to obtain p principal components (default: 100). The execution times
+are displayed in a plot at the end of the experiment.
 
 What you can observe:
 ---------------------

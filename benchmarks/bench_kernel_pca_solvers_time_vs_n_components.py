@@ -1,7 +1,7 @@
 """
-=========================================
-Kernel PCA Solvers comparison benchmark 2
-=========================================
+=============================================================
+Kernel PCA Solvers comparison benchmark: time vs n_components
+=============================================================
 
 This benchmark shows that the approximate solvers provided in Kernel PCA can
 help drastically improve its execution speed when an approximate solution
@@ -11,8 +11,8 @@ underlying distribution.
 
 Description:
 ------------
-A fixed number of training (default: 2000) and test (default: 1000) samples is
-generated.
+A fixed number of training (default: 2000) and test (default: 1000) samples
+with 2 features is generated using the `make_circles` helper method.
 
 KernelPCA models are trained on the training set with an increasing number of
 principal components, between 1 and `max_n_compo` (default: 1999), with
