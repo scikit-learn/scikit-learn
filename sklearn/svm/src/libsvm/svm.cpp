@@ -307,16 +307,12 @@ public:
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
 	static void set_blas(BlasFunctions *blas);
-	static void check_array_size_and_realloc(int size);
-	static void free_array();
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
 	static BlasFunctions *m_blas;
-	static int m_size;
-	static double* m_array;
 #ifdef _DENSE_REP
 	PREFIX(node) *x;
 #else
@@ -453,22 +449,6 @@ void Kernel::set_blas(BlasFunctions *blas)
 	Kernel::m_blas=blas;
 }
 
-void Kernel::check_array_size_and_realloc(int size)
-{
-	if (size > Kernel::m_size)
-	{
-		free(Kernel::m_array);
-		Kernel::m_array = (double*)malloc(sizeof(double)*size*2);
-		Kernel::m_size = size*2;
-	}
-}
-
-void Kernel::free_array()
-{
-	free(Kernel::m_array);
-	Kernel::m_size = 0;
-}
-
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param)
 {
@@ -483,12 +463,13 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			double sum = 0;
 #ifdef _DENSE_REP
 			int dim = min(x->dim, y->dim), i;
-			check_array_size_and_realloc(dim);
+			double* m_array = (double*)malloc(sizeof(double)*dim);
 			for (i = 0; i < dim; i++)
 			{
 				m_array[i] = x->values[i] - y->values[i];
 			}
 			sum = m_blas->dot(dim, m_array, 1, m_array, 1);
+			free(m_array);
 			for (; i < x->dim; i++)
 				sum += x->values[i] * x->values[i];
 			for (; i < y->dim; i++)
@@ -547,8 +528,6 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 	}
 }
 BlasFunctions* NAMESPACE::Kernel::m_blas=0;
-int NAMESPACE::Kernel::m_size=0;
-double* NAMESPACE::Kernel::m_array=0;
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -2846,7 +2825,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		sum -= model->rho[0];
 		*dec_values = sum;
 
-		NAMESPACE::Kernel::free_array();
 		if(model->param.svm_type == ONE_CLASS)
 			return (sum>0)?1:-1;
 		else
@@ -2909,7 +2887,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		free(kvalue);
 		free(start);
 		free(vote);
-		NAMESPACE::Kernel::free_array();
 		return model->label[vote_max_idx];
 	}
 }
