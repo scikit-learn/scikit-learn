@@ -311,7 +311,9 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
-def test_kernel_pca_time_and_equivalence():
+@pytest.mark.parametrize("n_components", [4, 10, 20],
+                         ids="n_components={}".format)
+def test_kernel_pca_solvers_equivalence(n_components):
     """Checks that 'dense', 'arpack' and 'randomized' solvers give similar
     results"""
 
@@ -322,27 +324,21 @@ def test_kernel_pca_time_and_equivalence():
     X_fit = rng.random_sample((n_training_samples, n_features))
     X_pred = rng.random_sample((100, n_features))
 
-    # Experiments design
-    n_compo_range = [4, 10, 20]
+    # reference (full)
+    ref_pred = KernelPCA(n_components, eigen_solver="dense")\
+        .fit(X_fit).transform(X_pred)
 
-    # Runs
-    for j, n_components in enumerate(n_compo_range):
+    # arpack
+    a_pred = KernelPCA(n_components, eigen_solver="arpack")\
+        .fit(X_fit).transform(X_pred)
+    # check that the result is still correct despite the approx
+    assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
 
-        # reference (full)
-        ref_pred = KernelPCA(n_components, eigen_solver="dense")\
-            .fit(X_fit).transform(X_pred)
-
-        # arpack
-        a_pred = KernelPCA(n_components, eigen_solver="arpack")\
-            .fit(X_fit).transform(X_pred)
-        # check that the result is still correct despite the approx
-        assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
-
-        # randomized
-        r_pred = KernelPCA(n_components, eigen_solver="randomized")\
-            .fit(X_fit).transform(X_pred)
-        # check that the result is still correct despite the approximation
-        assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
+    # randomized
+    r_pred = KernelPCA(n_components, eigen_solver="randomized")\
+        .fit(X_fit).transform(X_pred)
+    # check that the result is still correct despite the approximation
+    assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
 
 
 @pytest.mark.parametrize("kernel",
