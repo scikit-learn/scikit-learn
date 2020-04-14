@@ -290,7 +290,7 @@ def _yield_all_checks(name, estimator):
         yield check_fit_non_negative
 
 
-def _set_check_estimator_ids(obj):
+def _set_check_estimator_ids(obj, include_keywords=True):
     """Create pytest ids for checks.
 
     When `obj` is an estimator, this returns the pprint version of the
@@ -318,7 +318,7 @@ def _set_check_estimator_ids(obj):
         if not isinstance(obj, partial):
             return obj.__name__
 
-        if not obj.keywords:
+        if not obj.keywords or not include_keywords:
             return obj.func.__name__
 
         kwstring = ",".join(["{}={}".format(k, v)
@@ -378,7 +378,7 @@ def _mark_xfail_checks(estimator, check, pytest):
     if not xfail_checks:
         return estimator, check
 
-    check_name = _set_check_estimator_ids(check)
+    check_name = _set_check_estimator_ids(check, include_keywords=False)
     msg = xfail_checks.get(check_name, None)
 
     if msg is None:
