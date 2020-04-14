@@ -315,9 +315,7 @@ def test_kernel_conditioning():
 
 def test_kernel_pca_time_and_equivalence():
     """Checks that 'dense', 'arpack' and 'randomized' solvers give similar
-    results and benchmarks their respective execution times. This test can
-    be transformed into a benchmark by setting benchmark_mode to True.
-    """
+    results"""
 
     # Generate random data
     n_training_samples = 2000
@@ -328,54 +326,25 @@ def test_kernel_pca_time_and_equivalence():
 
     # Experiments design
     n_compo_range = [4, 10, 20]
-    arpack_all = False
-    n_iter = 3
 
     # Runs
-    ref_time = np.empty((len(n_compo_range), n_iter)) * np.nan
-    a_time = np.empty((len(n_compo_range), n_iter)) * np.nan
-    r_time = np.empty((len(n_compo_range), n_iter)) * np.nan
     for j, n_components in enumerate(n_compo_range):
 
         # reference (full)
-        for i in range(n_iter):
-            start_time = datetime.now()
-            ref_pred = KernelPCA(n_components, eigen_solver="dense")\
-                .fit(X_fit).transform(X_pred)
-            ref_time[j, i] = (datetime.now() - start_time).total_seconds()
+        ref_pred = KernelPCA(n_components, eigen_solver="dense")\
+            .fit(X_fit).transform(X_pred)
 
         # arpack
-        if arpack_all or n_components < 100:
-            for i in range(n_iter):
-                start_time = datetime.now()
-                a_pred = KernelPCA(n_components, eigen_solver="arpack")\
-                    .fit(X_fit).transform(X_pred)
-                # check that the result is still correct despite the approx
-                assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
-                a_time[j, i] = (datetime.now() - start_time).total_seconds()
+        a_pred = KernelPCA(n_components, eigen_solver="arpack")\
+            .fit(X_fit).transform(X_pred)
+        # check that the result is still correct despite the approx
+        assert_array_almost_equal(np.abs(a_pred), np.abs(ref_pred))
 
         # randomized
-        for i in range(n_iter):
-            start_time = datetime.now()
-            r_pred = KernelPCA(n_components, eigen_solver="randomized")\
-                .fit(X_fit).transform(X_pred)
-            # check that the result is still correct despite the approximation
-            assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
-            r_time[j, i] = (datetime.now() - start_time).total_seconds()
-
-    # Compute statistics for the 3 methods
-    avg_ref_time = ref_time.mean(axis=1)
-    avg_a_time = a_time.mean(axis=1)
-    avg_r_time = r_time.mean(axis=1)
-
-    # A few asserts - very "light" because Continuous integration target
-    # platforms vary quite a lot.
-    #
-    # Check that randomized reduces the time on average
-    assert np.mean(avg_r_time / avg_ref_time) < 0.75
-
-    # Check that arpack reduces the time at least on one run
-    assert min(avg_a_time / avg_ref_time) < 0.75
+        r_pred = KernelPCA(n_components, eigen_solver="randomized")\
+            .fit(X_fit).transform(X_pred)
+        # check that the result is still correct despite the approximation
+        assert_array_almost_equal(np.abs(r_pred), np.abs(ref_pred))
 
 
 @pytest.mark.parametrize("kernel",
