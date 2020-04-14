@@ -489,11 +489,11 @@ HellingerDistance
 
 .. math::
 
-    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{1_left}}{N_{1_parent}}})^2+(\sqrt{\frac{N_{0_right}}{N_{0_parent}}}-\sqrt{\frac{N_{1_right}}{N_{1_parent}}})^2 }
+    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2+(\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2 }
 
-left child class 0 samples fraction of parent class 0 samples  :math:`\frac{N_{left_0}}{N_{parent_0}}
+left child class 0 samples fraction of parent class 0 samples :math:`\frac{N_{left_0}}{N_{parent_0}}`
 
-and Misclassification
+Misclassification
 
 .. math::
 

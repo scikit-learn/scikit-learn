@@ -594,9 +594,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain
+        and "hellinger" for Hellinger Distance.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1295,9 +1296,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain
+        and "hellinger" for Hellinger Distance.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
