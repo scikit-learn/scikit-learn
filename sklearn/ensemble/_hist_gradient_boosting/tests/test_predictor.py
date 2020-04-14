@@ -11,7 +11,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
 
 
-@pytest.mark.parametrize('n_bins', [100,150])
+@pytest.mark.parametrize('n_bins', [100, 150])
 def test_diabetes_dataset(n_bins):
     X, y = load_diabetes(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(
