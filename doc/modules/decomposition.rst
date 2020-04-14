@@ -192,25 +192,59 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
 
+.. _Randomized_kPCA:
+
+Kernel PCA using randomized SVD
+-------------------------------
+
 Similarly to :ref:`PCA`, the optional parameter ``eigen_solver='randomized'``
-can be used to drastically improve the computation time when the desired
-number of components ``n_components`` is much smaller than the number of
-training samples. See :ref:`RandomizedPCA` above. You can see the performance
-impact of the solver selection in two benchmarks:
+can be used to drastically reduce the computation time when the number of
+requested ``n_components`` is small with respect to the number of samples, as
+discussed in :ref:`RandomizedPCA` above.
 
-* `benchmark 1 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison1.py>`_
-  compares the :class:`KernelPCA` execution times for various values of
-  ``eigen_solver``, when the number of components is fixed and the number of
-  samples increases.
+This is even more interesting for Kernel PCA than for PCA actually: while in
+:ref:`PCA` the number of components (and the computation time) grows with the
+number of features, in :ref:`KernelPCA` it grows with the number of samples !
+This often makes users disregard Kernel PCA prematurely because with relatively
+large real-world datasets it is simply not tractable. However this can be
+worked around easily: indeed for many datasets a few hundreds principal
+components (e.g. ``n_components=100``) are sufficient to ensure good
+reconstruction of the underlying distribution, and
+``eigen_solver='randomized'`` provides a much faster fit time.
 
-* `benchmark 2 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison2.py>`_
-  compares the :class:`KernelPCA` execution times for various values of
-  ``eigen_solver``, when the number of samples is fixed and the number of
-  components increases.
+For example the figure below shows the same "circles" dataset (top left)
+reconstructed with various approximations (top right is the standard kPCA with
+2000 components). You can compare the execution times vs. the reconstruction:
+
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_approximate_001.png
+    :target: ../auto_examples/decomposition/plot_kernel_pca_approximate.html
+    :align: center
+    :scale: 75%
 
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_approximate.py`
+
+To evaluate the performance impact of the solver selection with a more
+systematic approach you can execute the following benchmarks:
+
+* `Time vs. n_samples benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py>`_
+  compares the :class:`KernelPCA` execution times for various values of
+  ``eigen_solver``, when the number of components is fixed and the number of
+  samples increases. This is the kind of results it generates:
+
+.. |bench_time_vs_nsamples| image:: https://user-images.githubusercontent.com/3236794/47029170-2b1fa480-d16b-11e8-8480-e8d71f2900bb.png
+   :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py
+   :scale: 60%
+
+* `Time vs. n_components benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py>`_
+  compares the :class:`KernelPCA` execution times for various values of
+  ``eigen_solver``, when the number of samples is fixed and the number of
+  components increases. This is the kind of results it generates:
+
+.. |bench_time_vs_ncomp| image:: https://user-images.githubusercontent.com/3236794/45894261-26670b00-bdce-11e8-967d-0195168707b4.png
+   :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+   :scale: 60%
 
 .. _SparsePCA:
 
