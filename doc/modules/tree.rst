@@ -515,7 +515,7 @@ Log Loss or Entropy:
   computed on a dataset :math:`D` is defined as follows:
 
   .. math::
-  
+
       \mathrm{LL}(D, T) = -\frac{1}{n} \sum_{(x_i, y_i) \in D} \sum_k I(y_i = k) \log(T_k(x_i))
 
   where :math:`D` is a training dataset of :math:`n` pairs :math:`(x_i, y_i)`.
@@ -529,8 +529,14 @@ Log Loss or Entropy:
   the number of training data points that reached each leaf:
 
   .. math::
-  
+
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
+
+HellingerDistance:
+
+.. math::
+
+    H(X_m) = \sqrt{(\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{1_left}}{N_{1_parent}}})^2+(\sqrt{\frac{N_{0_right}}{N_{0_parent}}}-\sqrt{\frac{N_{1_right}}{N_{1_parent}}})^2 }
 
 Regression criteria
 -------------------

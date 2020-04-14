@@ -736,6 +736,11 @@ Changelog
   :class:`ensemble.GradientBoostingRegressor`.
   :pr:`16331` by :user:`Alexandre Batisse <batalex>`.
 
+- |Feature| Hellinger distance split criterion for trees based classifiers like
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.ExtraTreeClassifier` 
+  and :class:`ensemble.RandomForestClassifier`.
+  :pr:`16478` by :user:`Evgeni Dubov <EvgeniDubov>`.
+
 :mod:`sklearn.utils`
 ....................
 
