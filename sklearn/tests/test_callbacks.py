@@ -2,7 +2,6 @@
 
 import warnings
 
-import numpy as np
 import pytest
 
 from sklearn.datasets import load_iris
@@ -12,7 +11,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.compose import make_column_transformer
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.base import is_classifier, is_regressor, ClusterMixin, clone
-from sklearn.datasets import load_iris
 from sklearn._callbacks import BaseCallback, _check_callback_params
 from sklearn.utils.testing import all_estimators, set_random_state
 from sklearn.utils.estimator_checks import (
@@ -135,7 +133,6 @@ def test_set_callbacks():
     check_has_callback(pipe, callback)
     check_has_callback(pipe.named_steps['standardscaler'], callback)
     check_has_callback(pipe.named_steps['logisticregression'], callback)
-
 
     # check column transformer
     callback = CheckCallback()

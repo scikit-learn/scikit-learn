@@ -31,7 +31,8 @@ def _check_callback_params(**kwargs):
     msg = ""
     if invalid_params:
         msg += ("Invalid callback parameters: {}, must be one of {}. ").format(
-                ", ".join(invalid_params), ", ".join(CALLBACK_PARAM_TYPES.keys())
+                ", ".join(invalid_params),
+                ", ".join(CALLBACK_PARAM_TYPES.keys())
         )
     if invalid_types:
         msg += "Invalid callback parameters: " + ", ".join(invalid_types)

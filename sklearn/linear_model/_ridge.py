@@ -20,6 +20,7 @@ from scipy.sparse import linalg as sp_linalg
 from ._base import LinearClassifierMixin, LinearModel, _rescale_data
 from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
+from .._callbacks import _eval_callbacks
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_array
