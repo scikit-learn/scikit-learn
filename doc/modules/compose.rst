@@ -564,6 +564,12 @@ many estimators. An example of the HTML output can be seen below.
                           ('classifier', LogisticRegression())])
    clf
 
+As an alternative, the HTML can be written to a file using the `_repr_html_`
+method::
+
+        with open('my_estimator.html', 'w') as f:
+            f.write(clf._repr_html_())
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`

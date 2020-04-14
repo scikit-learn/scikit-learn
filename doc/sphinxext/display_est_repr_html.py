@@ -38,6 +38,7 @@ class DisplayEstimatorRepr(SphinxDirective):
         input_code['language'] = 'python'
         output.append(input_code)
 
+        html_repr = f"<p>{html_repr}</p>"
         html_node = nodes.raw('', html_repr, format='html')
         output.append(html_node)
 
@@ -62,8 +63,4 @@ class DisplayEstimatorRepr(SphinxDirective):
 
 def setup(app):
     app.add_directive('display_estimator_repr_html', DisplayEstimatorRepr)
-
-    return {
-        'parallel_read_safe': True,
-        'parallel_write_safe': True,
-    }
+    return {'parallel_read_safe': True, 'parallel_write_safe': True}
