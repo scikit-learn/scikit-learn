@@ -28,7 +28,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     SVD by the method of Halko et al. 2009, depending on the shape of the input
     data and the number of components to extract. It can also use the
     scipy.sparse.linalg ARPACK implementation of the truncated SVD, see
-    :ref:`eigen_solver`.
+    `eigen_solver`.
 
     Read more in the :ref:`User Guide <kernel_PCA>`.
 
@@ -64,7 +64,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         (i.e. learn to find the pre-image of a point)
 
     eigen_solver : string {'auto', 'dense', 'arpack', 'randomized'}
-        Select eigensolver to use (default='auto'). If n_components is much
+        Select eigensolver to use (default='auto'). If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
         smaller extend) may be more efficient than the dense eigensolver.
         Randomized SVD is performed according to the method of Halko et al.
@@ -113,7 +113,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack' or 'randomized'.
+        by `np.random`. Used when `eigen_solver` == 'arpack' or 'randomized'.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 

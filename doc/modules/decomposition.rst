@@ -199,14 +199,14 @@ training samples. See :ref:`RandomizedPCA` above. You can see the performance
 impact of the solver selection in two benchmarks:
 
 * `benchmark 1 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison1.py>`_
-compares the :class:`KernelPCA` execution times for various values of
-``eigen_solver``, when the number of components is fixed and the number of
-samples increases.
+  compares the :class:`KernelPCA` execution times for various values of
+  ``eigen_solver``, when the number of components is fixed and the number of
+  samples increases.
 
 * `benchmark 2 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison2.py>`_
-compares the :class:`KernelPCA` execution times for various values of
-``eigen_solver``, when the number of samples is fixed and the number of
-components increases.
+  compares the :class:`KernelPCA` execution times for various values of
+  ``eigen_solver``, when the number of samples is fixed and the number of
+  components increases.
 
 .. topic:: Examples:
 

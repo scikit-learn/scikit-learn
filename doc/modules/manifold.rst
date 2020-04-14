@@ -143,7 +143,7 @@ The overall complexity of Isomap is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
-Similarly to :ref:`KernelPCA`, the optional parameter
+Similarly to :ref:`kernel_PCA`, the optional parameter
 ``eigen_solver='randomized'`` can be used to drastically improve the
 computation time. Note that this is not yet the automatic behaviour.
 
