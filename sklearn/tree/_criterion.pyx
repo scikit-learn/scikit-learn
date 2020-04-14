@@ -16,6 +16,7 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs, sqrt, pow, abs
 
+import numpy as np
 cimport numpy as np
 np.import_array()
 from numpy.math cimport INFINITY
