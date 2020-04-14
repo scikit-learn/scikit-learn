@@ -32,7 +32,6 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
-from ..utils import check_scalar
 from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
@@ -679,10 +678,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
-        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        "gini" for the Gini impurity, "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`
+        and "hellinger" for Hellinger Distance.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1400,10 +1400,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy", "log_loss"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
-        Shannon information gain, see :ref:`tree_mathematical_formulation`.
+        "gini" for the Gini impurity, "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`
+        and "hellinger" for Hellinger Distance.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
