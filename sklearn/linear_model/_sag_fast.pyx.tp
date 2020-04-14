@@ -53,6 +53,7 @@ from libc.time cimport time, time_t
 
 from ._sgd_fast cimport LossFunction
 from ._sgd_fast cimport Log, SquaredLoss
+from .._callbacks import _eval_callbacks
 
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
@@ -238,7 +239,8 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
         np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_sum_gradient_init,
         double intercept_decay,
         bint saga,
-        bint verbose):
+        bint verbose,
+        callbacks=None):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
 
     Used in Ridge and LogisticRegression.
@@ -533,6 +535,10 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
             elif verbose:
                 printf('Epoch %d, change: %.8f\n', n_iter + 1,
                                                   max_change / max_weight)
+            if callbacks is not None:
+                with gil:
+                    _eval_callbacks(callbacks, n_iter=n_iter, coef=weights_array,
+                                    intercept=intercept_array)
     n_iter += 1
     # We do the error treatment here based on error code in status to avoid
     # re-acquiring the GIL within the cython code, which slows the computation

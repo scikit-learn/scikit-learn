@@ -35,7 +35,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
-                     X_offset=None, X_scale=None):
+                     X_offset=None, X_scale=None, callbacks=None):
 
     def _get_rescaled_operator(X):
 
@@ -102,6 +102,8 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
                 # old scipy
                 coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol)
+        if callbacks is not None:
+            _eval_callbacks(callbacks, n_iter=i, coef=coefs)
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -450,7 +452,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                                 tol=tol,
                                 verbose=verbose,
                                 X_offset=X_offset,
-                                X_scale=X_scale)
+                                X_scale=X_scale,
+                                callbacks=callbacks)
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)

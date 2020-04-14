@@ -11,7 +11,8 @@ CALLBACK_PARAM_TYPES = {
     "score": (float, dict),
     "validation_loss": (float, dict),
     "validation_score": (float, dict),
-    "coef": np.ndarray
+    "coef": np.ndarray,
+    "intercept": (np.ndarray, float)
 }
 
 
