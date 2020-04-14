@@ -96,8 +96,9 @@ def test_kernel_pca_deterministic_output():
 
 
 def test_kernel_pca_sparse():
-    """ Tests that kPCA works on a sparse data input. Same test than
-    test_kernel_pca except inverse_transform (why?) """
+    """ Tests that kPCA works on a sparse data input. Same test as
+    test_kernel_pca except inverse_transform since it's not implemented
+    for sparse matrices"""
     rng = np.random.RandomState(0)
     X_fit = sp.csr_matrix(rng.random_sample((5, 4)))
     X_pred = sp.csr_matrix(rng.random_sample((2, 4)))
