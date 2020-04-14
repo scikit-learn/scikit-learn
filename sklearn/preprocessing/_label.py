@@ -94,7 +94,7 @@ def _unique_python(values, return_inverse, return_counts):
 
     if return_inverse:
         table = {val: i for i, val in enumerate(uniques)}
-        inverse = np.array([table[v] for v in values], dtype=values.dtype)
+        inverse = np.array([table[v] for v in values])
         ret += (inverse, )
 
     if return_counts:

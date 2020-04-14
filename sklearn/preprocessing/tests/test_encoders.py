@@ -704,12 +704,14 @@ def test_categories(density, drop):
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
+
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_does_not_support_none_values(Encoder):
     values = [["a"], [None]]
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
         Encoder().fit(values)
+
 
 def test_ohe_infrequent_infrequent_is_a_cat():
     # category with 'infrequent' is a frequent category, ohe will name mangle
