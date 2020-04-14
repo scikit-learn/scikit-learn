@@ -158,7 +158,7 @@ def check_iris_criterion(name, criterion):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ("gini", "entropy"))
+@pytest.mark.parametrize("criterion", ("gini", "entropy", "hellinger"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
@@ -346,7 +346,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
+        product(FOREST_CLASSIFIERS, ["gini", "entropy", "hellinger"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
