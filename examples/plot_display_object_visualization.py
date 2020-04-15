@@ -78,13 +78,14 @@ pr_display = PrecisionRecallDisplay(prec, recall).plot()
 ##############################################################################
 # The display objects stores the computed values of metrics. This allows
 # for the visualizations to be easliy combinied using matplotlib's API. In
-# the following example, we place the three displays next to each other in a
+# the following example, we place the displays next to each other in a
 # row.
 
 # Sets this image as the thumbnail for sphinx gallery
 # sphinx_gallery_thumbnail_number = 4
 import matplotlib.pyplot as plt
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 8))
-cm_display.plot(ax=ax1)
-roc_display.plot(ax=ax2)
-pr_display.plot(ax=ax3)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
+
+roc_display.plot(ax=ax1)
+pr_display.plot(ax=ax2)
+plt.show()
