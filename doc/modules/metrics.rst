@@ -129,7 +129,7 @@ categorical features, otherwise it will assume all features are numerical. If
 the data is a `pandas.DataFrame`, you can use
 :func:`~sklearn.compose.make_column_selector` to select features::
 
-    >>> import pandas as pd
+    >>> import pandas as pd # doctest: +ELLIPSIS
     >>> from sklearn.compose import make_column_selector as selector
     >>> from sklearn.metrics.pairwise import gower_distances
     >>> X = pd.DataFrame(
