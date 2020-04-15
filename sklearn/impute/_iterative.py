@@ -206,10 +206,9 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
     def __init__(self,
                  estimator=None,
-                 missing_values=np.nan,
+                 missing_values=np.nan, *,
                  sample_posterior=False,
                  max_iter=10,
                  tol=1e-3,
