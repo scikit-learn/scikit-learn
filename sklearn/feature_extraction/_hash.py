@@ -69,6 +69,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
 
+    .. versionchanged:: 0.19
+        ``alternate_sign`` replaces the now deprecated ``non_negative``
+        parameter.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import FeatureHasher
