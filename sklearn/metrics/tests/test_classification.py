@@ -597,10 +597,13 @@ def test_cohen_kappa():
                         weights="quadratic"), 0.9541, decimal=4)
 
 
-@ignore_warnings
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
+@pytest.mark.parametrize(
+    "y_true, y_pred", [([0], [1]), ([0, 0], [0, 1])])
+def test_matthews_corrcoef_nan(y_true, y_pred):
+    # Test to make sure warnings are not raised and the metric is zero
+    with pytest.warns(None) as rec:
+        assert matthews_corrcoef(y_true, y_pred) == pytest.approx(0.0)
+    assert not rec
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef():

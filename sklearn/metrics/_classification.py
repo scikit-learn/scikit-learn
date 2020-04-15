@@ -831,7 +831,11 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
     cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+
+    with warnings.catch_warnings():
+        # catches run time warning when dividing by 0.0
+        warnings.simplefilter('ignore', RuntimeWarning)
+        mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
     if np.isnan(mcc):
         return 0.
