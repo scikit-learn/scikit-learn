@@ -733,16 +733,16 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     assert copy_X == np.array_equal(X, X_copy)
 
 
-@pytest.mark.parametrize('y, expected_coef', [
-    ([-2.5, -2.5], [0, 2.5, 0, 2.5, 0]),
-    ([[-2.5, -2.5], [-2.5, -2.5]],
-     [[0, 5, 0, 2.5, 0], [0, 5, 0, 2.5, 0]])])
-def test_lars_with_jitter(y, expected_coef):
+def test_lars_with_jitter():
     # Test that a small amount of jitter helps stability,
     # using example provided in issue #2746
 
-    X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0], [0.0, -1.0, 0.0, 0.0, 0.0]])
+    X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0],
+                  [0.0, -1.0, 0.0, 0.0, 0.0]])
+    y = [-2.5, -2.5]
+    expected_coef = [0, 2.5, 0, 2.5, 0]
     alpha = 0.001
+    # set to False since target is constant and we check the value of coef
     fit_intercept = False
 
     lars = linear_model.LassoLars(alpha=alpha, fit_intercept=fit_intercept)
@@ -754,11 +754,9 @@ def test_lars_with_jitter(y, expected_coef):
     lars.fit(X, y)
     lars_with_jitter.fit(X, y)
 
-    w_nojitter = lars.coef_
-    w_jitter = lars_with_jitter.coef_
-
-    assert not np.array_equal(w_jitter, w_nojitter)
-    np.testing.assert_allclose(w_jitter, expected_coef, rtol=1e-3)
+    assert np.mean((lars.coef_ - lars_with_jitter.coef_)**2) > .1
+    np.testing.assert_allclose(lars_with_jitter.coef_, expected_coef,
+                               rtol=1e-3)
 
 
 def test_X_none_gram_not_none():
