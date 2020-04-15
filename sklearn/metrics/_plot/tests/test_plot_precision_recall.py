@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
+from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
@@ -170,3 +171,22 @@ def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot):
     clf_name = "another_name"
     disp.plot(name=clf_name)
     assert clf_name in disp.line_.get_label()
+
+
+@pytest.mark.parametrize(
+    "average_precision, estimator_name, expected_label",
+    [
+        (0.9, None, "AP = 0.90"),
+        (None, "my_est", "my_est"),
+        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
+    ]
+)
+def test_default_labels(pyplot, average_precision, estimator_name,
+                        expected_label):
+    prec = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    disp = PrecisionRecallDisplay(prec, recall,
+                                  average_precision=average_precision,
+                                  estimator_name=estimator_name)
+    disp.plot()
+    assert disp.line_.get_label() == expected_label
