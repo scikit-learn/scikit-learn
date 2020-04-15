@@ -733,16 +733,13 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     assert copy_X == np.array_equal(X, X_copy)
 
 
-@pytest.mark.parametrize('y_list, expected_y', [
+@pytest.mark.parametrize('y, expected_coef', [
     ([-2.5, -2.5], [0, 2.5, 0, 2.5, 0]),
     ([[-2.5, -2.5], [-2.5, -2.5]],
      [[0, 5, 0, 2.5, 0], [0, 5, 0, 2.5, 0]])])
 def test_lars_with_jitter(y_list, expected_y):
-    """
-    Test that user input of a small amount of jitter,
-    using example provided in issue #2746
-
-    """
+    # Test that a small amount of jitter helps stability,
+    # using example provided in issue #2746
 
     X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0], [0.0, -1.0, 0.0, 0.0, 0.0]])
     y = np.array(y_list)
@@ -763,7 +760,7 @@ def test_lars_with_jitter(y_list, expected_y):
     w_jitter = lars_with_jitter.coef_
 
     assert not np.array_equal(w_jitter, w_nojitter)
-    assert_array_almost_equal(w_jitter, expected_output, decimal=2)
+    np.testing.assert_allclose(w_jitter, expected_coeff)```
 
 
 def test_X_none_gram_not_none():

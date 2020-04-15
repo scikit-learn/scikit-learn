@@ -800,13 +800,14 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         with a small alpha.
 
     jitter : float, default=None
-        Uniform noise parameter, added to the y values, to satisfy
-        the model's assumption of one-at-a-time computations.
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset creation. Pass an int
+        Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
     Attributes
     ----------
@@ -1049,13 +1050,14 @@ class LassoLars(Lars):
         coordinate descent Lasso estimator.
 
     jitter : float, default=None
-        Uniform noise parameter, added to the y values, to satisfy
-        the model's assumption of one-at-a-time computations.
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
 
     random_state : int, RandomState instance or None (default)
-        Determines random number generation for dataset creation. Pass an int
+        Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
-        See :term:`Glossary <random_state>`.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
     Attributes
     ----------
