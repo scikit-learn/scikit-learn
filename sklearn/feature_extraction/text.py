@@ -1318,17 +1318,16 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     corpus.
 
     The formula that is used to compute the tf-idf for a term t of a document d
-    in a document set is tf-idf(t, d) = tf(t, d) * idf(t), and the idf is
-    computed as idf(t) = log [ n / df(t) ] + 1 (if ``smooth_idf=False``), where
-    n is the total number of documents in the document set and df(t) is the
-    document frequency of t; the document frequency is the number of documents
-    in the document set that contain the term t. The effect of adding "1" to
-    the idf in the equation above is that terms with zero idf, i.e., terms
-    that occur in all documents in a training set, will not be entirely
-    ignored.
-    (Note that the idf formula above differs from the standard textbook
-    notation that defines the idf as
-    idf(t) = log [ n / (df(t) + 1) ]).
+    in a document set is tf-idf(t, d) = tf(t, d) * idf(t). The idf term is
+    computed as idf(t) = log [n / df(t)] + 1 if ``standard_idf=False``,
+    otherwise it is computed as idf(t) = log [n / df(t)], where n is the total
+    number number of documents and df(t) is the document frequency of t; the
+    document frequency is the number of documents in the document set that
+    contain the term t. The effect of adding "1" to the idf term in the
+    equation above results in terms with zero idf, i.e., terms that occur in
+    all documents in a training set, will not be entirely ignored. If
+    ``standard_idf=True`` the standard textbook definition of the idf term
+    will be used, which ignores terms with a zero idf.
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
@@ -1367,6 +1366,9 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
 
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+
+    standard_idf : boolean (default=False)
+        Use standard idf term, log(n/df(t)). If false idf is log(n/df(t)) + 1.
 
     Attributes
     ----------
@@ -1411,11 +1413,12 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, standard_idf=False):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
+        self.standard_idf = standard_idf
 
     def fit(self, X, y=None):
         """Learn the idf vector (global term weights).
@@ -1439,9 +1442,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             df += int(self.smooth_idf)
             n_samples += int(self.smooth_idf)
 
-            # log+1 instead of log makes sure terms with zero idf don't get
-            # suppressed entirely.
-            idf = np.log(n_samples / df) + 1
+            # log+1 if standard_idf=False, else idf term is simply log(n/df)
+            idf = np.log(n_samples / df) + int(not self.standard_idf)
             self._idf_diag = sp.diags(idf, offsets=0,
                                       shape=(n_features, n_features),
                                       format='csr',
@@ -1664,6 +1666,9 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    standard_idf : boolean (default=False)
+        Use standard idf term, log(n/df(t)). If false idf is log(n/df(t)) + 1.
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1723,7 +1728,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.float64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, standard_idf=False):
 
         super().__init__(
             input=input, encoding=encoding, decode_error=decode_error,
@@ -1736,7 +1741,8 @@ class TfidfVectorizer(CountVectorizer):
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
-                                       sublinear_tf=sublinear_tf)
+                                       sublinear_tf=sublinear_tf,
+                                       standard_idf=standard_idf)
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
@@ -1772,6 +1778,14 @@ class TfidfVectorizer(CountVectorizer):
     @sublinear_tf.setter
     def sublinear_tf(self, value):
         self._tfidf.sublinear_tf = value
+
+    @property
+    def standard_idf(self):
+        return self._tfidf.standard_idf
+
+    @standard_idf.setter
+    def standard_idf(self, value):
+        self._tfidf.standard_idf = value
 
     @property
     def idf_(self):
