@@ -1002,6 +1002,11 @@ class GridSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
 
     Examples
     --------
@@ -1337,6 +1342,11 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
+
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
 
     Attributes
     ----------
