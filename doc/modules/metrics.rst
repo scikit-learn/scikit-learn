@@ -114,12 +114,10 @@ Where:
 :math:`s(x_i, y_i)` : Calculates the distance as:
 
     - :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
-
-    - :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a boolean or
-    categorical attribute.
-
+    - :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a
+      boolean or categorical attribute.
     - :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
-    attribute.
+      attribute.
 
 
 The Gower formula combines a Manhattan (L1) distance for numeric features
