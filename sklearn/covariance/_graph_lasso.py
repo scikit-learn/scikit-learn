@@ -18,8 +18,10 @@ from joblib import Parallel, delayed
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import check_random_state, check_array
-from ..linear_model import _cd_fast as cd_fast
+from ..utils.validation import check_random_state
+from ..utils.validation import _deprecate_positional_args
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 
@@ -355,8 +357,8 @@ class GraphicalLasso(EmpiricalCovariance):
     --------
     graphical_lasso, GraphicalLassoCV
     """
-
-    def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
+    @_deprecate_positional_args
+    def __init__(self, alpha=.01, *, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
         super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
@@ -382,8 +384,8 @@ class GraphicalLasso(EmpiricalCovariance):
         self : object
         """
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
-                        estimator=self)
+        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2,
+                                estimator=self)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -631,8 +633,8 @@ class GraphicalLassoCV(GraphicalLasso):
     values of alpha then come out as missing values, but the optimum may
     be close to these missing values.
     """
-
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
+    @_deprecate_positional_args
+    def __init__(self, *, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super().__init__(
@@ -659,7 +661,7 @@ class GraphicalLassoCV(GraphicalLasso):
         self : object
         """
         # Covariance does not make sense for a single feature
-        X = check_array(X, ensure_min_features=2, estimator=self)
+        X = self._validate_data(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

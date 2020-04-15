@@ -78,14 +78,16 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, or None, default=None
+    random_state : int, RandomState instance, default=None
         Pseudo-random number generator to control the permutations of each
-        feature. See :term:`random_state`.
+        feature.
+        Pass an int to get reproducible results across function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
-    result : Bunch
-        Dictionary-like object, with attributes:
+    result : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         importances_mean : ndarray, shape (n_features, )
             Mean of feature importance over `n_repeats`.
@@ -98,6 +100,21 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     ----------
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
              2001. https://doi.org/10.1023/A:1010933404324
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.inspection import permutation_importance
+    >>> X = [[1, 9, 9],[1, 9, 9],[1, 9, 9],
+    ...      [0, 9, 9],[0, 9, 9],[0, 9, 9]]
+    >>> y = [1, 1, 1, 0, 0, 0]
+    >>> clf = LogisticRegression().fit(X, y)
+    >>> result = permutation_importance(clf, X, y, n_repeats=10,
+    ...                                 random_state=0)
+    >>> result.importances_mean
+    array([0.4666..., 0.       , 0.       ])
+    >>> result.importances_std
+    array([0.2211..., 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
         X = check_array(X, force_all_finite='allow-nan', dtype=None)
