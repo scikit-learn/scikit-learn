@@ -946,6 +946,19 @@ def test_gower_distance_input_validation():
         gower_distances(X, scale=True)
 
 
+def test_gower_distances_pairwise_equivalence():
+    # the call to pairwise_distances should yield the same results
+    # even with parallel processing
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+    Y = rng.randint(size=(5, 10), low=-10, high=10)
+    gower = gower_distances(
+        X, Y, categorical_features=slice(0, 4))
+    pw_gower = pairwise_distances(X, Y, metric='gower', n_jobs=2,
+                                  categorical_features=slice(0, 4))
+    assert_array_almost_equal(pw_gower, gower)
+
+
 def test_gower_distances_cdist_equivalence():
     # test that gower is consistent with L1 and hamming on numerical and
     # categorical only features respectively
@@ -975,6 +988,7 @@ def test_gower_distances_cdist_equivalence():
 def test_gower_distances_scaling():
     rng = check_random_state(42)
     X = rng.randint(size=(5, 10), low=0, high=10)
+    # assuming the first 6 cols to be numerical, the rest categorical
 
     # test scaling of the numerical values
     X_scaled = minmax_scale(X[:, 6:])
@@ -1001,6 +1015,18 @@ def test_gower_distances_scaling():
     with pytest.raises(AssertionError):
         assert_array_almost_equal(
             gower, (hamming * 6 + l1 * 4) / 10)
+
+    # the sacling should be done using both X and Y
+    Y = (X + 1)[::2, :]
+    trs = MinMaxScaler().fit(np.vstack((X[:, 6:], Y[:, 6:])))
+    l1 = cdist(trs.transform(X[:, 6:]), trs.transform(Y[:, 6:]),
+               metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], Y[:, :6], metric='hamming')
+    gower = gower_distances(X, Y, categorical_features=slice(0, 6),
+                            scale=True)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+    assert gower.shape == (len(X), len(Y))
 
 
 @pytest.mark.parametrize('cat',
@@ -1040,276 +1066,6 @@ def test_gower_distances_nans():
     assert np.all(np.isnan(dists[4, :]))
     assert np.all(np.isnan(dists[:, 4]))
 
-    # Calculates D with normalization, then results must be the same without
-    # normalization
-    X = pd.DataFrame(X)
-    D_normalized = gower_distances(X, scale=False,
-                                   categorical_features=make_column_selector(
-                                       dtype_include=["category", "object"]))
-    assert_array_almost_equal(D, D_normalized)
-
-    # The values must be the same, when using the categorical_values
-    # parameter
-    D = gower_distances(X, categorical_features=[0, 1])
-
-    assert_array_almost_equal(D_expected, D)
-
-    D = gower_distances(X, categorical_features=[0, 1, 3])
-
-    # These are the normalized values for the initial X above,
-    # but the last column became categorical.
-    X = [['M', False, 0.0, 1],
-         ['F', True, 0.06484477, 2],
-         ['M', True, 1.0, 4],
-         [np.nan, np.nan, np.nan, np.nan]]
-
-    # Simplified calculation of Gower distance for expected values
-    # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = np.asarray([4, 4, 4, 0])
-    D_expected = np.zeros((4, 4))
-    for i in range(0, 4):
-        for j in range(0, 4):
-            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
-                                 [1, 0][X[i][1] == X[j][1]] +
-                                 abs(X[i][2] - X[j][2]) +
-                                 [1, 0][X[i][3] == X[j][3]]) /
-                                non_missing_cols[j])
-
-    D = gower_distances(X, categorical_features=[True, True, False, True],
-                        scale=False)
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Two observations with same value
-    X = [[1, 4141.22, False, 'ABC'],
-         [1, 4141.22, False, 'ABC']]
-
-    D = gower_distances(X, categorical_features=[2, 3])
-    D_expected = [[0.0, 0.0], [0.0, 0.0]]
-    # An array of zeros is expected as distance, when comparing two
-    # observations with same values.
-    assert_array_almost_equal(D_expected, D)
-
-    # Only categorical values
-    X = [['M', False],
-         ['F', True],
-         ['M', True],
-         ['F', False]]
-
-    X = np.array(X, dtype=np.object)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((4, 4))
-    for i in range(0, 4):
-        for j in range(0, 4):
-            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]]) / 2
-
-    D = gower_distances(X, categorical_features=[0, 1])
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Gower results for categorical values must be similar to Hamming.
-    # It is necessary to digest it for current Hamming implementation.
-    X = np.asarray(X, dtype=np.object)
-    np.place(X[:, 0], X[:, 0] == 'M', 0)
-    np.place(X[:, 0], X[:, 0] == 'F', 1)
-    X = X.astype(np.int)
-
-    assert_array_almost_equal(D, pairwise_distances(X, metric="hamming"))
-
-    # Categorical values, with boolean represented as number 1, 0
-    X = [['M', 0],
-         ['F', 1],
-         ['M', 1],
-         ['F', 0]]
-
-    D = gower_distances(X, categorical_features=[True, True])
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Categorical values, with boolean represented as 1 and 0,
-    # and missing values
-    X = np.asarray([['M', 0],
-                    ['F', 1],
-                    ['M', 1],
-                    [np.nan, np.nan]], dtype=np.object)
-
-    D = gower_distances(X, categorical_features=[True, True])
-
-    D_expected = np.zeros((4, 4))
-    # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = np.asarray([2, 2, 2, 0])
-    for i in range(0, 4):
-        for j in range(0, 4):
-            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
-                                 [1, 0][X[i][1] == X[j][1]]) /
-                                min(non_missing_cols[i], non_missing_cols[j]))
-
-    # Necessary to replace the Inf (resulted from 0 division) by NaN
-    D_expected[D_expected == np.inf] = np.nan
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Tests numeric arrays with np.nan
-    X = [[0.0, 0.0],
-         [0.06484477, 0.33333333],
-         [1.0, 1.0],
-         [np.nan, np.nan]]
-
-    D = gower_distances(X)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((4, 4))
-    # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = np.asarray([2, 2, 2, 0])
-    for i in range(0, 4):
-        for j in range(0, 4):
-            D_expected[i][j] = (abs(X[i][0] - X[j][0]) +
-                                abs(X[i][1] - X[j][1])) / non_missing_cols[i]
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Tests only numeric arrays, no missing values
-    X = [[0.11444388, 0.0],
-         [0.17186758, 0.33333334],
-         [1.0, 1.0],
-         [0.0, 0.0]]
-
-    D = gower_distances(X)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((4, 4))
-    for i in range(0, 4):
-        for j in range(0, 4):
-            D_expected[i][j] = (abs(X[i][0] - X[j][0]) +
-                                abs(X[i][1] - X[j][1])) / 2
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Gower results for numerical values must be similar to Manhattan.
-    assert_array_almost_equal(D * 2, manhattan_distances(X))
-
-    # Test to obtain a non-squared distance matrix
-    X = [['Syria', 1.0, 0.0, 0.0, True],
-         ['Ireland', 0.181818, 0.0, 1, False],
-         ['United Kingdom', 0.0, 0.0, 0.160377, False]]
-
-    Y = [['United Kingdom', 0.090909, 0.0, 0.500109, True]]
-
-    D = gower_distances(X, Y, categorical_features=[0, 4], scale=False)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((3, 1))
-    for i in range(0, 3):
-        for j in range(0, 1):
-            D_expected[i][j] = \
-                ([1, 0][X[i][0] == Y[j][0]] +
-                 abs(X[i][1] - Y[j][1]) +
-                 abs(X[i][2] - Y[j][2]) +
-                 abs(X[i][3] - Y[j][3]) +
-                 [1, 0][X[i][4] == Y[j][4]]) / 5
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Test to obtain a non-squared distance matrix with numeric data only
-    X = np.array([[1.0, 0.0, 0.0],
-                  [0.181818, 0.0, 1],
-                  [0.0, 0.0, 0.160377]],
-                 dtype=object)
-
-    Y = np.array([[0.090909, 0.0, 0.500109]], dtype=object)
-    D = gower_distances(X, Y)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((3, 1))
-    for i in range(0, 3):
-        for j in range(0, 1):
-            D_expected[i][j] = \
-                (abs(X[i][0] - Y[j][0]) +
-                 abs(X[i][1] - Y[j][1]) +
-                 abs(X[i][2] - Y[j][2])) / 3
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Tests a range of negative and positive numeric values
-    # Range starting with zero
-    X = np.array([[0.0], [0.75], [1.0]])
-
-    D = gower_distances(X)
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((3, 3))
-    for i in range(0, 3):
-        for j in range(0, 3):
-            D_expected[i][j] = (abs(X[i][0] - X[j][0])) / 1
-
-    assert_array_almost_equal(D_expected, D)
-
-    # Range of positive and negative values
-    X = X - 0.5
-    D = gower_distances(X)
-    assert_array_almost_equal(D_expected, D)
-
-    # Range with positive values
-    X = X + 10
-    D = gower_distances(X)
-    assert_array_almost_equal(D_expected, D)
-
-    # Range of negative values
-    X = X - 15
-    D = gower_distances(X)
-    assert_array_almost_equal(D_expected, D)
-
-    # Test X and Y with different ranges of numeric values
-    X = [[9222.22, -11],
-         [41934.0, -44],
-         [1, 1]]
-
-    Y = [[-222.22, 1],
-         [1934.0, 4],
-         [3000, 3000]]
-
-    D = gower_distances(X, Y, scale=True)
-
-    # The expected normalized values above are:
-    Xn = [[0.22403432, 0.010841],
-          [1.0, 0.0],
-          [0.00529507, 0.01478318]]
-
-    Yn = [[0.0, 0.01478318],
-          [0.05114832, 0.01576873],
-          [0.07643522, 1.0]]
-
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((3, 3))
-    for i in range(0, 3):
-        for j in range(0, 3):
-            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
-                                abs(Xn[i][1] - Yn[j][1])) / 2
-
-    assert_array_almost_equal(D_expected, D)
-    # Test the use of range parameters
-    D = gower_distances(X, Y, scale=[42156.22, 3044.0])
-    assert_array_almost_equal(D_expected, D)
-    # same without scale, as long the entire data is present
-    D = gower_distances(X, Y)
-    assert_array_almost_equal(D_expected, D)
-
-    # an assertion error is expected here, because there is no scale
-    D = gower_distances(X, Y[1:2])
-    with pytest.raises(AssertionError):
-        assert_array_almost_equal(D_expected[:, 1:2], D)
-
-    # an assertion error is expected here, because there is no scale
-    D = gower_distances(X, Y[0:1])
-    with pytest.raises(AssertionError):
-        assert_array_almost_equal(D_expected[:, 0:1], D)
-
-    # Test gower under pairwise_distances
-    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
-    assert_array_almost_equal(D_expected, D)
-
     # Test X and Y with different ranges of numeric values, categorical values,
     # and using pairwise_distances
     X = [[9222.22, -11, 'M', 1],
@@ -1333,7 +1089,6 @@ def test_gower_distances_nans():
     D_expected = np.zeros((3, 3))
     # This represents the number of non missing cols for each X, Y line
     non_missing_cols = [4, 4, 3]
-
     for i in range(0, 3):
         for j in range(0, 3):
             # The calculations below shows how it compares observation
@@ -1352,84 +1107,6 @@ def test_gower_distances_nans():
                            n_jobs=2,
                            categorical_features=[2])
     assert_array_almost_equal(D_expected, D)
-
-    # Test categorical_values passed in kwargs
-    # Simplified calculation of Gower distance for expected values
-    D_expected = np.zeros((3, 3))
-    for i in range(0, 3):
-        for j in range(0, 3):
-            # The calculations below shows how it compares observation
-            # by observation, attribute by attribute.
-            D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
-                                 abs(Xn[i][1] - Yn[j][1]) +
-                                 ([1, 0][Xn[i][2] == Yn[j][2]]
-                                  if (Xn[i][2] == Xn[i][2] and
-                                      Yn[i][2] == Yn[i][2]) else 0) +
-                                 [1, 0][Xn[i][3] == Yn[j][3]]) /
-                                non_missing_cols[i])
-
-    D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
-                           n_jobs=2,
-                           categorical_features=[False, False, True, True])
-
-    assert_array_almost_equal(D_expected, D)
-
-    X = np.random.randn(1000).reshape(200, -1) * 10
-    X = np.append(X, np.random.randn(1000).reshape(200, -1) * 10000, axis=1)
-
-    D_expected = gower_distances(X)
-    D = pairwise_distances(X, metric='gower', n_jobs=2)
-    assert_array_almost_equal(D_expected, D)
-
-    D_expected = pairwise_distances(X, metric='gower')
-    D = pairwise_distances(X, metric='gower', n_jobs=2)
-    assert_array_almost_equal(D_expected, D)
-
-    X = [[np.nan, np.nan], [np.nan, np.nan]]
-    D = gower_distances(X)
-    assert_array_almost_equal(X, D)
-
-    X = np.random.normal(size=(10, 5)) * 10
-    Y = np.random.normal(size=(10, 5)) * 100
-    D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
-    D_expected = gower_distances(X, Y)
-    assert_array_almost_equal(D_expected, D)
-
-    # Test if method is "division by zero" proof
-    X = [[0, 0], [0, 0]]
-    D = gower_distances(X)
-    assert_array_almost_equal(X, D)
-    D = gower_distances(X, scale=[0, 0])
-    assert_array_almost_equal(X, D)
-
-    # Test columns with nan at first row to be identified as categorical
-    D_expected = np.full((15, 15), 1.0)
-    D_expected[:, 0] = np.nan
-    D_expected[0, :] = np.nan
-
-    X = np.full((15, 1), "X", dtype=np.object)
-    Y = np.full((15, 1), "B", dtype=np.object)
-
-    X[0] = np.nan
-    Y[0] = np.nan
-    D = gower_distances(X, Y, categorical_features=[0])
-    assert_array_equal(D_expected, D)
-
-    X = np.full((15, 1), True, dtype=np.object)
-    Y = np.full((15, 1), False, dtype=np.object)
-
-    X[0] = np.nan
-    Y[0] = np.nan
-    D = gower_distances(X, Y)
-    assert_array_equal(D_expected, D)
-
-    X = np.full((15, 1), 1000, dtype=np.object)
-    Y = np.full((15, 1), 2000, dtype=np.object)
-
-    X[0] = np.nan
-    Y[0] = np.nan
-    D = gower_distances(X, Y)
-    assert_array_equal(D_expected, D)
 
 
 def test_haversine_distances():
