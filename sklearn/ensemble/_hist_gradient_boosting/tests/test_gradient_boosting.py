@@ -12,6 +12,8 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
+from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
@@ -681,3 +683,22 @@ def test_single_node_trees(Est):
                for predictor in est._predictors)
     # Still gives correct predictions thanks to the baseline prediction
     assert_allclose(est.predict(X), y)
+
+
+@pytest.mark.parametrize('Est, loss, X, y', [
+    (
+        HistGradientBoostingClassifier,
+        BinaryCrossEntropy(sample_weight=None),
+        X_classification,
+        y_classification
+    ),
+    (
+        HistGradientBoostingRegressor,
+        LeastSquares(sample_weight=None),
+        X_regression,
+        y_regression
+    )
+])
+def test_custom_loss(Est, loss, X, y):
+    est = Est(loss=loss, max_iter=20)
+    est.fit(X, y)
