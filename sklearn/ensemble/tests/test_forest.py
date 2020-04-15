@@ -72,12 +72,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = datasets.load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
@@ -159,29 +159,39 @@ def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
 
-def check_boston_criterion(name, criterion):
-    # Check consistency on dataset boston house prices.
+def check_diabetes_criterion(name, criterion):
+    # Check consistency on diabetes dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
                           random_state=1)
-    clf.fit(boston.data, boston.target)
-    score = clf.score(boston.data, boston.target)
-    assert score > 0.94, ("Failed with max_features=None, criterion %s "
+    clf.fit(diabetes.data, diabetes.target)
+    score = clf.score(diabetes.data, diabetes.target)
+    print(score)
+    assert score > 0.87, ("Failed with max_features=None, criterion %s "
                           "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
                           max_features=6, random_state=1)
-    clf.fit(boston.data, boston.target)
-    score = clf.score(boston.data, boston.target)
-    assert score > 0.95, ("Failed with max_features=6, criterion %s "
+    clf.fit(diabetes.data, diabetes.target)
+    score = clf.score(diabetes.data, diabetes.target)
+    print(score)
+    assert score > 0.86, ("Failed with max_features=6, criterion %s "
                           "and score = %f" % (criterion, score))
 
 
+def test_lucy():
+    clf = RandomForestRegressor(n_estimators=5, criterion='mae',
+                                max_features=6, random_state=1)
+    clf.fit(diabetes.data, diabetes.target)
+    score = clf.score(diabetes.data, diabetes.target)
+    print(score)
+    assert False
+
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 @pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
-def test_boston(name, criterion):
-    check_boston_criterion(name, criterion)
+def test_diabetes(name, criterion):
+    check_diabetes_criterion(name, criterion)
 
 
 def check_regressor_attributes(name):
