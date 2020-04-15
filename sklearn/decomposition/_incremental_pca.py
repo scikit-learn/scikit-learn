@@ -10,6 +10,7 @@ from scipy import linalg, sparse
 from ._base import _BasePCA
 from ..utils import check_array, gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.validation import _deprecate_positional_args
 
 
 class IncrementalPCA(_BasePCA):
@@ -163,8 +164,8 @@ class IncrementalPCA(_BasePCA):
     SparsePCA
     TruncatedSVD
     """
-
-    def __init__(self, n_components=None, whiten=False, copy=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, whiten=False, copy=True,
                  batch_size=None):
         self.n_components = n_components
         self.whiten = whiten

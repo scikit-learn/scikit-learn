@@ -15,7 +15,6 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-from threadpoolctl import threadpool_limits
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -32,12 +31,12 @@ from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
 from ._k_means_fast import _mini_batch_update_csr
-from ._k_means_lloyd import _lloyd_iter_chunked_dense
-from ._k_means_lloyd import _lloyd_iter_chunked_sparse
-from ._k_means_elkan import _init_bounds_dense
-from ._k_means_elkan import _init_bounds_sparse
-from ._k_means_elkan import _elkan_iter_chunked_dense
-from ._k_means_elkan import _elkan_iter_chunked_sparse
+from ._k_means_lloyd import lloyd_iter_chunked_dense
+from ._k_means_lloyd import lloyd_iter_chunked_sparse
+from ._k_means_elkan import init_bounds_dense
+from ._k_means_elkan import init_bounds_sparse
+from ._k_means_elkan import elkan_iter_chunked_dense
+from ._k_means_elkan import elkan_iter_chunked_sparse
 
 
 ###############################################################################
@@ -420,12 +419,12 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
     if sp.issparse(X):
-        init_bounds = _init_bounds_sparse
-        elkan_iter = _elkan_iter_chunked_sparse
+        init_bounds = init_bounds_sparse
+        elkan_iter = elkan_iter_chunked_sparse
         _inertia = _inertia_sparse
     else:
-        init_bounds = _init_bounds_dense
-        elkan_iter = _elkan_iter_chunked_dense
+        init_bounds = init_bounds_dense
+        elkan_iter = elkan_iter_chunked_dense
         _inertia = _inertia_dense
 
     init_bounds(X, centers, center_half_distances,
@@ -559,10 +558,10 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
     if sp.issparse(X):
-        lloyd_iter = _lloyd_iter_chunked_sparse
+        lloyd_iter = lloyd_iter_chunked_sparse
         _inertia = _inertia_sparse
     else:
-        lloyd_iter = _lloyd_iter_chunked_dense
+        lloyd_iter = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
     for i in range(max_iter):
@@ -594,7 +593,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
+def _labels_inertia(X, sample_weight, x_squared_norms, centers,
+                    n_threads=None):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -615,7 +615,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     centers : ndarray, shape (n_clusters, n_features)
         The cluster centers.
 
-    n_threads : int, default=1
+    n_threads : int, default=None
         The number of OpenMP threads to use for the computation. Parallelism is
         sample-wise on the main cython loop which assigns each sample to its
         closest center.
@@ -631,16 +631,18 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_threads=1):
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
 
+    n_threads = _openmp_effective_n_threads(n_threads)
+
     sample_weight = _check_normalize_sample_weight(sample_weight, X)
     labels = np.full(n_samples, -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
     center_shift = np.zeros_like(weight_in_clusters)
 
     if sp.issparse(X):
-        _labels = _lloyd_iter_chunked_sparse
+        _labels = lloyd_iter_chunked_sparse
         _inertia = _inertia_sparse
     else:
-        _labels = _lloyd_iter_chunked_dense
+        _labels = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
     _labels(X, sample_weight, x_squared_norms, centers, centers,
@@ -1033,22 +1035,19 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # seeds for the initializations of the kmeans runs.
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
 
-        # limit number of threads in second level of nested parallelism
-        # (i.e. BLAS) to avoid oversubsciption.
-        with threadpool_limits(limits=1, user_api="blas"):
-            for seed in seeds:
-                # run a k-means once
-                labels, inertia, centers, n_iter_ = kmeans_single(
-                    X, sample_weight, self.n_clusters, max_iter=self.max_iter,
-                    init=init, verbose=self.verbose, tol=tol,
-                    x_squared_norms=x_squared_norms, random_state=seed,
-                    n_threads=self._n_threads)
-                # determine if these results are the best so far
-                if best_inertia is None or inertia < best_inertia:
-                    best_labels = labels.copy()
-                    best_centers = centers.copy()
-                    best_inertia = inertia
-                    best_n_iter = n_iter_
+        for seed in seeds:
+            # run a k-means once
+            labels, inertia, centers, n_iter_ = kmeans_single(
+                X, sample_weight, self.n_clusters, max_iter=self.max_iter,
+                init=init, verbose=self.verbose, tol=tol,
+                x_squared_norms=x_squared_norms, random_state=seed,
+                n_threads=self._n_threads)
+            # determine if these results are the best so far
+            if best_inertia is None or inertia < best_inertia:
+                best_labels = labels.copy()
+                best_centers = centers.copy()
+                best_inertia = inertia
+                best_n_iter = n_iter_
 
         if not sp.issparse(X):
             if not self.copy_x:

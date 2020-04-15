@@ -10,7 +10,9 @@ from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_random_state, check_array, resample
 from ...utils.validation import (check_is_fitted,
-                                 check_consistent_length, _check_sample_weight)
+                                 check_consistent_length,
+                                 _check_sample_weight,
+                                 _deprecate_positional_args)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -21,13 +23,14 @@ from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 from .binning import _BinMapper
 from .grower import TreeGrower
 from .loss import _LOSSES
+from .loss import BaseLoss
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
     @abstractmethod
-    def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
+    def __init__(self, loss, *, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  monotonic_cst, warm_start, early_stopping, scoring,
                  validation_fraction, n_iter_no_change, tol, verbose,
@@ -56,7 +59,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         The parameters that are directly passed to the grower are checked in
         TreeGrower."""
 
-        if self.loss not in self._VALID_LOSSES:
+        if (self.loss not in self._VALID_LOSSES and
+                not isinstance(self.loss, BaseLoss)):
             raise ValueError(
                 "Loss {} is not supported for {}. Accepted losses: "
                 "{}.".format(self.loss, self.__class__.__name__,
@@ -148,7 +152,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
-        self.loss_ = self._get_loss(sample_weight=sample_weight)
+        if isinstance(self.loss, str):
+            self.loss_ = self._get_loss(sample_weight=sample_weight)
+        elif isinstance(self.loss, BaseLoss):
+            self.loss_ = self.loss
+
         if self.early_stopping == 'auto':
             self.do_early_stopping_ = n_samples > 10000
         else:
@@ -224,14 +232,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 dtype=self._baseline_prediction.dtype
             )
             raw_predictions += self._baseline_prediction
-
-            # initialize gradients and hessians (empty arrays).
-            # shape = (n_trees_per_iteration, n_samples).
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_,
-                sample_weight=sample_weight_train
-            )
 
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
@@ -322,13 +322,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                  sample_weight_small_train) = self._get_small_trainset(
                     X_binned_train, y_train, sample_weight_train,
                     self._random_seed)
-
-            # Initialize the gradients and hessians
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                sample_weight=sample_weight_train,
-                prediction_dim=self.n_trees_per_iteration_
-            )
 
             # Get the predictors from the previous fit
             predictors = self._predictors
@@ -868,16 +861,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> # To use this experimental feature, we need to explicitly ask for it:
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> from sklearn.datasets import load_diabetes
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.98...
+    0.92...
     """
 
     _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
 
-    def __init__(self, loss='least_squares', learning_rate=0.1,
+    @_deprecate_positional_args
+    def __init__(self, loss='least_squares', *, learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  monotonic_cst=None, warm_start=False, early_stopping='auto',
@@ -1076,7 +1070,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
+    @_deprecate_positional_args
+    def __init__(self, loss='auto', *, learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, monotonic_cst=None,
                  warm_start=False, early_stopping='auto', scoring='loss',

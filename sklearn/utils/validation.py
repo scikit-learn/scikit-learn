@@ -451,7 +451,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        # throw warning if pandas dataframe is sparse
+        # throw warning if columns are sparse. If all columns are sparse, then
+        # array.sparse exists and sparsity will be perserved (later).
         with suppress(ImportError):
             from pandas.api.types import is_sparse
             if (not hasattr(array, 'sparse') and
@@ -1303,7 +1304,7 @@ def _deprecate_positional_args(f):
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
                           FutureWarning)
-        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
         return f(**kwargs)
     return inner_f
 

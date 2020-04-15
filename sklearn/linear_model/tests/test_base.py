@@ -228,6 +228,14 @@ def test_linear_regression_pd_sparse_dataframe_warning():
         reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
+    # does not warn when the whole dataframe is sparse
+    df['0'] = pd.arrays.SparseArray(df['0'], fill_value=0)
+    assert hasattr(df, "sparse")
+
+    with pytest.warns(None) as record:
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+    assert not record
+
 
 def test_preprocess_data():
     n_samples = 200

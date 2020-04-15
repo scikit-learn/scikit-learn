@@ -13,7 +13,7 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
@@ -520,7 +520,7 @@ budget of the project [#f1]_.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of
+.. [#f1] Regarding the organization budget, in particular, we might use some of
          the donated funds to pay for other project expenses such as DNS,
          hosting or continuous integration services.
 
