@@ -85,7 +85,7 @@ plt.pause(1e-3)  # needed to refresh the display
 
 # 2- Run experiments
 # -----------------------
-for i, n_compo in enumerate(n_components_range):
+for i, n_compo in enumerate(reversed(n_components_range)):
     n_compo = int(n_compo)
     print("Fitting kPCA for n_components=%i..." % n_compo)
     start_time = datetime.now()
