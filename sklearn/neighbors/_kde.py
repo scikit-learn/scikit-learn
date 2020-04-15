@@ -168,6 +168,19 @@ class KernelDensity(BaseEstimator):
                                           **kwargs)
         return self
 
+      '''HI all, 
+      score_samples() and score() are not really clear to me. The probability density is mentioned and then the total log density
+      and likelihood. The are already challenging concepts and I find them hard to interpret. For instance I get a negative score which for 
+      a log density would imply the log of a very small number, and it is not really clear to me. I have browsed the internet many times 
+      and there are no real examples. All the examples use cross_val_score with accuracy metric which has a totally different interpretation 
+      from what I need. 
+      Could someone with more expertise than me make these source code more clear or provide examples on how to interpret the results when 
+      applying score_samples() and score()? I found that np.sum(bestestimator.score_samples(X)) = score() and it is possible to plug also
+      the np.exp to get np.sum(np.exp(bestestimator.score_samples(X))) to get the total log density but i get values of -100 or even lower 
+      so it is hard to interpret. 
+      
+      Thanks for the help (code is prop so i cannot provide it, but i can elaborate, if needed). ''' 
+      
     def score_samples(self, X):
         """Evaluate the log density model on the data.
 
