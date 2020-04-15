@@ -55,7 +55,7 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 # 2- Design experiment / Init plots
 # ---------------------------------
 plt.ion()
-plt.figure(figsize=(30, 20))
+plt.figure(figsize=(11, 5.5))
 
 # Set this to true to create a logarithmic grid
 use_log_grid = False
@@ -87,7 +87,7 @@ plt.pause(1e-3)  # needed to refresh the display
 # -----------------------
 for i, n_compo in enumerate(n_components_range):
     n_compo = int(n_compo)
-    print("Fitting kPCA for n_components=%i" % n_compo)
+    print("Fitting kPCA for n_components=%i..." % n_compo)
     start_time = datetime.now()
 
     # fit and transform
@@ -96,6 +96,7 @@ for i, n_compo in enumerate(n_components_range):
     X_kpca = kpca.fit_transform(X)
     X_back = kpca.inverse_transform(X_kpca)
     elapsed = (datetime.now() - start_time).total_seconds()
+    print("...done. Elapsed time: %.2fs" % elapsed)
 
     # original space after inverse transform
     plt.subplot(2, nb_cols, i + 2, aspect='equal')
@@ -122,5 +123,6 @@ for i, n_compo in enumerate(n_components_range):
     plt.pause(1e-3)  # needed to refresh the display
 
 plt.ioff()
-plt.subplots_adjust(0.02, 0.10, 0.98, 0.94, 0.04, 0.35)
+plt.tight_layout()
+plt.draw()  # to make the new layout appear
 plt.show()
