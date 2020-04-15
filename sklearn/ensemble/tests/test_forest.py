@@ -72,12 +72,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the diabetes dataset
+# also load the california dataset
 # and randomly permute it
-diabetes = datasets.load_diabetes()
-perm = rng.permutation(diabetes.target.size)
-diabetes.data = diabetes.data[perm]
-diabetes.target = diabetes.target[perm]
+california = datasets.fetch_california_housing()
+perm = rng.permutation(500)
+california.data = california.data[perm]
+california.target = california.target[perm]
 
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
@@ -159,40 +159,29 @@ def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
 
-def check_diabetes_criterion(name, criterion):
-    # Check consistency on diabetes dataset.
+def check_california_criterion(name, criterion):
+    # Check consistency on california housing dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
                           random_state=1)
-    clf.fit(diabetes.data, diabetes.target)
-    score = clf.score(diabetes.data, diabetes.target)
-    print(score)
-    assert score > 0.87, ("Failed with max_features=None, criterion %s "
+    clf.fit(california.data, california.target)
+    score = clf.score(california.data, california.target)
+    assert score > 0.92, ("Failed with max_features=None, criterion %s "
                           "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
                           max_features=6, random_state=1)
-    clf.fit(diabetes.data, diabetes.target)
-    score = clf.score(diabetes.data, diabetes.target)
-    print(score)
-    assert score > 0.86, ("Failed with max_features=6, criterion %s "
+    clf.fit(california.data, california.target)
+    score = clf.score(california.data, california.target)
+    assert score > 0.93, ("Failed with max_features=6, criterion %s "
                           "and score = %f" % (criterion, score))
 
 
-def test_lucy():
-    print(diabetes.data[:10,:])
-    # clf = RandomForestRegressor(n_estimators=5, criterion='mae',
-    #                             max_features=6, random_state=1)
-    # clf.fit(diabetes.data, diabetes.target)
-    # score = clf.score(diabetes.data, diabetes.target)
-    # print(score)
-    assert False
-
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 @pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
-def test_diabetes(name, criterion):
-    check_diabetes_criterion(name, criterion)
+def test_california(name, criterion):
+    check_california_criterion(name, criterion)
 
 
 def check_regressor_attributes(name):
@@ -395,14 +384,12 @@ def check_oob_score(name, X, y, n_estimators=20):
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
-    print(test_score)
-    print(est.oob_score_)
 
     if name in FOREST_CLASSIFIERS:
         assert abs(test_score - est.oob_score_) < 0.1
     else:
         assert test_score > est.oob_score_
-        assert est.oob_score_ > .8
+        assert est.oob_score_ > .73
 
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -424,10 +411,9 @@ def test_oob_score_classifiers(name):
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 def test_oob_score_regressors(name):
-    check_oob_score(name, diabetes.data, diabetes.target, 50)
-
+    check_oob_score(name, california.data, california.target, 50)
     # csc matrix
-    check_oob_score(name, csc_matrix(diabetes.data), diabetes.target, 50)
+    check_oob_score(name, csc_matrix(california.data), california.target, 50)
 
 
 def check_oob_score_raise_error(name):
@@ -490,7 +476,7 @@ def test_parallel(name):
     if name in FOREST_CLASSIFIERS:
         ds = iris
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        ds = california
 
     check_parallel(name, ds.data, ds.target)
 
@@ -515,7 +501,7 @@ def test_pickle(name):
     if name in FOREST_CLASSIFIERS:
         ds = iris
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        ds = california
 
     check_pickle(name, ds.data[::2], ds.target[::2])
 
