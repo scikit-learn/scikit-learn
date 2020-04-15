@@ -17,6 +17,7 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 # Minimum Covariance Determinant
@@ -62,11 +63,10 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         The function which will be used to compute the covariance.
         Must return array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -236,11 +236,10 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     See Also
     ---------
@@ -332,11 +331,10 @@ def fast_mcd(X, support_fraction=None,
         The function which will be used to compute the covariance.
         Must return an array of shape (n_features, n_features).
 
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -550,10 +548,9 @@ class MinCovDet(EmpiricalCovariance):
         (0, 1).
 
     random_state : int or RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines the pseudo random number generator for shuffling the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
@@ -618,7 +615,8 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -641,7 +639,7 @@ class MinCovDet(EmpiricalCovariance):
         -------
         self : object
         """
-        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
+        X = self._validate_data(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

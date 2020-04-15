@@ -737,13 +737,11 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     ([-2.5, -2.5], [0, 2.5, 0, 2.5, 0]),
     ([[-2.5, -2.5], [-2.5, -2.5]],
      [[0, 5, 0, 2.5, 0], [0, 5, 0, 2.5, 0]])])
-def test_lars_with_jitter(y_list, expected_y):
+def test_lars_with_jitter(y, expected_coef):
     # Test that a small amount of jitter helps stability,
     # using example provided in issue #2746
 
     X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0], [0.0, -1.0, 0.0, 0.0, 0.0]])
-    y = np.array(y_list)
-    expected_output = np.array(expected_y)
     alpha = 0.001
     fit_intercept = False
 
@@ -760,7 +758,7 @@ def test_lars_with_jitter(y_list, expected_y):
     w_jitter = lars_with_jitter.coef_
 
     assert not np.array_equal(w_jitter, w_nojitter)
-    np.testing.assert_allclose(w_jitter, expected_coeff)```
+    np.testing.assert_allclose(w_jitter, expected_coef, rtol=1e-3)
 
 
 def test_X_none_gram_not_none():

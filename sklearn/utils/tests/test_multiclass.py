@@ -14,8 +14,6 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
 
@@ -154,7 +152,8 @@ MULTILABEL_SEQUENCES = [
 
 def test_unique_labels():
     # Empty iterable
-    assert_raises(ValueError, unique_labels)
+    with pytest.raises(ValueError):
+        unique_labels()
 
     # Multiclass problem
     assert_array_equal(unique_labels(range(10)), np.arange(10))
@@ -178,8 +177,11 @@ def test_unique_labels():
                        np.arange(3))
 
     # Border line case with binary indicator matrix
-    assert_raises(ValueError, unique_labels, [4, 0, 2], np.ones((5, 5)))
-    assert_raises(ValueError, unique_labels, np.ones((5, 4)), np.ones((5, 5)))
+    with pytest.raises(ValueError):
+        unique_labels([4, 0, 2], np.ones((5, 5)))
+    with pytest.raises(ValueError):
+        unique_labels(np.ones((5, 4)), np.ones((5, 5)))
+
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
                        np.arange(5))
 
@@ -194,12 +196,14 @@ def test_unique_labels_non_specific():
 
     # We don't support those format at the moment
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        assert_raises(ValueError, unique_labels, example)
+        with pytest.raises(ValueError):
+            unique_labels(example)
 
     for y_type in ["unknown", "continuous", 'continuous-multioutput',
                    'multiclass-multioutput']:
         for example in EXAMPLES[y_type]:
-            assert_raises(ValueError, unique_labels, example)
+            with pytest.raises(ValueError):
+                unique_labels(example)
 
 
 def test_unique_labels_mixed_types():
@@ -209,13 +213,22 @@ def test_unique_labels_mixed_types():
                              EXAMPLES["binary"])
 
     for y_multilabel, y_multiclass in mix_clf_format:
-        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
-        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+        with pytest.raises(ValueError):
+            unique_labels(y_multiclass, y_multilabel)
+        with pytest.raises(ValueError):
+            unique_labels(y_multilabel, y_multiclass)
 
-    assert_raises(ValueError, unique_labels, [[1, 2]], [["a", "d"]])
-    assert_raises(ValueError, unique_labels, ["1", 2])
-    assert_raises(ValueError, unique_labels, [["1", 2], [1, 3]])
-    assert_raises(ValueError, unique_labels, [["1", "2"], [2, 3]])
+    with pytest.raises(ValueError):
+        unique_labels([[1, 2]], [["a", "d"]])
+
+    with pytest.raises(ValueError):
+        unique_labels(["1", 2])
+
+    with pytest.raises(ValueError):
+        unique_labels([["1", 2], [1, 3]])
+
+    with pytest.raises(ValueError):
+        unique_labels([["1", "2"], [2, 3]])
 
 
 def test_is_multilabel():
@@ -263,8 +276,8 @@ def test_check_classification_targets():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
-                assert_raises_regex(ValueError, msg,
-                                    check_classification_targets, example)
+                with pytest.raises(ValueError, match=msg):
+                    check_classification_targets(example)
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
@@ -280,13 +293,15 @@ def test_type_of_target():
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'
-        assert_raises_regex(ValueError, msg_regex, type_of_target, example)
+        with pytest.raises(ValueError, match=msg_regex):
+            type_of_target(example)
 
     for example in MULTILABEL_SEQUENCES:
         msg = ('You appear to be using a legacy multi-label data '
                'representation. Sequence of sequences are no longer supported;'
                ' use a binary array or sparse matrix instead.')
-        assert_raises_regex(ValueError, msg, type_of_target, example)
+        with pytest.raises(ValueError, match=msg):
+            type_of_target(example)
 
 
 def test_type_of_target_pandas_sparse():
