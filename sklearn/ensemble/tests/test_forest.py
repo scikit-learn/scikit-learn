@@ -181,11 +181,12 @@ def check_diabetes_criterion(name, criterion):
 
 
 def test_lucy():
-    clf = RandomForestRegressor(n_estimators=5, criterion='mae',
-                                max_features=6, random_state=1)
-    clf.fit(diabetes.data, diabetes.target)
-    score = clf.score(diabetes.data, diabetes.target)
-    print(score)
+    print(diabetes.data[:10,:])
+    # clf = RandomForestRegressor(n_estimators=5, criterion='mae',
+    #                             max_features=6, random_state=1)
+    # clf.fit(diabetes.data, diabetes.target)
+    # score = clf.score(diabetes.data, diabetes.target)
+    # print(score)
     assert False
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
@@ -394,6 +395,8 @@ def check_oob_score(name, X, y, n_estimators=20):
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
+    print(test_score)
+    print(est.oob_score_)
 
     if name in FOREST_CLASSIFIERS:
         assert abs(test_score - est.oob_score_) < 0.1
@@ -421,10 +424,10 @@ def test_oob_score_classifiers(name):
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 def test_oob_score_regressors(name):
-    check_oob_score(name, boston.data, boston.target, 50)
+    check_oob_score(name, diabetes.data, diabetes.target, 50)
 
     # csc matrix
-    check_oob_score(name, csc_matrix(boston.data), boston.target, 50)
+    check_oob_score(name, csc_matrix(diabetes.data), diabetes.target, 50)
 
 
 def check_oob_score_raise_error(name):
