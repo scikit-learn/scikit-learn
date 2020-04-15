@@ -21,8 +21,7 @@ import scipy.sparse as sp
 from joblib import Parallel, delayed, logger
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, _safe_indexing,
-                     _message_with_time)
+from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.metaestimators import _safe_split
@@ -495,11 +494,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 2:
         if split_progress is not None:
             progress_msg = " %d/%d" % (split_progress[0]+1,
-                                          split_progress[1])
+                                       split_progress[1])
         if param_progress and verbose > 9:
             progress_msg += ";" if split_progress else ""
             progress_msg += " %d/%d" % (param_progress[0]+1,
-                                           param_progress[1])
+                                        param_progress[1])
 
     if verbose > 1:
         if parameters is None:
@@ -567,7 +566,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         test_scores = _score(estimator, X_test, y_test, scorer)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_score = _score(estimator, X_train, y_train, scorer)
+            train_scores = _score(estimator, X_train, y_train, scorer)
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -578,7 +577,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 for scorer_name in sorted(test_scores):
                     result_msg += " %s: (" % scorer_name
                     if return_train_score:
-                        result_msg += "train=%.3f, " % train_scores[scorer_name]
+                        result_msg += "train=%.3f, " % \
+                                       train_scores[scorer_name]
                     result_msg += "test=%.3f)" % test_scores[scorer_name]
         result_msg += " total time=%s" % logger.short_format_time(total_time)
 
