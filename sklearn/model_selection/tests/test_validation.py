@@ -1645,25 +1645,26 @@ def test_fit_and_score_verbose():
                 1: (),  # verbose level 1 should not produce any output
                 2: ("[CV] START {p}", "[CV] ", "{p}total time=   0.0s"),
                 3: ("[CV{s}] START {p}", "[CV{s}] ",
-                    "{p}score=0.260000, total time=   0.0s"),
+                    "{p}score: (test=0.260000) total time=   0.0s"),
                 10: ("[CV{s}] START {p}", "[CV{s}] ",
-                     "{p}score=0.260000, total time=   0.0s")
+                     "{p}score: (test=0.260000) total time=   0.0s")
         }
 
         # The prefixing status string based on the split_progress and
         # param_progress values
         status_map = {(None, None): "",
-                      (None, (1, 2)): " candidate 1 of 2",
-                      ((1, 2), None): " split 1 of 2",
-                      ((1, 2), (2, 3)): " split 1 of 2; candidate 2 of 3"}
+                      (None, (1, 2)): " 2/2",
+                      ((1, 2), None): " 2/2",
+                      ((1, 2), (2, 3)): " 2/2; 3/3"}
 
         train, test = next(cv.split(X, y, groups))
 
         for verbose, expected_template in verbose_output_map.items():
+            print(expected_template, verbose)
             for (split_progress, param_progress), status in status_map.items():
-                # candidate # is not printed for verbose < 10
-                if verbose < 10:
-                    status = status.split(" candidate")[0].strip(';')
+                # ; # is not printed for verbose < 10
+                if verbose > 10:
+                    status = status.split(";")[0]
 
                 for params in (None, {}, {'C': 0.01},
                                {'kernel': 'rbf', 'C': 0.001}):
@@ -1687,25 +1688,25 @@ def test_fit_and_score_verbose():
 
                     out = sys.stdout.getvalue().splitlines()
                     if verbose == 1:  # No output from _fit_and_score
-                        assert_true(out == [])
+                        assert out == []
                         continue
 
                     # Check if the verbose output matches correctly
                     # First line (the one with "Started")
-                    assert_true(out[0].startswith(expected_template[0].format(
-                        p=p_msg, s=status)))
+                    assert out[0].startswith(expected_template[0].format(
+                        p=p_msg, s=status))
 
                     # Check the left part and right part of 2nd line
                     left, right = out[1].split("END ")
                     left, right = left, right.strip('. ')
 
-                    assert_true(left.startswith(expected_template[1].format(
-                        s=status)))
+                    assert left.startswith(expected_template[1].format(
+                        s=status))
 
                     # Params displaed at the end should have a separating colon
                     p_msg += '; ' if p_msg else ''
-                    assert_true(right.startswith(expected_template[2].format(
-                        p=p_msg)))
+                    assert right.startswith(expected_template[2].format(
+                        p=p_msg))
     except Exception:
         sys.stdout = old_stdout  # So we can simply do print below
         # To help debug changes to verbose. Otherwise it's difficult to trace
