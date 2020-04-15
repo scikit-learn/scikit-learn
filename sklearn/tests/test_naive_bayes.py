@@ -663,9 +663,14 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = "X must not contain negative values."
+    error_msg = "Negative values in data passed to CategoricalNB (input X)"
     assert_raise_message(ValueError, error_msg, clf.predict, X)
     assert_raise_message(ValueError, error_msg, clf.fit, X, y)
+
+    # Check error is raised for incorrect X
+    X = np.array([[1, 4, 1], [2, 5, 6]])
+    msg = "Expected input with 2 features, got 3 instead"
+    assert_raise_message(ValueError, msg, clf.predict, X)
 
     # Test alpha
     X3_test = np.array([[2, 5]])

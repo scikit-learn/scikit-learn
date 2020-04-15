@@ -19,7 +19,8 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+# mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
+from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
@@ -47,12 +48,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         Input data. Note that if X is None then the Gram matrix must be
         specified, i.e., cannot be None or False.
 
-        .. deprecated:: 0.21
-
-           The use of ``X`` is ``None`` in combination with ``Gram`` is not
-           ``None`` will be removed in v0.23. Use :func:`lars_path_gram`
-           instead.
-
     y : None or array-like of shape (n_samples,)
         Input targets.
 
@@ -66,11 +61,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
-
-        .. deprecated:: 0.21
-
-           The use of ``X`` is ``None`` in combination with ``Gram`` is not
-           None will be removed in v0.23. Use :func:`lars_path_gram` instead.
 
     max_iter : int, default=500
         Maximum number of iterations to perform, set to infinity for no limit.
@@ -155,9 +145,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     """
     if X is None and Gram is not None:
-        warnings.warn('Use lars_path_gram to avoid passing X and y. '
-                      'The current option will be removed in v0.23.',
-                      FutureWarning)
+        raise ValueError(
+            'X cannot be None if Gram is not None'
+            'Use lars_path_gram to avoid passing X and y.'
+        )
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,
@@ -954,7 +945,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
+        X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         alpha = getattr(self, 'alpha', 0.)
         if hasattr(self, 'n_nonzero_coefs'):
@@ -1377,7 +1368,7 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
 
@@ -1758,7 +1749,7 @@ class LassoLarsIC(LassoLars):
         """
         if copy_X is None:
             copy_X = self.copy_X
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy_X)

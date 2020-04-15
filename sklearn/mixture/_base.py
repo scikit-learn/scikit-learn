@@ -10,6 +10,7 @@ from time import time
 from sklearn import preprocessing
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -17,7 +18,6 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -138,7 +138,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape  (n_samples, n_features)
 
         random_state : RandomState
-            A random number generator instance.
+            A random number generator instance that controls the random seed
+            used for the method chosen to initialize the parameters.
         """
         n_samples, _ = X.shape
 
@@ -226,6 +227,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         X = _check_X(X, self.n_components, ensure_min_samples=2)
+        self._check_n_features(X, reset=True)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation

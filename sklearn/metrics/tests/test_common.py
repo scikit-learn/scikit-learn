@@ -351,8 +351,6 @@ METRICS_WITH_LABELS = {
     "roc_curve",
     "precision_recall_curve",
 
-    "hamming_loss",
-
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
 
@@ -1170,8 +1168,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         assert_allclose(unweighted_score, weighted_score)
         raise ValueError("Unweighted and weighted scores are unexpectedly "
                          "almost equal (%s) and (%s) "
-                         "for %s" % (unweighted_score,
-                                     weighted_score, name))
+                         "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,

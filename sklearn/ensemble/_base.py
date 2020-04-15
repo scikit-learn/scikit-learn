@@ -6,6 +6,7 @@
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
+from typing import List
 
 import numpy as np
 
@@ -15,18 +16,18 @@ from ..base import clone
 from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import Bunch
+from ..utils import Bunch, _print_elapsed_time
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
-MAX_RAND_SEED = np.iinfo(np.int32).max
 
-
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+def _fit_single_estimator(estimator, X, y, sample_weight=None,
+                          message_clsname=None, message=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
-            estimator.fit(X, y, sample_weight=sample_weight)
+            with _print_elapsed_time(message_clsname, message):
+                estimator.fit(X, y, sample_weight=sample_weight)
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -35,7 +36,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
                 ) from exc
             raise
     else:
-        estimator.fit(X, y)
+        with _print_elapsed_time(message_clsname, message):
+            estimator.fit(X, y)
     return estimator
 
 
@@ -51,11 +53,11 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Pseudo-random number generator to control the generation of the random
+        integers. Pass an int for reproducible output across multiple function
+        calls.
+        See :term:`Glossary <random_state>`.
 
     Notes
     -----
@@ -71,7 +73,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == 'random_state' or key.endswith('__random_state'):
-            to_set[key] = random_state.randint(MAX_RAND_SEED)
+            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)
@@ -85,13 +87,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=None)
+    base_estimator : object
         The base estimator from which the ensemble is built.
 
-    n_estimators : integer
+    n_estimators : int, default=10
         The number of estimators in the ensemble.
 
-    estimator_params : list of strings
+    estimator_params : list of str, default=tuple()
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
@@ -105,10 +107,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters = []
+    _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
+    def __init__(self, base_estimator, *, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator
@@ -278,7 +280,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
         Parameters
         ----------
-        deep : bool
+        deep : bool, default=True
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """
