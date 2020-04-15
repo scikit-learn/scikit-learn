@@ -235,19 +235,22 @@ def test_iforest_subsampled_features():
 
 
 def test_iforest_average_path_length():
+    def harmonic_humber(n):
+        return np.sum(1.0/np.arange(1, n+1))
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
     # Updated to check average path length when input is <= 2 (issue #11839)
-    result_one = 2.0 * (np.log(4.0) + np.euler_gamma) - 2.0 * 4.0 / 5.0
-    result_two = 2.0 * (np.log(998.0) + np.euler_gamma) - 2.0 * 998.0 / 999.0
+    result_one = 2.0 * harmonic_humber(4.0) - 2.0 * 4.0 / 5.0
+    result_two = 2.0 * harmonic_humber(998.0) - 2.0 * 998.0 / 999.0
     assert_allclose(_average_path_length([0]), [0.0])
     assert_allclose(_average_path_length([1]), [0.0])
     assert_allclose(_average_path_length([2]), [1.0])
-    assert_allclose(_average_path_length([5]), [result_one])
-    assert_allclose(_average_path_length([999]), [result_two])
+    assert_allclose(_average_path_length([5]), [result_one], rtol=0.1)
+    assert_allclose(_average_path_length([999]), [result_two], rtol=1e-4)
     assert_allclose(
         _average_path_length(np.array([1, 2, 5, 999])),
         [0.0, 1.0, result_one, result_two],
+        rtol=0.1
     )
     # _average_path_length is increasing
     avg_path_length = _average_path_length(np.arange(5))
