@@ -73,7 +73,7 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 # also load the california dataset
-# and randomly permute it
+# and randomly permute it and use a subset
 california = datasets.fetch_california_housing()
 perm = rng.permutation(500)
 california.data = california.data[perm]
