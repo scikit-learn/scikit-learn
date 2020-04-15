@@ -21,15 +21,15 @@ samples projected along the first two principal components for each case.
 
 What you can observe:
 ---------------------
-When `n_components` is around 100 or more, the approximation is almost
-identical to the full KernelPCA using 2000 components, while execution is much
-faster (execution times are included in the plot titles)
+With quite small `n_components`, the approximation is almost identical to the
+full KernelPCA using 2000 components, while execution is much faster
+(execution times are included in the plot titles)
 
 Going further:
 --------------
-You can have a look at the other examples of this series,
-"Kernel PCA Solvers comparison benchmark 1/2", comparing execution times in
-more details.
+You can have a look at the `Kernel PCA Solvers comparison benchmarks
+<https://scikit-learn.org/stable/modules/decomposition.html#kernel-pca-solvers-benchmarks>`_
+to compare execution times in more details.
 """
 print(__doc__)  # noqa
 
