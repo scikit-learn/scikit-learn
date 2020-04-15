@@ -289,13 +289,18 @@ In :ref:`kernel_PCA`, the number of components found is equal to the number of
 samples. Many real-world datasets have large number of samples ! In these cases
 finding *all* the components with a full kPCA is a waste of computation time,
 as data is mostly described by the first few components
-(``n_components<=100``). The optional parameter ``eigen_solver='randomized'``
-can be used to *drastically* reduce the computation time when the number of
-requested ``n_components`` is small compared with the number of samples.
+(``n_components<=100``).
+
+The optional parameter ``eigen_solver='randomized'`` can be used to
+*drastically* reduce the computation time when the number of requested
+``n_components`` is small compared with the number of samples.
+This is done automatically by default if you do not specify any
+``eigen_solver`` and if ``n_components`` is less than 80% of
+the number of samples, see :class:`KernelPCA` for details.
 
 For example the figure below shows the same "circles" dataset (top left)
-reconstructed with various approximations (top right is the full kPCA with
-2000 components). You can compare the execution times vs. the reconstruction
+reconstructed with various approximations (number of components decreases from
+2000 - full - to 4). You can compare the execution times vs. the reconstruction
 quality :
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_approximate_001.png
@@ -321,8 +326,8 @@ systematic approach you can execute the following benchmarks:
   samples increases. This is the kind of results it generates:
 
   .. |bench_time_vs_nsamples| image:: https://user-images.githubusercontent.com/3236794/47029170-2b1fa480-d16b-11e8-8480-e8d71f2900bb.png
-     :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py
-     :scale: 60%
+      :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py
+      :scale: 60%
 
 * `Time vs. n_components benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py>`_
   compares the :class:`KernelPCA` execution times for various values of
@@ -330,8 +335,8 @@ systematic approach you can execute the following benchmarks:
   components increases. This is the kind of results it generates:
 
   .. |bench_time_vs_ncomp| image:: https://user-images.githubusercontent.com/3236794/45894261-26670b00-bdce-11e8-967d-0195168707b4.png
-     :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py
-     :scale: 60%
+      :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py
+      :scale: 60%
 
 
 .. _LSA:
