@@ -1421,7 +1421,7 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     return np.average(gain, weights=sample_weight)
 
 
-def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
+def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
                          sample_weight=None):
     """Top-k Accuracy multiclass classification score.
 
@@ -1442,7 +1442,7 @@ def top_k_accuracy_score(y_true, y_score, k=3, normalize=True,
         non-thresholded decision values as returned by :term:`predict_proba` or
         :term:`decision_function`, respectively.
 
-    k : int, default=3
+    k : int, default=2
         Number of guesses allowed to find the correct label.
 
     normalize : bool, default=True
