@@ -1658,7 +1658,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     n_classes_ : ndarray of shape (n_outputs,)
         Array of ones if fitted. It is not used in regression problems.
 
-
     n_features_ : int
         The number of features when ``fit`` is performed.
 
