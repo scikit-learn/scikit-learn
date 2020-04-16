@@ -181,7 +181,7 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
 # kNN-imputation of the missing values
 # ------------------------------------
 #
-# With ``KNNImputer``, missing values can be imputed using the weighted
+# :class:`sklearn.impute.KNNImputer` imputes missing values using the weighted
 # or unweighted mean of the desired number of nearest neighbors.
 
 def get_impute_knn_score(X_missing, y_missing):
