@@ -1159,16 +1159,51 @@ cdef class BinaryTree:
         self._update_sample_weight(n_samples, sample_weight_arr)
         self._update_memviews()
 
-    def _get_tree_stats(self):
+    def get_tree_stats(self):
+        """
+        get_tree_stats(self)
+
+        Get tree status.
+
+        Returns
+        -------
+        tree_stats: tuple of int
+            (number of trims, number of leaves, number of splits)
+        """
         return (self.n_trims, self.n_leaves, self.n_splits)
 
-    def _reset_n_calls(self):
+    def reset_n_calls(self):
+        """
+        reset_n_calls(self)
+
+        Reset number of calls to 0.
+        """
         self.n_calls = 0
 
-    def _get_n_calls(self):
+    def get_n_calls(self):
+        """
+        get_n_calls(self)
+
+        Get number of calls.
+
+        Returns
+        -------
+        n_calls: int
+            number of distance computation calls
+        """
         return self.n_calls
 
-    def _get_arrays(self):
+    def get_arrays(self):
+        """
+        get_arrays(self)
+
+        Get data and node arrays.
+
+        Returns
+        -------
+        arrays: tuple of array
+            Arrays for storing tree data, index, node data and node bounds.
+        """
         return (self.data_arr, self.idx_array_arr,
                 self.node_data_arr, self.node_bounds_arr)
 
