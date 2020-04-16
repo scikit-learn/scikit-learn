@@ -1508,13 +1508,6 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
     y_score = check_array(y_score)
 
     n_classes = y_score.shape[1]
-    if n_classes < 3:
-        raise ValueError(
-            "The number of columns in 'y_score' must be greater than 2, got "
-            f"({n_classes}) instead. Please use 'metrics.accuracy_score' for "
-            "the binary case."
-        )
-
     if k >= n_classes:
         raise ValueError(
             f"'k' ({k}) can't be greater than or equal to 'n_classes' "

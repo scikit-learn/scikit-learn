@@ -1516,16 +1516,6 @@ def test_top_k_accuracy_score_binary(y_true, true_score):
         "'y_true' type must be 'binary' or 'multiclass', got 'continuous'"
     ),
     (
-        [0, 1, 1],
-        np.array([
-            [0.7, 0.3],
-            [0.6, 0.4],
-            [0.2, 0.8],
-        ]),
-        2,
-        r"The number of columns in 'y_score' must be greater than 2, got \(2\)"
-    ),
-    (
         [0, 1, 2],
         np.array([
             [0.4, 0.3, 0.3],
