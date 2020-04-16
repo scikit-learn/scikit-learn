@@ -477,7 +477,7 @@ def test_parallel(name):
     if name in FOREST_CLASSIFIERS:
         ds = iris
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        ds = diabetes
 
     check_parallel(name, ds.data, ds.target)
 
@@ -502,7 +502,7 @@ def test_pickle(name):
     if name in FOREST_CLASSIFIERS:
         ds = iris
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        ds = diabetes
 
     check_pickle(name, ds.data[::2], ds.target[::2])
 
