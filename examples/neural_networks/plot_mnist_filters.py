@@ -40,6 +40,12 @@ mlp = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10, alpha=1e-4,
                     solver='sgd', verbose=10, random_state=1,
                     learning_rate_init=.1)
 
+# this example won't converge because of CI's constrigements, so we catch the
+# warning and are ignore it here
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                            module="sklearn")
+
 mlp.fit(X_train, y_train)
 print("Training set score: %f" % mlp.score(X_train, y_train))
 print("Test set score: %f" % mlp.score(X_test, y_test))
