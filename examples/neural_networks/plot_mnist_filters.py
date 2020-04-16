@@ -22,8 +22,12 @@ smoother spatial appearance. The example will throw a warning because it
 doesn't converge, in this case this is what we want because of CI's time
 constringements.
 """
+
+import warnings
+
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_openml
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 
 print(__doc__)
