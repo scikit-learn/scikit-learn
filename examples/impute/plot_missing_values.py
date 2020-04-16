@@ -14,8 +14,8 @@ In this example we will investigate different imputation techniques:
 - k nearest neighbor imputation
 - iterative imputation
 
-We will use two datasets: Diabetes dataset which consists of set of parameteres
-collected from the diabetes patients with aim to predict disease progression
+We will use two datasets: Diabetes dataset which consists of 10 feature variables
+collected from diabetes patients with an aim to predict disease progression
 and California Housing dataset for which the target is the median house value
 for California districts.
 
