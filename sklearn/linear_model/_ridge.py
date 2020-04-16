@@ -1574,6 +1574,18 @@ class _BaseRidgeCV(LinearModel):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
+        Attributes:
+        -------
+        coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
+            Coefficient of the features in the decision function.
+
+        intercept_ : float or ndarray of shape (n_targets,)
+            Independent term in decision function. Set to 0.0 if
+            ``fit_intercept = False``.
+
+        alpha_ : float
+            Estimated regularization parameter.
+
         Returns
         -------
         self : object
