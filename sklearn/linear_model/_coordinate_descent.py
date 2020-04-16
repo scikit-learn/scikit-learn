@@ -658,7 +658,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
-    dual_gaps_ : float or ndarray of shape (n_targets,)
+    dual_gap_ : float or ndarray of shape (n_targets,)
         Given param alpha, the dual gaps at the end of the optimization,
         same shape as each observation of y.
 

@@ -1656,9 +1656,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         The inferred value of max_features.
 
     n_classes_ : ndarray of shape (n_outputs,)
-        Array of ones, it exists since the construction of base
-        class Tree() requires n_classes as argument, but n_classes_
-        is not used in regression problem
+        Array of ones if fitted. It is not used in regression problems.
+
 
     n_features_ : int
         The number of features when ``fit`` is performed.
