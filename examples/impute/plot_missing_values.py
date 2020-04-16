@@ -158,7 +158,7 @@ mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 # ---------------------------
 #
 # Now we will estimate the score on the data where the missing values are
-# replaced by 0
+# replaced by 0:
 #
 
 
