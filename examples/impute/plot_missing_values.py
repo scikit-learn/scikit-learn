@@ -137,7 +137,7 @@ stds_diabetes = np.zeros(5)
 ###############################################################################
 # Estimate the score
 # ------------------
-# First, we want to estimate the score on the original data
+# First, we want to estimate the score on the original data:
 #
 
 
