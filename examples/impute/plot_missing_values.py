@@ -245,7 +245,7 @@ mses_california = mses_california * -1
 # Plot the results
 # ################
 #
-# Finally we are going to visualize the score
+# Finally we are going to visualize the score:
 #
 
 import matplotlib.pyplot as plt
