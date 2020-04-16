@@ -890,6 +890,15 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+    best_loss_: float
+        minimum loss value during training
+
+    loss_curve_: list, n_iters
+        loss value evaluated at the end of each training step
+
+    t_: int,
+        mathematically equals n_iters * X.shape[0], it means
+        time_step and it is used by optimizer's learning rate scheduler
 
     Examples
     --------
@@ -1295,6 +1304,16 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : string
         Name of the output activation function.
+
+    best_loss_: float
+        minimum loss value during training
+
+    loss_curve_: list, n_iters
+        loss value evaluated at the end of each training step
+
+    t_: int,
+        mathematically equals n_iters * X.shape[0], it means
+        time_step and it is used by optimizer's learning rate scheduler
 
     Examples
     --------
