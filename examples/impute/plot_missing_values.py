@@ -8,7 +8,7 @@ value using the basic :class:`sklearn.impute.SimpleImputer`.
 
 In this example we will investigate different imputation techniques:
 
-- imputation by the constant 0 value
+- imputation by the constant value 0
 - imputation by the mean value of each feature combined with a missing-ness
   indicator auxiliary variable
 - k nearest neighbor imputation
