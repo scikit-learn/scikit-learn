@@ -218,8 +218,8 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
 # Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 # round-robin linear regression, treating every variable as an output in turn.
 # The version implemented assumes Gaussian (output) variables. If your features
-# are obviously non-Normal, consider transforming them to look more Normal so
-# as to potentially improve performance.
+# are obviously non-normal, consider transforming them to look more normal
+# to potentially improve performance.
 #
 
 def get_impute_iterative(X_missing, y_missing):
