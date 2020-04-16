@@ -13,7 +13,7 @@ from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing
-from ..utils.validation import _deprecate_positional_args
+from ...utils.validation import _deprecate_positional_args
 
 
 @_deprecate_positional_args
