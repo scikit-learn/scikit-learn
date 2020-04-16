@@ -19,9 +19,11 @@ collected from the diabetes patients with aim to predict disease progression
 and California Housing dataset for which the target is the median house value
 for California districts.
 
-Neither of those datasets has missing values. We will remove some of the
-values and compare the results of RandomForestRegressor on the original data
-and the data with the missing values imputed by different techniques.
+As neither of these datasets have missing values, we will remove some
+values to create new versions with artificially missing data. The performance of
+:class:`~sklearn.ensemble.RandomForestRegressor` on the full original dataset is then
+compared the performance on the altered datasets with the artificially missing values
+imputed using different techniques.
 
 """
 print(__doc__)
