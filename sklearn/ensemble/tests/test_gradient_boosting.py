@@ -51,12 +51,8 @@ T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
 rng = np.random.RandomState(0)
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
 diabetes = datasets.load_diabetes()
 perm = rng.permutation(diabetes.target.size)
 diabetes.data = diabetes.data[perm]
@@ -216,10 +212,14 @@ def test_classification_synthetic(loss):
     check_classification_synthetic(loss)
 
 
-def check_boston(loss, subsample):
-    # Check consistency on dataset boston house prices with least squares
+def check_california(loss, subsample):
+    # Check consistency on dataset california house prices with least squares
     # and least absolute deviation.
-    ones = np.ones(len(diabetes.target))
+    california = datasets.fetch_california_housing()
+    perm = rng.permutation(500)
+    california.data = california.data[perm]
+    california.target = california.target[perm]
+    ones = np.ones(len(california.target))
     last_y_pred = None
     for sample_weight in None, ones, 2 * ones:
         clf = GradientBoostingRegressor(n_estimators=100,
@@ -229,28 +229,26 @@ def check_boston(loss, subsample):
                                         min_samples_split=2,
                                         random_state=1)
 
-        assert_raises(ValueError, clf.predict, diabetes.data)
-        clf.fit(diabetes.data, diabetes.target,
+        assert_raises(ValueError, clf.predict, california.data)
+        clf.fit(california.data, california.target,
                 sample_weight=sample_weight)
-        leaves = clf.apply(diabetes.data)
-        assert leaves.shape == (442, 100)
+        leaves = clf.apply(california.data)
+        assert leaves.shape == (500, 100)
 
-        y_pred = clf.predict(diabetes.data)
-        mse = mean_squared_error(diabetes.target, y_pred)
-        print('loss:{}, sub:{}'.format(loss, subsample))
-        print(mse)
-        assert mse < 2000.0
+        y_pred = clf.predict(california.data)
+        mse = mean_squared_error(california.target, y_pred)
+        assert mse < 0.1
 
         if last_y_pred is not None:
-            assert_array_almost_equal(last_y_pred, y_pred)
+            assert_array_almost_equal(last_y_pred, y_pred, decimal=0)
 
         last_y_pred = y_pred
 
 
 @pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
 @pytest.mark.parametrize('subsample', (1.0, 0.5))
-def test_boston(loss, subsample):
-    check_boston(loss, subsample)
+def test_california(loss, subsample):
+    check_california(loss, subsample)
 
 
 def check_iris(subsample, sample_weight):
@@ -317,8 +315,8 @@ def test_regression_synthetic():
 
 
 def test_feature_importances():
-    X = np.array(boston.data, dtype=np.float32)
-    y = np.array(boston.target, dtype=np.float32)
+    X = np.array(diabetes.data, dtype=np.float32)
+    y = np.array(diabetes.target, dtype=np.float32)
 
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
                                     min_samples_split=2, random_state=1)
@@ -605,14 +603,14 @@ def test_quantile_loss():
                                              max_depth=4, alpha=0.5,
                                              random_state=7)
 
-    clf_quantile.fit(boston.data, boston.target)
-    y_quantile = clf_quantile.predict(boston.data)
+    clf_quantile.fit(diabetes.data, diabetes.target)
+    y_quantile = clf_quantile.predict(diabetes.data)
 
     clf_lad = GradientBoostingRegressor(n_estimators=100, loss='lad',
                                         max_depth=4, random_state=7)
 
-    clf_lad.fit(boston.data, boston.target)
-    y_lad = clf_lad.predict(boston.data)
+    clf_lad.fit(diabetes.data, diabetes.target)
+    y_lad = clf_lad.predict(diabetes.data)
     assert_array_almost_equal(y_quantile, y_lad, decimal=4)
 
 
@@ -1019,7 +1017,7 @@ def test_complete_regression():
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=None,
                                     random_state=1, max_leaf_nodes=k + 1)
-    est.fit(boston.data, boston.target)
+    est.fit(diabetes.data, diabetes.target)
 
     tree = est.estimators_[-1, 0].tree_
     assert (tree.children_left[tree.children_left == TREE_LEAF].shape[0] ==
@@ -1031,14 +1029,14 @@ def test_zero_estimator_reg():
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
                                     random_state=1, init='zero')
-    est.fit(boston.data, boston.target)
-    y_pred = est.predict(boston.data)
-    mse = mean_squared_error(boston.target, y_pred)
-    assert_almost_equal(mse, 33.0, decimal=0)
+    est.fit(diabetes.data, diabetes.target)
+    y_pred = est.predict(diabetes.data)
+    mse = mean_squared_error(diabetes.target, y_pred)
+    assert_almost_equal(mse, 3664.0, decimal=0)
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
                                     random_state=1, init='foobar')
-    assert_raises(ValueError, est.fit, boston.data, boston.target)
+    assert_raises(ValueError, est.fit, diabetes.data, diabetes.target)
 
 
 def test_zero_estimator_clf():
