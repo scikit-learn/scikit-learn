@@ -57,6 +57,10 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+diabetes = datasets.load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 # also load the iris dataset
 # and randomly permute it
@@ -215,7 +219,7 @@ def test_classification_synthetic(loss):
 def check_boston(loss, subsample):
     # Check consistency on dataset boston house prices with least squares
     # and least absolute deviation.
-    ones = np.ones(len(boston.target))
+    ones = np.ones(len(diabetes.target))
     last_y_pred = None
     for sample_weight in None, ones, 2 * ones:
         clf = GradientBoostingRegressor(n_estimators=100,
@@ -225,15 +229,17 @@ def check_boston(loss, subsample):
                                         min_samples_split=2,
                                         random_state=1)
 
-        assert_raises(ValueError, clf.predict, boston.data)
-        clf.fit(boston.data, boston.target,
+        assert_raises(ValueError, clf.predict, diabetes.data)
+        clf.fit(diabetes.data, diabetes.target,
                 sample_weight=sample_weight)
-        leaves = clf.apply(boston.data)
-        assert leaves.shape == (506, 100)
+        leaves = clf.apply(diabetes.data)
+        assert leaves.shape == (442, 100)
 
-        y_pred = clf.predict(boston.data)
-        mse = mean_squared_error(boston.target, y_pred)
-        assert mse < 6.0
+        y_pred = clf.predict(diabetes.data)
+        mse = mean_squared_error(diabetes.target, y_pred)
+        print('loss:{}, sub:{}'.format(loss, subsample))
+        print(mse)
+        assert mse < 2000.0
 
         if last_y_pred is not None:
             assert_array_almost_equal(last_y_pred, y_pred)
