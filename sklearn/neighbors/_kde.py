@@ -71,6 +71,12 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
 
+    Attributes:
+    --------
+    tree_:
+        either BallTree or KDTree determined by argument algorithm
+        See :class:`BallTree` or :class:`KDTree` for details.
+
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
