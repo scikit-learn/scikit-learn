@@ -63,6 +63,7 @@ clf.fit(X_train, y_train)
 # properties. Below, we will compute the depth of each node and whether or not
 # it is a leaf.
 
+n_nodes = clf.tree_.node_count
 children_left = clf.tree_.children_left
 children_right = clf.tree_.children_right
 feature = clf.tree_.feature
@@ -88,7 +89,6 @@ while len(stack) > 0:
     else:
         is_leaves[node_id] = True
 
-n_nodes = clf.tree_.node_count
 print("The binary tree structure has %s nodes and has "
       "the following tree structure:\n"
       % n_nodes)
