@@ -459,8 +459,8 @@ The :func:`top_k_accuracy_score` function is a generalization of
 correct as long as the true label is associated with one of the ``k`` highest
 predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
 
-The function covers the multiclass classification case but not the binary and
-multilabel cases.
+The function covers the binary and multiclass classification cases but not the
+multilabel case.
 
 If :math:`\hat{y}_{i,j}` is the predicted class corresponding to :math:`j`-th
 largest predicted score for the :math:`i`-th sample and :math:`y_i` is the

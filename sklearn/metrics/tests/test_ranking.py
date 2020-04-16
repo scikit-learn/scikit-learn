@@ -1494,17 +1494,17 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
                                 sample_weight) == pytest.approx(true_score)
 
 
+@pytest.mark.parametrize('y_true, true_score', [
+    ([0, 0, 0, 0], .5),
+    ([0, 0, 0, 1], .75),
+    ([0, 0, 1, 1], 1)
+])
+def test_top_k_accuracy_score_binary(y_true, true_score):
+    y_score = [0, 0, 1, 1]
+    assert top_k_accuracy_score(y_true, y_score, k=1) == true_score
+
+
 @pytest.mark.parametrize('y_true, y_score, k, msg', [
-    (
-        [0, 1, 2],
-        np.array([
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]),
-        1,
-        "'k'=1 is equivalent to 'metrics.accuracy_score'"
-    ),
     (
         [.57, 1, 2],
         np.array([

@@ -36,6 +36,7 @@ from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
+from ._classification import accuracy_score
 
 
 def auc(x, y):
@@ -1423,11 +1424,13 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
 
 def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
                          sample_weight=None):
-    """Top-k Accuracy multiclass classification score.
+    """Top-k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
     the top `k` labels predicted (ranked by predicted scores). Note that the
     multilabel case isn't covered here.
+
+    If `k = 1`, :func:`accuracy_score` is called instead.
 
     Read more in the :ref:`User Guide <top_k_accuracy_score>`
 
@@ -1490,10 +1493,7 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
 
     """
     if k == 1:
-        raise ValueError(
-            "'k'=1 is equivalent to 'metrics.accuracy_score'. Please, use "
-            "that function instead."
-        )
+        return accuracy_score(y_true, y_score, normalize, sample_weight)
 
     check_consistent_length(y_true, y_score, sample_weight)
     y_true_type = type_of_target(y_true)
