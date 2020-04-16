@@ -107,8 +107,8 @@ regressor = RandomForestRegressor(random_state=0)
 ###############################################################################
 # Missing information
 # -------------------
-# In addition to using an imputing method, we can also keep an indication of
-# the missing information using :func:`sklearn.impute.MissingIndicator` which
+# In addition to imputing the missing values, we can also mark the values
+# that were missing using :func:`sklearn.impute.MissingIndicator`, which
 # might carry some information.
 #
 
