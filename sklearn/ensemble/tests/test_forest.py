@@ -167,7 +167,7 @@ def check_diabetes_criterion(name, criterion):
                           random_state=1)
     clf.fit(diabetes.data, diabetes.target)
     score = clf.score(diabetes.data, diabetes.target)
-    assert score > 0.87, ("Failed with max_features=None, criterion %s "
+    assert score > 0.86, ("Failed with max_features=None, criterion %s "
                           "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
