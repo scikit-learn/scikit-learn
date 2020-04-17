@@ -21,6 +21,7 @@ from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
+from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
@@ -800,6 +801,16 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
+    jitter : float, default=None
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for jittering. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
     Attributes
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
@@ -846,7 +857,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 jitter=None, random_state=None):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -855,6 +867,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
+        self.jitter = jitter
+        self.random_state = random_state
 
     @staticmethod
     def _get_gram(precompute, X, y):
@@ -954,6 +968,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
+        if self.jitter is not None:
+            rng = check_random_state(self.random_state)
+
+            noise = rng.uniform(high=self.jitter, size=len(y))
+            y = y + noise
+
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
                   Xy=Xy)
 
@@ -1031,6 +1051,16 @@ class LassoLars(Lars):
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
 
+    jitter : float, default=None
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for jittering. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
+
     Attributes
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
@@ -1083,7 +1113,7 @@ class LassoLars(Lars):
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 positive=False, jitter=None, random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1094,6 +1124,8 @@ class LassoLars(Lars):
         self.copy_X = copy_X
         self.eps = eps
         self.fit_path = fit_path
+        self.jitter = jitter
+        self.random_state = random_state
 
 
 ###############################################################################

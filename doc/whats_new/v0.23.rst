@@ -298,6 +298,11 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :class:`linear_model.LassoLars` and
+  :class:`linear_model.Lars` now support a `jitter` parameter that adds
+  random noise to the target. This might help with stability in some edge
+  cases. :pr:`15179` by :user:`angelaambroz`.
+
 :mod:`sklearn.metrics`
 ......................
 
