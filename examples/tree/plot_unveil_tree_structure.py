@@ -53,7 +53,8 @@ clf.fit(X_train, y_train)
 #
 # Among these arrays, we have:
 #   - ``children_left[i]`` - id of the left child of node i or -1 if leaf node
-#   - ``children_right[i]`` - id of the right child of node i or -1 if leaf node
+#   - ``children_right[i]`` - id of the right child of node i or -1 if leaf
+#     node
 #   - ``feature[i]`` - feature used for splitting node i
 #   - ``threshold[i]`` - threshold value at node i
 #   - ``n_node_samples[i]`` - the number of of training samples reaching node i
