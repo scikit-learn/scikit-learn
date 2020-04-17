@@ -1124,26 +1124,27 @@ def test_radius_neighbors_graph_sparse(seed=36):
 
 def test_neighbors_badargs():
     # Test bad argument values: these should all raise ValueErrors
-    assert_raises(ValueError,
-                  neighbors.NearestNeighbors,
-                  algorithm='blah')
 
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
     X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
+    with pytest.raises(ValueError):
+        neighbors.NearestNeighbors(algorithm='blah').fit(X, y)
+
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
-        assert_raises(ValueError,
-                      cls,
-                      weights='blah')
-        assert_raises(ValueError,
-                      cls, p=-1)
-        assert_raises(ValueError,
-                      cls, algorithm='blah')
+        with pytest.raises(ValueError):
+            cls(weights='blah').fit(X, y)
+
+        with pytest.raises(ValueError):
+            cls(p=-1).fit(X, y)
+
+        with pytest.raises(ValueError):
+            cls(algorithm='blah').fit(X, y)
 
         nbrs = cls(algorithm='ball_tree', metric='haversine')
         assert_raises(ValueError,
@@ -1212,10 +1213,10 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
-                assert_raises(ValueError,
-                              neighbors.NearestNeighbors,
-                              algorithm=algorithm,
-                              metric=metric, metric_params=metric_params)
+                with pytest.raises(ValueError):
+                    neighbors.NearestNeighbors(
+                        algorithm=algorithm,
+                        metric=metric, metric_params=metric_params).fit(X)
                 continue
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
@@ -1310,8 +1311,8 @@ def test_valid_brute_metric_for_auto_algorithm():
 
 
 def test_metric_params_interface():
-    assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
-                 metric_params={'p': 3})
+    with pytest.warns(SyntaxWarning):
+        neighbors.KNeighborsClassifier(metric_params={'p': 3}).fit([[1]], [1])
 
 
 def test_predict_sparse_ball_kd_tree():

@@ -111,11 +111,10 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     Y = rng.randn(10, 2)
 
     if algorithm == 'kd_tree' and metric not in KDTree.valid_metrics:
-        assert_raises(ValueError, KernelDensity,
-                      algorithm=algorithm, metric=metric)
+        with pytest.raises(ValueError):
+            KernelDensity(algorithm=algorithm, metric=metric).fit(X)
     else:
-        kde = KernelDensity(algorithm=algorithm, metric=metric)
-        kde.fit(X)
+        kde = KernelDensity(algorithm=algorithm, metric=metric).fit(X)
         y_dens = kde.score_samples(Y)
         assert y_dens.shape == Y.shape[:1]
 
@@ -129,21 +128,32 @@ def test_kde_score(n_samples=100, n_features=3):
 
 
 def test_kde_badargs():
-    assert_raises(ValueError, KernelDensity,
-                  algorithm='blah')
-    assert_raises(ValueError, KernelDensity,
-                  bandwidth=0)
-    assert_raises(ValueError, KernelDensity,
-                  kernel='blah')
-    assert_raises(ValueError, KernelDensity,
-                  metric='blah')
-    assert_raises(ValueError, KernelDensity,
-                  algorithm='kd_tree', metric='blah')
-    kde = KernelDensity()
-    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
-                  sample_weight=np.random.random((200, 10)))
-    assert_raises(ValueError, kde.fit, np.random.random((200, 10)),
-                  sample_weight=-np.random.random(200))
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='blah').fit(X)
+
+    with pytest.raises(ValueError):
+        KernelDensity(bandwidth=0).fit(X)
+
+    with pytest.raises(ValueError):
+        KernelDensity(kernel='blah').fit(X)
+
+    with pytest.raises(ValueError):
+        KernelDensity(metric='blah').fit(X)
+
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='kd_tree', metric='blah').fit(X)
+
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='blah').fit(
+            rng.random((200, 10)),
+            sample_weight=rng.random((200, 10)))
+
+    with pytest.raises(ValueError):
+        KernelDensity(algorithm='blah').fit(
+            rng.random((200, 10)),
+            sample_weight=-rng.random(200))
 
 
 def test_kde_pipeline_gridsearch():

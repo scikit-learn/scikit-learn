@@ -142,12 +142,13 @@ def test_label_binarizer_errors():
         lb.inverse_transform([])
 
     with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=2, pos_label=1)
+        LabelBinarizer(neg_label=2, pos_label=1).fit([1, 2])
     with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=2, pos_label=2)
+        LabelBinarizer(neg_label=2, pos_label=2).fit([1, 2])
 
     with pytest.raises(ValueError):
-        LabelBinarizer(neg_label=1, pos_label=2, sparse_output=True)
+        LabelBinarizer(neg_label=1, pos_label=2,
+                       sparse_output=True).fit([1, 2])
 
     # Fail on y_type
     with pytest.raises(ValueError):

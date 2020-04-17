@@ -154,6 +154,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             n_jobs=n_jobs, **kwargs)
         self.weights = weights
 
+    def fit(self, X, y):
+        # this `fit` is here only to do the validation which happens in this
+        # class and not the parent. Otherwise it's the same `fit`.
+        # `weights` is only used in `predict*`
+        _check_weights(self.weights)
+        return super().fit(X, y)
+
     def predict(self, X):
         """Predict the class labels for the provided data.
 
@@ -402,7 +409,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Target values.
 
         """
-
+        _check_weights(self.weights)
         SupervisedIntegerMixin.fit(self, X, y)
 
         classes_ = self.classes_
