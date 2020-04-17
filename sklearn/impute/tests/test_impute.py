@@ -55,7 +55,7 @@ def _check_statistics(X, X_true,
     assert_ae(X_trans, X_true, err_msg=err_msg.format(False))
 
     # Sparse matrix
-    imputer = SimpleImputer(missing_values=missin_values, strategy=strategy)
+    imputer = SimpleImputer(missing_values=missing_values, strategy=strategy)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
