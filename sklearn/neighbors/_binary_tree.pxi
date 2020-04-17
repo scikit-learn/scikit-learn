@@ -244,6 +244,8 @@ CLASS_DOC = \
 
 {BinaryTree} for fast generalized N-point problems
 
+Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+
 Parameters
 ----------
 X : array-like of shape (n_samples, n_features)
