@@ -855,7 +855,7 @@ class NuSVC(BaseSVC):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.'

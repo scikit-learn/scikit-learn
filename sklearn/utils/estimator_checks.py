@@ -359,38 +359,37 @@ def _generate_class_checks(Estimator):
 
 
 def _mark_xfail_checks(estimator, check, pytest):
-    """Mark estimator check pairs with xfail"""
+    """Mark (estimator, check) pairs with xfail according to the
+    _xfail_checks_ tag"""
     if isinstance(estimator, type):
-        # try to construct estimator to get tags, if it is unable to then
-        # return the estimator class
+        # try to construct estimator instance, if it is unable to then
+        # return the estimator class, ignoring the tag
         try:
-            xfail_checks = _safe_tags(_construct_instance(estimator),
-                                      '_xfail_test')
+            estimator = _construct_instance(estimator),
         except Exception:
             return estimator, check
-    else:
-        xfail_checks = _safe_tags(estimator, '_xfail_test')
 
-    if not xfail_checks:
-        return estimator, check
-
+    xfail_checks = _safe_tags(estimator, '_xfail_checks') or {}
     check_name = _set_check_estimator_ids(check)
-    msg = xfail_checks.get(check_name, None)
 
-    if msg is None:
+    if check_name not in xfail_checks:
+        # check isn't part of the xfail_checks tags, just return it
         return estimator, check
-
-    return pytest.param(
-        estimator, check, marks=pytest.mark.xfail(reason=msg))
+    else:
+        # check is in the tag, mark it as xfail for pytest
+        reason = xfail_checks[check_name]
+        return pytest.param(estimator, check,
+                            marks=pytest.mark.xfail(reason=reason))
 
 
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
-    The `id` of each test is set to be a pprint version of the estimator
+    The `id` of each check is set to be a pprint version of the estimator
     and the name of the check with its keyword arguments.
+    This allows to use `pytest -k` to specify which tests to run::
 
-    Read more in the :ref:`User Guide<rolling_your_own_estimator>`.
+        pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
     Parameters
     ----------
@@ -400,6 +399,17 @@ def parametrize_with_checks(estimators):
     Returns
     -------
     decorator : `pytest.mark.parametrize`
+
+    Examples
+    --------
+    >>> from sklearn.utils.estimator_checks import parametrize_with_checks
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.tree import DecisionTreeRegressor
+
+    >>> @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+    >>> def test_sklearn_compatible_estimator(estimator, check):
+    >>>     check(estimator)
+
     """
     import pytest
 
@@ -419,7 +429,8 @@ def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
-    shapes, etc.
+    shapes, etc, making sure that the estimator complies with `scikit-leanrn`
+    conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
@@ -428,7 +439,14 @@ def check_estimator(Estimator, generate_only=False):
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options.
 
-    Read more in :ref:`rolling_your_own_estimator`.
+    Setting `generate_only=True` returns a generator that yields (estimator,
+    check) tuples where the check can be called independently from each
+    other, i.e. `check(estimator)`. This allows all checks to be run
+    independently and report the checks that are failing.
+
+    scikit-learn provides a pytest specific decorator,
+    :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
+    multiple estimators.
 
     Parameters
     ----------
