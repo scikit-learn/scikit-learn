@@ -369,7 +369,7 @@ def _mark_xfail_checks(estimator, check, pytest):
         except Exception:
             return estimator, check
 
-    xfail_checks = _safe_tags(estimator, '_xfail_checks')
+    xfail_checks = _safe_tags(estimator, '_xfail_checks') or {}
     check_name = _set_check_estimator_ids(check)
 
     if check_name not in xfail_checks:
