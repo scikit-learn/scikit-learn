@@ -619,4 +619,5 @@ def test_multioutput_use_sparse_y():
     y = sp.csr_matrix((13, 2))
 
     m_reg = MultiOutputRegressor(SGDRegressor())
-    m_reg.fit(X, y)
+    with pytest.warns(UserWarning):
+        m_reg.fit(X, y)

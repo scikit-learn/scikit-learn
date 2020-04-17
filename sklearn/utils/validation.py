@@ -750,7 +750,7 @@ def column_or_1d(y, warn=False):
 
     Parameters
     ----------
-    y : array-like
+    y : {array-like, sparse matrix}
 
     warn : boolean, default False
        To control display of warnings.
@@ -760,10 +760,19 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
-    if type(y) == sp.csr_matrix:
-        y = y.toarray()
-    else:
-        y = np.asarray(y)
+    if sp.issparse(y):
+        shape = y.shape
+        if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
+            if warn:
+                warnings.warn("A sparse y matrix will be converted to "
+                              "dense array.", UserWarning)
+            return np.ravel(y.toarray())
+
+        raise ValueError(
+            "Sparse y should be of shape (n_samples, 1), or (n_samples,) "
+            "but got matrix of shape {} instead.".format(shape))
+
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
