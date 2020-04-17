@@ -1188,6 +1188,7 @@ def test_if_sparse_matrix_to_numpy_warns():
     with pytest.warns(UserWarning):
         column_or_1d(y, warn=True)
 
+
 def test_sparse_matrix_to_numpy_wrong_shape():
     y = sp.csr_matrix((13, 2))
     with pytest.raises(ValueError):
