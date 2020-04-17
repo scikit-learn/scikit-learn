@@ -1176,11 +1176,10 @@ def test_check_sparse_pandas_sp_format(sp_format):
 
 
 # check if column_or_1d accepts sparse input PR#16800
-@pytest.mark.filterwarnings("ignore", category=UserWarning)
 def test_sparse_matrix_to_numpy():
     y = sp.csr_matrix((13, 1))
     expected = np.ravel(y.toarray())
-    result = column_or_1d(y)
+    result = column_or_1d(y, warn=False)
     assert_array_equal(expected, result)
 
 
@@ -1188,3 +1187,8 @@ def test_if_sparse_matrix_to_numpy_warns():
     y = sp.csr_matrix((13, 1))
     with pytest.warns(UserWarning):
         column_or_1d(y, warn=True)
+
+def test_sparse_matrix_to_numpy_wrong_shape():
+    y = sp.csr_matrix((13, 2))
+    with pytest.raises(ValueError):
+        column_or_1d(y, warn=False)
