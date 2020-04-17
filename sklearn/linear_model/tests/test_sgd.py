@@ -167,24 +167,15 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_alpha(klass):
+@pytest.mark.parametrize('params', [
+    {'alpha': -.1},
+    {'penalty': 'foobar', 'l1_ratio': 0.85},
+    {'loss': "foobar"}
+])
+def test_sgd_bad_alpha(klass, params):
     # Check whether expected ValueError on bad alpha
-    assert_raises(ValueError, klass, alpha=-.1)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_penalty(klass):
-    # Check whether expected ValueError on bad penalty
-    assert_raises(ValueError, klass, penalty='foobar',
-                  l1_ratio=0.85)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_loss(klass):
-    # Check whether expected ValueError on bad loss
-    assert_raises(ValueError, klass, loss="foobar")
+    with pytest.raises(ValueError):
+        klass(**params).fit(X, Y)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -334,8 +325,8 @@ def test_late_onset_averaging_reached(klass):
 def test_sgd_bad_alpha_for_optimal_learning_rate(klass):
     # Check whether expected ValueError on bad alpha, i.e. 0
     # since alpha is used to compute the optimal learning rate
-    assert_raises(ValueError, klass,
-                  alpha=0, learning_rate="optimal")
+    with pytest.raises(ValueError):
+        klass(alpha=0, learning_rate="optimal").fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -436,59 +427,20 @@ def test_sgd_clf(klass):
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_bad_l1_ratio(klass):
-    # Check whether expected ValueError on bad l1_ratio
-    assert_raises(ValueError, klass, l1_ratio=1.1)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_bad_learning_rate_schedule(klass):
-    # Check whether expected ValueError on bad learning_rate
-    assert_raises(ValueError, klass, learning_rate="<unknown>")
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_bad_eta0(klass):
-    # Check whether expected ValueError on bad eta0
-    assert_raises(ValueError, klass, eta0=0,
-                  learning_rate="constant")
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_max_iter_param(klass):
-    # Test parameter validity check
-    assert_raises(ValueError, klass, max_iter=-10000)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_shuffle_param(klass):
-    # Test parameter validity check
-    assert_raises(ValueError, klass, shuffle="false")
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_early_stopping_param(klass):
-    # Test parameter validity check
-    assert_raises(ValueError, klass, early_stopping="false")
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_validation_fraction(klass):
-    # Test parameter validity check
-    assert_raises(ValueError, klass, validation_fraction=-.1)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_sgd_n_iter_no_change(klass):
-    # Test parameter validity check
-    assert_raises(ValueError, klass, n_iter_no_change=0)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
-def test_argument_coef(klass):
-    # Checks coef_init not allowed as model argument (only fit)
-    # Provided coef_ does not match dataset
-    assert_raises(TypeError, klass, coef_init=np.zeros((3,)))
+@pytest.mark.parametrize('params, error', [
+    ({'l1_ratio': 1.1}, ValueError),
+    ({'learning_rate': "<unknown>"}, ValueError),
+    ({'eta0': 0, 'learning_rate': "constant"}, ValueError),
+    ({'max_iter': -10000}, ValueError),
+    ({'shuffle': "false"}, ValueError),
+    ({'early_stopping': "false"}, ValueError),
+    ({'validation_fraction': -.1}, ValueError),
+    ({'n_iter_no_change': 0}, ValueError),
+    ({'coef_init': np.zeros((3,))}, TypeError)])
+def test_sgd_bad_l1_ratio(klass, params, error):
+    # Check expected ValueError on bad parameter set
+    with pytest.raises(error):
+        klass(**params).fit(X, Y)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
