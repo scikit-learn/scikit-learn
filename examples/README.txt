@@ -3,7 +3,7 @@
 Examples
 ========
 
-Miscellaneous examples
-----------------------
+General examples
+----------------
 
-Miscellaneous and introductory examples for scikit-learn.
+General and introductory examples for scikit-learn.
