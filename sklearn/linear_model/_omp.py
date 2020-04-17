@@ -373,7 +373,8 @@ def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
-        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
+        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs=n_nonzero_coefs,
+                                  tol=tol, norms_squared=norms_squared,
                                   copy_Gram=copy_X, copy_Xy=False,
                                   return_path=return_path)
 
@@ -664,7 +665,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if Gram is False:
             coef_, self.n_iter_ = orthogonal_mp(
-                X, y, self.n_nonzero_coefs_, self.tol,
+                X, y, n_nonzero_coefs=self.n_nonzero_coefs_, tol=self.tol,
                 precompute=False, copy_X=True,
                 return_n_iter=True)
         else:
