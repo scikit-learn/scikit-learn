@@ -1020,15 +1020,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
-        if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
-        if max_features is not None:
-            if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
-                raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features)
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -1184,6 +1176,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
+        if self.max_df < 0 or self.min_df < 0:
+            raise ValueError("negative value for max_df or min_df")
+        if self.max_features is not None:
+            if (not isinstance(self.max_features, numbers.Integral) or
+                    self.max_features <= 0):
+                raise ValueError(
+                    "max_features=%r, neither a positive integer nor None"
+                    % self.max_features)
+
         if isinstance(raw_documents, str):
             raise ValueError(
                 "Iterable over raw text documents expected, "
@@ -1735,51 +1736,72 @@ class TfidfVectorizer(CountVectorizer):
             max_features=max_features, vocabulary=vocabulary, binary=binary,
             dtype=dtype)
 
-        self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
-                                       smooth_idf=smooth_idf,
-                                       sublinear_tf=sublinear_tf)
-
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
 
     @property
     def norm(self):
-        return self._tfidf.norm
+        try:
+            check_is_fitted(self)
+            return self._tfidf.norm
+        except NotFittedError:
+            return None
 
     @norm.setter
     def norm(self, value):
+        check_is_fitted(self)
         self._tfidf.norm = value
 
     @property
     def use_idf(self):
-        return self._tfidf.use_idf
+        try:
+            check_is_fitted(self)
+            return self._tfidf.use_idf
+        except NotFittedError:
+            return None
 
     @use_idf.setter
     def use_idf(self, value):
+        check_is_fitted(self)
         self._tfidf.use_idf = value
 
     @property
     def smooth_idf(self):
-        return self._tfidf.smooth_idf
+        try:
+            check_is_fitted(self)
+            return self._tfidf.smooth_idf
+        except NotFittedError:
+            return None
 
     @smooth_idf.setter
     def smooth_idf(self, value):
+        check_is_fitted(self)
         self._tfidf.smooth_idf = value
 
     @property
     def sublinear_tf(self):
-        return self._tfidf.sublinear_tf
+        try:
+            check_is_fitted(self)
+            return self._tfidf.sublinear_tf
+        except NotFittedError:
+            return None
 
     @sublinear_tf.setter
     def sublinear_tf(self, value):
+        check_is_fitted(self)
         self._tfidf.sublinear_tf = value
 
     @property
     def idf_(self):
-        return self._tfidf.idf_
+        try:
+            check_is_fitted(self)
+            return self._tfidf.idf_
+        except NotFittedError:
+            return None
 
     @idf_.setter
     def idf_(self, value):
+        check_is_fitted(self)
         self._validate_vocabulary()
         if hasattr(self, 'vocabulary_'):
             if len(self.vocabulary_) != len(value):
@@ -1813,7 +1835,9 @@ class TfidfVectorizer(CountVectorizer):
         self._check_params()
         self._warn_for_unused_params()
         X = super().fit_transform(raw_documents)
-        self._tfidf.fit(X)
+        self._tfidf = TfidfTransformer(norm=self.norm, use_idf=self.use_idf,
+                                       smooth_idf=self.smooth_idf,
+                                       sublinear_tf=self.sublinear_tf).fit(X)
         return self
 
     def fit_transform(self, raw_documents, y=None):
@@ -1836,7 +1860,9 @@ class TfidfVectorizer(CountVectorizer):
         """
         self._check_params()
         X = super().fit_transform(raw_documents)
-        self._tfidf.fit(X)
+        self._tfidf = TfidfTransformer(norm=self.norm, use_idf=self.use_idf,
+                                       smooth_idf=self.smooth_idf,
+                                       sublinear_tf=self.sublinear_tf).fit(X)
         # X is already a transformed view of raw_documents so
         # we set copy to False
         return self._tfidf.transform(X, copy=False)

@@ -643,6 +643,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         **fit_params : dict of str -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+        self._validate_params()
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -1170,11 +1171,13 @@ class GridSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(ParameterGrid(self.param_grid))
+
+    def _validate_params(self):
+        _check_param_grid(self.param_grid)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1511,3 +1514,6 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
+    def _validate_params(self):
+        _check_param_grid(self.param_distributions)

@@ -147,9 +147,6 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ['lapack', 'randomized']:
-            raise ValueError('SVD method %s is not supported. Please consider'
-                             ' the documentation' % svd_method)
         self.svd_method = svd_method
 
         self.noise_variance_init = noise_variance_init
@@ -170,6 +167,10 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         -------
         self
         """
+        if self.svd_method not in ['lapack', 'randomized']:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % self.svd_method)
+
         X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape

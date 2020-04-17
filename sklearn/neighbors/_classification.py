@@ -152,7 +152,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params,
             n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -179,7 +179,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, _check_weights(self.weights))
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
@@ -224,7 +224,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         n_queries = _num_samples(X)
 
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, _check_weights(self.weights))
         if weights is None:
             weights = np.ones_like(neigh_ind)
 
@@ -384,7 +384,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
               leaf_size=leaf_size,
               metric=metric, p=p, metric_params=metric_params,
               n_jobs=n_jobs, **kwargs)
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
@@ -531,7 +531,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                              'or considering removing them from your dataset.'
                              % outliers)
 
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, _check_weights(self.weights))
         if weights is not None:
             weights = weights[inliers]
 

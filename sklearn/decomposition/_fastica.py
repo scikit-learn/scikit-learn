@@ -396,9 +396,6 @@ class FastICA(TransformerMixin, BaseEstimator):
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()
-        if max_iter < 1:
-            raise ValueError("max_iter should be greater than 1, got "
-                             "(max_iter={})".format(max_iter))
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
@@ -426,6 +423,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : array-like, shape (n_samples, n_components)
         """
+        if self.max_iter < 1:
+            raise ValueError("max_iter should be greater than 1, got "
+                             "(max_iter={})".format(self.max_iter))
 
         X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
                                 ensure_min_samples=2).T

@@ -97,7 +97,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self.tol = tol
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params()
 
     def set_params(self, **kwargs):
         """Set and validate the parameters of estimator.
@@ -113,7 +112,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             Estimator instance.
         """
         super().set_params(**kwargs)
-        self._validate_params()
         return self
 
     @abstractmethod

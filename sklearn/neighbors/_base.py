@@ -302,7 +302,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
-        self._check_algorithm_metric()
 
     def _check_algorithm_metric(self):
         if self.algorithm not in ['auto', 'brute',

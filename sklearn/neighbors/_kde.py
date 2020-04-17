@@ -102,16 +102,6 @@ class KernelDensity(BaseEstimator):
         self.leaf_size = leaf_size
         self.metric_params = metric_params
 
-        # run the choose algorithm code so that exceptions will happen here
-        # we're using clone() in the GenerativeBayes classifier,
-        # so we can't do this kind of logic in __init__
-        self._choose_algorithm(self.algorithm, self.metric)
-
-        if bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
-        if kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(kernel))
-
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
         # algorithm to compute the result.
@@ -152,6 +142,12 @@ class KernelDensity(BaseEstimator):
             Returns instance of object.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
+
+        if self.bandwidth <= 0:
+            raise ValueError("bandwidth must be positive")
+        if self.kernel not in VALID_KERNELS:
+            raise ValueError("invalid kernel: '{0}'".format(self.kernel))
+
         X = self._validate_data(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:

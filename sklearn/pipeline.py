@@ -108,7 +108,6 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
-        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -323,6 +322,7 @@ class Pipeline(_BaseComposition):
         self : Pipeline
             This estimator
         """
+        self._validate_steps()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time('Pipeline',
@@ -360,6 +360,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like of shape  (n_samples, n_transformed_features)
             Transformed samples
         """
+        self._validate_steps()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -803,7 +804,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
-        self._validate_transformers()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -900,6 +900,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : FeatureUnion
             This estimator
         """
+        self._validate_transformers()
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
@@ -926,6 +927,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        self._validate_transformers()
         results = self._parallel_func(X, y, fit_params, _fit_transform_one)
         if not results:
             # All transformers are None

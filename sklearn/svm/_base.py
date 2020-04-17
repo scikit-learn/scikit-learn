@@ -76,16 +76,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
-
-        if self._impl not in LIBSVM_IMPL:
-            raise ValueError("impl should be one of %s, %s was given" % (
-                LIBSVM_IMPL, self._impl))
-
-        if gamma == 0:
-            msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
-                   " gamma to a value of 1 / n_features.")
-            raise ValueError(msg)
-
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -139,6 +129,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+        if self._impl not in LIBSVM_IMPL:
+            raise ValueError("impl should be one of %s, %s was given" % (
+                LIBSVM_IMPL, self._impl))
+
+        if self.gamma == 0:
+            msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
+                   " gamma to a value of 1 / n_features.")
+            raise ValueError(msg)
 
         rnd = check_random_state(self.random_state)
 
