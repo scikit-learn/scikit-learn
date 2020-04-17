@@ -389,9 +389,9 @@ def parametrize_with_checks(estimators):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.tree import DecisionTreeRegressor
 
-    ... @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
-    >>> def test_sklearn_compatible_estimator(estimator, check):
-    ...    check(estimator)
+    >>> @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+    ... def test_sklearn_compatible_estimator(estimator, check):
+    ...     check(estimator)
 
     """
     import pytest
