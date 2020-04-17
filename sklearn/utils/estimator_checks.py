@@ -363,7 +363,7 @@ def _mark_xfail_checks(estimator, check, pytest):
     _xfail_checks_ tag"""
     if isinstance(estimator, type):
         # try to construct estimator instance, if it is unable to then
-        # return the estimator class ignoring the 
+        # return the estimator class, ignoring the tag
         try:
             estimator = _construct_instance(estimator),
         except Exception:
