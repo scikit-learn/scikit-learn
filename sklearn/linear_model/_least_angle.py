@@ -1743,8 +1743,7 @@ class LassoLarsIC(LassoLars):
     """
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, positive=False,
-                 random_state=None):
+                 eps=np.finfo(np.float).eps, copy_X=True, positive=False):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
         self.positive = positive
@@ -1755,7 +1754,6 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
-        self.random_state = random_state
 
     def _more_tags(self):
         return {'multioutput': False}
