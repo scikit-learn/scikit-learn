@@ -96,7 +96,7 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
     @_deprecate_positional_args
-    def __init__(self, missing_values=np.nan, *, n_neighbors=5,
+    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):
         super().__init__(

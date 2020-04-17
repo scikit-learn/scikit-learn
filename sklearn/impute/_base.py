@@ -207,7 +207,7 @@ class SimpleImputer(_BaseImputer):
 
     """
     @_deprecate_positional_args
-    def __init__(self, missing_values=np.nan, *, strategy="mean",
+    def __init__(self, *, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
         super().__init__(
             missing_values=missing_values,
@@ -528,7 +528,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, missing_values=np.nan, *, features="missing-only",
+    def __init__(self, *, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features

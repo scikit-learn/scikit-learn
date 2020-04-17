@@ -207,8 +207,8 @@ class IterativeImputer(_BaseImputer):
         <https://www.jstor.org/stable/2984099>`_
     """
     def __init__(self,
-                 estimator=None,
-                 missing_values=np.nan, *,
+                 estimator=None, *,
+                 missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,
                  tol=1e-3,
