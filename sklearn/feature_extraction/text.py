@@ -1735,61 +1735,10 @@ class TfidfVectorizer(CountVectorizer):
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=binary,
             dtype=dtype)
-
-    # Broadcast the TF-IDF parameters to the underlying transformer instance
-    # for easy grid search and repr
-
-    @property
-    def norm(self):
-        try:
-            check_is_fitted(self)
-            return self._tfidf.norm
-        except NotFittedError:
-            return None
-
-    @norm.setter
-    def norm(self, value):
-        check_is_fitted(self)
-        self._tfidf.norm = value
-
-    @property
-    def use_idf(self):
-        try:
-            check_is_fitted(self)
-            return self._tfidf.use_idf
-        except NotFittedError:
-            return None
-
-    @use_idf.setter
-    def use_idf(self, value):
-        check_is_fitted(self)
-        self._tfidf.use_idf = value
-
-    @property
-    def smooth_idf(self):
-        try:
-            check_is_fitted(self)
-            return self._tfidf.smooth_idf
-        except NotFittedError:
-            return None
-
-    @smooth_idf.setter
-    def smooth_idf(self, value):
-        check_is_fitted(self)
-        self._tfidf.smooth_idf = value
-
-    @property
-    def sublinear_tf(self):
-        try:
-            check_is_fitted(self)
-            return self._tfidf.sublinear_tf
-        except NotFittedError:
-            return None
-
-    @sublinear_tf.setter
-    def sublinear_tf(self, value):
-        check_is_fitted(self)
-        self._tfidf.sublinear_tf = value
+        self.norm = norm
+        self.use_idf = use_idf
+        self.smooth_idf = smooth_idf
+        self.sublinear_tf = sublinear_tf
 
     @property
     def idf_(self):

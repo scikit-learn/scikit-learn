@@ -160,14 +160,15 @@ class DummyEstimatorParams(BaseEstimator):
 
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
-    assert_raises(TypeError, Pipeline)
+    X, y = [[1]], [1]
+    with pytest.raises(TypeError):
+        Pipeline().fit(X, y)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    assert_raises_regex(TypeError,
-                        'Last step of Pipeline should implement fit '
-                        'or be the string \'passthrough\''
-                        '.*NoFit.*',
-                        Pipeline, [('clf', NoFit())])
+    with pytest.raises(TypeError,
+                       match='Last step of Pipeline should implement fit '
+                             'or be the string \'passthrough\'.*NoFit.*'):
+        Pipeline([('clf', NoFit())]).fit(X, y)
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
@@ -193,10 +194,10 @@ def test_pipeline_init():
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
-    assert_raises_regex(TypeError,
-                        'All intermediate steps should be transformers'
-                        '.*\\bNoTrans\\b.*',
-                        Pipeline, [('t', NoTrans()), ('svc', clf)])
+    with pytest.raises(TypeError,
+                       match='All intermediate steps should be transformers'
+                             '.*\\bNoTrans\\b.*'):
+        Pipeline([('t', NoTrans()), ('svc', clf)]).fit(X, y)
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -490,11 +491,10 @@ def test_feature_union():
     assert X_transformed.shape == (X.shape[0], 8)
 
     # test error if some elements do not support transform
-    assert_raises_regex(TypeError,
-                        'All estimators should implement fit and '
-                        'transform.*\\bNoTrans\\b',
-                        FeatureUnion,
-                        [("transform", Transf()), ("no_transform", NoTrans())])
+    with pytest.raises(TypeError, match='All estimators should implement fit '
+                                        'and transform.*\\bNoTrans\\b'):
+        FeatureUnion([("transform", Transf()),
+                      ("no_transform", NoTrans())]).fit(X, y)
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
@@ -951,15 +951,15 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
-            (bad_steps2, "Names provided are not unique: ['a', 'a']"),
+            (bad_steps1, "Estimator names must not contain __:"),
+            (bad_steps2, "Names provided are not unique:"),
             (bad_steps3, "Estimator names conflict with constructor "
-                         "arguments: ['%s']" % param),
+                         "arguments:"),
         ]:
             # three ways to make invalid:
             # - construction
-            assert_raise_message(ValueError, message, cls,
-                                 **{param: bad_steps})
+            with pytest.raises(ValueError, match=message):
+                cls(**{param: bad_steps}).fit([[1]], [1])
 
             # - setattr
             est = cls(**{param: [('a', Mult(1))]})
@@ -1233,10 +1233,10 @@ def test_feature_union_fit_params():
 def test_feature_union_warns_with_none():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    with pytest.warns(FutureWarning, match=msg):
-        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
-
     X = [[1, 2, 3], [4, 5, 6]]
+
+    with pytest.warns(FutureWarning, match=msg):
+        union = FeatureUnion([('multi1', None), ('multi2', Mult())]).fit(X)
 
     with pytest.warns(FutureWarning, match=msg):
         union.fit_transform(X)
