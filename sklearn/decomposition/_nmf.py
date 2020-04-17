@@ -16,9 +16,8 @@ from math import sqrt
 from ._cdnmf_fast import _update_cdnmf_fast
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state, check_array,gen_batches
+from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..utils.validation import _deprecate_positional_args
 
