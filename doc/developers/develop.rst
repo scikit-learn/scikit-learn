@@ -538,7 +538,7 @@ _skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-_xfail_test (default=False)
+_xfail_checks (default=False)
     dictionary ``{check_name : reason}`` of common checks to mark as a
     known failure, with the associated reason. Don't use this unless you have a
     *very good* reason.
