@@ -125,10 +125,12 @@ plt.show()
 # the non zero elements in row i of the indicator matrix designate the ids
 # of the nodes that sample goes through.
 #
-# The leaf ids reached by each sample can be obtained with the ``apply``
-# method. Using the leaf ids and the ``decision_path`` we can obtain the tests
-# that were used to predict a sample or a group of samples. First, let's do it
-# for one sample. Note: ``node_index`` is a sparse matrix.
+# The leaf ids reached by samples of interest can be obtained with the
+# ``apply`` method. This returns an array of the node ids of the leaves
+# reached by each sample of interest. Using the leaf ids and the
+# ``decision_path`` we can obtain the tests that were used to predict a sample
+# or a group of samples. First, let's do it for one sample. Note:
+# ``node_index`` is a sparse matrix.
 
 node_indicator = clf.decision_path(X_test)
 leaf_id = clf.apply(X_test)
