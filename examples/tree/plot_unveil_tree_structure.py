@@ -16,6 +16,7 @@ show how to retrieve:
 
 """
 import numpy as np
+from matplotlib import pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
@@ -40,24 +41,23 @@ clf.fit(X_train, y_train)
 # Tree structure
 # --------------
 #
-# The decision clf has an attribute called ``tree_`` which allows access
+# The decision classifier has an attribute called ``tree_`` which allows access
 # to low level attributes such as ``node_count``, the total number of nodes,
 # and ``max_depth``, the maximal depth of the tree. It also stores the
 # entire binary tree structure, represented as a number of parallel arrays. The
 # i-th element of each array holds information about the node i. Node 0 is the
 # tree's root. Some of the arrays only apply to either leaves or split nodes.
 # In this case the values of the nodes of the other type is arbitrary. For
-# example, the attributes ``feature`` and ``threshold`` only apply to split
-# nodes. The values corresponding to leaf nodes in these arrays are therefore
-# arbitrary.
+# example, the arrays ``feature`` and ``threshold`` only apply to split
+# nodes. The values for leaf nodes in these arrays are therefore arbitrary.
 #
-# Among those arrays, we have:
-#   - ``children_left`` - id of the left child of node i, -1 if leaf node
-#   - ``children_right`` - id of the right child of node i, -1 if leaf node
-#   - ``feature`` - feature used for splitting node i
-#   - ``threshold`` - threshold value at node i
-#   - ``n_node_samples`` - the number of of training samples reaching node i
-#   - ``impurity`` - the impurity at node i
+# Among these arrays, we have:
+#   - ``children_left[i]`` - id of the left child of node i or -1 if leaf node
+#   - ``children_right[i]`` - id of the right child of node i or -1 if leaf node
+#   - ``feature[i]`` - feature used for splitting node i
+#   - ``threshold[i]`` - threshold value at node i
+#   - ``n_node_samples[i]`` - the number of of training samples reaching node i
+#   - ``impurity[i]`` - the impurity at node i
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not
@@ -105,34 +105,35 @@ for i in range(n_nodes):
                  threshold[i],
                  children_right[i],
                  ))
-print()
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
 
 tree.plot_tree(clf)
+plt.show()
 
 ##############################################################################
 # Decision path
 # -------------
 #
-# We can also retrieve the decision path of each sample. The ``decision_path``
-# method allows us to retrieve the nodes samples go through. A non zero element
-# in the indicator matrix at position (i, j) indicates that the sample i goes
-# through the node j. For one sample, i, the positions of the non zero
-# element(s) in row i of the indicator matrix indicate the node(s) that sample
-# goes through.
+# We can also retrieve the decision path of samples of interest. The
+# ``decision_path`` method outputs an indicator matrix that allows us to
+# retrieve the nodes the samples of interest traverse through. A non zero
+# element in the indicator matrix at position (i, j) indicates that
+# the sample i goes through the node j. Or, for one sample, i, the positions of
+# the non zero elements in row i of the indicator matrix designate the ids
+# of the nodes that sample goes through.
 #
 # The leaf ids reached by each sample can be obtained with the ``apply``
-# method. We can use this and the ``decision_path`` to  get the tests that were
-# used to predict a sample or a group of samples. First, let's do it for one
-# sample. Note: ``node_index`` is a sparse matrix.
+# method. Using the leaf ids and the ``decision_path`` we can obtain the tests
+# that were used to predict a sample or a group of samples. First, let's do it
+# for one sample. Note: ``node_index`` is a sparse matrix.
 
 node_indicator = clf.decision_path(X_test)
 leaf_id = clf.apply(X_test)
 
 sample_id = 0
-# obtain ids of the nodes `sample_id` goes through
+# obtain ids of the nodes `sample_id` goes through, i.e., row `sample_id`
 node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
                                     node_indicator.indptr[sample_id + 1]]
 
@@ -142,6 +143,7 @@ for node_id in node_index:
     if leaf_id[sample_id] == node_id:
         continue
 
+    # check if value of the split feature for sample 0 is below threshold
     if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):
         threshold_sign = "<="
     else:
@@ -156,15 +158,16 @@ for node_id in node_index:
              threshold[node_id]))
 
 ##############################################################################
-# For a group of samples, we can determine common nodes the samples go through.
+# For a group of samples, we can determine the common nodes the samples go
+# through.
 
 sample_ids = [0, 1]
 # boolean array indicating the nodes both samples go through
 common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
                 len(sample_ids))
-# position in array equals node id
+# obstain node ids using position in array
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following samples %s share the node(s) %s in the tree"
+print("\nThe following samples %s share the node(s) %s in the tree."
       % (sample_ids, common_node_id))
 print("This is %s %% of all nodes." % (100 * len(common_node_id) / n_nodes,))
