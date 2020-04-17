@@ -1248,7 +1248,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     0.97...
     """
     @_deprecate_positional_args
-    def __init__(self, *, penalty='l2', dual=False, tol=1e-4, C=1.0,
+    def __init__(self, penalty='l2', *, dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
