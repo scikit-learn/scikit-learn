@@ -1,7 +1,7 @@
 .. _miscellaneous_examples:
 
-Miscellaneous examples
-----------------------
+Miscellaneous
+-------------
 
 Miscellaneous and introductory examples for scikit-learn.
 
