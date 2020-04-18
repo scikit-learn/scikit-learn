@@ -248,8 +248,8 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``master`` branch!
 
-9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to run code style
-   checks before each commit::
+9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+   run code style checks before each commit::
 
         $ pip install pre-commit
         $ pre-commit install
