@@ -374,9 +374,10 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return self
 
     def _more_tags(self):
+        from sklearn.utils.estimator_checks import check_methods_subset_invariance  # noqa
         return {
             '_xfail_checks': {
-                'check_methods_subset_invariance':
+                check_methods_subset_invariance:
                 'fails for the decision_function method'
             }
         }

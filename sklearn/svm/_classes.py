@@ -854,11 +854,13 @@ class NuSVC(BaseSVC):
             random_state=random_state)
 
     def _more_tags(self):
+        from ..utils.estimator_checks import check_class_weight_classifiers  # noqa
+        from ..utils.estimator_checks import check_methods_subset_invariance  # noqa
         return {
             '_xfail_checks': {
-                'check_methods_subset_invariance':
+                check_methods_subset_invariance:
                 'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.'
+                check_class_weight_classifiers: 'class_weight is ignored.'
             }
         }
 

@@ -73,6 +73,18 @@ def _safe_tags(estimator, key=None):
     return _DEFAULT_TAGS
 
 
+def skip_if_not_strict(check):
+    # Decorator to skip check when their strict_mode parameter is False
+    @wraps(check)
+    def wrapper(*args, **kwargs):
+        strict_mode = kwargs.get('strict_mode', True)
+        if strict_mode:
+            return check(*args, **kwargs)
+        else:
+            raise SkipTest(f"Skipping {check} since strict mode is off")
+    return wrapper
+
+
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
     yield check_no_attributes_set_in_init
@@ -374,14 +386,20 @@ def _mark_xfail_checks(estimator, check, pytest):
             return estimator, check
 
     xfail_checks = _safe_tags(estimator, '_xfail_checks') or {}
-    check_name = _set_check_estimator_ids(check)
+    # check_name = _set_check_estimator_ids(check)
+    # from sklearn.svm import NuSVC
+    # if isinstance(estimator, NuSVC):
+    #     print()
+    #     print(check)
+    #     print(xfail_checks)
 
-    if check_name not in xfail_checks:
+    # if check_name not in xfail_checks:
+    if check.func not in xfail_checks:
         # check isn't part of the xfail_checks tags, just return it
         return estimator, check
     else:
         # check is in the tag, mark it as xfail for pytest
-        reason = xfail_checks[check_name]
+        reason = xfail_checks[check.func]
         return pytest.param(estimator, check,
                             marks=pytest.mark.xfail(reason=reason))
 
@@ -3007,18 +3025,6 @@ def check_n_features_in(name, estimator_orig, strict_mode=True):
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
         )
-
-
-def skip_if_not_strict(check):
-    # Decorator to skip check when their strict_mode parameter is False
-    @wraps(check)
-    def wrapper(*args, **kwargs):
-        strict_mode = kwargs.get('strict_mode', True)
-        if strict_mode:
-            return check(*args, **kwargs)
-        else:
-            raise SkipTest(f"Skipping {check} since strict mode is off")
-    return wrapper
 
 
 @skip_if_not_strict
