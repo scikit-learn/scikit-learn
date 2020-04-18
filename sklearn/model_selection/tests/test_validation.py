@@ -1702,7 +1702,8 @@ def test_fit_and_score_verbose():
                     assert left.startswith(expected_template[1].format(
                         s=status))
 
-                    # Params displayed at the end should have a separating colon
+                    # Params displayed at the end should have
+                    # a separating colon
                     p_msg += '; ' if p_msg else ''
                     assert right.startswith(expected_template[2].format(
                         p=p_msg))
