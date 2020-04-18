@@ -349,8 +349,12 @@ def _mark_xfail_checks(estimator, check, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
     if isinstance(estimator, type):
-        # the tag doesn't work with classes
-        return estimator, check
+        # try to construct estimator instance, if it is unable to then
+        # return the estimator class, ignoring the tag
+        try:
+            estimator = _construct_instance(estimator)
+        except Exception:
+            return estimator, check
 
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
