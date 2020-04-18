@@ -365,7 +365,7 @@ def _mark_xfail_checks(estimator, check, pytest):
         # try to construct estimator instance, if it is unable to then
         # return the estimator class, ignoring the tag
         try:
-            estimator = _construct_instance(estimator),
+            estimator = _construct_instance(estimator)
         except Exception:
             return estimator, check
 
