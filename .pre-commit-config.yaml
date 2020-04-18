@@ -19,6 +19,4 @@ repos:
      -  id: mypy
         args:
           - --ignore-missing-imports
-          - --follow-imports
-          - skip
         files: sklearn/
