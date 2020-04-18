@@ -496,8 +496,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             progress_msg = " %d/%d" % (split_progress[0]+1,
                                        split_progress[1])
         if param_progress and verbose > 9:
-            progress_msg += ";" if split_progress else ""
-            progress_msg += " %d/%d" % (param_progress[0]+1,
+            progress_msg += "; %d/%d" % (param_progress[0]+1,
                                         param_progress[1])
 
     if verbose > 1:
@@ -571,7 +570,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "[CV%s] END " % progress_msg
-        result_msg = params_msg + ("; " if params_msg else "")
+        result_msg = params_msg + (";" if params_msg else "")
         if verbose > 2:
             if isinstance(test_scores, dict):
                 for scorer_name in sorted(test_scores):
