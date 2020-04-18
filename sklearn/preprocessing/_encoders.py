@@ -661,7 +661,8 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64, handle_unknown='error'):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 handle_unknown='error'):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
