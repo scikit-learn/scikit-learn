@@ -10,7 +10,7 @@ repos:
     hooks:
     -   id: flake8
         types: [file, python]
-        # only check for unused impors for now, as long as
+        # only check for unused imports for now, as long as
         # the code is not fully PEP8 compatible
         args: [--select=F401]
 -   repo: https://github.com/pre-commit/mirrors-mypy
