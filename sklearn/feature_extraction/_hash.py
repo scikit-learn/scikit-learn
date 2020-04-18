@@ -7,6 +7,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..utils import IS_PYPY
+from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
@@ -69,6 +70,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
 
+    .. versionchanged:: 0.19
+        ``alternate_sign`` replaces the now deprecated ``non_negative``
+        parameter.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import FeatureHasher
@@ -84,8 +89,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     DictVectorizer : vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
-
-    def __init__(self, n_features=(2 ** 20), input_type="dict",
+    @_deprecate_positional_args
+    def __init__(self, n_features=(2 ** 20), *, input_type="dict",
                  dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)
 
