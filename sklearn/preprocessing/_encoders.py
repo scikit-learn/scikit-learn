@@ -618,6 +618,14 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    handle_unknown : {'error', 'ignore'}, default='error'
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform (default is to raise). When this parameter
+        is set to 'ignore' and an unknown category is encountered during
+        transform, the resulting ordinal encoded value for this feature will be
+        -999. In the inverse transform, an unknown category will be denoted as
+        None.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -653,9 +661,10 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, handle_unknown='error'):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
         """
@@ -692,7 +701,12 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        X_int, _ = self._transform(X)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+
+        # create separate category for unknown values
+        if self.handle_unknown == 'ignore':
+            X_int[~X_mask] = -999
+
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
@@ -727,6 +741,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
-            X_tr[:, i] = self.categories_[i][labels]
+            # set unknown values to None
+            if self.handle_unknown == 'ignore':
+                X_tr[:, i] = np.where(
+                    labels == -999, None,
+                    self.categories_[i][np.where(labels == -999, 0, labels)])
+            else:
+                X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr

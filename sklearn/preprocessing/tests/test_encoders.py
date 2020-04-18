@@ -553,6 +553,21 @@ def test_ordinal_encoder_raise_missing(X):
         ohe.transform(X)
 
 
+def test_ordinal_encoder_handle_unknowns():
+    enc = OrdinalEncoder(handle_unknown='ignore')
+    X_fit = np.array([['a', 'b'], ['c', 'd']], dtype=object)
+    X_trans = np.array([['a', 'bla'], ['xy', 'd']], dtype=object)
+    enc.fit(X_fit)
+
+    X_trans_enc = enc.transform(X_trans)
+    exp = np.array([[0, -999], [-999, 1]], dtype=object)
+    assert_array_equal(X_trans_enc, exp)
+
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    inv_exp = np.array([['a', None], [None, 'd']], dtype=object)
+    assert_array_equal(X_trans_inv, inv_exp)
+
+
 def test_ordinal_encoder_raise_categories_shape():
 
     X = np.array([['Low', 'Medium', 'High', 'Medium', 'Low']], dtype=object).T
