@@ -318,6 +318,9 @@ def _set_check_estimator_ids(obj):
         if not isinstance(obj, partial):
             return obj.__name__
 
+        if not obj.keywords:
+            return obj.func.__name__
+
         kwstring = ",".join(["{}={}".format(k, v)
                              for k, v in obj.keywords.items()])
         return "{}({})".format(obj.func.__name__, kwstring)
