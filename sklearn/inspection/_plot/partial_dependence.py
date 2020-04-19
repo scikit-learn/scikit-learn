@@ -13,9 +13,11 @@ from ...base import is_regressor
 from ...utils import check_array
 from ...utils import check_matplotlib_support  # noqa
 from ...utils import _safe_indexing
+from ...utils.validation import _deprecate_positional_args
 
 
-def plot_partial_dependence(estimator, X, features, feature_names=None,
+@_deprecate_positional_args
+def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
@@ -322,8 +324,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         fig.clear()
         ax = fig.gca()
 
-    display = PartialDependenceDisplay(pd_results, features, feature_names,
-                                       target_idx, pdp_lim, deciles)
+    display = PartialDependenceDisplay(pd_results=pd_results,
+                                       features=features,
+                                       feature_names=feature_names,
+                                       target_idx=target_idx,
+                                       pdp_lim=pdp_lim,
+                                       deciles=deciles)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
 
@@ -406,7 +412,8 @@ class PartialDependenceDisplay:
         Figure containing partial dependence plots.
 
     """
-    def __init__(self, pd_results, features, feature_names, target_idx,
+    @_deprecate_positional_args
+    def __init__(self, pd_results, *, features, feature_names, target_idx,
                  pdp_lim, deciles):
         self.pd_results = pd_results
         self.features = features
