@@ -139,7 +139,7 @@ First note that the K means :math:`\mu_k` are vectors in
 dimension at least :math:`K - 1` (2 points lie on a line, 3 points lie on a
 plane, etc).
 
-As mentionned above, we can interpret LDA as assigning :math:`x` to the class
+As mentioned above, we can interpret LDA as assigning :math:`x` to the class
 whose mean :math:`\mu_k` is the closest in terms of Mahalanobis distance,
 while also accounting for the class prior probabilities. Alternatively, LDA
 is equivalent to first *sphering* the data so that the covariance matrix is
@@ -147,7 +147,7 @@ the identity, and then assigning :math:`x` to the closest mean in terms of
 Euclidean distance (still accounting for the class priors).
 
 Computing Euclidean distances in this d-dimensional space is equivalent to
-first projecting the data points into :math:`H`, and compute the distances
+first projecting the data points into :math:`H`, and computing the distances
 there (since the other dimensions will contribute equally to each class in
 terms of distance). In other words, if :math:`x` is closest to :math:`\mu_k`
 in the original space, it will also be the case in :math:`H`.

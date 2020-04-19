@@ -177,8 +177,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     store_covariance : bool, default=False
         If True, explicitely compute the weighted within-class covariance
-        matrix when solver is 'svd'. The matrix is always computed for the
-        other solvers.
+        matrix when solver is 'svd'. The matrix is always computed
+        and stored for the other solvers.
 
         .. versionadded:: 0.17
 
