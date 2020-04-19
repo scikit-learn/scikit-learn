@@ -1,6 +1,5 @@
 import warnings
 import functools
-import sys
 
 
 __all__ = ["deprecated"]
@@ -109,12 +108,12 @@ class deprecated:
         if self.extra:
             newdoc = "%s: %s" % (newdoc, self.extra)
         if olddoc:
-            newdoc = "%s\n\n%s" % (newdoc, olddoc)
+            newdoc = "%s\n\n    %s" % (newdoc, olddoc)
         return newdoc
 
 
 def _is_deprecated(func):
-    """Helper to check if func is wraped by our deprecated decorator"""
+    """Helper to check if func is wrapped by our deprecated decorator"""
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []

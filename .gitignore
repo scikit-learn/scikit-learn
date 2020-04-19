@@ -39,6 +39,7 @@ doc/samples
 *.prof
 .tox/
 .coverage
+pip-wheel-metadata
 
 lfw_preprocessed/
 nips2010_pdf/

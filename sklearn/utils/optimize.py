@@ -182,7 +182,7 @@ def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        if np.max(absgrad) < tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)
@@ -239,7 +239,7 @@ def _check_optimize_result(solver, result, max_iter=None,
                 "Increase the number of iterations (max_iter) "
                 "or scale the data as shown in:\n"
                 "    https://scikit-learn.org/stable/modules/"
-                "preprocessing.html."
+                "preprocessing.html"
             ).format(solver, result.status, result.message.decode("latin1"))
             if extra_warning_msg is not None:
                 warning_msg += "\n" + extra_warning_msg
