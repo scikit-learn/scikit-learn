@@ -1628,100 +1628,6 @@ def test_permutation_test_score_pandas():
         permutation_test_score(clf, X_df, y_ser)
 
 
-def test_fit_and_score_verbose():
-    # Test the _fit_and_score helper
-    estimator = SVC(kernel="rbf", random_state=42)
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    cv = GroupShuffleSplit(n_splits=5, random_state=42)
-    scorer = make_scorer(precision_score, average='micro')
-    groups = y.copy()
-    np.random.RandomState(42).shuffle(groups)
-
-    old_stdout = sys.stdout
-
-    try:
-        verbose_output_map = {
-                1: (),  # verbose level 1 should not produce any output
-                2: ("[CV] START {p}", "[CV] ", "{p}total time=   0.0s"),
-                3: ("[CV{s}] START {p}", "[CV{s}] ",
-                    "{p}total time=   0.0s"),
-                10: ("[CV{s}] START {p}", "[CV{s}] ",
-                     "{p}total time=   0.0s")
-        }
-
-        # The prefixing status string based on the split_progress and
-        # param_progress values
-        status_map = {(None, None): "",
-                      (None, (1, 2)): "; 2/2",
-                      ((1, 2), None): " 2/2",
-                      ((1, 2), (2, 3)): " 2/2; 3/3"}
-
-        train, test = next(cv.split(X, y, groups))
-
-        for verbose, expected_template in verbose_output_map.items():
-            for (split_progress, param_progress), status in status_map.items():
-                # only split_progress for verbose < 10
-                if verbose < 10:
-                    status = status.split(";")[0].strip(";")
-
-                for params in (None, {}, {'C': 0.01},
-                               {'kernel': 'rbf', 'C': 0.001}):
-                    # Flush it for each run; No need to close(). Will be gc-ed
-                    sys.stdout = StringIO()
-                    if params == {'C': 0.01}:
-                        p_msg = "C=0.01"
-                    elif params == {'kernel': 'rbf', 'C': 0.001}:
-                        p_msg = "C=0.001, kernel='rbf'"
-                    else:
-                        p_msg = ""
-
-                    _fit_and_score(estimator, X, y, scorer, train, test,
-                                   verbose, parameters=params, fit_params=None,
-                                   return_train_score=False,
-                                   return_parameters=False,
-                                   return_n_test_samples=False,
-                                   return_times=False, error_score='raise',
-                                   split_progress=split_progress,
-                                   param_progress=param_progress)
-
-                    out = sys.stdout.getvalue().splitlines()
-                    if verbose == 1:  # No output from _fit_and_score
-                        assert out == []
-                        continue
-
-                    # Check if the verbose output matches correctly
-                    # First line (the one with "Started")
-                    assert out[0].startswith(expected_template[0].format(
-                        p=p_msg, s=status))
-
-                    # Check the left part and right part of 2nd line
-                    left, right = out[1].split("END ")
-                    left, right = left, right.strip('. ')
-
-                    assert left.startswith(expected_template[1].format(
-                        s=status))
-
-                    # Params displayed at the end should have
-                    # a separating colon
-                    p_msg += '; ' if p_msg else ''
-                    assert right.startswith(expected_template[2].format(
-                        p=p_msg))
-    except Exception:
-        sys.stdout = old_stdout  # So we can simply do print below
-        # To help debug changes to verbose. Otherwise it's difficult to trace
-        print("verbose=%d; params=%s; split_progress=%s; param_progress=%s"
-              % (verbose, params, split_progress, param_progress))
-        print("Verbose output received:\n%s" % "\n".join(out))
-        print("Expected verbose output:\n'%s'\n'%sEND <...>%s'"
-              % (expected_template[0].format(p=p_msg, s=status),
-                 expected_template[1].format(s=status),
-                 expected_template[2].format(p=p_msg)))
-        raise
-    finally:
-        sys.stdout = old_stdout
-
-
 def test_fit_and_score_failing():
     # Create a failing classifier to deliberately fail
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
@@ -1792,6 +1698,41 @@ def test_fit_and_score_working():
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
     assert result[-1] == fit_and_score_kwargs['parameters']
+
+
+def three_params_scorer(i, j, k):
+    return 3.4213
+
+
+@pytest.mark.parametrize(
+    "scorer, verbose, split_prg, param_prg, expected", [
+     (three_params_scorer, 2, (1, 3), (0, 1),
+      "[CV] END ...................................................."
+      " total time=   0.0s"),
+     ({'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3, (1, 3),
+      (0, 1),
+      "[CV 2/3] END ............ sc1: (test=3.421) sc2: (test=3.421)"
+      " total time=   0.0s"),
+     ({'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10, (1, 3),
+      (0, 1),
+      "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
+      " total time=   0.0s")
+    ])
+def test_fit_and_score_verbosity(capsys, scorer, verbose, split_prg,
+                                 param_prg, expected):
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+    train, test = next(ShuffleSplit().split(X))
+
+    # test print without train score
+    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
+    fit_and_score_kwargs = {'return_train_score': False,
+                            'split_progress': split_prg,
+                            'param_progress': param_prg}
+    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+    out, _ = capsys.readouterr()
+    print(out)
+    assert out.split('\n')[1] == expected
 
 
 def test_score():
