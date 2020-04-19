@@ -1,3 +1,36 @@
+"""Inspired by https://github.com/pandas-dev/pydata-sphinx-theme
+
+BSD 3-Clause License
+
+Copyright (c) 2018, pandas
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 import docutils
 
 
@@ -26,8 +59,8 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
         # "collapse=True" collapses sub-pages of non-active TOC pages.
         # maxdepth controls how many TOC levels are returned
         toctree = TocTree(app.env).get_toctree_for(
-            pagename, app.builder, collapse=collapse, maxdepth=maxdepth, **kwargs
-        )
+            pagename, app.builder, collapse=collapse, maxdepth=maxdepth,
+            **kwargs)
         # If no toctree is defined (AKA a single-page site), skip this
         if toctree is None:
             return []
@@ -47,18 +80,7 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
 
         return nav
 
-    def get_page_toc_object():
-        """Return a list of within-page TOC links that can be accessed from Jinja."""
-        self_toc = TocTree(app.env).get_toc_for(pagename, app.builder)
-
-        try:
-            nav = docutils_node_to_jinja(self_toc.children[0])
-            return nav
-        except:
-            return {}
-
     context["get_nav_object"] = get_nav_object
-    context["get_page_toc_object"] = get_page_toc_object
 
 
 def docutils_node_to_jinja(list_item, only_pages=False):
