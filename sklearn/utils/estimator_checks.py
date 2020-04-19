@@ -342,6 +342,9 @@ def _expected_to_fail(estimator, check):
         except Exception:
             return False
 
+    if not hasattr(estimator, "_get_tags"):
+        return False
+
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
 
