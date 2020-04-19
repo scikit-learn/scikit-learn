@@ -8,6 +8,7 @@ import numpy as np
 
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
@@ -79,11 +80,10 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     verbose : int
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used during dictionary learning. Pass an int for reproducible results
+        across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     normalize_components : 'deprecated'
         This parameter does not have any effect. The components are always
@@ -132,7 +132,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     MiniBatchSparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
                  U_init=None, V_init=None, verbose=False, random_state=None,
                  normalize_components='deprecated'):
@@ -166,7 +167,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
 
         _check_normalize_components(
             self.normalize_components, self.__class__.__name__
@@ -231,6 +232,14 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         return U
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                "check_methods_subset_invariance":
+                "fails for the transform method"
+            }
+        }
+
 
 class MiniBatchSparsePCA(SparsePCA):
     """Mini-batch Sparse Principal Components Analysis
@@ -282,11 +291,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for random shuffling when ``shuffle`` is set to ``True``,
+        during online dictionary learning. Pass an int for reproducible results
+        across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     normalize_components : 'deprecated'
         This parameter does not have any effect. The components are always
@@ -333,7 +342,8 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
                  normalize_components='deprecated'):
@@ -364,7 +374,7 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
 
         _check_normalize_components(
             self.normalize_components, self.__class__.__name__

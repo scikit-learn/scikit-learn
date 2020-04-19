@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -28,7 +29,6 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
@@ -203,6 +203,7 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
+        X, y = self._validate_data(X, y)
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
@@ -472,7 +473,7 @@ class _BaseDiscreteNB(_BaseNB):
         return check_array(X, accept_sparse='csr')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse='csr')
+        return self._validate_data(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -569,8 +570,9 @@ class _BaseDiscreteNB(_BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -621,9 +623,9 @@ class _BaseDiscreteNB(_BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -1145,24 +1147,19 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes,
                                    sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_X(self, X):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X = check_array(X, y, dtype='int', accept_sparse=False,
-        #                 force_all_finite=True)
-        X = check_array(X, accept_sparse=False, force_all_finite=True)
-        X = check_array(X, dtype='int')
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        X = check_array(X, dtype='int', accept_sparse=False,
+                        force_all_finite=True)
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
-        # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # X, y = check_array(X, y, dtype='int', accept_sparse=False,
-        #                    force_all_finite=True)
-        X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
-        X, y = check_X_y(X, y, dtype='int')
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
+                                   force_all_finite=True)
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):
@@ -1211,7 +1208,7 @@ class CategoricalNB(_BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
-                             .format(self.n_features_, X.shape[1]))
+                             % (self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             indices = X[:, i]

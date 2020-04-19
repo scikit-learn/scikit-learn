@@ -1,27 +1,36 @@
+---
+name: Bug report
+about: Create a report to help us reproduce and correct the bug
+title: ''
+labels: 'Bug: triage'
+assignees: ''
+
+---
+
 <!--
-If your issue is a usage question, submit it here instead:
-- StackOverflow with the scikit-learn tag: https://stackoverflow.com/questions/tagged/scikit-learn
-- Mailing List: https://mail.python.org/mailman/listinfo/scikit-learn
-For more information, see User Questions: http://scikit-learn.org/stable/support.html#user-questions
+Before submitting a bug, please make sure the issue hasn't been already
+addressed by searching through the past issues.
 -->
 
-<!-- Instructions For Filing a Bug: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md#filing-bugs -->
-
-#### Description
-<!-- Example: Joblib Error thrown when calling fit on LatentDirichletAllocation with evaluate_every > 0-->
+#### Describe the bug
+<!--
+A clear and concise description of what the bug is.
+-->
 
 #### Steps/Code to Reproduce
 <!--
+Please add a minimal example that we can reproduce the error by running the
+code. Be as succinct as possible, do not depend on external data. In short, we
+are going to copy-paste your code and we expect to get the same
+result as you.
+
 Example:
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
-
 docs = ["Help I have a bug" for i in range(1000)]
-
 vectorizer = CountVectorizer(input=docs, analyzer='word')
 lda_features = vectorizer.fit_transform(docs)
-
 lda_model = LatentDirichletAllocation(
     n_topics=10,
     learning_method='online',
@@ -33,6 +42,10 @@ model = lda_model.fit(lda_features)
 If the code is too long, feel free to put it in a public gist and link
 it in the issue: https://gist.github.com
 -->
+
+```
+Sample code to reproduce the problem
+```
 
 #### Expected Results
 <!-- Example: No error is thrown. Please paste or describe the expected results.-->
@@ -51,6 +64,7 @@ import sys; print("Python", sys.version)
 import numpy; print("NumPy", numpy.__version__)
 import scipy; print("SciPy", scipy.__version__)
 import sklearn; print("Scikit-Learn", sklearn.__version__)
+import imblearn; print("Imbalanced-Learn", imblearn.__version__)
 -->
 
 
