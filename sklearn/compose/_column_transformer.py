@@ -315,19 +315,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 self.remainder)
 
         # Make it possible to check for reordered named columns on transform
-        if (hasattr(X, 'columns') and
-                any(_determine_key_type(cols) == 'str'
-                    for cols in self._columns)):
+        self._has_str_cols = any(_determine_key_type(cols) == 'str'
+                                 for cols in self._columns)
+        if hasattr(X, 'columns'):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
         cols = []
         for columns in self._columns:
             cols.extend(_get_column_indices(X, columns))
-        remaining_idx = list(set(range(self._n_features)) - set(cols))
-        remaining_idx = sorted(remaining_idx) or None
 
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+        remaining_idx = sorted(set(range(self._n_features)) - set(cols))
+        self._remainder = ('remainder', self.remainder, remaining_idx or None)
 
     @property
     def named_transformers_(self):
@@ -356,11 +355,18 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if trans == 'drop' or (
                     hasattr(column, '__len__') and not len(column)):
                 continue
-            elif trans == 'passthrough':
-                raise NotImplementedError(
-                    "get_feature_names is not yet supported when using "
-                    "a 'passthrough' transformer.")
-            elif not hasattr(trans, 'get_feature_names'):
+            if trans == 'passthrough':
+                if hasattr(self, '_df_columns'):
+                    if ((not isinstance(column, slice))
+                            and all(isinstance(col, str) for col in column)):
+                        feature_names.extend(column)
+                    else:
+                        feature_names.extend(self._df_columns[column])
+                else:
+                    indices = np.arange(self._n_features)
+                    feature_names.extend(['x%d' % i for i in indices[column]])
+                continue
+            if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
@@ -582,6 +588,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # name order and count. See #14237 for details.
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
+                self._has_str_cols and
                 hasattr(X, 'columns')):
             n_cols_fit = len(self._df_columns)
             n_cols_transform = len(X.columns)

@@ -105,6 +105,11 @@ Changelog
   a column name that is not unique in the dataframe. :pr:`16431` by
   `Thomas Fan`_.
 
+- |Enhancement| :class:`compose.ColumnTransformer` method ``get_feature_names``
+  now supports `'passthrough'` columns, with the feature name being either
+  the column name for a dataframe, or `'xi'` for column index `i`.
+  :pr:`14048` by :user:`Lewis Ball <lrjball>`.
+
 :mod:`sklearn.datasets`
 .......................
 
