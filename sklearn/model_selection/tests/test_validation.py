@@ -1794,32 +1794,6 @@ def test_fit_and_score_working():
     assert result[-1] == fit_and_score_kwargs['parameters']
 
 
-def three_params_scorer(i, j, k):
-    return 3.4213
-
-
-@pytest.mark.parametrize("return_train_score, scorer, expected", [
-    (False, three_params_scorer,
-     "[CV] .................................... , score=3.421, total=   0.0s"),
-    (True, three_params_scorer,
-     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
-    (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
-     "[CV]  , sc1=(train=3.421, test=3.421)"
-     ", sc2=(train=3.421, test=3.421), total=   0.0s")
-])
-def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
-    X, y = make_classification(n_samples=30, random_state=0)
-    clf = SVC(kernel="linear", random_state=0)
-    train, test = next(ShuffleSplit().split(X))
-
-    # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
-    fit_and_score_kwargs = {'return_train_score': return_train_score}
-    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
-    out, _ = capsys.readouterr()
-    assert out.split('\n')[1] == expected
-
-
 def test_score():
     error_message = "scoring must return a number, got None"
 
