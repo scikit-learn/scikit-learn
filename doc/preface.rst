@@ -1,9 +1,8 @@
 .. This helps define the TOC ordering for "about us" sections. Particularly
    useful for PDF output as this section is not linked from elsewhere.
 
-.. Places global toc into the sidebar
-
-:globalsidebartoc: True
+.. Places parent toc into the sidebar
+:parenttoc: True
 
 .. _preface_menu:
 
@@ -13,8 +12,6 @@
 =======================
 Welcome to scikit-learn
 =======================
-
-|
 
 .. toctree::
     :maxdepth: 2
@@ -29,4 +26,3 @@ Welcome to scikit-learn
     roadmap
     governance
 
-|

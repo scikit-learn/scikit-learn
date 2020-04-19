@@ -1,3 +1,6 @@
+.. Places parent toc into the sidebar
+:parenttoc: True
+
 ============================
 Computing with scikit-learn
 ============================

@@ -1,9 +1,8 @@
 .. include:: includes/big_toc_css.rst
 .. include:: tune_toc.rst
 
-.. Places global toc into the sidebar
-
-:globalsidebartoc: True
+.. Places parent toc into the sidebar
+:parenttoc: True
 
 =================
 Table Of Contents

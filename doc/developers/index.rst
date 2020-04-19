@@ -1,6 +1,5 @@
-.. Places global toc into the sidebar
-
-:globalsidebartoc: True
+.. Places parent toc into the sidebar
+:parenttoc: True
 
 .. _developers_guide:
 
