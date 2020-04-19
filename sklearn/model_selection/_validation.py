@@ -491,7 +491,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The fitted estimator
     """
     progress_msg = ""
-    print(type(split_progress))
     if verbose > 2:
         if split_progress is not None:
             progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
@@ -575,9 +574,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 for scorer_name in sorted(test_scores):
                     result_msg += f" {scorer_name}: ("
                     if return_train_score:
-                        result_msg += f"train={train_scores[scorer_name]}.3f, "
-                    result_msg += "test={test_scores[scorer_name]}.3f)"
-        result_msg += " total time={logger.short_format_time(total_time)}"
+                        result_msg += f"train={train_scores[scorer_name]:.3f}, "
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+        result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
         end_msg += "." * (80 - len(end_msg) - len(result_msg))

@@ -704,7 +704,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        train=train, test=test,
                                                        parameters=parameters,
                                                        split_progress=(
-                                                           split_idx, n_splits),
+                                                           split_idx,
+                                                           n_splits),
                                                        param_progress=(
                                                            cand_idx,
                                                            n_candidates),
