@@ -373,6 +373,13 @@ Changelog
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
+  deciles lines as attributes so they can be hidden or customized. :pr:`15785`
+  by `Nicolas Hug`_
+
 :mod:`sklearn.preprocessing`
 ............................
 

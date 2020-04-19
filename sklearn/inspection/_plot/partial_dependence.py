@@ -391,21 +391,36 @@ class PartialDependenceDisplay:
     axes_ : ndarray of matplotlib Axes
         If `ax` is an axes or None, `axes_[i, j]` is the axes on the i-th row
         and j-th column. If `ax` is a list of axes, `axes_[i]` is the i-th item
-        in `ax`. Elements that are None corresponds to a nonexisting axes in
+        in `ax`. Elements that are None correspond to a nonexisting axes in
         that position.
 
     lines_ : ndarray of matplotlib Artists
-        If `ax` is an axes or None, `line_[i, j]` is the partial dependence
+        If `ax` is an axes or None, `lines_[i, j]` is the partial dependence
         curve on the i-th row and j-th column. If `ax` is a list of axes,
         `lines_[i]` is the partial dependence curve corresponding to the i-th
-        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a line plot.
+
+    deciles_vlines_ : ndarray of matplotlib LineCollection
+        If `ax` is an axes or None, `vlines_[i, j]` is the line collection
+        representing the x axis deciles of the i-th row and j-th column. If
+        `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
+        `ax`. Elements that are None correspond to a nonexisting axes or an
+        axes that does not include a PDP plot.
+        .. versionadded:: 0.23
+    deciles_hlines_ : ndarray of matplotlib LineCollection
+        If `ax` is an axes or None, `vlines_[i, j]` is the line collection
+        representing the y axis deciles of the i-th row and j-th column. If
+        `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
+        `ax`. Elements that are None correspond to a nonexisting axes or an
+        axes that does not include a 2-way plot.
+        .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
         plot on the i-th row and j-th column. If `ax` is a list of axes,
         `contours_[i]` is the partial dependence plot corresponding to the i-th
-        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a contour plot.
 
     figure_ : matplotlib Figure
@@ -490,8 +505,6 @@ class PartialDependenceDisplay:
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
-            self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
-            self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
 
             axes_ravel = self.axes_.ravel()
 
@@ -514,14 +527,20 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
-            self.lines_ = np.empty_like(ax, dtype=np.object)
-            self.contours_ = np.empty_like(ax, dtype=np.object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
+
+        self.lines_ = np.empty_like(self.axes_, dtype=np.object)
+        self.contours_ = np.empty_like(self.axes_, dtype=np.object)
+        self.deciles_vlines_ = np.empty_like(self.axes_, dtype=np.object)
+        self.deciles_hlines_ = np.empty_like(self.axes_, dtype=np.object)
+        # Create 1d views of these 2d arrays for easy indexing
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
+        vlines_ravel = self.deciles_vlines_.ravel(order='C')
+        hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
         for i, axi, fx, (avg_preds, values) in zip(count(),
                                                    self.axes_.ravel(),
@@ -547,8 +566,8 @@ class PartialDependenceDisplay:
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
-                       color='k')
+            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
+                                         transform=trans, color='k')
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set
@@ -566,8 +585,8 @@ class PartialDependenceDisplay:
                 trans = transforms.blended_transform_factory(axi.transAxes,
                                                              axi.transData)
                 xlim = axi.get_xlim()
-                axi.hlines(self.deciles[fx[1]], 0, 0.05, transform=trans,
-                           color='k')
+                hlines_ravel[i] = axi.hlines(self.deciles[fx[1]], 0, 0.05,
+                                             transform=trans, color='k')
                 # hline erases xlim
                 axi.set_ylabel(self.feature_names[fx[1]])
                 axi.set_xlim(xlim)
