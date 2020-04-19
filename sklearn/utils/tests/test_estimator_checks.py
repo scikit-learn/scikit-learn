@@ -10,6 +10,7 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
+                                    assert_warns_message,
                                     ignore_warnings,
                                     assert_warns, assert_raises,
                                     SkipTest)
@@ -37,6 +38,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
+from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -590,6 +592,42 @@ def test_check_estimator_required_parameters_skip():
                                   r"which requires parameters "
                                   r"\['special_parameter'\]",
                                   check_estimator, MyEstimator)
+
+
+class LRXFailTags(LogisticRegression):
+    def _more_tags(self):
+        return {"_xfail_checks": {
+            "check_complex_data": "This is a bad check"}
+        }
+
+
+def test_check_estimator_xfail_tag_raises():
+    # When a _xfail_checks check passes, raise an error stating that the test
+    # passes and can be removed from the tag
+
+    assert_raises_regex(AssertionError,
+                        "check_complex_data passed, it can "
+                        "be removed from the _xfail_check tag",
+                        check_estimator, LRXFailTags)
+
+
+class LRXDoesNotRaise(LRXFailTags):
+    def fit(self, X, y):
+        # do not raise error for complex check
+        try:
+            return super().fit(X, y)
+        except ValueError as e:
+            if "Complex data not supported" not in str(e):
+                raise
+
+        return self
+
+
+def test_check_estimator_xfail_tag_skips():
+    # skips check_estimators_fit_returns_self based on _xfail_checks
+
+    assert_warns_message(SkipTestWarning, "This is a bad check",
+                         check_estimator, LRXDoesNotRaise)
 
 
 def run_tests_without_pytest():

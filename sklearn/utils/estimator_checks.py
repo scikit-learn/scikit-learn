@@ -6,6 +6,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from functools import wraps
 from itertools import chain
 from inspect import signature
 
@@ -331,42 +332,94 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _generate_instance_checks(name, estimator):
+def _expected_to_fail(estimator, check):
+    """Return reason if check should fail based on _xfail_checks tag."""
+    if isinstance(estimator, type):
+        # try to construct estimator instance, if it is unable to then
+        # return then ignore xfail tag
+        try:
+            estimator = _construct_instance(estimator)
+        except Exception:
+            return False
+
+    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    check_name = _set_check_estimator_ids(check)
+
+    if check_name in xfail_checks:
+        return xfail_checks[check_name]
+    return ""
+
+
+def _check_warns_on_fail(check, reason):
+    """Convert assertion errors to warnings. If the check does not fail,
+    assert stating that `xfail_check` should be removed now."""
+    @wraps(check)
+    def wrapped(*args, **kwargs):
+        try:
+            check(*args, **kwargs)
+        except AssertionError:
+            warnings.warn(reason, SkipTestWarning)
+            return
+
+        # did not fail
+        check_name = _set_check_estimator_ids(check)
+        raise AssertionError(f"{check_name} passed, it can be removed "
+                             f"from the _xfail_check tag")
+    return wrapped
+
+
+def _generate_instance_checks(name, estimator, warns_on_fail):
     """Generate instance checks."""
-    yield from ((estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator))
+    instance_checks = ((estimator, partial(check, name))
+                       for check in _yield_all_checks(name, estimator))
+    if not warns_on_fail:
+        yield from instance_checks
+    else:
+        for estimator, check in instance_checks:
+            reason = _expected_to_fail(estimator, check)
+            if reason:
+                yield estimator, _check_warns_on_fail(check, reason)
+            else:
+                yield estimator, check
 
 
-def _generate_class_checks(Estimator):
+def _generate_class_checks(Estimator, warns_on_fail):
     """Generate class checks."""
     name = Estimator.__name__
-    yield (Estimator, partial(check_parameters_default_constructible, name))
+    check_params = partial(check_parameters_default_constructible, name)
+    reason = _expected_to_fail(Estimator, check_params)
+
+    if reason and warns_on_fail:
+        yield Estimator, _check_warns_on_fail(check_params)
+    else:
+        yield Estimator, check_params
+
     estimator = _construct_instance(Estimator)
-    yield from _generate_instance_checks(name, estimator)
+    yield from _generate_instance_checks(name, estimator, warns_on_fail)
+
+
+def _generate_checks(Estimator, warns_on_fail):
+    if isinstance(Estimator, type):
+        # got a class
+        checks_generator = _generate_class_checks(Estimator, warns_on_fail)
+    else:
+        # got an instance
+        estimator = Estimator
+        name = type(estimator).__name__
+        checks_generator = _generate_instance_checks(name, estimator,
+                                                     warns_on_fail)
+    return checks_generator
 
 
 def _mark_xfail_checks(estimator, check, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
-    if isinstance(estimator, type):
-        # try to construct estimator instance, if it is unable to then
-        # return the estimator class, ignoring the tag
-        try:
-            estimator = _construct_instance(estimator)
-        except Exception:
-            return estimator, check
-
-    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
-    check_name = _set_check_estimator_ids(check)
-
-    if check_name not in xfail_checks:
-        # check isn't part of the xfail_checks tags, just return it
-        return estimator, check
-    else:
-        # check is in the tag, mark it as xfail for pytest
-        reason = xfail_checks[check_name]
+    reason = _expected_to_fail(estimator, check)
+    if reason:
         return pytest.param(estimator, check,
                             marks=pytest.mark.xfail(reason=reason))
+    else:
+        return estimator, check
 
 
 def parametrize_with_checks(estimators):
@@ -400,8 +453,10 @@ def parametrize_with_checks(estimators):
     """
     import pytest
 
+    # sets warns_on_fail to False because `_mark_xfail_checks` will mark the
+    # checks for pytest
     checks_generator = chain.from_iterable(
-        check_estimator(estimator, generate_only=True)
+        _generate_checks(estimator, warns_on_fail=False)
         for estimator in estimators)
 
     checks_with_marks = (
@@ -454,15 +509,7 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
-    if isinstance(Estimator, type):
-        # got a class
-        checks_generator = _generate_class_checks(Estimator)
-    else:
-        # got an instance
-        estimator = Estimator
-        name = type(estimator).__name__
-        checks_generator = _generate_instance_checks(name, estimator)
-
+    checks_generator = _generate_checks(Estimator, warns_on_fail=True)
     if generate_only:
         return checks_generator
 
