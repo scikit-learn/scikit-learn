@@ -491,23 +491,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The fitted estimator
     """
     progress_msg = ""
+    print(type(split_progress))
     if verbose > 2:
         if split_progress is not None:
-            progress_msg = " %d/%d" % (split_progress[0]+1,
-                                       split_progress[1])
+            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
         if param_progress and verbose > 9:
-            progress_msg += "; %d/%d" % (param_progress[0]+1,
-                                         param_progress[1])
+            progress_msg += f"; {param_progress[0]+1}/{param_progress[1]}"
 
     if verbose > 1:
         if parameters is None:
             params_msg = ''
         else:
             sorted_keys = sorted(parameters)  # Ensure deterministic o/p
-            params_msg = (', '.join('%s=%r' % (k, parameters[k])
+            params_msg = (', '.join(f'{k}={parameters[k]}'
                                     for k in sorted_keys))
-        start_msg = "[CV%s] START %s" % (progress_msg, params_msg)
-        print("%s%s" % (start_msg, (80 - len(start_msg)) * '.'))
+        start_msg = f"[CV{progress_msg}] START {params_msg}"
+        print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
@@ -569,17 +568,16 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "[CV%s] END " % progress_msg
+        end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
         if verbose > 2:
             if isinstance(test_scores, dict):
                 for scorer_name in sorted(test_scores):
-                    result_msg += " %s: (" % scorer_name
+                    result_msg += f" {scorer_name}: ("
                     if return_train_score:
-                        result_msg += "train=%.3f, " % \
-                                       train_scores[scorer_name]
-                    result_msg += "test=%.3f)" % test_scores[scorer_name]
-        result_msg += " total time=%s" % logger.short_format_time(total_time)
+                        result_msg += f"train={train_scores[scorer_name]}.3f, "
+                    result_msg += "test={test_scores[scorer_name]}.3f)"
+        result_msg += " total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
         end_msg += "." * (80 - len(end_msg) - len(result_msg))

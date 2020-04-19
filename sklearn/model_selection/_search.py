@@ -674,8 +674,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         base_estimator = clone(self.estimator)
 
-        # We don't pass verbose to Parallel, since _fit_and_score is detailed
-        # enough
         parallel = Parallel(n_jobs=self.n_jobs,
                             pre_dispatch=self.pre_dispatch)
 
@@ -706,13 +704,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        train=train, test=test,
                                                        parameters=parameters,
                                                        split_progress=(
-                                                           split_i, n_splits),
+                                                           split_idx, n_splits),
                                                        param_progress=(
-                                                           param_i,
+                                                           cand_idx,
                                                            n_candidates),
                                                        **fit_and_score_kwargs)
-                               for (param_i, parameters),
-                                   (split_i, (train, test)) in product(
+                               for (cand_idx, parameters),
+                                   (split_idx, (train, test)) in product(
                                    enumerate(candidate_params),
                                    enumerate(cv.split(X, y, groups))))
 
@@ -804,10 +802,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             array = np.array(array, dtype=np.float64).reshape(n_candidates,
                                                               n_splits)
             if splits:
-                for split_i in range(n_splits):
+                for split_idx in range(n_splits):
                     # Uses closure to alter the results
                     results["split%d_%s"
-                            % (split_i, key_name)] = array[:, split_i]
+                            % (split_idx, key_name)] = array[:, split_idx]
 
             array_means = np.average(array, axis=1, weights=weights)
             results['mean_%s' % key_name] = array_means
@@ -830,12 +828,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                             np.empty(n_candidates,),
                                             mask=True,
                                             dtype=object))
-        for cand_i, params in enumerate(candidate_params):
+        for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
                 # `"param_%s" % name` at the first occurrence of `name`.
                 # Setting the value at an index also unmasks that index
-                param_results["param_%s" % name][cand_i] = value
+                param_results["param_%s" % name][cand_idx] = value
 
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
