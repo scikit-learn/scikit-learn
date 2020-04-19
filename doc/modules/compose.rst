@@ -567,8 +567,8 @@ many estimators. An example of the HTML output can be seen below.
 As an alternative, the HTML can be written to a file using the `_repr_html_`
 method::
 
-        with open('my_estimator.html', 'w') as f:
-            f.write(clf._repr_html_())
+    with open('my_estimator.html', 'w') as f:
+        f.write(clf._repr_html_())
 
 .. topic:: Examples:
 

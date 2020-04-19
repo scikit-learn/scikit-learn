@@ -105,7 +105,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         return self.estimators_[0].n_features_in_
 
-    def _sk_repr_html(self):
+    def _sk_visual_block_(self):
         names, estimators = zip(*self.estimators)
         return _VisualBlock('parallel', estimators, names=names)
 

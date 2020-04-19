@@ -620,7 +620,7 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
-    def _sk_repr_html(self):
+    def _sk_visual_block_(self):
         _, estimators = zip(*self.steps)
 
         def _get_name(name, est):
@@ -1012,7 +1012,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
-    def _sk_repr_html(self):
+    def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock('parallel', transformers, names=names)
 

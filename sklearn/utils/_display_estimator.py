@@ -47,7 +47,7 @@ class _VisualBlock:
         self.names = names
         self.name_details = name_details
 
-    def _sk_repr_html(self):
+    def _sk_visual_block_(self):
         return self
 
 
@@ -77,7 +77,7 @@ def _get_visual_block(estimator):
     """Generate information about how to display an estimator.
     """
     with suppress(AttributeError):
-        return estimator._sk_repr_html()
+        return estimator._sk_visual_block_()
 
     if isinstance(estimator, str):
         return _VisualBlock('single', estimator,

@@ -631,7 +631,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
 
-    def _sk_repr_html(self):
+    def _sk_visual_block_(self):
         names, transformers, name_details = zip(*self.transformers)
         return _VisualBlock('parallel', transformers,
                             names=names, name_details=name_details)
