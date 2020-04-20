@@ -1390,7 +1390,8 @@ list of names and estimators::
   >>> from sklearn.svm import SVR
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
-  ...               ('svr', SVR())]
+  ...               ('knr', KNeighborsRegressor(n_neighbors=20,
+                                                metric='euclidean'))]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1405,10 +1406,8 @@ or :class:`StackingRegressor`, respectively::
 To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
-  >>> from sklearn.datasets import fetch_california_housing
-  >>> X, y = fetch_california_housing(return_X_y=True)
-  >>> X = X[:500, :]
-  >>> y = y[:500]
+  >>> from sklearn.datasets import load_diabetes
+  >>> X, y = load_diabetes(return_X_y=True)
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)
@@ -1469,7 +1468,8 @@ computationally expensive.
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
-    ...                 ('svr', SVR())],
+    ...                 ('svr', KNeighborsRegressor(n_neighbors=20,
+                                                    metric='euclidean'))],
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
