@@ -518,9 +518,16 @@ _skip_test (default=False)
     *very good* reason.
 
 _xfail_checks (default=False)
-    dictionary ``{check_name : reason}`` of common checks to mark as a
-    known failure, with the associated reason. Don't use this unless you have a
-    *very good* reason.
+    dictionary ``{check_name: reason}`` of common checks that will be marked
+    as `XFAIL` for pytest, when using
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. This tag
+    currently has no effect on
+    :func:`~sklearn.utils.estimator_checks.check_estimator`.
+    Don't use this unless there is a *very good* reason for your estimator
+    not to pass the check.
+    Also note that the usage of this tag is highly subject to change because
+    we are trying to make it more flexible: be prepared for breaking changes
+    in the future.
 
 stateless (default=False)
     whether the estimator needs access to data for fitting. Even though an
