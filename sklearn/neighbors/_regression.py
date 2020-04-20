@@ -77,10 +77,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of
+        :class:`sklearn.neighbors.DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, default=None
@@ -89,7 +90,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        ``-1`` means using all processors. See :term:`n_jobs`
         for more details.
         Doesn't affect :meth:`fit` method.
 
