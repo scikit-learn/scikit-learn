@@ -372,17 +372,16 @@ def _check_warns_on_fail(estimator, check, xfail_checks_tag):
 
 def _generate_instance_checks(name, estimator):
     """Generate instance checks."""
-    return ((estimator, partial(check, name))
-            for check in _yield_all_checks(name, estimator))
+    yield from ((estimator, partial(check, name))
+                for check in _yield_all_checks(name, estimator))
 
 
 def _generate_class_checks(Estimator):
     """Generate class checks."""
     name = Estimator.__name__
-    yield Estimator, partial(check_parameters_default_constructible, name)
+    yield (Estimator, partial(check_parameters_default_constructible, name))
     estimator = _construct_instance(Estimator)
     yield from _generate_instance_checks(name, estimator)
-
 
 def _generate_checks(Estimator):
     if isinstance(Estimator, type):
