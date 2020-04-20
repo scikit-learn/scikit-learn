@@ -176,8 +176,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     @property
     def fit_predict(self):
-        """"Fits the model to the training set X and returns the labels.
+        """Fits the model to the training set X and returns the labels.
 
+        **Only available for novelty detection (when novelty is set to True).**
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
 
@@ -207,7 +208,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         return self._fit_predict
 
     def _fit_predict(self, X, y=None):
-        """"Fits the model to the training set X and returns the labels.
+        """Fits the model to the training set X and returns the labels.
 
         Label is 1 for an inlier and -1 for an outlier according to the LOF
         score and the contamination parameter.
@@ -286,9 +287,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def predict(self):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
+        **Only available for novelty detection (when novelty is set to True).**
         This method allows to generalize prediction to *new observations* (not
-        in the training set). Only available for novelty detection (when
-        novelty is set to True).
+        in the training set).
 
         Parameters
         ----------
@@ -345,8 +346,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Bigger is better, i.e. large values correspond to inliers.
 
+        **Only available for novelty detection (when novelty is set to True).**
         The shift offset allows a zero threshold for being an outlier.
-        Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -381,8 +382,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Bigger is better, i.e. large values correspond to inliers.
 
+        **Only available for novelty detection (when novelty is set to True).**
         The shift offset allows a zero threshold for being an outlier.
-        Only available for novelty detection (when novelty is set to True).
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -411,7 +412,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
-        Only available for novelty detection (when novelty is set to True).
+        **Only available for novelty detection (when novelty is set to True).**
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
@@ -447,7 +448,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
-        Only available for novelty detection (when novelty is set to True).
+        **Only available for novelty detection (when novelty is set to True).**
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it considers the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
