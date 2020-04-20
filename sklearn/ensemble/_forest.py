@@ -50,8 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel, delayed
 
-from ..base import (ClassifierMixin, RegressorMixin, MultiOutputMixin,
-                    TransformerMixin)
+from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -2079,7 +2078,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.ccp_alpha = ccp_alpha
 
 
-class RandomTreesEmbedding(TransformerMixin, BaseForest):
+class RandomTreesEmbedding(BaseForest):
     """
     An ensemble of totally random trees.
 

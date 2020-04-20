@@ -10,7 +10,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 import warnings
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
@@ -272,7 +272,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         return best_pos, best_stress
 
 
-class MDS(TransformerMixin, BaseEstimator):
+class MDS(BaseEstimator):
     """Multidimensional scaling
 
     Read more in the :ref:`User Guide <multidimensional_scaling>`.
