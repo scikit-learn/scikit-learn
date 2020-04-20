@@ -7,6 +7,7 @@ from ..metrics import check_scoring
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
@@ -37,7 +38,8 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     return scores
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
+@_deprecate_positional_args
+def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None):
     """Permutation importance for feature evaluation [BRE]_.
 
