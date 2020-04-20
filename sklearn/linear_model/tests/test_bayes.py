@@ -203,7 +203,8 @@ def test_toy_ard_object():
 
 
 @pytest.mark.parametrize('seed', range(100))
-def test_ard_accuracy_on_easy_problem(seed):
+@pytest.mark.parametrize('n_samples, n_features', ((10, 100), (100, 10)))
+def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
     X = np.random.RandomState(seed=seed).normal(size=(250, 3))
@@ -246,3 +247,28 @@ def test_return_std():
         m2.fit(X, y)
         y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
+
+
+@pytest.mark.parametrize('seed', range(10))
+def test_update_sigma(seed):
+    # make sure the two update_sigma() helpers are equivalent. The woodbury
+    # formula is used when n_samples < n_features, and the other one is used
+    # otherwise.
+
+    rng = np.random.RandomState(seed)
+
+    # set n_samples == n_features to avoid instability issues when inverting
+    # the matrices. Using the woodbury formula would be unstable when
+    # n_samples > n_features
+    n_samples = n_features = 10
+    X = rng.randn(n_samples, n_features)
+    alpha = 1
+    lmbda = np.arange(1, n_features + 1)
+    keep_lambda = np.array([True] * n_features)
+
+    reg = ARDRegression()
+
+    sigma = reg._update_sigma(X, alpha, lmbda, keep_lambda)
+    sigma_woodbury = reg._update_sigma_woodbury(X, alpha, lmbda, keep_lambda)
+
+    np.testing.assert_allclose(sigma, sigma_woodbury)
