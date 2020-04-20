@@ -3001,7 +3001,8 @@ def check_requires_y_none(name, estimator_orig):
 
     expected_err_msgs = (
         "requires y to be passed, but the target y is None",
-        "Expected array-like (array or non-string sequence), got None"
+        "Expected array-like (array or non-string sequence), got None",
+        "y should be a 1d array"
     )
 
     try:
