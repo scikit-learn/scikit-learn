@@ -17,7 +17,10 @@ jobs:
       displayName: Add conda to PATH
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
-    - bash: conda create --name flake8_env --yes flake8
+    - bash: |
+        conda create --name flake8_env --yes python=3.8
+        conda activate flake8_env
+        pip install flake8 mypy==0.770
       displayName: Install flake8
     - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
@@ -25,10 +28,20 @@ jobs:
           echo "Skipping linting"
           exit 0
         else
-          source activate flake8_env
+          conda activate flake8_env
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
+    - bash: |
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+          # skip linting
+          echo "Skipping linting"
+          exit 0
+        else
+          conda activate flake8_env
+          mypy sklearn/ --ignore-missing-imports
+        fi
+      displayName: Run mypy
     - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
