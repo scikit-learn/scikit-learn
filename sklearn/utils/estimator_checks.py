@@ -2988,8 +2988,6 @@ def check_requires_y_none(name, estimator_orig):
 
     estimator = clone(estimator_orig)
     set_random_state(estimator)
-    if 'warm_start' in estimator.get_params():
-        estimator.set_params(warm_start=False)
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
@@ -3010,4 +3008,4 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, FutureWarning)
