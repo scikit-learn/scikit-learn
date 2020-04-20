@@ -83,7 +83,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion,
                  splitter,
                  max_depth,
