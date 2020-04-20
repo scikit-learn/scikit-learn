@@ -596,13 +596,13 @@ class _MPLTreeExporter(_BaseTreeExporter):
             extents = []
             for ann in anns:
                 extents.append(ann.get_bbox_patch().get_window_extent())
-            #extents = [ann.get_bbox_patch().get_window_extent()
+            # extents = [ann.get_bbox_patch().get_window_extent()
             #           for ann in anns]
             max_width = max([extent.width for extent in extents])
             max_height = max([extent.height for extent in extents])
             size = anns[0].get_fontsize() * min(scale_x / max_width,
-            # width should be around scale_x in axis coordinates
                                                 scale_y / max_height)
+            # width should be around scale_x in axis coordinates
             for ann in anns:
                 ann.set_fontsize(size)
         if plot_decision_edges is True:
