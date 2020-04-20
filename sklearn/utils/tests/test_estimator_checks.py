@@ -605,10 +605,10 @@ def test_check_estimator_xfail_tag_raises():
     # When a _xfail_checks check passes, raise an error stating that the test
     # passes and can be removed from the tag
 
-    assert_raises_regex(AssertionError,
-                        "check_complex_data passed, it can "
-                        "be removed from the _xfail_check tag",
-                        check_estimator, LRXFailTags)
+    assert_warns_message(SkipTestWarning,
+                         "check_complex_data passed, it can "
+                         "be removed from the _xfail_check tag",
+                         check_estimator, LRXFailTags)
 
 
 class LRXDoesNotRaise(LRXFailTags):

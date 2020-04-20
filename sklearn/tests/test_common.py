@@ -31,7 +31,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
@@ -54,16 +53,6 @@ def test_estimator_cls_parameterize_with_checks():
     param_checks = parametrize_with_checks([LogisticRegression])
     # Using the generator does not raise
     list(param_checks.args[1])
-
-
-def test_mark_xfail_checks_with_unconsructable_estimator():
-    class MyEstimator:
-        def __init__(self):
-            raise ValueError("This is bad")
-
-    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
-    assert estimator == MyEstimator
-    assert check == 42
 
 
 @pytest.mark.parametrize(
