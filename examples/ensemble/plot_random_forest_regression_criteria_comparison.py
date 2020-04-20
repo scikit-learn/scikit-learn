@@ -145,7 +145,7 @@ def main(sim_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     runtime : float
         Runtime (in seconds).
     """
-    #print(sim_name, n_samples, criterion, n_dimensions, n_iter)
+    # print(sim_name, n_samples, criterion, n_dimensions, n_iter)
 
     # Unpack training and testing data
     X_train, y_train, X_test, y_test = sim_data
