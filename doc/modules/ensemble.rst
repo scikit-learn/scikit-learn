@@ -1387,7 +1387,7 @@ are stacked together in parallel on the input data. It should be given as a
 list of names and estimators::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
-  >>> from sklearn.svm import SVR
+  >>> from sklearn.neighbors import KNeighborsRegressor
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
   ...               ('knr', KNeighborsRegressor(n_neighbors=20,
@@ -1468,7 +1468,7 @@ computationally expensive.
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
-    ...                 ('svr', KNeighborsRegressor(n_neighbors=20,
+    ...                 ('knr', KNeighborsRegressor(n_neighbors=20,
     ...                                             metric='euclidean'))],
     ...     final_estimator=final_layer
     ... )
