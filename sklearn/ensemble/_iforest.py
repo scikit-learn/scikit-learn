@@ -331,7 +331,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) < 0] = -1
+        is_inlier[self.decision_function(X) < -1e-15] = -1
         return is_inlier
 
     def decision_function(self, X):

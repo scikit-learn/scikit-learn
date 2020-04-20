@@ -327,32 +327,33 @@ def test_iforest_deprecation():
 def test_iforest_with_uniform_data():
     """Test whether iforest predicts inliers when using uniform data"""
 
-    # 2-d array of all 1s
-    X = np.ones((100, 10))
-    iforest = IsolationForest()
-    iforest.fit(X)
+    for n_samples, n_features in np.random.randint(10, 200, size=(10, 2)):
+        # 2-d array of all 1s
+        X = np.ones((n_samples, n_features))
+        iforest = IsolationForest()
+        iforest.fit(X)
 
-    rng = np.random.RandomState(0)
+        rng = np.random.RandomState(0)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(X + 1) == 1)
-    assert all(iforest.predict(X - 1) == 1)
+        assert all(iforest.predict(X) == 1)
+        assert all(iforest.predict(rng.randn(n_samples, n_features)) == 1)
+        assert all(iforest.predict(X + 1) == 1)
+        assert all(iforest.predict(X - 1) == 1)
 
-    # 2-d array where columns contain the same value across rows
-    X = np.repeat(rng.randn(1, 10), 100, 0)
-    iforest = IsolationForest()
-    iforest.fit(X)
+        # 2-d array where columns contain the same value across rows
+        X = np.repeat(rng.randn(1, n_features), n_samples, 0)
+        iforest = IsolationForest()
+        iforest.fit(X)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(np.ones((100, 10))) == 1)
+        assert all(iforest.predict(X) == 1)
+        assert all(iforest.predict(rng.randn(n_samples, n_features)) == 1)
+        assert all(iforest.predict(np.ones((n_samples, n_features))) == 1)
 
-    # Single row
-    X = rng.randn(1, 10)
-    iforest = IsolationForest()
-    iforest.fit(X)
+        # Single row
+        X = rng.randn(1, n_features)
+        iforest = IsolationForest()
+        iforest.fit(X)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(np.ones((100, 10))) == 1)
+        assert all(iforest.predict(X) == 1)
+        assert all(iforest.predict(rng.randn(n_samples, n_features)) == 1)
+        assert all(iforest.predict(np.ones((n_samples, n_features))) == 1)
