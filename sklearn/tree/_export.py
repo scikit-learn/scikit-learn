@@ -659,7 +659,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 
 @_deprecate_positional_args
-def export_graphviz(decision_tree, *, out_file=None, max_depth=None,
+def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
