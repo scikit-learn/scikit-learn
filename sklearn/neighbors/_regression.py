@@ -78,7 +78,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of
-        :class:`sklearn.neighbors.DistanceMetric` for a
+        :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`,
