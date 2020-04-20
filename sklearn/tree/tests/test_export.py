@@ -423,13 +423,27 @@ def test_plot_tree_entropy(pyplot):
 
     # Test export code
     feature_names = ['first_feat', 'sepal_width']
-    nodes = plot_tree(clf, feature_names=feature_names)
+    nodes = plot_tree(clf, feature_names=feature_names,
+                      plot_decision_edges=True)
     assert len(nodes) == 5
     assert nodes[0].get_text() == ("entropy = 1.0\nsamples " +
                                    "= 6\nvalue = [3, 3]")
     assert nodes[3].get_text() == ("entropy = 0.0\nsamples " +
                                    "= 3\nvalue = [3, 0]")
     assert nodes[4].get_text() == ("entropy = 0.0\nsamples " +
+                                   "= 3\nvalue = [0, 3]")
+
+    # Test export code
+    feature_names = ['first_feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names,
+                      plot_decision_edges=False)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first_feat <= 0.0\nentropy = 1.0\n" +
+                                   "samples = 6\n" +
+                                   "value = [3, 3]")
+    assert nodes[1].get_text() == ("entropy = 0.0\nsamples " +
+                                   "= 3\nvalue = [3, 0]")
+    assert nodes[2].get_text() == ("entropy = 0.0\nsamples " +
                                    "= 3\nvalue = [0, 3]")
 
 
@@ -444,11 +458,25 @@ def test_plot_tree_gini(pyplot):
 
     # Test export code
     feature_names = ['first_feat', 'sepal_width']
-    nodes = plot_tree(clf, feature_names=feature_names)
+    nodes = plot_tree(clf, feature_names=feature_names,
+                      plot_decision_edges=True)
     assert len(nodes) == 5
     assert nodes[0].get_text() == ("gini = 0.5\nsamples = 6\nvalue = [3, 3]")
     assert nodes[3].get_text() == ("gini = 0.0\nsamples = 3\nvalue = [3, 0]")
     assert nodes[4].get_text() == ("gini = 0.0\nsamples = 3\nvalue = [0, 3]")
+
+    # Test export code
+    feature_names = ['first_feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names,
+                      plot_decision_edges=False)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first_feat <= 0.0\n" +
+                                   "gini = 0.5\nsamples = 6\n" +
+                                   "value = [3, 3]")
+    assert nodes[1].get_text() == ("gini = 0.0\nsamples " +
+                                   "= 3\nvalue = [3, 0]")
+    assert nodes[2].get_text() == ("gini = 0.0\nsamples " +
+                                   "= 3\nvalue = [0, 3]")
 
 
 # FIXME: to be removed in 0.25

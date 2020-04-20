@@ -29,12 +29,10 @@ import warnings
 
 def _color_brew(n):
     """Generate n colors with equally spaced hues.
-
     Parameters
     ----------
     n : int
         The number of colors required.
-
     Returns
     -------
     color_list : list, length n
@@ -81,99 +79,78 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               impurity=True, node_ids=False,
               proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+              precision=3, ax=None, fontsize=None, plot_decision_edges=False):
     """Plot a decision tree.
-
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
-
     The visualization is fit automatically to the size of the axis.
     Use the ``figsize`` or ``dpi`` arguments of ``plt.figure``  to control
     the size of the rendering.
-
     Read more in the :ref:`User Guide <tree>`.
-
     .. versionadded:: 0.21
-
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
         The decision tree to be plotted.
-
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
         generated.
-
     feature_names : list of strings, optional (default=None)
         Names of each of the features.
-
     class_names : list of strings, bool or None, optional (default=None)
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
-
     label : {'all', 'root', 'none'}, optional (default='all')
         Whether to show informative labels for impurity, etc.
         Options include 'all' to show at every node, 'root' to show only at
         the top root node, or 'none' to not show at any node.
-
     filled : bool, optional (default=False)
         When set to ``True``, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
-
     impurity : bool, optional (default=True)
         When set to ``True``, show the impurity at each node.
-
     node_ids : bool, optional (default=False)
         When set to ``True``, show the ID number on each node.
-
     proportion : bool, optional (default=False)
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
-
     rotate : bool, optional (default=False)
         This parameter has no effect on the matplotlib tree visualisation and
         it is kept here for backward compatibility.
-
         .. deprecated:: 0.23
            ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
-
-
     rounded : bool, optional (default=False)
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
-
     precision : int, optional (default=3)
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
-
     ax : matplotlib axis, optional (default=None)
         Axes to plot to. If None, use current axis. Any previous content
         is cleared.
-
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
-
+    plot_decision_edges: bool, optional (default=False)
+        Print the decision criteria for the first two edges.
     Returns
     -------
     annotations : list of artists
         List containing the artists for the annotation boxes making up the
         tree.
-
     Examples
     --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-
     >>> clf = tree.DecisionTreeClassifier(random_state=0)
     >>> iris = load_iris()
-
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.plot_tree(clf)  # doctest: +SKIP
     [Text(251.5,345.217,'X[3] <= 0.8...
-
     """
+
+    check_is_fitted(decision_tree)
 
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
@@ -185,8 +162,11 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         class_names=class_names, label=label, filled=filled,
         impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
-        precision=precision, fontsize=fontsize)
-    return exporter.export(decision_tree, ax=ax)
+        precision=precision, fontsize=fontsize,
+        plot_decision_edges=plot_decision_edges)
+    return exporter.export(decision_tree,
+                           plot_decision_edges=plot_decision_edges,
+                           ax=ax)
 
 
 class _BaseTreeExporter:
@@ -194,7 +174,7 @@ class _BaseTreeExporter:
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, fontsize=None, plot_decision_edges=False):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -207,6 +187,7 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.plot_decision_edges = plot_decision_edges
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -366,7 +347,8 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  feature_names=None, class_names=None, label='all',
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3,
+                 plot_decision_edges=False):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
@@ -374,7 +356,8 @@ class _DOTTreeExporter(_BaseTreeExporter):
             impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded,
-            precision=precision)
+            precision=precision,
+            plot_decision_edges=plot_decision_edges)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
@@ -524,13 +507,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, plot_decision_edges=False, fontsize=None):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            rotate=rotate, rounded=rounded, precision=precision,
+            plot_decision_edges=plot_decision_edges)
         self.fontsize = fontsize
 
         # validate
@@ -569,12 +553,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
 
-    def export(self, decision_tree, ax=None):
+    def export(self, decision_tree, plot_decision_edges=False, ax=None):
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
-        import re as re
+        import re
 
-        check_is_fitted(decision_tree)
         if ax is None:
             ax = plt.gca()
         ax.clear()
@@ -610,86 +593,93 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            extents = [ann.get_bbox_patch().get_window_extent()
-                       for ann in anns]
+            extents = []
+            for ann in anns:
+                extents.append(ann.get_bbox_patch().get_window_extent())
+            #extents = [ann.get_bbox_patch().get_window_extent()
+            #           for ann in anns]
             max_width = max([extent.width for extent in extents])
             max_height = max([extent.height for extent in extents])
-            # width should be around scale_x in axis coordinates
             size = anns[0].get_fontsize() * min(scale_x / max_width,
+            # width should be around scale_x in axis coordinates
                                                 scale_y / max_height)
             for ann in anns:
                 ann.set_fontsize(size)
+        if plot_decision_edges is True:
+            # Define this function to switch the equal sign.
+            # which we use to plot the opposite edge
+            def opposite_equalizer(x):
+                if x == "<=":
+                    return ">"
 
-        # Define this function to switch the equal sign.
-        # which we use to plot the opposite edge
-        def opposite_equalizer(x):
-            if x == "<=":
-                return ">"
+            # We sort the bbox list to get the correct order
+            # of the nodes so we can get x,y values correctly.
+            anns2 = sorted(anns, key=lambda x:
+                           x.get_bbox_patch().get_window_extent().bounds[1],
+                           reverse=True)
 
-        # We sort the bbox list to get the correct order
-        # of the nodes so we can get x,y values correctly.
-        anns2 = sorted(anns, key=lambda x:
-                       x.get_bbox_patch().get_window_extent().bounds[1],
-                       reverse=True)
+            # If max_depth == 1 change the x position.
+            # Else the decision box will overlap the two edges.
+            if decision_tree.max_depth == 1:
+                x_l = anns2[1].get_bbox_patch().get_window_extent().bounds[0]
+                y_l = (anns2[0].get_position()[1] +
+                       anns2[1].get_position()[1])//2
+                x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
+                y_r = (anns2[0].get_position()[1] +
+                       anns2[2].get_position()[1])//2
+            else:
+                x_l = anns2[1].get_position()[0]
+                y_l = (anns2[0].get_position()[1] +
+                       anns2[1].get_position()[1])//2
+                x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
+                y_r = (anns2[0].get_position()[1] +
+                       anns2[2].get_position()[1])//2
 
-        # If max_depth == 1 change the x position.
-        # Else the decision box will overlap the two edges.
-        if decision_tree.max_depth == 1:    # pragma: no cover
-            # Decision tree will always have at least three bounding boxes.
-            x_l = anns2[1].get_bbox_patch().get_window_extent().bounds[0]
-            y_l = (anns2[0].get_position()[1] + anns2[1].get_position()[1])//2
-            x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
-            y_r = (anns2[0].get_position()[1] + anns2[2].get_position()[1])//2
-        else:
-            x_l = anns2[1].get_position()[0]
-            y_l = (anns2[0].get_position()[1] + anns2[1].get_position()[1])//2
-            x_r = anns2[2].get_bbox_patch().get_window_extent().bounds[0]
-            y_r = (anns2[0].get_position()[1] + anns2[2].get_position()[1])//2
+            # Remove the decision threshold from the first node, and
+            # add it as a the decision criteria on the edge.
+            text_first_decision = anns[0].get_text().split('\n')[0].split(' ')
+            index = 0
+            for i, j in enumerate(text_first_decision):
+                if j in ["<=", "<", ">=", ">"]:
+                    index = i
+            anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
+            first = str(text_first_decision[0:index]).replace('\'', '')
+            first = first.replace(',', '')
+            first = first[0:len(first)-1] + " "
+            equalizer = opposite_equalizer(text_first_decision[index])
+            opp_equal = equalizer + " "
+            end = str(text_first_decision[index+1:len(text_first_decision)])
+            end = end.replace('\'', '').replace(',', '')
+            text_first_decision = str(text_first_decision).replace(',', '')
+            text_first_decision = text_first_decision.replace('\'', '')
+            text_first_decision = text_first_decision[
+                                            1:len(text_first_decision)-1]
 
-        # Remove the decision threshold from the first node, and
-        # add it as a the decision criteria on the edge.
-        text_first_decision = anns[0].get_text().split('\n')[0].split(' ')
-        index = 0
-        for i, j in enumerate(text_first_decision):
-            if j in ["<=", "<", ">=", ">"]:
-                index = i
-        anns[0].set_text(re.sub("^.*?\n", "", anns[0].get_text(), 1))
-        first = str(text_first_decision[0:index]).replace('\'', '')
-        first = first.replace(',', '')
-        first = first[0:len(first)-1] + " "
-        equalizer = opposite_equalizer(text_first_decision[index])
-        opp_equal = equalizer + " "
-        end = str(text_first_decision[index+1:len(text_first_decision)])
-        end = end.replace('\'', '').replace(',', '')
-        text_first_decision = str(text_first_decision).replace(',', '')
-        text_first_decision = text_first_decision.replace('\'', '')
-        text_first_decision = text_first_decision[1:len(text_first_decision)-1]
+            # Take the average of bbox root node and first left node for
+            # first decision
+            box_left = np.add(
+                list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+                list(anns2[1].get_bbox_patch().get_window_extent().bounds))//2
+            box_right = np.add(
+                list(anns2[0].get_bbox_patch().get_window_extent().bounds),
+                list(anns2[2].get_bbox_patch().get_window_extent().bounds))//2
+            box_left = np.reshape(box_left, [2, 2])
+            box_right = np.reshape(box_right, [2, 2])
 
-        # Take the average of bbox root node and first left node for
-        # first decision
-        box_left = np.add(
-            list(anns2[0].get_bbox_patch().get_window_extent().bounds),
-            list(anns2[1].get_bbox_patch().get_window_extent().bounds))//2
-        box_right = np.add(
-            list(anns2[0].get_bbox_patch().get_window_extent().bounds),
-            list(anns2[2].get_bbox_patch().get_window_extent().bounds))//2
-        box_left = np.reshape(box_left, [2, 2])
-        box_right = np.reshape(box_right, [2, 2])
+            # Insert new text to left.
+            anns.insert(1, ax.annotate(text_first_decision, (x_l, y_l),
+                        bbox={'fc': 'white', 'color': 'gray'},
+                        zorder=100, xycoords='axes pixels',
+                        fontsize=anns2[0].get_fontsize()))
+            anns2[1].get_bbox_patch().get_window_extent().set_points(box_left)
 
-        # Insert new text to left.
-        anns.insert(1, ax.annotate(text_first_decision, (x_l, y_l),
-                    bbox={'fc': 'white', 'color': 'white'},
-                    zorder=100, xycoords='axes pixels',
-                    fontsize=anns2[0].get_fontsize()))
-        anns2[1].get_bbox_patch().get_window_extent().set_points(box_left)
-
-        # Insert new text to right.
-        anns.insert(2, ax.annotate(first[1:len(first)] + opp_equal
-                    + end[1:len(end)-1], (x_r, y_r),
-                    bbox={'fc': 'white', 'color': 'white'},
-                    zorder=100, xycoords='axes pixels',
-                    fontsize=anns2[0].get_fontsize()))
-        anns2[1].get_bbox_patch().get_window_extent().set_points(box_right)
+            # Insert new text to right.
+            anns.insert(2, ax.annotate(first[1:len(first)] + opp_equal
+                        + end[1:len(end)-1], (x_r, y_r),
+                        bbox={'fc': 'white', 'color': 'gray'},
+                        zorder=100, xycoords='axes pixels',
+                        fontsize=anns2[0].get_fontsize()))
+            anns2[1].get_bbox_patch().get_window_extent().set_points(box_right)
 
         return anns
 
@@ -708,7 +698,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 kwargs['bbox']['fc'] = self.get_fill_color(tree,
                                                            node.tree.node_id)
             if node.parent is None:
-                # root
                 ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = ((node.parent.x + .5) * scale_x,
@@ -733,97 +722,72 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                     node_ids=False, proportion=False, rotate=False,
                     rounded=False, special_characters=False, precision=3):
     """Export a decision tree in DOT format.
-
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
     can be generated using, for example::
-
         $ dot -Tps tree.dot -o tree.ps      (PostScript format)
         $ dot -Tpng tree.dot -o tree.png    (PNG format)
-
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
-
     Read more in the :ref:`User Guide <tree>`.
-
     Parameters
     ----------
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
-
     out_file : file object or string, optional (default=None)
         Handle or name of the output file. If ``None``, the result is
         returned as a string.
-
         .. versionchanged:: 0.20
             Default of out_file changed from "tree.dot" to None.
-
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
         generated.
-
     feature_names : list of strings, optional (default=None)
         Names of each of the features.
-
     class_names : list of strings, bool or None, optional (default=None)
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
-
     label : {'all', 'root', 'none'}, optional (default='all')
         Whether to show informative labels for impurity, etc.
         Options include 'all' to show at every node, 'root' to show only at
         the top root node, or 'none' to not show at any node.
-
     filled : bool, optional (default=False)
         When set to ``True``, paint nodes to indicate majority class for
         classification, extremity of values for regression, or purity of node
         for multi-output.
-
     leaves_parallel : bool, optional (default=False)
         When set to ``True``, draw all leaf nodes at the bottom of the tree.
-
     impurity : bool, optional (default=True)
         When set to ``True``, show the impurity at each node.
-
     node_ids : bool, optional (default=False)
         When set to ``True``, show the ID number on each node.
-
     proportion : bool, optional (default=False)
         When set to ``True``, change the display of 'values' and/or 'samples'
         to be proportions and percentages respectively.
-
     rotate : bool, optional (default=False)
         When set to ``True``, orient tree left to right rather than top-down.
-
     rounded : bool, optional (default=False)
         When set to ``True``, draw node boxes with rounded corners and use
         Helvetica fonts instead of Times-Roman.
-
     special_characters : bool, optional (default=False)
         When set to ``False``, ignore special characters for PostScript
         compatibility.
-
     precision : int, optional (default=3)
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
-
     Returns
     -------
     dot_data : string
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
-
         .. versionadded:: 0.18
-
     Examples
     --------
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-
     >>> clf = tree.DecisionTreeClassifier()
     >>> iris = load_iris()
-
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.export_graphviz(clf)
     'digraph Tree {...
@@ -881,42 +845,32 @@ def _compute_depth(tree, node):
 def export_text(decision_tree, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.
-
     Note that backwards compatibility may not be supported.
-
     Parameters
     ----------
     decision_tree : object
         The decision tree estimator to be exported.
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
-
     feature_names : list, optional (default=None)
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
-
     max_depth : int, optional (default=10)
         Only the first max_depth levels of the tree are exported.
         Truncated branches will be marked with "...".
-
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
-
     decimals : int, optional (default=2)
         Number of decimal digits to display.
-
     show_weights : bool, optional (default=False)
         If true the classification weights will be exported on each leaf.
         The classification weights are the number of samples each class.
-
     Returns
     -------
     report : string
         Text summary of all the rules in the decision tree.
-
     Examples
     --------
-
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> from sklearn.tree import export_text
