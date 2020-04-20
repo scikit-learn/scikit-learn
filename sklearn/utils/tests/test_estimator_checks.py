@@ -230,7 +230,7 @@ class BadTransformerWithoutMixin(BaseEstimator):
         X = check_array(X)
         return X
 
-    def _get_tags(self):
+    def _more_tags(self):
         # Currently, if a transformer doesn't inherit from the mixin AND
         # doesn't have the tag (e.g. a third party transformer), it will fail
         # when calling _validate_data(X). In other words, any transformer that
