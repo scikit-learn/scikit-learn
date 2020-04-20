@@ -668,25 +668,88 @@ def test_column_transformer_get_feature_names():
     ct.fit(X)
     assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
 
-    # passthrough transformers not supported
-    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
-    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
-                           remainder='passthrough')
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
     assert ct.get_feature_names() == ['col0__a', 'col0__b']
+
+    # passthrough transformer
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x0', 'x1']
+
+    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', lambda x: [1])],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+
+def test_column_transformer_get_feature_names_dataframe():
+    # passthough transformer with a dataframe
+    pd = pytest.importorskip('pandas')
+    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+                  [{'c': 5}, {'c': 6}]], dtype=object).T
+    X_df = pd.DataFrame(X, columns=['col0', 'col1'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0', 'col1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0', 'col1']
+
+    ct = ColumnTransformer([('col0', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col1'])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough',
+                             lambda x: x[['col1']].columns)],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
 
 
 def test_column_transformer_special_strings():

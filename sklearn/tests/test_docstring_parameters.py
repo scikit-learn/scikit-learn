@@ -17,7 +17,6 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import all_estimators
-from sklearn.utils.estimator_checks import _safe_tags
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
@@ -206,9 +205,9 @@ def test_fit_docstring_attributes(name, Estimator):
     y = _enforce_estimator_tags_y(est, y)
     X = _enforce_estimator_tags_x(est, X)
 
-    if '1dlabels' in _safe_tags(est, 'X_types'):
+    if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
-    elif '2dlabels' in _safe_tags(est, 'X_types'):
+    elif '2dlabels' in est._get_tags()['X_types']:
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)

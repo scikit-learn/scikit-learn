@@ -143,6 +143,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     n_components : int, optional (default=10)
         Number of topics.
 
+        .. versionchanged:: 0.19
+            ``n_topics `` was renamed to ``n_components``
+
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.

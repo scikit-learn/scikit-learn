@@ -350,8 +350,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     .. versionadded:: 0.21
 
-    A voting regressor is an ensemble meta-estimator that fits base
-    regressors each on the whole dataset. It, then, averages the individual
+    A voting regressor is an ensemble meta-estimator that fits several base
+    regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
     Read more in the :ref:`User Guide <voting_regressor>`.

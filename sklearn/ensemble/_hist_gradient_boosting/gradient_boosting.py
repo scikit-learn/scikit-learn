@@ -23,6 +23,7 @@ from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 from .binning import _BinMapper
 from .grower import TreeGrower
 from .loss import _LOSSES
+from .loss import BaseLoss
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
@@ -58,7 +59,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         The parameters that are directly passed to the grower are checked in
         TreeGrower."""
 
-        if self.loss not in self._VALID_LOSSES:
+        if (self.loss not in self._VALID_LOSSES and
+                not isinstance(self.loss, BaseLoss)):
             raise ValueError(
                 "Loss {} is not supported for {}. Accepted losses: "
                 "{}.".format(self.loss, self.__class__.__name__,
@@ -150,7 +152,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
-        self.loss_ = self._get_loss(sample_weight=sample_weight)
+        if isinstance(self.loss, str):
+            self.loss_ = self._get_loss(sample_weight=sample_weight)
+        elif isinstance(self.loss, BaseLoss):
+            self.loss_ = self.loss
+
         if self.early_stopping == 'auto':
             self.do_early_stopping_ = n_samples > 10000
         else:
@@ -855,11 +861,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     >>> # To use this experimental feature, we need to explicitly ask for it:
     >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     >>> from sklearn.ensemble import HistGradientBoostingRegressor
-    >>> from sklearn.datasets import load_boston
-    >>> X, y = load_boston(return_X_y=True)
+    >>> from sklearn.datasets import load_diabetes
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.98...
+    0.92...
     """
 
     _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
