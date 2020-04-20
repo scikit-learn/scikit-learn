@@ -346,7 +346,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -398,11 +398,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X = _check_precomputed(X)
             self.n_features_in_ = X.shape[1]
         else:
-            if y is not None:
-                X, _ = self._validate_data(X, y, accept_sparse='csr',
-                                           multi_output=True)
-            else:
-                X = self._validate_data(X, accept_sparse='csr')
+            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -1111,7 +1107,10 @@ class SupervisedFloatMixin:
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
         self._y = y
-        return self._fit(X, y)
+        return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class SupervisedIntegerMixin:
@@ -1155,7 +1154,10 @@ class SupervisedIntegerMixin:
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        return self._fit(X, y)
+        return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class UnsupervisedMixin:
