@@ -1391,7 +1391,7 @@ list of names and estimators::
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
   ...               ('knr', KNeighborsRegressor(n_neighbors=20,
-                                                metric='euclidean'))]
+  ...                                           metric='euclidean'))]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1433,17 +1433,17 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.78
+   R2 score: 0.54
 
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[2.52..., 3.13..., 1.67...],
-         [1.20..., 0.73..., 1.39...],
-         [1.47..., 1.97..., 1.65...],
-         [3.61..., 3.94..., 1.66...],
-         [2.11..., 2.06..., 2.15...]])
+  array([[142..., 138..., 146...],
+         [179..., 182..., 151...],
+         [139..., 132..., 158...],
+         [286..., 292..., 225...],
+         [126..., 124..., 164...]])
 
 In practice, a stacking predictor predicts as good as the best predictor of the
 base layer and even sometimes outperforms it by combining the different
@@ -1469,14 +1469,14 @@ computationally expensive.
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
     ...                 ('svr', KNeighborsRegressor(n_neighbors=20,
-                                                    metric='euclidean'))],
+    ...                                             metric='euclidean'))],
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.77
+    R2 score: 0.51
 
 .. topic:: References
 
