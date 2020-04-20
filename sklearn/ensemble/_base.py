@@ -6,6 +6,7 @@
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
+from typing import List
 
 import numpy as np
 
@@ -20,12 +21,13 @@ from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None,
-                            message_clsname=None, message=None):
+def _fit_single_estimator(estimator, X, y, sample_weight=None,
+                          message_clsname=None, message=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
         try:
-            estimator.fit(X, y, sample_weight=sample_weight)
+            with _print_elapsed_time(message_clsname, message):
+                estimator.fit(X, y, sample_weight=sample_weight)
         except TypeError as exc:
             if "unexpected keyword argument 'sample_weight'" in str(exc):
                 raise TypeError(
@@ -52,10 +54,10 @@ def _set_random_states(estimator, random_state=None):
         parameters.
 
     random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        integers. Pass an int for reproducible output across multiple function
+        calls.
+        See :term:`Glossary <random_state>`.
 
     Notes
     -----
@@ -105,10 +107,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters = []
+    _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
+    def __init__(self, base_estimator, *, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator

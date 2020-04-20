@@ -171,6 +171,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
 
+    increasing_ : bool
+        Inferred value for ``increasing``.
+
     Notes
     -----
     Ties are broken using the secondary method from Leeuw, 1977.
@@ -249,12 +252,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
-        # Store _X_ and _y_ to maintain backward compat during the deprecation
-        # period of X_ and y_
-        self._X_ = X = unique_X
-        self._y_ = y = isotonic_regression(unique_y, unique_sample_weight,
-                                           self.y_min, self.y_max,
-                                           increasing=self.increasing_)
+        X = unique_X
+        y = isotonic_regression(unique_y, unique_sample_weight,
+                                self.y_min, self.y_max,
+                                increasing=self.increasing_)
 
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)

@@ -12,9 +12,9 @@ from scipy import linalg
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
-from ..utils import check_X_y
 from ..utils.fixes import pinvh
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -146,8 +146,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
                  normalize=False, copy_X=True, verbose=False):
@@ -190,7 +190,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             raise ValueError('n_iter should be greater than or equal to 1.'
                              ' Got {!r}.'.format(self.n_iter))
 
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -490,8 +490,8 @@ class ARDRegression(RegressorMixin, LinearModel):
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
                  copy_X=True, verbose=False):
@@ -526,8 +526,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
-                         ensure_min_samples=2)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
+                                   ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

@@ -15,7 +15,8 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import as_float_array, check_array, check_X_y
+from ..utils import as_float_array, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -262,7 +263,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active], n_active
 
 
-def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
+@_deprecate_positional_args
+def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
     r"""Orthogonal Matching Pursuit (OMP)
@@ -371,7 +373,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
-        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
+        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs=n_nonzero_coefs,
+                                  tol=tol, norms_squared=norms_squared,
                                   copy_Gram=copy_X, copy_Xy=False,
                                   return_path=return_path)
 
@@ -404,7 +407,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         return np.squeeze(coef)
 
 
-def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
+@_deprecate_positional_args
+def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
                        copy_Xy=True, return_path=False,
                        return_n_iter=False):
@@ -616,7 +620,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
-    def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
@@ -641,7 +646,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = \
@@ -660,7 +665,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if Gram is False:
             coef_, self.n_iter_ = orthogonal_mp(
-                X, y, self.n_nonzero_coefs_, self.tol,
+                X, y, n_nonzero_coefs=self.n_nonzero_coefs_, tol=self.tol,
                 precompute=False, copy_X=True,
                 return_n_iter=True)
         else:
@@ -853,7 +858,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy=True, fit_intercept=True, normalize=True,
+    @_deprecate_positional_args
+    def __init__(self, *, copy=True, fit_intercept=True, normalize=True,
                  max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
@@ -879,8 +885,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True, ensure_min_features=2,
-                         estimator=self)
+        X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
+                                   estimator=self)
         X = as_float_array(X, copy=False, force_all_finite=False)
         cv = check_cv(self.cv, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])

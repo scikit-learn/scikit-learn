@@ -21,6 +21,7 @@ import time
 import warnings
 
 import numpy as np
+from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
 from ..base import BaseEstimator, is_classifier, clone
@@ -31,7 +32,6 @@ from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
 from ..utils import check_random_state
-from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import if_delegate_has_method
@@ -385,9 +385,10 @@ def _check_param_grid(param_grid):
 
             if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a sequence(but not a string) or"
-                                 " np.ndarray.".format(name))
+                raise ValueError("Parameter grid for parameter ({0}) needs to"
+                                 " be a list or numpy array, but got ({1})."
+                                 " Single values need to be wrapped in a list"
+                                 " with one element.".format(name, type(v)))
 
             if len(v) == 0:
                 raise ValueError("Parameter values for parameter ({0}) need "
@@ -565,6 +566,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.inverse_transform(Xt)
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the search estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.best_estimator_.n_features_in_
 
     @property
     def classes_(self):
@@ -987,6 +1002,11 @@ class GridSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
 
     Examples
     --------
@@ -1322,6 +1342,11 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
+
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
 
     Attributes
     ----------

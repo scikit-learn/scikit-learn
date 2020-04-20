@@ -1,10 +1,8 @@
 
 from time import time
-from distutils.version import LooseVersion
 from collections import namedtuple
 import warnings
 
-import scipy
 from scipy import stats
 import numpy as np
 
@@ -208,9 +206,8 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
     def __init__(self,
-                 estimator=None,
+                 estimator=None, *,
                  missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,
@@ -329,19 +326,10 @@ class IterativeImputer(_BaseImputer):
             a = (self._min_value[feat_idx] - mus) / sigmas
             b = (self._max_value[feat_idx] - mus) / sigmas
 
-            if scipy.__version__ < LooseVersion('0.18'):
-                # bug with vector-valued `a` in old scipy
-                imputed_values[inrange_mask] = [
-                    stats.truncnorm(a=a_, b=b_,
-                                    loc=loc_, scale=scale_).rvs(
-                                        random_state=self.random_state_)
-                    for a_, b_, loc_, scale_
-                    in zip(a, b, mus, sigmas)]
-            else:
-                truncated_normal = stats.truncnorm(a=a, b=b,
-                                                   loc=mus, scale=sigmas)
-                imputed_values[inrange_mask] = truncated_normal.rvs(
-                    random_state=self.random_state_)
+            truncated_normal = stats.truncnorm(a=a, b=b,
+                                               loc=mus, scale=sigmas)
+            imputed_values[inrange_mask] = truncated_normal.rvs(
+                random_state=self.random_state_)
         else:
             imputed_values = estimator.predict(X_test)
             imputed_values = np.clip(imputed_values,
@@ -505,8 +493,8 @@ class IterativeImputer(_BaseImputer):
         else:
             force_all_finite = True
 
-        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite=force_all_finite)
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+                                force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)
