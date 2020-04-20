@@ -1705,28 +1705,28 @@ def three_params_scorer(i, j, k):
 
 
 @pytest.mark.parametrize(
-    "scorer, verbose, split_prg, param_prg, expected", [
-     (three_params_scorer, 2, (1, 3), (0, 1),
+    "train_score, scorer, verbose, split_prg, param_prg, expected", [
+     (False, three_params_scorer, 2, (1, 3), (0, 1),
       "[CV] END ...................................................."
       " total time=   0.0s"),
-     ({'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3, (1, 3),
-      (0, 1),
-      "[CV 2/3] END ............ sc1: (test=3.421) sc2: (test=3.421)"
-      " total time=   0.0s"),
-     ({'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10, (1, 3),
-      (0, 1),
+     (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3,
+      (1, 3), (0, 1),
+      "[CV 2/3] END  sc1: (train=3.421, test=3.421) sc2: "
+      "(train=3.421, test=3.421) total time=   0.0s"),
+     (False, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10,
+      (1, 3), (0, 1),
       "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
       " total time=   0.0s")
     ])
-def test_fit_and_score_verbosity(capsys, scorer, verbose, split_prg,
-                                 param_prg, expected):
+def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
+                                 split_prg, param_prg, expected):
     X, y = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
     fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
-    fit_and_score_kwargs = {'return_train_score': False,
+    fit_and_score_kwargs = {'return_train_score': train_score,
                             'split_progress': split_prg,
                             'param_progress': param_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
