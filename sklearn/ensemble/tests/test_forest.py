@@ -1081,7 +1081,7 @@ def check_warm_start(name, random_state=42):
     est_no_ws.fit(X, y)
 
     assert (set([tree.random_state for tree in est_ws]) ==
-                 set([tree.random_state for tree in est_no_ws]))
+            set([tree.random_state for tree in est_no_ws]))
 
     assert_array_equal(est_ws.apply(X), est_no_ws.apply(X),
                        err_msg="Failed with {0}".format(name))
