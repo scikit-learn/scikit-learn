@@ -436,14 +436,14 @@ def test_grid_search_bad_param_grid():
         " be a list or numpy array, but got (<class 'int'>)."
         " Single values need to be wrapped in a list"
         " with one element.",
-        GridSearchCV, clf, param_dict)
+        GridSearchCV(clf, param_grid=param_dict).fit, X, y)
 
     param_dict = {"C": []}
     clf = SVC()
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
-        GridSearchCV, clf, param_dict)
+        GridSearchCV(clf, param_grid=param_dict).fit, X, y)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma='auto')
@@ -453,11 +453,12 @@ def test_grid_search_bad_param_grid():
         " be a list or numpy array, but got (<class 'str'>)."
         " Single values need to be wrapped in a list"
         " with one element.",
-        GridSearchCV, clf, param_dict)
+        GridSearchCV(clf, param_grid=param_dict).fit, X, y)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
-    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+    assert_raises(ValueError, GridSearchCV(clf, param_grid=param_dict).fit,
+                  X, y)
 
 
 def test_grid_search_sparse():
@@ -1717,6 +1718,9 @@ def test_custom_run_search():
             check_results(results, fit_grid([{'max_depth': [1, 2]},
                                              {'min_samples_split': [5, 10]}]))
 
+        def _validate_params(self):
+            pass
+
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)
     X, y = make_classification(n_samples=100, n_informative=4,
@@ -1747,12 +1751,18 @@ def test__custom_fit_no_run_search():
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
 
+        def _validate_params(self):
+            pass
+
     # this should not raise any exceptions
     NoRunSearchSearchCV(SVC()).fit(X, y)
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
             super().__init__(estimator, **kwargs)
+
+        def _validate_params(self):
+            pass
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):

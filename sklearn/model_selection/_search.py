@@ -1516,4 +1516,5 @@ class RandomizedSearchCV(BaseSearchCV):
             random_state=self.random_state))
 
     def _validate_params(self):
-        _check_param_grid(self.param_distributions)
+        # TODO: check param distributions validity
+        pass
