@@ -155,9 +155,9 @@ def main(sim_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     curr_y_train = y_train[0:n_samples]
 
     # Train forest
-    start = time.time()
+    start = time.process_time()
     regr = _train_forest(curr_X_train, curr_y_train, criterion)
-    stop = time.time()
+    stop = time.process_time()
 
     # Evaluate on testing data and record runtime
     mse = _test_forest(X_test, y_test, regr)
@@ -172,11 +172,11 @@ print("Constructing parameter space...")
 # Declare simulation parameters
 n_dimensions = 10
 simulation_names = simulations.keys()
-sample_sizes = np.arange(5, 51, 3)
+sample_sizes = np.arange(5, 51, 5)
 criteria = ["mae", "mse", "friedman_mse"]
 
 # Number of times to repeat each simulation setting
-n_repeats = 30
+n_repeats = 8
 
 # Create the parameter space
 params = product(simulation_names, sample_sizes, criteria, range(n_repeats))
@@ -210,7 +210,7 @@ for sim in simulation_names:
                           n_dimensions, n_repeats)
 
 # Run the simulations in parallel
-data = Parallel(n_jobs=-2)(
+data = Parallel(n_jobs=-1)(
     delayed(main)(sim_name, sim_data[sim_name][n_iter], n, crit,
                   n_dimensions, n_iter)
     for sim_name, n, crit, n_iter in params
@@ -225,6 +225,19 @@ df = pd.DataFrame(data, columns=columns)
 sns.relplot(
     x="n_samples",
     y="mse",
+    hue="criterion",
+    col="simulation",
+    kind="line",
+    data=df,
+    facet_kws={"sharey": False, "sharex": True},
+)
+plt.tight_layout()
+plt.show()
+
+# Plot the results
+sns.relplot(
+    x="n_samples",
+    y="runtime",
     hue="criterion",
     col="simulation",
     kind="line",
