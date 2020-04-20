@@ -270,8 +270,8 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
     if not tags["no_validation"]:
         yield check_n_features_in
-        if tags["is_supervised"]:
-            yield check_supervised_y_none
+        if tags["requires_y"]:
+            yield check_requires_y_none
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -2980,8 +2980,8 @@ def check_n_features_in(name, estimator_orig):
         )
 
 
-def check_supervised_y_none(name, estimator_orig):
-    # Make sure that estimators fail gracefully when a supervised estimator is
+def check_requires_y_none(name, estimator_orig):
+    # Make sure that an estimator with requires_y=True fails gracefully when
     # given y=None
 
     rng = np.random.RandomState(0)
@@ -2996,13 +2996,13 @@ def check_supervised_y_none(name, estimator_orig):
     X = _pairwise_estimator_convert_X(X, estimator)
 
     warning_msg = ("As of scikit-learn 0.23, estimators should have a "
-                   "'is_supervised' tag set to the appropriate value. "
-                   "The default value of the tag is True. "
+                   "'requires_y' tag set to the appropriate value. "
+                   "The default value of the tag is False. "
                    "An error will be raised from version 0.25 when calling "
                    "check_estimator() if the tag isn't properly set.")
 
     expected_err_msgs = (
-        "is a supervised estimator but the target y is None",
+        "requires y to be passed, but the target y is None",
         "Expected array-like (array or non-string sequence), got None"
     )
 

@@ -37,7 +37,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
-    'is_supervised': True,
+    'requires_y': False,
     }
 
 
@@ -408,10 +408,10 @@ class BaseEstimator:
         """
 
         if y is None:
-            if self._get_tags()['is_supervised']:
+            if self._get_tags()['requires_y']:
                 raise ValueError(
-                    f"This {self.__class__.__name__} estimator is a "
-                    f"supervised estimator but the target y is None."
+                    f"This {self.__class__.__name__} estimator "
+                    f"requires y to be passed, but the target y is None."
                 )
             X = check_array(X, **check_params)
             out = X
@@ -466,6 +466,9 @@ class ClassifierMixin:
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
@@ -516,6 +519,9 @@ class RegressorMixin:
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
@@ -542,9 +548,6 @@ class ClusterMixin:
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
-
-    def _more_tags(self):
-        return {'is_supervised': False}
 
 
 class BiclusterMixin:
@@ -621,9 +624,6 @@ class BiclusterMixin:
         row_ind, col_ind = self.get_indices(i)
         return data[row_ind[:, np.newaxis], col_ind]
 
-    def _more_tags(self):
-        return {'is_supervised': False}
-
 
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
@@ -660,10 +660,6 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
-    def _more_tags(self):
-        return {'is_supervised': False}
-
-
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
@@ -685,8 +681,6 @@ class DensityMixin:
         """
         pass
 
-    def _more_tags(self):
-        return {'is_supervised': False}
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
@@ -713,8 +707,6 @@ class OutlierMixin:
         # override for transductive outlier detectors like LocalOulierFactor
         return self.fit(X).predict(X)
 
-    def _more_tags(self):
-        return {'is_supervised': False}
 
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]

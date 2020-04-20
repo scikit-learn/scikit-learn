@@ -1169,6 +1169,3 @@ class UnsupervisedMixin:
             or [n_samples, n_samples] if metric='precomputed'.
         """
         return self._fit(X)
-
-    def _more_tags(self):
-        return {'is_supervised': False}

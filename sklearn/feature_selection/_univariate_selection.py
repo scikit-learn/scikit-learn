@@ -364,7 +364,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         pass
 
     def _more_tags(self):
-        return {'is_supervised': True}
+        return {'requires_y': True}
 
 
 ######################################################################

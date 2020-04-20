@@ -1235,8 +1235,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
 
-
-
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))

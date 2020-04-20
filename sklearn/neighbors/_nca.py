@@ -522,4 +522,4 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         return sign * loss, sign * gradient.ravel()
 
     def _more_tags(self):
-        return {'is_supervised': True}
+        return {'requires_y': True}

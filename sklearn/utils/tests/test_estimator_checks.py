@@ -233,10 +233,9 @@ class BadTransformerWithoutMixin(BaseEstimator):
     def _get_tags(self):
         # Currently, if a transformer doesn't inherit from the mixin AND
         # doesn't have the tag (e.g. a third party transformer), it will fail
-        # fail when calling _validate_data(X).
-        # In other words, any transformer that uses _validate_data must also
-        # support the tag one way or another.
-        return {'is_supervised': False}
+        # when calling _validate_data(X). In other words, any transformer that
+        # uses _validate_data must also support the tag one way or another.
+        return {'requires_y': False}
 
 
 class NotInvariantPredict(BaseEstimator):

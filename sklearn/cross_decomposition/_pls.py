@@ -519,7 +519,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self.fit(X, y).transform(X, y)
 
     def _more_tags(self):
-        return {'poor_score': True}
+        return {'poor_score': True,
+                'requires_y': False}
 
 
 class PLSRegression(_PLS):

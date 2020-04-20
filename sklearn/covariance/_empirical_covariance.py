@@ -79,6 +79,7 @@ def empirical_covariance(X, assume_centered=False):
            [0.25, 0.25, 0.25]])
     """
     X = np.asarray(X)
+
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
 
@@ -313,6 +314,3 @@ class EmpiricalCovariance(BaseEstimator):
                                   metric='mahalanobis', VI=precision)
 
         return np.reshape(dist, (len(X),)) ** 2
-
-    def _more_tags(self):
-        return {'is_supervised': False}

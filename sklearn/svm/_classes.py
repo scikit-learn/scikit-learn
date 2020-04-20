@@ -1358,6 +1358,3 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     @property
     def probB_(self):
         return self._probB
-
-    def _more_tags(self):
-        return {'is_supervised': False}
