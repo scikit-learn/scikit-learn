@@ -601,8 +601,8 @@ class LRXFailTags(LogisticRegression):
         }
 
 
-def test_check_estimator_xfail_tag_raises():
-    # When a _xfail_checks check passes, raise an error stating that the test
+def test_check_estimator_xfail_tag_warns():
+    # When a _xfail_checks check passes, warns stating that the test
     # passes and can be removed from the tag
 
     assert_warns_message(SkipTestWarning,
