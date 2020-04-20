@@ -395,7 +395,7 @@ class BaseEstimator:
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
-            and the method will call check_array() on both X and y separately.
+            to be used for calling check_array() on X and y respectively.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
             :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
