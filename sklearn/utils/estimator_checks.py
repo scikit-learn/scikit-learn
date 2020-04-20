@@ -383,6 +383,7 @@ def _generate_class_checks(Estimator):
     estimator = _construct_instance(Estimator)
     yield from _generate_instance_checks(name, estimator)
 
+
 def _generate_checks(Estimator):
     if isinstance(Estimator, type):
         # got a class
