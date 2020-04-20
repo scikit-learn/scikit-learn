@@ -706,7 +706,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        split_progress=(
                                                            split_idx,
                                                            n_splits),
-                                                       param_progress=(
+                                                       candidate_progress=(
                                                            cand_idx,
                                                            n_candidates),
                                                        **fit_and_score_kwargs)

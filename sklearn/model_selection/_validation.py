@@ -396,7 +396,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   split_progress=None, param_progress=None,
+                   split_progress=None, candidate_progress=None,
                    error_score=np.nan):
 
     """Fit estimator and compute scores for a given dataset split.
@@ -453,7 +453,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     split_progress : list or tuple, optional, default: None
         A list or tuple of format (<current_split_id>, <total_num_of_splits>)
 
-    param_progress : list or tuple, optional, default: None
+    candidate_progress : list or tuple, optional, default: None
         A list or tuple of format
         (<current_candidate_id>, <total_number_of_candidates>)
 
@@ -494,8 +494,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 2:
         if split_progress is not None:
             progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
-        if param_progress and verbose > 9:
-            progress_msg += f"; {param_progress[0]+1}/{param_progress[1]}"
+        if candidate_progress and verbose > 9:
+            progress_msg += (f"; {candidate_progress[0]+1}/"
+                             f"{candidate_progress[1]}")
 
     if verbose > 1:
         if parameters is None:

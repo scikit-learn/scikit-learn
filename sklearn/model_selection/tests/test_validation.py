@@ -1705,7 +1705,7 @@ def three_params_scorer(i, j, k):
 
 
 @pytest.mark.parametrize(
-    "train_score, scorer, verbose, split_prg, param_prg, expected", [
+    "train_score, scorer, verbose, split_prg, cdt_prg, expected", [
      (False, three_params_scorer, 2, (1, 3), (0, 1),
       "[CV] END ...................................................."
       " total time=   0.0s"),
@@ -1719,7 +1719,7 @@ def three_params_scorer(i, j, k):
       " total time=   0.0s")
     ])
 def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
-                                 split_prg, param_prg, expected):
+                                 split_prg, cdt_prg, expected):
     X, y = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
@@ -1728,7 +1728,7 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
     fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
     fit_and_score_kwargs = {'return_train_score': train_score,
                             'split_progress': split_prg,
-                            'param_progress': param_prg}
+                            'candidate_progress': cdt_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
     print(out)
