@@ -410,6 +410,7 @@ class PCA(_BasePCA):
 
         X = self._validate_data(X, dtype=[np.float64, np.float32],
                                 ensure_2d=True, copy=self.copy)
+        onp = get_array_module(X)
 
         # Handle n_components==None
         if self.n_components is None:
@@ -434,14 +435,14 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == 'full':
-            return self._fit_full(X, n_components)
+            return self._fit_full(X, n_components, onp=np)
         elif self._fit_svd_solver in ['arpack', 'randomized']:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
                              "".format(self._fit_svd_solver))
 
-    def _fit_full(self, X, n_components):
+    def _fit_full(self, X, n_components, onp=np):
         """Fit the model by computing full SVD on X"""
         n_samples, n_features = X.shape
 
@@ -462,13 +463,12 @@ class PCA(_BasePCA):
                                  % (n_components, type(n_components)))
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = onp.mean(X, axis=0)
         X -= self.mean_
 
-        arr_mod = get_array_module(X)
-        U, S, V = arr_mod.linalg.svd(X, full_matrices=False)
+        U, S, V = onp.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
-        U, V = svd_flip(U, V)
+        U, V = svd_flip(U, V, onp=np)
 
         components_ = V
 
