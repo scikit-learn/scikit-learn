@@ -34,7 +34,7 @@ clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
 clf.fit(X_train, y_train)
 
 ##############################################################################
-# Create :class`ConfusionMatrixDisplay`
+# Create :class:`ConfusionMatrixDisplay`
 ##############################################################################
 # With the fitted model, we compute the predictions of the model on the test
 # dataset. These predictions are used to compute confustion matrix and
@@ -59,7 +59,7 @@ from sklearn.metrics import RocCurveDisplay
 y_score = clf.decision_function(X_test)
 
 fpr, tpr, _ = roc_curve(y_test, y_score, pos_label=clf.classes_[1])
-roc_display = RocCurveDisplay(fpr, tpr).plot()
+roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 
 ##############################################################################
 # Create :class:`PrecisionRecallDisplay`
@@ -71,7 +71,7 @@ from sklearn.metrics import PrecisionRecallDisplay
 
 prec, recall, _ = precision_recall_curve(y_test, y_score,
                                          pos_label=clf.classes_[1])
-pr_display = PrecisionRecallDisplay(prec, recall).plot()
+pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
 ##############################################################################
 # Combining the display objects into a single plot
@@ -81,7 +81,6 @@ pr_display = PrecisionRecallDisplay(prec, recall).plot()
 # the following example, we place the displays next to each other in a
 # row.
 
-# Sets this image as the thumbnail for sphinx gallery
 # sphinx_gallery_thumbnail_number = 4
 import matplotlib.pyplot as plt
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
