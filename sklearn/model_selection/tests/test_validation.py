@@ -370,8 +370,8 @@ def test_cross_validate():
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
-        mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2')
+        mse_scorer = check_scoring(est, scoring='neg_mean_squared_error')
+        r2_scorer = check_scoring(est, scoring='r2')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -1251,7 +1251,8 @@ def test_validation_curve_cv_splits_consistency():
     X, y = make_classification(n_samples=100, random_state=0)
 
     scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1262,7 +1263,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1272,7 +1274,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1679,9 +1682,9 @@ def test_fit_and_score_failing():
                          failing_clf, X, y, cv=3, error_score='unvalid-string')
 
     assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, 'parameter',
-                         [FailingClassifier.FAILING_PARAMETER], cv=3,
-                         error_score='unvalid-string')
+                         failing_clf, X, y, param_name='parameter',
+                         param_range=[FailingClassifier.FAILING_PARAMETER],
+                         cv=3, error_score='unvalid-string')
 
     assert failing_clf.score() == 0.  # FailingClassifier coverage
 

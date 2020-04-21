@@ -14,6 +14,7 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
@@ -183,10 +184,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
+@_deprecate_positional_args
 def locally_linear_embedding(
-        X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
-        max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=None):
+        X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
+        tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
+        modified_tol=1E-12, random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -628,8 +630,8 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-
-    def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
                  neighbors_algorithm='auto', random_state=None, n_jobs=None):

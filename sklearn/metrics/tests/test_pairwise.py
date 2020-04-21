@@ -350,7 +350,7 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     with pytest.raises(TypeError):
-        pairwise_kernels(X, Y, "rbf", **params)
+        pairwise_kernels(X, Y, metric="rbf", **params)
 
 
 @pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())

@@ -25,6 +25,7 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -37,7 +38,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+@_deprecate_positional_args
+def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score=np.nan):
@@ -239,7 +241,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
             error_score=error_score)
-        for train, test in cv.split(X, y, groups))
+        for train, test in cv.split(X, y, groups=groups))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
@@ -266,8 +268,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=None, verbose=0, fit_params=None,
+@_deprecate_positional_args
+def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
+                    cv=None, n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
@@ -618,7 +621,8 @@ def _score(estimator, X_test, y_test, scorer):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
+@_deprecate_positional_args
+def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -760,7 +764,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups))
+        for train, test in cv.split(X, y, groups=groups))
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
@@ -948,7 +952,8 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
+@_deprecate_positional_args
+def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1068,7 +1073,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
-    for train, test in cv.split(X, y, groups):
+    for train, test in cv.split(X, y, groups=groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
         estimator.fit(X_train, y_train)
@@ -1088,7 +1093,8 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-def learning_curve(estimator, X, y, groups=None,
+@_deprecate_positional_args
+def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
@@ -1227,7 +1233,7 @@ def learning_curve(estimator, X, y, groups=None,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     # Store it as list as we will be iterating over the list multiple times
-    cv_iter = list(cv.split(X, y, groups))
+    cv_iter = list(cv.split(X, y, groups=groups))
 
     scorer = check_scoring(estimator, scoring=scoring)
 
@@ -1372,7 +1378,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, groups=None,
+@_deprecate_positional_args
+def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan):
     """Validation curve.
@@ -1479,7 +1486,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         parameters={param_name: v}, fit_params=None, return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
-        for train, test in cv.split(X, y, groups) for v in param_range)
+        for train, test in cv.split(X, y, groups=groups) for v in param_range)
     out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params

@@ -25,7 +25,7 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params)
+                               _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
@@ -64,7 +64,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                             metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -245,9 +246,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> clf.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -315,9 +316,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
@@ -414,7 +415,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, order=None, cv=None,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
