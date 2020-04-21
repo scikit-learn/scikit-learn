@@ -30,7 +30,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
-
+from ..utils import _get_array_module
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
 from ._encoders import OneHotEncoder
@@ -60,17 +60,17 @@ __all__ = [
 ]
 
 
-def _handle_zeros_in_scale(scale, copy=True):
+def _handle_zeros_in_scale(scale, copy=True, npx=np):
     ''' Makes sure that whenever scale is zero, we handle it correctly.
 
     This happens in most scalers when we have constant features.'''
 
     # if we are fitting on 1D arrays, scale might be a scalar
-    if np.isscalar(scale):
+    if npx.isscalar(scale):
         if scale == .0:
             scale = 1.
         return scale
-    elif isinstance(scale, np.ndarray):
+    elif isinstance(scale, npx.ndarray):
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
@@ -367,20 +367,21 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, reset=first_pass,
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite="allow-nan")
+        npx = _get_array_module(X)
 
-        data_min = np.nanmin(X, axis=0)
-        data_max = np.nanmax(X, axis=0)
+        data_min = npx.nanmin(X, axis=0)
+        data_max = npx.nanmax(X, axis=0)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
         else:
-            data_min = np.minimum(self.data_min_, data_min)
-            data_max = np.maximum(self.data_max_, data_max)
+            data_min = npx.minimum(self.data_min_, data_min)
+            data_max = npx.maximum(self.data_max_, data_max)
             self.n_samples_seen_ += X.shape[0]
 
         data_range = data_max - data_min
         self.scale_ = ((feature_range[1] - feature_range[0]) /
-                       _handle_zeros_in_scale(data_range))
+                       _handle_zeros_in_scale(data_range, npx=npx))
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_min_ = data_min
         self.data_max_ = data_max
