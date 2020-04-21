@@ -2,6 +2,7 @@
    useful for PDF output as this section is not linked from elsewhere.
 
 .. Places parent toc into the sidebar
+
 :parenttoc: True
 
 .. _preface_menu:

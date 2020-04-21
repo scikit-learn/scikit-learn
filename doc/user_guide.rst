@@ -1,4 +1,5 @@
 .. Places parent toc into the sidebar
+
 :parenttoc: True
 
 .. title:: User guide: contents
