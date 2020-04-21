@@ -8,9 +8,6 @@ To run this benchmark, you will need,
  * psutil (optional, but recommended)
 
 """
-
-from __future__ import print_function
-
 import timeit
 import itertools
 
@@ -35,7 +32,7 @@ def run_vectorizer(Vectorizer, X, **params):
 text = fetch_20newsgroups(subset='train').data[:1000]
 
 print("="*80 + '\n#' + "    Text vectorizers benchmark" + '\n' + '='*80 + '\n')
-print("Using a subset of the 20 newsrgoups dataset ({} documents)."
+print("Using a subset of the 20 newsgroups dataset ({} documents)."
       .format(len(text)))
 print("This benchmarks runs in ~1 min ...")
 

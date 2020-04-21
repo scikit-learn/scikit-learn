@@ -1,14 +1,10 @@
-from __future__ import print_function
-
 from collections import defaultdict
 from time import time
-
-import six
 
 import numpy as np
 from numpy import random as nr
 
-from sklearn.cluster.k_means_ import KMeans, MiniBatchKMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 
 def compute_bench(samples_range, features_range):

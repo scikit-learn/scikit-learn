@@ -3,9 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
-from numpy.testing import (assert_array_almost_equal,
-                           assert_array_equal,
-                           assert_equal)
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.random import RandomState
 
 from sklearn.datasets import make_classification
@@ -18,9 +16,9 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        count_nonzero, csc_median_axis_0)
 from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
-                                            inplace_csr_row_normalize_l2)
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_allclose
+                                            inplace_csr_row_normalize_l2,
+                                            csr_row_norms)
+from sklearn.utils._testing import assert_allclose
 
 
 def test_mean_variance_axis0():
@@ -33,7 +31,8 @@ def test_mean_variance_axis0():
     X_lil[1, 0] = 0
     X[1, 0] = 0
 
-    assert_raises(TypeError, mean_variance_axis, X_lil, axis=0)
+    with pytest.raises(TypeError):
+        mean_variance_axis(X_lil, axis=0)
 
     X_csr = sp.csr_matrix(X_lil)
     X_csc = sp.csc_matrix(X_lil)
@@ -48,8 +47,8 @@ def test_mean_variance_axis0():
         for X_sparse in (X_csr, X_csc):
             X_sparse = X_sparse.astype(input_dtype)
             X_means, X_vars = mean_variance_axis(X_sparse, axis=0)
-            assert_equal(X_means.dtype, output_dtype)
-            assert_equal(X_vars.dtype, output_dtype)
+            assert X_means.dtype == output_dtype
+            assert X_vars.dtype == output_dtype
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
@@ -64,7 +63,8 @@ def test_mean_variance_axis1():
     X_lil[1, 0] = 0
     X[1, 0] = 0
 
-    assert_raises(TypeError, mean_variance_axis, X_lil, axis=1)
+    with pytest.raises(TypeError):
+        mean_variance_axis(X_lil, axis=1)
 
     X_csr = sp.csr_matrix(X_lil)
     X_csc = sp.csc_matrix(X_lil)
@@ -79,8 +79,8 @@ def test_mean_variance_axis1():
         for X_sparse in (X_csr, X_csc):
             X_sparse = X_sparse.astype(input_dtype)
             X_means, X_vars = mean_variance_axis(X_sparse, axis=0)
-            assert_equal(X_means.dtype, output_dtype)
-            assert_equal(X_vars.dtype, output_dtype)
+            assert X_means.dtype == output_dtype
+            assert X_vars.dtype == output_dtype
             assert_array_almost_equal(X_means, np.mean(X_test, axis=0))
             assert_array_almost_equal(X_vars, np.var(X_test, axis=0))
 
@@ -103,12 +103,11 @@ def test_incr_mean_variance_axis():
         X = np.atleast_2d(X)
         X_lil = sp.lil_matrix(X)
         X_csr = sp.csr_matrix(X_lil)
-        assert_raises(TypeError, incr_mean_variance_axis, axis,
-                      last_mean, last_var, last_n)
-        assert_raises(TypeError, incr_mean_variance_axis, axis,
-                      last_mean, last_var, last_n)
-        assert_raises(TypeError, incr_mean_variance_axis, X_lil, axis,
-                      last_mean, last_var, last_n)
+
+        with pytest.raises(TypeError):
+            incr_mean_variance_axis(axis, last_mean, last_var, last_n)
+        with pytest.raises(TypeError):
+            incr_mean_variance_axis(X_lil, axis, last_mean, last_var, last_n)
 
         # Test _incr_mean_and_var with a 1 row input
         X_means, X_vars = mean_variance_axis(X_csr, axis)
@@ -116,13 +115,14 @@ def test_incr_mean_variance_axis():
             incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
-        assert_equal(X.shape[axis], n_incr)  # X.shape[axis] picks # samples
+        # X.shape[axis] picks # samples
+        assert_array_equal(X.shape[axis], n_incr)
 
         X_csc = sp.csc_matrix(X_lil)
         X_means, X_vars = mean_variance_axis(X_csc, axis)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
-        assert_equal(X.shape[axis], n_incr)
+        assert_array_equal(X.shape[axis], n_incr)
 
         # Test _incremental_mean_and_var with whole data
         X = np.vstack(data_chunks)
@@ -144,11 +144,61 @@ def test_incr_mean_variance_axis():
                 X_means_incr, X_vars_incr, n_incr = \
                     incr_mean_variance_axis(X_sparse, axis, last_mean,
                                             last_var, last_n)
-                assert_equal(X_means_incr.dtype, output_dtype)
-                assert_equal(X_vars_incr.dtype, output_dtype)
+                assert X_means_incr.dtype == output_dtype
+                assert X_vars_incr.dtype == output_dtype
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
-                assert_equal(X.shape[axis], n_incr)
+                assert_array_equal(X.shape[axis], n_incr)
+
+
+@pytest.mark.parametrize(
+    "X1, X2",
+    [
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
+         sp.random(13, 2, density=0.8, format='csr', random_state=0)),
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
+         sp.hstack([sp.csr_matrix(np.full((13, 1), fill_value=np.nan)),
+                    sp.random(13, 1, density=0.8, random_state=42)],
+                   format="csr"))
+    ]
+)
+def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16448
+    # check that computing the incremental mean and variance is equivalent to
+    # computing the mean and variance on the stacked dataset.
+    axis = 0
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X1, axis, last_mean, last_var, last_n
+    )
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis, updated_mean, updated_var, updated_n
+    )
+    X = sp.vstack([X1, X2])
+    assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
+    assert_allclose(updated_var, np.nanvar(X.A, axis=axis))
+    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
+
+
+def test_incr_mean_variance_no_new_n():
+    # check the behaviour when we update the variance with an empty matrix
+    axis = 0
+    X1 = sp.random(5, 1, density=0.8, random_state=0).tocsr()
+    X2 = sp.random(0, 1, density=0.8, random_state=0).tocsr()
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    last_mean, last_var, last_n = incr_mean_variance_axis(
+        X1, axis, last_mean, last_var, last_n
+    )
+    # update statistic with a column which should ignored
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis, last_mean, last_var, last_n
+    )
+    assert_allclose(updated_mean, last_mean)
+    assert_allclose(updated_var, last_var)
+    assert_allclose(updated_n, last_n)
 
 
 @pytest.mark.parametrize("axis", [0, 1])
@@ -195,16 +245,24 @@ def test_mean_variance_illegal_axis():
     X[2, 1] = 0
     X[4, 3] = 0
     X_csr = sp.csr_matrix(X)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-3)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=2)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-1)
+    with pytest.raises(ValueError):
+        mean_variance_axis(X_csr, axis=-3)
+    with pytest.raises(ValueError):
+        mean_variance_axis(X_csr, axis=2)
+    with pytest.raises(ValueError):
+        mean_variance_axis(X_csr, axis=-1)
 
-    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=-3,
-                  last_mean=None, last_var=None, last_n=None)
-    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=2,
-                  last_mean=None, last_var=None, last_n=None)
-    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=-1,
-                  last_mean=None, last_var=None, last_n=None)
+    with pytest.raises(ValueError):
+        incr_mean_variance_axis(X_csr, axis=-3, last_mean=None, last_var=None,
+                                last_n=None)
+
+    with pytest.raises(ValueError):
+        incr_mean_variance_axis(X_csr, axis=2, last_mean=None, last_var=None,
+                                last_n=None)
+
+    with pytest.raises(ValueError):
+        incr_mean_variance_axis(X_csr, axis=-1, last_mean=None, last_var=None,
+                                last_n=None)
 
 
 def test_densify_rows():
@@ -239,7 +297,8 @@ def test_inplace_column_scale():
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
-    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+    with pytest.raises(TypeError):
+        inplace_column_scale(X.tolil(), scale)
 
     X = X.astype(np.float32)
     scale = scale.astype(np.float32)
@@ -252,7 +311,8 @@ def test_inplace_column_scale():
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
-    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+    with pytest.raises(TypeError):
+        inplace_column_scale(X.tolil(), scale)
 
 
 def test_inplace_row_scale():
@@ -269,7 +329,8 @@ def test_inplace_row_scale():
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
-    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+    with pytest.raises(TypeError):
+        inplace_column_scale(X.tolil(), scale)
 
     X = X.astype(np.float32)
     scale = scale.astype(np.float32)
@@ -282,7 +343,8 @@ def test_inplace_row_scale():
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
-    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+    with pytest.raises(TypeError):
+        inplace_column_scale(X.tolil(), scale)
 
 
 def test_inplace_swap_row():
@@ -309,7 +371,8 @@ def test_inplace_swap_row():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
-    assert_raises(TypeError, inplace_swap_row, X_csr.tolil())
+    with pytest.raises(TypeError):
+        inplace_swap_row(X_csr.tolil())
 
     X = np.array([[0, 3, 0],
                   [2, 4, 0],
@@ -332,7 +395,8 @@ def test_inplace_swap_row():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
-    assert_raises(TypeError, inplace_swap_row, X_csr.tolil())
+    with pytest.raises(TypeError):
+        inplace_swap_row(X_csr.tolil())
 
 
 def test_inplace_swap_column():
@@ -359,7 +423,8 @@ def test_inplace_swap_column():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
-    assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
+    with pytest.raises(TypeError):
+        inplace_swap_column(X_csr.tolil())
 
     X = np.array([[0, 3, 0],
                   [2, 4, 0],
@@ -382,7 +447,8 @@ def test_inplace_swap_column():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
-    assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
+    with pytest.raises(TypeError):
+        inplace_swap_column(X_csr.tolil())
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -393,14 +459,18 @@ def test_inplace_swap_column():
     [(0, np.min, np.max, False),
      (np.nan, np.nanmin, np.nanmax, True)]
 )
+@pytest.mark.parametrize("large_indices", [True, False])
 def test_min_max(dtype, axis, sparse_format, missing_values, min_func,
-                 max_func, ignore_nan):
+                 max_func, ignore_nan, large_indices):
     X = np.array([[0, 3, 0],
                   [2, -1, missing_values],
                   [0, 0, 0],
                   [9, missing_values, 7],
                   [4, 0, 5]], dtype=dtype)
     X_sparse = sparse_format(X)
+    if large_indices:
+        X_sparse.indices = X_sparse.indices.astype('int64')
+        X_sparse.indptr = X_sparse.indptr.astype('int64')
 
     mins_sparse, maxs_sparse = min_max_axis(X_sparse, axis=axis,
                                             ignore_nan=ignore_nan)
@@ -416,9 +486,12 @@ def test_min_max_axis_errors():
                   [4, 0, 5]], dtype=np.float64)
     X_csr = sp.csr_matrix(X)
     X_csc = sp.csc_matrix(X)
-    assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
-    assert_raises(ValueError, min_max_axis, X_csr, axis=2)
-    assert_raises(ValueError, min_max_axis, X_csc, axis=-3)
+    with pytest.raises(TypeError):
+        min_max_axis(X_csr.tolil(), axis=0)
+    with pytest.raises(ValueError):
+        min_max_axis(X_csr, axis=2)
+    with pytest.raises(ValueError):
+        min_max_axis(X_csc, axis=-3)
 
 
 def test_count_nonzero():
@@ -440,8 +513,10 @@ def test_count_nonzero():
                                                 sample_weight=sample_weight),
                                   X_nonzero_weighted.sum(axis=axis))
 
-    assert_raises(TypeError, count_nonzero, X_csc)
-    assert_raises(ValueError, count_nonzero, X_csr, axis=2)
+    with pytest.raises(TypeError):
+        count_nonzero(X_csc)
+    with pytest.raises(ValueError):
+        count_nonzero(X_csr, axis=2)
 
     assert (count_nonzero(X_csr, axis=0).dtype ==
             count_nonzero(X_csr, axis=1).dtype)
@@ -449,7 +524,7 @@ def test_count_nonzero():
             count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
 
     # Check dtypes with large sparse matrices too
-    # XXX: test fails on Appveyor (python2.7 32bit)
+    # XXX: test fails on 32bit (Windows/Linux)
     try:
         X_csr.indices = X_csr.indices.astype(np.int64)
         X_csr.indptr = X_csr.indptr.astype(np.int64)
@@ -460,11 +535,8 @@ def test_count_nonzero():
                 count_nonzero(X_csr, axis=1,
                               sample_weight=sample_weight).dtype)
     except TypeError as e:
-        if ("according to the rule 'safe'" in e.args[0] and
-                np.intp().nbytes < 8):
-            pass
-        else:
-            raise
+        assert ("according to the rule 'safe'" in e.args[0]
+                and np.intp().nbytes < 8), e
 
 
 def test_csc_row_median():
@@ -497,7 +569,8 @@ def test_csc_row_median():
     assert_array_equal(csc_median_axis_0(csc), np.array([0., -3]))
 
     # Test that it raises an Error for non-csc matrices.
-    assert_raises(TypeError, csc_median_axis_0, sp.csr_matrix(X))
+    with pytest.raises(TypeError):
+        csc_median_axis_0(sp.csr_matrix(X))
 
 
 def test_inplace_normalize():
@@ -518,7 +591,21 @@ def test_inplace_normalize():
                 assert X_csr.indices.dtype == index_dtype
                 assert X_csr.indptr.dtype == index_dtype
                 inplace_csr_row_normalize(X_csr)
-                assert_equal(X_csr.dtype, dtype)
+                assert X_csr.dtype == dtype
                 if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
                     X_csr.data **= 2
                 assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_csr_row_norms(dtype):
+    # checks that csr_row_norms returns the same output as
+    # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
+    X = sp.random(100, 10, format='csr', dtype=dtype, random_state=42)
+
+    scipy_norms = sp.linalg.norm(X, axis=1)**2
+    norms = csr_row_norms(X)
+
+    assert norms.dtype == dtype
+    rtol = 1e-6 if dtype == np.float32 else 1e-7
+    assert_allclose(norms, scipy_norms, rtol=rtol)

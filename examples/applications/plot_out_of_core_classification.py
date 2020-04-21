@@ -11,23 +11,12 @@ that the features space remains the same over time we leverage a
 HashingVectorizer that will project each example into the same feature space.
 This is especially useful in the case of text classification where new
 features (words) may appear in each batch.
-
-The dataset used in this example is Reuters-21578 as provided by the UCI ML
-repository. It will be automatically downloaded and uncompressed on first run.
-
-The plot represents the learning curve of the classifier: the evolution
-of classification accuracy over the course of the mini-batches. Accuracy is
-measured on the first 1000 samples, held out as a validation set.
-
-To limit the memory consumption, we queue examples up to a fixed amount before
-feeding them to the learner.
 """
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from glob import glob
 import itertools
 import os.path
@@ -58,6 +47,10 @@ def _not_in_sphinx():
 # Reuters Dataset related routines
 # --------------------------------
 #
+# The dataset used in this example is Reuters-21578 as provided by the UCI ML
+# repository. It will be automatically downloaded and uncompressed on first
+# run.
+
 
 
 class ReutersParser(HTMLParser):
@@ -208,10 +201,10 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(max_iter=5, tol=1e-3),
-    'Perceptron': Perceptron(tol=1e-3),
+    'SGD': SGDClassifier(max_iter=5),
+    'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
+    'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 
@@ -221,7 +214,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):
@@ -321,6 +314,13 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 ###############################################################################
 # Plot results
 # ------------
+#
+# The plot represents the learning curve of the classifier: the evolution
+# of classification accuracy over the course of the mini-batches. Accuracy is
+# measured on the first 1000 samples, held out as a validation set.
+#
+# To limit the memory consumption, we queue examples up to a fixed amount
+# before feeding them to the learner.
 
 
 def plot_accuracy(x, y, x_legend):
