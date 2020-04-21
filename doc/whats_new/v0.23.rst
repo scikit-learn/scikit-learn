@@ -407,14 +407,14 @@ Changelog
   generators used to randomly select coordinates in the coordinate descent
   algorithms. Platform-dependent C ``rand()`` was used, which is only able to
   generate numbers up to ``32767`` on windows platform (see this `blog
-  post <https://codeforces.com/blog/entry/61587>`) and also has poor
+  post <https://codeforces.com/blog/entry/61587>`_) and also has poor
   randomization power as suggested by `this presentation
-  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`.
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`_.
   It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
   generates 31bits/63bits random numbers on all platforms. In addition, the
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as suggested by `this blog
-  post <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`_.
   Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
