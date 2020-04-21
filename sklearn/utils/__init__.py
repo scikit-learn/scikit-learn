@@ -1232,3 +1232,20 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _get_array_module(array):
+    if isinstance(array, np.ndarray):
+        return np
+    elif issparse(array):
+        return np
+
+    npx_str = array.__class__.__module__.split(".")[0]
+    if npx_str == "cupy":
+        import cupy
+        return cupy
+    elif npx_str == "jax":
+        import jax.numpy as npx
+        return npx
+    else:
+        raise ValueError("Unexpected array object")

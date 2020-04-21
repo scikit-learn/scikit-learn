@@ -14,7 +14,6 @@ from math import log, sqrt
 import numbers
 
 import numpy as np
-import scipy as sp
 from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
@@ -26,20 +25,7 @@ from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
-
-
-def get_array_module(array):
-    if isinstance(array, np.ndarray):
-        # if we need scipy support
-        np.scipy = sp
-        return np
-    # assume cupy for now
-    import cupy  # noqa
-    import cupyx  # noqa
-
-    # if we need scipy support
-    cupy.scipy = cupyx
-    return cupy
+from ..utils import _get_array_module
 
 
 def _assess_dimension(spectrum, rank, n_samples, n_features):
@@ -410,7 +396,7 @@ class PCA(_BasePCA):
 
         X = self._validate_data(X, dtype=[np.float64, np.float32],
                                 ensure_2d=True, copy=self.copy)
-        onp = get_array_module(X)
+        npx = _get_array_module(X)
 
         # Handle n_components==None
         if self.n_components is None:
@@ -435,14 +421,14 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == 'full':
-            return self._fit_full(X, n_components, onp=np)
+            return self._fit_full(X, n_components, npx=npx)
         elif self._fit_svd_solver in ['arpack', 'randomized']:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
                              "".format(self._fit_svd_solver))
 
-    def _fit_full(self, X, n_components, onp=np):
+    def _fit_full(self, X, n_components, npx=np):
         """Fit the model by computing full SVD on X"""
         n_samples, n_features = X.shape
 
@@ -463,12 +449,12 @@ class PCA(_BasePCA):
                                  % (n_components, type(n_components)))
 
         # Center data
-        self.mean_ = onp.mean(X, axis=0)
+        self.mean_ = npx.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, V = onp.linalg.svd(X, full_matrices=False)
+        U, S, V = npx.linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
-        U, V = svd_flip(U, V, onp=np)
+        U, V = svd_flip(U, V, npx=np)
 
         components_ = V
 

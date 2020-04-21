@@ -491,7 +491,7 @@ def cartesian(arrays, out=None):
     return out
 
 
-def svd_flip(u, v, u_based_decision=True, onp=np):
+def svd_flip(u, v, u_based_decision=True, npx=np):
     """Sign correction to ensure deterministic output from SVD.
 
     Adjusts the columns of u and the rows of v such that the loadings in the
@@ -522,14 +522,14 @@ def svd_flip(u, v, u_based_decision=True, onp=np):
     """
     if u_based_decision:
         # columns of u, rows of v
-        max_abs_cols = onp.argmax(onp.abs(u), axis=0)
-        signs = onp.sign(u[max_abs_cols, list(range(u.shape[1]))])
+        max_abs_cols = npx.argmax(npx.abs(u), axis=0)
+        signs = npx.sign(u[max_abs_cols, list(range(u.shape[1]))])
         u *= signs
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
-        max_abs_rows = onp.argmax(np.abs(v), axis=1)
-        signs = onp.sign(v[list(range(v.shape[0])), max_abs_rows])
+        max_abs_rows = npx.argmax(np.abs(v), axis=1)
+        signs = npx.sign(v[list(range(v.shape[0])), max_abs_rows])
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v
