@@ -501,7 +501,7 @@ def test_stacking_cv_influence(stacker, X, y):
 
 
 class ProdClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, idx):
+    def __init__(self, idx=None):
         self.idx_ = idx
         self.n_features_in_ = 0
 
@@ -516,7 +516,7 @@ class ProdClassifier(BaseEstimator, ClassifierMixin):
 
 
 class SumRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, idx):
+    def __init__(self, idx=None):
         self.idx_ = idx
         self.n_features_in_ = 0
 
@@ -556,21 +556,18 @@ def test_stacking_prefit(stacker, X, y):
 
 
 @pytest.mark.parametrize(
-    "stacker, X, y, type_err",
+    "stacker, X, y",
     [(StackingClassifier(
         estimators=[('lr', LogisticRegression()),
                     ('svm', SVC(max_iter=5e4))],
         cv="prefit"),
-     X_dummy_classification, y_dummy_classification,
-     NotFittedError),
+     X_dummy_classification, y_dummy_classification),
      (StackingRegressor(
          estimators=[('lr', LinearRegression()),
                      ('svm', LinearSVR(random_state=42))],
          cv="prefit"),
-      X_dummy_regression,
-      y_dummy_regression,
-      NotFittedError)]
+      X_dummy_regression, y_dummy_regression)]
 )
-def test_stacking_prefit_error(stacker, X, y, type_err):
-    with pytest.raises(type_err):
+def test_stacking_prefit_error(stacker, X, y):
+    with pytest.raises(NotFittedError):
         stacker.fit(X, y)
