@@ -1815,6 +1815,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
         score /= 1 - chance
     return score
 
+
 @_deprecate_positional_args
 def classification_report(y_true, y_pred, *, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,

@@ -42,7 +42,8 @@ class PrecisionRecallDisplay:
         Figure containing the curve.
     """
     @_deprecate_positional_args
-    def __init__(self, *, precision, recall, average_precision, estimator_name):
+    def __init__(self, *, precision, recall, average_precision,
+                 estimator_name):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
