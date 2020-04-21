@@ -595,7 +595,7 @@ def test_label_binarize_multilabel():
                                 expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
