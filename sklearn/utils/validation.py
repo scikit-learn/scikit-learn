@@ -598,7 +598,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                              % (n_features, array.shape, ensure_min_features,
                                 context))
 
-    if copy and np.may_share_memory(array, array_orig):
+    if (copy and isinstance(array_orig, np.ndarray) and
+            np.may_share_memory(array, array_orig)):
         array = np.array(array, dtype=dtype, order=order)
 
     return array
