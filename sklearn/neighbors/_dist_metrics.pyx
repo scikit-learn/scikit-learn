@@ -110,8 +110,10 @@ cdef class DistanceMetric:
     This class provides a uniform interface to fast distance metric
     functions.  The various metrics can be accessed via the :meth:`get_metric`
     class method and the metric string identifier (see below).
-    For example, to use the Euclidean distance:
 
+    Examples
+    --------
+    >>> from sklearn.neighbors import DistanceMetric
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
              [3, 4, 5]]

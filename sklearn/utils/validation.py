@@ -451,10 +451,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        # throw warning if pandas dataframe is sparse
+        # throw warning if columns are sparse. If all columns are sparse, then
+        # array.sparse exists and sparsity will be perserved (later).
         with suppress(ImportError):
             from pandas.api.types import is_sparse
-            if array.dtypes.apply(is_sparse).any():
+            if (not hasattr(array, 'sparse') and
+                    array.dtypes.apply(is_sparse).any()):
                 warnings.warn(
                     "pandas.DataFrame with sparse columns found."
                     "It will be converted to a dense numpy array."
@@ -497,6 +499,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     else:
         estimator_name = "Estimator"
     context = " by %s" % estimator_name if estimator is not None else ""
+
+    # When all dataframe columns are sparse, convert to a sparse array
+    if hasattr(array, 'sparse') and array.ndim > 1:
+        # DataFrame.sparse only supports `to_coo`
+        array = array.sparse.to_coo()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -1290,11 +1297,11 @@ def _deprecate_positional_args(f):
             args_msg = ['{}={}'.format(name, arg)
                         for name, arg in zip(kwonly_args[:extra_args],
                                              args[-extra_args:])]
-            warnings.warn("Pass {} as keyword args. From version 0.24 "
+            warnings.warn("Pass {} as keyword args. From version 0.25 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
                           FutureWarning)
-        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
         return f(**kwargs)
     return inner_f
 
