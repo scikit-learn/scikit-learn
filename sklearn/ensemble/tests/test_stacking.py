@@ -502,32 +502,32 @@ def test_stacking_cv_influence(stacker, X, y):
 
 class ProdClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, idx=None):
-        self.idx_ = idx
+        self.idx = idx
         self.n_features_in_ = 0
 
     def fit(self, X, y=None):
         return self
 
     def predict(self, X):
-        if not self.idx_:
+        if not self.idx:
             return np.prod(X, axis=1)
         else:
-            return np.prod(X[:, self.idx_], axis=1)
+            return np.prod(X[:, self.idx], axis=1)
 
 
 class SumRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, idx=None):
-        self.idx_ = idx
+        self.idx = idx
         self.n_features_in_ = 0
 
     def fit(self, X, y=None):
         return self
 
     def predict(self, X):
-        if not self.idx_:
+        if not self.idx:
             return np.sum(X, axis=1)
         else:
-            return np.sum(X[:, self.idx_], axis=1)
+            return np.sum(X[:, self.idx], axis=1)
 
 
 @pytest.mark.parametrize(
