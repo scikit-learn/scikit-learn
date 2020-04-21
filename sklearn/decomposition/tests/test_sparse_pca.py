@@ -208,6 +208,7 @@ def test_spca_error_unormalized_components(spca):
     with pytest.raises(NotImplementedError, match=err_msg):
         spca(normalize_components=False).fit(Y)
 
+
 @pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
 @pytest.mark.parametrize("n_components", [None, 3])
 def test_spca_n_components_(spca, n_components):
