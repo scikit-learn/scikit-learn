@@ -22,8 +22,8 @@ class ConfusionMatrixDisplay:
         Confusion matrix.
 
     display_labels : ndarray of shape (n_classes,), default=None
-        Display labels for plot. If None, display labels are set to 0 to
-        `n_classes`.
+        Display labels for plot. If None, display labels are set from 0 to
+        `n_classes - 1`.
 
     Attributes
     ----------
@@ -109,10 +109,7 @@ class ConfusionMatrixDisplay:
                     ha="center", va="center",
                     color=color)
 
-        if self.display_labels is None:
-            display_labels = np.arange(n_classes)
-        else:
-            display_labels = self.display_labels
+        display_labels = self.display_labels or np.arange(n_classes)
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
