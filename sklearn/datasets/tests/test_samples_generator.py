@@ -555,7 +555,7 @@ def test_nonlinear_regression_simulations():
     for sim in [make_independent_noise, make_log_regression,
                 make_multiplicative_noise, make_sin_regression,
                 make_square_regression]:
-        X, y = make_log_regression(n_samples, n_dimensions)
+        X, y = sim(n_samples, n_dimensions)
         assert X.shape == (n_samples, n_dimensions), "X shape mismatch"
         assert y.shape == (n_samples, n_dimensions), "Y shape mismatch"
 
