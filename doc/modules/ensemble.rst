@@ -1399,9 +1399,12 @@ or :class:`StackingRegressor`, respectively::
 
   >>> from sklearn.ensemble import GradientBoostingRegressor
   >>> from sklearn.ensemble import StackingRegressor
+  >>> final_estimator = GradientBoostingRegressor(
+  ...                       n_estimators=25, subsample=0.5, min_samples_leaf=25,
+  ...                       max_features=1, random_state=42)
   >>> reg = StackingRegressor(
   ...     estimators=estimators,
-  ...     final_estimator=GradientBoostingRegressor(random_state=42))
+  ...     final_estimator=final_estimator)
 
 To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
@@ -1433,7 +1436,7 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.54
+   R2 score: 0.53
 
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
@@ -1460,9 +1463,15 @@ computationally expensive.
    Multiple stacking layers can be achieved by assigning `final_estimator` to
    a :class:`StackingClassifier` or :class:`StackingRegressor`::
 
+    >>> final_layer_rfr = RandomForestRegressor(
+    ...                        n_estimators=10, max_features=1,
+    ...                        max_leaf_nodes=5,random_state=42)
+    >>> final_layer_gbr = GradientBoostingRegressor(
+    ...                        n_estimators=10, max_features=1,
+    ...                        max_leaf_nodes=5,random_state=42)
     >>> final_layer = StackingRegressor(
-    ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
-    ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
+    ...     estimators=[('rf', final_layer_rfr),
+    ...                 ('gbrt', final_layer_gbr)],
     ...     final_estimator=RidgeCV()
     ...     )
     >>> multi_layer_regressor = StackingRegressor(
@@ -1476,7 +1485,7 @@ computationally expensive.
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.51
+    R2 score: 0.53
 
 .. topic:: References
 
