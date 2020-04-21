@@ -207,3 +207,17 @@ def test_spca_error_unormalized_components(spca):
     err_msg = "normalize_components=False is not supported starting "
     with pytest.raises(NotImplementedError, match=err_msg):
         spca(normalize_components=False).fit(Y)
+
+@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize("n_components", [None, 3])
+def test_spca_n_components_(spca, n_components):
+    rng = np.random.RandomState(0)
+    X = rng.randn(12, 10)
+
+    model = spca(n_components=n_components)
+    model.fit(X)
+
+    if n_components is not None:
+        assert model.n_components_ == n_components
+    else:
+        assert model.n_components_ == 10
