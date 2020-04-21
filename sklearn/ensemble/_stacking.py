@@ -14,7 +14,7 @@ from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
 
-from ._base import _fit_single_estimator, _predict_single_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
@@ -173,11 +173,15 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
 
         if self.cv == "prefit":
             # Generate predictions from prefit models
-            predictions = Parallel(n_jobs=self.n_jobs)(
-                delayed(_predict_single_estimator)(est, X, method=meth)
+            def _predict_single_estimator(estimator, X, method):
+                func = getattr(estimator, method)
+                return func(X)
+
+            predictions = [
+                _predict_single_estimator(est, X, method=meth)
                 for est, meth in zip(all_estimators, self.stack_method_)
                 if est != 'drop'
-            )
+            ]
         else:
             # To ensure that the data provided to each estimator are the same,
             # we need to set the random state of the cv if there is one and we
