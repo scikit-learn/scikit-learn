@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 from scipy import sparse
 
@@ -6,12 +5,14 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_raises
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
-from sklearn.linear_model.ransac import _dynamic_max_trials
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_allclose
+from sklearn.datasets import make_regression
+from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import OrthogonalMatchingPursuit
+from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -287,7 +288,9 @@ def test_ransac_none_estimator():
 
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, random_state=0)
-    ransac_none_estimator = RANSACRegressor(None, 2, 5, random_state=0)
+    ransac_none_estimator = RANSACRegressor(None, min_samples=2,
+                                            residual_threshold=5,
+                                            random_state=0)
 
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)
@@ -332,7 +335,6 @@ def test_ransac_min_n_samples():
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_multi_dimensional_targets():
 
     base_estimator = LinearRegression()
@@ -353,7 +355,6 @@ def test_ransac_multi_dimensional_targets():
     assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_residual_loss():
     loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
     loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
@@ -487,10 +488,28 @@ def test_ransac_fit_sample_weight():
     y_ = np.append(y_, outlier_y)
     ransac_estimator.fit(X_, y_, sample_weight)
 
-    assert_almost_equal(ransac_estimator.estimator_.coef_, ref_coef_)
+    assert_allclose(ransac_estimator.estimator_.coef_, ref_coef_)
 
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
-    base_estimator = Lasso()
+    base_estimator = OrthogonalMatchingPursuit()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+
+
+def test_ransac_final_model_fit_sample_weight():
+    X, y = make_regression(n_samples=1000, random_state=10)
+    rng = check_random_state(42)
+    sample_weight = rng.randint(1, 4, size=y.shape[0])
+    sample_weight = sample_weight / sample_weight.sum()
+    ransac = RANSACRegressor(base_estimator=LinearRegression(), random_state=0)
+    ransac.fit(X, y, sample_weight=sample_weight)
+
+    final_model = LinearRegression()
+    mask_samples = ransac.inlier_mask_
+    final_model.fit(
+        X[mask_samples], y[mask_samples],
+        sample_weight=sample_weight[mask_samples]
+    )
+
+    assert_allclose(ransac.estimator_.coef_, final_model.coef_)
