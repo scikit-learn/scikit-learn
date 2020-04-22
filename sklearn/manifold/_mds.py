@@ -411,7 +411,7 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "

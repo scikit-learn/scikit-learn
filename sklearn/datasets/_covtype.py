@@ -81,17 +81,17 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : numpy array of shape (581012, 54)
-        Each row corresponds to the 54 features in the dataset.
-
-    dataset.target : numpy array of shape (581012,)
-        Each value corresponds to one of the 7 forest covertypes with values
-        ranging between 1 to 7.
-
-    dataset.DESCR : string
-        Description of the forest covertype dataset.
+        data : numpy array of shape (581012, 54)
+            Each row corresponds to the 54 features in the dataset.
+        target : numpy array of shape (581012,)
+            Each value corresponds to one of
+            the 7 forest covertypes with values
+            ranging between 1 to 7.
+        DESCR : str
+            Description of the forest covertype dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

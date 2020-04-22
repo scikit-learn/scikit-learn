@@ -1947,7 +1947,7 @@ def test_normalizer_max():
         X_norm2 = toarray(X_norm2)
 
         for X_norm in (X_norm1, X_norm2):
-            row_maxs = X_norm.max(axis=1)
+            row_maxs = abs(X_norm).max(axis=1)
             for i in range(3):
                 assert_almost_equal(row_maxs[i], 1.0)
             assert_almost_equal(row_maxs[3], 0.0)
@@ -1964,6 +1964,27 @@ def test_normalizer_max():
         for i in range(3):
             assert_almost_equal(row_maxs[i], 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalizer_max_sign():
+    # check that we normalize by a positive number even for negative data
+    rng = np.random.RandomState(0)
+    X_dense = rng.randn(4, 5)
+    # set the row number 3 to zero
+    X_dense[3, :] = 0.0
+    # check for mixed data where the value with
+    # largest magnitude is negative
+    X_dense[2, abs(X_dense[2, :]).argmax()] *= -1
+    X_all_neg = -np.abs(X_dense)
+    X_all_neg_sparse = sparse.csr_matrix(X_all_neg)
+
+    for X in (X_dense, X_all_neg, X_all_neg_sparse):
+        normalizer = Normalizer(norm='max')
+        X_norm = normalizer.transform(X)
+        assert X_norm is not X
+        X_norm = toarray(X_norm)
+        assert_array_equal(
+            np.sign(X_norm), np.sign(toarray(X)))
 
 
 def test_normalize():
@@ -2471,3 +2492,17 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
+
+
+@pytest.mark.parametrize(
+    "X_2",
+    [sparse.random(10, 1, density=0.8, random_state=0),
+     sparse.csr_matrix(np.full((10, 1), fill_value=np.nan))]
+)
+def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16448
+    X_1 = sparse.random(5, 1, density=0.8)
+    scaler = StandardScaler(with_mean=False)
+    scaler.fit(X_1).partial_fit(X_2)
+    assert np.isfinite(scaler.var_[0])

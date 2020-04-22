@@ -106,7 +106,8 @@ def plot_precision_recall_curve(estimator, X, y,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -141,7 +142,7 @@ def plot_precision_recall_curve(estimator, X, y,
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
-    classification_error = ("{} should be a binary classifer".format(
+    classification_error = ("{} should be a binary classifier".format(
         estimator.__class__.__name__))
     if not is_classifier(estimator):
         raise ValueError(classification_error)
@@ -163,6 +164,9 @@ def plot_precision_recall_curve(estimator, X, y,
     average_precision = average_precision_score(y, y_pred,
                                                 pos_label=pos_label,
                                                 sample_weight=sample_weight)
-    viz = PrecisionRecallDisplay(precision, recall, average_precision,
-                                 estimator.__class__.__name__)
+    name = name if name is not None else estimator.__class__.__name__
+    viz = PrecisionRecallDisplay(
+        precision=precision, recall=recall,
+        average_precision=average_precision, estimator_name=name
+    )
     return viz.plot(ax=ax, name=name, **kwargs)

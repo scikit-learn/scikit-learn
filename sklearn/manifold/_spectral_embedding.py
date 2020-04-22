@@ -531,8 +531,8 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = check_array(X, accept_sparse='csr', ensure_min_samples=2,
-                        estimator=self)
+        X = self._validate_data(X, accept_sparse='csr', ensure_min_samples=2,
+                                estimator=self)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):

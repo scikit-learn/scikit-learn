@@ -156,6 +156,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         self.n_outputs_ = y.shape[1]
 
+        self.n_features_in_ = None  # No input validation is done for X
+
         check_consistent_length(X, y)
 
         if sample_weight is not None:
@@ -356,7 +358,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     def _more_tags(self):
         return {
             'poor_score': True, 'no_validation': True,
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the predict method'
             }
@@ -393,7 +395,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."
@@ -489,6 +492,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                              % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
+        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -619,7 +623,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."

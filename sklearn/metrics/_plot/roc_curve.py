@@ -115,7 +115,8 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -165,8 +166,9 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    classification_error = ("{} should be a binary classifer".format(
-        estimator.__class__.__name__))
+    classification_error = (
+        "{} should be a binary classifier".format(estimator.__class__.__name__)
+    )
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
@@ -185,5 +187,8 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
-    viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
+    name = estimator.__class__.__name__ if name is None else name
+    viz = RocCurveDisplay(
+        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
+    )
     return viz.plot(ax=ax, name=name, **kwargs)

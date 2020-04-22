@@ -214,13 +214,19 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - data: list, length [n_samples]
-        - target: array, shape [n_samples]
-        - filenames: list, length [n_samples]
-        - DESCR: a description of the dataset.
-        - target_names: a list of categories of the returned data,
-          length [n_classes]. This depends on the `categories` parameter.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list, length [n_samples]
+            The data list to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        filenames: list, length [n_samples]
+            The path to the location of the data.
+        DESCR: str
+            The full description of the dataset.
+        target_names: list, length [n_classes]
+            The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22
@@ -384,12 +390,17 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - bunch.data: sparse matrix, shape [n_samples, n_features]
-        - bunch.target: array, shape [n_samples]
-        - bunch.target_names: a list of categories of the returned data,
-          length [n_classes].
-        - bunch.DESCR: a description of the dataset.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data: sparse matrix, shape [n_samples, n_features]
+            The data matrix to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        target_names: list, length [n_classes]
+            The names of target classes.
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

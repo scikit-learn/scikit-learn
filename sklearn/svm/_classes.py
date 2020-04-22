@@ -1,11 +1,9 @@
-import warnings
 import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
@@ -161,15 +159,21 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = LinearSVC(random_state=0, tol=1e-5)
+    >>> clf = make_pipeline(StandardScaler(),
+    ...                     LinearSVC(random_state=0, tol=1e-5))
     >>> clf.fit(X, y)
-    LinearSVC(random_state=0, tol=1e-05)
-    >>> print(clf.coef_)
-    [[0.085... 0.394... 0.498... 0.375...]]
-    >>> print(clf.intercept_)
-    [0.284...]
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('linearsvc', LinearSVC(random_state=0, tol=1e-05))])
+
+    >>> print(clf.named_steps['linearsvc'].coef_)
+    [[0.141...   0.526... 0.679... 0.493...]]
+
+    >>> print(clf.named_steps['linearsvc'].intercept_)
+    [0.1693...]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
@@ -217,9 +221,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -324,17 +328,23 @@ class LinearSVR(RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn.svm import LinearSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = LinearSVR(random_state=0, tol=1e-5)
+    >>> regr = make_pipeline(StandardScaler(),
+    ...                      LinearSVR(random_state=0, tol=1e-5))
     >>> regr.fit(X, y)
-    LinearSVR(random_state=0, tol=1e-05)
-    >>> print(regr.coef_)
-    [16.35... 26.91... 42.30... 60.47...]
-    >>> print(regr.intercept_)
-    [-4.29...]
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('linearsvr', LinearSVR(random_state=0, tol=1e-05))])
+
+    >>> print(regr.named_steps['linearsvr'].coef_)
+    [18.582... 27.023... 44.357... 64.522...]
+    >>> print(regr.named_steps['linearsvr'].intercept_)
+    [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-4.29...]
+    [-2.384...]
+
 
     See also
     --------
@@ -395,9 +405,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_data(X, y, accept_sparse='csr',
+                                   dtype=np.float64, order="C",
+                                   accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -463,6 +473,7 @@ class SVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -497,7 +508,8 @@ class SVC(BaseSVC):
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy.
+        ('ovo') is always used as multi-class strategy. The parameter is
+        ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -519,7 +531,7 @@ class SVC(BaseSVC):
 
     random_state : int or RandomState instance, default=None
         Controls the pseudo random number generation for shuffling the data for
-        probability estimates.
+        probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -535,11 +547,13 @@ class SVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
-        Coefficients of the support vector in the decision function.
+        Dual coefficients of the support vector in the decision
+        function (see :ref:`sgd_mathematical_formulation`), multiplied by
+        their targets.
         For multiclass, coefficient for all 1-vs-1 classifiers.
         The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in the
-        SVM section of the User Guide for details.
+        non-trivial. See the :ref:`multi-class section of the User Guide
+        <svm_multi_class>` for details.
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -578,12 +592,16 @@ class SVC(BaseSVC):
     Examples
     --------
     >>> import numpy as np
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
-    >>> clf = SVC(gamma='auto')
+    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
     >>> clf.fit(X, y)
-    SVC(gamma='auto')
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))])
+
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -639,9 +657,9 @@ class NuSVC(BaseSVC):
     Parameters
     ----------
     nu : float, default=0.5
-        An upper bound on the fraction of training errors and a lower
-        bound of the fraction of support vectors. Should be in the
-        interval (0, 1].
+        An upper bound on the fraction of margin errors (see :ref:`User Guide
+        <nu_svc>`) and a lower bound of the fraction of support vectors.
+        Should be in the interval (0, 1].
 
     kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
          Specifies the kernel type to be used in the algorithm.
@@ -670,6 +688,7 @@ class NuSVC(BaseSVC):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     probability : bool, default=False
         Whether to enable probability estimates. This must be enabled prior
@@ -702,7 +721,9 @@ class NuSVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2).
+        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
+        ('ovo') is always used as multi-class strategy. The parameter is
+        ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -724,7 +745,7 @@ class NuSVC(BaseSVC):
 
     random_state : int or RandomState instance, default=None
         Controls the pseudo random number generation for shuffling the data for
-        probability estimates.
+        probability estimates. Ignored when `probability` is False.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
@@ -740,11 +761,13 @@ class NuSVC(BaseSVC):
         Number of support vectors for each class.
 
     dual_coef_ : ndarray of shape (n_class-1, n_SV)
-        Coefficients of the support vector in the decision function.
+        Dual coefficients of the support vector in the decision
+        function (see :ref:`sgd_mathematical_formulation`), multiplied by
+        their targets.
         For multiclass, coefficient for all 1-vs-1 classifiers.
         The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in
-        the SVM section of the User Guide for details.
+        non-trivial. See the :ref:`multi-class section of the User Guide
+        <svm_multi_class>` for details.
 
     coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -785,10 +808,12 @@ class NuSVC(BaseSVC):
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.svm import NuSVC
-    >>> clf = NuSVC()
+    >>> clf = make_pipeline(StandardScaler(), NuSVC())
     >>> clf.fit(X, y)
-    NuSVC()
+    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -830,7 +855,7 @@ class NuSVC(BaseSVC):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.'
@@ -895,6 +920,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
@@ -934,14 +960,18 @@ class SVR(RegressorMixin, BaseLibSVM):
     Examples
     --------
     >>> from sklearn.svm import SVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
-    >>> clf.fit(X, y)
-    SVR(epsilon=0.2)
+    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svr', SVR(epsilon=0.2))])
+
 
     See also
     --------
@@ -972,14 +1002,16 @@ class SVR(RegressorMixin, BaseLibSVM):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
@@ -1035,6 +1067,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     tol : float, default=1e-3
         Tolerance for stopping criterion.
@@ -1074,14 +1107,17 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     Examples
     --------
     >>> from sklearn.svm import NuSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
-    >>> clf.fit(X, y)
-    NuSVR(nu=0.1)
+    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('nusvr', NuSVR(nu=0.1))])
 
     See also
     --------
@@ -1159,6 +1195,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
@@ -1306,14 +1343,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probA_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The probB_ attribute is deprecated in version 0.23 and will be "
         "removed in version 0.25.")
     @property

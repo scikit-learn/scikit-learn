@@ -140,13 +140,13 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
-
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       metric=self.metric, p=self.p,
                                       metric_params=self.metric_params,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
+        self.n_features_in_ = self.nbrs_.n_features_in_
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
@@ -167,8 +167,11 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
 
-    @deprecated("Attribute `training_data_` was deprecated in version 0.22 and"
-                " will be removed in 0.24.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `training_data_` was deprecated in version 0.22 and"
+        " will be removed in 0.24."
+    )
     @property
     def training_data_(self):
         check_is_fitted(self)

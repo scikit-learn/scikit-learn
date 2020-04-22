@@ -383,11 +383,6 @@ and ignored by setting to ``'drop'``::
 ColumnTransformer for heterogeneous data
 ========================================
 
-.. warning::
-
-    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
-    class is experimental and the API is subject to change.
-
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying

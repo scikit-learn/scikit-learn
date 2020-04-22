@@ -51,6 +51,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "DataConversionWarning"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -64,7 +65,8 @@ class Bunch(dict):
     They extend dictionaries by enabling values to be accessed by key,
     `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-
+    Examples
+    --------
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -76,7 +78,6 @@ class Bunch(dict):
     >>> b.c = 6
     >>> b['c']
     6
-
     """
 
     def __init__(self, **kwargs):
@@ -419,7 +420,7 @@ def _get_column_indices(X, key):
         return np.atleast_1d(idx).tolist()
     elif key_dtype == 'str':
         try:
-            all_columns = list(X.columns)
+            all_columns = X.columns
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
@@ -428,10 +429,10 @@ def _get_column_indices(X, key):
         elif isinstance(key, slice):
             start, stop = key.start, key.stop
             if start is not None:
-                start = all_columns.index(start)
+                start = all_columns.get_loc(start)
             if stop is not None:
                 # pandas indexing with strings is endpoint included
-                stop = all_columns.index(stop) + 1
+                stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
             return list(range(n_columns)[slice(start, stop)])
@@ -439,13 +440,18 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         try:
-            column_indices = [all_columns.index(col) for col in columns]
-        except ValueError as e:
-            if 'not in list' in str(e):
-                raise ValueError(
-                    "A given column is not a column of the dataframe"
-                ) from e
-            raise
+            column_indices = []
+            for col in columns:
+                col_idx = all_columns.get_loc(col)
+                if not isinstance(col_idx, numbers.Integral):
+                    raise ValueError(f"Selected columns, {columns}, are not "
+                                     "unique in dataframe")
+                column_indices.append(col_idx)
+
+        except KeyError as e:
+            raise ValueError(
+                "A given column is not a column of the dataframe"
+            ) from e
 
         return column_indices
     else:
