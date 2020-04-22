@@ -16,14 +16,14 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
-from . import _barnes_hut_tsne
+# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
+from . import _barnes_hut_tsne  # type: ignore
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps

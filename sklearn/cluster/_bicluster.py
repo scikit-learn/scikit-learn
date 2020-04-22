@@ -18,8 +18,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
-from ..utils.validation import (assert_all_finite, check_array,
-                                _deprecate_positional_args)
+from ..utils.validation import assert_all_finite, _deprecate_positional_args
 
 
 __all__ = ['SpectralCoclustering',

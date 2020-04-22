@@ -22,8 +22,7 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import (check_is_fitted, check_array, check_X_y,
-                                check_scalar)
+from ..utils.validation import check_is_fitted, check_array, check_scalar
 from ..exceptions import ConvergenceWarning
 
 

@@ -16,6 +16,7 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from ._bagging import BaseBagging
@@ -93,7 +94,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         processors. See :term:`Glossary <n_jobs>` for more details.
 
     behaviour : str, default='deprecated'
-        This parameter has not effect, is deprecated, and will be removed.
+        This parameter has no effect, is deprecated, and will be removed.
 
         .. versionadded:: 0.20
            ``behaviour`` is added in 0.20 for back-compatibility purpose.
@@ -145,6 +146,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -178,8 +182,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  n_estimators=100,
                  max_samples="auto",
                  contamination="auto",

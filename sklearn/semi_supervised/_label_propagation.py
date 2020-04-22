@@ -67,7 +67,7 @@ from ..metrics.pairwise import rbf_kernel
 from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
