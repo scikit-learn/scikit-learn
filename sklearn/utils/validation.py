@@ -153,9 +153,9 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
-        return check_array(X, ['csr', 'csc', 'coo'], dtype=np.float64,
-                           copy=copy, force_all_finite=force_all_finite,
-                           ensure_2d=False)
+        return check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                           dtype=np.float64, copy=copy,
+                           force_all_finite=force_all_finite, ensure_2d=False)
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
@@ -774,8 +774,8 @@ def check_X_y(X, y, *, accept_sparse=False, accept_large_sparse=True,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
-                        dtype=None)
+        y = check_array(y, accept_sparse='csr', force_all_finite=True,
+                        ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
