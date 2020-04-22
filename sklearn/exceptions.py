@@ -121,7 +121,7 @@ class EfficiencyWarning(UserWarning):
     >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
     >>> neigh = NearestNeighbors(n_neighbors=1, metric='precomputed')
     >>> neigh.fit(samples)
-    NearestNeighbors(n_neighbors=1)
+    NearestNeighbors(metric='precomputed', n_neighbors=1)
     >>> X = csr_matrix([[0., 2., 0.], [1., 0., 1.], [3., 0., 1.]])
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
