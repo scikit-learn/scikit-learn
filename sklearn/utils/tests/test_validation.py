@@ -349,7 +349,8 @@ def test_check_array():
             check_array(X, dtype="numeric")
 
 
-@pytest.mark.parametrize("dtype", ["Int8", "Int16", "Int32"])
+@pytest.mark.parametrize("dtype", ["Int8", "Int16", "Int32",
+                                   "UInt8", "UInt16", "UInt32"])
 def test_check_array_pandas_na_support(dtype):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip('pandas', minversion="1.0")
@@ -360,9 +361,12 @@ def test_check_array_pandas_na_support(dtype):
 
     # Creates dataframe with IntegerArrays with pd.NA
     X = pd.DataFrame(X_np, dtype=dtype, columns=['a', 'b', 'c'])
-    X['c'] = X['c'].astype('int')
+    # column c has no nans
+    X['c'] = X['c'].astype('float')
     X_checked = check_array(X, force_all_finite='allow-nan')
+    assert_allclose(X_checked, X_np)
 
+    X_checked = check_array(X, force_all_finite=False)
     assert_allclose(X_checked, X_np)
 
     msg = "Input contains NaN, infinity"

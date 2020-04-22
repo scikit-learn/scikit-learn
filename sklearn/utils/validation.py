@@ -468,16 +468,18 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
-            elif dtype_iter.name.startswith("Int"):
+            elif (dtype_iter.name.startswith("Int") or
+                  dtype_iter.name.startswith("UInt")):
                 # actually check for dtype
                 with suppress(ImportError):
                     from pandas import (Int8Dtype, Int16Dtype,
-                                        Int32Dtype, Int64Dtype)
+                                        Int32Dtype, Int64Dtype,
+                                        UInt8Dtype, UInt16Dtype,
+                                        UInt32Dtype, UInt64Dtype)
                     if isinstance(dtype_iter, (Int8Dtype, Int16Dtype,
-                                               Int32Dtype, Int64Dtype)):
-                        # This should be an int if there are no pd.NA in the
-                        # array but this is expensive to check
-                        dtypes_orig[i] = float
+                                               Int32Dtype, Int64Dtype,
+                                               UInt8Dtype, UInt16Dtype,
+                                               UInt32Dtype, UInt64Dtype)):
                         has_pd_interger_array = True
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
@@ -517,6 +519,10 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
 
+    if has_pd_interger_array:
+        # convert dataframe with Integer extension arrays with floats
+        array = array.astype(None)
+
     if sp.issparse(array):
         _ensure_no_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse=accept_sparse,
@@ -542,9 +548,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                                            msg_dtype=dtype)
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
-                    # Need to call astype first for pandas IntegerArray
-                    if has_pd_interger_array:
-                        array = array.astype(dtype)
                     array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
