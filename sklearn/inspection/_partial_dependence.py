@@ -480,7 +480,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if kind == 'average':
         warnings.warn(
             "A Bunch will be returned in place of 'predictions' from 0.25 with"
-            " partial dependence results accessible via the 'average' key.",
+            " partial dependence results accessible via the 'average' key. In"
+            " the meantime, pass kind='both' to get the future behaviour.",
             FutureWarning
         )
         # TODO 0.25: Return a Bunch in place of averaged_predictions
