@@ -293,7 +293,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, feature_range=(0, 1), copy=True):
+    def __init__(self, feature_range=(0, 1), *, copy=True):
         self.feature_range = feature_range
         self.copy = copy
 
@@ -1647,7 +1647,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
 
 @_deprecate_positional_args
-def normalize(X, *, norm='l2', axis=1, copy=True, return_norm=False):
+def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
@@ -2241,7 +2241,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_quantiles=1000, *, output_distribution='uniform',
+    def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None, copy=True):
         self.n_quantiles = n_quantiles
@@ -2778,7 +2778,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    def __init__(self, method='yeo-johnson', standardize=True, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, method='yeo-johnson', *, standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
         self.copy = copy
@@ -3049,7 +3050,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
 
 @_deprecate_positional_args
-def power_transform(X, *, method='yeo-johnson', standardize=True, copy=True):
+def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for

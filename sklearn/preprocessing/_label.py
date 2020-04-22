@@ -856,7 +856,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, classes=None, sparse_output=False):
+    def __init__(self, classes=None, *, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
 
