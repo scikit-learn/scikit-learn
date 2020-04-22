@@ -322,6 +322,9 @@ def _elkan_iter_chunked_dense(
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
 
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
+
     if update_centers:
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                        centers_new, weight_in_clusters, labels)
@@ -552,6 +555,9 @@ def _elkan_iter_chunked_sparse(
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
 
     if update_centers:
         _relocate_empty_clusters_sparse(
