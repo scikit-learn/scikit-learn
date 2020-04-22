@@ -1,4 +1,9 @@
+.. Places global toc into the sidebar
+
+:globalsidebartoc: True
+
 .. _tutorial_menu:
+
 
 .. include:: ../includes/big_toc_css.rst
 .. include:: ../tune_toc.rst
@@ -6,6 +11,8 @@
 ======================
 scikit-learn Tutorials
 ======================
+
+|
 
 .. toctree::
    :maxdepth: 2
@@ -15,6 +22,8 @@ scikit-learn Tutorials
    text_analytics/working_with_text_data.rst
    machine_learning_map/index
    ../presentations
+
+|
 
 .. note:: **Doctest Mode**
 

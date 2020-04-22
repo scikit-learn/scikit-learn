@@ -14,6 +14,8 @@
 Welcome to scikit-learn
 =======================
 
+|
+
 .. toctree::
     :maxdepth: 2
 
@@ -27,3 +29,4 @@ Welcome to scikit-learn
     roadmap
     governance
 
+|
