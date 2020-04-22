@@ -383,7 +383,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                                          multi_class, average, sample_weight)
     elif y_type == "binary":
         labels = np.unique(y_true)
-        y_true = label_binarize(y_true, labels)[:, 0]
+        y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(partial(_binary_roc_auc_score,
                                              max_fpr=max_fpr),
                                      y_true, y_score, average,
@@ -489,7 +489,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
                                              y_score, average=average)
     else:
         # ovr is same as multi-label
-        y_true_multilabel = label_binarize(y_true, classes)
+        y_true_multilabel = label_binarize(y_true, classes=classes)
         return _average_binary_score(_binary_roc_auc_score, y_true_multilabel,
                                      y_score, average,
                                      sample_weight=sample_weight)

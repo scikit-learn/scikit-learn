@@ -574,7 +574,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
-    y_true = label_binarize(y_true, labels)[:, 0]
+    y_true = label_binarize(y_true, classes=labels)[:, 0]
 
     if strategy == 'quantile':  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)

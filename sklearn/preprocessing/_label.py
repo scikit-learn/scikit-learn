@@ -485,7 +485,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
             raise ValueError("The object was not fitted with multilabel"
                              " input.")
 
-        return label_binarize(y, self.classes_,
+        return label_binarize(y, classes=self.classes_,
                               pos_label=self.pos_label,
                               neg_label=self.neg_label,
                               sparse_output=self.sparse_output)
@@ -544,7 +544,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
 
 @_deprecate_positional_args
-def label_binarize(y, classes, *, neg_label=0, pos_label=1,
+def label_binarize(y, *, classes, neg_label=0, pos_label=1,
                    sparse_output=False):
     """Binarize labels in a one-vs-all fashion
 
@@ -856,7 +856,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, classes=None, *, sparse_output=False):
+    def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
 
