@@ -241,7 +241,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
             error_score=error_score)
-        for train, test in cv.split(X, y, groups=groups))
+        for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
@@ -764,7 +764,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups=groups))
+        for train, test in cv.split(X, y, groups))
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
@@ -1073,7 +1073,7 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
 def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
-    for train, test in cv.split(X, y, groups=groups):
+    for train, test in cv.split(X, y, groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
         estimator.fit(X_train, y_train)
@@ -1233,7 +1233,7 @@ def learning_curve(estimator, X, y, *, groups=None,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     # Store it as list as we will be iterating over the list multiple times
-    cv_iter = list(cv.split(X, y, groups=groups))
+    cv_iter = list(cv.split(X, y, groups))
 
     scorer = check_scoring(estimator, scoring=scoring)
 
@@ -1486,7 +1486,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
         parameters={param_name: v}, fit_params=None, return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
-        for train, test in cv.split(X, y, groups=groups) for v in param_range)
+        for train, test in cv.split(X, y, groups) for v in param_range)
     out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params

@@ -676,7 +676,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
 
-        n_splits = cv.get_n_splits(X, y, groups=groups)
+        n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
 
@@ -712,7 +712,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        **fit_and_score_kwargs)
                                for parameters, (train, test)
                                in product(candidate_params,
-                                          cv.split(X, y, groups=groups)))
+                                          cv.split(X, y, groups)))
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '

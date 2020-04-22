@@ -51,8 +51,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -100,8 +99,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator"""
 
     def __repr__(self):
@@ -164,8 +162,7 @@ class LeaveOneOut(BaseCrossValidator):
             )
         return range(n_samples)
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X, y=None, *, groups=None):
+    def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -249,8 +246,7 @@ class LeavePOut(BaseCrossValidator):
         for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X, y=None, *, groups=None):
+    def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -305,8 +301,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         self.shuffle = shuffle
         self.random_state = random_state
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -338,11 +333,10 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                  " than the number of samples: n_samples={1}.")
                 .format(self.n_splits, n_samples))
 
-        for train, test in super().split(X, y, groups=groups):
+        for train, test in super().split(X, y, groups):
             yield train, test
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -480,11 +474,11 @@ class GroupKFold(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4])
     >>> groups = np.array([0, 0, 2, 2])
     >>> group_kfold = GroupKFold(n_splits=2)
-    >>> group_kfold.get_n_splits(X, y, groups=groups)
+    >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2)
-    >>> for train_index, test_index in group_kfold.split(X, y, groups=groups):
+    >>> for train_index, test_index in group_kfold.split(X, y, groups):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
@@ -545,8 +539,7 @@ class GroupKFold(_BaseKFold):
         for f in range(self.n_splits):
             yield np.where(indices == f)[0]
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -570,7 +563,7 @@ class GroupKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 class StratifiedKFold(_BaseKFold):
@@ -705,8 +698,7 @@ class StratifiedKFold(_BaseKFold):
         for i in range(self.n_splits):
             yield test_folds == i
 
-    @_deprecate_positional_args
-    def split(self, X, y, *, groups=None):
+    def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -741,7 +733,7 @@ class StratifiedKFold(_BaseKFold):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
@@ -803,8 +795,7 @@ class TimeSeriesSplit(_BaseKFold):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -869,13 +860,13 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
     >>> logo = LeaveOneGroupOut()
-    >>> logo.get_n_splits(X, y, groups=groups)
+    >>> logo.get_n_splits(X, y, groups)
     2
     >>> logo.get_n_splits(groups=groups)  # 'groups' is always required
     2
     >>> print(logo)
     LeaveOneGroupOut()
-    >>> for train_index, test_index in logo.split(X, y, groups=groups):
+    >>> for train_index, test_index in logo.split(X, y, groups):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
@@ -904,8 +895,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         for i in unique_groups:
             yield groups == i
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -932,8 +922,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return len(np.unique(groups))
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -957,7 +946,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         test : ndarray
             The testing set indices for that split.
         """
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -990,13 +979,13 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
     >>> lpgo = LeavePGroupsOut(n_groups=2)
-    >>> lpgo.get_n_splits(X, y, groups=groups)
+    >>> lpgo.get_n_splits(X, y, groups)
     3
     >>> lpgo.get_n_splits(groups=groups)  # 'groups' is always required
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
-    >>> for train_index, test_index in lpgo.split(X, y, groups=groups):
+    >>> for train_index, test_index in lpgo.split(X, y, groups):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
@@ -1037,8 +1026,7 @@ class LeavePGroupsOut(BaseCrossValidator):
                 test_index[groups == l] = True
             yield test_index
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1065,8 +1053,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1090,7 +1077,7 @@ class LeavePGroupsOut(BaseCrossValidator):
         test : ndarray
             The testing set indices for that split.
         """
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 class _RepeatedSplits(metaclass=ABCMeta):
@@ -1133,8 +1120,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         self.random_state = random_state
         self.cvargs = cvargs
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generates indices to split data into training and test set.
 
         Parameters
@@ -1164,11 +1150,10 @@ class _RepeatedSplits(metaclass=ABCMeta):
         for idx in range(n_repeats):
             cv = self.cv(random_state=rng, shuffle=True,
                          **self.cvargs)
-            for train_index, test_index in cv.split(X, y, groups=groups):
+            for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1193,7 +1178,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         rng = check_random_state(self.random_state)
         cv = self.cv(random_state=rng, shuffle=True,
                      **self.cvargs)
-        return cv.get_n_splits(X, y, groups=groups) * self.n_repeats
+        return cv.get_n_splits(X, y, groups) * self.n_repeats
 
     def __repr__(self):
         return _build_repr(self)
@@ -1320,8 +1305,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         self.random_state = random_state
         self._default_test_size = 0.1
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1359,8 +1343,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
     def _iter_indices(self, X, y=None, groups=None):
         """Generate (train, test) indices"""
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1532,7 +1515,7 @@ class GroupShuffleSplit(ShuffleSplit):
     >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
     >>> gss.get_n_splits()
     2
-    >>> for train_idx, test_idx in gss.split(X, y, groups=groups):
+    >>> for train_idx, test_idx in gss.split(X, y, groups):
     ...     print("TRAIN:", train_idx, "TEST:", test_idx)
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
@@ -1561,8 +1544,7 @@ class GroupShuffleSplit(ShuffleSplit):
 
             yield train, test
 
-    @_deprecate_positional_args
-    def split(self, X, y=None, *, groups=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1592,7 +1574,7 @@ class GroupShuffleSplit(ShuffleSplit):
         split. You can make the results identical by setting `random_state`
         to an integer.
         """
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 class StratifiedShuffleSplit(BaseShuffleSplit):
@@ -1725,8 +1707,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             yield train, test
 
-    @_deprecate_positional_args
-    def split(self, X, y, *, groups=None):
+    def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1761,7 +1742,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super().split(X, y, groups=groups)
+        return super().split(X, y, groups)
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size,
@@ -1878,8 +1859,7 @@ class PredefinedSplit(BaseCrossValidator):
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]
 
-    @_deprecate_positional_args
-    def split(self, X=None, y=None, *, groups=None):
+    def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1915,8 +1895,7 @@ class PredefinedSplit(BaseCrossValidator):
             test_mask[test_index] = True
             yield test_mask
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1943,8 +1922,7 @@ class _CVIterableWrapper(BaseCrossValidator):
     def __init__(self, cv):
         self.cv = list(cv)
 
-    @_deprecate_positional_args
-    def get_n_splits(self, X=None, y=None, *, groups=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1965,8 +1943,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         """
         return len(self.cv)
 
-    @_deprecate_positional_args
-    def split(self, X=None, y=None, *, groups=None):
+    def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters

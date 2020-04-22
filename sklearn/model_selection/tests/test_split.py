@@ -140,10 +140,10 @@ def test_2d_y():
                  LeavePGroupsOut(n_groups=2), GroupKFold(n_splits=3),
                  TimeSeriesSplit(), PredefinedSplit(test_fold=groups)]
     for splitter in splitters:
-        list(splitter.split(X, y, groups=groups))
-        list(splitter.split(X, y_2d, groups=groups))
+        list(splitter.split(X, y, groups))
+        list(splitter.split(X, y_2d, groups))
         try:
-            list(splitter.split(X, y_multilabel, groups=groups))
+            list(splitter.split(X, y_multilabel, groups))
         except ValueError as e:
             allowed_target_types = ('binary', 'multiclass')
             msg = "Supported target types are: {}. Got 'multilabel".format(
@@ -166,11 +166,11 @@ def check_valid_split(train, test, n_samples=None):
 def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
-    assert cv.get_n_splits(X, y, groups=groups) == expected_n_splits
+    assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
     iterations = 0
-    for train, test in cv.split(X, y, groups=groups):
+    for train, test in cv.split(X, y, groups):
         check_valid_split(train, test, n_samples=n_samples)
         iterations += 1
         collected_test_samples.update(test)
@@ -554,7 +554,7 @@ def test_group_shuffle_split_default_test_size(train_size, exp_train,
     groups = range(10)
 
     X_train, X_test = next(GroupShuffleSplit(train_size=train_size)
-                           .split(X, y, groups=groups))
+                           .split(X, y, groups))
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
@@ -839,22 +839,22 @@ def test_leave_one_p_group_out():
                 assert np.unique(groups_arr[test]).shape[0], p_groups_out
 
     # check get_n_splits() with dummy parameters
-    assert logo.get_n_splits(None, None, groups=['a', 'b', 'c', 'b', 'c']) == 3
+    assert logo.get_n_splits(None, None, ['a', 'b', 'c', 'b', 'c']) == 3
     assert logo.get_n_splits(groups=[1.0, 1.1, 1.0, 1.2]) == 3
-    assert lpgo_2.get_n_splits(None, None, groups=np.arange(4)) == 6
+    assert lpgo_2.get_n_splits(None, None, np.arange(4)) == 6
     assert lpgo_1.get_n_splits(groups=np.arange(4)) == 4
 
     # raise ValueError if a `groups` parameter is illegal
     with assert_raises(ValueError):
-        logo.get_n_splits(None, None, groups=[0.0, np.nan, 0.0])
+        logo.get_n_splits(None, None, [0.0, np.nan, 0.0])
     with assert_raises(ValueError):
-        lpgo_2.get_n_splits(None, None, groups=[0.0, np.inf, 0.0])
+        lpgo_2.get_n_splits(None, None, [0.0, np.inf, 0.0])
 
     msg = "The 'groups' parameter should not be None."
     assert_raise_message(ValueError, msg,
-                         logo.get_n_splits, None, None, groups=None)
+                         logo.get_n_splits, None, None, None)
     assert_raise_message(ValueError, msg,
-                         lpgo_1.get_n_splits, None, None, groups=None)
+                         lpgo_1.get_n_splits, None, None, None)
 
 
 def test_leave_group_out_changing_groups():
@@ -885,28 +885,26 @@ def test_leave_group_out_changing_groups():
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
     assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
-                         LeaveOneGroupOut().split(X, y, groups=groups))
+                         LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
            "LeaveOneGroupOut expects at least 2.").format(groups)
     assert_raise_message(ValueError, msg, next,
-                         LeaveOneGroupOut().split(X, y, groups=groups))
+                         LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
            "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
            "that at least n_groups + 1 (4) unique groups "
            "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y,
-                                                           groups=groups))
+                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
     X = y = groups = np.arange(3)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
            "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
            "that at least n_groups + 1 (4) unique groups "
            "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
-                         LeavePGroupsOut(n_groups=3).split(X, y,
-                                                           groups=groups))
+                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
 @ignore_warnings
@@ -1310,7 +1308,7 @@ def test_group_kfold():
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
     lkf = GroupKFold(n_splits=n_splits)
-    for i, (_, test) in enumerate(lkf.split(X, y, groups=groups)):
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
     # Check that folds have approximately the same size
@@ -1325,7 +1323,7 @@ def test_group_kfold():
 
     # Check that no group is on both sides of the split
     groups = np.asarray(groups, dtype=object)
-    for train, test in lkf.split(X, y, groups=groups):
+    for train, test in lkf.split(X, y, groups):
         assert len(np.intersect1d(groups[train], groups[test])) == 0
 
     # Construct the test data
@@ -1347,7 +1345,7 @@ def test_group_kfold():
 
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    for i, (_, test) in enumerate(lkf.split(X, y, groups=groups)):
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
     # Check that folds have approximately the same size
@@ -1364,12 +1362,12 @@ def test_group_kfold():
 
     # Check that no group is on both sides of the split
     groups = np.asarray(groups, dtype=object)
-    for train, test in lkf.split(X, y, groups=groups):
+    for train, test in lkf.split(X, y, groups):
         assert len(np.intersect1d(groups[train], groups[test])) == 0
 
     # groups can also be a list
-    cv_iter = list(lkf.split(X, y, groups=groups.tolist()))
-    for (train1, test1), (train2, test2) in zip(lkf.split(X, y, groups=groups),
+    cv_iter = list(lkf.split(X, y, groups.tolist()))
+    for (train1, test1), (train2, test2) in zip(lkf.split(X, y, groups),
                                                 cv_iter):
         assert_array_equal(train1, train2)
         assert_array_equal(test1, test2)
@@ -1378,8 +1376,7 @@ def test_group_kfold():
     groups = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(groups))
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
-                         next, GroupKFold(n_splits=3).split(
-                             X, y, groups=groups))
+                         next, GroupKFold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():
