@@ -650,9 +650,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
-        self._precomputed = False
-        if hasattr(X, 'dtype') and X.dtype.kind == 'b':
-            self._precomputed = True
+        if not hasattr(self, '_precomputed'):
+            self._precomputed = False
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
