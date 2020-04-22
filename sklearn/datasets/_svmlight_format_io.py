@@ -153,8 +153,13 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
         X, y = get_data()
     """
-    return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based, query_id, offset, length))
+    return tuple(load_svmlight_files([f], n_features=n_features,
+                                     dtype=dtype,
+                                     multilabel=multilabel,
+                                     zero_based=zero_based,
+                                     query_id=query_id,
+                                     offset=offset,
+                                     length=length))
 
 
 def _gen_open(f):
