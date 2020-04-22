@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.datasets import load_diabetes
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
@@ -11,11 +11,10 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
 
 
-@pytest.mark.parametrize('n_bins', [50, 100])
-def test_california_dataset(n_bins):
-    X, y = load_diabetes(return_X_y=True)
-    # X = X[:500, :]
-    # y = y[:500]
+@pytest.mark.parametrize('n_bins', [200, 256])
+def test_regression_dataset(n_bins):
+    X, y = make_regression(n_samples=500, n_features=10, n_informative=5,
+                           random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=42)
 
@@ -26,8 +25,8 @@ def test_california_dataset(n_bins):
     gradients = -y_train.astype(G_H_DTYPE)
     hessians = np.ones(1, dtype=G_H_DTYPE)
 
-    min_samples_leaf = 50
-    max_leaf_nodes = None
+    min_samples_leaf = 10
+    max_leaf_nodes = 30
     grower = TreeGrower(X_train_binned, gradients, hessians,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=max_leaf_nodes, n_bins=n_bins,
@@ -35,11 +34,9 @@ def test_california_dataset(n_bins):
     grower.grow()
 
     predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
-    print(r2_score(y_train, predictor.predict(X_train)))
-    print(r2_score(y_test, predictor.predict(X_test)))
 
-    # assert r2_score(y_train, predictor.predict(X_train)) > 0.3
-    # assert r2_score(y_test, predictor.predict(X_test)) > 0.3
+    assert r2_score(y_train, predictor.predict(X_train)) > 0.82
+    assert r2_score(y_test, predictor.predict(X_test)) > 0.67
 
 
 @pytest.mark.parametrize('threshold, expected_predictions', [
