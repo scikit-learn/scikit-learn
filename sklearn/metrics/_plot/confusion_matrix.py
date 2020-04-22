@@ -109,7 +109,10 @@ class ConfusionMatrixDisplay:
                     ha="center", va="center",
                     color=color)
 
-        display_labels = self.display_labels or np.arange(n_classes)
+        if self.display_labels is None:
+            display_labels = np.arange(n_classes)
+        else:
+            display_labels = self.display_labels
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
