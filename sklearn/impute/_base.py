@@ -76,7 +76,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values, error_on_new=False)
-            self.indicator_.fit(X)
+            self.indicator_._fit_precomputed(X)
         else:
             self.indicator_ = None
 
@@ -671,6 +671,25 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         self.features_ = missing_features_info[1]
 
         return missing_features_info[0]
+
+    def _fit_precomputed(self, X, y=None):
+        """Fit the transformer on X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}
+            Mask of input data.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self._precomputed = False
+        if hasattr(X, 'dtype') and X.dtype.kind == 'b':
+            self._precomputed = True
+
+        return self._fit(X, y)
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
