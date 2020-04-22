@@ -21,6 +21,7 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _mini_batch_step
+from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
@@ -647,16 +648,69 @@ def test_minibatch_kmeans_init_size():
     assert km._init_size == n_samples
 
 
-def test_minibatch_kmeans_partial_fit():
-    # Check fitting using the partial_fit API
-    km = MiniBatchKMeans(n_clusters=n_clusters, init="random", random_state=42)
+def test_minibatch_sensible_reassign():
+    # check that identical initial clusters are reassigned
+    # also a regression test for when there are more desired reassignments than
+    # samples.
+    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
+                                       random_state=42)
+    zeroed_X[::2, :] = 0
 
-    for X_minibatch in np.array_split(X, 10):
-        km.partial_fit(X_minibatch)
+    km = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                         init="random").fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
 
-    # compute the labeling on the complete dataset
-    labels = km.predict(X)
-    assert_allclose(v_measure_score(true_labels, labels), 1.0)
+    # do the same with batch-size > X.shape[0] (regression test)
+    km = MiniBatchKMeans(n_clusters=20, batch_size=200, random_state=42,
+                         init="random").fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
+
+    # do the same with partial_fit API
+    km = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
+    for i in range(100):
+        km.partial_fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
+
+
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+def test_minibatch_reassign(data):
+    # Check the reassignment part of the minibatch step with very high or very
+    # low reassignment ratio.
+    perfect_centers = np.empty((n_clusters, n_features))
+    for i in range(n_clusters):
+        perfect_centers[i] = X[true_labels == i].mean(axis=0)
+
+    x_squared_norms = row_norms(data, squared=True)
+    sample_weight = np.ones(n_samples)
+    centers_new = np.empty_like(perfect_centers)
+
+    # Give a perfect initialization, but a large reassignment_ratio, as a
+    # result many centers should be reassigned and the model should no longer
+    # be good
+    score_before = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                     perfect_centers, 1)[1]
+
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1)
+
+    score_after = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                    centers_new, 1)[1]
+
+    assert score_before > score_after
+
+    # Give a perfect initialization, with a small reassignment_ratio,
+    # no center should be reassigned.
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1e-15)
+
+    assert_allclose(centers_new, perfect_centers)
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])

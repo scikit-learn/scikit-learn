@@ -1210,7 +1210,7 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
                 assign_rows_csr(
                         X, new_centers.astype(np.intp, copy=False),
                         np.where(to_reassign)[0].astype(np.intp, copy=False),
-                        centers)
+                        centers_new)
             else:
                 centers_new[to_reassign] = X[new_centers]
 
@@ -1462,20 +1462,16 @@ class MiniBatchKMeans(KMeans):
         # Normalize inertia to be able to compare values when
         # batch_size changes
         batch_inertia /= self.batch_size
-        centers_squared_diff /= self.batch_size
 
-        # Compute an Exponentially Weighted Average of the squared diff to
+        # Compute an Exponentially Weighted Average of the inertia to
         # monitor the convergence while discarding minibatch-local stochastic
         # variability: https://en.wikipedia.org/wiki/Moving_average
-        ewa_diff = self._ewa_diff
         ewa_inertia = self._ewa_inertia
-        if ewa_diff is None:
-            ewa_diff = centers_squared_diff
+        if ewa_inertia is None:
             ewa_inertia = batch_inertia
         else:
             alpha = self.batch_size * 2.0 / (n_samples + 1)
             alpha = min(alpha, 1)
-            ewa_diff = ewa_diff * (1 - alpha) + centers_squared_diff * alpha
             ewa_inertia = ewa_inertia * (1 - alpha) + batch_inertia * alpha
 
         # Log progress to be able to monitor convergence
@@ -1486,7 +1482,7 @@ class MiniBatchKMeans(KMeans):
 
         # Early stopping based on absolute tolerance on squared change of
         # centers position (using EWA smoothing)
-        if self._tol > 0.0 and ewa_diff <= self._tol:
+        if self._tol > 0.0 and centers_squared_diff <= self._tol:
             if self.verbose:
                 print(f"Converged (small centers change) at iteration "
                       f"{iteration_idx + 1}/{n_iter}")
@@ -1511,7 +1507,6 @@ class MiniBatchKMeans(KMeans):
 
         # update the convergence context to maintain state across successive
         # calls:
-        self._ewa_diff = ewa_diff
         self._ewa_inertia = ewa_inertia
         self._ewa_inertia_min = ewa_inertia_min
         self._no_improvement = no_improvement
@@ -1600,7 +1595,6 @@ class MiniBatchKMeans(KMeans):
         self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
         # Attributes to monitor the convergence
-        self._ewa_diff = None
         self._ewa_inertia = None
         self._ewa_inertia_min = None
         self._no_improvement = 0
