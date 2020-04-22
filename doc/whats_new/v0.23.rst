@@ -334,6 +334,12 @@ Changelog
   the `labels` parameter.
   :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
 
+- |API| From version 0.25, :func:`metrics.pairwise.pairwise_distances` will no
+  longer automatically compute the ``VI`` parameter for Mahalanobis distance
+  and the ``V`` parameter for seuclidean distance if ``Y`` is passed. The user
+  will be expected to compute this parameter on the training data of their
+  choice and pass it to `pairwise_distances`. :pr:`TBA` by `Joel Nothman`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
