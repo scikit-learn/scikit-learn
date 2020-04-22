@@ -360,7 +360,7 @@ class MDS(BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, n_components=2, metric=True, n_init=4,
+    def __init__(self, n_components=2, *, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
