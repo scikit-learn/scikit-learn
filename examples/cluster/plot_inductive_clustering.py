@@ -28,7 +28,7 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils import plot_decision_boundary
+from sklearn.utils.plot import plot_decision_boundary
 
 N_SAMPLES = 5000
 RANDOM_STATE = 42

@@ -1,6 +1,6 @@
 import numpy as np
-from .utils import check_matplotlib_support
-from .utils import _safe_indexing
+from .. import check_matplotlib_support
+from .. import _safe_indexing
 
 
 def _check_boundary_response_method(estimator, response_method):

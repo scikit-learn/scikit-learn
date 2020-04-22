@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_gaussian_quantiles
-from sklearn.utils import plot_decision_boundary
+from sklearn.utils.plot import plot_decision_boundary
 
 
 # Construct dataset

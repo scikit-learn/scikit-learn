@@ -24,7 +24,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import (KNeighborsClassifier,
                                NeighborhoodComponentsAnalysis)
 from sklearn.pipeline import Pipeline
-from sklearn.utils import plot_decision_boundary
+from sklearn.utils.plot import plot_decision_boundary
 
 
 print(__doc__)

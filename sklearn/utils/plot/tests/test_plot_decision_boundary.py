@@ -2,10 +2,10 @@ import pytest
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
-from sklearn.utils import plot_decision_boundary
+from sklearn.utils.plot import plot_decision_boundary
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils._plot.decision_boundary import (
+from sklearn.utils.plot._decision_boundary import (
     _check_boundary_response_method)
 
 
