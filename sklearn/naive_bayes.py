@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -28,7 +29,6 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight

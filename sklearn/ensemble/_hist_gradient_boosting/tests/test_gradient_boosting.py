@@ -12,6 +12,8 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
+from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
@@ -659,3 +661,44 @@ def test_early_stopping_on_test_set_with_warm_start():
     # does not raise on second call
     gb.set_params(max_iter=2)
     gb.fit(X, y)
+
+
+@pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
+                                 HistGradientBoostingRegressor))
+def test_single_node_trees(Est):
+    # Make sure it's still possible to build single-node trees. In that case
+    # the value of the root is set to 0. That's a correct value: if the tree is
+    # single-node that's because min_gain_to_split is not respected right from
+    # the root, so we don't want the tree to have any impact on the
+    # predictions.
+
+    X, y = make_classification(random_state=0)
+    y[:] = 1  # constant target will lead to a single root node
+
+    est = Est(max_iter=20)
+    est.fit(X, y)
+
+    assert all(len(predictor[0].nodes) == 1 for predictor in est._predictors)
+    assert all(predictor[0].nodes[0]['value'] == 0
+               for predictor in est._predictors)
+    # Still gives correct predictions thanks to the baseline prediction
+    assert_allclose(est.predict(X), y)
+
+
+@pytest.mark.parametrize('Est, loss, X, y', [
+    (
+        HistGradientBoostingClassifier,
+        BinaryCrossEntropy(sample_weight=None),
+        X_classification,
+        y_classification
+    ),
+    (
+        HistGradientBoostingRegressor,
+        LeastSquares(sample_weight=None),
+        X_regression,
+        y_regression
+    )
+])
+def test_custom_loss(Est, loss, X, y):
+    est = Est(loss=loss, max_iter=20)
+    est.fit(X, y)

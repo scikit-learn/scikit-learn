@@ -152,7 +152,8 @@ The features are considered unimportant and removed, if the corresponding
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
-"0.1*mean".
+"0.1*mean". In combination with the `threshold` criteria, one can use the
+`max_features` parameter to set a limit on the number of features to select.
 
 For examples on how it is to be used refer to the sections below.
 
