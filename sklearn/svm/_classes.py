@@ -179,7 +179,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     [1]
     """
     @_deprecate_positional_args
-    def __init__(self, penalty='l2', *, loss='squared_hinge', dual=True,
+    def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
                  tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
                  random_state=None, max_iter=1000):
