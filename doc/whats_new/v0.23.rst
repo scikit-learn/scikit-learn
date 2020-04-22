@@ -25,6 +25,12 @@ random sampling procedures.
 - :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`,
   and :class:`ensemble.IsolationForest`. |Fix|
 
+- Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`.
+  |Efficiency| |Fix|
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -99,6 +105,11 @@ Changelog
   a column name that is not unique in the dataframe. :pr:`16431` by
   `Thomas Fan`_.
 
+- |Enhancement| :class:`compose.ColumnTransformer` method ``get_feature_names``
+  now supports `'passthrough'` columns, with the feature name being either
+  the column name for a dataframe, or `'xi'` for column index `i`.
+  :pr:`14048` by :user:`Lewis Ball <lrjball>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -133,10 +144,12 @@ Changelog
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
    exclusively choose the components that explain the variance greater than
    `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
-- |Fix| :func:`decomposition._pca._assess_dimension` now correctly handles small
-   eigenvalues. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
-   :user:`Gelavizh Ahmadi <gelavizh1>` and
-   :user:`Marija Vlajic Wheeler <marijavlajic>`.
+
+- |Fix| :class:`decomposition.PCA` with `n_components='mle'` now correctly
+  handles small eigenvalues, and does not infer 0 as the correct number of
+  components. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
+  :user:`Gelavizh Ahmadi <gelavizh1>` and :user:`Marija Vlajic Wheeler
+  <marijavlajic>` and :pr:`16841` by `Nicolas Hug`_.
 
 - |Enhancement| :class:`decomposition.NMF` and
   :func:`decomposition.non_negative_factorization` now preserves float32 dtype.
@@ -145,6 +158,10 @@ Changelog
 - |Fix| :class:`decomposition.KernelPCA` method ``inverse_transform`` now
   applies the correct inverse transform to the transformed data. :pr:`16655`
   by :user:`Lewis Ball <lrjball>`.
+
+- |Fix| Fixed bug that was causing :class:`decomposition.KernelPCA` to sometimes
+  raise `invalid value encountered in multiply` during `fit`.
+  :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -179,6 +196,11 @@ Changelog
   is 'auto', which enables early stopping if there are at least 10,000
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
+
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive/negative
+  effect on the target. :pr:`15582` by `Nicolas Hug`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.BaggingClassifier`,
   :class:`ensemble.BaggingRegressor` and :class:`ensemble.IsolationForest`
@@ -281,13 +303,18 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :class:`linear_model.LassoLars` and
+  :class:`linear_model.Lars` now support a `jitter` parameter that adds
+  random noise to the target. This might help with stability in some edge
+  cases. :pr:`15179` by :user:`angelaambroz`.
+
 :mod:`sklearn.metrics`
 ......................
 
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
   :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
-  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and 
+  or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
 - |Enhancement| :func:`metrics.pairwise.pairwise_distances_chunked` now allows
@@ -346,6 +373,13 @@ Changelog
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
+  deciles lines as attributes so they can be hidden or customized. :pr:`15785`
+  by `Nicolas Hug`_
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -354,7 +388,7 @@ Changelog
 
 - |Feature| argument `drop` of :class:`preprocessing.OneHotEncoder`
   will now accept value 'if_binary' and will drop the first category of
-  each feature with two categories. :pr:`#16245`
+  each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
 - |Fix| Fix a bug in :class:`preprocessing.StandardScaler` which was incorrectly
@@ -368,6 +402,26 @@ Changelog
 
 :mod:`sklearn.svm`
 ..................
+
+- |Fix| |Efficiency| Improved ``libsvm`` and ``liblinear`` random number
+  generators used to randomly select coordinates in the coordinate descent
+  algorithms. Platform-dependent C ``rand()`` was used, which is only able to
+  generate numbers up to ``32767`` on windows platform (see this `blog
+  post <https://codeforces.com/blog/entry/61587>`_) and also has poor
+  randomization power as suggested by `this presentation
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`_.
+  It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
+  generates 31bits/63bits random numbers on all platforms. In addition, the
+  crude "modulo" postprocessor used to get a random number in a bounded
+  interval was replaced by the tweaked Lemire method as suggested by `this blog
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`_.
+  Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`, :class:`linear_model.LogisticRegression`,
+  is affected. In particular users can expect a better convergence when the
+  number of samples (LibSVM) or the number of features (LibLinear) is large.
+  :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 - |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
   `probB_`, are now deprecated as they were not useful. :pr:`15558` by
@@ -404,6 +458,10 @@ Changelog
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray`s.
+  :pr:`16728` by `Thomas Fan`_.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -418,4 +476,10 @@ Miscellaneous
   attribute is equal to the number of features passed to the `fit` method.
   See `SLEP010
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
-  for details. :pr:`16112` by `Nicolas Hug`_.
+  for details. :pr:`16112` and :pr:`16622` by `Nicolas Hug`_.
+
+- |API| Estimators now have a `requires_y` tags which is False by default
+  except for estimators that inherit from `~sklearn.base.RegressorMixin` or
+  `~sklearn.base.ClassifierMixin`. This tag is used to ensure that a proper
+  error message is raised when y was expected but None was passed.
+  :pr:`16622` by `Nicolas Hug`_.

@@ -9,7 +9,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext

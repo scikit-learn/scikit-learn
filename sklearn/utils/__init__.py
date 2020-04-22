@@ -51,6 +51,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "DataConversionWarning"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'

@@ -233,6 +233,17 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_linnerud
+    >>> from sklearn.multioutput import MultiOutputRegressor
+    >>> from sklearn.linear_model import Ridge
+    >>> X, y = load_linnerud(return_X_y=True)
+    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> clf.predict(X[[0]])
+    array([[176..., 35..., 57...]])
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -351,6 +362,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+            .. versionchanged:: 0.19
+                This function now returns a list of arrays where the length of
+                the list is ``n_outputs``, and each array is (``n_samples``,
+                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")

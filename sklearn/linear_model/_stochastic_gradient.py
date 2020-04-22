@@ -19,6 +19,7 @@ from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -68,8 +69,8 @@ class _ValidationScoreCallback:
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
-
-    def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, loss, *, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
@@ -287,25 +288,31 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
 
-    @deprecated("Attribute standard_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def standard_coef_(self):
         return self._standard_coef
 
-    @deprecated("Attribute standard_intercept_ was deprecated "
-                "in version 0.23 and will be removed in 0.25.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute standard_intercept_ was deprecated "
+        "in version 0.23 and will be removed in 0.25."
+    )
     @property
     def standard_intercept_(self):
         return self._standard_intercept
 
-    @deprecated("Attribute average_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_coef_(self):
         return self._average_coef
 
-    @deprecated("Attribute average_intercept_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_intercept_(self):
@@ -455,7 +462,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     }
 
     @abstractmethod
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -720,13 +728,13 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
 
 class SGDClassifier(BaseSGDClassifier):
-    """Linear classifiers (SVM, logistic regression, a.o.) with SGD training.
+    """Linear classifiers (SVM, logistic regression, etc.) with SGD training.
 
     This estimator implements regularized linear models with stochastic
     gradient descent (SGD) learning: the gradient of the loss is estimated
     each sample at a time and the model is updated along the way with a
     decreasing strength schedule (aka learning rate). SGD allows minibatch
-    (online/out-of-core) learning, see the partial_fit method.
+    (online/out-of-core) learning via the `partial_fit` method.
     For best results using the default learning rate schedule, the data should
     have zero mean and unit variance.
 
@@ -760,7 +768,11 @@ class SGDClassifier(BaseSGDClassifier):
         'squared_hinge' is like hinge but is quadratically penalized.
         'perceptron' is the linear loss used by the perceptron algorithm.
         The other losses are designed for regression but can be useful in
-        classification as well; see SGDRegressor for a description.
+        classification as well; see
+        :class:`~sklearn.linear_model.SGDRegressor` for a description.
+
+        More details about the losses formulas can be found in the
+        :ref:`User Guide <sgd_mathematical_formulation>`.
 
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -769,17 +781,19 @@ class SGDClassifier(BaseSGDClassifier):
         not achievable with 'l2'.
 
     alpha : float, default=0.0001
-        Constant that multiplies the regularization term. Defaults to 0.0001.
-        Also used to compute learning_rate when set to 'optimal'.
+        Constant that multiplies the regularization term. The higher the
+        value, the stronger the regularization.
+        Also used to compute the learning rate when set to `learning_rate` is
+        set to 'optimal'.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-        Defaults to 0.15.
+        Only used if `penalty` is 'elasticnet'.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
-        data is assumed to be already centered. Defaults to True.
+        data is assumed to be already centered.
 
     max_iter : int, default=1000
         The maximum number of passes over the training data (aka epochs).
@@ -789,7 +803,7 @@ class SGDClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
 
     tol : float, default=1e-3
-        The stopping criterion. If it is not None, the iterations will stop
+        The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
 
@@ -824,18 +838,14 @@ class SGDClassifier(BaseSGDClassifier):
     learning_rate : str, default='optimal'
         The learning rate schedule:
 
-        'constant':
-            eta = eta0
-        'optimal': [default]
-            eta = 1.0 / (alpha * (t + t0))
-            where t0 is chosen by a heuristic proposed by Leon Bottou.
-        'invscaling':
-            eta = eta0 / pow(t, power_t)
-        'adaptive':
-            eta = eta0, as long as the training keeps decreasing.
-            Each time n_iter_no_change consecutive epochs fail to decrease the
-            training loss by tol or fail to increase validation score by tol if
-            early_stopping is True, the current learning rate is divided by 5.
+        - 'constant': `eta = eta0`
+        - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
+          where t0 is chosen by a heuristic proposed by Leon Bottou.
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
+        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+          Each time n_iter_no_change consecutive epochs fail to decrease the
+          training loss by tol or fail to increase validation score by tol if
+          early_stopping is True, the current learning rate is divided by 5.
 
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -849,15 +859,15 @@ class SGDClassifier(BaseSGDClassifier):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score returned by the `score` method is not
+        improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True.
+        Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
 
@@ -890,11 +900,11 @@ class SGDClassifier(BaseSGDClassifier):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
-        averaging will begin once the total number of samples seen reaches
-        average. So ``average=10`` will begin averaging after seeing 10
-        samples.
+        When set to True, computes the averaged SGD weights accross all
+        updates and stores the result in the ``coef_`` attribute. If set to
+        an int greater than 1, averaging will begin once the total number of
+        samples seen reaches `average`. So ``average=10`` will begin
+        averaging after seeing 10 samples.
 
     Attributes
     ----------
@@ -906,7 +916,7 @@ class SGDClassifier(BaseSGDClassifier):
         Constants in decision function.
 
     n_iter_ : int
-        The actual number of iterations to reach the stopping criterion.
+        The actual number of iterations before reaching the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
     loss_function_ : concrete ``LossFunction``
@@ -928,18 +938,23 @@ class SGDClassifier(BaseSGDClassifier):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
+    >>> # Always scale the input. The most convenient way is to use a pipeline.
+    >>> clf = make_pipeline(StandardScaler(),
+    ...                     SGDClassifier(max_iter=1000, tol=1e-3))
     >>> clf.fit(X, Y)
-    SGDClassifier()
-
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('sgdclassifier', SGDClassifier())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15,
                  fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -1085,7 +1100,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     }
 
     @abstractmethod
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
@@ -1361,6 +1377,9 @@ class SGDRegressor(BaseSGDRegressor):
         'squared_epsilon_insensitive' is the same but becomes squared loss past
         a tolerance of epsilon.
 
+        More details about the losses formulas can be found in the
+        :ref:`User Guide <sgd_mathematical_formulation>`.
+
     penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
@@ -1368,12 +1387,15 @@ class SGDRegressor(BaseSGDRegressor):
         not achievable with 'l2'.
 
     alpha : float, default=0.0001
-        Constant that multiplies the regularization term.
-        Also used to compute learning_rate when set to 'optimal'.
+        Constant that multiplies the regularization term. The higher the
+        value, the stronger the regularization.
+        Also used to compute the learning rate when set to `learning_rate` is
+        set to 'optimal'.
 
     l1_ratio : float, default=0.15
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+        Only used if `penalty` is 'elasticnet'.
 
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
@@ -1387,7 +1409,7 @@ class SGDRegressor(BaseSGDRegressor):
         .. versionadded:: 0.19
 
     tol : float, default=1e-3
-        The stopping criterion. If it is not None, the iterations will stop
+        The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
         epochs.
 
@@ -1415,18 +1437,14 @@ class SGDRegressor(BaseSGDRegressor):
     learning_rate : string, default='invscaling'
         The learning rate schedule:
 
-        'constant':
-            eta = eta0
-        'optimal':
-            eta = 1.0 / (alpha * (t + t0))
-            where t0 is chosen by a heuristic proposed by Leon Bottou.
-        'invscaling': [default]
-            eta = eta0 / pow(t, power_t)
-        'adaptive':
-            eta = eta0, as long as the training keeps decreasing.
-            Each time n_iter_no_change consecutive epochs fail to decrease the
-            training loss by tol or fail to increase validation score by tol if
-            early_stopping is True, the current learning rate is divided by 5.
+        - 'constant': `eta = eta0`
+        - 'optimal': `eta = 1.0 / (alpha * (t + t0))`
+          where t0 is chosen by a heuristic proposed by Leon Bottou.
+        - 'invscaling': `eta = eta0 / pow(t, power_t)`
+        - 'adaptive': eta = eta0, as long as the training keeps decreasing.
+          Each time n_iter_no_change consecutive epochs fail to decrease the
+          training loss by tol or fail to increase validation score by tol if
+          early_stopping is True, the current learning rate is divided by 5.
 
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1439,15 +1457,16 @@ class SGDRegressor(BaseSGDRegressor):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
+        training when validation score returned by the `score` method is not
+        improving by at least `tol` for `n_iter_no_change` consecutive
+        epochs.
 
         .. versionadded:: 0.20
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True.
+        Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
 
@@ -1470,11 +1489,11 @@ class SGDRegressor(BaseSGDRegressor):
         existing counter.
 
     average : bool or int, default=False
-        When set to True, computes the averaged SGD weights and stores the
-        result in the ``coef_`` attribute. If set to an int greater than 1,
-        averaging will begin once the total number of samples seen reaches
-        average. So ``average=10`` will begin averaging after seeing 10
-        samples.
+        When set to True, computes the averaged SGD weights accross all
+        updates and stores the result in the ``coef_`` attribute. If set to
+        an int greater than 1, averaging will begin once the total number of
+        samples seen reaches `average`. So ``average=10`` will begin
+        averaging after seeing 10 samples.
 
     Attributes
     ----------
@@ -1500,7 +1519,7 @@ class SGDRegressor(BaseSGDRegressor):
             in version 0.23 and will be removed in 0.25.
 
     n_iter_ : int
-        The actual number of iterations to reach the stopping criterion.
+        The actual number of iterations before reaching the stopping criterion.
 
     t_ : int
         Number of weight updates performed during training.
@@ -1509,21 +1528,27 @@ class SGDRegressor(BaseSGDRegressor):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import SGDRegressor
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
     >>> n_samples, n_features = 10, 5
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
-    >>> clf.fit(X, y)
-    SGDRegressor()
+    >>> # Always scale the input. The most convenient way is to use a pipeline.
+    >>> reg = make_pipeline(StandardScaler(),
+    ...                     SGDRegressor(max_iter=1000, tol=1e-3))
+    >>> reg.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('sgdregressor', SGDRegressor())])
 
     See also
     --------
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,

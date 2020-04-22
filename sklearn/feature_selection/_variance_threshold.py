@@ -4,7 +4,6 @@
 import numpy as np
 from ..base import BaseEstimator
 from ._base import SelectorMixin
-from ..utils import check_array
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
 
