@@ -450,7 +450,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    has_pd_interger_array = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be perserved (later).
@@ -463,6 +462,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                     "It will be converted to a dense numpy array."
                 )
 
+        has_pd_interger_array = False
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
@@ -486,6 +486,10 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
+        if has_pd_interger_array:
+            # If there are any pandas integer extension arrays,
+            array = array.astype(np.float64)
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -501,10 +505,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             # dtype conversion required. Let's select the first element of the
             # list of accepted types.
             dtype = dtype[0]
-
-    if has_pd_interger_array:
-        # If there are any pandas integer extension arrays,
-        array = array.astype(np.float64)
 
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
