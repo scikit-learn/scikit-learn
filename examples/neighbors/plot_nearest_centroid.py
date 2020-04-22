@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
-from sklearn.inspection import plot_decision_boundary
+from sklearn.utils import plot_decision_boundary
 
 n_neighbors = 15
 

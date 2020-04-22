@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs
 from sklearn.svm import LinearSVC
-from sklearn.inspection import plot_decision_boundary
+from sklearn.utils import plot_decision_boundary
 
 X, y = make_blobs(n_samples=40, centers=2, random_state=0)
 

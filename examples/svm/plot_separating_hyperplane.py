@@ -12,7 +12,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import make_blobs
-from sklearn.inspection import plot_decision_boundary
+from sklearn.utils import plot_decision_boundary
 
 
 # we create 40 separable points
