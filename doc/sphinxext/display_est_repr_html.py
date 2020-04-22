@@ -1,14 +1,17 @@
 """
-Primary used to display the html output of `_repr_html_` of estimators
+Primarily used to display the html output of `_repr_html_` of estimators
 """
-import sys
 from sphinx.util.docutils import SphinxDirective
+from contextlib import redirect_stderr, redirect_stdout
 from docutils import nodes
 from io import StringIO
 
 
 class DisplayEstimatorRepr(SphinxDirective):
-    "Execute Python code and includes stdout as HTML"
+    """Execute Python and runs `_repr_html_` on the last element on the code
+    block. The last element in the code block should be an estimator with
+    support for `_repr_html_`.
+    """
 
     has_content = True
     required_arguments = 0
@@ -19,13 +22,10 @@ class DisplayEstimatorRepr(SphinxDirective):
         final_output = code_parts[-1]
         code_parts[-1] = format_str.format(final_output)
         code = '\n'.join(code_parts)
-        orig_stdout, orig_stderr = sys.stdout, sys.stderr
 
         output, err = StringIO(), StringIO()
-
-        sys.stdout, sys.stderr = output, err
-        exec(code)
-        sys.stdout, sys.stderr = orig_stdout, orig_stderr
+        with redirect_stdout(output), redirect_stderr(err):
+            exec(code)
 
         return f"{output.getvalue()}{err.getvalue()}"
 
@@ -34,7 +34,7 @@ class DisplayEstimatorRepr(SphinxDirective):
         code = "\n".join(self.content)
         html_repr = self.execute(code, format_str='print({}._repr_html_())')
 
-        input_code = nodes.literal_block(code, code)
+        input_code = nodes.literal_block(rawsource=code, text=code)
         input_code['language'] = 'python'
         output.append(input_code)
 
@@ -54,7 +54,8 @@ class DisplayEstimatorRepr(SphinxDirective):
             output.append(latex_node)
 
             str_repr = self.execute(code, format_str='print(repr({}))')
-            str_repr_node = nodes.literal_block(str_repr, str_repr)
+            str_repr_node = nodes.literal_block(rawsource=str_repr,
+                                                text=str_repr)
             str_repr_node['language'] = 'python'
             output.append(str_repr_node)
 
