@@ -658,7 +658,8 @@ class LocallyLinearEmbedding(TransformerMixin,
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.nbrs_, self.n_neighbors, self.n_components,
+                X=self.nbrs_, n_neighbors=self.n_neighbors,
+                n_components=self.n_components,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
