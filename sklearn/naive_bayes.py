@@ -179,7 +179,7 @@ class GaussianNB(_BaseNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *,priors=None, var_smoothing=1e-9):
+    def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
