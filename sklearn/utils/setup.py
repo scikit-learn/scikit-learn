@@ -70,8 +70,8 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_subpackage("_plot")
-    config.add_subpackage("_plot/tests")
+    config.add_subpackage("plot")
+    config.add_subpackage("plot/tests")
     config.add_subpackage('tests')
 
     return config
