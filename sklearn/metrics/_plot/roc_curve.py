@@ -62,7 +62,7 @@ class RocCurveDisplay:
         self.estimator_name = estimator_name
 
     @_deprecate_positional_args
-    def plot(self, *, ax=None, name=None, **kwargs):
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.

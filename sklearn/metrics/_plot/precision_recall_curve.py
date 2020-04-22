@@ -42,7 +42,7 @@ class PrecisionRecallDisplay:
         Figure containing the curve.
     """
     @_deprecate_positional_args
-    def __init__(self, *, precision, recall, average_precision,
+    def __init__(self, precision, recall, *, average_precision,
                  estimator_name):
         self.precision = precision
         self.recall = recall
@@ -50,7 +50,7 @@ class PrecisionRecallDisplay:
         self.estimator_name = estimator_name
 
     @_deprecate_positional_args
-    def plot(self, *, ax=None, name=None, **kwargs):
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.

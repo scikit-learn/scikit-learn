@@ -373,7 +373,7 @@ def _passthrough_scorer(estimator, *args, **kwargs):
 
 
 @_deprecate_positional_args
-def check_scoring(estimator, *, scoring=None, allow_none=False):
+def check_scoring(estimator, scoring=None, *, allow_none=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.

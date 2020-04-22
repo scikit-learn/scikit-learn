@@ -587,7 +587,7 @@ class GaussianMixture(BaseMixture):
         inference.
     """
     @_deprecate_positional_args
-    def __init__(self, *, n_components=1, covariance_type='full', tol=1e-3,
+    def __init__(self, n_components=1, *, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,

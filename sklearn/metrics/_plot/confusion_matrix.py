@@ -41,7 +41,7 @@ class ConfusionMatrixDisplay:
         Figure containing the confusion matrix.
     """
     @_deprecate_positional_args
-    def __init__(self, *, confusion_matrix, display_labels):
+    def __init__(self, confusion_matrix, *, display_labels):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 

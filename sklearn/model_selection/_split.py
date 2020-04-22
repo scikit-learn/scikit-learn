@@ -1247,7 +1247,7 @@ class RepeatedKFold(_RepeatedSplits):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
     @_deprecate_positional_args
-    def __init__(self, n_splits=5, *, n_repeats=10, random_state=None):
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
             KFold, n_repeats=n_repeats,
             random_state=random_state, n_splits=n_splits)
@@ -1303,7 +1303,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     RepeatedKFold: Repeats K-Fold n times.
     """
     @_deprecate_positional_args
-    def __init__(self, n_splits=5, *, n_repeats=10, random_state=None):
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
             StratifiedKFold, n_repeats=n_repeats, random_state=random_state,
             n_splits=n_splits)
