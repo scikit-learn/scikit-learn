@@ -653,10 +653,9 @@ class PartialDependenceDisplay:
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
 
-        self.lines_ = np.empty_like(self.axes_, dtype=np.object)
-        self.contours_ = np.empty_like(self.axes_, dtype=np.object)
         self.deciles_vlines_ = np.empty_like(self.axes_, dtype=np.object)
         self.deciles_hlines_ = np.empty_like(self.axes_, dtype=np.object)
+
         # Create 1d views of these 2d arrays for easy indexing
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
@@ -680,12 +679,12 @@ class PartialDependenceDisplay:
 
             if len(values) == 1:
                 if self.kind == 'individual' or self.kind == 'both':
-                    n_sampled = self._get_sample_count(
+                    n_samples = self._get_sample_count(
                         len(preds[self.target_idx])
                     )
                     ice_lines = preds[self.target_idx]
                     sampled = ice_lines[np.random.choice(
-                        ice_lines.shape[0], n_sampled, replace=False
+                        ice_lines.shape[0], n_samples, replace=False
                     ), :]
                     for j, ins in enumerate(sampled):
                         lines_ravel[i * j + j] = axi.plot(
