@@ -390,6 +390,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Returns
         -------
         T : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -643,6 +647,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         Y : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
 
@@ -699,10 +707,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         than one-vs-the-rest.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the codebook.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        The generator used to initialize the codebook.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.

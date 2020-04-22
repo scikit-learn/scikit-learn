@@ -27,6 +27,7 @@ from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -234,7 +235,8 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ['csr', 'csc', 'coo']
 
 
-def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+@_deprecate_positional_args
+def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
                      return_n_iter=False, return_intercept=False,
                      check_input=True):
@@ -518,7 +520,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         self.alpha = alpha
@@ -727,8 +730,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     >>> clf.fit(X, y)
     Ridge()
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         super().__init__(
@@ -885,8 +888,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
         super().__init__(
@@ -1112,8 +1115,8 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False,
@@ -1546,7 +1549,8 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
@@ -1854,8 +1858,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *, fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
         super().__init__(

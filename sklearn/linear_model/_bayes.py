@@ -14,6 +14,7 @@ from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils.fixes import pinvh
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -145,8 +146,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
                  normalize=False, copy_X=True, verbose=False):
@@ -489,8 +490,8 @@ class ARDRegression(RegressorMixin, LinearModel):
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
                  copy_X=True, verbose=False):

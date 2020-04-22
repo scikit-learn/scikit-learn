@@ -210,11 +210,6 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
     where min, max = feature_range.
 
-    The transformation is calculated as::
-
-        X_scaled = scale * X + min - X.min(axis=0) * scale
-        where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
-
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 

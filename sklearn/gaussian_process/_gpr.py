@@ -17,6 +17,7 @@ from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
 from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
+from ..utils.validation import _deprecate_positional_args
 
 
 class GaussianProcessRegressor(MultiOutputMixin,
@@ -149,7 +150,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
-    def __init__(self, kernel=None, alpha=1e-10,
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
@@ -486,7 +488,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             # constructing the full matrix tmp.dot(K_gradient) since only
             # its diagonal is required
             log_likelihood_gradient_dims = \
-                0.5 * np.einsum("ijl,ijk->kl", tmp, K_gradient)
+                0.5 * np.einsum("ijl,jik->kl", tmp, K_gradient)
             log_likelihood_gradient = log_likelihood_gradient_dims.sum(-1)
 
         if eval_gradient:

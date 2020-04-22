@@ -7,7 +7,6 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
 from ._label import _encode, _encode_check_unknown
@@ -527,7 +526,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
-            labels = np.asarray(_argmax(sub, axis=1)).flatten()
+            labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
             if self.handle_unknown == 'ignore':
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
