@@ -36,7 +36,9 @@ _DEFAULT_TAGS = {
     '_xfail_checks': False,
     'multioutput_only': False,
     'binary_only': False,
-    'requires_fit': True}
+    'requires_fit': True,
+    'requires_y': False,
+    }
 
 
 def clone(estimator, safe=True):
@@ -374,7 +376,8 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
-    def _validate_data(self, X, y=None, reset=True, **check_params):
+    def _validate_data(self, X, y=None, reset=True,
+                       validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -389,9 +392,14 @@ class BaseEstimator:
             Whether to reset the `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
             provided when reset was last True.
+        validate_separately : False or tuple of dicts, default=False
+            Only used if y is not None.
+            If False, call validate_X_y(). Else, it must be a tuple of kwargs
+            to be used for calling check_array() on X and y respectively.
         **check_params : kwargs
             Parameters passed to :func:`sklearn.utils.check_array` or
-            :func:`sklearn.utils.check_X_y`.
+            :func:`sklearn.utils.check_X_y`. Ignored if validate_separately
+            is not False.
 
         Returns
         -------
@@ -400,10 +408,24 @@ class BaseEstimator:
         """
 
         if y is None:
+            if self._get_tags()['requires_y']:
+                raise ValueError(
+                    f"This {self.__class__.__name__} estimator "
+                    f"requires y to be passed, but the target y is None."
+                )
             X = check_array(X, **check_params)
             out = X
         else:
-            X, y = check_X_y(X, y, **check_params)
+            if validate_separately:
+                # We need this because some estimators validate X and y
+                # separately, and in general, separately calling check_array()
+                # on X and y isn't equivalent to just calling check_X_y()
+                # :(
+                check_X_params, check_y_params = validate_separately
+                X = check_array(X, **check_X_params)
+                y = check_array(y, **check_y_params)
+            else:
+                X, y = check_X_y(X, y, **check_params)
             out = X, y
 
         if check_params.get('ensure_2d', True):
@@ -443,6 +465,9 @@ class ClassifierMixin:
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class RegressorMixin:
@@ -493,6 +518,9 @@ class RegressorMixin:
         from .metrics import r2_score
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class ClusterMixin:

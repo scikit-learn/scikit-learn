@@ -476,4 +476,10 @@ Miscellaneous
   attribute is equal to the number of features passed to the `fit` method.
   See `SLEP010
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
-  for details. :pr:`16112` by `Nicolas Hug`_.
+  for details. :pr:`16112` and :pr:`16622` by `Nicolas Hug`_.
+
+- |API| Estimators now have a `requires_y` tags which is False by default
+  except for estimators that inherit from `~sklearn.base.RegressorMixin` or
+  `~sklearn.base.ClassifierMixin`. This tag is used to ensure that a proper
+  error message is raised when y was expected but None was passed.
+  :pr:`16622` by `Nicolas Hug`_.
