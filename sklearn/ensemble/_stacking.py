@@ -280,7 +280,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         A classifier which will be used to combine the base estimators.
         The default classifier is a `LogisticRegression`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -296,6 +296,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        If “prefit” is passed, it is assumed that all base_estimators have
+        been fitted already.
 
         .. note::
            A larger number of split will provide no benefits if the number
@@ -542,7 +545,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         A regressor which will be used to combine the base estimators.
         The default regressor is a `RidgeCV`.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable, or "prefit", default=None
         Determines the cross-validation splitting strategy used in
         `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
@@ -558,6 +561,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        If “prefit” is passed, it is assumed that all base_estimators have
+        been fitted already.
 
         .. note::
            A larger number of split will provide no benefits if the number
