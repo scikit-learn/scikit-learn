@@ -87,10 +87,10 @@
             Please <a class="font-weight-bold" href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn"><string>cite us</string></a> if you use the software.
           </p>
         </div>
-          <div class="sk-sidebar-toc">
             {%- if meta and meta['parenttoc']|tobool %}
+            <div class="sk-sidebar-toc">
             {% set nav = get_nav_object(maxdepth=5, collapse=True) %}
-            <ul>
+              <ul>
               {% for main_nav_item in nav %}
               {% if main_nav_item.active %}
               <li>
@@ -114,13 +114,17 @@
               </ul>
               {% endif %}
               {% endfor %}
-            </ul>
+              </ul>
+            </div>
+            {%- elif meta and meta['globalsidebartoc']|tobool %}
+            <div class="sk-sidebar-toc sk-sidebar-global-toc">
+              {{ toctree(maxdepth=2, titles_only=True) }}
+            </div>
             {%- else %}
             <div class="sk-sidebar-toc">
               {{ toc }}
             </div>
             {%- endif %}
-          </div>
       </div>
     </div>
     <div id="sk-page-content-wrapper">

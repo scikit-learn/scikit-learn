@@ -1,9 +1,9 @@
 .. This helps define the TOC ordering for "about us" sections. Particularly
    useful for PDF output as this section is not linked from elsewhere.
 
-.. Places parent toc into the sidebar
+.. Places global toc into the sidebar
 
-:parenttoc: True
+:globalsidebartoc: True
 
 .. _preface_menu:
 
