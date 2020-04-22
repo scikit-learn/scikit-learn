@@ -504,7 +504,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     if has_pd_interger_array:
         # If there are any pandas integer extension arrays,
-        array = array.astype(None)
+        array = array.astype(np.float64)
 
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
