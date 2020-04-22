@@ -26,6 +26,7 @@ from ..utils import check_array, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -49,7 +50,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, hidden_layer_sizes, activation, solver,
+    @_deprecate_positional_args
+    def __init__(self, *, hidden_layer_sizes, activation, solver,
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
@@ -936,7 +938,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, *, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
@@ -1339,7 +1342,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, *, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
