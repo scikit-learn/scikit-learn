@@ -469,8 +469,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
             elif (dtype_iter.name.startswith("Int") or
-                  dtype_iter.name.startswith("UInt")):
-                # actually check for dtype
+                    dtype_iter.name.startswith("UInt")):
+                # name looks like an Integer Extension Array, now check for
+                # the dtype
                 with suppress(ImportError):
                     from pandas import (Int8Dtype, Int16Dtype,
                                         Int32Dtype, Int64Dtype,
@@ -501,6 +502,10 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             # list of accepted types.
             dtype = dtype[0]
 
+    if has_pd_interger_array:
+        # If there are any pandas integer extension arrays,
+        array = array.astype(None)
+
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
                          '. Got {!r} instead'.format(force_all_finite))
@@ -518,10 +523,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
-
-    if has_pd_interger_array:
-        # convert dataframe with Integer extension arrays with floats
-        array = array.astype(None)
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
