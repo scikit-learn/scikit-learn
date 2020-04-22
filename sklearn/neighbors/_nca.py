@@ -520,3 +520,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
+
+    def _more_tags(self):
+        return {'requires_y': True}

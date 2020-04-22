@@ -270,6 +270,8 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
     if not tags["no_validation"]:
         yield check_n_features_in
+        if tags["requires_y"]:
+            yield check_requires_y_none
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -2976,3 +2978,35 @@ def check_n_features_in(name, estimator_orig):
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
         )
+
+
+def check_requires_y_none(name, estimator_orig):
+    # Make sure that an estimator with requires_y=True fails gracefully when
+    # given y=None
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+
+    warning_msg = ("As of scikit-learn 0.23, estimators should have a "
+                   "'requires_y' tag set to the appropriate value. "
+                   "The default value of the tag is False. "
+                   "An error will be raised from version 0.25 when calling "
+                   "check_estimator() if the tag isn't properly set.")
+
+    expected_err_msgs = (
+        "requires y to be passed, but the target y is None",
+        "Expected array-like (array or non-string sequence), got None",
+        "y should be a 1d array"
+    )
+
+    try:
+        estimator.fit(X, None)
+    except ValueError as ve:
+        if not any(msg in str(ve) for msg in expected_err_msgs):
+            warnings.warn(warning_msg, FutureWarning)
