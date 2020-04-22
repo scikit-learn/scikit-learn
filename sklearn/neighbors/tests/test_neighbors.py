@@ -1245,9 +1245,9 @@ def test_callable_metric():
         return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     X = np.random.RandomState(42).rand(20, 2)
-    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto',
+    nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                        metric=custom_metric)
-    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute',
+    nbrs2 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                        metric=custom_metric)
 
     nbrs1.fit(X)
@@ -1339,7 +1339,7 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
-        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, metric=metric).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
@@ -1351,7 +1351,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
 
     # Raise error when wrong parameters are supplied,
-    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
     assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
                   metric='euclidean')

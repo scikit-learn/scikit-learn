@@ -20,6 +20,7 @@ from ._base import \
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
@@ -142,7 +143,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5,
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=5, *,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -374,7 +376,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
                  **kwargs):
