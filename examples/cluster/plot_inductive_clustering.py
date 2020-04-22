@@ -22,7 +22,6 @@ extends clustering by inducing a classifier from the cluster labels.
 #          Christos Aridas
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering

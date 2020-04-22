@@ -16,7 +16,6 @@ training set.
 
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import datasets
