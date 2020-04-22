@@ -49,8 +49,7 @@ __all__ = ["SparseRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
 
-@_deprecate_positional_args
-def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
+def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
