@@ -1157,8 +1157,52 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
         """
-        y = check_array(y, copy=False, dtype=[np.float64, np.float32],
-                        ensure_2d=False)
+        # This makes sure that there is no duplication in memory.
+        # Dealing right with copy_X is important in the following:
+        # Multiple functions touch X and subsamples of X and can induce a
+        # lot of duplication of memory
+        copy_X = self.copy_X and self.fit_intercept
+
+        check_y_params = dict(copy=False, dtype=[np.float64, np.float32],
+                              ensure_2d=False)
+        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
+            # Keep a reference to X
+            reference_to_old_X = X
+            # Let us not impose fortran ordering so far: it is
+            # not useful for the cross-validation loop and will be done
+            # by the model fitting itself
+
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
+            check_X_params = dict(accept_sparse='csc',
+                                  dtype=[np.float64, np.float32], copy=False)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
+            if sparse.isspmatrix(X):
+                if (hasattr(reference_to_old_X, "data") and
+                   not np.may_share_memory(reference_to_old_X.data, X.data)):
+                    # X is a sparse matrix and has been copied
+                    copy_X = False
+            elif not np.may_share_memory(reference_to_old_X, X):
+                # X has been copied
+                copy_X = False
+            del reference_to_old_X
+        else:
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
+            check_X_params = dict(accept_sparse='csc',
+                                  dtype=[np.float64, np.float32], order='F',
+                                  copy=copy_X)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
+            copy_X = False
+
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
 
@@ -1190,35 +1234,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
-
-        # This makes sure that there is no duplication in memory.
-        # Dealing right with copy_X is important in the following:
-        # Multiple functions touch X and subsamples of X and can induce a
-        # lot of duplication of memory
-        copy_X = self.copy_X and self.fit_intercept
-
-        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
-            # Keep a reference to X
-            reference_to_old_X = X
-            # Let us not impose fortran ordering so far: it is
-            # not useful for the cross-validation loop and will be done
-            # by the model fitting itself
-            X = self._validate_data(X, accept_sparse='csc',
-                                    dtype=[np.float64, np.float32], copy=False)
-            if sparse.isspmatrix(X):
-                if (hasattr(reference_to_old_X, "data") and
-                   not np.may_share_memory(reference_to_old_X.data, X.data)):
-                    # X is a sparse matrix and has been copied
-                    copy_X = False
-            elif not np.may_share_memory(reference_to_old_X, X):
-                # X has been copied
-                copy_X = False
-            del reference_to_old_X
-        else:
-            X = self._validate_data(X, accept_sparse='csc',
-                                    dtype=[np.float64, np.float32], order='F',
-                                    copy=copy_X)
-            copy_X = False
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
@@ -1842,9 +1857,15 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = self._validate_data(X, dtype=[np.float64, np.float32], order='F',
-                                copy=self.copy_X and self.fit_intercept)
-        y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
+
+        # Need to validate separately here.
+        # We can't pass multi_ouput=True because that would allow y to be csr.
+        check_X_params = dict(dtype=[np.float64, np.float32], order='F',
+                              copy=self.copy_X and self.fit_intercept)
+        check_y_params = dict(ensure_2d=False)
+        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
+                                                              check_y_params))
+        y = y.astype(X.dtype)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
