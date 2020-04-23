@@ -622,8 +622,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
-                                       floating[:, ::1] X,
-                                       floating[::1, :] Y,
+                                       floating[::1, :] X,
+                                       floating[:, ::1] Y,
                                        int max_iter, floating tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
@@ -651,7 +651,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
+    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='C')
 
     cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
@@ -707,7 +707,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                # _copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
                 _copy(n_tasks, &W[ii, 0], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
@@ -725,16 +724,16 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                _copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
+                _copy(n_tasks, &tmp[0], 1, &W[ii, 0], 1)
                 _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                      W_ptr + ii * n_tasks, 1)
+                      &W[ii, 0], 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if (W[ii, 0] != 0.) or (_nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0):
+                if (W[ii, 0] != 0.) or (_nrm2(n_tasks, &W[ii, 0], 1) != 0.0):
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
                     _ger(RowMajor, n_samples, n_tasks, -1.0,
-                         X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
+                         &X[0, ii], 1, &W[ii, 0], 1,
                          &R[0, 0], n_tasks)
 
                 # update the maximum absolute coefficient update
