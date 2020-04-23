@@ -710,7 +710,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 _copy(n_tasks, &W[ii, 0], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if (w_ii[0] != 0.) or (_nrm2(n_tasks, &w_ii[0], 1) != 0.0):
+                # if (w_ii[0] != 0.) or (_nrm2(n_tasks, &w_ii[0], 1) != 0.0):
+                if (w_ii[0] != 0.):
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
                     # _ger(RowMajor, n_samples, n_tasks, 1.0,
                     #      X_ptr + ii * n_samples, 1,
@@ -726,6 +727,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
+                # nn = fabs(tmp[0])
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
                 _copy(n_tasks, &tmp[0], 1, &W[ii, 0], 1)
@@ -733,7 +735,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                       &W[ii, 0], 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if (W[ii, 0] != 0.) or (_nrm2(n_tasks, &W[ii, 0], 1) != 0.0):
+                # if (W[ii, 0] != 0.) or (_nrm2(n_tasks, &W[ii, 0], 1) != 0.0):
+                if (W[ii, 0] != 0.):
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
                     # _ger(RowMajor, n_samples, n_tasks, -1.0,
