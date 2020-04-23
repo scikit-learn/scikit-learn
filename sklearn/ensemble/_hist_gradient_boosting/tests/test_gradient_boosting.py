@@ -217,21 +217,21 @@ def test_poisson():
     y = rng.poisson(lam=np.exp(X @ coef))
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
                                                         random_state=rng)
-    gbdt1 = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
-    gbdt2 = HistGradientBoostingRegressor(loss='least_squares',
-                                          random_state=rng)
-    gbdt1.fit(X_train, y_train)
-    gbdt2.fit(X_train, y_train)
+    gbdt_pois = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
+    gbdt_ls = HistGradientBoostingRegressor(loss='least_squares',
+                                            random_state=rng)
+    gbdt_pois.fit(X_train, y_train)
+    gbdt_ls.fit(X_train, y_train)
     dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
     for X, y in [(X_train, y_train), (X_test, y_test)]:
-        metric1 = mean_poisson_deviance(y, gbdt1.predict(X))
+        metric_pois = mean_poisson_deviance(y, gbdt_pois.predict(X))
         # least_squares might produce non-positive predictions => clip
-        metric2 = mean_poisson_deviance(y, np.clip(gbdt2.predict(X), 1e-15,
-                                                   None))
-        metric3 = mean_poisson_deviance(y, dummy.predict(X))
-        assert metric1 < metric2
-        assert metric1 < metric3
+        metric_ls = mean_poisson_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15,
+                                                     None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        assert metric_pois < metric_ls
+        assert metric_pois < metric_dummy
 
 
 def test_binning_train_validation_are_separated():

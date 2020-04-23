@@ -180,7 +180,7 @@ def test_baseline_poisson():
     # log(0)
     assert y_train.sum() > 0
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
-    assert baseline_prediction.shape == tuple()  # scalar
+    assert np.isscalar(baseline_prediction)
     assert baseline_prediction.dtype == y_train.dtype
     assert_all_finite(baseline_prediction)
     # Make sure baseline prediction produces the log of the mean of all targets
