@@ -68,6 +68,7 @@ from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -105,7 +106,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         for more details.
     """
 
-    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+    @_deprecate_positional_args
+    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
                  alpha=1, max_iter=30, tol=1e-3, n_jobs=None):
 
         self.max_iter = max_iter
@@ -378,7 +380,8 @@ class LabelPropagation(BaseLabelPropagation):
 
     _variant = 'propagation'
 
-    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+    @_deprecate_positional_args
+    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
                  max_iter=1000, tol=1e-3, n_jobs=None):
         super().__init__(kernel=kernel, gamma=gamma,
                          n_neighbors=n_neighbors, max_iter=max_iter,
@@ -491,7 +494,8 @@ class LabelSpreading(BaseLabelPropagation):
 
     _variant = 'spreading'
 
-    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
+    @_deprecate_positional_args
+    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7, alpha=0.2,
                  max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
