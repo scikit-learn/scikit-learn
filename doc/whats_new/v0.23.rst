@@ -147,7 +147,7 @@ Changelog
 
 - |Fix| :class:`decomposition.PCA` with `n_components='mle'` now correctly
   handles small eigenvalues, and does not infer 0 as the correct number of
-  components. :pr: `4441` by :user:`Lisa Schwetlick <lschwetlick>`, and
+  components. :pr:`16224` by :user:`Lisa Schwetlick <lschwetlick>`, and
   :user:`Gelavizh Ahmadi <gelavizh1>` and :user:`Marija Vlajic Wheeler
   <marijavlajic>` and :pr:`16841` by `Nicolas Hug`_.
 
@@ -163,6 +163,9 @@ Changelog
   raise `invalid value encountered in multiply` during `fit`.
   :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
 
+- |Enhancement| :func:`TruncatedSVD.transform` is now faster on given sparse
+  ``csc`` matrices. :pr:`16837` by :user:`wornbb`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -172,7 +175,7 @@ Changelog
 
 - |API| Added boolean `verbose` flag to classes:
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
-  :pr:`15991` by :user:`Sam Bail <spbail>`,
+  :pr:`16069` by :user:`Sam Bail <spbail>`,
   :user:`Hanna Bruce MacDonald <hannahbrucemacdonald>`,
   :user:`Reshama Shaikh <reshamas>`, and
   :user:`Chiara Marmo <cmarmo>`.
@@ -187,7 +190,7 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. The depth now corresponds to
   the number of edges to go from the root to the deepest leaf.
   Stumps (trees with one split) are now allowed.
-  :pr: `16182` by :user:`Santhosh B <santhoshbala18>`
+  :pr:`16182` by :user:`Santhosh B <santhoshbala18>`
 
 - |Feature| Early stopping in
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -272,7 +275,7 @@ Changelog
 - |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
   method of :class:`linear_model.RANSACRegressor`, it would not be passed to
   the wrapped `base_estimator` during the fitting of the final model.
-  :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
+  :pr:`15773` by :user:`Jeremy Alexandre <J-A16>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
@@ -483,3 +486,18 @@ Miscellaneous
   `~sklearn.base.ClassifierMixin`. This tag is used to ensure that a proper
   error message is raised when y was expected but None was passed.
   :pr:`16622` by `Nicolas Hug`_.
+
+- |API| Most constructor and function parameters are now expected to be passed
+  as a keyword and not positional. :issue:`15005` by `Joel Nothman`_,
+  `Adrin Jalali`_, `Thomas Fan`_, and `Nicolas Hug`_. See `SLEP009
+  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+  for more details.
+
+- |Enhancement| ``scikit-learn`` now works with ``mypy`` without errors.
+  :pr:`16726` by `Roman Yurchak`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.20, including:
