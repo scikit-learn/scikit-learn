@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 # Digits dataset
 # --------------
 #
-# The :func:`digits dataset <~sklearn.datasets.load_digits>` consists of 8x8
+# The digits dataset consists of 8x8
 # pixel images of digits. The ``images`` attribute of the dataset stores
 # 8x8 arrays of grayscale values for each image. We will use these arrays to
 # visualize the first 4 images. The ``target`` attribute of the dataset stores
@@ -35,7 +35,7 @@ from sklearn.model_selection import train_test_split
 
 digits = datasets.load_digits()
 
-_, axes = plt.subplots(ncols=4)
+_, axes = plt.subplots(1, 4, figsize=(10, 3))
 images_and_labels = list(zip(digits.images, digits.target))
 for ax, (image, label) in zip(axes, images_and_labels[:4]):
     ax.set_axis_off()
@@ -78,7 +78,7 @@ predicted = clf.predict(X_test)
 # Below we visualize the first 4 test samples and show their predicted
 # digit value in the title.
 
-_, axes = plt.subplots(1, 4)
+_, axes = plt.subplots(1, 4, figsize=(10, 3))
 images_and_predictions = list(zip(digits.images[n_samples // 2:], predicted))
 for ax, (image, prediction) in zip(axes, images_and_predictions[:4]):
     ax.set_axis_off()
