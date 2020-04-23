@@ -329,7 +329,7 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
-        Y = label_binarize(y, self.classes_)
+        Y = label_binarize(y, classes=self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []
