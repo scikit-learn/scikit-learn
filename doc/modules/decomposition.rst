@@ -289,7 +289,7 @@ In :class:`KernelPCA`, the number of components found is equal to the number of
 samples. Many real-world datasets have large number of samples! In these cases
 finding *all* the components with a full kPCA is a waste of computation time,
 as data is mostly described by the first few components
-(``n_components<=100``).
+(e.g. ``n_components<=100``).
 
 The optional parameter ``eigen_solver='randomized'`` can be used to
 *drastically* reduce the computation time when the number of requested
