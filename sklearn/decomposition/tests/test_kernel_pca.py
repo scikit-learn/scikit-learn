@@ -124,13 +124,13 @@ def test_kernel_pca_sparse():
 
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
                          ids="solver={}".format)
-@pytest.mark.parametrize("n_feats", [4, 10], ids="n_feats={}".format)
-def test_kernel_pca_linear_kernel(solver, n_feats):
+@pytest.mark.parametrize("n_features", [4, 10], ids="n_features={}".format)
+def test_kernel_pca_linear_kernel(solver, n_features):
     """ Tests that kPCA with a linear kernel is equivalent to PCA for all
     solvers"""
     rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((5, n_feats))
-    X_pred = rng.random_sample((2, n_feats))
+    X_fit = rng.random_sample((5, n_features))
+    X_pred = rng.random_sample((2, n_features))
 
     # for a linear kernel, kernel PCA should find the same projection as PCA
     # modulo the sign (direction)
