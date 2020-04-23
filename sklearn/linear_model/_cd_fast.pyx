@@ -623,7 +623,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
                                        floating[::1, :] X,
-                                       floating[:, ::1] Y,
+                                       floating[::1, :] Y,
                                        int max_iter, floating tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
@@ -651,7 +651,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='C')
+    cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
     cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
@@ -683,13 +683,15 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
+    R[:] = Y - np.dot(X, W.T)
+
     with nogil:
-        # R = Y - np.dot(X, W.T)
-        for ii in range(n_samples):
-            for jj in range(n_tasks):
-                R[ii, jj] = Y[ii, jj] - (
-                    _dot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
-                    )
+        # # 
+        # for ii in range(n_samples):
+        #     for jj in range(n_tasks):
+        #         R[ii, jj] = Y[ii, jj] - (
+        #             _dot(n_features, &X[ii, :], n_samples, &W[jj, :], n_tasks)
+        #             )
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * _nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
@@ -707,7 +709,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                _copy(n_tasks, &W[ii, 0], 1, &w_ii[0], 1)
+                _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
                 # if (w_ii[0] != 0.) or (_nrm2(n_tasks, &w_ii[0], 1) != 0.0):
@@ -730,9 +732,9 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # nn = fabs(tmp[0])
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                _copy(n_tasks, &tmp[0], 1, &W[ii, 0], 1)
+                _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
                 _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                      &W[ii, 0], 1)
+                      &W[0, ii], 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 # if (W[ii, 0] != 0.) or (_nrm2(n_tasks, &W[ii, 0], 1) != 0.0):
@@ -743,15 +745,15 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     #      &X[0, ii], 1, &W[ii, 0], 1,
                     #      &R[0, 0], n_tasks)
                     for jj in range(n_tasks):
-                        _axpy(n_samples, -W[ii, jj], &X[0, ii], 1, &R[0, jj], 1)
+                        _axpy(n_samples, -W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
+                d_w_ii = diff_abs_max(n_tasks, &W[0, ii], &w_ii[0])
 
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
+                W_ii_abs_max = abs_max(n_tasks, &W[0, ii])
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
@@ -791,16 +793,17 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     gap = R_norm ** 2
 
                 # ry_sum = np.sum(R * y)
-                ry_sum = 0.0
-                for ii in range(n_samples):
-                    for jj in range(n_tasks):
-                        ry_sum += R[ii, jj] * Y[ii, jj]
+                ry_sum = _dot(n_samples * n_tasks, &R[0, 0], 1, &Y[0, 0], 1)
+                # ry_sum = 0.0
+                # for ii in range(n_samples):
+                #     for jj in range(n_tasks):
+                #         ry_sum += R[ii, jj] * Y[ii, jj]
 
                 # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
                 l21_norm = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(W ** 2, axis=0))
-                    l21_norm += _nrm2(n_tasks, &W[ii, 0], 1)
+                    l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
