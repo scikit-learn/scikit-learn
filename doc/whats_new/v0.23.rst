@@ -303,6 +303,12 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Fix| |Efficiency| :class:`linear_model.ARDRegression` is more stable and
+  much faster when `n_samples > n_features`. It can now scale to hundreds of
+  thousands of samples. The stability fix might imply changes in the number
+  of non-zero coefficients and in the predicted output. :pr:`16849` by
+  `Nicolas Hug`_.
+
 - |Enhancement| :class:`linear_model.LassoLars` and
   :class:`linear_model.Lars` now support a `jitter` parameter that adds
   random noise to the target. This might help with stability in some edge
