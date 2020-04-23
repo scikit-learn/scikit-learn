@@ -1,0 +1,27 @@
+{
+    // "regular": Bencharks are run on small to medium datasets. Each benchmark
+    //            is run multiple times and averaged.
+    // "fast": Benchmarks are run on small to medium datasets. Each benchmark
+    //         is run only once. May provide unstable benchmarks.
+    // "large_scale": Benchmarks are run on large datasets. Each benchmark is
+    //                run multiple times and averaged. This profile is meant to
+    //                benchmark scalability and will take hours on single core.
+    "profile": "regular",
+
+    // List of values of n_jobs to use for estimators which accept this 
+    // parameter (-1 means all cores). An empty list means all values from 1 to
+    // the maximum number of available cores.
+    "n_jobs_vals": [1],
+
+    // If true, fitted estimators are saved in ./cache/estimators/<commit hash>
+    "save_estimators": false,
+
+    // Commit hash to compare estimator predictions with.
+    // If null, predictions are not compared.
+    "base_folder": null,
+
+    // If false, the predict (resp. transform) method of the estimators won't
+    // be benchmarked.
+    "bench_predict": true,
+    "bench_transform": true
+}
