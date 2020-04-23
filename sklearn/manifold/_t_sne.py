@@ -635,7 +635,7 @@ class TSNE(BaseEstimator):
     _N_ITER_CHECK = 50
 
     @_deprecate_positional_args
-    def __init__(self, *, n_components=2, perplexity=30.0,
+    def __init__(self, n_components=2, *, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
