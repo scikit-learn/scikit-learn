@@ -285,7 +285,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 Kernel PCA using randomized SVD
 -------------------------------
 
-In :ref:`kernel_PCA`, the number of components found is equal to the number of
+In :class:`KernelPCA`, the number of components found is equal to the number of
 samples. Many real-world datasets have large number of samples ! In these cases
 finding *all* the components with a full kPCA is a waste of computation time,
 as data is mostly described by the first few components
