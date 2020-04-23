@@ -20,6 +20,7 @@ from . import __version__
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -41,7 +42,8 @@ _DEFAULT_TAGS = {
     }
 
 
-def clone(estimator, safe=True):
+@_deprecate_positional_args
+def clone(estimator, *, safe=True):
     """Constructs a new estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
