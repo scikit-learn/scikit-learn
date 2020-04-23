@@ -1168,6 +1168,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
+
         Returns
         -------
         self
@@ -1186,6 +1190,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         Returns
         -------
@@ -1244,6 +1252,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         Returns
         -------
@@ -1813,6 +1825,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
         y : None
             This parameter is not needed to compute tfidf.
 
@@ -1837,6 +1853,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
         y : None
             This parameter is ignored.
 
@@ -1862,6 +1882,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place
