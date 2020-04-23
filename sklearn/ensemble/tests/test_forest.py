@@ -80,8 +80,7 @@ diabetes.data = diabetes.data[perm]
 diabetes.target = diabetes.target[perm]
 
 X_reg, y_reg = datasets.make_regression(n_samples=500, n_features=10,
-n_informative=1000,
-                                        noise=0, random_state=1)
+                                        n_informative=100, random_state=1)
 
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
@@ -395,8 +394,8 @@ def check_oob_score(name, X, y, n_estimators=20):
         print(test_score)
         print('below should be lower')
         print(est.oob_score_)
-        # assert test_score > est.oob_score_
-        # assert est.oob_score_ > .32
+        assert test_score > est.oob_score_
+        assert est.oob_score_ > .32
 
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -417,11 +416,11 @@ def test_oob_score_classifiers(name):
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
-def test_oob_score_regressors(name, n_est):
-    check_oob_score(name, diabetes.data, diabetes.target, n_est)
+def test_oob_score_regressors(name):
+    check_oob_score(name, X_reg, y_reg, 50)
 
-    csc matrix
-    check_oob_score(name, csc_matrix(X_reg), y_reg, 25)
+    # csc matrix
+    check_oob_score(name, csc_matrix(X_reg), y_reg, 50)
 
 
 def check_oob_score_raise_error(name):
