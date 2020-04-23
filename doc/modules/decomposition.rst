@@ -286,7 +286,7 @@ Kernel PCA using randomized SVD
 -------------------------------
 
 In :class:`KernelPCA`, the number of components found is equal to the number of
-samples. Many real-world datasets have large number of samples ! In these cases
+samples. Many real-world datasets have large number of samples! In these cases
 finding *all* the components with a full kPCA is a waste of computation time,
 as data is mostly described by the first few components
 (``n_components<=100``).
