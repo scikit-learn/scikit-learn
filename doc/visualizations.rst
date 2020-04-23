@@ -60,6 +60,7 @@ values of the curves.
 
     * :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
     * :ref:`sphx_glr_auto_examples_plot_partial_dependence_visualization_api.py`
+    * :ref:`sphx_glr_auto_examples_plot_display_object_visualization.py`
 
 Available Plotting Utilities
 ============================
