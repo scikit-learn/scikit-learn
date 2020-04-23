@@ -653,7 +653,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     # initial value of the residuals
     cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
-    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
+    cdef floating[::1] norm_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[::1] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
@@ -709,14 +709,13 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                # if (w_ii[0] != 0.) or (_nrm2(n_tasks, &w_ii[0], 1) != 0.0):
-                if (w_ii[0] != 0.):
+                if (w_ii[0] != 0.):  # faster than testing full norm for non-zeros
                     # Using Numpy:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
                     # Using Blas Level2:
                     # _ger(RowMajor, n_samples, n_tasks, 1.0,
-                    #      X_ptr + ii * n_samples, 1,
-                    #      wii_ptr, 1, &R[0, 0], n_tasks)
+                    #      &X[0, ii], 1,
+                    #      &w_ii[0], 1, &R[0, 0], n_tasks)
                     # Using Blas Level1 and for loop for avoid slower threads
                     # for such small vectors
                     for jj in range(n_tasks):
@@ -726,7 +725,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
                 # Using BLAS Level 2:
                 # _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
-                #       n_tasks, X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
+                #       n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
                 # Using BLAS Level 1 (faster small vectors like here):
                 for jj in range(n_tasks):
                     tmp[jj] = _dot(n_samples, &X[0, ii], 1, &R[0, jj], 1)
@@ -746,7 +745,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     # Using BLAS Level 2:
                     # Update residual : rank 1 update
                     # _ger(RowMajor, n_samples, n_tasks, -1.0,
-                    #      &X[0, ii], 1, &W[ii, 0], 1,
+                    #      &X[0, ii], 1, &W[0, ii], 1,
                     #      &R[0, 0], n_tasks)
                     # Using BLAS Level 1 (faster small vectors like here):
                     for jj in range(n_tasks):
@@ -801,7 +800,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
                 l21_norm = 0.0
                 for ii in range(n_features):
-                    # np.sqrt(np.sum(W ** 2, axis=0))
                     l21_norm += _nrm2(n_tasks, &W[0, ii], 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
