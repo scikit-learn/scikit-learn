@@ -25,12 +25,13 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-import numpy as np
+from collections import ChainMap
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import ensemble
 from sklearn import datasets
-
+from sklearn import ensemble
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)
@@ -56,8 +57,7 @@ for label, color, setting in [('No shrinkage', 'orange',
                                {'learning_rate': 0.1, 'subsample': 0.5}),
                               ('learning_rate=0.1, max_features=2', 'magenta',
                                {'learning_rate': 0.1, 'max_features': 2})]:
-    params = dict(original_params)
-    params.update(setting)
+    params = ChainMap(setting, original_params)
 
     clf = ensemble.GradientBoostingClassifier(**params)
     clf.fit(X_train, y_train)
