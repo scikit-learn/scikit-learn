@@ -313,13 +313,6 @@ class Poisson(BaseLoss):
                                            y_true, raw_predictions,
                                            sample_weight)
 
-    def predict_target(self, raw_predictions):
-        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
-        # return a view.
-        raw_predictions = raw_predictions.reshape(-1)
-        target = np.exp(raw_predictions, dtype=Y_DTYPE)
-        return target
-
 
 class BinaryCrossEntropy(BaseLoss):
     """Binary cross-entropy loss, for binary classification.
