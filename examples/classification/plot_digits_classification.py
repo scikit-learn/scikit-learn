@@ -23,18 +23,19 @@ from sklearn.model_selection import train_test_split
 # Digits dataset
 # --------------
 #
-# The :func:`digits dataset <load_digits>` consists of 8x8 pixel images of
-# digits. The ``images`` attribute of the dataset contains 8x8 arrays of
-# grayscale values for each image. We will use these arrays to visualize the
-# first 4 images. The ``target`` attribute of the dataset stores the digit each
-# image represents and this is included in title of the 4 plots below.
+# The :func:`digits dataset <~sklearn.datasets.load_digits>` consists of 8x8
+# pixel images of digits. The ``images`` attribute of the dataset stores
+# 8x8 arrays of grayscale values for each image. We will use these arrays to
+# visualize the first 4 images. The ``target`` attribute of the dataset stores
+# the digit each image represents and this is included in title of the 4 plots
+# below.
 #
-# Note: if we were working from image files (e.g., '.png' files), we could load
+# Note: if we were working from image files (e.g., 'png' files), we could load
 # them using :func:`matplotlib.pyplot.imread`.
 
 digits = datasets.load_digits()
 
-_, axes = plt.subplots(1, 4)
+_, axes = plt.subplots(ncols=4)
 images_and_labels = list(zip(digits.images, digits.target))
 for ax, (image, label) in zip(axes, images_and_labels[:4]):
     ax.set_axis_off()
@@ -46,14 +47,15 @@ for ax, (image, label) in zip(axes, images_and_labels[:4]):
 # --------------
 #
 # To apply a classifier on this data, we need to flatten the images, turning
-# each array of grayscale values from shape (8,8) into (64, ).
+# each array of grayscale values from shape (8,8) into shape (64, ).
 # The data is then able to take the shape (n_samples, n_features), where
 # n_samples is the number of images and n_features is the total number of
 # pixels in each image.
 #
 # We can then split the data into train and test subsets and fit a support
 # vector classifier on the train samples. The fitted classifier can
-# subsequently be used to predict the value of the digit in the test subset.
+# subsequently be used to predict the value of the digit for the samples
+# in the test subset.
 
 # flatten the images
 n_samples = len(digits.images)
@@ -84,15 +86,15 @@ for ax, (image, prediction) in zip(axes, images_and_predictions[:4]):
     ax.set_title('Prediction: %i' % prediction)
 
 ###############################################################################
-# :func:`classification_report` builds a text report showing the main
-# classification metrics.
+# :func:`~sklearn.metrics.classification_report` builds a text report showing
+# the main classification metrics.
 
 print("Classification report for classifier %s:\n%s\n"
       % (clf, metrics.classification_report(y_test, predicted)))
 
 ###############################################################################
-# We can also plot a :ref:`confusion_matrix` comparing the true digit values
-# with the predicted digit values.
+# We can also plot a :ref:`confusion matrix <confusion_matrix>` of the
+# true digit values and the predicted digit values.
 
 disp = metrics.plot_confusion_matrix(clf, X_test, y_test)
 disp.figure_.suptitle("Confusion Matrix")
