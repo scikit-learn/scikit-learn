@@ -299,7 +299,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     cluster_centers_ : array, [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels_ :
+    labels_ : array of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int

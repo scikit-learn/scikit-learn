@@ -10,6 +10,7 @@
 
 import numpy as np
 cimport numpy as np
+from threadpoolctl import threadpool_limits
 cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
@@ -29,7 +30,19 @@ from ._k_means_fast cimport _center_shift
 np.import_array()
 
 
-def _init_bounds_dense(
+# Threadpoolctl wrappers to limit the number of threads in second level of
+# nested parallelism (i.e. BLAS) to avoid oversubsciption.
+def elkan_iter_chunked_dense(*args, **kwargs):
+    with threadpool_limits(limits=1, user_api="blas"):
+        _elkan_iter_chunked_dense(*args, **kwargs)
+
+
+def elkan_iter_chunked_sparse(*args, **kwargs):
+    with threadpool_limits(limits=1, user_api="blas"):
+        _elkan_iter_chunked_sparse(*args, **kwargs)
+
+
+def init_bounds_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[:, ::1] centers,                  # IN
         floating[:, ::1] center_half_distances,    # IN
@@ -99,7 +112,7 @@ def _init_bounds_dense(
         upper_bounds[i] = min_dist
 
 
-def _init_bounds_sparse(
+def init_bounds_sparse(
         X,                                       # IN
         floating[:, ::1] centers,                # IN
         floating[:, ::1] center_half_distances,  # IN
@@ -308,6 +321,9 @@ def _elkan_iter_chunked_dense(
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
 
     if update_centers:
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
@@ -539,6 +555,9 @@ def _elkan_iter_chunked_sparse(
                     weight_in_clusters[j] += weight_in_clusters_chunk[j]
                     for k in range(n_features):
                         centers_new[j, k] += centers_new_chunk[j * n_features + k]
+
+        free(centers_new_chunk)
+        free(weight_in_clusters_chunk)
 
     if update_centers:
         _relocate_empty_clusters_sparse(

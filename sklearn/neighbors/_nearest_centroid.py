@@ -15,7 +15,7 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_X_y, check_is_fitted
+from ..utils.validation import check_array, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
@@ -40,6 +40,9 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         samples that belong to that particular class are minimized.
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
+
+        .. versionchanged:: 0.19
+            ``metric='precomputed'`` was deprecated and now raises an error
 
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.

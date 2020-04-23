@@ -1,5 +1,6 @@
 """ Network tests are only run, if data is already locally available,
 or if download is specifically requested by environment variable."""
+import builtins
 from os import environ
 import pytest
 from sklearn.datasets import fetch_20newsgroups
@@ -59,3 +60,16 @@ def fetch_olivetti_faces_fxt():
 @pytest.fixture
 def fetch_rcv1_fxt():
     return _wrapped_fetch(fetch_rcv1, dataset_name='rcv1')
+
+
+@pytest.fixture
+def hide_available_pandas(monkeypatch):
+    """ Pretend pandas was not installed. """
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == 'pandas':
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, '__import__', mocked_import)
