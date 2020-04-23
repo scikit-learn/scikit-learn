@@ -26,8 +26,8 @@ from sklearn import tree
 ##############################################################################
 # Train tree classifier
 # ---------------------
-# First we fit a :class:`tree.DecisionTreeClassifier` using the
-# :func:`datasets.load_iris` dataset.
+# First we fit a :class:`~sklearn.tree.DecisionTreeClassifier` using the
+# :func:`~sklearn.datasets.load_iris` dataset.
 
 iris = load_iris()
 X = iris.data
