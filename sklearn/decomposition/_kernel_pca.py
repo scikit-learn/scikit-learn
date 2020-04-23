@@ -70,7 +70,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Randomized SVD is performed according to the method of Halko et al.
 
         auto :
-            the solver is selected by a default policy based on `K.shape[0]`
+            the solver is selected by a default policy based on n_samples
             (the number of training samples) and `n_components`:
             if the number of components to extract is lower than 80% of
             `K.shape[0]`, then the more efficient 'randomized'
