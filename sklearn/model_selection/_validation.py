@@ -134,6 +134,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
 

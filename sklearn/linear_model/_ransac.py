@@ -9,9 +9,10 @@ import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -201,8 +202,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
-
-    def __init__(self, base_estimator=None, min_samples=None,
+    @_deprecate_positional_args
+    def __init__(self, base_estimator=None, *, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,
@@ -246,8 +247,12 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             `max_trials` randomly chosen sub-samples.
 
         """
-        X = self._validate_data(X, accept_sparse='csr')
-        y = check_array(y, ensure_2d=False)
+        # Need to validate separately here.
+        # We can't pass multi_ouput=True because that would allow y to be csr.
+        check_X_params = dict(accept_sparse='csr')
+        check_y_params = dict(ensure_2d=False)
+        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
+                                                              check_y_params))
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:

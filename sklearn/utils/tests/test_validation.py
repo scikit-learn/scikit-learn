@@ -1097,6 +1097,15 @@ def test_deprecate_positional_args_warns_for_function():
                       match=r"Pass b=2 as keyword args"):
         f2(1, 2)
 
+    # The * is place before a keyword only argument without a default value
+    @_deprecate_positional_args
+    def f3(a, *, b, c=1, d=1):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"Pass b=2 as keyword args"):
+        f3(1, 2)
+
 
 def test_deprecate_positional_args_warns_for_class():
 
