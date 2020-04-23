@@ -341,7 +341,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd_result, _ = pd_results[0]  # checking the first result is enough
-    n_tasks = (pd_result.shape[0] if kind == 'average'
+    n_tasks = (pd_result.average.shape[0] if kind == 'average'
                else pd_result.individual.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
         if target is None:
@@ -355,7 +355,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for pd_result, values in pd_results:
-        preds = pd_result if kind == 'average' else pd_result.individual
+        preds = pd_result.average if kind == 'average' else pd_result.individual
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
