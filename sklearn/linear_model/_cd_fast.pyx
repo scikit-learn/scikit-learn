@@ -19,7 +19,7 @@ from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2, 
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
                                    _copy, _scal)
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
@@ -154,7 +154,7 @@ def enet_coordinate_descent(floating[::1] w,
     with nogil:
         # R = y - np.dot(X, w)
         _copy(n_samples, &y[0], 1, &R[0], 1)
-        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0], 
+        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
               n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
@@ -622,8 +622,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
-                                       np.ndarray[floating, ndim=2, mode='fortran'] X,
-                                       np.ndarray[floating, ndim=2] Y,
+                                       floating[::1, :] X,
+                                       floating[::1, :] Y,
                                        int max_iter, floating tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
@@ -712,7 +712,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                _copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
+                _copy(n_tasks, &W[0, ii], 1, wii_ptr, 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
                 if _nrm2(n_tasks, wii_ptr, 1) != 0.0:
@@ -729,9 +729,9 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 nn = _nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                _copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
+                _copy(n_tasks, &tmp[0], 1, &W[0, ii], 1)
                 _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                      W_ptr + ii * n_tasks, 1)
+                       &W[0, ii], 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 if _nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
@@ -742,12 +742,12 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                          &R[0, 0], n_tasks)
 
                 # update the maximum absolute coefficient update
-                d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
+                d_w_ii = diff_abs_max(n_tasks, &W[0, ii], wii_ptr)
 
                 if d_w_ii > d_w_max:
                     d_w_max = d_w_ii
 
-                W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
+                W_ii_abs_max = abs_max(n_tasks, &W[0, ii])
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
@@ -760,7 +760,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 for ii in range(n_features):
                     for jj in range(n_tasks):
                         XtA[ii, jj] = _dot(
-                            n_samples, X_ptr + ii * n_samples, 1,
+                            n_samples, &X[0, ii], 1,
                             &R[0, 0] + jj, n_tasks
                             ) - l2_reg * W[jj, ii]
 
@@ -769,7 +769,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=1))
                     XtA_axis1norm = _nrm2(n_tasks,
-                                          &XtA[0, 0] + ii * n_tasks, 1)
+                                          &XtA[ii, 0], 1)
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
