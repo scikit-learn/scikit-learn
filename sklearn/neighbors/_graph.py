@@ -285,7 +285,7 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
     @_deprecate_positional_args
-    def __init__(self, mode='distance', n_neighbors=5, *, algorithm='auto',
+    def __init__(self, *, mode='distance', n_neighbors=5, algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
@@ -427,7 +427,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
     @_deprecate_positional_args
-    def __init__(self, mode='distance', radius=1., *, algorithm='auto',
+    def __init__(self, *, mode='distance', radius=1., algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(
