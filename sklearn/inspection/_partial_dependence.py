@@ -206,7 +206,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 @_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto', kind='average'):
+                       method='auto', kind='legacy'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -292,12 +292,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    kind : {"average", "individual", "both"}, default="average"
+    kind : {"legacy", "average", "individual", "both"}, default="legacy"
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both individual lines and the
         average dependence at the same time.
 
-        - kind="average" results in the traditional PD plot;
+        - kind="legacy"/"average" results in the traditional PD plot;
         - kind="individual" results in the ICE plot.
 
        Note that the fast method="recursion" option is only available for
@@ -309,12 +309,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     Returns
     -------
     predictions : ndarray or Bunch
-        - kind='average', ndarray
+        - kind='legacy', ndarray
             shape (n_outputs, len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid, averaged over all
             samples in X (or over the training data if ``method`` is
             'recursion').
-        - kind='individual' or kind='both', Bunch
+        - kind='individual', kind='average' or kind='both', Bunch
             Key 'individual', ndarray
             shape (n_outputs, n_instances, len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid for all samples
@@ -396,7 +396,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             'method {} is invalid. Accepted method names are {}.'.format(
                 method, ', '.join(accepted_methods)))
 
-    if kind != 'average':
+    if kind != 'average' and kind != 'legacy':
         if method == 'recursion':
             raise ValueError(
                 "The 'recursion' method only applies when 'kind' is set "
@@ -479,15 +479,17 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values])
 
-    if kind == 'average':
+    if kind == 'legacy':
         warnings.warn(
             "A Bunch will be returned in place of 'predictions' from 0.25 with"
             " partial dependence results accessible via the 'average' key. In"
-            " the meantime, pass kind='both' to get the future behaviour.",
+            " the meantime, pass kind='average' to get the future behaviour.",
             FutureWarning
         )
-        # TODO 0.25: Return a Bunch in place of averaged_predictions
+        # TODO 0.25: Remove kind == 'legacy' section
         return averaged_predictions, values
+    elif kind == 'average':
+        return Bunch(average=averaged_predictions), values
     elif kind == 'individual':
         return Bunch(individual=predictions), values
     else:  # kind='both'

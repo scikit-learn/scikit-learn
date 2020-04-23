@@ -672,7 +672,7 @@ class PartialDependenceDisplay:
             if self.kind == 'individual':
                 preds = pd_result.individual
             elif self.kind == 'average':
-                avg_preds = pd_result
+                avg_preds = pd_result.average
             else:  # kind='both'
                 avg_preds = pd_result.average
                 preds = pd_result.individual
