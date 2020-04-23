@@ -101,6 +101,7 @@ def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
     """
     try:
         if squeeze and len(doc) == 1 and not hasattr(doc, 'items'):
+            # column vector support
             doc = doc[0]
     except TypeError:
         pass

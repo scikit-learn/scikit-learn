@@ -120,6 +120,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         for x in X:
             if not hasattr(x, 'items') and len(x) == 1:
+                # column vector support
                 x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
@@ -168,6 +169,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         # same time
         for x in X:
             if not hasattr(x, 'items') and len(x) == 1:
+                # column vector support
                 x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
@@ -309,6 +311,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
             for i, x in enumerate(X):
                 if not hasattr(x, 'items') and len(x) == 1:
+                    # column vector support
                     x = x[0]
                 for f, v in x.items():
                     if isinstance(v, str):
