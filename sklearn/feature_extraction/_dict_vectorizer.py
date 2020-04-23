@@ -106,6 +106,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
         y : (ignored)
 
         Returns
@@ -116,6 +119,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         vocab = {}
 
         for x in X:
+            if not hasattr(x, 'items') and len(x) == 1:
+                x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
@@ -162,6 +167,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         # collect all the possible feature names and build sparse matrix at
         # same time
         for x in X:
+            if not hasattr(x, 'items') and len(x) == 1:
+                x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
@@ -218,6 +225,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
         y : (ignored)
 
         Returns
@@ -280,6 +290,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
 
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
+
         Returns
         -------
         Xa : {array, sparse matrix}
@@ -295,6 +308,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
+                if not hasattr(x, 'items') and len(x) == 1:
+                    x = x[0]
                 for f, v in x.items():
                     if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)
