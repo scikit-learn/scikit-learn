@@ -7,7 +7,6 @@
 
 import platform
 import sys
-from time import time
 from distutils.version import LooseVersion
 import os
 
@@ -20,8 +19,6 @@ from sklearn.externals import _pilutil
 from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 PYTEST_MIN_VERSION = '3.3.0'
-tic = time()
-
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
     raise ImportError('Your version of pytest is too old, you should have '
@@ -101,15 +98,10 @@ def pytest_runtest_setup(item):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=True)
 
-    global tic
-    tic = time()
-
 
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
-
-    print(" {:.3f}s ".format(time() - tic), end="")
 
 
 # TODO: Remove when modules are deprecated in 0.24

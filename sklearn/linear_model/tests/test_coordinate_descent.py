@@ -1025,16 +1025,14 @@ def test_enet_sample_weight_sparse():
         reg.fit(X, y, sample_weight=sw, check_input=True)
 
 
-@pytest.mark.parametrize("backend",
-                         ["loky", "multiprocessing", "threading"])
+@pytest.mark.parametrize("backend", ["loky", "threading"])
 @pytest.mark.parametrize("estimator",
                          [ElasticNetCV, MultiTaskElasticNetCV,
                           LassoCV, MultiTaskLassoCV])
 def test_linear_models_cv_fit_for_all_backends(backend, estimator):
     # LinearModelsCV.fit performs inplace operations on input data which is
-    # memmapped when using loky or multiprocessing backend, causing an error
-    # due to unexpected behavior of fancy indexing of read-only memmaps
-    # (cf. numpy#14132).
+    # memmapped when using loky backend, causing an error due to unexpected
+    # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
     if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
         pytest.skip('loky backend does not exist in joblib <0.12')
