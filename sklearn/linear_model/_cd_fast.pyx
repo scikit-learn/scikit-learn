@@ -738,7 +738,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 # if (W[ii, 0] != 0.) or (_nrm2(n_tasks, &W[ii, 0], 1) != 0.0):
-                if (W[ii, 0] != 0.):
+                if (W[0, ii] != 0.):
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
                     # _ger(RowMajor, n_samples, n_tasks, -1.0,
