@@ -25,7 +25,7 @@ print(__doc__)
 
 import time
 import warnings
-
+from collections import ChainMap
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -81,8 +81,7 @@ datasets = [
 
 for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # update parameters with dataset-specific values
-    params = default_base.copy()
-    params.update(algo_params)
+    params = ChainMap(algo_params, default_base)
 
     X, y = dataset
 

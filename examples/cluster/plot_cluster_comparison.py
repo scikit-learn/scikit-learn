@@ -26,14 +26,15 @@ print(__doc__)
 
 import time
 import warnings
+from collections import ChainMap
+from itertools import cycle, islice
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
-from itertools import cycle, islice
 
 np.random.seed(0)
 
@@ -93,8 +94,7 @@ datasets = [
 
 for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # update parameters with dataset-specific values
-    params = default_base.copy()
-    params.update(algo_params)
+    params = ChainMap(algo_params, default_base)
 
     X, y = dataset
 
