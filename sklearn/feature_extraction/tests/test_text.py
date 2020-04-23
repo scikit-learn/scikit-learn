@@ -851,6 +851,40 @@ def test_vectorizer_pipeline_cross_validation():
     assert_array_equal(cv_scores, [1., 1., 1.])
 
 
+@pytest.mark.parametrize('est', [
+    CountVectorizer(analyzer='word',),
+    CountVectorizer(analyzer='char',),
+    CountVectorizer(analyzer='char_wb',),
+    TfidfVectorizer(analyzer='char_wb',),
+])
+@pytest.mark.parametrize('input', ['content', 'filename'])
+def test_vectorizer_column(est, input, tmpdir):
+    "Ensure data can come in as a column vector of text objects"
+    est.set_params(input=input)
+    X = ["Hello world", "Goodbye world."]
+    if input == 'filename':
+        for i, x in enumerate(X):
+            with (tmpdir / f"ex{i}").open("w") as f:
+                f.write(x)
+        X = [tmpdir / f"ex{i}" for i in range(len(X))]
+
+    Xt = est.fit_transform(X)
+
+    X_col_vec = np.asarray(X, dtype='object').reshape(-1, 1)
+    assert_array_equal(Xt.A, est.fit_transform(X_col_vec).A)
+
+    X_col_vec_list = X_col_vec.tolist()
+    assert_array_equal(Xt.A, est.fit_transform(X_col_vec_list).A)
+
+    # 2d with multiple columns fails
+    with pytest.raises(Exception):
+        est.fit_transform(np.hstack([X_col_vec, X_col_vec]))
+
+    # row vector fails
+    with pytest.raises(Exception):
+        est.fit_transform(X_col_vec.reshape(1, -1))
+
+
 @fails_if_pypy
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.

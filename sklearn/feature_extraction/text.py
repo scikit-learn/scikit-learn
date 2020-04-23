@@ -99,8 +99,11 @@ def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
     ngrams: list
         A sequence of tokens, possibly with pairs, triples, etc.
     """
-    if squeeze and len(doc) == 1 and not hasattr(doc, 'items'):
-        doc = doc[0]
+    try:
+        if squeeze and len(doc) == 1 and not hasattr(doc, 'items'):
+            doc = doc[0]
+    except TypeError:
+        pass
 
     if decoder is not None:
         doc = decoder(doc)
