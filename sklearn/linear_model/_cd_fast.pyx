@@ -651,7 +651,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
+    cdef floating[::1, :] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
     cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
@@ -690,6 +690,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 norm_cols_X[ii] += X[jj, ii] ** 2
 
         # R = Y - np.dot(X, W.T)
+        # _copy()
         for ii in range(n_samples):
             for jj in range(n_tasks):
                 R[ii, jj] = Y[ii, jj] - (
@@ -717,13 +718,17 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
                 if _nrm2(n_tasks, wii_ptr, 1) != 0.0:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                    _ger(RowMajor, n_samples, n_tasks, 1.0,
-                         X_ptr + ii * n_samples, 1,
-                         wii_ptr, 1, &R[0, 0], n_tasks)
+                    # _ger(RowMajor, n_samples, n_tasks, 1.0,
+                    #      X_ptr + ii * n_samples, 1,
+                    #      wii_ptr, 1, &R[0, 0], n_tasks)
+                    for jj in range(n_tasks):
+                        _axpy(n_samples, W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
 
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
-                _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
-                      n_tasks, X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
+                for jj in range(n_tasks):
+                    tmp[jj] = _dot(n_samples, &X[0, ii], 1, &R[0, jj], 1)
+                # _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
+                #       n_tasks, X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
@@ -737,9 +742,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if _nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
-                    _ger(RowMajor, n_samples, n_tasks, -1.0,
-                         X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
-                         &R[0, 0], n_tasks)
+                    # _ger(RowMajor, n_samples, n_tasks, -1.0,
+                    #      X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
+                    #      &R[0, 0], n_tasks)
+                    for jj in range(n_tasks):
+                        _axpy(n_samples, -W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = diff_abs_max(n_tasks, &W[0, ii], wii_ptr)
@@ -761,7 +768,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     for jj in range(n_tasks):
                         XtA[ii, jj] = _dot(
                             n_samples, &X[0, ii], 1,
-                            &R[0, 0] + jj, n_tasks
+                            &R[0, jj], 1
                             ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
