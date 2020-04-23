@@ -12,7 +12,7 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm, datasets
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 # import some data to play with
 iris = datasets.load_iris()

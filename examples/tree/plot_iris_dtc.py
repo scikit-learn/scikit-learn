@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier, plot_tree
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 # Parameters
 n_classes = 3

@@ -11,7 +11,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 n_neighbors = 15
 

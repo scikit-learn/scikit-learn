@@ -29,7 +29,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import make_blobs
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 # we create two clusters of random points
 n_samples_1 = 1000

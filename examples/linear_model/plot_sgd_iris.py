@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 # import some data to play with
 iris = datasets.load_iris()

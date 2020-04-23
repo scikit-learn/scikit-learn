@@ -1,6 +1,6 @@
 import numpy as np
-from .. import check_matplotlib_support
-from .. import _safe_indexing
+from ...utils import check_matplotlib_support
+from ...utils import _safe_indexing
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -49,7 +49,7 @@ def _check_boundary_response_method(estimator, response_method):
 class DecisionBoundaryDisplay:
     """Decisions Boundary visualization.
 
-    It is recommend to use :func:`~sklearn.utils.plot_decision_boundary`
+    It is recommend to use :func:`~sklearn.inspection.plot_decision_boundary`
     to create a :class:`DecisionBoundaryDisplay`. All parameters are stored as
     attributes.
 

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import svm
 from sklearn.semi_supervised import LabelSpreading
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 rng = np.random.RandomState(0)
 

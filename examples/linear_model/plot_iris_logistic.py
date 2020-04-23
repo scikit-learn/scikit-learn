@@ -21,7 +21,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
-from sklearn.utils.plot import plot_decision_boundary
+from sklearn.inspection import plot_decision_boundary
 
 # import some data to play with
 iris = datasets.load_iris()
