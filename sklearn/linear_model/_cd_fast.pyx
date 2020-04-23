@@ -622,8 +622,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
-                                       np.ndarray[floating, ndim=2, mode='fortran'] X,
-                                       np.ndarray[floating, ndim=2] Y,
+                                       floating[:, ::1] X,
+                                       floating[::1, :] Y,
                                        int max_iter, floating tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
@@ -651,11 +651,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
+    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype, order='F')
 
-    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[::1] norm_cols_X = np.square(X).sum(axis=0)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
-    cdef floating[:] w_ii = np.zeros(n_tasks, dtype=dtype)
+    cdef floating[::1] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_ii
@@ -684,11 +684,6 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
             " results and is discouraged.")
 
     with nogil:
-        # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
-        for ii in range(n_features):
-            for jj in range(n_samples):
-                norm_cols_X[ii] += X[jj, ii] ** 2
-
         # R = Y - np.dot(X, W.T)
         for ii in range(n_samples):
             for jj in range(n_tasks):
@@ -712,10 +707,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                _copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
+                # _copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
+                _copy(n_tasks, &W[ii, 0], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if _nrm2(n_tasks, wii_ptr, 1) != 0.0:
+                if (w_ii[0] != 0.) or (_nrm2(n_tasks, &w_ii[0], 1) != 0.0):
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
                     _ger(RowMajor, n_samples, n_tasks, 1.0,
                          X_ptr + ii * n_samples, 1,
@@ -734,7 +730,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                       W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if _nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
+                if (W[ii, 0] != 0.) or (_nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0):
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
                     _ger(RowMajor, n_samples, n_tasks, -1.0,
@@ -777,7 +773,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
                 R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
-                w_norm = _nrm2(n_features * n_tasks, W_ptr, 1)
+                w_norm = _nrm2(n_features * n_tasks, &W[0, 0], 1)
                 if (dual_norm_XtA > l1_reg):
                     const =  l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
@@ -796,7 +792,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 l21_norm = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(W ** 2, axis=0))
-                    l21_norm += _nrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+                    l21_norm += _nrm2(n_tasks, &W[ii, 0], 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
