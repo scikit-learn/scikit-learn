@@ -851,6 +851,17 @@ def test_vectorizer_pipeline_cross_validation():
     assert_array_equal(cv_scores, [1., 1., 1.])
 
 
+def test_preanalyzed():
+    "Check an identity analyzer: that analyzer can take a list of tokens"
+    est = CountVectorizer(analyzer=lambda x: x)
+    Xt = est.fit_transform([["hello", "world"], ["goodbye", "world"]])
+    assert_array_equal(Xt.A, [[0, 1, 1], [1, 0, 1]])
+
+    # Check a column vector is not mishandled
+    Xt = est.fit_transform([["hello"], ["goodbye"]])
+    assert_array_equal(Xt.A, [[0, 1], [1, 0]])
+
+
 @pytest.mark.parametrize('est', [
     CountVectorizer(analyzer='word',),
     CountVectorizer(analyzer='char',),
