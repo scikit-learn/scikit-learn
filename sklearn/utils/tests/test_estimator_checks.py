@@ -605,8 +605,8 @@ def test_check_estimator_xfail_tag_warns():
     # When a _xfail_checks check passes, warns stating that the test
     # passes and can be removed from the tag
 
-    assert_warns_message(SkipTestWarning,
-                         "check_complex_data passed, it can "
+    assert_warns_message(FutureWarning,
+                         "LRXFailTags:check_complex_data passed, it can "
                          "be removed from the _xfail_check tag",
                          check_estimator, LRXFailTags)
 

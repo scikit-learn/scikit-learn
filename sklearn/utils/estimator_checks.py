@@ -334,11 +334,20 @@ def _construct_instance(Estimator):
     return estimator
 
 
+def _get_estimator_name(estimater):
+    """Get name of estimator instance or class"""
+    if isinstance(estimater, type):
+        # got a class
+        return estimater.__name__
+    # got an instance
+    return type(estimater).__name__
+
+
 def _get_xfail_checks(estimator):
-    """Get xfail_check from estimator"""
+    """Get checks marked with xfail_checks tag from estimator"""
     if isinstance(estimator, type):
         # try to construct estimator instance, if it is unable to then
-        # return then ignore xfail tag
+        # return xfail tag
         try:
             estimator = _construct_instance(estimator)
         except Exception:
@@ -350,13 +359,26 @@ def _get_xfail_checks(estimator):
     return estimator._get_tags()['_xfail_checks'] or {}
 
 
-def _check_warns_on_fail(estimator, check, xfail_checks_tag):
-    """Convert assertion errors to warnings if reason is given"""
+def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
+    """Wrap the check so that a warning is raised:
+
+    - when the check is in the `xfail_checks` tag and the check properly failed
+      as expected
+    - when the check is in the `xfail_checks` tag and the check didnt fail but
+      should have
+
+    Checks that aren't in the xfail_checks tag aren't wrapped and are returned
+    as-is. This wrapper basically simulates what pytest would do with the
+    @xfail decorator, but this one can be used with check_estimator() which
+    doesn't rely on pytest.
+
+    """
     check_name = _set_check_estimator_ids(check)
     if check_name not in xfail_checks_tag:
         return estimator, check
 
     reason = xfail_checks_tag[check_name]
+    name = _get_estimator_name(estimator)
     @wraps(check)
     def wrapped(*args, **kwargs):
         try:
@@ -367,8 +389,8 @@ def _check_warns_on_fail(estimator, check, xfail_checks_tag):
 
         # did not fail
         check_name = _set_check_estimator_ids(check)
-        warnings.warn(f"{check_name} passed, it can be removed "
-                      f"from the _xfail_check tag", SkipTestWarning)
+        warnings.warn(f"{name}:{check_name} passed, it can be removed "
+                      f"from the _xfail_check tag", FutureWarning)
     return estimator, wrapped
 
 
@@ -378,37 +400,33 @@ def _generate_instance_checks(name, estimator):
                 for check in _yield_all_checks(name, estimator))
 
 
-def _generate_class_checks(Estimator):
+def _generate_class_checks(name, Estimator):
     """Generate class checks."""
-    name = Estimator.__name__
     yield (Estimator, partial(check_parameters_default_constructible, name))
     estimator = _construct_instance(Estimator)
     yield from _generate_instance_checks(name, estimator)
 
 
 def _generate_checks(Estimator):
+    """Generate checks based on Estimator"""
+    name = _get_estimator_name(Estimator)
     if isinstance(Estimator, type):
         # got a class
-        checks_generator = _generate_class_checks(Estimator)
-    else:
-        # got an instance
-        estimator = Estimator
-        name = type(estimator).__name__
-        checks_generator = _generate_instance_checks(name, estimator)
-
-    return checks_generator
+        return _generate_class_checks(name, Estimator)
+    # got an instance
+    return _generate_instance_checks(name, Estimator)
 
 
 def _generate_marked_checks(estimator, pytest):
-    """Mark (estimator, check) pairs with xfail according to the
-    _xfail_checks_ tag"""
+    """Generate checks marked with pytest.mark.xfail according to the
+    _xfail_checks tag."""
     xfail_checks_tag = _get_xfail_checks(estimator)
     checks_generator = _generate_checks(estimator)
 
     for estimator, check in checks_generator:
         check_name = _set_check_estimator_ids(check)
-        reason = xfail_checks_tag.get(check_name, "")
-        if reason:
+        if check_name in xfail_checks_tag:
+            reason = xfail_checks_tag[check_name]
             yield pytest.param(estimator, check,
                                marks=pytest.mark.xfail(reason=reason))
         else:
@@ -500,7 +518,7 @@ def check_estimator(Estimator, generate_only=False):
 
     # wrap checks based on xfail_checks
     xfail_checks_tag = _get_xfail_checks(Estimator)
-    checks_generator = (_check_warns_on_fail(
+    checks_generator = (_make_check_warn_on_fail(
         estimator, check, xfail_checks_tag=xfail_checks_tag)
                         for estimator, check in checks_generator)
 
