@@ -11,6 +11,7 @@ from ._split import RepeatedKFold
 from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
+from ._split import StratifiedGroupKfold
 from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
 from ._split import train_test_split
@@ -35,6 +36,7 @@ __all__ = ('BaseCrossValidator',
            'KFold',
            'GroupKFold',
            'GroupShuffleSplit',
+           'StratifiedGroupKfold',
            'LeaveOneGroupOut',
            'LeaveOneOut',
            'LeavePGroupsOut',
