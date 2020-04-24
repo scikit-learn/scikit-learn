@@ -256,8 +256,7 @@ def test_class_support_deprecated():
         parametrize_with_checks([LogisticRegression])
 
 
-def test_check_classs():
-
+def test_check_class():
     check_class(LogisticRegression)
     with pytest.raises(ValueError, match="expects a Class object"):
         check_class(LogisticRegression())
