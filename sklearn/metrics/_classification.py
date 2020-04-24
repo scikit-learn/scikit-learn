@@ -533,6 +533,111 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+def most_confused_classes(y_true, y_pred, labels=None,
+                          max_rows=None, normalize=None):
+    """Compute the most confused classes.
+
+    In multiclass and binary classification, this function computes the classes
+    which have been confused the most often by the classifier.
+
+    Parameters
+    ----------
+
+    y_true: array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the confusion matrix. This may be used to
+        reorder or select a subset of labels.
+        If none is given, those that appear at least once in ``y_true`` or
+        ``y_pred`` are used in sorted order.
+
+    max_rows : int, optional
+        Maximum number of pairs of classes to return. Corresponds to the
+        number of rows in most_confused.
+        If none is given, all rows are returned.
+
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes the number of confusions over the true, predicted conditions
+        or all the population. If None, most confused classes will not be
+        normalized.
+        For normalize='all', the sum of the counts of the most_confused matrix
+        is equal to 1 - accuracy_score.
+
+    Returns
+    -------
+    most_confused : list (of length max_rows) of tuples (of length 3)
+        The most confused classes list, from the most confused to the least
+        confused, with each row containing: (class_1, class_2, count)
+        where count denotes the number of times class_1 was misclassified as
+        class_2 and n_pairs is the number of pairs of classes confused by the
+        classifier.
+        Or, if there is no misclassification, returns an empty list.
+
+    See also
+    --------
+    confusion_matrix
+
+    Examples
+    --------
+    >>> from sklearn.metrics import most_confused_classes
+    >>> y_true = [2, 0, 1, 2, 1, 2]
+    >>> y_pred = [0, 0, 2, 0, 1, 1]
+    >>> most_confused_classes(y_true, y_pred)
+    [(2, 0, 2), (2, 1, 1), (1, 2, 1)]
+
+    With labels:
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"])
+    [('cat', 'ant', 1), ('bird', 'cat', 1)]
+
+    Keep only two rows:
+    >>> from sklearn.metrics import most_confused_classes
+    >>> y_true = [2, 0, 1, 2, 1, 2]
+    >>> y_pred = [0, 0, 2, 0, 1, 1]
+    >>> most_confused_classes(y_true, y_pred, max_rows=2)
+    [(2, 0, 2), (2, 1, 1)]
+    """
+    # If there is no mistake, we return an empty array
+    if np.array_equal(y_true, y_pred):
+        return []
+
+    if max_rows is not None and max_rows < 1:
+        raise ValueError('max_rows must be an int >= 1')
+
+    # confusion_matrix checks for input errors
+    cm = confusion_matrix(y_true, y_pred, labels=labels, normalize=normalize)
+
+    # Clean the diagonal
+    cm[np.diag_indices(len(cm))] = 0
+    # Get the coordinates of descending sorted values of cm (only max_rows)
+    coords = np.array(
+        np.unravel_index(
+            np.argsort(cm, axis=None)[::-1][:max_rows],
+            cm.shape
+        )
+    ).T
+
+    # Keep only rows with count > 0
+    coords = coords[np.where(cm[coords[:, 0], coords[:, 1]] > 0)]
+    # most_confused = most_confused[np.where(most_confused[:, -1] > 0)]
+
+    # Return the result as a list of tuples
+    # with the class names as strings (if provided)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
+    most_confused = list(zip(labels[coords[:, 0]], labels[coords[:, 1]],
+                             cm[coords[:, 0], coords[:, 1]]))
+
+    return most_confused
+
+
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
