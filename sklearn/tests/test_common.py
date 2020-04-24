@@ -107,7 +107,7 @@ def _tested_estimators():
         yield estimator
 
 
-@parametrize_with_checks(_tested_estimators())
+@parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
