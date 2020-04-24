@@ -280,9 +280,9 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
 
-.. _Randomized_kPCA:
+.. _kPCA_Solvers:
 
-Kernel PCA using randomized SVD
+Choice of solver for Kernel PCA
 -------------------------------
 
 In :class:`KernelPCA`, the number of components found is equal to the number of
@@ -295,7 +295,7 @@ The optional parameter ``eigen_solver='randomized'`` can be used to
 *drastically* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples.
 This is done automatically by default if you do not specify any
-``eigen_solver`` and if ``n_components`` is less than 80% of
+``eigen_solver`` and if the required ``n_components`` is less than 80% of
 the number of samples, see :class:`KernelPCA` for details.
 
 For example the figure below shows the same "circles" dataset (top left)
@@ -307,6 +307,15 @@ quality :
     :target: ../auto_examples/decomposition/plot_kernel_pca_approximate.html
     :align: center
     :scale: 75%
+
+The time complexity of the randomized :class:`KernelPCA` is
+:math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
+instead of :math:`O(n_{\mathrm{samples}}^3)` for the exact method
+implemented with ``eigen_solver='dense'``.
+
+The memory footprint of randomized :class:`KernelPCA` is also proportional to
+:math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
+:math:`n_{\mathrm{samples}}^2` for the exact method.
 
 .. topic:: Examples:
 
