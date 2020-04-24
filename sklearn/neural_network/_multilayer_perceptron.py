@@ -453,7 +453,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         packed_coef_inter = _pack(self.coefs_,
                                   self.intercepts_)
 
-        if self.verbose is True or self.verbose >= 1:
+        if self.verbose or self.verbose >= 1:
             iprint = 1
         else:
             iprint = -1
@@ -806,7 +806,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         unless ``learning_rate`` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to print progress messages to stdout.
 
     warm_start : bool, default=False
@@ -942,7 +942,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
                  shuffle=True, random_state=None, tol=1e-4,
-                 verbose=False, warm_start=False, momentum=0.9,
+                 verbose=0, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
@@ -1217,7 +1217,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         unless ``learning_rate`` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to print progress messages to stdout.
 
     warm_start : bool, default=False
@@ -1347,7 +1347,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
                  learning_rate_init=0.001,
                  power_t=0.5, max_iter=200, shuffle=True,
                  random_state=None, tol=1e-4,
-                 verbose=False, warm_start=False, momentum=0.9,
+                 verbose=0, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10, max_fun=15000):
