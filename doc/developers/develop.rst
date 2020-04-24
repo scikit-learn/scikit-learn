@@ -510,6 +510,11 @@ requires_fit (default=True)
 requires_positive_X (default=False)
     whether the estimator requires positive X.
 
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
+
 requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 

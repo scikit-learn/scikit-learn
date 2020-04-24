@@ -33,7 +33,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-X_r, y_r = datasets.load_boston(return_X_y=True)
+X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_weights_iris():
 
 
 def test_weights_regressor():
-    """Check weighted average regression prediction on boston dataset."""
+    """Check weighted average regression prediction on diabetes dataset."""
     reg1 = DummyRegressor(strategy='mean')
     reg2 = DummyRegressor(strategy='median')
     reg3 = DummyRegressor(strategy='quantile', quantile=.2)
