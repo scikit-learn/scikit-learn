@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
