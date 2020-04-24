@@ -1384,7 +1384,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     will also compute training scores and is merely a utility for plotting the
     results.
 
-    Read more in the :ref:`User Guide <learning_curve>`.
+    Read more in the :ref:`User Guide <validation_curve>`.
 
     Parameters
     ----------
