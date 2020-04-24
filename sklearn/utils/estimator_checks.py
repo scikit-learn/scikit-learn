@@ -351,6 +351,7 @@ def _mark_xfail_checks(estimator, check, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
     if isinstance(estimator, type):
+        # TODO: remove in 0.25 since passing instances isn't supported anymore
         # try to construct estimator instance, if it is unable to then
         # return the estimator class, ignoring the tag
         try:
@@ -401,6 +402,14 @@ def parametrize_with_checks(estimators):
 
     """
     import pytest
+
+    if any(isinstance(est, type) for est in estimators):
+        # TODO: remove class support in 0.25
+        msg = ("Passing a class is deprecated since version 0.23 "
+               "and won't be supported in 0.25."
+               "Please pass an instance instead and call "
+               "check_estimator_class separately on the class.")
+        warnings.warn(msg, FutureWarning)
 
     checks_generator = chain.from_iterable(
         check_estimator(estimator, generate_only=True)
@@ -461,12 +470,15 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
+    # TODO: remove class support in 0.25
     if isinstance(Estimator, type):
         # got a class
-        msg = ("Passing a class is deprecated since version 0.23. "
+        msg = ("Passing a class is deprecated since version 0.23 "
+               "and won't be supported in 0.25."
                "Please pass an instance instead and call "
                "check_estimator_class separately on the class.")
         warnings.warn(msg, FutureWarning)
+
         checks_generator = _generate_class_checks(Estimator)
     else:
         # got an instance

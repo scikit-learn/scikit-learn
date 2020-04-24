@@ -48,7 +48,9 @@ def test_all_estimator_no_base_class():
         assert not name.lower().startswith('base'), msg
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.25
 def test_estimator_cls_parameterize_with_checks():
+    # TODO: remove test in 0.25
     # Non-regression test for #16707 to ensure that parametrize_with_checks
     # works with estimator classes
     param_checks = parametrize_with_checks([LogisticRegression])
@@ -115,7 +117,9 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.25
 def test_check_estimator_generate_only():
+    # TODO in 0.25: remove checks on passing a class
     estimator_cls_gen_checks = check_estimator(LogisticRegression,
                                                generate_only=True)
     all_instance_gen_checks = check_estimator(LogisticRegression(),
@@ -238,3 +242,15 @@ def test_all_tests_are_importable():
                                  '__init__.py or an add_subpackage directive '
                                  'in the parent '
                                  'setup.py'.format(missing_tests))
+
+
+def test_class_deprecated():
+    # Make sure passing classes to check_estimator or parametrize_with_checks
+    # is deprecated
+
+    msg = "Passing a class is deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        check_estimator(LogisticRegression)
+
+    with pytest.warns(FutureWarning, match=msg):
+        parametrize_with_checks([LogisticRegression])

@@ -356,6 +356,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.25
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -579,7 +580,9 @@ def test_check_regressor_data_not_an_array():
                         EstimatorInconsistentForPandas())
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.25
 def test_check_estimator_required_parameters_skip():
+    # TODO: remove whole test in 0.25
     class MyEstimator(BaseEstimator):
         _required_parameters = ["special_parameter"]
 
@@ -621,11 +624,6 @@ def test_all_estimators_all_public():
     estimators = all_estimators()
     for est in estimators:
         assert not est.__class__.__name__.startswith("_")
-
-
-def test_check_estimator_class_warning():
-    # message should be Passing a class is deprecated...
-    assert_warns(FutureWarning, check_estimator, LogisticRegression)
 
 
 if __name__ == '__main__':
