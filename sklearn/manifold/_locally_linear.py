@@ -97,7 +97,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
@@ -647,7 +647,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
 
