@@ -278,9 +278,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             # However SVD does not guarantee that sign of u and v is the same.
             # If they are different, the corresponding *singular value* is not
             # equal to the *eigenvalue*, it has the wrong sign. We have to
-            # take this into account to find the actual *eigenvalue*
-            VU = np.dot(V[:n_components, :], U[:, :n_components])
-            signs = np.sign(np.diag(VU))
+            # take this into account to find the actual *eigenvalue*.
+            # Fastest check for flipped sign is the sign of the scalar product:
+            VU_scalprods = np.multiply(V[:n_components, :].T,
+                                       U[:, :n_components]).sum(axis=0)
+            signs = np.sign(VU_scalprods)
             self.lambdas_ = self.lambdas_ * signs
             # Note: the above is a mandatory operation to ensure a correct sign
             # for *eigenvalues*, it has nothing to do with the optional
