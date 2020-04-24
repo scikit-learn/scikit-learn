@@ -6,9 +6,9 @@ Column Transformer with Heterogeneous Data Sources
 Datasets can often contain components that require different feature
 extraction and processing pipelines. This scenario might occur when:
 
-1. Your dataset consists of heterogeneous data types (e.g. raster images and
+1. your dataset consists of heterogeneous data types (e.g. raster images and
    text captions),
-2. Your dataset is stored in a :class:`pandas.DataFrame` and different columns
+2. your dataset is stored in a :class:`pandas.DataFrame` and different columns
    require different processing pipelines.
 
 This example demonstrates how to use
@@ -38,7 +38,7 @@ from sklearn.svm import LinearSVC
 # ---------------------
 #
 # We will use the :ref:`20 newsgroups dataset <20newsgroups_dataset>`, which
-# comprises text posts from newsgroups on 20 topics. This dataset is split
+# comprises posts from newsgroups on 20 topics. This dataset is split
 # into train and test subsets based on messages posted before and after
 # a specific date. We will only use posts from 2 categories to speed up running
 # time.
@@ -56,8 +56,8 @@ X_test, y_test = fetch_20newsgroups(random_state=1,
                                     return_X_y=True)
 
 ##############################################################################
-# Each feature comprises meta information about that post and the body of the
-# news post.
+# Each feature comprises meta information about that post, such as the subject
+# and the body of the news post.
 
 print(X_train[0])
 
@@ -65,7 +65,7 @@ print(X_train[0])
 # Creating transformers
 # ---------------------
 #
-# First, we would like to define a transformer that extracts the subject and
+# First, we would like a transformer that extracts the subject and
 # body of each post. Since this is a stateless transformation (does not
 # require information from training data), we can define a function that
 # performs the extraction then use
@@ -85,7 +85,7 @@ def subject_body_extractor(posts):
 
         prefix = 'Subject:'
         sub = ''
-        # save text after 'Subject:'
+        # save text after 'Subject:' in first column
         for line in headers.split('\n'):
             if line.startswith(prefix):
                 sub = line[len(prefix):]
@@ -99,7 +99,7 @@ def subject_body_extractor(posts):
 SubjectBodyExtractor = FunctionTransformer(subject_body_extractor)
 
 ##############################################################################
-# We will also create a transformer that takes the body and extracts the
+# We will also create a transformer that extracts the
 # length of the text and the number of sentences.
 
 
@@ -115,21 +115,22 @@ TextStats = FunctionTransformer(text_stats)
 # Classification pipeline
 # -----------------------
 #
-# Our pipeline extracts the subject and body text then uses
-# ``ColumnTransformer`` to compute standard bag-of-words features for the
-# subject and body as well as text length and number of sentences on the body.
-# We combine them (with weights) then finally train a classifier on the
-# combined set of features.
+# The pipeline below extracts the subject and body from each post using
+# ``SubjectBodyExtractor``, producing a (n_samples, 2) array. This array is
+# then used to compute standard bag-of-words features for the subject and body
+# as well as text length and number of sentences on the body, using
+# ``ColumnTransformer``. We combine them, with weights, then train a
+# classifier on the combined set of features.
 
 pipeline = Pipeline([
-    # Extract subject & body, producing (n_samples, 2) array
+    # Extract subject & body
     ('subjectbody', SubjectBodyExtractor),
     # Use ColumnTransformer to combine the subject and body features
     ('union', ColumnTransformer(
         [
-            # TF-IDF features from subject (col 0)
+            # bag-of-words for subject (col 0)
             ('subject', TfidfVectorizer(min_df=50), 0),
-            # Pipeline for standard bag-of-words model for body (col 1)
+            # bag-of-words with decomposition for body (col 1)
             ('body_bow', Pipeline([
                 ('tfidf', TfidfVectorizer()),
                 ('best', TruncatedSVD(n_components=50)),
@@ -152,9 +153,11 @@ pipeline = Pipeline([
 ], verbose=True)
 
 ##############################################################################
-# Now we can fit our pipeline on the training data and use it to predict on
-# ``X_test``. The performance of our pipeline is then printed.
+# Finally, we fit our pipeline on the training data and use it to predict
+# topics for ``X_test``. Performance metrics of our pipeline is then printed.
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print(classification_report(y_test, y_pred))
+print('Classification report:\n{}'.format(
+    classification_report(y_test, y_pred))
+)
