@@ -9,10 +9,13 @@ import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
 import warnings
+from functools import partial
+from scipy.optimize import minimize
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
+from ..utils.validation import check_is_fitted
 from ..isotonic import IsotonicRegression
 
 
@@ -272,6 +275,30 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         return best_pos, best_stress
 
 
+def _tau(w, A):
+    """Double centering transformation.
+
+    Transform relating metric squared dissimilarity matrix to
+    centered weighted inner product generating the metric.
+
+    See :"On Certain Linear Mappings Between Inner-Product and
+          Squared-Distance Matrices" Critchley F. Techinical Report 1238
+          Departement d'Informatique et Recherche Operationelle,
+          Universite de Montreal, Montreal, Quebec, Canada July 2003
+
+    Parameters
+    ----------
+    w : array, shape (n_samples,) weight vector
+
+    A : array, shape(n_samples, n_samples) metric dissimilarity matrix
+    """
+    n = A.shape[0]
+    e = np.ones((n, 1))
+    P1 = np.eye(n) - np.dot(e, w.T)/np.dot(e.T, w)
+    P2 = np.eye(n) - np.dot(w, e.T)/np.dot(e.T, w)
+    return -0.5 * np.matmul(np.matmul(P1, A), P2)
+
+
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
@@ -357,6 +384,7 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
+
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
@@ -421,6 +449,7 @@ class MDS(BaseEstimator):
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
         elif self.dissimilarity == "euclidean":
+            self.X_fit_ = X
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
@@ -434,3 +463,89 @@ class MDS(BaseEstimator):
             return_n_iter=True)
 
         return self.embedding_
+
+    def transform(self, X, init=None, data_type='sample'):
+        """Return embedded coordinates for new data or dissimilarity
+        matrix X based on prefitted model.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+            for input as new data sample or dissimilarty matrix.
+            If dissimilarity == 'precomuted' then X must be a dissimilarty
+            matrix (containing self.dissimilarity_matrix_ as a submatrix)
+            and data_type='dissimilarity', as we cannto compute the necessary
+            extended dissimilarity matrix without the original data sample.
+
+        init : ndarray, shape (n_samples,), optional, default: None
+            Starting configuration of the embedding to initialize the SMACOF
+            algorithm. By default, the algorithm is initialized with a matrix
+            of ones of shape (X.shape[0], self.n_components)
+
+        data_type : str, type of data input, 'sample' or 'dissimilarity'. Even
+            though self.dissimilarity_ = 'precomputed', an out of sample fit
+            could be based on additional data or extended dissimilarity matrix.
+            For ease of input, if data_input = 'sample', only the new new data
+            beyond self.X is input, while for data_input = 'dissimilarity', the
+            extended dissimilarity matrix_ is input, which should contain
+            self.dissimilarity_matrix_ as a submatrix.
+
+        Notes
+        -----
+        "The Out-of-Sample Problem for Classical Multidimensional Scaling"
+        Trosset, M., Priebe, C. Computational Statistics and Data Analysis
+        52 (2008)
+
+        "Out-of-Sample Extensions for LLE, Isomap, MDS, Eigenmaps, and
+        Spectral Clustering" Bengio Y., Paiement J.-F., Vincent P.,
+        Delalleau O., Le Roux N., Ouimet M. Prceedings of the 16th
+        Internaitional Conference on Neural Information Processing
+        Systems December 2003 Pages 177-184
+        """
+
+        check_is_fitted(self)
+
+        X = check_array(X)
+
+        n_x_fit = self.dissimilarity_matrix_.shape[0]
+        n_X = X.shape[0] if data_type == 'sample' else X.shape[0] - n_x_fit
+
+        if data_type == "dissimilarity":
+            A = check_symmetric(X**2)
+        elif data_type == "sample":
+            if self.dissimilarity == 'precomputed':
+                raise ValueError("Cannot provide data sample with "
+                                 "dissimilarity precomputed")
+            else:
+                x = self.X_fit_
+                xX_dist = euclidean_distances(x, X, squared=True)
+                XX_dist = euclidean_distances(X, X, squared=True)
+                A = np.block([[self.dissimilarity_matrix_**2,
+                               xX_dist],
+                              [xX_dist.T,
+                               XX_dist]])
+        else:
+            raise ValueError("Incorrect data_type specified")
+
+        def _oos_objective(dissimilarities_xy, dissimilarities_yy, x, y):
+            """Constrained MSE between squaredmetric dissimilarity matrix and
+            outer product of concatenated data.
+            """
+            y = y.reshape(-1, x.shape[1])
+            xy_norm = np.sum((dissimilarities_xy - np.dot(x, y.T))**2)
+            yy_norm = np.sum((dissimilarities_yy - np.dot(y, y.T))**2)
+
+            return xy_norm + yy_norm
+
+        w = np.concatenate([np.ones(n_x_fit), np.zeros(n_X)])[:, np.newaxis]
+        B = _tau(w, A)
+        dissimilarities_xy = B[:n_x_fit, -n_X:]
+        dissimilarities_yy = B[-n_X:, -n_X:]
+        _obj = partial(_oos_objective, dissimilarities_xy,
+                       dissimilarities_yy, self.embedding_)
+
+        if init is None:
+            init = np.ones((n_X, self.n_components))
+        X_hat = minimize(_obj, x0=init, method='BFGS').x
+
+        return X_hat.reshape(-1, self.n_components)
