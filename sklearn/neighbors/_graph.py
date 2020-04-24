@@ -105,7 +105,7 @@ def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
     radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
-        X = NearestNeighbors(n_neighbors, metric=metric, p=p,
+        X = NearestNeighbors(n_neighbors=n_neighbors, metric=metric, p=p,
                              metric_params=metric_params, n_jobs=n_jobs).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
