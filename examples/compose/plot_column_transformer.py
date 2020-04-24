@@ -122,8 +122,8 @@ TextStats = FunctionTransformer(text_stats)
 # combined set of features.
 
 pipeline = Pipeline([
-    # Extract subject (col 0) & body (col 1), producing (n_samples, 2) array
-    ('subjectbody', SubjectBodyExtractor()),
+    # Extract subject & body, producing (n_samples, 2) array
+    ('subjectbody', SubjectBodyExtractor),
     # Use ColumnTransformer to combine the subject and body features
     ('union', ColumnTransformer(
         [
@@ -136,7 +136,7 @@ pipeline = Pipeline([
             ]), 1),
             # Pipeline for pulling text stats from post's body
             ('body_stats', Pipeline([
-                ('stats', TextStats()),  # returns a list of dicts
+                ('stats', TextStats),  # returns a list of dicts
                 ('vect', DictVectorizer()),  # list of dicts -> feature matrix
             ]), 1),
         ],
