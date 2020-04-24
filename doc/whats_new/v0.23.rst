@@ -249,6 +249,11 @@ Changelog
   to obtain the input to the meta estimator.
   :pr:`16539` by :user:`Bill DeRose <wderose>`.
 
+- |Feature| Added additional option `loss="poisson"` to
+  :class:`ensemble.HistGradientBoostingRegressor`, which adds Poisson deviance
+  with log-link useful for modeling count data.
+  :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -341,6 +346,12 @@ Changelog
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor`.
   :pr:`16261` by :user:`Carlos Brandt <chbrandt>`.
+
+- |Fix| |Efficiency| :class:`linear_model.ARDRegression` is more stable and
+  much faster when `n_samples > n_features`. It can now scale to hundreds of
+  thousands of samples. The stability fix might imply changes in the number
+  of non-zero coefficients and in the predicted output. :pr:`16849` by
+  `Nicolas Hug`_.
 
 :mod:`sklearn.metrics`
 ......................
