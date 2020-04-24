@@ -65,7 +65,7 @@ X_test, y_test = fetch_20newsgroups(random_state=1,
 # Each feature comprises meta information about that post and the body of the
 # news post.
 
-print(X_train0[0])
+print(X_train[0])
 
 ##############################################################################
 # Creating transformers
@@ -77,6 +77,7 @@ print(X_train0[0])
 # performs the extraction then use
 # :class:`~sklearn.preprocessing.FunctionTransformer` to create a scikit-learn
 # transformer.
+
 
 def subject_body_extractor(posts):
     # construct object dtype array with two columns
@@ -99,6 +100,7 @@ def subject_body_extractor(posts):
 
     return features
 
+
 # create scikit-learn transformer
 SubjectBodyExtractor = FunctionTransformer(subject_body_extractor)
 
@@ -106,10 +108,12 @@ SubjectBodyExtractor = FunctionTransformer(subject_body_extractor)
 # We will also create a transformer that takes the body and extracts the
 # length of the text and the number of sentences.
 
+
 def text_stats(posts):
     return [{'length': len(text),
-                'num_sentences': text.count('.')}
+             'num_sentences': text.count('.')}
             for text in posts]
+
 
 TextStats = FunctionTransformer(text_stats)
 
