@@ -87,15 +87,9 @@
             Please <a class="font-weight-bold" href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn"><string>cite us</string></a> if you use the software.
           </p>
         </div>
-          {%- if meta and meta['globalsidebartoc']|tobool %}
           <div class="sk-sidebar-toc sk-sidebar-global-toc">
-            {{ toctree(maxdepth=2, titles_only=True) }}
+            {{ toctree() }}
           </div>
-          {%- else %}
-          <div class="sk-sidebar-toc">
-            {{ toc }}
-          </div>
-          {%- endif %}
       </div>
     </div>
     <div id="sk-page-content-wrapper">
