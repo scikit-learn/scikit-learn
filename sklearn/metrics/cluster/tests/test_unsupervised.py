@@ -126,24 +126,46 @@ def test_silhouette_paper_example():
                       abs=1e-2)
 
 
-def test_correct_labelsize():
-    # Assert 1 < n_labels < n_samples
+def test_worst_score_silhouette():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
     dataset = datasets.load_iris()
     X = dataset.data
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
-    err_msg = (r'Number of labels is %d\. Valid values are 2 '
-               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
-    with pytest.raises(ValueError, match=err_msg):
-        silhouette_score(X, y)
-
+    assert -1.0 == silhouette_score(X, y)
     # n_labels = 1
     y = np.zeros(X.shape[0])
-    err_msg = (r'Number of labels is %d\. Valid values are 2 '
-               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
-    with pytest.raises(ValueError, match=err_msg):
-        silhouette_score(X, y)
+    assert -1.0 == silhouette_score(X, y)
+
+
+def test_worst_score_calinski_harabasz():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
+    dataset = datasets.load_iris()
+    X = dataset.data
+
+    # n_labels = n_samples
+    y = np.arange(X.shape[0])
+    assert 0.0 == calinski_harabasz_score(X, y)
+    # n_labels = 1
+    y = np.zeros(X.shape[0])
+    assert 0.0 == calinski_harabasz_score(X, y)
+
+
+def test_worst_score_davies_bouldin():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
+    dataset = datasets.load_iris()
+    X = dataset.data
+
+    # n_labels = n_samples
+    y = np.arange(X.shape[0])
+    assert np.inf == davies_bouldin_score(X, y)
+    # n_labels = 1
+    y = np.zeros(X.shape[0])
+    assert np.inf == davies_bouldin_score(X, y)
 
 
 def test_non_encoded_labels():
@@ -184,24 +206,7 @@ def test_silhouette_nonzero_diag(dtype):
         silhouette_samples(dists, labels, metric='precomputed')
 
 
-def assert_raises_on_only_one_label(func):
-    """Assert message when there is only one label"""
-    rng = np.random.RandomState(seed=0)
-    with pytest.raises(ValueError, match="Number of labels is"):
-        func(rng.rand(10, 2), np.zeros(10))
-
-
-def assert_raises_on_all_points_same_cluster(func):
-    """Assert message when all point are in different clusters"""
-    rng = np.random.RandomState(seed=0)
-    with pytest.raises(ValueError, match="Number of labels is"):
-        func(rng.rand(10, 2), np.arange(10))
-
-
 def test_calinski_harabasz_score():
-    assert_raises_on_only_one_label(calinski_harabasz_score)
-
-    assert_raises_on_all_points_same_cluster(calinski_harabasz_score)
 
     # Assert the value is 1. when all samples are equals
     assert 1. == calinski_harabasz_score(np.ones((10, 2)),
@@ -220,8 +225,6 @@ def test_calinski_harabasz_score():
 
 
 def test_davies_bouldin_score():
-    assert_raises_on_only_one_label(davies_bouldin_score)
-    assert_raises_on_all_points_same_cluster(davies_bouldin_score)
 
     # Assert the value is 0. when all samples are equals
     assert davies_bouldin_score(np.ones((10, 2)),

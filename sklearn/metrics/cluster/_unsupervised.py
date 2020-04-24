@@ -18,22 +18,6 @@ from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
 
-def check_number_of_labels(n_labels, n_samples):
-    """Check that number of labels are valid.
-
-    Parameters
-    ----------
-    n_labels : int
-        Number of labels
-
-    n_samples : int
-        Number of samples
-    """
-    if not 1 < n_labels < n_samples:
-        raise ValueError("Number of labels is %d. Valid values are 2 "
-                         "to n_samples - 1 (inclusive)" % n_labels)
-
-
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
@@ -223,7 +207,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     labels = le.fit_transform(labels)
     n_samples = len(labels)
     label_freqs = np.bincount(labels)
-    check_number_of_labels(len(le.classes_), n_samples)
+
+    # don't raise an error when le.classes_ = 1 or le.classes_ = n_samples
+    # instead return the worst score = -1
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return -1.0
 
     kwds['metric'] = metric
     reduce_func = functools.partial(_silhouette_reduce,
@@ -282,7 +270,10 @@ def calinski_harabasz_score(X, labels):
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
 
-    check_number_of_labels(n_labels, n_samples)
+    # don't raise an error when le.classes_ = 1 or le.classes_ = n_samples
+    # instead return the worst score = 0
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return 0.0
 
     extra_disp, intra_disp = 0., 0.
     mean = np.mean(X, axis=0)
@@ -336,7 +327,11 @@ def davies_bouldin_score(X, labels):
     labels = le.fit_transform(labels)
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
-    check_number_of_labels(n_labels, n_samples)
+
+    # don't raise an error when le.classes_ = 1 or le.classes_ = n_samples
+    # instead return the worst score = np.inf
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return np.inf
 
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
