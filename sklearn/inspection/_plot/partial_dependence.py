@@ -355,7 +355,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
     for pd_result, values in pd_results:
-        preds = pd_result.average if kind == 'average' else pd_result.individual
+        preds = (pd_result.average if kind == 'average'
+                 else pd_result.individual)
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
