@@ -334,20 +334,20 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _get_estimator_name(estimater):
+def _get_estimator_name(estimator):
     """Get name of estimator instance or class"""
-    if isinstance(estimater, type):
+    if isinstance(estimator, type):
         # got a class
-        return estimater.__name__
+        return estimator.__name__
     # got an instance
-    return type(estimater).__name__
+    return type(estimator).__name__
 
 
 def _get_xfail_checks(estimator):
     """Get checks marked with xfail_checks tag from estimator"""
     if isinstance(estimator, type):
         # try to construct estimator instance, if it is unable to then
-        # return xfail tag
+        # the xfail_checks tag is ignored
         try:
             estimator = _construct_instance(estimator)
         except Exception:
@@ -375,7 +375,7 @@ def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
         return estimator, check
 
     reason = xfail_checks_tag[check_name]
-    name = _get_estimator_name(estimator)
+    est_name = _get_estimator_name(estimator)
     @wraps(check)
     def wrapped(*args, **kwargs):
         try:
@@ -386,7 +386,7 @@ def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
 
         # did not fail
         check_name = _set_check_estimator_ids(check)
-        warnings.warn(f"{name}:{check_name} passed, it can be removed "
+        warnings.warn(f"{est_name}:{check_name} passed, it can be removed "
                       f"from the _xfail_check tag", FutureWarning)
     return estimator, wrapped
 
@@ -515,8 +515,9 @@ def check_estimator(Estimator, generate_only=False):
 
     # wrap checks based on xfail_checks
     xfail_checks_tag = _get_xfail_checks(Estimator)
-    checks_generator = (_make_check_warn_on_fail(
-        estimator, check, xfail_checks_tag=xfail_checks_tag)
+    checks_generator = (
+        _make_check_warn_on_fail(estimator, check,
+                                 xfail_checks_tag=xfail_checks_tag)
                         for estimator, check in checks_generator)
 
     if generate_only:
