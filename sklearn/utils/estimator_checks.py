@@ -390,7 +390,7 @@ def parametrize_with_checks(estimators):
     estimators : list of estimators objects or classes
         Estimators to generated checks for.
 
-        .. versionchanged:: 0.23
+        .. deprecated:: 0.23
            Passing a class is deprecated from version 0.23, and won't be
            supported in 0.25. Pass an instance instead, and call
            `check_class` separately to check the class.
@@ -465,7 +465,7 @@ def check_estimator(Estimator, generate_only=False):
     estimator : estimator object
         Estimator to check. Estimator is a class object or instance.
 
-        .. versionchanged:: 0.23
+        .. deprecated:: 0.23
            Passing a class is deprecated from version 0.23, and won't be
            supported in 0.25. Pass an instance instead, and call
            `check_class` separately to check the class.
@@ -2623,7 +2623,8 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
 
 # TODO: This check can probably be removed in 0.25 since _generate_class_checks
-# should be removed too. Maybe put this inside of `check_class` instead.
+# should be removed too, and this is the only class-specific check. Maybe this
+# should just become the body of check_class() instead.
 def check_parameters_default_constructible(name, Estimator):
     # this check works on classes, not instances
     # test default-constructibility
