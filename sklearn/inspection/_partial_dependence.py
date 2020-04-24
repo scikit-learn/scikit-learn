@@ -292,42 +292,42 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    kind : {"legacy", "average", "individual", "both"}, default="legacy"
-        Whether to plot the partial dependence averaged across all the samples
-        in the dataset or one line per sample or both individual lines and the
-        average dependence at the same time.
+    kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
+        Whether to return the partial dependence averaged across all the
+        samples in the dataset or one line per sample or both.
+        See Returns below.
 
-        - kind="legacy"/"average" results in the traditional PD plot;
-        - kind="individual" results in the ICE plot.
+        Note that the fast method='recursion' option is only available for
+        kind='average'. Plotting individual dependencies requires using the
+        slower method='brute' option.
 
-       Note that the fast method="recursion" option is only available for
-       kind="average". Plotting individual dependencies requires using the
-       slower method="brute" option.
+        Note that 'legacy' will not be available from 0.25
 
         .. versionadded:: 0.23
 
     Returns
     -------
-    predictions : ndarray or Bunch
+    predictions : ndarray or :class:`~sklearn.utils.Bunch`
 
-        - kind='legacy', ndarray
-            shape (n_outputs, len(values[0]), len(values[1]), ...)
-            The predictions for all the points in the grid, averaged over all
-            samples in X (or over the training data if ``method`` is
-            'recursion').
+        - kind='legacy', ndarray, shape (n_outputs, len(values[0]),
+            len(values[1]), ...)
+                The predictions for all the points in the grid, averaged
+                over all samples in X (or over the training data if ``method``
+                is 'recursion').
 
-        - kind='individual', 'average' or 'both', Bunch with one or both of the
-            following attributes.
+        - kind='individual', 'average' or 'both', :class:`~sklearn.utils.Bunch`
+            Dictionary-like object, with the following attributes.
 
-            individual : ndarray
-            shape (n_outputs, n_instances, len(values[0]), len(values[1]), ...)
-                The predictions for all the points in the grid for all samples
-                in X.
-            average : ndarray
-            shape (n_outputs, len(values[0]), len(values[1]), ...)
-                The predictions for all the points in the grid, averaged over
-                all samples in X (or over the training data if ``method`` is
-                'recursion'). Only available when kind='both'.
+            individual : ndarray, shape (n_outputs, n_instances,
+                len(values[0]), len(values[1]), ...)
+                    The predictions for all the points in the grid for all
+                    samples in X.
+            average : ndarray, shape (n_outputs, len(values[0]),
+                len(values[1]), ...)
+                    The predictions for all the points in the grid, averaged
+                    over all samples in X (or over the training data if
+                    ``method`` is 'recursion').
+                    Only available when kind='both'.
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
