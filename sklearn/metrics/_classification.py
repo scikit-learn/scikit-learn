@@ -37,6 +37,7 @@ from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
@@ -121,7 +122,8 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
+@_deprecate_positional_args
+def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -193,7 +195,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
+@_deprecate_positional_args
+def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                      normalize=None):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
@@ -330,7 +333,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     return cm
 
 
-def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
                                 labels=None, samplewise=False):
     """Compute a confusion matrix for each class or sample
 
@@ -533,7 +537,9 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
+@_deprecate_positional_args
+def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
+                      sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -613,7 +619,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
                   average='binary', sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -752,7 +759,8 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     return np.average(jaccard, weights=weights)
 
 
-def matthews_corrcoef(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -839,7 +847,8 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
         return mcc
 
 
-def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
+@_deprecate_positional_args
+def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
     If normalize is ``True``, return the fraction of misclassifications
@@ -909,7 +918,8 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
+@_deprecate_positional_args
+def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
              sample_weight=None, zero_division="warn"):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
@@ -1027,13 +1037,14 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
     """
-    return fbeta_score(y_true, y_pred, 1, labels=labels,
+    return fbeta_score(y_true, y_pred, beta=1, labels=labels,
                        pos_label=pos_label, average=average,
                        sample_weight=sample_weight,
                        zero_division=zero_division)
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+@_deprecate_positional_args
+def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
                 average='binary', sample_weight=None, zero_division="warn"):
     """Compute the F-beta score
 
@@ -1256,7 +1267,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     return labels
 
 
-def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
+@_deprecate_positional_args
+def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
@@ -1488,7 +1500,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
     """Compute the precision
@@ -1607,7 +1620,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
+@_deprecate_positional_args
+def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                  sample_weight=None, zero_division="warn"):
     """Compute the recall
 
@@ -1724,7 +1738,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
                             adjusted=False):
     """Compute the balanced accuracy
 
@@ -1801,7 +1816,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     return score
 
 
-def classification_report(y_true, y_pred, labels=None, target_names=None,
+@_deprecate_positional_args
+def classification_report(y_true, y_pred, *, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
     """Build a text report showing the main classification metrics.
@@ -1999,7 +2015,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -2090,7 +2107,8 @@ def hamming_loss(y_true, y_pred, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
+@_deprecate_positional_args
+def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2215,7 +2233,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
+@_deprecate_positional_args
+def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -2292,7 +2311,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     LinearSVC()
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
-    >>> hinge_loss(y_true, pred_decision, labels)
+    >>> hinge_loss(y_true, pred_decision, labels=labels)
     0.56...
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
@@ -2336,7 +2355,8 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
+@_deprecate_positional_args
+def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score.
 
     The smaller the Brier score, the better, hence the naming with "loss".

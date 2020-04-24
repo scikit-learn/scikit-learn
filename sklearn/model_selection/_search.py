@@ -34,6 +34,7 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -234,7 +235,8 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
-    def __init__(self, param_distributions, n_iter, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
                             'a list ({!r})'.format(param_distributions))
@@ -400,9 +402,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, scoring=None, n_jobs=None,
+                 iid='deprecated', refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score=np.nan,
+                 return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -620,7 +624,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def fit(self, X, y=None, groups=None, **fit_params):
+    @_deprecate_positional_args
+    def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -1160,7 +1165,8 @@ class GridSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    def __init__(self, estimator, param_grid, scoring=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                  error_score=np.nan, return_train_score=False):
@@ -1492,8 +1498,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_distributions, *, n_iter=10,
+                 scoring=None, n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=False):
