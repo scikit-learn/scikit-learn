@@ -280,3 +280,18 @@ def test_confusion_matrix_standard_format(pyplot):
     # Values are have two dec places max, (e.g 100 becomes 1e+02)
     test = [t.get_text() for t in plotted_text.ravel()]
     assert test == ['0.1', '10', '1e+02', '0.53']
+
+
+@pytest.mark.parametrize("display_labels, expected_labels", [
+    (None, ["0", "1"]),
+    (["cat", "dog"], ["cat", "dog"]),
+])
+def test_default_labels(pyplot, display_labels, expected_labels):
+    cm = np.array([[10, 0], [12, 120]])
+    disp = ConfusionMatrixDisplay(cm, display_labels=display_labels).plot()
+
+    x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
+
+    assert_array_equal(x_ticks, expected_labels)
+    assert_array_equal(y_ticks, expected_labels)
