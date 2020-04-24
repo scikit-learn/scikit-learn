@@ -6,6 +6,7 @@
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
+from typing import List
 
 import numpy as np
 
@@ -53,10 +54,10 @@ def _set_random_states(estimator, random_state=None):
         parameters.
 
     random_state : int or RandomState, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        integers. Pass an int for reproducible output across multiple function
+        calls.
+        See :term:`Glossary <random_state>`.
 
     Notes
     -----
@@ -106,10 +107,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     # overwrite _required_parameters from MetaEstimatorMixin
-    _required_parameters = []
+    _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, n_estimators=10,
+    def __init__(self, base_estimator, *, n_estimators=10,
                  estimator_params=tuple()):
         # Set parameters
         self.base_estimator = base_estimator

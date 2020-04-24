@@ -2144,7 +2144,8 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-train_test_split.__test__ = False
+# Use setattr to avoid mypy errors when monkeypatching.
+setattr(train_test_split, '__test__', False)
 
 
 def _build_repr(self):

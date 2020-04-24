@@ -654,7 +654,7 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
 
-    y_true_inv2 = label_binarize(y_true, ["a", "b"])
+    y_true_inv2 = label_binarize(y_true, classes=["a", "b"])
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
