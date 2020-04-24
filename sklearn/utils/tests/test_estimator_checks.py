@@ -623,6 +623,11 @@ def test_all_estimators_all_public():
         assert not est.__class__.__name__.startswith("_")
 
 
+def test_check_estimator_class_warning():
+    # message should be Passing a class is deprecated...
+    assert_warns(FutureWarning, check_estimator, LogisticRegression)
+
+
 if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.

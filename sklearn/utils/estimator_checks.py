@@ -439,8 +439,13 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    estimator : estimator object or class
+    estimator : estimator object
         Estimator to check. Estimator is a class object or instance.
+
+        .. versionchanged:: 0.23
+           Classes are deprecated from version 0.23. Pass an instance
+           instead, and call `check_estimator_class` separately to check the
+           class.
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -458,6 +463,10 @@ def check_estimator(Estimator, generate_only=False):
     """
     if isinstance(Estimator, type):
         # got a class
+        msg = ("Passing a class is deprecated since version 0.23. "
+               "Please pass an instance instead and call "
+               "check_estimator_class separately on the class.")
+        warnings.warn(msg, FutureWarning)
         checks_generator = _generate_class_checks(Estimator)
     else:
         # got an instance
