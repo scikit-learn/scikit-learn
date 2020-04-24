@@ -247,7 +247,7 @@ pdp, axes = partial_dependence(
     est, X_train, features=features, kind='average', grid_resolution=20
 )
 XX, YY = np.meshgrid(axes[0], axes[1])
-Z = pdp[0].T
+Z = pdp.average[0].T
 ax = Axes3D(fig)
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
                        cmap=plt.cm.BuPu, edgecolor='k')
