@@ -3,6 +3,4 @@ env/
 html/
 results/
 scikit-learn/
-benchmarks/cache/joblib/
-benchmarks/cache/tmp/*
-benchmarks/cache/estimators/*
+benchmarks/cache/

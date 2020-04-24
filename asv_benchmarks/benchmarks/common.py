@@ -24,12 +24,21 @@ def get_from_config():
     if not n_jobs_vals:
         n_jobs_vals = list(range(1, 1 + cpu_count()))
 
+    cache_path = os.path.join(current_path, 'cache')
+    if not os.path.exists(cache_path):
+        os.mkdir(cache_path)
+    estimators_path = os.path.join(current_path, 'cache', 'estimators')
+    if not os.path.exists(estimators_path):
+        os.mkdir(estimators_path)
+    tmp_path = os.path.join(current_path, 'cache', 'tmp')
+    if not os.path.exists(tmp_path):
+        os.mkdir(tmp_path)
+
     save_estimators = config['save_estimators']
     save_folder = os.getenv('ASV_COMMIT', 'new')[:8]
 
     if save_estimators:
-        save_path = os.path.join(current_path, 'cache',
-                                 'estimators', save_folder)
+        save_path = os.path.join(estimators_path, save_folder)
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
@@ -62,8 +71,8 @@ def get_data_path(benchmark, params):
 def clear_tmp():
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         'cache', 'tmp')
-    list(map(os.remove, (os.path.join(path, f)
-             for f in os.listdir(path) if f != '.gitignore')))
+
+    list(map(os.remove, (os.path.join(path, f) for f in os.listdir(path))))
 
 
 class Benchmark(ABC):
