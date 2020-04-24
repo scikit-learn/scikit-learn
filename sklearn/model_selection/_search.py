@@ -190,7 +190,7 @@ class ParameterSampler:
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
-    Read more in the :ref:`User Guide <search>`.
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
