@@ -105,8 +105,10 @@ def test_output_shape(Estimator, method, data, grid_resolution,
                           *[grid_resolution for _ in range(len(features))])
     expected_ice_shape = (n_targets, n_instances,
                           *[grid_resolution for _ in range(len(features))])
-    if kind == 'average' or kind == 'legacy':
+    if kind == 'legacy':
         assert pdp.shape == expected_pdp_shape
+    elif kind == 'average':
+        assert pdp.average.shape == expected_pdp_shape
     elif kind == 'individual':
         assert pdp.individual.shape == expected_ice_shape
     else:  # 'both'
