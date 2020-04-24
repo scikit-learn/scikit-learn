@@ -11,7 +11,7 @@
 
     // The URL or local path of the source code repository for the
     // project being benchmarked
-    "repo": "https://github.com/scikit-learn/scikit-learn.git",
+    "repo": "..",
     
     // The Python project's subdirectory in your repo.  If missing or
     // the empty string, the project is assumed to be located at the root
@@ -51,7 +51,7 @@
     //"install_timeout": 600,
 
     // the base URL to show a commit for the project.
-    // "show_commit_url": "http://github.com/owner/project/commit/",
+    "show_commit_url": "https://github.com/scikit-learn/scikit-learn/commit/",
 
     // The Pythons you'd like to test against. If not provided, defaults
     // to the current version of Python used to run `asv`.
