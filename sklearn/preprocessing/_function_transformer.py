@@ -2,6 +2,7 @@ import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import _allclose_dense_sparse
+from ..utils.validation import _deprecate_positional_args
 
 
 def _identity(X):
@@ -78,7 +79,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     array([[0.       , 0.6931...],
            [1.0986..., 1.3862...]])
     """
-    def __init__(self, func=None, inverse_func=None, validate=False,
+
+    @_deprecate_positional_args
+    def __init__(self, func=None, inverse_func=None, *, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
                  inv_kw_args=None):
         self.func = func

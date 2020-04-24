@@ -23,11 +23,11 @@ class PrecisionRecallDisplay:
     recall : ndarray
         Recall values.
 
-    average_precision : float
-        Average precision.
+    average_precision : float, default=None
+        Average precision. If None, the average precision is not shown.
 
-    estimator_name : str
-        Name of estimator.
+    estimator_name : str, default=None
+        Name of estimator. If None, then the estimator name is not shown.
 
     Attributes
     ----------
@@ -41,7 +41,8 @@ class PrecisionRecallDisplay:
         Figure containing the curve.
     """
 
-    def __init__(self, precision, recall, average_precision, estimator_name):
+    def __init__(self, precision, recall,
+                 average_precision=None, estimator_name=None):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
@@ -78,16 +79,22 @@ class PrecisionRecallDisplay:
 
         name = self.estimator_name if name is None else name
 
-        line_kwargs = {
-            "label": "{} (AP = {:0.2f})".format(name,
-                                                self.average_precision),
-            "drawstyle": "steps-post"
-        }
+        line_kwargs = {"drawstyle": "steps-post"}
+        if self.average_precision is not None and name is not None:
+            line_kwargs["label"] = (f"{name} (AP = "
+                                    f"{self.average_precision:0.2f})")
+        elif self.average_precision is not None:
+            line_kwargs["label"] = (f"AP = "
+                                    f"{self.average_precision:0.2f}")
+        elif name is not None:
+            line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
         self.line_, = ax.plot(self.recall, self.precision, **line_kwargs)
         ax.set(xlabel="Recall", ylabel="Precision")
-        ax.legend(loc='lower left')
+
+        if "label" in line_kwargs:
+            ax.legend(loc='lower left')
 
         self.ax_ = ax
         self.figure_ = ax.figure

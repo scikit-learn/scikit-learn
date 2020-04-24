@@ -98,10 +98,9 @@ class DataConversionWarning(UserWarning):
     ...         Y = validation.column_or_1d(Y,warn=True)
     ...     except ValueError:
     ...         pass
-    ...     print(repr(w[-1].message))
-    DataConversionWarning('A column-vector y was passed when a
-    1d array was expected. Please change the shape of y to
-    (n_samples, ), for example using ravel().')
+    ...     print(w[-1].message)
+    A column-vector y was passed when a 1d array was expected. Please change
+    the shape of y to (n_samples, ), for example using ravel().
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
