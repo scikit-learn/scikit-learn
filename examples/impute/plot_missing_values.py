@@ -14,16 +14,17 @@ In this example we will investigate different imputation techniques:
 - k nearest neighbor imputation
 - iterative imputation
 
-We will use two datasets: Diabetes dataset which consists of 10 feature variables
-collected from diabetes patients with an aim to predict disease progression
-and California Housing dataset for which the target is the median house value
-for California districts.
+We will use two datasets: Diabetes dataset which consists of 10 feature
+variables collected from diabetes patients with an aim to predict disease
+progression and California Housing dataset for which the target is the median
+house value for California districts.
 
 As neither of these datasets have missing values, we will remove some
-values to create new versions with artificially missing data. The performance of
-:class:`~sklearn.ensemble.RandomForestRegressor` on the full original dataset is then
-compared the performance on the altered datasets with the artificially missing values
-imputed using different techniques.
+values to create new versions with artificially missing data. The performance
+of
+:class:`~sklearn.ensemble.RandomForestRegressor` on the full original dataset
+is then compared the performance on the altered datasets with the artificially
+missing values imputed using different techniques.
 
 """
 print(__doc__)
@@ -38,8 +39,8 @@ print(__doc__)
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
 # dataset is much larger with 20640 entries and 8 features. It needs to be
-# downloaded. We will only use the first 500 entries for the sake of speeding up
-# the calculations but feel free to use the whole dataset.
+# downloaded. We will only use the first 500 entries for the sake of speeding
+# up the calculations but feel free to use the whole dataset.
 #
 
 import numpy as np
