@@ -69,6 +69,12 @@ estimators = [
                        whiten=True),
      True),
 
+    ('Eigenfaces - kPCA using randomized SVD',
+     decomposition.KernelPCA(n_components=n_components,
+                             fit_inverse_transform=True,
+                             eigen_solver='randomized'),
+     True),
+
     ('Non-negative components - NMF',
      decomposition.NMF(n_components=n_components, init='nndsvda', tol=5e-3),
      False),
@@ -119,8 +125,18 @@ for name, estimator, center in estimators:
     print("done in %0.3fs" % train_time)
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
-    else:
+    elif hasattr(estimator, 'components_'):
         components_ = estimator.components_
+    else:
+        # Kernel PCA specific case  - these are not the components but the
+        # images of the components in the input space. When kPCA is exact
+        # these should be perfect because they correspond to "the closest
+        # training samples in the feature space".
+        #
+        # do not use the dual coef_ as they may not take into account kernel
+        # centering ?
+        # components_ = estimator.dual_coef_
+        components_ = estimator.inverse_transform(estimator.alphas_)
 
     # Plot an image representing the pixelwise variance provided by the
     # estimator e.g its noise_variance_ attribute. The Eigenfaces estimator,
