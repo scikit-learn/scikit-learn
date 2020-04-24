@@ -319,6 +319,7 @@ sphinx_gallery_conf = {
     },
     # avoid generating too many cross links
     'inspect_global_variables': False,
+    'remove_config_comments': True,
 }
 
 

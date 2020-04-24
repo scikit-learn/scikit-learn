@@ -105,6 +105,11 @@ Changelog
   a column name that is not unique in the dataframe. :pr:`16431` by
   `Thomas Fan`_.
 
+- |Enhancement| :class:`compose.ColumnTransformer` method ``get_feature_names``
+  now supports `'passthrough'` columns, with the feature name being either
+  the column name for a dataframe, or `'xi'` for column index `i`.
+  :pr:`14048` by :user:`Lewis Ball <lrjball>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -210,6 +215,11 @@ Changelog
   to obtain the input to the meta estimator.
   :pr:`16539` by :user:`Bill DeRose <wderose>`.
 
+- |Feature| Added additional option `loss="poisson"` to
+  :class:`ensemble.HistGradientBoostingRegressor`, which adds Poisson deviance
+  with log-link useful for modeling count data.
+  :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -298,6 +308,12 @@ Changelog
   of strictly inferior for maximum of `absgrad` and `tol` in `utils.optimize._newton_cg`.
   :pr:`16266` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Fix| |Efficiency| :class:`linear_model.ARDRegression` is more stable and
+  much faster when `n_samples > n_features`. It can now scale to hundreds of
+  thousands of samples. The stability fix might imply changes in the number
+  of non-zero coefficients and in the predicted output. :pr:`16849` by
+  `Nicolas Hug`_.
+
 - |Enhancement| :class:`linear_model.LassoLars` and
   :class:`linear_model.Lars` now support a `jitter` parameter that adds
   random noise to the target. This might help with stability in some edge
@@ -368,6 +384,13 @@ Changelog
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
+  deciles lines as attributes so they can be hidden or customized. :pr:`15785`
+  by `Nicolas Hug`_
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -395,14 +418,14 @@ Changelog
   generators used to randomly select coordinates in the coordinate descent
   algorithms. Platform-dependent C ``rand()`` was used, which is only able to
   generate numbers up to ``32767`` on windows platform (see this `blog
-  post <https://codeforces.com/blog/entry/61587>`) and also has poor
+  post <https://codeforces.com/blog/entry/61587>`_) and also has poor
   randomization power as suggested by `this presentation
-  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`.
+  <https://channel9.msdn.com/Events/GoingNative/2013/rand-Considered-Harmful>`_.
   It was replaced with C++11 ``mt19937``, a Mersenne Twister that correctly
   generates 31bits/63bits random numbers on all platforms. In addition, the
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as suggested by `this blog
-  post <http://www.pcg-random.org/posts/bounded-rands.html>`.
+  post <http://www.pcg-random.org/posts/bounded-rands.html>`_.
   Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
@@ -464,4 +487,10 @@ Miscellaneous
   attribute is equal to the number of features passed to the `fit` method.
   See `SLEP010
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
-  for details. :pr:`16112` by `Nicolas Hug`_.
+  for details. :pr:`16112` and :pr:`16622` by `Nicolas Hug`_.
+
+- |API| Estimators now have a `requires_y` tags which is False by default
+  except for estimators that inherit from `~sklearn.base.RegressorMixin` or
+  `~sklearn.base.ClassifierMixin`. This tag is used to ensure that a proper
+  error message is raised when y was expected but None was passed.
+  :pr:`16622` by `Nicolas Hug`_.
