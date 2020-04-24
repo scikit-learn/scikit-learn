@@ -450,8 +450,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
     np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
-    ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
-        return_distance=False)
+    ind_X_embedded = NearestNeighbors(n_neighbors=n_neighbors).fit(
+            X_embedded).kneighbors(return_distance=False)
 
     # We build an inverted index of neighbors in the input space: For sample i,
     # we define `inverted_index[i]` as the inverted index of sorted distances:
