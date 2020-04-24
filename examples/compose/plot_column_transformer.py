@@ -15,12 +15,6 @@ This example demonstrates how to use
 :class:`~sklearn.compose.ColumnTransformer` on a dataset containing
 different types of features. The choice of features is not particularly
 helpful, but serves to illustrate the technique.
-
-
-# compute standard bag-of-words features for the subject line and body in separate
-# pipelines as well as ad hoc features on the body. We combine them (with
-# weights) using a ColumnTransformer and finally train a classifier on the
-# combined set of features.
 """
 
 # Author: Matt Terry <matt.terry@gmail.com>
@@ -121,8 +115,11 @@ TextStats = FunctionTransformer(text_stats)
 # Classification pipeline
 # -----------------------
 #
-# Create our pipeline, which performs preprocessing, feature extraction and
-# classification with a ``LinearSVC``.
+# Our pipeline extracts the subject and body text then uses
+# ``ColumnTransformer`` to compute standard bag-of-words features for the
+# subject and body as well as text length and number of sentences on the body.
+# We combine them (with weights) then finally train a classifier on the
+# combined set of features.
 
 pipeline = Pipeline([
     # Extract subject (col 0) & body (col 1), producing (n_samples, 2) array
