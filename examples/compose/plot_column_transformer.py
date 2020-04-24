@@ -67,8 +67,8 @@ print(X_train[0])
 #
 # First, we would like a transformer that extracts the subject and
 # body of each post. Since this is a stateless transformation (does not
-# require information from training data), we can define a function that
-# performs the extraction then use
+# require state information from training data), we can define a function that
+# performs the data transformation then use
 # :class:`~sklearn.preprocessing.FunctionTransformer` to create a scikit-learn
 # transformer.
 
@@ -95,7 +95,6 @@ def subject_body_extractor(posts):
     return features
 
 
-# create scikit-learn transformer
 SubjectBodyExtractor = FunctionTransformer(subject_body_extractor)
 
 ##############################################################################
@@ -158,6 +157,6 @@ pipeline = Pipeline([
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print('Classification report:\n{}'.format(
+print('Classification report:\n\n{}'.format(
     classification_report(y_test, y_pred))
 )
