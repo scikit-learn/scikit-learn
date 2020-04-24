@@ -363,8 +363,8 @@ def test_check_estimator():
     # not a complete test of all checks, which are very extensive.
 
     # check that we have a set_params and can clone
-    msg = "it does not implement a 'get_params' method"
-    assert_raises_regex(TypeError, msg, check_estimator, object)
+    msg = "object has no attribute '_get_tags'"
+    assert_raises_regex(AttributeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
     # check that values returned by get_params match set_params

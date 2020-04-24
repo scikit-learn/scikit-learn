@@ -353,9 +353,6 @@ def _get_xfail_checks(estimator):
         except Exception:
             return {}
 
-    if not hasattr(estimator, "_get_tags"):
-        return {}
-
     return estimator._get_tags()['_xfail_checks'] or {}
 
 
