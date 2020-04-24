@@ -86,12 +86,12 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
         line = disp.lines_[pos]
 
         avg_preds, values = disp.pd_results[i]
-        assert avg_preds.shape == (1, grid_resolution)
+        assert avg_preds.average.shape == (1, grid_resolution)
         target_idx = disp.target_idx
 
         line_data = line.get_data()
         assert_allclose(line_data[0], values[0])
-        assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+        assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # two feature position
     ax = disp.axes_[0, 2]
@@ -189,7 +189,7 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
 
     line_data = line.get_data()
     assert_allclose(line_data[0], values[0])
-    assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+    assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
     ax = disp.axes_[0, 0]
@@ -225,7 +225,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
 
     line_data = line.get_data()
     assert_allclose(line_data[0], values[0])
-    assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+    assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
     ax = disp.axes_[1]
@@ -384,7 +384,7 @@ def test_plot_partial_dependence_multiclass(pyplot):
                                          disp_symbol.pd_results):
         avg_preds_int, values_int = int_result
         avg_preds_symbol, values_symbol = symbol_result
-        assert_allclose(avg_preds_int, avg_preds_symbol)
+        assert_allclose(avg_preds_int.average, avg_preds_symbol.average)
         assert_allclose(values_int, values_symbol)
 
     # check that the pd plots are different for another target
