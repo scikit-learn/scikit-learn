@@ -4,6 +4,7 @@ from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
 
@@ -40,15 +41,15 @@ class PrecisionRecallDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
-
-    def __init__(self, precision, recall,
+    def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
         self.estimator_name = estimator_name
 
-    def plot(self, ax=None, name=None, **kwargs):
+    @_deprecate_positional_args
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -101,7 +102,8 @@ class PrecisionRecallDisplay:
         return self
 
 
-def plot_precision_recall_curve(estimator, X, y,
+@_deprecate_positional_args
+def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, **kwargs):
     """Plot Precision Recall Curve for binary classifiers.

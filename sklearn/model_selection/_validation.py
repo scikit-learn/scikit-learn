@@ -25,6 +25,7 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -37,7 +38,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+@_deprecate_positional_args
+def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score=np.nan):
@@ -266,8 +268,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=None, verbose=0, fit_params=None,
+@_deprecate_positional_args
+def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
+                    cv=None, n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
@@ -618,7 +621,8 @@ def _score(estimator, X_test, y_test, scorer):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
+@_deprecate_positional_args
+def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -948,7 +952,8 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
+@_deprecate_positional_args
+def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1088,7 +1093,8 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-def learning_curve(estimator, X, y, groups=None,
+@_deprecate_positional_args
+def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
@@ -1372,7 +1378,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, groups=None,
+@_deprecate_positional_args
+def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan):
     """Validation curve.
