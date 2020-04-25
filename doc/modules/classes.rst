@@ -900,7 +900,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -985,6 +985,7 @@ details.
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
    metrics.mean_tweedie_deviance
+   metrics.d2_tweedie_score
 
 Multilabel ranking metrics
 --------------------------

@@ -2122,6 +2122,24 @@ the difference in errors decreases. Finally, by setting, ``power=2``::
 we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
+.. _d2_tweedie_score:
+
+D² score, the coefficient of determination
+-------------------------------------------
+
+The :func:`d2_tweedie_score` function computes the percentage of deviance
+explained. It is a generalization of R², where the squared error is replaced by
+the Tweedie deviance. D², also known as McFadden's likelihood ratio index, is
+calculated as
+
+.. math::
+
+  D^2(y, \hat{y}) = 1 - \frac{\text{D}(y, \hat{y})}{\text{D}(y, \bar{y})} \,.
+
+The argument `power` defines the Tweedie power as for
+:func:`mean_tweedie_deviance`. Note that for `power=0`,
+`:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+
 .. _clustering_metrics:
 
 Clustering metrics
