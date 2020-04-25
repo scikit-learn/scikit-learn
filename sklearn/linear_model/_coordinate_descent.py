@@ -1989,13 +1989,13 @@ class MultiTaskLasso(MultiTaskElasticNet):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    >>> clf.fit([[0, 1], [1, 2], [2, 4]], [[0, 0], [1, 1], [2, 3]])
     MultiTaskLasso(alpha=0.1)
     >>> print(clf.coef_)
-    [[0.89393398 0.        ]
-     [0.89393398 0.        ]]
+    [[0.         0.60809415]
+    [0.         0.94592424]]
     >>> print(clf.intercept_)
-    [0.10606602 0.10606602]
+    [-0.41888636 -0.87382323]
 
     See also
     --------
