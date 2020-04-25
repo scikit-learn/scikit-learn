@@ -835,7 +835,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         might change in the future for a better heuristic.
 
         .. versionchanged:: 0.18
-        Added ''algorithm="elkan"'' implementing Elkan's fast K-Means algorithm
+            Added ''algorithm="elkan"'' implementing Elkan's fast K-Means
+            algorithm
 
     Attributes
     ----------

@@ -213,7 +213,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             samples. If not provided,
             then each sample is given unit weight.
 
-            ..versionadded:: 0.18
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -400,7 +400,7 @@ class LinearSVR(RegressorMixin, LinearModel):
             samples. If not provided,
             then each sample is given unit weight.
 
-            ..versionadded:: 0.18
+            .. versionadded:: 0.18
 
         Returns
         -------

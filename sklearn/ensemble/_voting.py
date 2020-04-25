@@ -233,7 +233,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
-        .. versionadded:: 0.18
+
+            .. versionadded:: 0.18
 
         Returns
         -------
