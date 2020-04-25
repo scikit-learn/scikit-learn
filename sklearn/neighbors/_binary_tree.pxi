@@ -1067,6 +1067,8 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
+        if metric == 'HaversineDistance' and n_features != 2:
+            raise ValueError('Haversine distance only valid in 2 dimensions.')
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes

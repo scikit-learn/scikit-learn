@@ -988,23 +988,13 @@ cdef class HaversineDistance(DistanceMetric):
     """
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid "
-                                 "in 2 dimensions")
         cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
         cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
         return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid in 2 dimensions")
-        cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
-        cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
-        return 2 * asin(sqrt(sin_0 * sin_0
-                             + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
+        return 2 * asin(sqrt(self.rdist(x1, x2, size)))
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return 2 * asin(sqrt(rdist))
