@@ -848,6 +848,7 @@ class SGDClassifier(BaseSGDClassifier):
           early_stopping is True, the current learning rate is divided by 5.
 
             .. versionadded:: 0.20
+                Added 'adaptive' option
 
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
@@ -865,6 +866,7 @@ class SGDClassifier(BaseSGDClassifier):
         improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -872,11 +874,13 @@ class SGDClassifier(BaseSGDClassifier):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -1449,6 +1453,7 @@ class SGDRegressor(BaseSGDRegressor):
           early_stopping is True, the current learning rate is divided by 5.
 
             .. versionadded:: 0.20
+                Added 'adaptive' option
 
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
@@ -1466,6 +1471,7 @@ class SGDRegressor(BaseSGDRegressor):
         epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -1473,11 +1479,13 @@ class SGDRegressor(BaseSGDRegressor):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
