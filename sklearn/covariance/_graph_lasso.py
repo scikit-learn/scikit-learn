@@ -516,7 +516,7 @@ class GraphicalLassoCV(GraphicalLasso):
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        GraphLassoCV have been renamed to GraphicalLassoCV
+        GraphLassoCV has been renamed to GraphicalLassoCV
 
     Parameters
     ----------
