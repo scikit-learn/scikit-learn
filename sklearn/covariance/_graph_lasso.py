@@ -573,7 +573,7 @@ class GraphicalLassoCV(GraphicalLasso):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` changed from ``1`` to ``None``
+           `n_jobs` default changed from 1 to None
 
     verbose : bool, default=False
         If verbose is True, the objective function and duality gap are

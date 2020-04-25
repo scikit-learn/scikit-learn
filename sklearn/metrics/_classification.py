@@ -1751,6 +1751,8 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
 
     Read more in the :ref:`User Guide <balanced_accuracy_score>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     y_true : 1d array-like
@@ -1800,7 +1802,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     >>> balanced_accuracy_score(y_true, y_pred)
     0.625
 
-    .. versionadded:: 0.20
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     with np.errstate(divide='ignore', invalid='ignore'):

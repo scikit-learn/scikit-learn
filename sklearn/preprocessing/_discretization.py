@@ -25,6 +25,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     n_bins : int or array-like, shape (n_features,) (default=5)
@@ -115,7 +117,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
 
-    .. versionadded:: 0.20
     """
 
     @_deprecate_positional_args

@@ -395,7 +395,7 @@ class Pipeline(_BaseComposition):
             transformations in the pipeline are not propagated to the
             final estimator.
 
-            .. versionchanged:: 0.20
+            .. versionadded:: 0.20
 
         Returns
         -------
@@ -776,7 +776,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` changed from ``1`` to ``None``
+           `n_jobs` default changed from 1 to None
 
     transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
@@ -1024,7 +1024,7 @@ def make_union(*transformers, **kwargs):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` changed from ``1`` to ``None``
+           `n_jobs` default changed from 1 to None
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
