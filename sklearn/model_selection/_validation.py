@@ -819,6 +819,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     X : array-like of shape (n_samples, n_features)
         The data to fit.
 
+        .. versionchanged:: 0.20
+            X is only required to be an object with finite length or shape now
+
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
         supervised learning.
