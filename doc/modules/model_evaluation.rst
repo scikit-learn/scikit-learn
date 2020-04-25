@@ -2138,7 +2138,7 @@ calculated as
 
 The argument `power` defines the Tweedie power as for
 :func:`mean_tweedie_deviance`. Note that for `power=0`,
-`:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
+:func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
 .. _clustering_metrics:
 
