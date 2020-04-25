@@ -85,7 +85,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        graph_lasso have been renamed to graphical_lasso
+        graph_lasso has been renamed to graphical_lasso
 
     Parameters
     ----------
