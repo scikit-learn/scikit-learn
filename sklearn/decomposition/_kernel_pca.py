@@ -236,7 +236,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # if v is an eigenvector of K
         #     then Phi(X)v  is an eigenvector of Phi(X)Phi(X)'
         # if u is an eigenvector of Phi(X)Phi(X)'
-        #     then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        #     then Phi(X)'u is an eigenvector of Phi(X)'Phi(X)
         #
         # At this stage our self.alphas_ (the v) have norm 1, we need to scale
         # them so that eigenvectors in kernel feature space (the u) have norm=1
