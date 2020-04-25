@@ -20,6 +20,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
@@ -141,6 +142,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     ----------
     n_components : int, optional (default=10)
         Number of topics.
+
+        .. versionchanged:: 0.19
+            ``n_topics `` was renamed to ``n_components``
 
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
@@ -280,8 +284,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         https://github.com/blei-lab/onlineldavb
 
     """
-
-    def __init__(self, n_components=10, doc_topic_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,

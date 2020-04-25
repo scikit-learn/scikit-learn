@@ -11,6 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
+from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -585,8 +586,8 @@ class GaussianMixture(BaseMixture):
     BayesianGaussianMixture : Gaussian mixture model fit with a variational
         inference.
     """
-
-    def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, n_components=1, *, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,

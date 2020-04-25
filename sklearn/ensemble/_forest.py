@@ -62,6 +62,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ["RandomForestClassifier",
@@ -180,7 +181,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -480,7 +481,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -735,7 +736,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -1146,8 +1147,9 @@ class RandomForestClassifier(ForestClassifier):
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1436,8 +1438,9 @@ class RandomForestRegressor(ForestRegressor):
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-8.32987858]
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1746,8 +1749,9 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -2026,8 +2030,9 @@ class ExtraTreesRegressor(ForestRegressor):
     >>> reg.score(X_test, y_test)
     0.2708...
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -2222,8 +2227,9 @@ class RandomTreesEmbedding(BaseForest):
     criterion = 'mse'
     max_features = 1
 
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,

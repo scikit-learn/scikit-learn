@@ -34,6 +34,7 @@ from joblib import Parallel, delayed
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
@@ -189,7 +190,7 @@ class ParameterSampler:
     It is highly recommended to use continuous distributions for continuous
     parameters.
 
-    Read more in the :ref:`User Guide <search>`.
+    Read more in the :ref:`User Guide <grid_search>`.
 
     Parameters
     ----------
@@ -203,9 +204,6 @@ class ParameterSampler:
 
     n_iter : integer
         Number of parameter settings that are produced.
-
-        .. versionchanged:: 0.20
-           `n-iter` now acts as an upper bound on iterations
 
     random_state : int or RandomState instance, default=None
         Pseudo random number generator state used for random uniform sampling
@@ -237,8 +235,8 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
-
-    def __init__(self, param_distributions, n_iter, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
                             'a list ({!r})'.format(param_distributions))
@@ -389,9 +387,10 @@ def _check_param_grid(param_grid):
 
             if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a sequence(but not a string) or"
-                                 " np.ndarray.".format(name))
+                raise ValueError("Parameter grid for parameter ({0}) needs to"
+                                 " be a list or numpy array, but got ({1})."
+                                 " Single values need to be wrapped in a list"
+                                 " with one element.".format(name, type(v)))
 
             if len(v) == 0:
                 raise ValueError("Parameter values for parameter ({0}) need "
@@ -403,9 +402,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, scoring=None, n_jobs=None,
+                 iid='deprecated', refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score=np.nan,
+                 return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -623,7 +624,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def fit(self, X, y=None, groups=None, **fit_params):
+    @_deprecate_positional_args
+    def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -744,7 +746,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
-                        self.best_index_ >= len(results["params"])):
+                   self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
@@ -1008,6 +1010,11 @@ class GridSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
 
     Examples
     --------
@@ -1163,7 +1170,8 @@ class GridSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    def __init__(self, estimator, param_grid, scoring=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                  error_score=np.nan, return_train_score=False):
@@ -1349,6 +1357,11 @@ class RandomizedSearchCV(BaseSearchCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -1495,8 +1508,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_distributions, *, n_iter=10,
+                 scoring=None, n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=False):

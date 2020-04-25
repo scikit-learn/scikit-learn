@@ -28,6 +28,7 @@ from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
+from ..utils.validation import _deprecate_positional_args
 
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
@@ -58,7 +59,8 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
+@_deprecate_positional_args
+def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
                           accept_sparse='csr', force_all_finite=True,
                           copy=False):
     """ Set X and Y appropriately and checks inputs
@@ -192,7 +194,8 @@ def check_paired_arrays(X, Y):
 
 
 # Pairwise distances
-def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
+@_deprecate_positional_args
+def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
                         X_norm_squared=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
@@ -313,7 +316,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-def nan_euclidean_distances(X, Y=None, squared=False,
+@_deprecate_positional_args
+def nan_euclidean_distances(X, Y=None, *, squared=False,
                             missing_values=np.nan, copy=True):
     """Calculate the euclidean distances in the presence of missing values.
 
@@ -503,7 +507,8 @@ def _argmin_min_reduce(dist, start):
     return indices, values
 
 
-def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
+@_deprecate_positional_args
+def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
                                   metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
@@ -589,7 +594,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     return indices, values
 
 
-def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
+@_deprecate_positional_args
+def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
                               metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
@@ -659,7 +665,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(X, Y, axis, metric,
+    return pairwise_distances_argmin_min(X, Y, axis=axis, metric=metric,
                                          metric_kwargs=metric_kwargs)[0]
 
 
@@ -711,7 +717,8 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
-def manhattan_distances(X, Y=None, sum_over_features=True):
+@_deprecate_positional_args
+def manhattan_distances(X, Y=None, *, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -908,7 +915,8 @@ PAIRED_DISTANCES = {
     'cityblock': paired_manhattan_distances}
 
 
-def paired_distances(X, Y, metric="euclidean", **kwds):
+@_deprecate_positional_args
+def paired_distances(X, Y, *, metric="euclidean", **kwds):
     """
     Computes the paired distances between X and Y.
 
@@ -1444,7 +1452,8 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     return {}
 
 
-def pairwise_distances_chunked(X, Y=None, reduce_func=None,
+@_deprecate_positional_args
+def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
                                metric='euclidean', n_jobs=None,
                                working_memory=None, **kwds):
     """Generate a distance matrix chunk by chunk with optional reduction
@@ -1606,7 +1615,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         yield D_chunk
 
 
-def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None,
+@_deprecate_positional_args
+def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
                        force_all_finite=True, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
@@ -1820,7 +1830,8 @@ KERNEL_PARAMS = {
 }
 
 
-def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
+@_deprecate_positional_args
+def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
                      n_jobs=None, **kwds):
     """Compute the kernel between arrays X and optional array Y.
 
