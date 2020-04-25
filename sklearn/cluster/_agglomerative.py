@@ -737,7 +737,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
           of the two sets.
 
               .. versionadded:: 0.20
-
+				 Added the 'single' option
     distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
