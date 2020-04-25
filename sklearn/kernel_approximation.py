@@ -83,7 +83,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     1.0
     """
 
-    def __init__(self, gamma=1., degree=2, coef0=0, n_components=100,
+    def __init__(self, *, gamma=1., degree=2, coef0=0, n_components=100,
                  random_state=None):
 
         self.gamma = gamma
