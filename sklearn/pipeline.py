@@ -778,7 +778,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         .. versionchanged:: v0.20
            `n_jobs` default changed from 1 to None
 
-    transformer_weights : dict, optional
+    transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
