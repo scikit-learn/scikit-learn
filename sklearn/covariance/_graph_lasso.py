@@ -287,7 +287,7 @@ class GraphicalLasso(EmpiricalCovariance):
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     .. versionchanged:: v0.20
-        GraphLasso have been renamed to GraphicalLasso
+        GraphLasso has been renamed to GraphicalLasso
 
     Parameters
     ----------
