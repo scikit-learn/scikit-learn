@@ -745,6 +745,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         If array-like, each element of the sequence indicates
         the number of samples per cluster.
 
+        .. versionchanged:: v0.20
+            one can now pass an array-like to the ``n_samples`` parameter
+
     n_features : int, optional (default=2)
         The number of features for each sample.
 

@@ -144,11 +144,15 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
 
+        .. versionadded:: 0.20
+
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -359,6 +363,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -495,7 +501,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
-                          for k, v in parameters.items()))
+                                    for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # Adjust length of sample weights
@@ -812,6 +818,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
 
     X : array-like of shape (n_samples, n_features)
         The data to fit.
+
+        .. versionchanged:: 0.20
+            X is only required to be an object with finite length or shape now
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
@@ -1197,6 +1206,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+        .. versionadded:: 0.20
+
     return_times : bool, default=False
         Whether to return the fit and score times.
 
@@ -1460,6 +1471,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
+        .. versionadded:: 0.20
 
     Returns
     -------

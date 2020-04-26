@@ -117,6 +117,8 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
+        .. versionadded:: 0.20
+
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -147,6 +149,8 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         contamination parameter different than "auto" is provided. In that
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
+
+        .. versionadded:: 0.20
 
     Examples
     --------

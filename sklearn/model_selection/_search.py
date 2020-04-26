@@ -914,6 +914,9 @@ class GridSearchCV(BaseSearchCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     pre_dispatch : int, or str, default=n_jobs
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -1136,6 +1139,8 @@ class GridSearchCV(BaseSearchCV):
 
         This is present only if ``refit`` is not False.
 
+        .. versionadded:: 0.20
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1249,6 +1254,9 @@ class RandomizedSearchCV(BaseSearchCV):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     pre_dispatch : int, or str, default=None
         Controls the number of jobs that get dispatched during parallel
@@ -1456,6 +1464,8 @@ class RandomizedSearchCV(BaseSearchCV):
         Seconds used for refitting the best model on the whole dataset.
 
         This is present only if ``refit`` is not False.
+
+        .. versionadded:: 0.20
 
     Notes
     -----
