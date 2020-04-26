@@ -334,15 +334,6 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _get_estimator_name(estimator):
-    """Get name of estimator instance or class"""
-    if isinstance(estimator, type):
-        # got a class
-        return estimator.__name__
-    # got an instance
-    return type(estimator).__name__
-
-
 def _get_xfail_checks(estimator):
     """Get checks marked with xfail_checks tag from estimator"""
     if isinstance(estimator, type):
@@ -372,8 +363,8 @@ def _make_check_warn_on_fail(check, xfail_checks_tag):
     def wrapped(*args, **kwargs):
         try:
             check(*args, **kwargs)
-        except AssertionError:
-            warnings.warn(reason, SkipTestWarning)
+        except Exception:
+            warnings.warn(reason, UserWarning)
             return
     return wrapped
 
@@ -393,11 +384,12 @@ def _generate_class_checks(name, Estimator):
 
 def _generate_checks(Estimator):
     """Generate checks based on Estimator"""
-    name = _get_estimator_name(Estimator)
     if isinstance(Estimator, type):
         # got a class
+        name = Estimator.__name__
         return _generate_class_checks(name, Estimator)
     # got an instance
+    name = type(Estimator).__name__
     return _generate_instance_checks(name, Estimator)
 
 

@@ -39,7 +39,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
-from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -600,7 +599,7 @@ def test_check_estimator_xfail_tag_raises_skip_test_warning():
 
     estimators = [DummyClassifier(), DummyClassifier]
     for estimator in estimators:
-        assert_warns_message(SkipTestWarning,
+        assert_warns_message(UserWarning,
                              "fails for the predict method",
                              check_estimator, DummyClassifier)
 
