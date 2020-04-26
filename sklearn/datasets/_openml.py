@@ -35,7 +35,7 @@ _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
-OpenmlQuantileType = List[Dict[str, str]]
+OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
 
 
@@ -450,7 +450,7 @@ def _get_data_features(
 
 def _get_data_qualities(
     data_id: int, data_home: Optional[str]
-) -> Optional[OpenmlQuantileType]:
+) -> OpenmlQualitiesType:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
@@ -458,15 +458,12 @@ def _get_data_qualities(
     json_data = _get_json_content_from_openml_api(
         url, error_message, data_home=data_home
     )
-    try:
-        return json_data['data_qualities']['quality']
-    except KeyError:
-        # the qualities might not be available, but we still try to process
-        # the data
-        return None
+    # the qualities might not be available, but we still try to process
+    # the data
+    return json_data['data_qualities'].get('quality', [])
 
 
-def _get_num_samples(data_qualities: Optional[OpenmlQuantileType]) -> int:
+def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
     """Get the number of samples from data qualities.
 
     Parameters
@@ -482,9 +479,6 @@ def _get_num_samples(data_qualities: Optional[OpenmlQuantileType]) -> int:
     """
     # If the data qualities are unavailable, we return -1
     default_n_samples = -1
-
-    if data_qualities is None:
-        return default_n_samples
 
     qualities = {d['name']: d['value'] for d in data_qualities}
     return int(float(qualities.get('NumberOfInstances', default_n_samples)))
