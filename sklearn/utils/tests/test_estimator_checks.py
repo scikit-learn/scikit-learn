@@ -32,6 +32,7 @@ from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
+from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
@@ -594,46 +595,14 @@ def test_check_estimator_required_parameters_skip():
                                   check_estimator, MyEstimator)
 
 
-class LRXFailTagButCheckPasses(LogisticRegression):
-    def _more_tags(self):
-        return {"_xfail_checks": {
-            # check_complex_data actually passes for this estimator
-            "check_complex_data": "This is a bad check"}
-        }
-
-
-def test_check_estimator_xfail_tag_warns():
-    # When a _xfail_checks check passes, warns stating that the test
-    # passes and can be removed from the tag
-
-    estimators = [LRXFailTagButCheckPasses(), LRXFailTagButCheckPasses]
-
-    for estimator in estimators:
-        assert_warns_message(FutureWarning,
-                             "LRXFailTagButCheckPasses:check_complex_data "
-                             "passed, it can be removed from the "
-                             "_xfail_check tag",
-                             check_estimator, estimator)
-
-
-class LRXFailDoesNotRaiseOnComplex(LRXFailTagButCheckPasses):
-    def fit(self, X, y):
-        # do not raise error for complex check
-        try:
-            return super().fit(X, y)
-        except ValueError as e:
-            if "Complex data not supported" not in str(e):
-                raise
-        return self
-
-
-def test_check_estimator_xfail_tag_skips():
+def test_check_estimator_xfail_tag_raises_skip_test_warning():
     # skips check_complex_data based on _xfail_checks
 
-    estimators = [LRXFailDoesNotRaiseOnComplex(), LRXFailDoesNotRaiseOnComplex]
+    estimators = [DummyClassifier(), DummyClassifier]
     for estimator in estimators:
-        assert_warns_message(SkipTestWarning, "This is a bad check",
-                             check_estimator, LRXFailDoesNotRaiseOnComplex)
+        assert_warns_message(SkipTestWarning,
+                             "fails for the predict method",
+                             check_estimator, DummyClassifier)
 
 
 def run_tests_without_pytest():

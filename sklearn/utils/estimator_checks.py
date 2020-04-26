@@ -350,7 +350,7 @@ def _get_xfail_checks(estimator):
         # the xfail_checks tag is ignored
         try:
             estimator = _construct_instance(estimator)
-        except Exception:
+        except SkipTest:
             return {}
 
     return estimator._get_tags()['_xfail_checks'] or {}
@@ -383,11 +383,6 @@ def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
         except AssertionError:
             warnings.warn(reason, SkipTestWarning)
             return
-
-        # did not fail
-        check_name = _set_check_estimator_ids(check)
-        warnings.warn(f"{est_name}:{check_name} passed, it can be removed "
-                      f"from the _xfail_check tag", FutureWarning)
     return estimator, wrapped
 
 
@@ -423,10 +418,12 @@ def _generate_marked_checks(estimator, pytest):
     for estimator, check in checks_generator:
         check_name = _set_check_estimator_ids(check)
         if check_name in xfail_checks_tag:
+            # check is in the xfail_checks tag, mark it as xfail for pytest
             reason = xfail_checks_tag[check_name]
             yield pytest.param(estimator, check,
                                marks=pytest.mark.xfail(reason=reason))
         else:
+            # check isn't part of the xfail_checks tag
             yield estimator, check
 
 
