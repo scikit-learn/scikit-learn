@@ -85,12 +85,12 @@ class DataConversionWarning(UserWarning):
 
     Examples
     --------
-    >>> from sklearn.utils import validation
+    >>> from sklearn.utils.validation import column_or_1d
     >>> import warnings
     >>> Y = [[1],[2],[3]]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     # will trigger warning as Y is a column-vector
-    ...     Y = validation.column_or_1d(Y,warn=True)
+    ...     Y = column_or_1d(Y,warn=True)
     ...     print(w[-1].message)
     A column-vector y was passed when a 1d array was expected. Please change
     the shape of y to (n_samples, ), for example using ravel().
