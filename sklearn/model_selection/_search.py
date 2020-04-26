@@ -406,7 +406,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def __init__(self, estimator, *, scoring=None, n_jobs=None,
                  iid='deprecated', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score=np.nan,
-                 return_train_score=True):
+                 return_train_score=True, return_all_estimators=False):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -418,6 +418,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.return_all_estimators = return_all_estimators
 
     @property
     def _estimator_type(self):
@@ -686,6 +687,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
+                                    return_estimator=self.return_all_estimators,
                                     return_n_test_samples=True,
                                     return_times=True,
                                     return_parameters=False,
@@ -774,15 +776,24 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
+        if self.return_all_estimators:
+            self.all_estimators_ = results["estimators"]
+
         return self
 
     def _format_results(self, candidate_params, scorers, n_splits, out):
         n_candidates = len(candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
+        if self.return_train_score and not self.return_all_estimators:
             (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
              score_time) = zip(*out)
+        elif self.return_train_score and self.return_all_estimators:
+            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
+             score_time, estimators) = zip(*out)
+        elif self.return_all_estimators:
+            (test_score_dicts, test_sample_counts, fit_time, 
+            score_time, estimators) = zip(*out)
         else:
             (test_score_dicts, test_sample_counts, fit_time,
              score_time) = zip(*out)
@@ -838,6 +849,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
+
+        # Store a list of all estimators
+        if self.return_all_estimators:
+            results['estimators'] = estimators
 
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
@@ -1174,12 +1189,14 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False):
+                 error_score=np.nan, return_train_score=False, 
+                 return_all_estimators=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            return_all_estimators=return_all_estimators)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1513,7 +1530,7 @@ class RandomizedSearchCV(BaseSearchCV):
                  scoring=None, n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=False):
+                 return_train_score=False, return_all_estimators=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1521,7 +1538,8 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score, 
+            return_all_estimators=return_all_estimators)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
