@@ -127,12 +127,15 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     return gzip.GzipFile(local_path, 'rb')
 
 
+class OpenMLError(Exception):
+    pass
+
+
 def _get_json_content_from_openml_api(
     url: str,
     error_message: Optional[str],
-    raise_if_error: bool,
     data_home: Optional[str]
-) -> Optional[Dict]:
+) -> Dict:
     """
     Loads json data from the openml api
 
@@ -146,21 +149,14 @@ def _get_json_content_from_openml_api(
         (acceptable error is, e.g., data id not found. Other errors, like 404's
         will throw the native error message)
 
-    raise_if_error : bool
-        Whether to raise an error if OpenML returns an acceptable error (e.g.,
-        date not found). If this argument is set to False, a None is returned
-        in case of acceptable errors. Note that all other errors (e.g., 404)
-        will still be raised as normal.
-
     data_home : str or None
         Location to cache the response. None if no cache is required.
 
     Returns
     -------
-    json_data : json or None
-        the json result from the OpenML server if the call was successful;
-        None otherwise iff raise_if_error was set to False and the error was
-        ``acceptable``
+    json_data : json
+        the json result from the OpenML server if the call was successful.
+        An exception otherwise.
     """
 
     @_retry_with_clean_cache(url, data_home)
@@ -177,9 +173,7 @@ def _get_json_content_from_openml_api(
             raise error
 
     # 412 error, not in except for nicer traceback
-    if raise_if_error:
-        raise ValueError(error_message)
-    return None
+    raise OpenMLError(error_message)
 
 
 def _split_sparse_columns(
@@ -395,10 +389,8 @@ def _get_data_info_by_name(
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, raise_if_error=True, data_home=data_home
+            url, error_msg, data_home=data_home
         )
-        # json_data should never be None with raise_if_error=True
-        assert json_data is not None
         res = json_data['data']['dataset']
         if len(res) > 1:
             warn("Multiple active versions of the dataset matching the name"
@@ -409,10 +401,14 @@ def _get_data_info_by_name(
 
     # an integer version has been provided
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
-    json_data = _get_json_content_from_openml_api(
-        url, error_message=None, raise_if_error=False, data_home=data_home
-    )
-    if json_data is None:
+    try:
+        json_data = _get_json_content_from_openml_api(
+            url, error_message=None, data_home=data_home
+        )
+        retry = False
+    except OpenMLError:
+        retry = True
+    if retry:
         # we can do this in 1 function call if OpenML does not require the
         # specification of the dataset status (i.e., return datasets with a
         # given name / version regardless of active, deactivated, etc. )
@@ -421,10 +417,8 @@ def _get_data_info_by_name(
         error_msg = "Dataset {} with version {} not found.".format(name,
                                                                    version)
         json_data = _get_json_content_from_openml_api(
-            url, error_msg, raise_if_error=True, data_home=data_home
+            url, error_msg, data_home=data_home
         )
-        # json_data should never be None with raise_if_error=True
-        assert json_data is not None
 
     return json_data['data']['dataset'][0]
 
@@ -436,10 +430,8 @@ def _get_data_description_by_id(
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, raise_if_error=True, data_home=data_home
+        url, error_message, data_home=data_home
     )
-    # json_data should never be None with raise_if_error=True
-    assert json_data is not None
     return json_data['data_set_description']
 
 
@@ -451,10 +443,8 @@ def _get_data_features(
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, raise_if_error=True, data_home=data_home
+        url, error_message, data_home=data_home
     )
-    # json_data should never be None with raise_if_error=True
-    assert json_data is not None
     return json_data['data_features']['feature']
 
 
@@ -466,10 +456,8 @@ def _get_data_qualities(
     url = _DATA_QUALITIES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(
-        url, error_message, raise_if_error=True, data_home=data_home
+        url, error_message, data_home=data_home
     )
-    # json_data should never be None with raise_if_error=True
-    assert json_data is not None
     try:
         return json_data['data_qualities']['quality']
     except KeyError:
