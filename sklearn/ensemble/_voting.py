@@ -161,7 +161,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
-
         .. versionadded:: 0.20
 
     classes_ : array-like of shape (n_predictions,)

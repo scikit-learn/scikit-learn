@@ -526,6 +526,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     Read more in the :ref:`User Guide <openml>`.
 
+    .. versionadded:: 0.20
+
     .. note:: EXPERIMENTAL
 
         The API is experimental (particularly the return value structure),
