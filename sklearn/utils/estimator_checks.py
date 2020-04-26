@@ -513,7 +513,7 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def check_class(Estimator):
+def check_estimator_class(Estimator):
     """Check if an estimator class adheres to scikit-learn conventions.
 
     This check suite should be used along with
@@ -527,7 +527,8 @@ def check_class(Estimator):
         Estimator class to check.
     """
     if isinstance(Estimator, BaseEstimator):
-        raise ValueError("check_class() expects a Class object to be passed. "
+        raise ValueError("check_estimator_class() expects a Class object "
+                         "to be passed. "
                          "It looks like you passed an estimator instance. "
                          "You should use check_estimator for instances.")
     check_parameters_default_constructible(Estimator.__name__, Estimator)
@@ -2624,7 +2625,7 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
 # TODO: This check can probably be removed in 0.25 since _generate_class_checks
 # should be removed too, and this is the only class-specific check. Maybe this
-# should just become the body of check_class() instead.
+# should just become the body of check_estimator_class() instead.
 def check_parameters_default_constructible(name, Estimator):
     # this check works on classes, not instances
     # test default-constructibility

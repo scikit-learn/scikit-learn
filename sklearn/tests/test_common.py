@@ -20,7 +20,8 @@ import pytest
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.estimator_checks import check_estimator, check_class
+from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator_class
 
 import sklearn
 from sklearn.base import BiclusterMixin
@@ -256,7 +257,7 @@ def test_class_support_deprecated():
         parametrize_with_checks([LogisticRegression])
 
 
-def test_check_class():
-    check_class(LogisticRegression)
+def test_check_estimator_class():
+    check_estimator_class(LogisticRegression)
     with pytest.raises(ValueError, match="expects a Class object"):
-        check_class(LogisticRegression())
+        check_estimator_class(LogisticRegression())

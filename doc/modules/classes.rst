@@ -1568,7 +1568,7 @@ Plotting
    utils.class_weight.compute_sample_weight
    utils.deprecated
    utils.estimator_checks.check_estimator
-   utils.estimator_checks.check_class
+   utils.estimator_checks.check_estimator_class
    utils.estimator_checks.parametrize_with_checks
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
