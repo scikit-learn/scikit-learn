@@ -63,7 +63,7 @@ def test_as_float_array():
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
-    assert as_float_array(X, copy=False) is not X
+    assert as_float_array(X, False) is not X
     assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
     tested_dtypes = [np.bool,
@@ -912,8 +912,7 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(x, "test_name", target_type=target_type,
-                     min_val=min_val, max_val=max_val)
+        check_scalar(x, "test_name", target_type, min_val, max_val)
     assert len(record) == 0
 
 
