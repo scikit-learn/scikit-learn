@@ -572,7 +572,7 @@ def _download_data_to_bunch(
         parse_arff = partial(_convert_arff_data_dataframe, columns=columns,
                              features_dict=features_dict)
 
-        def postprocess(frame):  # type:ignore
+        def postprocess(frame):
             X = frame[data_columns]
             if len(target_columns) >= 2:
                 y = frame[target_columns]
@@ -593,7 +593,7 @@ def _download_data_to_bunch(
                                   k in data_columns + target_columns}
             return X, y, nominal_attributes
 
-        def postprocess(X, y, nominal_attributes):  # type:ignore
+        def postprocess(X, y, nominal_attributes):
             is_classification = {col_name in nominal_attributes
                                  for col_name in target_columns}
             if not is_classification:
