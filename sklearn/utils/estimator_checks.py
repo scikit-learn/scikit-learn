@@ -518,7 +518,7 @@ def check_estimator(Estimator, generate_only=False):
     checks_generator = (
         _make_check_warn_on_fail(estimator, check,
                                  xfail_checks_tag=xfail_checks_tag)
-                        for estimator, check in checks_generator)
+        for estimator, check in checks_generator)
 
     if generate_only:
         return checks_generator
