@@ -24,6 +24,7 @@ from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
 from ..base import _pprint
 
@@ -50,7 +51,6 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -270,7 +270,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
-    def __init__(self, n_splits, shuffle, random_state):
+    @_deprecate_positional_args
+    def __init__(self, n_splits, *, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
             raise ValueError('The number of folds must be of Integral type. '
                              '%s of type %s was passed.'
@@ -426,10 +427,11 @@ class KFold(_BaseKFold):
 
     RepeatedKFold: Repeats K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False,
                  random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -633,9 +635,10 @@ class StratifiedKFold(_BaseKFold):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
@@ -787,7 +790,8 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=5, max_train_size=None):
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
@@ -1099,7 +1103,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
-    def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
+    @_deprecate_positional_args
+    def __init__(self, cv, *, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
@@ -1226,9 +1231,11 @@ class RepeatedKFold(_RepeatedSplits):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            KFold, n_repeats, random_state, n_splits=n_splits)
+            KFold, n_repeats=n_repeats,
+            random_state=random_state, n_splits=n_splits)
 
 
 class RepeatedStratifiedKFold(_RepeatedSplits):
@@ -1280,15 +1287,17 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
+            StratifiedKFold, n_repeats=n_repeats, random_state=random_state,
+            n_splits=n_splits)
 
 
 class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         self.n_splits = n_splits
         self.test_size = test_size
@@ -1421,7 +1430,8 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 4 1] TEST: [5 2]
     TRAIN: [3 5 1] TEST: [2 4]
     """
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1510,8 +1520,8 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
-
-    def __init__(self, n_splits=5, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1626,8 +1636,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [4 1 0] TEST: [2 3 5]
     TRAIN: [0 5 1] TEST: [3 4 2]
     """
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1959,7 +1969,8 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, classifier=False):
+@_deprecate_positional_args
+def check_cv(cv=5, y=None, *, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters

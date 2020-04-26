@@ -396,6 +396,8 @@ class Pipeline(_BaseComposition):
             transformations in the pipeline are not propagated to the
             final estimator.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         y_pred : array-like
@@ -789,6 +791,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
@@ -1037,6 +1042,9 @@ def make_union(*transformers, **kwargs):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be

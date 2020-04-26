@@ -20,6 +20,7 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..utils.validation import _deprecate_positional_args
 
 
 def _graph_connected_component(graph, node_id):
@@ -132,7 +133,8 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+@_deprecate_positional_args
+def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
@@ -440,8 +442,8 @@ class SpectralEmbedding(BaseEstimator):
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-
-    def __init__(self, n_components=2, affinity="nearest_neighbors",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):
         self.n_components = n_components
