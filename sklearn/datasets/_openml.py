@@ -6,6 +6,7 @@ from os.path import join
 from warnings import warn
 from contextlib import closing
 from functools import wraps
+from typing import Callable, Optional, Dict, Tuple, List, Any, Union
 import itertools
 from collections.abc import Generator
 from collections import OrderedDict
@@ -17,6 +18,7 @@ import numpy as np
 import scipy.sparse
 
 from ..externals import _arff
+from ..externals._arff import ArffDataType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
@@ -34,11 +36,16 @@ _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
-def _get_local_path(openml_path, data_home):
+ArffQuantileType = List[Dict[str, str]]
+
+
+def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
 
 
-def _retry_with_clean_cache(openml_path, data_home):
+def _retry_with_clean_cache(
+    openml_path: str, data_home: Optional[str]
+) -> Callable:
     """If the first call to the decorated function fails, the local cached
     file is removed, and the function is called again. If ``data_home`` is
     ``None``, then the function is called once.
@@ -62,7 +69,7 @@ def _retry_with_clean_cache(openml_path, data_home):
     return decorator
 
 
-def _open_openml_url(openml_path, data_home):
+def _open_openml_url(openml_path: str, data_home: Optional[str]):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -103,12 +110,13 @@ def _open_openml_url(openml_path, data_home):
 
         try:
             with closing(urlopen(req)) as fsrc:
+                opener: Callable
                 if is_gzip(fsrc):
-                    with open(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
+                    opener = gzip.GzipFile
                 else:
-                    with gzip.GzipFile(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
+                    opener = open
+                with opener(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
         except Exception:
             if os.path.exists(local_path):
                 os.unlink(local_path)
@@ -119,8 +127,12 @@ def _open_openml_url(openml_path, data_home):
     return gzip.GzipFile(local_path, 'rb')
 
 
-def _get_json_content_from_openml_api(url, error_message, raise_if_error,
-                                      data_home):
+def _get_json_content_from_openml_api(
+    url: str,
+    error_message: Optional[str],
+    raise_if_error: bool,
+    data_home: Optional[str]
+) -> Optional[Dict]:
     """
     Loads json data from the openml api
 
@@ -170,7 +182,9 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
     return None
 
 
-def _split_sparse_columns(arff_data, include_columns):
+def _split_sparse_columns(
+    arff_data: ArffDataType, include_columns: List
+) -> ArffDataType:
     """
     obtains several columns from sparse arff representation. Additionally, the
     column indices are re-labelled, given the columns that are not included.
@@ -192,7 +206,7 @@ def _split_sparse_columns(arff_data, include_columns):
         Subset of arff data with only the include columns indicated by the
         include_columns argument.
     """
-    arff_data_new = (list(), list(), list())
+    arff_data_new: ArffDataType = (list(), list(), list())
     reindexed_columns = {column_idx: array_idx for array_idx, column_idx
                          in enumerate(include_columns)}
     for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
@@ -203,7 +217,9 @@ def _split_sparse_columns(arff_data, include_columns):
     return arff_data_new
 
 
-def _sparse_data_to_array(arff_data, include_columns):
+def _sparse_data_to_array(
+    arff_data: ArffDataType, include_columns: List
+) -> np.ndarray:
     # turns the sparse data back into an array (can't use toarray() function,
     # as this does only work on numeric data)
     num_obs = max(arff_data[1]) + 1
@@ -218,7 +234,12 @@ def _sparse_data_to_array(arff_data, include_columns):
     return y
 
 
-def _convert_arff_data(arff, col_slice_x, col_slice_y, shape=None):
+def _convert_arff_data(
+    arff: Dict[str, Any],
+    col_slice_x: List[int],
+    col_slice_y: List[int],
+    shape: Optional[Tuple] =None
+) -> Tuple:
     """
     converts the arff object into the appropriate matrix type (np.array or
     scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
@@ -244,6 +265,10 @@ def _convert_arff_data(arff, col_slice_x, col_slice_y, shape=None):
     """
     arff_data = arff['data']
     if isinstance(arff_data, Generator):
+        if shape is None:
+            raise ValueError(
+                "shape must be provided when arr['data'] is a Generator"
+            )
         if shape[0] == -1:
             count = -1
         else:
@@ -269,7 +294,7 @@ def _convert_arff_data(arff, col_slice_x, col_slice_y, shape=None):
         raise ValueError('Unexpected Data Type obtained from arff.')
 
 
-def _feature_to_dtype(feature):
+def _feature_to_dtype(feature: Dict[str, str]):
     """Map feature to dtype for pandas DataFrame
     """
     if feature['data_type'] == 'string':
@@ -286,7 +311,9 @@ def _feature_to_dtype(feature):
     raise ValueError('Unsupported feature: {}'.format(feature))
 
 
-def _convert_arff_data_dataframe(arff, columns, features_dict):
+def _convert_arff_data_dataframe(
+    arff, columns: List, features_dict: Dict[str, Any]
+) -> Tuple:
     """Convert the ARFF object into a pandas DataFrame.
 
     Parameters
@@ -333,7 +360,9 @@ def _convert_arff_data_dataframe(arff, columns, features_dict):
     return (df, )
 
 
-def _get_data_info_by_name(name, version, data_home):
+def _get_data_info_by_name(
+    name: str, version: Union[int, str], data_home: Optional[str]
+):
     """
     Utilizes the openml dataset listing api to find a dataset by
     name/version
@@ -365,8 +394,11 @@ def _get_data_info_by_name(name, version, data_home):
         # situation in which we return the oldest active version
         url = _SEARCH_NAME.format(name) + "/status/active/"
         error_msg = "No active dataset {} found.".format(name)
-        json_data = _get_json_content_from_openml_api(url, error_msg, True,
-                                                      data_home)
+        json_data = _get_json_content_from_openml_api(
+            url, error_msg, raise_if_error=True, data_home=data_home
+        )
+        # json_data should never be None with raise_if_error=True
+        assert json_data is not None
         res = json_data['data']['dataset']
         if len(res) > 1:
             warn("Multiple active versions of the dataset matching the name"
@@ -377,8 +409,9 @@ def _get_data_info_by_name(name, version, data_home):
 
     # an integer version has been provided
     url = (_SEARCH_NAME + "/data_version/{}").format(name, version)
-    json_data = _get_json_content_from_openml_api(url, None, False,
-                                                  data_home)
+    json_data = _get_json_content_from_openml_api(
+        url, error_message=None, raise_if_error=False, data_home=data_home
+    )
     if json_data is None:
         # we can do this in 1 function call if OpenML does not require the
         # specification of the dataset status (i.e., return datasets with a
@@ -387,38 +420,56 @@ def _get_data_info_by_name(name, version, data_home):
         url += "/status/deactivated"
         error_msg = "Dataset {} with version {} not found.".format(name,
                                                                    version)
-        json_data = _get_json_content_from_openml_api(url, error_msg, True,
-                                                      data_home)
+        json_data = _get_json_content_from_openml_api(
+            url, error_msg, raise_if_error=True, data_home=data_home
+        )
+        # json_data should never be None with raise_if_error=True
+        assert json_data is not None
 
     return json_data['data']['dataset'][0]
 
 
-def _get_data_description_by_id(data_id, data_home):
+def _get_data_description_by_id(
+    data_id: int, data_home: Optional[str]
+) -> Dict[str, Any]:
     # OpenML API function: https://www.openml.org/api_docs#!/data/get_data_id
     url = _DATA_INFO.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
-    json_data = _get_json_content_from_openml_api(url, error_message, True,
-                                                  data_home)
+    json_data = _get_json_content_from_openml_api(
+        url, error_message, raise_if_error=True, data_home=data_home
+    )
+    # json_data should never be None with raise_if_error=True
+    assert json_data is not None
     return json_data['data_set_description']
 
 
-def _get_data_features(data_id, data_home):
+def _get_data_features(
+    data_id: int, data_home: Optional[str]
+) -> List[Dict[str, str]]:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
-    json_data = _get_json_content_from_openml_api(url, error_message, True,
-                                                  data_home)
+    json_data = _get_json_content_from_openml_api(
+        url, error_message, raise_if_error=True, data_home=data_home
+    )
+    # json_data should never be None with raise_if_error=True
+    assert json_data is not None
     return json_data['data_features']['feature']
 
 
-def _get_data_qualities(data_id, data_home):
+def _get_data_qualities(
+    data_id: int, data_home: Optional[str]
+) -> Optional[ArffQuantileType]:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
     error_message = "Dataset with data_id {} not found.".format(data_id)
-    json_data = _get_json_content_from_openml_api(url, error_message, True,
-                                                  data_home)
+    json_data = _get_json_content_from_openml_api(
+        url, error_message, raise_if_error=True, data_home=data_home
+    )
+    # json_data should never be None with raise_if_error=True
+    assert json_data is not None
     try:
         return json_data['data_qualities']['quality']
     except KeyError:
@@ -427,7 +478,7 @@ def _get_data_qualities(data_id, data_home):
         return None
 
 
-def _get_num_samples(data_qualities):
+def _get_num_samples(data_qualities: Optional[ArffQuantileType]) -> int:
     """Get the number of samples from data qualities.
 
     Parameters
@@ -506,7 +557,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
         parse_arff = partial(_convert_arff_data_dataframe, columns=columns,
                              features_dict=features_dict)
 
-        def postprocess(frame):
+        def postprocess_frame(frame):
             X = frame[data_columns]
             if len(target_columns) >= 2:
                 y = frame[target_columns]
@@ -527,7 +578,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                                   k in data_columns + target_columns}
             return X, y, nominal_attributes
 
-        def postprocess(X, y, nominal_attributes):
+        def postprocess_X_y(X, y, nominal_attributes):
             is_classification = {col_name in nominal_attributes
                                  for col_name in target_columns}
             if not is_classification:
@@ -558,7 +609,10 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                              return_type=return_type,
                              encode_nominal=not as_frame,
                              parse_arff=parse_arff)
-    X, y, frame, nominal_attributes = postprocess(*out)
+    if as_frame:
+        X, y, frame, nominal_attributes = postprocess_frame(*out)
+    else:
+        X, y, frame, nominal_attributes = postprocess_X_y(*out)
 
     return Bunch(data=X, target=y, frame=frame,
                  categories=nominal_attributes,
@@ -608,9 +662,16 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
-def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True, return_X_y=False,
-                 as_frame=False):
+def fetch_openml(
+    name: Optional[str] = None,
+    version: Union[str, int] = 'active',
+    data_id: Optional[int] = None,
+    data_home: Optional[str] = None,
+    target_column: Optional[Union[str, List]] = 'default-target',
+    cache: bool = True,
+    return_X_y: bool = False,
+    as_frame: bool = False
+):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -800,6 +861,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_columns = _valid_data_column_names(features_list,
                                             target_columns)
 
+    shape: Optional[Tuple[int, int]]
     # determine arff encoding to return
     if not return_sparse:
         # The shape must include the ignored features to keep the right indexes

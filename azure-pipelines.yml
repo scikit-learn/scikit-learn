@@ -33,6 +33,7 @@ jobs:
         fi
       displayName: Run linting
     - bash: |
+        set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"

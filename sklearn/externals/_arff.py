@@ -148,7 +148,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-from typing import Optional
+import typing
+from typing import Optional, Tuple, List, Dict, Any
 
 import re
 import sys
@@ -170,6 +171,19 @@ _RE_QUOTE_CHARS = re.compile(r'["\'\\\s%,\000-\031]', re.UNICODE)
 _RE_ESCAPE_CHARS = re.compile(r'(?=["\'\\%])|[\n\r\t\000-\031]')
 _RE_SPARSE_LINE = re.compile(r'^\s*\{.*\}\s*$', re.UNICODE)
 _RE_NONTRIVIAL_DATA = re.compile('["\'{}\\s]', re.UNICODE)
+
+ArffDataType = Tuple[List, ...]
+
+if typing.TYPE_CHECKING:
+    from typing_extensions import TypedDict
+
+    class ArffContainerType(TypedDict):
+        description: str
+        relation: str
+        attributes: List
+        data: ArffDataType
+else:
+    ArffContainerType = Dict[str, Any]
 
 
 def _build_re_values():
@@ -778,7 +792,7 @@ class ArffDecoder(object):
             s = s.strip('\r\n ').replace('\r\n', '\n').split('\n')
 
         # Create the return object
-        obj = {
+        obj: ArffContainerType = {
             u'description': u'',
             u'relation': u'',
             u'attributes': [],
