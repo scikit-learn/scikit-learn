@@ -88,7 +88,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     result : stream
         A stream to the OpenML resource
     """
-    def is_gzip(_fsrc):
+    def is_gzip_encoded(_fsrc):
         return _fsrc.info().get('Content-Encoding', '') == 'gzip'
 
     req = Request(_OPENML_PREFIX + openml_path)
@@ -96,7 +96,7 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
 
     if data_home is None:
         fsrc = urlopen(req)
-        if is_gzip(fsrc):
+        if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -111,10 +111,10 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
         try:
             with closing(urlopen(req)) as fsrc:
                 opener: Callable
-                if is_gzip(fsrc):
-                    opener = gzip.GzipFile
-                else:
+                if is_gzip_encoded(fsrc):
                     opener = open
+                else:
+                    opener = gzip.GzipFile
                 with opener(local_path, 'wb') as fdst:
                     shutil.copyfileobj(fsrc, fdst)
         except Exception:
@@ -127,7 +127,8 @@ def _open_openml_url(openml_path: str, data_home: Optional[str]):
     return gzip.GzipFile(local_path, 'rb')
 
 
-class OpenMLError(Exception):
+class OpenMLError(ValueError):
+    """HTTP 412 is a specific OpenML error code, indicating a generic error"""
     pass
 
 
@@ -460,7 +461,7 @@ def _get_data_qualities(
     )
     # the qualities might not be available, but we still try to process
     # the data
-    return json_data['data_qualities'].get('quality', [])
+    return json_data.get('data_qualities', {}).get('quality', [])
 
 
 def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
