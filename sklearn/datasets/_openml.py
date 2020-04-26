@@ -35,8 +35,9 @@ _DATA_FEATURES = "api/v1/json/data/features/{}"
 _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
+OpenmlQuantileType = List[Dict[str, str]]
+OpenmlFeaturesType = List[Dict[str, str]]
 
-ArffQuantileType = List[Dict[str, str]]
 
 
 def _get_local_path(openml_path: str, data_home: str) -> str:
@@ -445,7 +446,7 @@ def _get_data_description_by_id(
 
 def _get_data_features(
     data_id: int, data_home: Optional[str]
-) -> List[Dict[str, str]]:
+) -> OpenmlFeaturesType:
     # OpenML function:
     # https://www.openml.org/api_docs#!/data/get_data_features_id
     url = _DATA_FEATURES.format(data_id)
@@ -460,7 +461,7 @@ def _get_data_features(
 
 def _get_data_qualities(
     data_id: int, data_home: Optional[str]
-) -> Optional[ArffQuantileType]:
+) -> Optional[OpenmlQuantileType]:
     # OpenML API function:
     # https://www.openml.org/api_docs#!/data/get_data_qualities_id
     url = _DATA_QUALITIES.format(data_id)
@@ -478,7 +479,7 @@ def _get_data_qualities(
         return None
 
 
-def _get_num_samples(data_qualities: Optional[ArffQuantileType]) -> int:
+def _get_num_samples(data_qualities: Optional[OpenmlQuantileType]) -> int:
     """Get the number of samples from data qualities.
 
     Parameters
