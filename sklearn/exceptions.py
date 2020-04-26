@@ -89,11 +89,8 @@ class DataConversionWarning(UserWarning):
     >>> import warnings
     >>> Y = [[1],[2],[3]]
     >>> with warnings.catch_warnings(record=True) as w:
-    ...     try:
-    ...         # will trigger warning as Y is a column-vector
-    ...         Y = validation.column_or_1d(Y,warn=True)
-    ...     except ValueError:
-    ...         pass
+    ...     # will trigger warning as Y is a column-vector
+    ...     Y = validation.column_or_1d(Y,warn=True)
     ...     print(w[-1].message)
     A column-vector y was passed when a 1d array was expected. Please change
     the shape of y to (n_samples, ), for example using ravel().
