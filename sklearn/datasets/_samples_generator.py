@@ -100,7 +100,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         ``weights`` exceeds 1.
 
     flip_y : float, optional (default=0.01)
-        The fraction of samples whose class is assigned randomly. Larger
+        The fraction of samples whose class is assigned randomly. If you
+        prefer the output dataset to have all the class labels you specified
+        at n_classes, you should set flip_y to 0. Larger
         values introduce noise in the labels and make the classification
         task harder.
 
