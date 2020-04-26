@@ -356,7 +356,7 @@ def _get_xfail_checks(estimator):
     return estimator._get_tags()['_xfail_checks'] or {}
 
 
-def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
+def _make_check_warn_on_fail(check, xfail_checks_tag):
     """Wrap the check so that a warning is raised:
 
     - when the check is in the `xfail_checks` tag and the check properly failed
@@ -372,10 +372,9 @@ def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
     """
     check_name = _set_check_estimator_ids(check)
     if check_name not in xfail_checks_tag:
-        return estimator, check
+        return check
 
     reason = xfail_checks_tag[check_name]
-    est_name = _get_estimator_name(estimator)
     @wraps(check)
     def wrapped(*args, **kwargs):
         try:
@@ -383,7 +382,7 @@ def _make_check_warn_on_fail(estimator, check, xfail_checks_tag):
         except AssertionError:
             warnings.warn(reason, SkipTestWarning)
             return
-    return estimator, wrapped
+    return wrapped
 
 
 def _generate_instance_checks(name, estimator):
@@ -513,8 +512,8 @@ def check_estimator(Estimator, generate_only=False):
     # wrap checks based on xfail_checks
     xfail_checks_tag = _get_xfail_checks(Estimator)
     checks_generator = (
-        _make_check_warn_on_fail(estimator, check,
-                                 xfail_checks_tag=xfail_checks_tag)
+        (estimator,
+         _make_check_warn_on_fail(check, xfail_checks_tag=xfail_checks_tag))
         for estimator, check in checks_generator)
 
     if generate_only:
