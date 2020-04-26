@@ -29,8 +29,7 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar,
-                         _deprecate_positional_args)
+                         check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -315,10 +314,10 @@ def safe_indexing(X, indices, axis=0):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    return _safe_indexing(X, indices, axis=axis)
+    return _safe_indexing(X, indices, axis)
 
 
-def _safe_indexing(X, indices, *, axis=0):
+def _safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -685,8 +684,7 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
-@_deprecate_positional_args
-def safe_sqr(X, *, copy=True):
+def safe_sqr(X, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
     Parameters
@@ -725,8 +723,7 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-@_deprecate_positional_args
-def gen_batches(n, batch_size, *, min_batch_size=0):
+def gen_batches(n, batch_size, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -775,8 +772,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
         yield slice(start, n)
 
 
-@_deprecate_positional_args
-def gen_even_slices(n, n_packs, *, n_samples=None):
+def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
     Parameters
@@ -961,8 +957,8 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-@_deprecate_positional_args
-def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
+def get_chunk_n_rows(row_bytes, max_n_rows=None,
+                     working_memory=None):
     """Calculates how many rows can be processed within working_memory
 
     Parameters
