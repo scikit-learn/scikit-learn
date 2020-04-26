@@ -487,8 +487,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C", accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
