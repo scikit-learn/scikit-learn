@@ -439,6 +439,8 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
         documentation of argument metric in sklearn.pairwise.pairwise_distances
         for a list of available metrics.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     trustworthiness : float

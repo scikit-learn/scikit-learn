@@ -374,6 +374,8 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
+        .. versionadded:: 0.20
+
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -497,6 +499,8 @@ class RFECV(RFE):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+            .. versionadded:: 0.20
         """
         tags = self._get_tags()
         X, y = self._validate_data(

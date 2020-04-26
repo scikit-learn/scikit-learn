@@ -312,6 +312,8 @@ def davies_bouldin_score(X, labels):
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     X : array-like, shape (``n_samples``, ``n_features``)
