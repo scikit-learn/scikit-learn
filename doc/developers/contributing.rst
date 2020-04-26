@@ -431,7 +431,9 @@ You can check for common programming errors with the following tools:
 
     mypy --ignore-missing-import sklearn
 
-  must not produce new errors in your pull request. Using `# type: ignore` annotation can be a workaround for a few cases that are not supported by mypy, in particular,
+  must not produce new errors in your pull request. Using `# type: ignore`
+  annotation can be a workaround for a few cases that are not supported by
+  mypy, in particular,
    - when importing C or Cython modules
    - on properties with decorators
 
