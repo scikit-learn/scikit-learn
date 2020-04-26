@@ -39,7 +39,6 @@ OpenmlQuantileType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
 
 
-
 def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
 
