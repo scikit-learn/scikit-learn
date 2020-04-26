@@ -19,6 +19,7 @@ jobs:
       displayName: Take ownership of conda installation
     - bash: |
         conda create --name flake8_env --yes python=3.8
+        conda init $SHELL
         conda activate flake8_env
         pip install flake8 mypy==0.770
       displayName: Install flake8
@@ -28,6 +29,7 @@ jobs:
           echo "Skipping linting"
           exit 0
         else
+          conda init $SHELL
           conda activate flake8_env
           ./build_tools/circle/linting.sh
         fi
@@ -38,6 +40,7 @@ jobs:
           echo "Skipping linting"
           exit 0
         else
+          conda init $SHELL
           conda activate flake8_env
           mypy sklearn/ --ignore-missing-imports
         fi
