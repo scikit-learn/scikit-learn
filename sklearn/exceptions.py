@@ -55,8 +55,6 @@ class ConvergenceWarning(UserWarning):
     >>> import numpy as np
     >>> import warnings
     >>> from sklearn.cluster import KMeans
-    >>> from sklearn.exceptions import ConvergenceWarning
-    >>> warnings.simplefilter("always", ConvergenceWarning)
     >>> X = np.asarray([[0, 0],
     ...                 [0, 1],
     ...                 [1, 0],
@@ -88,10 +86,8 @@ class DataConversionWarning(UserWarning):
     Examples
     --------
     >>> from sklearn.utils import validation
-    >>> Y = [[1],[2],[3]]
     >>> import warnings
-    >>> from sklearn.exceptions import DataConversionWarning
-    >>> warnings.simplefilter('always', DataConversionWarning)
+    >>> Y = [[1],[2],[3]]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
     ...         # will trigger warning as Y is a column-vector
@@ -143,9 +139,7 @@ class FitFailedWarning(RuntimeWarning):
     --------
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
-    >>> from sklearn.exceptions import FitFailedWarning
     >>> import warnings
-    >>> warnings.simplefilter('always', FitFailedWarning)
     >>> gs = GridSearchCV(LinearSVC(), {'C': [-1, -2]}, error_score=0, cv=2)
     >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8]], [0, 0, 1, 1]
     >>> with warnings.catch_warnings(record=True) as w:
