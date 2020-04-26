@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse
 
 from ..externals import _arff
-from ..externals._arff import ArffDataType
+from ..externals._arff import ArffDataType, ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
@@ -238,7 +238,7 @@ def _convert_arff_data(
     arff: Dict[str, Any],
     col_slice_x: List[int],
     col_slice_y: List[int],
-    shape: Optional[Tuple] =None
+    shape: Optional[Tuple] = None
 ) -> Tuple:
     """
     converts the arff object into the appropriate matrix type (np.array or
@@ -502,8 +502,12 @@ def _get_num_samples(data_qualities: Optional[ArffQuantileType]) -> int:
     return int(float(qualities.get('NumberOfInstances', default_n_samples)))
 
 
-def _load_arff_response(url, data_home, return_type, encode_nominal,
-                        parse_arff):
+def _load_arff_response(
+    url: str,
+    data_home: Optional[str],
+    return_type, encode_nominal: bool,
+    parse_arff: Callable[[ArffContainerType], Tuple]
+) -> Tuple:
     """Load arff data with url and parses arff response with parse_arff"""
     response = _open_openml_url(url, data_home)
 
@@ -516,9 +520,17 @@ def _load_arff_response(url, data_home, return_type, encode_nominal,
         return parse_arff(arff)
 
 
-def _download_data_to_bunch(url, sparse, data_home, *,
-                            as_frame, features_list, data_columns,
-                            target_columns, shape):
+def _download_data_to_bunch(
+    url: str,
+    sparse: bool,
+    data_home: Optional[str],
+    *,
+    as_frame: bool,
+    features_list: List,
+    data_columns: List[int],
+    target_columns: List,
+    shape: Optional[Tuple[int, int]]
+):
     """Download OpenML ARFF and convert to Bunch of data
     """
     # NB: this function is long in order to handle retry for any failure
@@ -552,12 +564,15 @@ def _download_data_to_bunch(url, sparse, data_home, *,
         return_type = _arff.DENSE_GEN
 
     frame = nominal_attributes = None
+
+    parse_arff: Callable
+    postprocess: Callable
     if as_frame:
         columns = data_columns + target_columns
         parse_arff = partial(_convert_arff_data_dataframe, columns=columns,
                              features_dict=features_dict)
 
-        def postprocess_frame(frame):
+        def postprocess(frame):
             X = frame[data_columns]
             if len(target_columns) >= 2:
                 y = frame[target_columns]
@@ -578,7 +593,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                                   k in data_columns + target_columns}
             return X, y, nominal_attributes
 
-        def postprocess_X_y(X, y, nominal_attributes):
+        def postprocess(X, y, nominal_attributes):
             is_classification = {col_name in nominal_attributes
                                  for col_name in target_columns}
             if not is_classification:
@@ -609,10 +624,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                              return_type=return_type,
                              encode_nominal=not as_frame,
                              parse_arff=parse_arff)
-    if as_frame:
-        X, y, frame, nominal_attributes = postprocess_frame(*out)
-    else:
-        X, y, frame, nominal_attributes = postprocess_X_y(*out)
+    X, y, frame, nominal_attributes = postprocess(*out)
 
     return Bunch(data=X, target=y, frame=frame,
                  categories=nominal_attributes,
