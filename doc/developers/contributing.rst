@@ -248,19 +248,28 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``master`` branch!
 
-9. Develop the feature on your feature branch on your computer, using Git to
-   do the version control. When you're done editing, add changed files using
-   ``git add`` and then ``git commit``::
+9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+   run code style checks before each commit::
 
-       $ git add modified_files
-       $ git commit
+        $ pip install pre-commit
+        $ pre-commit install
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with::
+   pre-commit checks can be disabled for a particular commit with
+   `git commit -n`.
+
+10. Develop the feature on your feature branch on your computer, using Git to
+    do the version control. When you're done editing, add changed files using
+    ``git add`` and then ``git commit``::
+ 
+        $ git add modified_files
+        $ git commit
+
+    to record your changes in Git, then push the changes to your GitHub
+    account with::
 
        $ git push -u origin my_feature
 
-10. Follow `these
+11. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
