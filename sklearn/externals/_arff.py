@@ -185,7 +185,6 @@ if typing.TYPE_CHECKING:
 else:
     ArffContainerType = Dict[str, Any]
 
-
 def _build_re_values():
     quoted_re = r'''
                     "      # open quote followed by zero or more of:
