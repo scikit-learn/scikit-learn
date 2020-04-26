@@ -683,11 +683,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
+        return_all_estimators = self.return_all_estimators
 
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
-                                    return_estimator=self.return_all_estimators,
+                                    return_estimator=return_all_estimators,
                                     return_n_test_samples=True,
                                     return_times=True,
                                     return_parameters=False,
@@ -792,8 +793,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
              score_time, estimators) = zip(*out)
         elif self.return_all_estimators:
-            (test_score_dicts, test_sample_counts, fit_time, 
-            score_time, estimators) = zip(*out)
+            (test_score_dicts, test_sample_counts, fit_time,
+             score_time, estimators) = zip(*out)
         else:
             (test_score_dicts, test_sample_counts, fit_time,
              score_time) = zip(*out)
@@ -1189,7 +1190,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False, 
+                 error_score=np.nan, return_train_score=False,
                  return_all_estimators=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
@@ -1538,7 +1539,7 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score, 
+            return_train_score=return_train_score,
             return_all_estimators=return_all_estimators)
 
     def _run_search(self, evaluate_candidates):
