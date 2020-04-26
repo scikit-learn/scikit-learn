@@ -309,9 +309,7 @@ class SimpleImputer(_BaseImputer):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
-
-
-
+            
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
