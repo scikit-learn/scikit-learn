@@ -506,7 +506,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
         parse_arff = partial(_convert_arff_data_dataframe, columns=columns,
                              features_dict=features_dict)
 
-        def postprocess_frame(frame):
+        def postprocess(frame):  # type:ignore
             X = frame[data_columns]
             if len(target_columns) >= 2:
                 y = frame[target_columns]
@@ -515,7 +515,6 @@ def _download_data_to_bunch(url, sparse, data_home, *,
             else:
                 y = None
             return X, y, frame, nominal_attributes
-        postprocess = postprocess_frame
     else:
         def parse_arff(arff):
             X, y = _convert_arff_data(arff, col_slice_x, col_slice_y, shape)
@@ -528,7 +527,7 @@ def _download_data_to_bunch(url, sparse, data_home, *,
                                   k in data_columns + target_columns}
             return X, y, nominal_attributes
 
-        def postprocess_X_y(X, y, nominal_attributes):
+        def postprocess(X, y, nominal_attributes):  # type:ignore
             is_classification = {col_name in nominal_attributes
                                  for col_name in target_columns}
             if not is_classification:
@@ -553,7 +552,6 @@ def _download_data_to_bunch(url, sparse, data_home, *,
             elif y.shape[1] == 0:
                 y = None
             return X, y, frame, nominal_attributes
-        postprocess = postprocess_X_y
 
     out = _retry_with_clean_cache(url, data_home)(
         _load_arff_response)(url, data_home,
