@@ -237,7 +237,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Randomly replace labels
     if flip_y >= 0.0:
         flip_mask = generator.rand(n_samples) < flip_y
-        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
+        y[flip_mask] = generator.permutation(y[flip_mask])
 
     # Randomly shift and scale
     if shift is None:

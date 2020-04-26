@@ -61,6 +61,15 @@ def test_make_classification():
                 "Unexpected number of unique rows")
 
 
+def test_make_classification_flip_y_permutes():
+    # checks that the number of classes does not change with flip_y
+    # non-regression test for #16789
+    n_classes = 20
+    X, y = make_classification(n_classes=n_classes, n_samples=40,
+                               n_informative=8, random_state=0, flip_y=0.5)
+    assert len(np.unique(y)) == n_classes
+
+
 def test_make_classification_informative_features():
     """Test the construction of informative features in make_classification
 
