@@ -357,18 +357,11 @@ def _get_xfail_checks(estimator):
 
 
 def _make_check_warn_on_fail(check, xfail_checks_tag):
-    """Wrap the check so that a warning is raised:
-
-    - when the check is in the `xfail_checks` tag and the check properly failed
-      as expected
-    - when the check is in the `xfail_checks` tag and the check didnt fail but
-      should have
+    """Wrap the check so that a warning is raised when the check is in the
+    `xfail_checks` tag and the check properly failed as expected.
 
     Checks that aren't in the xfail_checks tag aren't wrapped and are returned
-    as-is. This wrapper basically simulates what pytest would do with the
-    @xfail decorator, but this one can be used with check_estimator() which
-    doesn't rely on pytest.
-
+    as-is.
     """
     check_name = _set_check_estimator_ids(check)
     if check_name not in xfail_checks_tag:
