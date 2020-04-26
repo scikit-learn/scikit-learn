@@ -20,7 +20,7 @@ jobs:
     - bash: |
         conda create --name flake8_env --yes python=3.8
         conda activate flake8_env
-        pip install flake8 mypy
+        pip install flake8 mypy==0.770
       displayName: Install flake8
     - bash: |
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
