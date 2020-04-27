@@ -32,6 +32,7 @@ from ._label import label_binarize
 from ._label import LabelBinarizer
 from ._label import LabelEncoder
 from ._label import MultiLabelBinarizer
+from ._label import MultiLabelHistogram
 
 from ._discretization import KBinsDiscretizer
 
@@ -44,6 +45,7 @@ __all__ = [
     'LabelBinarizer',
     'LabelEncoder',
     'MultiLabelBinarizer',
+    'MultiLabelHistogram',
     'MinMaxScaler',
     'MaxAbsScaler',
     'QuantileTransformer',

@@ -1389,6 +1389,7 @@ details.
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
    preprocessing.MultiLabelBinarizer
+   preprocessing.MultiLabelHistogram
    preprocessing.MaxAbsScaler
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
