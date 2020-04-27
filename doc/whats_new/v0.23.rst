@@ -275,6 +275,11 @@ Changelog
   with log-link useful for modeling count data.
   :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
 
+- |Fix| Fixed a bug where :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` would fail with multiple
+  calls to fit when `warm_start=True`, `early_stopping=True`, and there is no
+  validation set. :pr:`16663` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -538,6 +543,9 @@ Changelog
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
+
+- |FIX| :func:`utils.all_estimators` now only returns public estimators.
+  :pr:`15380` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
