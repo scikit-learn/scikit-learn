@@ -778,8 +778,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 refit_end_time = time.time()
                 self.refit_time_ += refit_end_time - refit_start_time
                 estimators.append(estimator)
-            self.best_estimator_ = estimators[self.best_index_] if self.return_all_estimators else estimators[0]
-            
+            if return_all_estimators:
+                self.best_estimator_ = estimators[self.best_index_]
+            else:
+                self.best_estimator_ = estimators[0]
+
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers if self.multimetric_ else scorers['score']
 
