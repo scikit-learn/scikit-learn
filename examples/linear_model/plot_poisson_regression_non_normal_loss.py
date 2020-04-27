@@ -10,13 +10,13 @@ learned with least squared error.
 
 A few definitions:
 
-- a **policy** is a contract between an insurance company and an individual:
+- A **policy** is a contract between an insurance company and an individual:
   the **policyholder**, that is, the vehicle driver in this case.
 
-- a **claim** is the request made by a policyholder to the insurer to
+- A **claim** is the request made by a policyholder to the insurer to
   compensate for a loss covered by the insurance.
 
-- the **exposure** is the duration of the insurance coverage of a given policy,
+- The **exposure** is the duration of the insurance coverage of a given policy,
   in years.
 
 - the claim **frequency** is the number of claims divided by the exposure,
@@ -233,7 +233,7 @@ score_estimator(poisson, df_test)
 # Regression Trees. Tree-based models do not require the categorical data to be
 # one-hot encoded: instead, we can encode each category label with an arbitrary
 # integer using :class:`preprocessing.OrdinalEncoder`. With this encoding, the
-# the trees will treat the categorical features as ordered features, which
+# trees will treat the categorical features as ordered features, which
 # might not be always a desired behavior. However this effect is limited for
 # deep enough trees which are able to recover the categorical nature of the
 # features. The main advantage of the :class:`preprocessing.OrdinalEncoder`
@@ -408,7 +408,7 @@ for axi, model in zip(ax.ravel(), [dummy, ridge, poisson, gbrt]):
 plt.tight_layout()
 
 ###############################################################################
-# The dummy regression model predicts on constant frequency. This model is not
+# The dummy regression model predicts a constant frequency. This model is not
 # attribute the same tied rank to all samples but is none-the-less well
 # calibrated.
 #
@@ -525,7 +525,7 @@ ax.legend(loc="upper left")
 #   model to be badly calibrated. In particular it tends to under estimate the
 #   risk and can even predict invalid negative frequencies...
 #
-# - Using the Poisson loss can correct this problem and lead to a
+# - Using the Poisson loss with a log-link can correct these problems and lead to a
 #   well-calibrated linear model.
 #
 # - Despite the improvement in calibration, the ranking power of both linear
@@ -538,7 +538,7 @@ ax.legend(loc="upper left")
 #
 # - The Poisson deviance computed as an evaluation metric reflects both the
 #   calibration and the ranking power of the model but makes a linear
-#   assumption on the ideal relationship between the expected value of an the
+#   assumption on the ideal relationship between the expected value and the
 #   variance of the response variable.
 #
 # - Traditional regression metrics such as Mean Squared Error and Mean Absolute
