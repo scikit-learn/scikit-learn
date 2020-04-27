@@ -165,7 +165,7 @@ mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
 def get_impute_zero_score(X_missing, y_missing):
 
-    imputer = SimpleImputer(missing_values=np.nan,
+    imputer = SimpleImputer(missing_values=np.nan, add_indicator=True,
                             strategy='constant',
                             fill_value=0)
     zero_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
