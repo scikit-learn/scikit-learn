@@ -14,6 +14,20 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
+Enforcing keyword-only arguments
+--------------------------------
+
+In an effort to promote clear and non-ambiguous use of the library, most
+constructor and function parameters are now expected to be passed as keyword
+arguments (i.e. using the `param=value` syntax) instead of positional. To
+ease the transition, a `FutureWarning` is raised if a keyword-only parameter
+is used as positional. In version 0.25, these parameters will be strictly
+keyword-only, and a `TypeError` will be raised.
+:issue:`15005` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_, and
+`Nicolas Hug`_. See `SLEP009
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+for more details.
+
 Changed models
 --------------
 
@@ -535,12 +549,6 @@ Miscellaneous
   `~sklearn.base.ClassifierMixin`. This tag is used to ensure that a proper
   error message is raised when y was expected but None was passed.
   :pr:`16622` by `Nicolas Hug`_.
-
-- |API| Most constructor and function parameters are now expected to be passed
-  as a keyword and not positional. :issue:`15005` by `Joel Nothman`_,
-  `Adrin Jalali`_, `Thomas Fan`_, and `Nicolas Hug`_. See `SLEP009
-  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
-  for more details.
 
 Code and Documentation Contributors
 -----------------------------------
