@@ -529,7 +529,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
             # in the dict params
             _params['p'] = p
         dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                   metric, n_jobs=None,
+                                   metric=metric, n_jobs=None,
                                    **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])

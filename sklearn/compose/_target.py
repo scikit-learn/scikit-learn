@@ -42,6 +42,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     regressor : object, default=None
