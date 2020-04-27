@@ -1241,6 +1241,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+        .. versionadded:: 0.20
+
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 

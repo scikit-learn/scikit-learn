@@ -102,7 +102,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     flip_y : float, optional (default=0.01)
         The fraction of samples whose class is assigned randomly. Larger
         values introduce noise in the labels and make the classification
-        task harder.
+        task harder. Note that the default setting flip_y > 0 might lead
+        to less than n_classes in y in some cases.
 
     class_sep : float, optional (default=1.0)
         The factor multiplying the hypercube size.  Larger values spread
@@ -744,6 +745,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         clusters.
         If array-like, each element of the sequence indicates
         the number of samples per cluster.
+
+        .. versionchanged:: v0.20
+            one can now pass an array-like to the ``n_samples`` parameter
 
     n_features : int, optional (default=2)
         The number of features for each sample.
