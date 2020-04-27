@@ -89,9 +89,12 @@ def test_imputers_add_indicator_sparse(imputer, marker):
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", IMPUTERS)
-def test_imputers_pandas_na_integer_array_support(imputer):
+@pytest.mark.parametrize("add_indicator", [True, False])
+def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip('pandas', minversion="1.0")
+    imputer.set_params(add_indicator=add_indicator)
+
     marker = np.nan
     X = np.array([
         [marker, 1,      5,      marker, 1],
