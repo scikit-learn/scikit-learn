@@ -17,12 +17,15 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier
+
+import warnings
 
 
 def _color_brew(n):
@@ -75,10 +78,11 @@ class Sentinel:
 SENTINEL = Sentinel()
 
 
-def plot_tree(decision_tree, max_depth=None, feature_names=None,
+@_deprecate_positional_args
+def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               impurity=True, node_ids=False,
-              proportion=False, rotate=False, rounded=False,
+              proportion=False, rotate='deprecated', rounded=False,
               precision=3, ax=None, fontsize=None):
     """Plot a decision tree.
 
@@ -131,7 +135,12 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         to be proportions and percentages respectively.
 
     rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
+        This parameter has no effect on the matplotlib tree visualisation and
+        it is kept here for backward compatibility.
+
+        .. deprecated:: 0.23
+           ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
+
 
     rounded : bool, optional (default=False)
         When set to ``True``, draw node boxes with rounded corners and use
@@ -167,6 +176,14 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     [Text(251.5,345.217,'X[3] <= 0.8...
 
     """
+
+    check_is_fitted(decision_tree)
+
+    if rotate != 'deprecated':
+        warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
+                       "It will be removed in 0.25."),
+                      FutureWarning)
+
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
         class_names=class_names, label=label, filled=filled,
@@ -559,6 +576,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
     def export(self, decision_tree, ax=None):
         import matplotlib.pyplot as plt
         from matplotlib.text import Annotation
+
         if ax is None:
             ax = plt.gca()
         ax.clear()
@@ -640,7 +658,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
-def export_graphviz(decision_tree, out_file=None, max_depth=None,
+@_deprecate_positional_args
+def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -791,7 +810,8 @@ def _compute_depth(tree, node):
     return max(depths)
 
 
-def export_text(decision_tree, feature_names=None, max_depth=10,
+@_deprecate_positional_args
+def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.
 

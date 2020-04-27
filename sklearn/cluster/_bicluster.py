@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+import warnings
 
 import numpy as np
 
@@ -17,7 +18,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
-from ..utils.validation import assert_all_finite, check_array
+from ..utils.validation import assert_all_finite, _deprecate_positional_args
 
 
 __all__ = ['SpectralCoclustering',
@@ -88,7 +89,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -115,7 +116,11 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         y : Ignored
 
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        if self.n_jobs != 'deprecated':
+            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
+                          " removed in 0.25.", FutureWarning)
+
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
         return self
@@ -191,10 +196,10 @@ class SpectralCoclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer, optional, default: 3
+    n_clusters : int, default=3
         The number of biclusters to find.
 
-    svd_method : string, optional, default: 'randomized'
+    svd_method : {'randomized', 'arpack'}, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -202,20 +207,21 @@ class SpectralCoclustering(BaseSpectral):
         :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    n_svd_vecs : int, optional, default: None
+    n_svd_vecs : int, default=None
         Number of vectors to use in calculating the SVD. Corresponds
         to `ncv` when `svd_method=arpack` and `n_oversamples` when
         `svd_method` is 'randomized`.
 
-    mini_batch : bool, optional, default: False
+    mini_batch : bool, default=False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}
-         Method for initialization of k-means algorithm; defaults to
-         'k-means++'.
+    init : {'k-means++', 'random', or ndarray of shape \
+            (n_clusters, n_features), default='k-means++'
+        Method for initialization of k-means algorithm; defaults to
+        'k-means++'.
 
-    n_init : int, optional, default: 10
+    n_init : int, default=10
         Number of random initializations that are tried with the
         k-means algorithm.
 
@@ -223,7 +229,7 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -232,24 +238,28 @@ class SpectralCoclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
+    random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    rows_ : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like of shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    columns_ : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like of shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    row_labels_ : array-like, shape (n_rows,)
+    row_labels_ : array-like of shape (n_rows,)
         The bicluster label of each row.
 
-    column_labels_ : array-like, shape (n_cols,)
+    column_labels_ : array-like of shape (n_cols,)
         The bicluster label of each column.
 
     Examples
@@ -259,9 +269,9 @@ class SpectralCoclustering(BaseSpectral):
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> clustering = SpectralCoclustering(n_clusters=2, random_state=0).fit(X)
-    >>> clustering.row_labels_
+    >>> clustering.row_labels_ #doctest: +SKIP
     array([0, 1, 1, 0, 0, 0], dtype=int32)
-    >>> clustering.column_labels_
+    >>> clustering.column_labels_ #doctest: +SKIP
     array([0, 0], dtype=int32)
     >>> clustering
     SpectralCoclustering(n_clusters=2, random_state=0)
@@ -274,9 +284,10 @@ class SpectralCoclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
 
     """
-    def __init__(self, n_clusters=3, svd_method='randomized',
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=3, *, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,
@@ -319,26 +330,28 @@ class SpectralBiclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer or tuple (n_row_clusters, n_column_clusters)
+    n_clusters : int or tuple (n_row_clusters, n_column_clusters), default=3
         The number of row and column clusters in the checkerboard
         structure.
 
-    method : string, optional, default: 'bistochastic'
+    method : {'bistochastic', 'scale', 'log'}, default='bistochastic'
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
         The authors recommend using 'log'. If the data is sparse,
         however, log normalization will not work, which is why the
-        default is 'bistochastic'. CAUTION: if `method='log'`, the
-        data must not be sparse.
+        default is 'bistochastic'.
 
-    n_components : integer, optional, default: 6
+        .. warning::
+           if `method='log'`, the data must be sparse.
+
+    n_components : int, default=6
         Number of singular vectors to check.
 
-    n_best : integer, optional, default: 3
+    n_best : int, default=3
         Number of best singular vectors to which to project the data
         for clustering.
 
-    svd_method : string, optional, default: 'randomized'
+    svd_method : {'randomized', 'arpack'}, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
         :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -346,20 +359,21 @@ class SpectralBiclustering(BaseSpectral):
         `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    n_svd_vecs : int, optional, default: None
+    n_svd_vecs : int, default=None
         Number of vectors to use in calculating the SVD. Corresponds
         to `ncv` when `svd_method=arpack` and `n_oversamples` when
         `svd_method` is 'randomized`.
 
-    mini_batch : bool, optional, default: False
+    mini_batch : bool, default=False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}
-         Method for initialization of k-means algorithm; defaults to
-         'k-means++'.
+    init : {'k-means++', 'random'} or ndarray of (n_clusters, n_features), \
+            default='k-means++'
+        Method for initialization of k-means algorithm; defaults to
+        'k-means++'.
 
-    n_init : int, optional, default: 10
+    n_init : int, default=10
         Number of random initializations that are tried with the
         k-means algorithm.
 
@@ -367,7 +381,7 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -376,24 +390,28 @@ class SpectralBiclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+        .. deprecated:: 0.23
+            ``n_jobs`` was deprecated in version 0.23 and will be removed in
+            0.25.
+
+    random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    rows_ : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like of shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    columns_ : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like of shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    row_labels_ : array-like, shape (n_rows,)
+    row_labels_ : array-like of shape (n_rows,)
         Row partition labels.
 
-    column_labels_ : array-like, shape (n_cols,)
+    column_labels_ : array-like of shape (n_cols,)
         Column partition labels.
 
     Examples
@@ -418,10 +436,11 @@ class SpectralBiclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
     """
-    def __init__(self, n_clusters=3, method='bistochastic',
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=3, *, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs=None, random_state=None):
+                 n_init=10, n_jobs='deprecated', random_state=None):
         super().__init__(n_clusters,
                          svd_method,
                          n_svd_vecs,

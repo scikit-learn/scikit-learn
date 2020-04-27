@@ -45,6 +45,7 @@ from ._base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils.validation import _deprecate_positional_args
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +147,8 @@ def strip_newsgroup_footer(text):
         return text
 
 
-def fetch_20newsgroups(data_home=None, subset='train', categories=None,
+@_deprecate_positional_args
+def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True, return_X_y=False):
@@ -184,7 +186,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -214,13 +216,19 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - data: list, length [n_samples]
-        - target: array, shape [n_samples]
-        - filenames: list, length [n_samples]
-        - DESCR: a description of the dataset.
-        - target_names: a list of categories of the returned data,
-          length [n_classes]. This depends on the `categories` parameter.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list, length [n_samples]
+            The data list to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        filenames: list, length [n_samples]
+            The path to the location of the data.
+        DESCR: str
+            The full description of the dataset.
+        target_names: list, length [n_classes]
+            The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22
@@ -316,7 +324,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
+@_deprecate_positional_args
+def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
                                   normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
@@ -384,12 +393,17 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - bunch.data: sparse matrix, shape [n_samples, n_features]
-        - bunch.target: array, shape [n_samples]
-        - bunch.target_names: a list of categories of the returned data,
-          length [n_classes].
-        - bunch.DESCR: a description of the dataset.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data: sparse matrix, shape [n_samples, n_features]
+            The data matrix to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        target_names: list, length [n_classes]
+            The names of target classes.
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

@@ -16,7 +16,7 @@ from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
-from ...utils import deprecated
+from ...utils.validation import _deprecate_positional_args
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -35,7 +35,8 @@ def check_number_of_labels(n_labels, n_samples):
                          "to n_samples - 1 (inclusive)" % n_labels)
 
 
-def silhouette_score(X, labels, metric='euclidean', sample_size=None,
+@_deprecate_positional_args
+def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
@@ -78,11 +79,10 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         If ``sample_size is None``, no sampling is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The generator used to randomly select a subset of samples.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+        Determines random number generation for selecting a subset of samples.
+        Used when ``sample_size is not None``.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -149,7 +149,8 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     return intra_clust_dists, inter_clust_dists
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+@_deprecate_positional_args
+def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -299,13 +300,6 @@ def calinski_harabasz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
-@deprecated("Function 'calinski_harabaz_score' has been renamed to "
-            "'calinski_harabasz_score' "
-            "and will be removed in version 0.23.")
-def calinski_harabaz_score(X, labels):
-    return calinski_harabasz_score(X, labels)
-
-
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
 
@@ -317,6 +311,8 @@ def davies_bouldin_score(X, labels):
     The minimum score is zero, with lower values indicating better clustering.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------

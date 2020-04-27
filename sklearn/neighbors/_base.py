@@ -23,7 +23,8 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array, gen_even_slices
+from ..utils import check_array, gen_even_slices
+from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
@@ -276,8 +277,8 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
-        neigh_dist = np.array(np.split(data, indptr[1:-1]))
-    neigh_ind = np.array(np.split(indices, indptr[1:-1]))
+        neigh_dist = _to_object_array(np.split(data, indptr[1:-1]))
+    neigh_ind = _to_object_array(np.split(indices, indptr[1:-1]))
 
     if return_distance:
         return neigh_dist, neigh_ind
@@ -395,8 +396,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
+            self.n_features_in_ = X.shape[1]
         else:
-            X = check_array(X, accept_sparse='csr')
+            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -558,7 +560,7 @@ class KNeighborsMixin:
 
         Examples
         --------
-        In the following example, we construct a NeighborsClassifier
+        In the following example, we construct a NearestNeighbors
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 
@@ -940,17 +942,12 @@ class RadiusNeighborsMixin:
                 neigh_dist_chunks, neigh_ind_chunks = zip(*chunked_results)
                 neigh_dist_list = sum(neigh_dist_chunks, [])
                 neigh_ind_list = sum(neigh_ind_chunks, [])
-                # See https://github.com/numpy/numpy/issues/5456
-                # to understand why this is initialized this way.
-                neigh_dist = np.empty(len(neigh_dist_list), dtype='object')
-                neigh_dist[:] = neigh_dist_list
-                neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
-                neigh_ind[:] = neigh_ind_list
+                neigh_dist = _to_object_array(neigh_dist_list)
+                neigh_ind = _to_object_array(neigh_ind_list)
                 results = neigh_dist, neigh_ind
             else:
                 neigh_ind_list = sum(chunked_results, [])
-                results = np.empty(len(neigh_ind_list), dtype='object')
-                results[:] = neigh_ind_list
+                results = _to_object_array(neigh_ind_list)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -1107,9 +1104,13 @@ class SupervisedFloatMixin:
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
         self._y = y
         return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class SupervisedIntegerMixin:
@@ -1127,7 +1128,8 @@ class SupervisedIntegerMixin:
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -1153,6 +1155,9 @@ class SupervisedIntegerMixin:
             self._y = self._y.ravel()
 
         return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class UnsupervisedMixin:

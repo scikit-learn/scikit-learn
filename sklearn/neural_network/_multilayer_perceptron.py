@@ -21,10 +21,11 @@ from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
-from ..utils import check_array, check_X_y, column_or_1d
+from ..utils import _safe_indexing
+from ..utils import check_array, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -140,13 +141,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        packed_coef_inter : array-like
+        packed_coef_inter : ndarray
             A vector comprising the flattened coefficients and intercepts.
 
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target values.
 
         activations : list, length = n_layers - 1
@@ -185,10 +186,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target values.
 
         activations : list, length = n_layers - 1
@@ -503,6 +504,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             y_val = None
 
         n_samples = X.shape[0]
+        sample_idx = np.arange(n_samples, dtype=int)
 
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -512,12 +514,24 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         try:
             for it in range(self.max_iter):
                 if self.shuffle:
-                    X, y = shuffle(X, y, random_state=self._random_state)
+                    # Only shuffle the sample indices instead of X and y to
+                    # reduce the memory footprint. These indices will be used
+                    # to slice the X and y.
+                    sample_idx = shuffle(sample_idx,
+                                         random_state=self._random_state)
+
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    activations[0] = X[batch_slice]
+                    if self.shuffle:
+                        X_batch = _safe_indexing(X, sample_idx[batch_slice])
+                        y_batch = y[sample_idx[batch_slice]]
+                    else:
+                        X_batch = X[batch_slice]
+                        y_batch = y[batch_slice]
+
+                    activations[0] = X_batch
                     batch_loss, coef_grads, intercept_grads = self._backprop(
-                        X[batch_slice], y[batch_slice], activations, deltas,
+                        X_batch, y_batch, activations, deltas,
                         coef_grads, intercept_grads)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
@@ -613,10 +627,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : ndarray or sparse matrix of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -632,10 +646,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The target values.
 
         Returns
@@ -656,15 +670,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        y_pred : array-like, shape (n_samples,) or (n_samples, n_outputs)
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
@@ -698,11 +712,11 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default (100,)
+    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default='relu'
         Activation function for the hidden layer.
 
         - 'identity', no-op activation, useful to implement linear bottleneck,
@@ -717,7 +731,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    solver : {'lbfgs', 'sgd', 'adam'}, default 'adam'
+    solver : {'lbfgs', 'sgd', 'adam'}, default='adam'
         The solver for weight optimization.
 
         - 'lbfgs' is an optimizer in the family of quasi-Newton methods.
@@ -733,15 +747,15 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
-    alpha : float, optional, default 0.0001
+    alpha : float, default=0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 'auto'
+    batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
-    learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
+    learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
         Learning rate schedule for weight updates.
 
         - 'constant' is a constant learning rate given by
@@ -759,55 +773,56 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Only used when ``solver='sgd'``.
 
-    learning_rate_init : double, optional, default 0.001
+    learning_rate_init : double, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, optional, default 0.5
+    power_t : double, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
 
-    max_iter : int, optional, default 200
+    max_iter : int, default=200
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations. For stochastic
         solvers ('sgd', 'adam'), note that this determines the number of epochs
         (how many times each data point will be used), not the number of
         gradient steps.
 
-    shuffle : bool, optional, default True
+    shuffle : bool, default=True
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, optional, default None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    tol : float, optional, default 1e-4
+    tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving
         by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
         unless ``learning_rate`` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    momentum : float, default 0.9
+    momentum : float, default=0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default True
+    nesterovs_momentum : boolean, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
-    early_stopping : bool, default False
+    early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
@@ -816,29 +831,29 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         except in a multilabel setting.
         Only effective when solver='sgd' or 'adam'
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
-    beta_1 : float, optional, default 0.9
+    beta_1 : float, default=0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
 
-    beta_2 : float, optional, default 0.999
+    beta_2 : float, default=0.999
         Exponential decay rate for estimates of second moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
 
-    epsilon : float, optional, default 1e-8
+    epsilon : float, default=1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
-    n_iter_no_change : int, optional, default 10
+    n_iter_no_change : int, default=10
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'
 
         .. versionadded:: 0.20
 
-    max_fun : int, optional, default 15000
+    max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of loss function calls.
         The solver iterates until convergence (determined by 'tol'), number
         of iterations reaches max_iter, or this number of loss function calls.
@@ -849,7 +864,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     Attributes
     ----------
-    classes_ : array or list of array of shape (n_classes,)
+    classes_ : ndarray or list of ndarray of shape (n_classes,)
         Class labels for each output.
 
     loss_ : float
@@ -874,6 +889,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     out_activation_ : string
         Name of the output activation function.
+
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    ...                                                     random_state=1)
+    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
+    >>> clf.predict_proba(X_test[:1])
+    array([[0.038..., 0.961...]])
+    >>> clf.predict(X_test[:5, :])
+    array([1, 0, 1, 0, 1])
+    >>> clf.score(X_test, y_test)
+    0.8...
 
     Notes
     -----
@@ -904,7 +936,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
@@ -928,8 +961,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -959,12 +992,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        y : array-like, shape (n_samples,) or (n_samples, n_classes)
+        y : ndarray, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
         check_is_fitted(self)
@@ -980,10 +1013,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : ndarray or sparse matrix of shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -1041,12 +1074,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        log_y_prob : array-like, shape (n_samples, n_classes)
+        log_y_prob : ndarray of shape (n_samples, n_classes)
             The predicted log-probability of the sample for each class
             in the model, where classes are ordered as they are in
             `self.classes_`. Equivalent to log(predict_proba(X))
@@ -1059,12 +1092,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        y_prob : array-like, shape (n_samples, n_classes)
+        y_prob : ndarray of shape (n_samples, n_classes)
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
@@ -1090,11 +1123,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     Parameters
     ----------
-    hidden_layer_sizes : tuple, length = n_layers - 2, default (100,)
+    hidden_layer_sizes : tuple, length = n_layers - 2, default=(100,)
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default='relu'
         Activation function for the hidden layer.
 
         - 'identity', no-op activation, useful to implement linear bottleneck,
@@ -1109,7 +1142,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    solver : {'lbfgs', 'sgd', 'adam'}, default 'adam'
+    solver : {'lbfgs', 'sgd', 'adam'}, default='adam'
         The solver for weight optimization.
 
         - 'lbfgs' is an optimizer in the family of quasi-Newton methods.
@@ -1125,15 +1158,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
-    alpha : float, optional, default 0.0001
+    alpha : float, default=0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 'auto'
+    batch_size : int, default='auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
-    learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
+    learning_rate : {'constant', 'invscaling', 'adaptive'}, default='constant'
         Learning rate schedule for weight updates.
 
         - 'constant' is a constant learning rate given by
@@ -1151,55 +1184,56 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         Only used when solver='sgd'.
 
-    learning_rate_init : double, optional, default 0.001
+    learning_rate_init : double, default=0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
 
-    power_t : double, optional, default 0.5
+    power_t : double, default=0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
 
-    max_iter : int, optional, default 200
+    max_iter : int, default=200
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations. For stochastic
         solvers ('sgd', 'adam'), note that this determines the number of epochs
         (how many times each data point will be used), not the number of
         gradient steps.
 
-    shuffle : bool, optional, default True
+    shuffle : bool, default=True
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
 
-    random_state : int, RandomState instance or None, optional, default None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for weights and bias
+        initialization, train-test split if early stopping is used, and batch
+        sampling when solver='sgd' or 'adam'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    tol : float, optional, default 1e-4
+    tol : float, default=1e-4
         Tolerance for the optimization. When the loss or score is not improving
         by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
         unless ``learning_rate`` is set to 'adaptive', convergence is
         considered to be reached and training stops.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    momentum : float, default 0.9
+    momentum : float, default=0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default True
+    nesterovs_momentum : boolean, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
-    early_stopping : bool, default False
+    early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
@@ -1207,29 +1241,29 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
-    validation_fraction : float, optional, default 0.1
+    validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
-    beta_1 : float, optional, default 0.9
+    beta_1 : float, default=0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
 
-    beta_2 : float, optional, default 0.999
+    beta_2 : float, default=0.999
         Exponential decay rate for estimates of second moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
 
-    epsilon : float, optional, default 1e-8
+    epsilon : float, default=1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
-    n_iter_no_change : int, optional, default 10
+    n_iter_no_change : int, default=10
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'
 
         .. versionadded:: 0.20
 
-    max_fun : int, optional, default 15000
+    max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
         The solver iterates until convergence (determined by 'tol'), number
         of iterations reaches max_iter, or this number of function calls.
@@ -1263,6 +1297,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(n_samples=200, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=1)
+    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
+    >>> regr.predict(X_test[:2])
+    array([-0.9..., -7.1...])
+    >>> regr.score(X_test, y_test)
+    0.4...
+
     Notes
     -----
     MLPRegressor trains iteratively since at each time step
@@ -1292,7 +1340,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
@@ -1321,12 +1370,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
         Returns
         -------
-        y : array-like, shape (n_samples, n_outputs)
+        y : ndarray of shape (n_samples, n_outputs)
             The predicted values.
         """
         check_is_fitted(self)
@@ -1336,8 +1385,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
