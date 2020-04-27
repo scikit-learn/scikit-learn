@@ -163,30 +163,32 @@ def test_display_estimator_pipeline():
         assert (f"<div class=\"sk-toggleable__content\">"
                 f"<pre>{str(est)}") in html_output
 
-    assert str(num_trans['pass']) in html_output
-    assert 'passthrough</label>' in html_output
-    assert str(num_trans['imputer']) in html_output
+    # low level estimators do not show changes
+    with config_context(print_changed_only=True):
+        assert str(num_trans['pass']) in html_output
+        assert 'passthrough</label>' in html_output
+        assert str(num_trans['imputer']) in html_output
 
-    for _, _, cols in preprocess.transformers:
-        assert f"<pre>{cols}</pre>" in html_output
+        for _, _, cols in preprocess.transformers:
+            assert f"<pre>{cols}</pre>" in html_output
 
-    # feature union
-    for name, _ in feat_u.transformer_list:
-        assert f"<label>{name}</label>" in html_output
+        # feature union
+        for name, _ in feat_u.transformer_list:
+            assert f"<label>{name}</label>" in html_output
 
-    pca = feat_u.transformer_list[0][1]
-    assert f"<pre>{str(pca)}</pre>" in html_output
+        pca = feat_u.transformer_list[0][1]
+        assert f"<pre>{str(pca)}</pre>" in html_output
 
-    tsvd = feat_u.transformer_list[1][1]
-    first = tsvd['first']
-    select = tsvd['select']
-    assert f"<pre>{str(first)}</pre>" in html_output
-    assert f"<pre>{str(select)}</pre>" in html_output
+        tsvd = feat_u.transformer_list[1][1]
+        first = tsvd['first']
+        select = tsvd['select']
+        assert f"<pre>{str(first)}</pre>" in html_output
+        assert f"<pre>{str(select)}</pre>" in html_output
 
-    # voting classifer
-    for name, est in clf.estimators:
-        assert f"<label>{name}</label>" in html_output
-        assert f"<pre>{str(est)}</pre>" in html_output
+        # voting classifer
+        for name, est in clf.estimators:
+            assert f"<label>{name}</label>" in html_output
+            assert f"<pre>{str(est)}</pre>" in html_output
 
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVC()])
@@ -224,8 +226,10 @@ def test_birch_duck_typing_meta():
     birch = Birch(n_clusters=AgglomerativeClustering(n_clusters=3))
     html_output = estimator_repr_html(birch)
 
-    assert f"<pre>{str(birch.n_clusters)}" in html_output
-    assert "AgglomerativeClustering</label>" in html_output
+    # inner estimators do not show changes
+    with config_context(print_changed_only=True):
+        assert f"<pre>{str(birch.n_clusters)}" in html_output
+        assert "AgglomerativeClustering</label>" in html_output
 
     # outer estimator contains all changes
     assert f"<pre>{str(birch)}" in html_output
@@ -236,8 +240,10 @@ def test_ovo_classifier_duck_typing_meta():
     ovo = OneVsOneClassifier(LinearSVC(penalty='l1'))
     html_output = estimator_repr_html(ovo)
 
-    assert f"<pre>{str(ovo.estimator)}" in html_output
-    assert "LinearSVC</label>" in html_output
+    # inner estimators do not show changes
+    with config_context(print_changed_only=True):
+        assert f"<pre>{str(ovo.estimator)}" in html_output
+        assert "LinearSVC</label>" in html_output
 
     # outter estimator
     assert f"<pre>{str(ovo)}" in html_output

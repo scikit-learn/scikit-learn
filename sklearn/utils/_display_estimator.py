@@ -1,3 +1,4 @@
+from sklearn import config_context
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO
@@ -104,7 +105,11 @@ def _write_estimator_html(out, estimator, estimator_label,
                           estimator_label_details, first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
-    est_block = _get_visual_block(estimator)
+    if first_call:
+        est_block = _get_visual_block(estimator)
+    else:
+        with config_context(print_changed_only=True):
+            est_block = _get_visual_block(estimator)
 
     if est_block.kind in ('serial', 'parallel'):
         dashed_wrapped = first_call or est_block.dash_wrapped
