@@ -246,17 +246,13 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance and
-:func:`~sklearn.utils.check_estimator.check_estimator_class` on the class. The
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
 :func:`~sklearn.utils.parametrize_with_checks` pytest decorator can also be
-used to generate the instance checks (see its docstring for details and
-possible interactions with `pytest`)::
+used (see its docstring for details and possible interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
-  >>> from sklearn.utils.estimator_checks import check_estimator_class
   >>> from sklearn.svm import LinearSVC
   >>> check_estimator(LinearSVC())  # passes
-  >>> check_estimator_class(LinearSVC)  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and

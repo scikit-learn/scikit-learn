@@ -392,8 +392,7 @@ def parametrize_with_checks(estimators):
 
         .. deprecated:: 0.23
            Passing a class is deprecated from version 0.23, and won't be
-           supported in 0.25. Pass an instance instead, and call
-           `check_class` separately to check the class.
+           supported in 0.24. Pass an instance instead.
 
     Returns
     -------
@@ -414,12 +413,10 @@ def parametrize_with_checks(estimators):
     import pytest
 
     if any(isinstance(est, type) for est in estimators):
-        # TODO: remove class support in 0.25 and update docstrings telling
-        # users to use check_class as well
+        # TODO: remove class support in 0.24 and update docstrings
         msg = ("Passing a class is deprecated since version 0.23 "
-               "and won't be supported in 0.25."
-               "Please pass an instance instead and call "
-               "check_class separately on the class.")
+               "and won't be supported in 0.24."
+               "Please pass an instance instead.")
         warnings.warn(msg, FutureWarning)
 
     checks_generator = chain.from_iterable(
@@ -448,8 +445,7 @@ def check_estimator(Estimator, generate_only=False):
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options. However,
     support for classes is deprecated since version 0.23 and will be removed
-    in version 0.25. Class checks can instead be run using
-    `~sklearn.utils.estimator_checks.check_class`.
+    in version 0.24 (classe checks will still be run on the instances).
 
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
@@ -467,8 +463,7 @@ def check_estimator(Estimator, generate_only=False):
 
         .. deprecated:: 0.23
            Passing a class is deprecated from version 0.23, and won't be
-           supported in 0.25. Pass an instance instead, and call
-           `check_class` separately to check the class.
+           supported in 0.24. Pass an instance instead.
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -484,14 +479,12 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
-    # TODO: remove class support in 0.25 and update docstrings telling users to
-    # use check_class as well
+    # TODO: remove class support in 0.24 and update docstrings
     if isinstance(Estimator, type):
         # got a class
         msg = ("Passing a class is deprecated since version 0.23 "
-               "and won't be supported in 0.25."
-               "Please pass an instance instead and call "
-               "check_class separately on the class.")
+               "and won't be supported in 0.24."
+               "Please pass an instance instead.")
         warnings.warn(msg, FutureWarning)
 
         checks_generator = _generate_class_checks(Estimator)
@@ -511,27 +504,6 @@ def check_estimator(Estimator, generate_only=False):
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
             warnings.warn(str(exception), SkipTestWarning)
-
-
-def check_estimator_class(Estimator):
-    """Check if an estimator class adheres to scikit-learn conventions.
-
-    This check suite should be used along with
-    `~sklearn.utils.estimator_checks.check_estimator` to also check the
-    estimator instance. Using `check_class` alone or `check_estimator` alone
-    isn't sufficient for full compatibility.
-
-    Parameters
-    ----------
-    Estimator : class
-        Estimator class to check.
-    """
-    if isinstance(Estimator, BaseEstimator):
-        raise ValueError("check_estimator_class() expects a Class object "
-                         "to be passed. "
-                         "It looks like you passed an estimator instance. "
-                         "You should use check_estimator for instances.")
-    check_parameters_default_constructible(Estimator.__name__, Estimator)
 
 
 def _boston_subset(n_samples=200):
@@ -2623,13 +2595,16 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-# TODO: This check can probably be removed in 0.25 since _generate_class_checks
-# should be removed too, and this is the only class-specific check. Maybe this
-# should just become the body of check_estimator_class() instead.
 def check_parameters_default_constructible(name, Estimator):
     # this check works on classes, not instances
     # test default-constructibility
     # get rid of deprecation warnings
+    if isinstance(Estimator, BaseEstimator):
+        # Convert estimator instance to its class
+        # TODO: Always convert to class in 0.24, because check_estimator() will
+        # only accept instances, not classes
+        Estimator = Estimator.__class__
+
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
         # test cloning
