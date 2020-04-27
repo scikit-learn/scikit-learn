@@ -1820,7 +1820,7 @@ class MultiTaskElasticNet(Lasso):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as a Fortran-contiguous numpy arrays.
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
@@ -2008,7 +2008,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as a Fortran-contiguous numpy arrays.
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
@@ -2186,7 +2186,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as a Fortran-contiguous numpy arrays.
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     path = staticmethod(enet_path)
 
@@ -2358,7 +2358,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X and y arguments of the fit
-    method should be directly passed as a Fortran-contiguous numpy arrays.
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     path = staticmethod(lasso_path)
 
