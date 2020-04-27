@@ -25,7 +25,7 @@ from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
-from ._display_estimator import estimator_repr_html
+from ._estimator_html_repr import estimator_repr_html
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,

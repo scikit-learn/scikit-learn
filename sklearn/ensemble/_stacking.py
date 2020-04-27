@@ -13,7 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
-from ..utils._display_estimator import _VisualBlock
+from ..utils._estimator_html_repr import _VisualBlock
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble

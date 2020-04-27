@@ -1,8 +1,10 @@
-from sklearn import config_context
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO
 import uuid
+import html
+
+from sklearn import config_context
 
 
 class _VisualBlock:
@@ -98,7 +100,7 @@ def _get_visual_block(estimator):
 
     return _VisualBlock('single', estimator,
                         names=estimator.__class__.__name__,
-                        name_details=str(estimator))
+                        name_details=html.escape(str(estimator), quote=False))
 
 
 def _write_estimator_html(out, estimator, estimator_label,
@@ -302,7 +304,8 @@ def estimator_repr_html(estimator):
                   f'<head><style>{_STYLE}</style></head><body>'
                   f'<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
-                              str(estimator), first_call=True)
+                              html.escape(str(estimator), quote=False),
+                              first_call=True)
         out.write('</div></div></body></html>')
 
         html_output = out.getvalue()

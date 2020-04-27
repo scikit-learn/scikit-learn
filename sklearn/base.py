@@ -21,7 +21,7 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from .utils._display_estimator import estimator_repr_html
+from .utils._estimator_html_repr import estimator_repr_html
 from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {

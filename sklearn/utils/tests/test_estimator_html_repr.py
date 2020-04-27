@@ -25,9 +25,9 @@ from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RationalQuadratic
-from sklearn.utils._display_estimator import _write_label_html
-from sklearn.utils._display_estimator import _get_visual_block
-from sklearn.utils._display_estimator import estimator_repr_html
+from sklearn.utils._estimator_html_repr import _write_label_html
+from sklearn.utils._estimator_html_repr import _get_visual_block
+from sklearn.utils._estimator_html_repr import estimator_repr_html
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -120,7 +120,7 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (['num1', 'num2'], [0, 3])
 
 
-def test_display_estimator_pipeline():
+def test_estimator_html_repr_pipeline():
     num_trans = Pipeline(steps=[
         ('pass', 'passthrough'),
         ('imputer', SimpleImputer(strategy='median'))
