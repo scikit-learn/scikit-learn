@@ -451,7 +451,7 @@ class BaseEstimator:
         repr_html = get_config()["repr_html"]
         if repr_html:
             return estimator_repr_html(self)
-        return repr(self)
+        return f"<code>{repr(self)}</code>"
 
 
 class ClassifierMixin:
