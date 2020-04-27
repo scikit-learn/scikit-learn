@@ -14,6 +14,20 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
+Enforcing keyword-only arguments
+--------------------------------
+
+In an effort to promote clear and non-ambiguous use of the library, most
+constructor and function parameters are now expected to be passed as keyword
+arguments (i.e. using the `param=value` syntax) instead of positional. To
+ease the transition, a `FutureWarning` is raised if a keyword-only parameter
+is used as positional. In version 0.25, these parameters will be strictly
+keyword-only, and a `TypeError` will be raised.
+:issue:`15005` by `Joel Nothman`_, `Adrin Jalali`_, `Thomas Fan`_, and
+`Nicolas Hug`_. See `SLEP009
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
+for more details.
+
 Changed models
 --------------
 
@@ -201,6 +215,9 @@ Changelog
   raise `invalid value encountered in multiply` during `fit`.
   :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
 
+- |Feature| Added `n_components_` attribute to :class:'decomposition.SparsePCA'
+  and :class:'MiniBatchSparsePCA'. :pr:'16981' by :user:'Mateusz Górski <Reksbril>'
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -383,6 +400,12 @@ Changelog
   or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
+- |API| From version 0.25, :func:`metrics.pairwise.pairwise_distances` will no
+  longer automatically compute the ``VI`` parameter for Mahalanobis distance
+  and the ``V`` parameter for seuclidean distance if ``Y`` is passed. The user
+  will be expected to compute this parameter on the training data of their
+  choice and pass it to `pairwise_distances`. :pr:`16993` by `Joel Nothman`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -511,6 +534,11 @@ Changelog
   matrix from a pandas DataFrame that contains only `SparseArray`s.
   :pr:`16728` by `Thomas Fan`_.
 
+- |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
+  :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
+  and support for classes will be removed in 0.24. Pass instances instead.
+  :pr:`17032` by `Nicolas Hug`_.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -536,11 +564,13 @@ Miscellaneous
   error message is raised when y was expected but None was passed.
   :pr:`16622` by `Nicolas Hug`_.
 
-- |API| Most constructor and function parameters are now expected to be passed
-  as a keyword and not positional. :issue:`15005` by `Joel Nothman`_,
-  `Adrin Jalali`_, `Thomas Fan`_, and `Nicolas Hug`_. See `SLEP009
-  <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
-  for more details.
+- |API| The default setting `print_changed_only` has been changed from False
+  to True. This means that the `repr` of estimators is now more concise and
+  only shows the parameters whose default value has been changed when
+  printing an estimator. You can restore the previous behaviour by using
+  `sklearn.set_config(print_changed_only=False)`. Also, note that it is
+  always possible to quickly inspect the parameters of any estimator using
+  `est.get_params(deep=False)`. :pr:`17061` by `Nicolas Hug`_.
 
 Code and Documentation Contributors
 -----------------------------------
