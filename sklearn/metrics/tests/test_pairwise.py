@@ -1285,7 +1285,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
         if y_is_x:
             warn_checker = pytest.warns(None)
         else:
-            warn_checker = pytest.warns(DeprecationWarning,
+            warn_checker = pytest.warns(FutureWarning,
                                         match="to be specified if Y is passed")
         with warn_checker:
             dist = np.vstack(tuple(dist_function(X, Y,
