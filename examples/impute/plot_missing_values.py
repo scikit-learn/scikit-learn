@@ -39,7 +39,7 @@ print(__doc__)
 # First we download the two datasets. Diabetes dataset is shipped with
 # scikit-learn. It has 442 entries, each with 10 features. California Housing
 # dataset is much larger with 20640 entries and 8 features. It needs to be
-# downloaded. We will only use the first 500 entries for the sake of speeding
+# downloaded. We will only use the first 400 entries for the sake of speeding
 # up the calculations but feel free to use the whole dataset.
 #
 
@@ -53,8 +53,8 @@ rng = np.random.RandomState(42)
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_california, y_california = fetch_california_housing(return_X_y=True)
-X_california = X_california[:500]
-y_california = y_california[:500]
+X_california = X_california[:400]
+y_california = y_california[:400]
 
 
 def add_missing_values(X_full, y_full):
