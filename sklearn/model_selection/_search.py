@@ -683,7 +683,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
-        return_all_estimators = self.return_all_estimators
 
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
@@ -778,7 +777,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 refit_end_time = time.time()
                 self.refit_time_ += refit_end_time - refit_start_time
                 estimators.append(estimator)
-            if return_all_estimators:
+            if self.return_all_estimators:
                 self.best_estimator_ = estimators[self.best_index_]
             else:
                 self.best_estimator_ = estimators[0]
