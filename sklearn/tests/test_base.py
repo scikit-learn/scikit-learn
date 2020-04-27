@@ -211,10 +211,10 @@ def test_repr():
     test = T(K(), K())
     assert (
         repr(test) ==
-        "T(a=K(c=None, d=None), b=K(c=None, d=None))")
+        "T(a=K(), b=K())")
 
     some_est = T(a=["long_params"] * 1000)
-    assert len(repr(some_est)) == 495
+    assert len(repr(some_est)) == 485
 
 
 def test_str():
