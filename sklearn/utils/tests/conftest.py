@@ -3,8 +3,8 @@ import pytest
 import sklearn
 
 
-@pytest.fixture(scope='function')
-def print_changed_only_setter(value):
-    sklearn.set_config(print_changed_only=value)
+@pytest.fixture
+def print_changed_only_false():
+    sklearn.set_config(print_changed_only=False)
     yield
-    sklearn.set_config(print_changed_only=None)  # reset to default
+    sklearn.set_config(print_changed_only=True)  # reset to default

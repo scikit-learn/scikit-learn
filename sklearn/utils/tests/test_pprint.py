@@ -174,9 +174,7 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-import pytest
-@pytest.mark.parametrize('value', [False])
-def test_basic(print_changed_only_setter):
+def test_basic(print_changed_only_false):
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
@@ -190,9 +188,8 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
     assert lr.__repr__() == expected
 
 
-@pytest.mark.parametrize('value', [True])
-def test_changed_only(print_changed_only_setter):
-    # Make sure the changed_only param is correctly used
+def test_changed_only():
+    # Make sure the changed_only param is correctly used when True (default)
     lr = LogisticRegression(C=99)
     expected = """LogisticRegression(C=99)"""
     assert lr.__repr__() == expected
@@ -219,8 +216,7 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
 
-@pytest.mark.parametrize('value', [False])
-def test_pipeline(print_changed_only_setter):
+def test_pipeline(print_changed_only_false):
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -241,8 +237,7 @@ Pipeline(memory=None,
     assert pipeline.__repr__() == expected
 
 
-@pytest.mark.parametrize('value', [False])
-def test_deeply_nested(print_changed_only_setter):
+def test_deeply_nested(print_changed_only_false):
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -279,8 +274,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
-@pytest.mark.parametrize('value', [False])
-def test_gridsearch(print_changed_only_setter):
+def test_gridsearch(print_changed_only_false):
     # render a gridsearch
     param_grid = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                    'C': [1, 10, 100, 1000]},
@@ -305,8 +299,7 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-@pytest.mark.parametrize('value', [False])
-def test_gridsearch_pipeline(print_changed_only_setter):
+def test_gridsearch_pipeline(print_changed_only_false):
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -376,8 +369,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     assert repr_ == expected
 
 
-@pytest.mark.parametrize('value', [False])
-def test_n_max_elements_to_show(print_changed_only_setter):
+def test_n_max_elements_to_show(print_changed_only_false):
 
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
@@ -466,8 +458,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
 
-@pytest.mark.parametrize('value', [False])
-def test_bruteforce_ellipsis(print_changed_only_setter):
+def test_bruteforce_ellipsis(print_changed_only_false):
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
