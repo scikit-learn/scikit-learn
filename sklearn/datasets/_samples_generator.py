@@ -1164,7 +1164,7 @@ def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
 
 
 @_deprecate_positional_args
-def make_sparse_coded_signal(n_samples, n_components, *, n_features,
+def make_sparse_coded_signal(n_samples, *, n_components, n_features,
                              n_nonzero_coefs, random_state=None):
     """Generate a signal as a sparse combination of dictionary elements.
 
