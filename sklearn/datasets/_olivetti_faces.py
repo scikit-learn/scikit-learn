@@ -77,15 +77,21 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     Returns
     -------
-    bunch : Bunch object with the following attributes:
-        - data: ndarray, shape (400, 4096). Each row corresponds to a ravelled
-          face image of original size 64 x 64 pixels.
-        - images : ndarray, shape (400, 64, 64). Each row is a face image
-          corresponding to one of the 40 subjects of the dataset.
-        - target : ndarray, shape (400,). Labels associated to each face image.
-          Those labels are ranging from 0-39 and correspond to the
-          Subject IDs.
-        - DESCR : string. Description of the modified Olivetti Faces Dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data: ndarray, shape (400, 4096)
+            Each row corresponds to a ravelled
+            face image of original size 64 x 64 pixels.
+        images : ndarray, shape (400, 64, 64)
+            Each row is a face image
+            corresponding to one of the 40 subjects of the dataset.
+        target : ndarray, shape (400,)
+            Labels associated to each face image.
+            Those labels are ranging from 0-39 and correspond to the
+            Subject IDs.
+        DESCR : str
+            Description of the modified Olivetti Faces Dataset.
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22

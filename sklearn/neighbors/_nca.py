@@ -22,8 +22,8 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import (check_is_fitted, check_array, check_X_y,
-                                check_scalar)
+from ..utils.validation import check_is_fitted, check_array, check_scalar
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -162,7 +162,8 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_components=None, init='auto', warm_start=False,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, verbose=0,
                  random_state=None):
         self.n_components = n_components
@@ -300,7 +301,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -521,3 +522,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
+
+    def _more_tags(self):
+        return {'requires_y': True}

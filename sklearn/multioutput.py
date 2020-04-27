@@ -25,7 +25,7 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params)
+                               _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
 from .utils import deprecated
 
@@ -64,7 +64,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                             metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -152,9 +153,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = check_X_y(X, y,
-                         multi_output=True,
-                         accept_sparse=True)
+        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -231,14 +230,28 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
-    """
 
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_linnerud
+    >>> from sklearn.multioutput import MultiOutputRegressor
+    >>> from sklearn.linear_model import Ridge
+    >>> X, y = load_linnerud(return_X_y=True)
+    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> clf.predict(X[[0]])
+    array([[176..., 35..., 57...]])
+    """
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -286,6 +299,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     classes_ : array, shape = (n_classes,)
@@ -306,9 +322,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
@@ -353,6 +369,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+            .. versionchanged:: 0.19
+                This function now returns a list of arrays where the length of
+                the list is ``n_outputs``, and each array is (``n_samples``,
+                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
@@ -400,7 +421,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, order=None, cv=None,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
@@ -423,7 +446,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
         """
-        X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
+        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
@@ -679,6 +702,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <regressorchain>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------

@@ -19,7 +19,7 @@ import warnings
 from joblib import Parallel, delayed
 
 from collections import defaultdict
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
@@ -299,7 +299,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     cluster_centers_ : array, [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels_ :
+    labels_ : array of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int
@@ -346,7 +346,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
     Machine Intelligence. 2002. pp. 603-619.
 
     """
-    def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
+    @_deprecate_positional_args
+    def __init__(self, *, bandwidth=None, seeds=None, bin_seeding=False,
                  min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
         self.bandwidth = bandwidth
         self.seeds = seeds
@@ -367,7 +368,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         y : Ignored
 
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)

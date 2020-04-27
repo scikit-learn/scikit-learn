@@ -9,7 +9,6 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import SkipTest
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 
@@ -252,6 +251,17 @@ def test_wrong_shape():
     data = np.arange(27).reshape((3, 3, 3))
     with pytest.raises(ValueError):
         model.fit(data)
+
+
+@pytest.mark.parametrize('est',
+                         (SpectralBiclustering(), SpectralCoclustering()))
+def test_n_features_in_(est):
+
+    X, _, _ = make_biclusters((3, 3), 3, random_state=0)
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X)
+    assert est.n_features_in_ == 3
 
 
 @pytest.mark.parametrize("klass", [SpectralBiclustering, SpectralCoclustering])
