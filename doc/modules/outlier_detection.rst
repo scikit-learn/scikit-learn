@@ -98,7 +98,7 @@ Outlier Factor (LOF) does not show a decision boundary in black as it
 has no predict method to be applied on new data when it is used for outlier
 detection.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
    :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
    :align: center
    :scale: 50

@@ -35,7 +35,7 @@ However, prediction of 100000 target values is more than three times faster
 with :class:`~sklearn.svm.SVR` since it has learned a sparse model using only
 approximately 1/3 of the 100 training datapoints as support vectors.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_ridge_regression_001.png
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_kernel_ridge_regression_001.png
    :target: ../auto_examples/miscellaneous/plot_kernel_ridge_regression.html
    :align: center
 
@@ -51,7 +51,7 @@ prediction time depends on the parameters :math:`\epsilon` and :math:`C` of
 the :class:`~sklearn.svm.SVR`; :math:`\epsilon = 0` would correspond to a
 dense model.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_ridge_regression_002.png
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_kernel_ridge_regression_002.png
    :target: ../auto_examples/miscellaneous/plot_kernel_ridge_regression.html
    :align: center
 

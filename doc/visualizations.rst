@@ -24,7 +24,7 @@ ROC curve for a fitted support vector machine:
 
     svc_disp = plot_roc_curve(svc, X_test, y_test)
 
-.. figure:: auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_001.png
+.. figure:: auto_examples/miscellaneous/images/sphx_glr_plot_roc_curve_visualization_api_001.png
     :target: auto_examples/miscellaneous/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
@@ -48,7 +48,7 @@ method of the `Display` object.
     rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
     svc_disp.plot(ax=ax, alpha=0.8)
 
-.. figure:: auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_002.png
+.. figure:: auto_examples/miscellaneous/images/sphx_glr_plot_roc_curve_visualization_api_002.png
     :target: auto_examples/miscellaneous/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
