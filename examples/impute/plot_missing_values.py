@@ -96,10 +96,9 @@ from sklearn.ensemble import RandomForestRegressor
 
 # To use the experimental IterativeImputer, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import (SimpleImputer, KNNImputer, IterativeImputer,
-                            MissingIndicator)
+from sklearn.impute import SimpleImputer, KNNImputer, IterativeImputer
 from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline, make_union
+from sklearn.pipeline import make_pipeline
 
 
 N_SPLITS = 5
@@ -108,16 +107,14 @@ regressor = RandomForestRegressor(random_state=0)
 ###############################################################################
 # Missing information
 # -------------------
-# In addition to imputing the missing values, we can also mark the values
-# that were missing using :func:`sklearn.impute.MissingIndicator`, which
+# In addition to imputing the missing values, the imputers have an
+# `add_indicator` parameter that marks the values that were missing, which
 # might carry some information.
 #
 
 
 def get_scores_for_imputer(imputer, X_missing, y_missing):
-    estimator = make_pipeline(
-        make_union(imputer, MissingIndicator(missing_values=np.nan)),
-        regressor)
+    estimator = make_pipeline(imputer, regressor)
     impute_scores = cross_val_score(estimator, X_missing, y_missing,
                                     scoring='neg_mean_squared_error',
                                     cv=N_SPLITS)
@@ -166,8 +163,7 @@ mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 def get_impute_zero_score(X_missing, y_missing):
 
     imputer = SimpleImputer(missing_values=np.nan, add_indicator=True,
-                            strategy='constant',
-                            fill_value=0)
+                            strategy='constant', fill_value=0)
     zero_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return zero_impute_scores.mean(), zero_impute_scores.std()
 
@@ -229,8 +225,7 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
 
 def get_impute_iterative(X_missing, y_missing):
     imputer = IterativeImputer(missing_values=np.nan, add_indicator=True,
-                               random_state=0,
-                               n_nearest_features=5,
+                               random_state=0, n_nearest_features=5,
                                sample_posterior=True)
     iterative_impute_scores = get_scores_for_imputer(imputer,
                                                      X_missing,
