@@ -513,7 +513,7 @@ Changelog
 
 - |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
-  and support for classe will be removed in 0.24. Pass instances instead.
+  and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
 
 :mod:`sklearn.cluster`
