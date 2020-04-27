@@ -186,7 +186,7 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
 # or unweighted mean of the desired number of nearest neighbors.
 
 def get_impute_knn_score(X_missing, y_missing):
-    imputer = KNNImputer(missing_values=np.nan)
+    imputer = KNNImputer(missing_values=np.nan, add_indicator=True)
     knn_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return knn_impute_scores.mean(), knn_impute_scores.std()
 
