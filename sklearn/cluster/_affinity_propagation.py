@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import re
 import warnings
 
 from ..exceptions import ConvergenceWarning
@@ -43,14 +44,14 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     S : array-like, shape (n_samples, n_samples)
         Matrix of similarities between points
 
-    preference : array-like, shape (n_samples,) or float, optional
+    preference : array-like, shape (n_samples,), float or string, optional
         Preferences for each point - points with larger values of
-        preferences are more likely to be chosen as exemplars. The number of
-        exemplars, i.e. of clusters, is influenced by the input preferences
-        value. If the preferences are not passed as arguments, they will be
-        set to the median of the input similarities (resulting in a moderate
-        number of clusters). For a smaller amount of clusters, this can be set
-        to the minimum value of the similarities.
+        preferences are more likely to be chosen as exemplars. Given a
+        percentile string, the preference will be set to the percentile of
+        the similarities. The number of exemplars, i.e. of clusters,
+        is influenced by the input preferences value. If the preferences are
+        not passed as arguments, they will be set to the median of
+        the input similarities.
 
     convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
@@ -110,6 +111,17 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     if S.shape[0] != S.shape[1]:
         raise ValueError("S must be a square array (shape=%s)" % repr(S.shape))
+
+    if isinstance(preference, str):
+        pattern = re.compile('\\d*(|\\.|\\.\\d+)%')
+        if pattern.match(preference):
+            preference_percentile = float(preference.strip('%'))
+            if preference_percentile < 0 or preference_percentile > 100:
+                raise ValueError('preference string must be >= 0% and =< 100%')
+            else:
+                preference = np.percentile(S, preference_percentile)
+        else:
+            raise ValueError('preference string must be valid percentile')
 
     if preference is None:
         preference = np.median(S)
