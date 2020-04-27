@@ -56,9 +56,9 @@ The disadvantages of decision trees include:
 
     - Decision-tree learners can create over-complex trees that do not
       generalise the data well. This is called overfitting. Mechanisms
-      such as pruning (not currently supported), setting the minimum
-      number of samples required at a leaf node or setting the maximum
-      depth of the tree are necessary to avoid this problem.
+      such as pruning, setting the minimum number of samples required
+      at a leaf node or setting the maximum depth of the tree are
+      necessary to avoid this problem.
 
     - Decision trees can be unstable because small variations in the
       data might result in a completely different tree being generated.
@@ -124,10 +124,10 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, y)
 
-Once trained, you can plot the tree with the plot_tree function::
+Once trained, you can plot the tree with the :func:`plot_tree` function::
 
 
-    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
+    >>> tree.plot_tree(clf) # doctest: +SKIP
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
    :target: ../auto_examples/tree/plot_iris_dtc.html
@@ -137,10 +137,7 @@ Once trained, you can plot the tree with the plot_tree function::
 We can also export the tree in `Graphviz
 <https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries
-
-and the python package can be installed with
-
-    conda install python-graphviz
+and the python package can be installed with `conda install python-graphviz`.
 
 Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
 and the Python wrapper installed from pypi with `pip install graphviz`.
@@ -188,7 +185,7 @@ of external libraries and is more compact:
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree.export import export_text
+    >>> from sklearn.tree import export_text
     >>> iris = load_iris()
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
     >>> decision_tree = decision_tree.fit(iris.data, iris.target)
