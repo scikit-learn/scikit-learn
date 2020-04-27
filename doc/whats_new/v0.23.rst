@@ -523,7 +523,13 @@ Changelog
   :pr:`16728` by `Thomas Fan`_.
 
 - |Enhancement| :func:`utils.validation.check_array` supports pandas
-  IntegerArray with nan values. :pr:`16508` by `Thomas Fan`_.
+  IntegerArray when `force_all_finite` is set to `False` or `'allow-nan'`
+  in which case the data is converted to floating point values where `pd.NA`
+  values are replaced by `np.nan`. As a consequence, all
+  :mod:`sklearn.preprocessing` transformers that accept numeric inputs with
+  missing values represented as `np.nan` now also accepts being directly fed
+  pandas dataframes with `pd.Int* or `pd.Uint*` typed columns that use
+  `pd.NA` as a missing value marker. :pr:`16508` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
