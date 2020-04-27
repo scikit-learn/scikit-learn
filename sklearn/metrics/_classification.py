@@ -1744,7 +1744,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
     """Compute the balanced accuracy
 
     The balanced accuracy in binary and multiclass classification problems to
-    deal with imbalanced datasets. It is defined as the average of recall
+    deal with imbalanced datasets. It is defined as the average of accuracy
     obtained on each class.
 
     The best value is 1 and the worst value is 0 when ``adjusted=False``.
