@@ -564,6 +564,14 @@ Miscellaneous
   error message is raised when y was expected but None was passed.
   :pr:`16622` by `Nicolas Hug`_.
 
+- |API| The default setting `print_changed_only` has been changed from False
+  to True. This means that the `repr` of estimators is now more concise and
+  only shows the parameters whose default value has been changed when
+  printing an estimator. You can restore the previous behaviour by using
+  `sklearn.set_config(print_changed_only=False)`. Also, note that it is
+  always possible to quickly inspect the parameters of any estimator using
+  `est.get_params(deep=False)`. :pr:`17061` by `Nicolas Hug`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
