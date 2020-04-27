@@ -1985,6 +1985,79 @@ def test_montonic_constraints():
         assert(np.min(y2 - y0) >= 0)
 
 
+def is_increasing(a):
+    return (np.diff(a) >= 0.0).all()
+
+
+def is_decreasing(a):
+    return (np.diff(a) <= 0.0).all()
+
+
+def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
+    # Flip values so that only need to check for increasing constraint
+    values = monotonic_cst * tree_.value
+
+    for i in range(tree_.node_count):
+        if tree_.feature[i] >= 0:
+            # Check monotonicity
+            i_left = tree_.children_left[i]
+            i_right = tree_.children_right[i]
+            assert(values[i_left] <= values[i_right])
+            val_middle = (values[i_left] + values[i_right]) / 2
+            # Check bounds
+            if tree_.feature[i_left] >= 0:
+                i_left_right = tree_.children_right[i_left]
+                assert(values[i_left_right] <= val_middle)
+            if tree_.feature[i_right] >= 0:
+                i_right_left = tree_.children_left[i_right]
+                assert(val_middle <= values[i_right_left])
+
+
+def assert_leaves_values_monotonic(tree, monotonic_cst):
+    leaf_values = []
+    for i in range(tree.node_count):
+        if tree.feature[i] < 0:
+            leaf_values.append(float(tree.value[i]))
+    if monotonic_cst == 1:
+        assert is_increasing(leaf_values)
+    elif monotonic_cst == -1:
+        assert is_decreasing(leaf_values)
+
+
+@pytest.mark.parametrize('monotonic_cst', (-1, 1))
+@pytest.mark.parametrize('seed', range(4))
+def test_nodes_values(monotonic_cst, seed):
+    # Adaptation from test_nodes_values in test_montonic_constraints.py
+    # Build a single tree with only one feature, and make sure the nodes
+    # values respect the monotonic constraints.
+
+    # Considering the following tree with a monotonic POS constraint, we
+    # should have:
+    #
+    #       root
+    #      /    \
+    #     5     10    # middle = 7.5
+    #    / \   / \
+    #   a  b  c  d
+    #
+    # a <= b <= middle <= c <= d (assert_children_values_monotonic_bounded)
+    # a <= b <= c <= d (assert_leaves_values_monotonic)
+    #
+    # The last one is a consequence of the first, but can't hurt to check
+
+    rng = np.random.RandomState(seed)
+    n_samples = 1000
+    n_features = 1
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    clf = DecisionTreeRegressor(monotonic_cst=[monotonic_cst])
+    clf.fit(X, y)
+
+    assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
+    assert_leaves_values_monotonic(clf.tree_, monotonic_cst)
+
+
 def test_classes_deprecated():
     X = [[0, 0], [2, 2], [4, 6], [10, 11]]
     y = [0.5, 2.5, 3.5, 5.5]
