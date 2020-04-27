@@ -834,6 +834,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
+        .. versionchanged:: 0.18
+            Added Elkan algorithm
+
     Attributes
     ----------
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
