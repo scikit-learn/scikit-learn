@@ -394,9 +394,6 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
 
-# Reduces the output of estimators
-sklearn.set_config(print_changed_only=True)
-
 # Used by custom extension: `custom_autosummary_new_suffix` to change the
 # suffix of the following functions. This works around the issue with
 # `sklearn.cluster.dbscan` overlapping with `klearn.cluster.DBSCAN`  on
