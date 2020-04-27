@@ -2448,7 +2448,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     # Otherwise pos_label is set to the greater label.
     # (differ from other functions to keep backward compatibility)
     if pos_label is None:
-        if labels.dtype.kind in ('O', 'U', 'S'):
+        if any(isinstance(label, str) for label in labels):
             raise ValueError("pos_label must be specified when y_true "
                              "contains strings.")
         elif (np.array_equal(labels, [0]) or

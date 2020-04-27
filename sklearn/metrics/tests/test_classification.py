@@ -2260,6 +2260,10 @@ def test_brier_score_loss():
     score2 = brier_score_loss(y_true, y_pred, pos_label="pos")
     assert score1 == pytest.approx(score2)
 
+    y_pred_num_obj = np.array([0, 1, 1, 0], dtype=object)
+    score3 = brier_score_loss(y_pred_num_obj, y_pred)
+    assert score1 == pytest.approx(score3)
+
 
 def test_balanced_accuracy_score_unseen():
     assert_warns_message(UserWarning, 'y_pred contains classes not in y_true',
