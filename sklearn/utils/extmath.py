@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg, sparse
+from scipy.sparse.linalg import LinearOperator
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
@@ -120,8 +121,8 @@ def safe_sparse_dot(a, b, dense_output=False):
 
     Parameters
     ----------
-    a : array or sparse matrix
-    b : array or sparse matrix
+    a : array or sparse matrix or LinearOperator
+    b : array or sparse matrix or LinearOperator
     dense_output : boolean, (default=False)
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
@@ -131,7 +132,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     dot_product : array or sparse matrix
         sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
     """
-    if a.ndim > 2 or b.ndim > 2:
+    if len(a.shape) > 2 or len(b.shape) > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
             # [i, j] @ [k, ..., l, m, n] -> [i, k, ..., l, n]
@@ -148,7 +149,10 @@ def safe_sparse_dot(a, b, dense_output=False):
         else:
             ret = np.dot(a, b)
     else:
-        ret = a @ b
+        if isinstance(b, LinearOperator) and not isinstance(a, LinearOperator):
+            ret = (b.T @ a.T).T
+        else:
+            ret = a @ b
 
     if (sparse.issparse(a) and sparse.issparse(b)
             and dense_output and hasattr(ret, "toarray")):
@@ -164,7 +168,7 @@ def randomized_range_finder(A, size, n_iter,
     Parameters
     ----------
     A : 2D array
-        The input data matrix
+        The input data matrix or LinearOperator
 
     size : integer
         Size of the return array
@@ -247,7 +251,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     Parameters
     ----------
-    M : ndarray or sparse matrix
+    M : ndarray or sparse matrix or LinearOperator
         Matrix to decompose
 
     n_components : int

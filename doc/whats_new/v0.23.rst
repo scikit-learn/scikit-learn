@@ -521,9 +521,15 @@ Changelog
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Feature| :func:`utils.extmath.randomized_svd` and 
+  :func:`utils.extmath.safe_dot_product` now accepts 
+  :class:`scipy.sparse.linalg.LinearOperator` as argument. 
+  :pr:`#16463` by :user:`Pavel V. Stishenko <Mazay0>`.
+
 - |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
   matrix from a pandas DataFrame that contains only `SparseArray`s.
   :pr:`16728` by `Thomas Fan`_.
+
 
 :mod:`sklearn.cluster`
 ......................

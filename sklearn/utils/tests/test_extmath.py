@@ -7,6 +7,7 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
+from scipy.sparse.linalg import LinearOperator
 from scipy import stats
 from scipy.special import expit
 
@@ -720,3 +721,52 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+class CustomLinearOperator(LinearOperator):
+    """
+        Since SciPy version 1.4.0 :func:`scipy.sparse.linalg.aslinearoperator`
+        should be used instead of this class. In earlier versions the
+        `LinearOperator` implementation do not have `_transpose()` method.
+    """
+    def __init__(self, M):
+        self.M = M
+        super(CustomLinearOperator, self).__init__(M.dtype, M.shape)
+
+    def _matvec(self, x):
+        return self.M @ x
+
+    def _transpose(self):
+        return CustomLinearOperator(self.M.T)
+
+
+def test_safe_sparse_dot_operator():
+    rng = np.random.RandomState(0)
+
+    # LinearOperator @ ndarray
+    A = rng.random_sample((10, 20))
+    B = rng.random_sample((20, 30))
+    expected = np.dot(A, B)
+    op = CustomLinearOperator(A)
+    actual = safe_sparse_dot(op, B)
+    assert_allclose(actual, expected)
+
+    # ndarray @ LinearOperator
+    A = rng.random_sample((10, 20))
+    B = rng.random_sample((20, 30))
+    expected = np.dot(A, B)
+
+    op = CustomLinearOperator(B)
+    actual = safe_sparse_dot(A, op)
+    assert_allclose(actual, expected)
+
+
+def test_randomized_svd_operator():
+    rng = np.random.RandomState(0)
+    A = rng.random_sample((10, 20))
+    op = CustomLinearOperator(A)
+    u1, s1, v1 = randomized_svd(A, 5, flip_sign=True, random_state=41)
+    u2, s2, v2 = randomized_svd(op, 5, flip_sign=True, random_state=41)
+    assert_almost_equal(u1, u2)
+    assert_almost_equal(s1, s2)
+    assert_almost_equal(v1, v2)
