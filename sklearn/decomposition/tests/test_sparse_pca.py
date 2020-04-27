@@ -213,7 +213,7 @@ def test_spca_error_unormalized_components(spca):
 @pytest.mark.parametrize("n_components", [None, 3])
 def test_spca_n_components_(spca, n_components):
     rng = np.random.RandomState(0)
-	n_samples, n_features = 12, 10
+    n_samples, n_features = 12, 10
     X = rng.randn(n_samples, n_features)
 
     model = SPCA(n_components=n_components).fit(X)
@@ -221,4 +221,4 @@ def test_spca_n_components_(spca, n_components):
     if n_components is not None:
         assert model.n_components_ == n_components
     else:
-        assert model.n_components_ == 10
+        assert model.n_components_ == n_features
