@@ -240,7 +240,7 @@ score_estimator(poisson, df_test)
 # over the :class:`preprocessing.OneHotEncoder` is that it will make training
 # faster.
 
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.preprocessing import OrdinalEncoder
 
