@@ -9,6 +9,10 @@ Version 0.23.0
 
 **In Development**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
+
 
 .. include:: changelog_legend.inc
 
@@ -109,6 +113,10 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`cluster.AgglomerativeCluClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 - |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
   :class:`cluster.SpectralCoclustering` and
@@ -510,13 +518,6 @@ Changelog
 - |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
   matrix from a pandas DataFrame that contains only `SparseArray`s.
   :pr:`16728` by `Thomas Fan`_.
-
-:mod:`sklearn.cluster`
-......................
-
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
-  distance matrix is not square and `affinity=precomputed`.
-  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 Miscellaneous
 .............
