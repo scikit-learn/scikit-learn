@@ -542,6 +542,11 @@ Miscellaneous
   <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep009/proposal.html>`_
   for more details.
 
+- |API| The default setting `print_changed_only` has been changed from False
+  to True. This means that the `repr` of estimators is now more concise and
+  only shows the parameters whose default value has been changed when
+  printing an estimator. :pr:`17061` by `Nicolas Hug`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
