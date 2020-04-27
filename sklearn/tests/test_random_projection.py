@@ -62,21 +62,21 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 # test on JL lemma
 ###############################################################################
 def test_invalid_jl_domain():
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, 0.5)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=1.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=0.0)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=-0.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, eps=0.5)
 
 
 def test_input_size_jl_min_dim():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim,
-                  3 * [100], 2 * [0.9])
+                  3 * [100], eps=2 * [0.9])
 
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
-                  2 * [0.9])
+                  eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
-                                  np.full((10, 10), 0.5))
+                                  eps=np.full((10, 10), 0.5))
 
 
 ###############################################################################

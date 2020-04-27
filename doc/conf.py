@@ -281,6 +281,11 @@ class SubSectionTitleOrder:
 
     def __call__(self, directory):
         src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+
+        # Forces Release Highlights to the top
+        if os.path.basename(src_path) == "release_highlights":
+            return "0"
+
         readme = os.path.join(src_path, "README.txt")
 
         try:
@@ -314,6 +319,7 @@ sphinx_gallery_conf = {
     },
     # avoid generating too many cross links
     'inspect_global_variables': False,
+    'remove_config_comments': True,
 }
 
 
