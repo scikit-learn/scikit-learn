@@ -11,6 +11,7 @@ import requests
 import getpass
 import time
 from pathlib import Path
+from os import path
 
 print("user:", file=sys.stderr)
 user = input()
@@ -18,7 +19,7 @@ passwd = getpass.getpass("Password or access token:\n")
 auth = (user, passwd)
 
 LOGO_URL = 'https://avatars2.githubusercontent.com/u/365630?v=4'
-REPO_FOLDER = Path(__file__).parent.parent
+REPO_FOLDER = Path(path.abspath(__file__)).parent.parent
 
 
 def get(url):
@@ -100,7 +101,6 @@ def get_profile(login):
         'Duchesnay': 'Edouard Duchesnay',
         'Lars': 'Lars Buitinck',
         'MechCoder': 'Manoj Kumar',
-        'jeremiedbb': 'Jérémie Du Boisberranger',
     }
     if profile["name"] in missing_names:
         profile["name"] = missing_names[profile["name"]]
