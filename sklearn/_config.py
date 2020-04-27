@@ -7,6 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': False,
+    'repr_html': False,
 }
 
 
@@ -27,7 +28,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None):
+               print_changed_only=None, repr_html=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -59,6 +60,12 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
+    repr_html : bool, optional
+        If True, estimators will be displayed with HTML in a jupyter lab or
+        notebook context.
+
+        .. versionadded:: 0.23
+
     See Also
     --------
     config_context: Context manager for global scikit-learn configuration
@@ -70,6 +77,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
+    if repr_html is not None:
+        _global_config['repr_html'] = repr_html
 
 
 @contextmanager
@@ -96,6 +105,12 @@ def config_context(**new_config):
         ``print(SVC())`` while True will only print 'SVC()' while the default
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
         all the non-changed parameters.
+
+    repr_html : bool, optional
+        If True, estimators will be displayed with HTML in a jupyter lab or
+        notebook context.
+
+        .. versionadded:: 0.23
 
     Notes
     -----

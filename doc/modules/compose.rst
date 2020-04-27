@@ -539,6 +539,7 @@ many estimators. An example of the HTML output can be seen below.
 
 .. display_estimator_repr_html::
 
+   from sklearn import config_context
    from sklearn.compose import ColumnTransformer
    from sklearn.pipeline import Pipeline
    from sklearn.impute import SimpleImputer
@@ -552,7 +553,7 @@ many estimators. An example of the HTML output can be seen below.
 
    categorical_features = ['embarked', 'sex', 'pclass']
    categorical_transformer = Pipeline(steps=[
-       ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
    preprocessor = ColumnTransformer(
@@ -562,13 +563,14 @@ many estimators. An example of the HTML output can be seen below.
 
    clf = Pipeline(steps=[('preprocessor', preprocessor),
                           ('classifier', LogisticRegression())])
-   clf
+   with config_context(repr_html=True):
+       clf
 
 As an alternative, the HTML can be written to a file using the `_repr_html_`
 method::
 
-    with open('my_estimator.html', 'w') as f:
-        f.write(clf._repr_html_())
+   with config_context(repr_html=True), open('my_estimator.html', 'w') as f:
+       f.write(clf._repr_html_())
 
 .. topic:: Examples:
 

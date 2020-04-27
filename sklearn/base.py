@@ -17,10 +17,11 @@ import re
 import numpy as np
 
 from . import __version__
+from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from .utils._display_estimator import _estimator_repr_html
+from .utils._display_estimator import estimator_repr_html
 from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {
@@ -437,16 +438,20 @@ class BaseEstimator:
         return out
 
     def _repr_html_(self):
-        """Build a HTML representation of an estimator.
+        """HTML or string representation of an estimator depending on
+        global configuration flag `repr_html`.
 
         Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
 
         Returns
         -------
-        html: str
-            HTML representation of estimator.
+        repr: str
+            HTML or string representation of estimator.
         """
-        return _estimator_repr_html(self)
+        repr_html = get_config()["repr_html"]
+        if repr_html:
+            return estimator_repr_htmlself)
+        return repr(self)
 
 
 class ClassifierMixin:

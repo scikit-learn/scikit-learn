@@ -20,7 +20,9 @@ class DisplayEstimatorRepr(SphinxDirective):
     def execute(self, code, format_str):
         code_parts = code.split('\n')
         final_output = code_parts[-1]
-        code_parts[-1] = format_str.format(final_output)
+        final_est = final_output.lstrip(' ')
+        n_whitespace = len(final_output) - len(final_est)
+        code_parts[-1] = " " * n_whitespace + format_str.format(final_est)
         code = '\n'.join(code_parts)
 
         output, err = StringIO(), StringIO()
@@ -32,14 +34,14 @@ class DisplayEstimatorRepr(SphinxDirective):
     def run(self):
         output = []
         code = "\n".join(self.content)
-        html_repr = self.execute(code, format_str='print({}._repr_html_())')
+        repr_html = self.execute(code, format_str='print({}._repr_html_())')
 
         input_code = nodes.literal_block(rawsource=code, text=code)
         input_code['language'] = 'python'
         output.append(input_code)
 
-        html_repr = f"<p>{html_repr}</p>"
-        html_node = nodes.raw('', html_repr, format='html')
+        repr_html = f"<p>{repr_html}</p>"
+        html_node = nodes.raw('', repr_html, format='html')
         output.append(html_node)
 
         if self.env.app.builder.name == 'latex':

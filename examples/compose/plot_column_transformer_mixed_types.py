@@ -27,6 +27,7 @@ model.
 
 import numpy as np
 
+from sklearn import set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_openml
 from sklearn.pipeline import Pipeline
@@ -92,6 +93,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
 # representation of the estimator is displayed as follows:
+set_config(repr_html=True)
 clf
 
 ###############################################################################

@@ -116,13 +116,6 @@ pipeline = Pipeline([
 ], verbose=True)
 
 ###############################################################################
-# HTML representation of ``Pipeline``
-###############################################################################
-# When the ``Pipeline`` is printed out in a jupyter notebook an HTML
-# representation of the estimator is displayed as follows:
-pipeline
-
-###############################################################################
 # Classification Report
 ###############################################################################
 # Finally, the pipeline is trained and a classification report is generated
