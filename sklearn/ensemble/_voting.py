@@ -120,7 +120,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         using ``set_params``.
 
         .. versionchanged:: 0.21
-            The ``'drop'`` is accepted, in addition to ``None``.
+            ``'drop'`` is accepted, in addition to ``None``.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
@@ -367,7 +367,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``set_params``.
 
         .. versionchanged:: 0.21
-            The ``'drop'`` is accepted, in addition to ``None``.
+            ``'drop'`` is accepted, in addition to ``None``.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
