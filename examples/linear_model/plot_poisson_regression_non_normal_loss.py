@@ -521,9 +521,10 @@ ax.legend(loc="upper left")
 #   value vs the mean predicted value on groups of test samples binned by
 #   predicted risk.
 #
-# - The least squares loss of the Ridge regression model seem to cause this
-#   model to be badly calibrated. In particular it tends to under estimate the
-#   risk and can even predict invalid negative frequencies...
+# - The least squares loss (along with the implicit use of the identity link
+#   function) of the Ridge regression model seems to cause this model to be
+#   badly calibrated. In particular it tends to under estimate the risk and can
+#   even predict invalid negative frequencies.
 #
 # - Using the Poisson loss with a log-link can correct these problems and lead
 #   to a well-calibrated linear model.
@@ -537,9 +538,10 @@ ax.legend(loc="upper left")
 #   squares loss).
 #
 # - The Poisson deviance computed as an evaluation metric reflects both the
-#   calibration and the ranking power of the model but makes a linear
+#   calibration and the ranking power of the model. It also makes a linear
 #   assumption on the ideal relationship between the expected value and the
-#   variance of the response variable.
+#   variance of the response variable. For the sake of conciseness we did not
+#   check whether this assumption holds.
 #
 # - Traditional regression metrics such as Mean Squared Error and Mean Absolute
 #   Error are hard to meaningfully interpret on count values with many zeros.
