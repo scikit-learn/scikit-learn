@@ -14,6 +14,7 @@ from sklearn.inspection._partial_dependence import (
 )
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -36,6 +37,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _IS_32BIT
+from sklearn.utils.validation import check_random_state
+from sklearn.tree.tests.test_tree import assert_is_subtree
 
 
 # toy sample
@@ -174,6 +178,11 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # samples.
     # This also checks that the brute and recursion methods give the same
     # output.
+    # Note that even on the trainset, the brute and the recursion methods
+    # aren't always strictly equivalent, in particular when the slow method
+    # generates unrealistic samples that have low mass in the joint
+    # distribution of the input features, and when some of the features are
+    # dependent. Hence the high tolerance on the checks.
 
     X, y = make_regression(random_state=0, n_features=5, n_informative=5)
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
@@ -206,6 +215,71 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
+@pytest.mark.parametrize('seed', range(1))
+def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
+    # Make sure that the recursion method gives the same results on a
+    # DecisionTreeRegressor and a GradientBoostingRegressor or a
+    # RandomForestRegressor with 1 tree and equivalent parameters.
+
+    rng = np.random.RandomState(seed)
+
+    # Purely random dataset to avoid correlated features
+    n_samples = 1000
+    n_features = 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples) * 10
+
+    # The 'init' estimator for GBDT (here the average prediction) isn't taken
+    # into account with the recursion method, for technical reasons. We set
+    # the mean to 0 to that this 'bug' doesn't have any effect.
+    y = y - y.mean()
+
+    # set max_depth not too high to avoid splits with same gain but different
+    # features
+    max_depth = 5
+
+    tree_seed = 0
+    forest = RandomForestRegressor(n_estimators=1, max_features=None,
+                                   bootstrap=False, max_depth=max_depth,
+                                   random_state=tree_seed)
+    # The forest will use ensemble.base._set_random_states to set the
+    # random_state of the tree sub-estimator. We simulate this here to have
+    # equivalent estimators.
+    equiv_random_state = check_random_state(tree_seed).randint(
+        np.iinfo(np.int32).max)
+    gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
+                                     criterion='mse', max_depth=max_depth,
+                                     random_state=equiv_random_state)
+    tree = DecisionTreeRegressor(max_depth=max_depth,
+                                 random_state=equiv_random_state)
+
+    forest.fit(X, y)
+    gbdt.fit(X, y)
+    tree.fit(X, y)
+
+    # sanity check: if the trees aren't the same, the PD values won't be equal
+    try:
+        assert_is_subtree(tree.tree_, gbdt[0, 0].tree_)
+        assert_is_subtree(tree.tree_, forest[0].tree_)
+    except AssertionError:
+        # For some reason the trees aren't exactly equal on 32bits, so the PDs
+        # cannot be equal either. See
+        # https://github.com/scikit-learn/scikit-learn/issues/8853
+        assert _IS_32BIT, "this should only fail on 32 bit platforms"
+        return
+
+    grid = rng.randn(50).reshape(-1, 1)
+    for f in range(n_features):
+        features = np.array([f], dtype=np.int32)
+
+        pdp_forest = _partial_dependence_recursion(forest, grid, features)
+        pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
+        pdp_tree = _partial_dependence_recursion(tree, grid, features)
+
+        np.testing.assert_allclose(pdp_gbdt, pdp_tree)
+        np.testing.assert_allclose(pdp_forest, pdp_tree)
+
+
 @pytest.mark.parametrize('est', (
     GradientBoostingClassifier(random_state=0),
     HistGradientBoostingClassifier(random_state=0),
@@ -236,8 +310,9 @@ def test_recursion_decision_function(est, target_feature):
     LinearRegression(),
     GradientBoostingRegressor(random_state=0),
     HistGradientBoostingRegressor(random_state=0, min_samples_leaf=1,
-                                  max_leaf_nodes=None, max_iter=1))
-)
+                                  max_leaf_nodes=None, max_iter=1),
+    DecisionTreeRegressor(random_state=0),
+))
 @pytest.mark.parametrize('power', (1, 2))
 def test_partial_dependence_easy_target(est, power):
     # If the target y only depends on one feature in an obvious way (linear or
@@ -443,6 +518,16 @@ def test_partial_dependence_sample_weight():
     pdp, values = partial_dependence(clf, X, features=[1])
 
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
+
+
+def test_hist_gbdt_sw_not_supported():
+    # TODO: remove/fix when PDP supports HGBT with sample weights
+    clf = HistGradientBoostingRegressor(random_state=1)
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+
+    with pytest.raises(NotImplementedError,
+                       match="does not support partial dependence"):
+        partial_dependence(clf, X, features=[1])
 
 
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates

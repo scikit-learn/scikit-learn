@@ -33,7 +33,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-X_r, y_r = datasets.load_boston(return_X_y=True)
+X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_weights_iris():
 
 
 def test_weights_regressor():
-    """Check weighted average regression prediction on boston dataset."""
+    """Check weighted average regression prediction on diabetes dataset."""
     reg1 = DummyRegressor(strategy='mean')
     reg2 = DummyRegressor(strategy='median')
     reg3 = DummyRegressor(strategy='quantile', quantile=.2)
@@ -316,7 +316,7 @@ def test_sample_weight():
     with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
-    # check that _parallel_fit_estimator will raise the right error
+    # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
     class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
@@ -512,6 +512,26 @@ def test_check_estimators_voting_estimator(estimator):
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "est",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('tree', DecisionTreeRegressor(random_state=0))]),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=0)),
+                     ('tree', DecisionTreeClassifier(random_state=0))])],
+    ids=['VotingRegressor', 'VotingClassifier']
+)
+def test_n_features_in(est):
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X, y)
+    assert est.n_features_in_ == 2
 
 
 @pytest.mark.parametrize(

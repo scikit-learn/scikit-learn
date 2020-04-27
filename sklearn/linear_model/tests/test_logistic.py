@@ -1723,7 +1723,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
         if sys.platform == 'darwin' and solver == 'lbfgs':
             pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
                          'multi_class="multinomial") is nondterministic on '
-                         'MacOS.')  # pragma: no cover
+                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))

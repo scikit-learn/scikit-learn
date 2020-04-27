@@ -87,21 +87,20 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : ndarray, shape [20640, 8]
-        Each row corresponding to the 8 feature values in order.
-        If ``as_frame`` is True, ``data`` is a pandas object.
-
-    dataset.target : numpy array of shape (20640,)
-        Each value corresponds to the average house value in units of 100,000.
-        If ``as_frame`` is True, ``target`` is a pandas object.
-
-    dataset.feature_names : array of length 8
-        Array of ordered feature names used in the dataset.
-
-    dataset.DESCR : string
-        Description of the California housing dataset.
+        data : ndarray, shape (20640, 8)
+            Each row corresponding to the 8 feature values in order.
+            If ``as_frame`` is True, ``data`` is a pandas object.
+        target : numpy array of shape (20640,)
+            Each value corresponds to the average
+            house value in units of 100,000.
+            If ``as_frame`` is True, ``target`` is a pandas object.
+        feature_names : list of length 8
+            Array of ordered feature names used in the dataset.
+        DESCR : string
+            Description of the California housing dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

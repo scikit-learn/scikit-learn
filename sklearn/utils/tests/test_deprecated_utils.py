@@ -74,9 +74,6 @@ def test_newton_cg():
     def grad(x):
         return A.T.dot(A.dot(x))
 
-    def hess(x, p):
-        return p.dot(A.T.dot(A.dot(x.all())))
-
     def grad_hess(x):
         return grad(x), lambda x: A.T.dot(A.dot(x))
 

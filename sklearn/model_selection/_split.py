@@ -18,13 +18,14 @@ from abc import ABCMeta, abstractmethod
 from inspect import signature
 
 import numpy as np
+from scipy.special import comb
 
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import comb
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -50,7 +51,6 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -270,7 +270,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
-    def __init__(self, n_splits, shuffle, random_state):
+    @_deprecate_positional_args
+    def __init__(self, n_splits, *, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
             raise ValueError('The number of folds must be of Integral type. '
                              '%s of type %s was passed.'
@@ -381,10 +382,10 @@ class KFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int or RandomState instance, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold. Otherwise, this
+        parameter has no effect.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -412,7 +413,7 @@ class KFold(_BaseKFold):
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
@@ -426,10 +427,11 @@ class KFold(_BaseKFold):
 
     RepeatedKFold: Repeats K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False,
                  random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -588,10 +590,10 @@ class StratifiedKFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int or RandomState instance, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
-        Pass an int for reproducible output across multiple
-        function calls.
+        When `shuffle` is True, `random_state` affects the ordering of the
+        indices, which controls the randomness of each fold for each class.
+        Otherwise, leave `random_state` as `None`.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -633,9 +635,10 @@ class StratifiedKFold(_BaseKFold):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
@@ -726,7 +729,7 @@ class StratifiedKFold(_BaseKFold):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -787,7 +790,8 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=5, max_train_size=None):
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
@@ -1091,15 +1095,16 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Passes `random_state` to the arbitrary repeating cross validator.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
-    def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
+    @_deprecate_positional_args
+    def __init__(self, cv, *, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
@@ -1195,8 +1200,9 @@ class RepeatedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.See :term:`Glossary <random_state>`.
+        Controls the randomness of each repeated cross-validation instance.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1218,16 +1224,18 @@ class RepeatedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            KFold, n_repeats, random_state, n_splits=n_splits)
+            KFold, n_repeats=n_repeats,
+            random_state=random_state, n_splits=n_splits)
 
 
 class RepeatedStratifiedKFold(_RepeatedSplits):
@@ -1247,8 +1255,8 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
         Number of times cross-validator needs to be repeated.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the generation of the random states for each repetition.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1272,22 +1280,24 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     Notes
     -----
     Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
+    split. You can make the results identical by setting `random_state`
     to an integer.
 
     See also
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
+            StratifiedKFold, n_repeats=n_repeats, random_state=random_state,
+            n_splits=n_splits)
 
 
 class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         self.n_splits = n_splits
         self.test_size = test_size
@@ -1322,7 +1332,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         X, y, groups = indexable(X, y, groups)
@@ -1388,8 +1398,8 @@ class ShuffleSplit(BaseShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1420,7 +1430,8 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 4 1] TEST: [5 2]
     TRAIN: [3 5 1] TEST: [2 4]
     """
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1488,8 +1499,8 @@ class GroupShuffleSplit(ShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1509,8 +1520,8 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
-
-    def __init__(self, n_splits=5, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1560,7 +1571,7 @@ class GroupShuffleSplit(ShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         return super().split(X, y, groups)
@@ -1600,8 +1611,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Examples
@@ -1625,8 +1636,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [4 1 0] TEST: [2 3 5]
     TRAIN: [0 5 1] TEST: [3 4 2]
     """
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1727,7 +1738,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Notes
         -----
         Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
+        split. You can make the results identical by setting `random_state`
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
@@ -1958,7 +1969,8 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, classifier=False):
+@_deprecate_positional_args
+def check_cv(cv=5, y=None, *, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -2042,9 +2054,10 @@ def train_test_split(*arrays, **options):
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState instance, default=None
-        Pass an int for reproducible output across multiple
-        function calls.
+        Controls the shuffling applied to the data before applying the split.
+        Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+
 
     shuffle : bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False
@@ -2142,7 +2155,8 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-train_test_split.__test__ = False
+# Use setattr to avoid mypy errors when monkeypatching.
+setattr(train_test_split, '__test__', False)
 
 
 def _build_repr(self):

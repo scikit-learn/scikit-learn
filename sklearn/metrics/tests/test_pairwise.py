@@ -350,7 +350,7 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     with pytest.raises(TypeError):
-        pairwise_kernels(X, Y, "rbf", **params)
+        pairwise_kernels(X, Y, metric="rbf", **params)
 
 
 @pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
@@ -481,6 +481,19 @@ def test_pairwise_distances_chunked_reduce():
     assert len(S_chunks) > 1
     # atol is for diagonal where S is explicitly zeroed on the diagonal
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
+
+
+def test_pairwise_distances_chunked_reduce_none():
+    # check that the reduce func is allowed to return None
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    S_chunks = pairwise_distances_chunked(X, None,
+                                          reduce_func=lambda dist, start: None,
+                                          working_memory=2 ** -16)
+    assert isinstance(S_chunks, GeneratorType)
+    S_chunks = list(S_chunks)
+    assert len(S_chunks) > 1
+    assert all(chunk is None for chunk in S_chunks)
 
 
 @pytest.mark.parametrize('good_reduce', [

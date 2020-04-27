@@ -25,6 +25,7 @@ ctypedef fused integral:
 
 ctypedef np.float64_t DOUBLE
 
+
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
@@ -38,19 +39,18 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    np.ndarray[integral, ndim=1, mode="c"] X_indptr):
     cdef:
         unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
-        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
-
-        np.npy_intp i, j
+        unsigned long long i
+        integral j
         double sum_
 
-    norms = np.zeros(n_samples, dtype=np.float64)
+    norms = np.empty(n_samples, dtype=X_data.dtype)
+    cdef floating[::1] norms_view = norms
 
     for i in range(n_samples):
         sum_ = 0.0
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
-        norms[i] = sum_
+        norms_view[i] = sum_
 
     return norms
 
@@ -334,23 +334,26 @@ def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
 
     # Next passes
     for i in range(n_features):
-        updated_n[i] = last_n[i] + new_n[i]
-        last_over_new_n[i] = last_n[i] / new_n[i]
-
-    # Unnormalized stats
-    for i in range(n_features):
-        last_mean[i] *= last_n[i]
-        last_var[i] *= last_n[i]
-        new_mean[i] *= new_n[i]
-        new_var[i] *= new_n[i]
-
-    # Update stats
-    for i in range(n_features):
-        updated_var[i] = (last_var[i] + new_var[i] +
-                          last_over_new_n[i] / updated_n[i] *
-                          (last_mean[i] / last_over_new_n[i] - new_mean[i])**2)
-        updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n[i]
-        updated_var[i] /= updated_n[i]
+        if new_n[i] > 0:
+            updated_n[i] = last_n[i] + new_n[i]
+            last_over_new_n[i] = dtype(last_n[i]) / dtype(new_n[i])
+            # Unnormalized stats
+            last_mean[i] *= last_n[i]
+            last_var[i] *= last_n[i]
+            new_mean[i] *= new_n[i]
+            new_var[i] *= new_n[i]
+            # Update stats
+            updated_var[i] = (
+                last_var[i] + new_var[i] +
+                last_over_new_n[i] / updated_n[i] *
+                (last_mean[i] / last_over_new_n[i] - new_mean[i])**2
+            )
+            updated_mean[i] = (last_mean[i] + new_mean[i]) / updated_n[i]
+            updated_var[i] /= updated_n[i]
+        else:
+            updated_var[i] = last_var[i]
+            updated_mean[i] = last_mean[i]
+            updated_n[i] = last_n[i]
 
     return updated_mean, updated_var, updated_n
 
