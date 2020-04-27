@@ -18,6 +18,7 @@ from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
+from ..utils.validation import _deprecate_positional_args
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -33,7 +34,8 @@ def _generate_hypercube(samples, dimensions, rng):
     return out
 
 
-def make_classification(n_samples=100, n_features=20, n_informative=2,
+@_deprecate_positional_args
+def make_classification(n_samples=100, n_features=20, *, n_informative=2,
                         n_redundant=2, n_repeated=0, n_classes=2,
                         n_clusters_per_class=2, weights=None, flip_y=0.01,
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
@@ -261,7 +263,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     return X, y
 
 
-def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
+@_deprecate_positional_args
+def make_multilabel_classification(n_samples=100, n_features=20, *,
+                                   n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
                                    sparse=False, return_indicator='dense',
                                    return_distributions=False,
@@ -422,7 +426,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     return X, Y
 
 
-def make_hastie_10_2(n_samples=12000, random_state=None):
+@_deprecate_positional_args
+def make_hastie_10_2(n_samples=12000, *, random_state=None):
     """Generates data for binary classification used in
     Hastie et al. 2009, Example 10.2.
 
@@ -470,7 +475,8 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     return X, y
 
 
-def make_regression(n_samples=100, n_features=100, n_informative=10,
+@_deprecate_positional_args
+def make_regression(n_samples=100, n_features=100, *, n_informative=10,
                     n_targets=1, bias=0.0, effective_rank=None,
                     tail_strength=0.5, noise=0.0, shuffle=True, coef=False,
                     random_state=None):
@@ -592,7 +598,8 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
         return X, y
 
 
-def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
+@_deprecate_positional_args
+def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
                  factor=.8):
     """Make a large circle containing a smaller circle in 2d.
 
@@ -668,7 +675,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     return X, y
 
 
-def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
+@_deprecate_positional_args
+def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles
 
     A simple toy dataset to visualize clustering and classification
@@ -731,7 +739,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
-def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
+@_deprecate_positional_args
+def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None,
                return_centers=False):
     """Generate isotropic Gaussian blobs for clustering.
@@ -889,7 +898,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         return X, y
 
 
-def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
+@_deprecate_positional_args
+def make_friedman1(n_samples=100, n_features=10, *, noise=0.0,
+                   random_state=None):
     """Generate the "Friedman #1" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
@@ -951,7 +962,8 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     return X, y
 
 
-def make_friedman2(n_samples=100, noise=0.0, random_state=None):
+@_deprecate_positional_args
+def make_friedman2(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #2" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
@@ -1016,7 +1028,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     return X, y
 
 
-def make_friedman3(n_samples=100, noise=0.0, random_state=None):
+@_deprecate_positional_args
+def make_friedman3(n_samples=100, *, noise=0.0, random_state=None):
     """Generate the "Friedman #3" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
@@ -1080,7 +1093,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     return X, y
 
 
-def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
+@_deprecate_positional_args
+def make_low_rank_matrix(n_samples=100, n_features=100, *, effective_rank=10,
                          tail_strength=0.5, random_state=None):
     """Generate a mostly low rank matrix with bell-shaped singular values
 
@@ -1149,7 +1163,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     return np.dot(np.dot(u, s), v.T)
 
 
-def make_sparse_coded_signal(n_samples, n_components, n_features,
+@_deprecate_positional_args
+def make_sparse_coded_signal(n_samples, *, n_components, n_features,
                              n_nonzero_coefs, random_state=None):
     """Generate a signal as a sparse combination of dictionary elements.
 
@@ -1211,7 +1226,9 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     return map(np.squeeze, (Y, D, X))
 
 
-def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
+@_deprecate_positional_args
+def make_sparse_uncorrelated(n_samples=100, n_features=10, *,
+                             random_state=None):
     """Generate a random regression problem with sparse uncorrelated design
 
     This dataset is described in Celeux et al [1]. as::
@@ -1262,7 +1279,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     return X, y
 
 
-def make_spd_matrix(n_dim, random_state=None):
+@_deprecate_positional_args
+def make_spd_matrix(n_dim, *, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1295,7 +1313,8 @@ def make_spd_matrix(n_dim, random_state=None):
     return X
 
 
-def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
+@_deprecate_positional_args
+def make_sparse_spd_matrix(dim=1, *, alpha=0.95, norm_diag=False,
                            smallest_coef=.1, largest_coef=.9,
                            random_state=None):
     """Generate a sparse symmetric definite positive matrix.
@@ -1369,7 +1388,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     return prec
 
 
-def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
+@_deprecate_positional_args
+def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1421,7 +1441,8 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     return X, t
 
 
-def make_s_curve(n_samples=100, noise=0.0, random_state=None):
+@_deprecate_positional_args
+def make_s_curve(n_samples=100, *, noise=0.0, random_state=None):
     """Generate an S curve dataset.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -1463,7 +1484,8 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     return X, t
 
 
-def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
+@_deprecate_positional_args
+def make_gaussian_quantiles(*, mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
     r"""Generate isotropic Gaussian and label samples by quantile
@@ -1558,7 +1580,8 @@ def _shuffle(data, random_state=None):
     return result, row_idx, col_idx
 
 
-def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
+@_deprecate_positional_args
+def make_biclusters(shape, n_clusters, *, noise=0.0, minval=10,
                     maxval=100, shuffle=True, random_state=None):
     """Generate an array with constant block diagonal structure for
     biclustering.
@@ -1649,7 +1672,8 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     return result, rows, cols
 
 
-def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
+@_deprecate_positional_args
+def make_checkerboard(shape, n_clusters, *, noise=0.0, minval=10,
                       maxval=100, shuffle=True, random_state=None):
     """Generate an array with block checkerboard structure for
     biclustering.
