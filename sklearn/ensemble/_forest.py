@@ -159,9 +159,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         if class_weight == 'subsample':
             with catch_warnings():
                 simplefilter('ignore', DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight('auto', y, indices)
+                curr_sample_weight *= compute_sample_weight('auto', y,
+                                                            indices=indices)
         elif class_weight == 'balanced_subsample':
-            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
+            curr_sample_weight *= compute_sample_weight('balanced', y,
+                                                        indices=indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
