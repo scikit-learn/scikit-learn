@@ -227,7 +227,7 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
 #
 
 def get_impute_iterative(X_missing, y_missing):
-    imputer = IterativeImputer(missing_values=np.nan,
+    imputer = IterativeImputer(missing_values=np.nan, add_indicator=True,
                                random_state=0,
                                n_nearest_features=5,
                                sample_posterior=True)
