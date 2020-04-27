@@ -227,6 +227,8 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+        .. versionadded:: 0.18
+
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
@@ -788,6 +790,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -2156,6 +2160,7 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
+
         .. versionadded:: 0.18
 
     Returns
