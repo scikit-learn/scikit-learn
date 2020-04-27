@@ -203,7 +203,7 @@ mses_diabetes[2], stds_diabetes[2] = get_impute_knn_score(X_miss_diabetes,
 #
 
 def get_impute_mean(X_missing, y_missing):
-    imputer = SimpleImputer(missing_values=np.nan, strategy="mean")
+    imputer = SimpleImputer(missing_values=np.nan, strategy="mean", add_indicator=True)
     mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
     return mean_impute_scores.mean(), mean_impute_scores.std()
 
