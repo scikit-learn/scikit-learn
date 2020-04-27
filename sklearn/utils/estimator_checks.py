@@ -333,7 +333,7 @@ def _construct_instance(Estimator):
     return estimator
 
 
-# TODO: probably not needed anymore in 0.25 since _generate_class_checks should
+# TODO: probably not needed anymore in 0.24 since _generate_class_checks should
 # be removed too. Just put this in check_estimator()
 def _generate_instance_checks(name, estimator):
     """Generate instance checks."""
@@ -341,7 +341,7 @@ def _generate_instance_checks(name, estimator):
                 for check in _yield_all_checks(name, estimator))
 
 
-# TODO: remove this in 0.25
+# TODO: remove this in 0.24
 def _generate_class_checks(Estimator):
     """Generate class checks."""
     name = Estimator.__name__
@@ -356,7 +356,7 @@ def _mark_xfail_checks(estimator, check, pytest):
     if isinstance(estimator, type):
         # try to construct estimator instance, if it is unable to then
         # return the estimator class, ignoring the tag
-        # TODO: remove this if block in 0.25 since passing instances isn't
+        # TODO: remove this if block in 0.24 since passing instances isn't
         # supported anymore
         try:
             estimator = _construct_instance(estimator)
@@ -445,7 +445,7 @@ def check_estimator(Estimator, generate_only=False):
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options. However,
     support for classes is deprecated since version 0.23 and will be removed
-    in version 0.24 (classe checks will still be run on the instances).
+    in version 0.24 (class checks will still be run on the instances).
 
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
