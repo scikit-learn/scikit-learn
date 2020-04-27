@@ -299,8 +299,7 @@ def estimator_repr_html(estimator):
     """
     with closing(StringIO()) as out:
         out.write(f'<!DOCTYPE html><html lang="en">'
-                  f'<head><title>sklearn-viz</title>'
-                  f'<style>{_STYLE}</style></head><body>'
+                  f'<head><style>{_STYLE}</style></head><body>'
                   f'<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
                               str(estimator), first_call=True)

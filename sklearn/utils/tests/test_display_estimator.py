@@ -64,10 +64,6 @@ def test_get_visual_block_single_estimator():
     assert est_html_info.names == est.__class__.__name__
     assert est_html_info.name_details == str(est)
 
-    # wraps with code block
-    expected_str = f"<code>{repr(est)}</code>"
-    assert est._repr_html_() == expected_str
-
 
 def test_get_visual_block_pipeline():
     pipe = Pipeline([

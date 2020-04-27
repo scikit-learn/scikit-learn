@@ -437,21 +437,11 @@ class BaseEstimator:
 
         return out
 
-    def _repr_html_(self):
-        """HTML or string representation of an estimator depending on
-        global configuration flag `repr_html`.
-
-        Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
-
-        Returns
-        -------
-        repr: str
-            HTML or string representation of estimator.
-        """
-        repr_html = get_config()["repr_html"]
-        if repr_html:
-            return estimator_repr_html(self)
-        return f"<code>{repr(self)}</code>"
+    def _repr_mimebundle_(self, **kwargs):
+        output = {"text/plain": repr(self)}
+        if get_config()["repr_html"]:
+            output["text/html"] = estimator_repr_html(self)
+        return output
 
 
 class ClassifierMixin:
