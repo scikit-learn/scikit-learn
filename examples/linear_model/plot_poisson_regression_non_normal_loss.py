@@ -310,10 +310,10 @@ plt.tight_layout()
 # The experimental data presents a long tail distribution for ``y``. In all
 # models, we predict the expected frequency of a random variable, so we will
 # have necessarily fewer extreme values than for the observed realizations of
-# that random variable. Additionally, the normal conditional distribution used
-# in ``Ridge`` and ``HistGradientBoostingRegressor`` has a constant variance,
-# while for the Poisson distribution used in ``PoissonRegressor``, the variance
-# is proportional to the predicted expected value.
+# that random variable. Additionally, the normal distribution used in ``Ridge``
+# and ``HistGradientBoostingRegressor`` has a constant variance, while for the
+# Poisson distribution used in ``PoissonRegressor``, the variance is
+# proportional to the predicted expected value.
 #
 # Thus, among the considered estimators, ``PoissonRegressor`` is a-priori
 # better suited for modeling the long tail distribution of the non-negative
@@ -321,7 +321,7 @@ plt.tight_layout()
 #
 # The ``HistGradientBoostingRegressor`` estimator has more flexibility and is
 # able to predict higher expected values while still assuming a normal
-# conditional distribution with constant variance for the response variable.
+# distribution with constant variance for the response variable.
 #
 # Evaluation of the calibration of predictions
 # --------------------------------------------
@@ -389,6 +389,8 @@ for axi, model in zip(ax.ravel(), [dummy, ridge, poisson, gbrt]):
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
         y_true, y_pred, sample_weight=exposure, n_bins=10)
 
+    # Name of the model after the class of the estimator used in the last step
+    # of the pipeline.
     model_name = model.steps[-1][1].__class__.__name__
     print(f"Predicted number of claims by {model_name}: "
           f"{np.sum(y_pred * exposure):.1f}")
@@ -407,7 +409,8 @@ plt.tight_layout()
 
 ###############################################################################
 # The dummy regression model predicts on constant frequency. This model is not
-# discriminative at all but is none-the-less well calibrated.
+# attribute the same tied rank to all samples but is none-the-less well
+# calibrated.
 #
 # The ``Ridge`` regression model can predict very low expected frequencies that
 # do not match the data. It can therefore severly under-estimate the risk for
@@ -422,13 +425,13 @@ plt.tight_layout()
 # claims in the test set while the other three models can approximately recover
 # the total number of claims of the test portfolio.
 #
-# Evaluation of the discriminative power
-# --------------------------------------
+# Evaluation of the ranking power
+# -------------------------------
 #
 # For some business applications, we are interested in the ability of the model
-# to discriminate the riskiest from the safest policyholders, irrespective of
-# the absolute value of the prediction. In this case, the model evaluation
-# would cast the problem as a ranking problem rather than a regression problem.
+# to rank the riskiest from the safest policyholders, irrespective of the
+# absolute value of the prediction. In this case, the model evaluation would
+# cast the problem as a ranking problem rather than a regression problem.
 #
 # To compare the 3 models from this perspective, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
@@ -485,8 +488,8 @@ ax.set(
 ax.legend(loc="upper left")
 
 ##############################################################################
-# As expected, the dummy regressor is unable to discriminate and therefore
-# performs the worst on this plot.
+# As expected, the dummy regressor is unable to correctly rank the samples and
+# therefore performs the worst on this plot.
 #
 # The tree-based model is significantly better at ranking policyholders by risk
 # while the two linear models perform similarly.
@@ -507,11 +510,12 @@ ax.legend(loc="upper left")
 # Main takeaways
 # --------------
 #
-# - A ideal model is both well-calibrated and discriminative.
+# - The performance of the models can be evaluted by their ability to yield
+#   well-calibrated predictions and a good ranking.
 #
 # - The Gini index reflects the ability of a model to rank predictions
 #   irrespective of their absolute values, and therefore only assess their
-#   discriminative power.
+#   ranking power.
 #
 # - The calibration of the model can be assessed by plotting the mean observed
 #   value vs the mean predicted value on groups of test samples binned by
@@ -524,16 +528,16 @@ ax.legend(loc="upper left")
 # - Using the Poisson loss can correct this problem and lead to a
 #   well-calibrated linear model.
 #
-# - Despite the improvement in calibration, the discriminative power of both
-#   linear models are comparable and well below the discriminative power of the
-#   Gradient Boosting Regression Trees.
+# - Despite the improvement in calibration, the ranking power of both linear
+#   models are comparable and well below the ranking power of the Gradient
+#   Boosting Regression Trees.
 #
 # - The non-linear Gradient Boosting Regression Trees model does not seem to
 #   suffer from significant mis-calibration issues (despite the use of a least
 #   squares loss).
 #
 # - The Poisson deviance computed as an evaluation metric reflects both the
-#   calibration and the discriminative power of the model but makes a linear
+#   calibration and the ranking power of the model but makes a linear
 #   assumption on the ideal relationship between the expected value of an the
 #   variance of the response variable.
 #
