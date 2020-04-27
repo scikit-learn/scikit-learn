@@ -64,8 +64,9 @@ df
 # events occurring with a constant rate in a given time interval (``Exposure``,
 # in units of years).
 #
-# Here we want to model the frequency ``y = ClaimNb / Exposure`` via a (scaled)
-# conditional Poisson distribution, and use ``Exposure`` as ``sample_weight``.
+# Here we want to model the frequency ``y = ClaimNb / Exposure`` conditionally
+# on ``X`` via a (scaled) Poisson distribution, and use ``Exposure`` as
+# ``sample_weight``.
 
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 
