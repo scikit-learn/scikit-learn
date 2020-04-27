@@ -158,10 +158,10 @@ def score_estimator(estimator, df_test):
 
     print("MSE: %.3f" %
           mean_squared_error(df_test["Frequency"], y_pred,
-                             df_test["Exposure"]))
+                             sample_weight=df_test["Exposure"]))
     print("MAE: %.3f" %
           mean_absolute_error(df_test["Frequency"], y_pred,
-                              df_test["Exposure"]))
+                              sample_weight=df_test["Exposure"]))
 
     # ignore non-positive predictions, as they are invalid for
     # the Poisson deviance
@@ -174,7 +174,7 @@ def score_estimator(estimator, df_test):
 
     print("mean Poisson deviance: %.3f" %
           mean_poisson_deviance(df_test["Frequency"], y_pred.clip(min=1e-6),
-                                df_test["Exposure"]))
+                                sample_weight=df_test["Exposure"]))
 
 
 print("Constant mean frequency evaluation:")
