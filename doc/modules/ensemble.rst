@@ -952,8 +952,9 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares' and
-'least_absolute_deviation', which is less sensitive to outliers. For
+Available losses for regression are 'least_squares',
+'least_absolute_deviation', which is less sensitive to outliers, and
+'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
 the loss is 'auto' and will select the appropriate loss depending on
@@ -1436,7 +1437,7 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
    R2 score: 0.81
 
-Note that it is also possible to get the output of the stacked outputs of the
+Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
