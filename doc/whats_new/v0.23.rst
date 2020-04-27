@@ -473,6 +473,9 @@ Changelog
   matrix from a pandas DataFrame that contains only `SparseArray`s.
   :pr:`16728` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.validation.check_array` supports pandas
+  IntegerArray. :pr:`16508` by `Thomas Fan`_.
+
 :mod:`sklearn.cluster`
 ......................
 
