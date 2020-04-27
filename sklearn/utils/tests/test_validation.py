@@ -371,7 +371,7 @@ def test_check_array_pandas_na_support(dtype):
 
     msg = "Input contains NaN, infinity"
     with pytest.raises(ValueError, match=msg):
-        check_array(X)
+        check_array(X, force_all_finite=True)
 
 
 def test_check_array_pandas_dtype_object_conversion():
