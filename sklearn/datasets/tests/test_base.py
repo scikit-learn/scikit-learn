@@ -152,7 +152,7 @@ def test_load_digits():
 
 
 def test_load_digits_n_class_lt_10():
-    digits = load_digits(9)
+    digits = load_digits(n_class=9)
     assert digits.data.shape == (1617, 64)
     assert numpy.unique(digits.target).size == 9
 
