@@ -1953,3 +1953,20 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+def test_grid_search_return_all_estimators():
+    X, y = make_blobs(n_samples=50, random_state=42)
+    param_grid = {'C': [1, 1.001, 0.001]}
+    grid_search = GridSearchCV(SVC(), param_grid=param_grid,
+                               return_all_estimators=True).fit(X, y)
+    estimators = grid_search.all_estimators_
+    
+    # Check the length of estimators
+    assert(len(estimators) == 3)
+
+    # Apply the same check with a single param.
+    param_grid = {'C': [1]}
+    grid_search = GridSearchCV(SVC(), param_grid=param_grid,
+                               return_all_estimators=True).fit(X, y)
+    estimators = grid_search.all_estimators_
+    assert(len(estimators) == 1)

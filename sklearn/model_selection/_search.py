@@ -688,7 +688,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
-                                    return_estimator=return_all_estimators,
                                     return_n_test_samples=True,
                                     return_times=True,
                                     return_parameters=False,
@@ -759,26 +758,33 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            # we clone again after setting params in case some
-            # of the params are estimators as well.
-            self.best_estimator_ = clone(clone(base_estimator).set_params(
-                **self.best_params_))
-            refit_start_time = time.time()
-            if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+            estimators = []
+            self.refit_time_ = 0.0
+            if self.return_all_estimators:
+                params_grid = results["params"]
+                self.all_estimators_ = estimators
             else:
-                self.best_estimator_.fit(X, **fit_params)
-            refit_end_time = time.time()
-            self.refit_time_ = refit_end_time - refit_start_time
-
+                params_grid = [results["params"][self.best_index_]]
+            for params in params_grid:
+                # we clone again after setting params in case some
+                # of the params are estimators as well.
+                estimator = clone(clone(base_estimator).set_params(
+                    **params))
+                refit_start_time = time.time()
+                if y is not None:
+                    estimator.fit(X, y, **fit_params)
+                else:
+                    estimator.fit(X, **fit_params)
+                refit_end_time = time.time()
+                self.refit_time_ += refit_end_time - refit_start_time
+                estimators.append(estimator)
+            self.best_estimator_ = estimators[self.best_index_] if self.return_all_estimators else estimators[0]
+            
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers if self.multimetric_ else scorers['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
-
-        if self.return_all_estimators:
-            self.all_estimators_ = results["estimators"]
 
         return self
 
@@ -786,15 +792,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         n_candidates = len(candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score and not self.return_all_estimators:
+        if self.return_train_score:
             (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
              score_time) = zip(*out)
-        elif self.return_train_score and self.return_all_estimators:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time, estimators) = zip(*out)
-        elif self.return_all_estimators:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time, estimators) = zip(*out)
         else:
             (test_score_dicts, test_sample_counts, fit_time,
              score_time) = zip(*out)
@@ -850,10 +850,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
-
-        # Store a list of all estimators
-        if self.return_all_estimators:
-            results['estimators'] = estimators
 
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
