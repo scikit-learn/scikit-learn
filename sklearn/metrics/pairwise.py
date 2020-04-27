@@ -1444,7 +1444,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         else:
             warnings.warn("from version 0.25, pairwise_distances for "
                           "metric='mahalanobis' will require VI to be "
-                          "specified if Y is passed.", DeprecationWarning)
+                          "specified if Y is passed.", FutureWarning)
             VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
         return {'VI': VI}
     return {}
