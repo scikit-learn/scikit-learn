@@ -39,7 +39,6 @@ print(__doc__)
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -168,10 +167,10 @@ def score_estimator(estimator, df_test):
     # the Poisson deviance
     mask = y_pred > 0
     if (~mask).any():
-        warnings.warn("Estimator yields non-positive predictions for {} "
-                      "samples out of {}. These predictions will be clipped "
-                      " while computing the Poisson deviance"
-                      .format((~mask).sum(), mask.shape[0]))
+        n_clipped, n_samples = (~mask).sum(), mask.shape[0]
+        print(f"WARNING: Estimator yields non-positive predictions for "
+              f"{n_clipped} samples out of {n_samples}. These predictions "
+              f"will be clipped while computing the Poisson deviance.")
 
     print("mean Poisson deviance: %.3f" %
           mean_poisson_deviance(df_test["Frequency"], y_pred.clip(min=1e-6),
