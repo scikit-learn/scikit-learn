@@ -215,6 +215,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     estimator : estimator object
