@@ -48,7 +48,7 @@ print(reg.score(X_test, y_test))
 # ------------------------------------------------
 # The :class:`~sklearn.cluster.KMeans` estimator was entirely re-worked, and it
 # is now significantly faster and more stable. In addition, the Elkan algorithm
-# is now compatible with sparse matrices. The estimator now uses OpenMP based
+# is now compatible with sparse matrices. The estimator uses OpenMP based
 # parallelism instead of relying on joblib, so the `n_jobs` parameter has no
 # effect anymore. For more details on how to control the number of threads,
 # please refer to our :ref:`parallelism` notes.
