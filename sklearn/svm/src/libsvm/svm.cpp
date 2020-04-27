@@ -307,12 +307,14 @@ public:
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
 	static void set_blas(BlasFunctions *blas);
+	static void free_blas();
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
 	static BlasFunctions *m_blas;
+	static int blas_status;
 #ifdef _DENSE_REP
 	PREFIX(node) *x;
 #else
@@ -446,7 +448,16 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 
 void Kernel::set_blas(BlasFunctions *blas)
 {
-	Kernel::m_blas=blas;
+	if (Kernel::blas_status==0)
+		Kernel::m_blas=blas;
+	Kernel::blas_status++;
+}
+
+void Kernel::free_blas()
+{
+	Kernel::blas_status--;
+	if (Kernel::blas_status==0)
+		Kernel::m_blas=NULL;
 }
 
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
@@ -527,7 +538,8 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable 
 	}
 }
-BlasFunctions* NAMESPACE::Kernel::m_blas=0;
+BlasFunctions* NAMESPACE::Kernel::m_blas=NULL;
+int NAMESPACE::Kernel::blas_status=0;
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -2635,6 +2647,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	free(newprob.x);
 	free(newprob.y);
 	free(newprob.W);
+	NAMESPACE::Kernel::free_blas();
 	return model;
 }
 
@@ -2825,6 +2838,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		sum -= model->rho[0];
 		*dec_values = sum;
 
+		NAMESPACE::Kernel::free_blas();
 		if(model->param.svm_type == ONE_CLASS)
 			return (sum>0)?1:-1;
 		else
@@ -2887,6 +2901,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		free(kvalue);
 		free(start);
 		free(vote);
+		NAMESPACE::Kernel::free_blas();
 		return model->label[vote_max_idx];
 	}
 }
