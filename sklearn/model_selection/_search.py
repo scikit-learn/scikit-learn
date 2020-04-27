@@ -761,7 +761,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.refit_time_ = 0.0
             if self.return_all_estimators:
                 params_grid = results["params"]
-                self.all_estimators_ = estimators
             else:
                 params_grid = [results["params"][self.best_index_]]
             for params in params_grid:
@@ -779,6 +778,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 estimators.append(estimator)
             if self.return_all_estimators:
                 self.best_estimator_ = estimators[self.best_index_]
+                self.all_estimators_ = estimators
             else:
                 self.best_estimator_ = estimators[0]
 
