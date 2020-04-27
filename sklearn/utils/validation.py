@@ -468,8 +468,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
                 dtypes_orig[i] = np.object
-            elif (dtype_iter.name.startswith("Int") or
-                    dtype_iter.name.startswith("UInt")):
+            elif dtype_iter.name.startswith(("Int", "UInt"):
                 # name looks like an Integer Extension Array, now check for
                 # the dtype
                 with suppress(ImportError):
