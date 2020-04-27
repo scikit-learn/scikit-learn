@@ -60,6 +60,7 @@ def _write_label_html(out, name, name_details,
     """Write labeled html with or without a dropdown with named details"""
     out.write(f'<div class="{outer_class}">'
               f'<div class="{inner_class} sk-toggleable">')
+    name = html.escape(name)
 
     if name_details is not None:
         checked_str = 'checked' if checked else ''
@@ -100,7 +101,7 @@ def _get_visual_block(estimator):
 
     return _VisualBlock('single', estimator,
                         names=estimator.__class__.__name__,
-                        name_details=html.escape(str(estimator), quote=False))
+                        name_details=str(estimator))
 
 
 def _write_estimator_html(out, estimator, estimator_label,
@@ -284,7 +285,7 @@ div.sk-container {
 """.replace('  ', '').replace('\n', '')  # noqa
 
 
-def estimator_repr_html(estimator):
+def display_estimator_html(estimator):
     """Build a HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.
@@ -300,13 +301,11 @@ def estimator_repr_html(estimator):
         HTML representation of estimator.
     """
     with closing(StringIO()) as out:
-        out.write(f'<!DOCTYPE html><html lang="en">'
-                  f'<head><style>{_STYLE}</style></head><body>'
+        out.write(f'<style>{_STYLE}</style>'
                   f'<div class="sk-top-container"><div class="sk-container">')
         _write_estimator_html(out, estimator, estimator.__class__.__name__,
-                              html.escape(str(estimator), quote=False),
-                              first_call=True)
-        out.write('</div></div></body></html>')
+                              str(estimator), first_call=True)
+        out.write('</div></div>')
 
         html_output = out.getvalue()
         return html_output

@@ -25,9 +25,9 @@ from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RationalQuadratic
-from sklearn.utils._estimator_html_repr import _write_label_html
-from sklearn.utils._estimator_html_repr import _get_visual_block
-from sklearn.utils._estimator_html_repr import estimator_repr_html
+from sklearn.utils._display_estimator_html import _write_label_html
+from sklearn.utils._display_estimator_html import _get_visual_block
+from sklearn.utils._display_estimator_html import display_estimator_html
 
 
 @pytest.mark.parametrize("checked", [True, False])
@@ -120,7 +120,7 @@ def test_get_visual_block_column_transformer():
     assert est_html_info.name_details == (['num1', 'num2'], [0, 3])
 
 
-def test_estimator_html_repr_pipeline():
+def test_display_estimator_html_pipeline():
     num_trans = Pipeline(steps=[
         ('pass', 'passthrough'),
         ('imputer', SimpleImputer(strategy='median'))
@@ -151,7 +151,7 @@ def test_estimator_html_repr_pipeline():
     pipe = Pipeline([
         ('preprocessor', preprocess), ('feat_u', feat_u), ('classifier', clf)
     ])
-    html_output = estimator_repr_html(pipe)
+    html_output = display_estimator_html(pipe)
 
     # top level estimators show estimator with changes
     assert str(pipe) in html_output
@@ -194,7 +194,7 @@ def test_stacking_classsifer(final_estimator):
     clf = StackingClassifier(
         estimators=estimators, final_estimator=final_estimator)
 
-    html_output = estimator_repr_html(clf)
+    html_output = display_estimator_html(clf)
 
     assert str(clf) in html_output
     if final_estimator is None:
@@ -207,7 +207,7 @@ def test_stacking_classsifer(final_estimator):
 def test_stacking_regressor(final_estimator):
     reg = StackingRegressor(
         estimators=[('svr', LinearSVR())], final_estimator=final_estimator)
-    html_output = estimator_repr_html(reg)
+    html_output = display_estimator_html(reg)
 
     assert str(reg.estimators[0][0]) in html_output
     assert "LinearSVR</label>" in html_output
@@ -220,7 +220,7 @@ def test_stacking_regressor(final_estimator):
 def test_birch_duck_typing_meta():
     # Test duck typing meta estimators with Birch
     birch = Birch(n_clusters=AgglomerativeClustering(n_clusters=3))
-    html_output = estimator_repr_html(birch)
+    html_output = display_estimator_html(birch)
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
@@ -234,7 +234,7 @@ def test_birch_duck_typing_meta():
 def test_ovo_classifier_duck_typing_meta():
     # Test duck typing metaestimators with OVO
     ovo = OneVsOneClassifier(LinearSVC(penalty='l1'))
-    html_output = estimator_repr_html(ovo)
+    html_output = display_estimator_html(ovo)
 
     # inner estimators do not show changes
     with config_context(print_changed_only=True):
@@ -249,7 +249,7 @@ def test_duck_typing_nested_estimator():
     # Test duck typing metaestimators with GP
     kernel = RationalQuadratic(length_scale=1.0, alpha=0.1)
     gp = GaussianProcessRegressor(kernel=kernel)
-    html_output = estimator_repr_html(gp)
+    html_output = display_estimator_html(gp)
 
     assert f"<pre>{str(kernel)}" in html_output
     assert f"<pre>{str(gp)}" in html_output
@@ -261,5 +261,5 @@ def test_one_estimator_print_change_only(print_changed_only):
 
     with config_context(print_changed_only=print_changed_only):
         pca_repr = str(pca)
-        html_output = estimator_repr_html(pca)
+        html_output = display_estimator_html(pca)
         assert pca_repr in html_output

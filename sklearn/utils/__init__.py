@@ -25,7 +25,7 @@ from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
-from ._estimator_html_repr import estimator_repr_html
+from ._display_estimator_html import display_estimator_html
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -52,7 +52,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_repr_html"
+           "DataConversionWarning", "display_estimator_html"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'

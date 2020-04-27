@@ -15,7 +15,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..utils._estimator_html_repr import _VisualBlock
+from ..utils._display_estimator_html import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch

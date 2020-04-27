@@ -13,6 +13,7 @@ from collections import defaultdict
 import platform
 import inspect
 import re
+import html
 
 import numpy as np
 
@@ -21,7 +22,7 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
-from .utils._estimator_html_repr import estimator_repr_html
+from .utils._display_estimator_html import display_estimator_html
 from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {
@@ -437,11 +438,11 @@ class BaseEstimator:
 
         return out
 
-    def _repr_mimebundle_(self, **kwargs):
-        output = {"text/plain": repr(self)}
+    def _repr_html_(self):
+        """HTML representation of estimator."""
         if get_config()["repr_html"]:
-            output["text/html"] = estimator_repr_html(self)
-        return output
+            return display_estimator_html(self)
+        return None
 
 
 class ClassifierMixin:
