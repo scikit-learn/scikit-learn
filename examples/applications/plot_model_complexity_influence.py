@@ -8,20 +8,23 @@ computational performance.
 
 Here, we will use two datasets:
 
-    - Diabetes dataset for regression. This dataset consists of 10 measurements
-      taken from diabetes patients. The task is to predict the disease
-      progression TODO: add link
+    - Diabetes dataset for regression.
+      This dataset consists of 10 measurements taken from diabetes patients.
+      The task is to predict the disease
+      progression
     - 20 Newsgroups dataset for classification. This dataset consists of
       newsgroup posts. The task is to predict on which (out of 20 topics) is
       the post
 
 We will use three different estimators:
     - SGDClassifier (for classification data) which implements stochastic
-      gradient descent learning TODO: add link
+      gradient descent learning
+      :class:`sklearn.linear_model.SGDClassifier`
     - NuSVR (for regression data) which implements Nu support vector regression
-      TODO: add link
+      :class:`sklearn.svm.NuSVR`
     - GradientBoostingRegressor (for regression data) which builds an additive
-      model in a forward stage-wise fashionTODO: add link
+      model in a forward stage-wise fashion
+      :class:`ensemble.GradientBoostingRegressor`
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters. Next, we will measure the influence on both
