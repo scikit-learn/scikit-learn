@@ -1965,8 +1965,8 @@ def test_grid_search_return_all_estimators():
     # Check the length of estimators
     assert(len(estimators) == 3)
 
-    # Check that the best estimator is the same as in the list of all_estimators_
-    # based on the best_index_
+    # Check that the best estimator is the same as in the list
+    # of all_estimators_ based on the best_index_
     assert(estimators[grid_search.best_index_] == grid_search.best_estimator_)
 
     # Apply the same check with a single param.
