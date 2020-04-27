@@ -115,13 +115,7 @@ pipeline = Pipeline([
     ('svc', LinearSVC(dual=False)),
 ], verbose=True)
 
-###############################################################################
-# Classification Report
-###############################################################################
-# Finally, the pipeline is trained and a classification report is generated
-# on a testing subset. We limit the list of categories to make running this
-# example faster.
-
+# limit the list of categories to make running this example faster.
 categories = ['alt.atheism', 'talk.religion.misc']
 X_train, y_train = fetch_20newsgroups(random_state=1,
                                       subset='train',
