@@ -525,8 +525,8 @@ ax.legend(loc="upper left")
 #   model to be badly calibrated. In particular it tends to under estimate the
 #   risk and can even predict invalid negative frequencies...
 #
-# - Using the Poisson loss with a log-link can correct these problems and lead to a
-#   well-calibrated linear model.
+# - Using the Poisson loss with a log-link can correct these problems and lead
+#   to a well-calibrated linear model.
 #
 # - Despite the improvement in calibration, the ranking power of both linear
 #   models are comparable and well below the ranking power of the Gradient
