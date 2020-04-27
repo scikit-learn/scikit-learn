@@ -131,7 +131,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     if Xy is None:
         X_sparse = sparse.isspmatrix(X)
         sparse_center = X_sparse and (fit_intercept or normalize)
-        X = check_array(X, 'csc',
+        X = check_array(X, accept_sparse='csc',
                         copy=(copy_X and fit_intercept and not X_sparse))
         if not X_sparse:
             # X can be touched inplace thanks to the above line
@@ -435,10 +435,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+        X = check_array(X, accept_sparse='csc', dtype=[np.float64, np.float32],
                         order='F', copy=copy_X)
-        y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
-                        ensure_2d=False)
+        y = check_array(y, accept_sparse='csc', dtype=X.dtype.type,
+                        order='F', copy=False, ensure_2d=False)
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
             Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
@@ -1095,7 +1095,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, 'csc', dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse='csc', dtype=dtype,
+                          order=X_order)
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 

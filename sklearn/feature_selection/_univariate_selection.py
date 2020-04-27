@@ -146,7 +146,7 @@ def f_classif(X, y):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -277,7 +277,8 @@ def f_regression(X, y, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                     dtype=np.float64)
     n_samples = X.shape[0]
 
     # compute centered values
