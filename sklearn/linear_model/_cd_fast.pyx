@@ -709,7 +709,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if (w_ii[0] != 0.):  # faster than testing full norm for non-zeros
+                # if (w_ii[0] != 0.):  # faster than testing full norm for non-zeros, yet unsafe
                     # Using Numpy:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
                     # Using Blas Level2:
@@ -718,7 +718,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     #      &w_ii[0], 1, &R[0, 0], n_tasks)
                     # Using Blas Level1 and for loop for avoid slower threads
                     # for such small vectors
-                    for jj in range(n_tasks):
+                for jj in range(n_tasks):
+                    if w_ii[jj] != 0:
                         _axpy(n_samples, w_ii[jj], &X[0, ii], 1, &R[0, jj], 1)
 
                 # Using numpy:
@@ -739,7 +740,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                       &W[0, ii], 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if (W[0, ii] != 0.):  # faster than testing full col norm
+                # if (W[0, ii] != 0.):  # faster than testing full col norm, but unsafe
                     # Using numpy:
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Using BLAS Level 2:
@@ -748,7 +749,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     #      &X[0, ii], 1, &W[0, ii], 1,
                     #      &R[0, 0], n_tasks)
                     # Using BLAS Level 1 (faster small vectors like here):
-                    for jj in range(n_tasks):
+                for jj in range(n_tasks):
+                    if W[jj, ii] != 0:
                         _axpy(n_samples, -W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
