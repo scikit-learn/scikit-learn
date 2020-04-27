@@ -1960,7 +1960,7 @@ def test_grid_search_return_all_estimators():
     grid_search = GridSearchCV(SVC(), param_grid=param_grid,
                                return_all_estimators=True).fit(X, y)
     estimators = grid_search.all_estimators_
-    
+
     # Check the length of estimators
     assert(len(estimators) == 3)
 
