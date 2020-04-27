@@ -303,11 +303,11 @@ def test_precision():
             # check impurity
             for finding in finditer(pattern, dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
                 assert (len(search(r"\.\d+", finding.group()).group()) ==
-                             precision + 1)
+                        precision + 1)
 
 
 def test_export_text_errors():
@@ -448,3 +448,22 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+
+# FIXME: to be removed in 0.25
+def test_plot_tree_rotate_deprecation(pyplot):
+    tree = DecisionTreeClassifier()
+    tree.fit(X, y)
+    # test that a warning is raised when rotate is used.
+    match = ("'rotate' has no effect and is deprecated in 0.23. "
+             "It will be removed in 0.25.")
+    with pytest.warns(FutureWarning, match=match):
+        plot_tree(tree, rotate=True)
+
+
+def test_not_fitted_tree(pyplot):
+
+    # Testing if not fitted tree throws the correct error
+    clf = DecisionTreeRegressor()
+    with pytest.raises(NotFittedError):
+        plot_tree(clf)

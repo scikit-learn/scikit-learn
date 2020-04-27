@@ -7,9 +7,9 @@ from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ._base import LinearModel
-from ..utils import check_X_y
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
 
@@ -205,7 +205,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284608623514573
+    -7.284...
     >>> huber.predict(X[:1,])
     array([806.7200...])
     >>> linear = LinearRegression().fit(X, y)
@@ -223,8 +223,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
-
-    def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.epsilon = epsilon
         self.max_iter = max_iter
@@ -252,7 +252,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(
+        X, y = self._validate_data(
             X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
             dtype=[np.float64, np.float32])
 

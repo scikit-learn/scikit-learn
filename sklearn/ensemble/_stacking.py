@@ -14,7 +14,7 @@ from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
 
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
@@ -30,6 +30,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -37,7 +38,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     """Base class for stacking method."""
 
     @abstractmethod
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
@@ -63,7 +64,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         and `self.passthrough` is True, the output of `transform` will
         be sparse.
 
-        This helper is in charge of ensuring the preditions are 2D arrays and
+        This helper is in charge of ensuring the predictions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
         """
@@ -117,10 +118,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,) or default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
+
+            .. versionchanged:: 0.23
+               when not None, `sample_weight` is passed to all underlying
+               estimators
 
         Returns
         -------
@@ -137,9 +142,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
+            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
+        self.n_features_in_ = self.estimators_[0].n_features_in_
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
@@ -165,10 +171,13 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-
+        fit_params = ({"sample_weight": sample_weight}
+                      if sample_weight is not None
+                      else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
+                                       fit_params=fit_params,
                                        verbose=self.verbose)
             for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
@@ -182,21 +191,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        if sample_weight is not None:
-            try:
-                self.final_estimator_.fit(
-                    X_meta, y, sample_weight=sample_weight
-                )
-            except TypeError as exc:
-                if "unexpected keyword argument 'sample_weight'" in str(exc):
-                    raise TypeError(
-                        "Underlying estimator {} does not support sample "
-                        "weights."
-                        .format(self.final_estimator_.__class__.__name__)
-                    ) from exc
-                raise
-        else:
-            self.final_estimator_.fit(X_meta, y)
+        _fit_single_estimator(self.final_estimator_, X_meta, y,
+                              sample_weight=sample_weight)
 
         return self
 
@@ -310,14 +306,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Class labels.
+
     estimators_ : list of estimators
         The elements of the estimators parameter, having been fitted on the
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
     final_estimator_ : estimator
@@ -365,7 +367,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
@@ -398,7 +401,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -555,6 +558,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `final_estimator` is trained on the predictions as well as the
         original training data.
 
+    verbose : int, default=0
+        Verbosity level.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -562,8 +568,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         training data. If an estimator has been set to `'drop'`, it
         will not appear in `estimators_`.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
+
 
     final_estimator_ : estimator
         The regressor to stacked the base estimators fitted.
@@ -598,8 +605,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 passthrough=False, verbose=0):
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
+                 n_jobs=None, passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
@@ -630,7 +638,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.

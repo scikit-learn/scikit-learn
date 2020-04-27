@@ -17,6 +17,7 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ._base import SelectorMixin
 
 
@@ -145,7 +146,7 @@ def f_classif(X, y):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -276,7 +277,8 @@ def f_regression(X, y, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                     dtype=np.float64)
     n_samples = X.shape[0]
 
     # compute centered values
@@ -338,7 +340,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -360,6 +363,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
 
     def _check_params(self, X, y):
         pass
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 ######################################################################
@@ -418,9 +424,9 @@ class SelectPercentile(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
-
-    def __init__(self, score_func=f_classif, percentile=10):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, percentile=10):
+        super().__init__(score_func=score_func)
         self.percentile = percentile
 
     def _check_params(self, X, y):
@@ -502,9 +508,9 @@ class SelectKBest(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
-
-    def __init__(self, score_func=f_classif, k=10):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, k=10):
+        super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
@@ -581,9 +587,9 @@ class SelectFpr(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -647,9 +653,9 @@ class SelectFdr(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -710,9 +716,9 @@ class SelectFwe(_BaseFilter):
     SelectFdr: Select features based on an estimated false discovery rate.
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
-
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+        super().__init__(score_func=score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -760,7 +766,7 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
+    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
     (569, 20)
@@ -785,8 +791,9 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}
 
-    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        super().__init__(score_func)
+    @_deprecate_positional_args
+    def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
+        super().__init__(score_func=score_func)
         self.mode = mode
         self.param = param
 

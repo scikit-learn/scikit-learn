@@ -19,6 +19,7 @@ from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
                                     assert_array_almost_equal,
+                                    assert_allclose,
                                     assert_raise_message)
 
 
@@ -249,6 +250,7 @@ def test_kernel_clone_after_set_params(kernel):
                                                    isotropic_kernels):
         length_scale = params['length_scale']
         if np.iterable(length_scale):
+            # XXX unreached code as of v0.22
             params['length_scale'] = length_scale[0]
             params['length_scale_bounds'] = bounds
         else:
@@ -270,6 +272,11 @@ def test_matern_kernel():
     K_absexp = np.exp(-euclidean_distances(X, X, squared=False))
     K = Matern(nu=0.5, length_scale=1.0)(X)
     assert_array_almost_equal(K, K_absexp)
+    # matern kernel with coef0==inf is equal to RBF kernel
+    K_rbf = RBF(length_scale=1.0)(X)
+    K = Matern(nu=np.inf, length_scale=1.0)(X)
+    assert_array_almost_equal(K, K_rbf)
+    assert_allclose(K, K_rbf)
     # test that special cases of matern kernel (coef0 in [0.5, 1.5, 2.5])
     # result in nearly identical results as the general case for coef0 in
     # [0.5 + tiny, 1.5 + tiny, 2.5 + tiny]
@@ -278,6 +285,11 @@ def test_matern_kernel():
         K1 = Matern(nu=nu, length_scale=1.0)(X)
         K2 = Matern(nu=nu + tiny, length_scale=1.0)(X)
         assert_array_almost_equal(K1, K2)
+    # test that coef0==large is close to RBF
+    large = 100
+    K1 = Matern(nu=large, length_scale=1.0)(X)
+    K2 = RBF(length_scale=1.0)(X)
+    assert_array_almost_equal(K1, K2, decimal=2)
 
 
 @pytest.mark.parametrize("kernel", kernels)

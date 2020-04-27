@@ -24,6 +24,8 @@ from ._from_model import SelectFromModel
 
 from ._mutual_info import mutual_info_regression, mutual_info_classif
 
+from ._base import SelectorMixin
+
 
 __all__ = ['GenericUnivariateSelect',
            'RFE',
@@ -40,4 +42,5 @@ __all__ = ['GenericUnivariateSelect',
            'f_oneway',
            'f_regression',
            'mutual_info_classif',
-           'mutual_info_regression']
+           'mutual_info_regression',
+           'SelectorMixin']
