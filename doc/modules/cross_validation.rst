@@ -323,11 +323,11 @@ The following cross-validators can be used in such cases.
 
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
-time-dependent process, it's safer to
-use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
-Similarly if we know that the generative process has a group structure
-(samples from collected from different subjects, experiments, measurement
-devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
+time-dependent process, it is safer to
+use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`.
+Similarly, if we know that the generative process has a group structure
+(samples collected from different subjects, experiments, measurement
+devices), it is safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
@@ -535,14 +535,14 @@ folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
 Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
-two unbalanced classes.  We show the number of samples in each class and compare with 
+two unbalanced classes.  We show the number of samples in each class and compare with
 :class:`KFold`.
 
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
   >>> X, y = np.ones((50, 1)), np.hstack(([0] * 45, [1] * 5))
-  >>> skf = StratifiedKFold(n_splits=3) 
-  >>> for train, test in skf.split(X, y):  
+  >>> skf = StratifiedKFold(n_splits=3)
+  >>> for train, test in skf.split(X, y):
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
   train -  [30  3]   |   test -  [15  2]
@@ -556,7 +556,7 @@ two unbalanced classes.  We show the number of samples in each class and compare
   train -  [28  5]   |   test -  [17]
   train -  [34]   |   test -  [11  5]
 
-We can see that :class:`StratifiedKFold` preserves the class ratios 
+We can see that :class:`StratifiedKFold` preserves the class ratios
 (approximately 1 / 10) in both train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
