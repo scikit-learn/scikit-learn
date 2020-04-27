@@ -14,8 +14,8 @@ Version 0.23.0
 
 Put the changes in their relevant module.
 
-Keyword-only arguments
-----------------------
+Enforcing keyword-only arguments
+--------------------------------
 
 In an effort to promote clear and non-ambiguous code, most constructor and
 function parameters are now expected to be passed as keyword arguments (i.e.
