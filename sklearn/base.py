@@ -437,7 +437,12 @@ class BaseEstimator:
 
         return out
 
+    def _repr_html_(self):
+        """HTML representation of estimator"""
+        return display_estimator_html(self)
+
     def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
         if get_config()["repr_html"]:
             output["text/html"] = display_estimator_html(self)

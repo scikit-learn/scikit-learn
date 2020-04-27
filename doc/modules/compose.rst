@@ -536,38 +536,10 @@ Visualizing Composite Estimators
 By default, estimators are displayed with a HTML representation when shown in a
 jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
 many estimators. An example of the HTML output can be seen below.
-
-.. display_estimator_repr_html::
-
-    from sklearn import config_context
-    from sklearn.compose import ColumnTransformer
-    from sklearn.pipeline import Pipeline
-    from sklearn.impute import SimpleImputer
-    from sklearn.preprocessing import StandardScaler, OneHotEncoder
-    from sklearn.linear_model import LogisticRegression
-
-    numeric_features = ['age', 'fare']
-    numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler())])
-
-    categorical_features = ['embarked', 'sex', 'pclass']
-    categorical_transformer = Pipeline(steps=[
-     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', numeric_transformer, numeric_features),
-            ('cat', categorical_transformer, categorical_features)])
-
-    clf = Pipeline(steps=[('preprocessor', preprocessor),
-                           ('classifier', LogisticRegression())])
-    with config_context(repr_html=True):
-        clf
-
-As an alternative, the HTML can be written to a file using the `_repr_html_`
-method::
+**HTML representation of Pipeline** section of 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+As an alternative, the HTML can be written to a file using
+:func:`~sklearn.utils.display_estimator_html`::
 
    from sklearn.utils import display_estimator_html
 
