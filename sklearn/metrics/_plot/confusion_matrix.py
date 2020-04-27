@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
 
@@ -21,8 +22,9 @@ class ConfusionMatrixDisplay:
     confusion_matrix : ndarray of shape (n_classes, n_classes)
         Confusion matrix.
 
-    display_labels : ndarray of shape (n_classes,)
-        Display labels for plot.
+    display_labels : ndarray of shape (n_classes,), default=None
+        Display labels for plot. If None, display labels are set from 0 to
+        `n_classes - 1`.
 
     Attributes
     ----------
@@ -39,11 +41,12 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
     """
-    def __init__(self, confusion_matrix, display_labels):
+    def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 
-    def plot(self, include_values=True, cmap='viridis',
+    @_deprecate_positional_args
+    def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None, ax=None):
         """Plot visualization.
 
@@ -108,11 +111,16 @@ class ConfusionMatrixDisplay:
                     ha="center", va="center",
                     color=color)
 
+        if self.display_labels is None:
+            display_labels = np.arange(n_classes)
+        else:
+            display_labels = self.display_labels
+
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
                yticks=np.arange(n_classes),
-               xticklabels=self.display_labels,
-               yticklabels=self.display_labels,
+               xticklabels=display_labels,
+               yticklabels=display_labels,
                ylabel="True label",
                xlabel="Predicted label")
 
@@ -124,7 +132,8 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, labels=None,
+@_deprecate_positional_args
+def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
