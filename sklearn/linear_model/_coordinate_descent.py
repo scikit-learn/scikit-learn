@@ -1723,9 +1723,9 @@ class MultiTaskElasticNet(Lasso):
 
     Where::
 
-        ||W||_21 = sum_i sqrt(sum_j w_ij ^ 2)
+        ||W||_21 = sum_i sqrt(sum_j W_ij ^ 2)
 
-    i.e. the sum of norm of each row.
+    i.e. the sum of norms of each row.
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
@@ -1819,8 +1819,8 @@ class MultiTaskElasticNet(Lasso):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as a Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
@@ -2007,8 +2007,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as a Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
@@ -2185,8 +2185,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as a Fortran-contiguous numpy arrays.
     """
     path = staticmethod(enet_path)
 
@@ -2357,8 +2357,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as a Fortran-contiguous numpy arrays.
     """
     path = staticmethod(lasso_path)
 
