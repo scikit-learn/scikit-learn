@@ -357,7 +357,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples))
+                                            n_batches, n_samples=n_samples))
         verbose = self.verbose
         begin = time.time()
         for iteration in range(1, self.n_iter + 1):
