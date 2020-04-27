@@ -1954,6 +1954,7 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     }
     model.fit(X_train, y_train, **fit_params)
 
+
 def test_grid_search_return_all_estimators():
     X, y = make_blobs(n_samples=50, random_state=42)
     param_grid = {'C': [1, 1.001, 0.001]}
