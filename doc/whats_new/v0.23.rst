@@ -397,6 +397,12 @@ Changelog
   or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 
+- |API| From version 0.25, :func:`metrics.pairwise.pairwise_distances` will no
+  longer automatically compute the ``VI`` parameter for Mahalanobis distance
+  and the ``V`` parameter for seuclidean distance if ``Y`` is passed. The user
+  will be expected to compute this parameter on the training data of their
+  choice and pass it to `pairwise_distances`. :pr:`16993` by `Joel Nothman`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 
