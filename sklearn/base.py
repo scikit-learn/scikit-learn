@@ -13,7 +13,6 @@ from collections import defaultdict
 import platform
 import inspect
 import re
-import html
 
 import numpy as np
 
@@ -438,11 +437,11 @@ class BaseEstimator:
 
         return out
 
-    def _repr_html_(self):
-        """HTML representation of estimator."""
+    def _repr_mimebundle_(self, **kwargs):
+        output = {"text/plain": repr(self)}
         if get_config()["repr_html"]:
-            return display_estimator_html(self)
-        return None
+            output["text/html"] = display_estimator_html(self)
+        return output
 
 
 class ClassifierMixin:

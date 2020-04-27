@@ -1,6 +1,5 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
-import html
 
 import numpy as np
 import scipy.sparse as sp
@@ -518,10 +517,11 @@ def test_warns_on_get_params_non_attribute():
 def test_repr_mimebundle_():
     # Checks the repr_html configuration flag controls the json output
     tree = DecisionTreeClassifier()
-    output = tree._repr_html_()
-    assert output == f"<code>{html.escape(str(tree))}</code>"
+    output = tree._repr_mimebundle_()
+    assert "text/plain" in output
+    assert "text/html" not in output
 
     with config_context(repr_html=True):
-        output = tree._repr_html_()
-        # html output
-        assert "<style>" in output
+        output = tree._repr_mimebundle_()
+        assert "text/plain" in output
+        assert "text/html" in output
