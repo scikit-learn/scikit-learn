@@ -150,6 +150,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         If the loss on a sample is greater than the ``residual_threshold``,
         then this sample is classified as an outlier.
 
+        .. versionadded:: 0.18
+
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
         Pass an int for reproducible output across multiple function calls.
@@ -238,6 +240,8 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             Individual weights for each sample
             raises error if sample_weight is passed and base_estimator
             fit method does not support it.
+
+            .. versionadded:: 0.18
 
         Raises
         ------
