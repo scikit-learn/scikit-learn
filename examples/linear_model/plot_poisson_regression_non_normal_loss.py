@@ -523,7 +523,7 @@ ax.legend(loc="upper left")
 #
 # - The least squares loss (along with the implicit use of the identity link
 #   function) of the Ridge regression model seems to cause this model to be
-#   badly calibrated. In particular it tends to under estimate the risk and can
+#   badly calibrated. In particular, it tends to underestimate the risk and can
 #   even predict invalid negative frequencies.
 #
 # - Using the Poisson loss with a log-link can correct these problems and lead
