@@ -176,7 +176,7 @@ Changelog
 - |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
-  :pr:`15709` by :user:`<shivamgargsya>` and
+  :pr:`15709` by :user:`shivamgargsya` and
   :user:`Venkatachalam N <venkyyuvy>`.
 
 - |Enhancement| Functions :func:`datasets.make_circles` and
@@ -198,8 +198,8 @@ Changelog
   ``csc`` matrices. :pr:`16837` by :user:`wornbb`.
 
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
-   exclusively choose the components that explain the variance greater than
-   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+  exclusively choose the components that explain the variance greater than
+  `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
 - |Fix| :class:`decomposition.PCA` with `n_components='mle'` now correctly
   handles small eigenvalues, and does not infer 0 as the correct number of
@@ -302,7 +302,7 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr:`15503` by :user:`Sam Dixon` <sam-dixon>.
+  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
 
 - |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
   caused predicted standard deviations to only be between 0 and 1 when
@@ -336,7 +336,7 @@ Changelog
   and `Olivier Grisel`_.
 
 - |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model:Lasso` for dense feature matrix `X`.
+  :class:`linear_model.Lasso` for dense feature matrix `X`.
   :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
@@ -558,12 +558,12 @@ Changelog
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
 
-- |Enhancement| add warning in :func:`utils.validation.check_array` for
+- |Enhancement| add warning in :func:`utils.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
-- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
-  matrix from a pandas DataFrame that contains only `SparseArray`s.
+- |Enhancement| :func:`utils.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray` columns.
   :pr:`16728` by `Thomas Fan`_.
 
 - |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
