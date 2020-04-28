@@ -277,10 +277,9 @@ score_estimator(poisson_gbrt, df_test)
 
 
 ##############################################################################
-# Like the Ridge regression above, the gradient boosted trees model minimizes
-# the conditional squared error. However, because of a higher predictive power,
-# it also results in a smaller Poisson deviance than the linear Poisson
-# regression model.
+# Like the Poisson GLM above, the gradient boosted trees model minimizes
+# the Poisson deviance. However, because of a higher predictive power,
+# it reaches lower values of Poisson deviance.
 #
 # Evaluating models with a single train / test split is prone to random
 # fluctuations. If computing resources allow, it should be verified that
@@ -339,7 +338,7 @@ plt.tight_layout()
 #
 # Note that we could have used the least squares loss for the
 # ``HistGradientBoostingRegressor`` model. This would wrongly assume a normal
-# distribution the response variable as for the `Ridge` model, and possibly
+# distributed response variable as does the `Ridge` model, and possibly
 # also lead to slightly negative predictions. However the gradient boosted
 # trees would still perform relatively well and in particular better than
 # ``PoissonRegressor`` thanks to the flexibility of the trees combined with the
@@ -533,7 +532,7 @@ ax.legend(loc="upper left")
 # Main takeaways
 # --------------
 #
-# - The performance of the models can be evaluted by their ability to yield
+# - The performance of the models can be evaluated by their ability to yield
 #   well-calibrated predictions and a good ranking.
 #
 # - The Gini index reflects the ability of a model to rank predictions
