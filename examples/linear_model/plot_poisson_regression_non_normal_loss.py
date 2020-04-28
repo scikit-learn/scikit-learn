@@ -49,8 +49,8 @@ import pandas as pd
 # The French Motor Third-Party Liability Claims dataset
 # -----------------------------------------------------
 #
-# Let's load the motor claim dataset. We ignore the severity data for this
-# study for the sake of simplicitly:
+# Let's load the motor claim dataset from OpenML:
+# https://www.openml.org/d/41214
 
 from sklearn.datasets import fetch_openml
 
