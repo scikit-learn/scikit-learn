@@ -229,8 +229,8 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right, double children_lower_bound,
-                  double children_upper_bound) nogil except -1:
+                  double impurity_right, double lower_bound,
+                  double upper_bound) nogil except -1:
         """Push record on the priority heap.
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
@@ -257,8 +257,8 @@ cdef class PriorityHeap:
         heap[heap_ptr].impurity_left = impurity_left
         heap[heap_ptr].impurity_right = impurity_right
         heap[heap_ptr].improvement = improvement
-        heap[heap_ptr].children_lower_bound = children_lower_bound
-        heap[heap_ptr].children_upper_bound = children_upper_bound
+        heap[heap_ptr].lower_bound = lower_bound
+        heap[heap_ptr].upper_bound = upper_bound
 
         # Heapify up
         self.heapify_up(heap, heap_ptr)
