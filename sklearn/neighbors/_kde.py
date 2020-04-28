@@ -103,6 +103,8 @@ class KernelDensity(BaseEstimator):
         self.breadth_first = breadth_first
         self.leaf_size = leaf_size
         self.metric_params = metric_params
+        
+        self.tree_ = None
 
         # run the choose algorithm code so that exceptions will happen here
         # we're using clone() in the GenerativeBayes classifier,
