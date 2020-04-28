@@ -4,15 +4,17 @@
 # License: BSD 3 clause
 
 import warnings
+import numbers
 import numpy as np
 from scipy import sparse
 from math import sqrt
 
+from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.extmath import row_norms
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 
@@ -48,10 +50,12 @@ def _split_node(node, threshold, branching_factor):
     new_subcluster1 = _CFSubcluster()
     new_subcluster2 = _CFSubcluster()
     new_node1 = _CFNode(
-        threshold, branching_factor, is_leaf=node.is_leaf,
+        threshold=threshold, branching_factor=branching_factor,
+        is_leaf=node.is_leaf,
         n_features=node.n_features)
     new_node2 = _CFNode(
-        threshold, branching_factor, is_leaf=node.is_leaf,
+        threshold=threshold, branching_factor=branching_factor,
+        is_leaf=node.is_leaf,
         n_features=node.n_features)
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
@@ -132,7 +136,7 @@ class _CFNode:
         view of ``init_sq_norm_``.
 
     """
-    def __init__(self, threshold, branching_factor, is_leaf, n_features):
+    def __init__(self, *, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
@@ -273,7 +277,7 @@ class _CFSubcluster:
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
-    def __init__(self, linear_sum=None):
+    def __init__(self, *, linear_sum=None):
         if linear_sum is None:
             self.n_samples_ = 0
             self.squared_sum_ = 0.0
@@ -334,20 +338,20 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    threshold : float, default 0.5
+    threshold : float, default=0.5
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
         subcluster is started. Setting this value to be very low promotes
         splitting and vice-versa.
 
-    branching_factor : int, default 50
+    branching_factor : int, default=50
         Maximum number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
         that node is split into two nodes with the subclusters redistributed
         in each. The parent subcluster of that node is removed and two new
         subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default 3
+    n_clusters : int, instance of sklearn.cluster model, default=3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
@@ -361,10 +365,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
 
-    compute_labels : bool, default True
+    compute_labels : bool, default=True
         Whether or not to compute labels for each fit.
 
-    copy : bool, default True
+    copy : bool, default=True
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
 
@@ -388,25 +392,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.cluster import Birch
-    >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(n_clusters=None)
-    >>> brc.fit(X)
-    Birch(n_clusters=None)
-    >>> brc.predict(X)
-    array([0, 0, 0, 1, 1, 1])
 
-    References
-    ----------
-    * Tian Zhang, Raghu Ramakrishnan, Maron Livny
-      BIRCH: An efficient data clustering method for large databases.
-      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
-
-    * Roberto Perdisci
-      JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/archive/p/jbirch
+    MiniBatchKMeans
+        Alternative  implementation that does incremental updates
+        of the centers' positions using mini-batches.
 
     Notes
     -----
@@ -421,9 +412,29 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     to it and the linear sum, squared sum and the number of samples of that
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
-    """
 
-    def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
+    References
+    ----------
+    * Tian Zhang, Raghu Ramakrishnan, Maron Livny
+      BIRCH: An efficient data clustering method for large databases.
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+
+    * Roberto Perdisci
+      JBirch - Java implementation of BIRCH clustering algorithm
+      https://code.google.com/archive/p/jbirch
+
+    Examples
+    --------
+    >>> from sklearn.cluster import Birch
+    >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
+    >>> brc.predict(X)
+    array([0, 0, 0, 1, 1, 1])
+    """
+    @_deprecate_positional_args
+    def __init__(self, *, threshold=0.5, branching_factor=50, n_clusters=3,
                  compute_labels=True, copy=True):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -441,13 +452,18 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Input data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+            Fitted estimator.
         """
         self.fit_, self.partial_fit_ = True, False
         return self._fit(X)
 
     def _fit(self, X):
-        X = check_array(X, accept_sparse='csr', copy=self.copy)
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
@@ -461,11 +477,14 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         has_root = getattr(self, 'root_', None)
         if getattr(self, 'fit_') or (partial_fit and not has_root):
             # The first root is the leaf. Manipulate this object throughout.
-            self.root_ = _CFNode(threshold, branching_factor, is_leaf=True,
+            self.root_ = _CFNode(threshold=threshold,
+                                 branching_factor=branching_factor,
+                                 is_leaf=True,
                                  n_features=n_features)
 
             # To enable getting back subclusters.
-            self.dummy_leaf_ = _CFNode(threshold, branching_factor,
+            self.dummy_leaf_ = _CFNode(threshold=threshold,
+                                       branching_factor=branching_factor,
                                        is_leaf=True, n_features=n_features)
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
@@ -484,7 +503,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 new_subcluster1, new_subcluster2 = _split_node(
                     self.root_, threshold, branching_factor)
                 del self.root_
-                self.root_ = _CFNode(threshold, branching_factor,
+                self.root_ = _CFNode(threshold=threshold,
+                                     branching_factor=branching_factor,
                                      is_leaf=False,
                                      n_features=n_features)
                 self.root_.append_subcluster(new_subcluster1)
@@ -524,7 +544,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             step is done.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+            Fitted estimator.
         """
         self.partial_fit_, self.fit_ = True, False
         if X is None:
@@ -562,10 +587,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         """
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
-        reduced_distance = safe_sparse_dot(X, self.subcluster_centers_.T)
-        reduced_distance *= -2
-        reduced_distance += self._subcluster_norms
-        return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
+        kwargs = {'Y_norm_squared': self._subcluster_norms}
+        return self.subcluster_labels_[
+                pairwise_distances_argmin(X,
+                                          self.subcluster_centers_,
+                                          metric_kwargs=kwargs)
+            ]
 
     def transform(self, X):
         """
@@ -597,7 +624,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(clusterer, int):
+        if isinstance(clusterer, numbers.Integral):
             clusterer = AgglomerativeClustering(
                 n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.

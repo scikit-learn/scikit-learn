@@ -17,6 +17,7 @@ from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
@@ -40,6 +41,18 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     ite = 1
     X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
+
+    if mode == "B":
+        # Uses condition from scipy<1.3 in pinv2 which was changed in
+        # https://github.com/scipy/scipy/pull/10067. In scipy 1.3, the
+        # condition was changed to depend on the largest singular value
+        X_t = X.dtype.char.lower()
+        Y_t = Y.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+
+        cond_X = factor[X_t] * eps
+        cond_Y = factor[Y_t] * eps
+
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
@@ -47,7 +60,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             if X_pinv is None:
                 # We use slower pinv2 (same as np.linalg.pinv) for stability
                 # reasons
-                X_pinv = pinv2(X, check_finite=False)
+                X_pinv = pinv2(X, check_finite=False, cond=cond_X)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
@@ -64,7 +77,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
-                Y_pinv = pinv2(Y, check_finite=False)  # compute once pinv(Y)
+                # compute once pinv(Y)
+                Y_pinv = pinv2(Y, check_finite=False, cond=cond_Y)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
@@ -235,7 +249,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     """
 
     @abstractmethod
-    def __init__(self, n_components=2, scale=True, deflation_mode="regression",
+    def __init__(self, n_components=2, *, scale=True,
+                 deflation_mode="regression",
                  mode="A", algorithm="nipals", norm_y_weights=False,
                  max_iter=500, tol=1e-06, copy=True):
         self.n_components = n_components
@@ -264,8 +279,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -504,7 +519,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self.fit(X, y).transform(X, y)
 
     def _more_tags(self):
-        return {'poor_score': True}
+        return {'poor_score': True,
+                'requires_y': False}
 
 
 class PLSRegression(_PLS):
@@ -516,6 +532,8 @@ class PLSRegression(_PLS):
     norm_y_weights=False and algorithm="nipals".
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -635,8 +653,8 @@ class PLSRegression(_PLS):
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
     """
-
-    def __init__(self, n_components=2, scale=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -654,6 +672,8 @@ class PLSCanonical(_PLS):
     results up to numerical errors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -703,6 +723,9 @@ class PLSCanonical(_PLS):
 
     y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
+
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -779,8 +802,8 @@ class PLSCanonical(_PLS):
     CCA
     PLSSVD
     """
-
-    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -796,6 +819,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     There are no iterative deflation here.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -846,8 +871,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
     """
-
-    def __init__(self, n_components=2, scale=True, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
@@ -867,8 +892,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)

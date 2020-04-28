@@ -708,7 +708,6 @@ def test_dummy_regressor_return_std():
     assert_array_equal(y_pred_list[1], y_std_expected)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize("y,y_test", [
     ([1, 1, 1, 2], [1.25] * 4),
     (np.array([[2, 2],
@@ -755,6 +754,17 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+@pytest.mark.filterwarnings("ignore:The default value of strategy.*")  # 0.24
+@pytest.mark.parametrize('Dummy', (DummyRegressor, DummyClassifier))
+def test_n_features_in_(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    d = Dummy()
+    assert not hasattr(d, 'n_features_in_')
+    d.fit(X, y)
+    assert d.n_features_in_ is None
 
 
 @pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))

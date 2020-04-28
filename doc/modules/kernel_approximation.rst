@@ -84,8 +84,8 @@ For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_approximation_002.png
-    :target: ../auto_examples/plot_kernel_approximation.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_kernel_approximation_002.png
+    :target: ../auto_examples/miscellaneous/plot_kernel_approximation.html
     :scale: 50%
     :align: center
 
@@ -93,7 +93,7 @@ use of larger feature spaces more efficient.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 from scipy import linalg
 
+from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
@@ -15,7 +16,9 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues, LassoLarsIC
+from sklearn.linear_model._least_angle import _lars_path_residues
+from sklearn.linear_model import LassoLarsIC, lars_path
+from sklearn.linear_model import Lars, LassoLars
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -730,3 +733,31 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     y = X[:, 2]
     lasso_lars.fit(X, y, copy_X=copy_X)
     assert copy_X == np.array_equal(X, X_copy)
+
+
+@pytest.mark.parametrize('est', (LassoLars(alpha=1e-3), Lars()))
+def test_lars_with_jitter(est):
+    # Test that a small amount of jitter helps stability,
+    # using example provided in issue #2746
+
+    X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0],
+                  [0.0, -1.0, 0.0, 0.0, 0.0]])
+    y = [-2.5, -2.5]
+    expected_coef = [0, 2.5, 0, 2.5, 0]
+
+    # set to fit_intercept to False since target is constant and we want check
+    # the value of coef. coef would be all zeros otherwise.
+    est.set_params(fit_intercept=False)
+    est_jitter = clone(est).set_params(jitter=10e-8, random_state=0)
+
+    est.fit(X, y)
+    est_jitter.fit(X, y)
+
+    assert np.mean((est.coef_ - est_jitter.coef_)**2) > .1
+    np.testing.assert_allclose(est_jitter.coef_, expected_coef, rtol=1e-3)
+
+
+def test_X_none_gram_not_none():
+    with pytest.raises(ValueError,
+                       match="X cannot be None if Gram is not None"):
+        lars_path(X=None, y=[1], Gram='not None')

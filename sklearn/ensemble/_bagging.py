@@ -16,13 +16,13 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_array, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weight
+    _check_sample_weight, _deprecate_positional_args
 
 
 __all__ = ["BaggingClassifier",
@@ -82,7 +82,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run "
                   "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
-        random_state = np.random.RandomState(seeds[i])
+        random_state = seeds[i]
         estimator = ensemble._make_estimator(append=False,
                                              random_state=random_state)
 
@@ -193,7 +193,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,
@@ -259,10 +259,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
-        max_samples : int or float, optional (default=None)
+        max_samples : int or float, default=None
             Argument to use instead of self.max_samples.
 
-        max_depth : int, optional (default=None)
+        max_depth : int, default=None
             Override value used when constructing base estimator. Only
             supported if the base estimator has a max_depth parameter.
 
@@ -278,9 +278,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = check_X_y(
-            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
-            multi_output=True
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False, multi_output=True
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
@@ -405,9 +405,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(
-                random_state, self.bootstrap_features, self.bootstrap,
+                seed, self.bootstrap_features, self.bootstrap,
                 self.n_features_, self._n_samples, self._max_features,
                 self._max_samples)
 
@@ -456,37 +455,40 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Parameters
     ----------
-    base_estimator : object or None, optional (default=None)
+    base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
         If None, then the base estimator is a decision tree.
 
-    n_estimators : int, optional (default=10)
+    n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, optional (default=1.0)
-        The number of samples to draw from X to train each base estimator.
+    max_samples : int or float, default=1.0
+        The number of samples to draw from X to train each base estimator (with
+        replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
-    max_features : int or float, optional (default=1.0)
-        The number of features to draw from X to train each base estimator.
+    max_features : int or float, default=1.0
+        The number of features to draw from X to train each base estimator (
+        without replacement by default, see `bootstrap_features` for more
+        details).
 
         - If int, then draw `max_features` features.
         - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : boolean, optional (default=True)
+    bootstrap : bool, default=True
         Whether samples are drawn with replacement. If False, sampling
         without replacement is performed.
 
-    bootstrap_features : boolean, optional (default=False)
+    bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
 
-    oob_score : bool, optional (default=False)
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
@@ -494,19 +496,21 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         .. versionadded:: 0.17
            *warm_start* constructor parameter.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
         :meth:`predict`. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Controls the random resampling of the original dataset
+        (sample wise and feature wise).
+        If the base estimator accepts a `random_state` attribute, a different
+        seed is generated for each instance in the ensemble.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
     Attributes
@@ -527,7 +531,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int or list
@@ -537,7 +541,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape (n_samples, n_classes)
+    oob_decision_function_ : ndarray of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -573,9 +577,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
+    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,
@@ -689,7 +694,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes)
+        p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -739,7 +744,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes)
+        p : ndarray of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -794,7 +799,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        score : array, shape = [n_samples, k]
+        score : ndarray of shape (n_samples, k)
             The decision function of the input samples. The columns correspond
             to the classes in sorted order, as they appear in the attribute
             ``classes_``. Regression and binary classification are special
@@ -858,54 +863,59 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Parameters
     ----------
-    base_estimator : object or None, optional (default=None)
+    base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
         If None, then the base estimator is a decision tree.
 
-    n_estimators : int, optional (default=10)
+    n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, optional (default=1.0)
-        The number of samples to draw from X to train each base estimator.
+    max_samples : int or float, default=1.0
+        The number of samples to draw from X to train each base estimator (with
+        replacement by default, see `bootstrap` for more details).
 
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
-    max_features : int or float, optional (default=1.0)
-        The number of features to draw from X to train each base estimator.
+    max_features : int or float, default=1.0
+        The number of features to draw from X to train each base estimator (
+        without replacement by default, see `bootstrap_features` for more
+        details).
 
         - If int, then draw `max_features` features.
         - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : boolean, optional (default=True)
+    bootstrap : bool, default=True
         Whether samples are drawn with replacement. If False, sampling
         without replacement is performed.
 
-    bootstrap_features : boolean, optional (default=False)
+    bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
 
-    oob_score : bool
+    oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
         :meth:`predict`. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Controls the random resampling of the original dataset
+        (sample wise and feature wise).
+        If the base estimator accepts a `random_state` attribute, a different
+        seed is generated for each instance in the ensemble.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
     Attributes
@@ -966,10 +976,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-
+    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,

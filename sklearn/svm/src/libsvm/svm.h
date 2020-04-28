@@ -79,7 +79,7 @@ struct svm_model
 	int *sv_ind;            /* index of support vectors */
 
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
-	double *probA;		/* pariwise probability information */
+	double *probA;		/* pairwise probability information */
 	double *probB;
 
 	/* for classification only */
@@ -104,7 +104,7 @@ struct svm_csr_model
         int *sv_ind;            /* index of support vectors */
 
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
-	double *probA;		/* pariwise probability information */
+	double *probA;		/* pairwise probability information */
 	double *probB;
 
 	/* for classification only */

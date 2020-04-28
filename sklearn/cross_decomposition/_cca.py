@@ -1,5 +1,6 @@
 from ._pls import _PLS
 from ..base import _UnstableArchMixin
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['CCA']
 
@@ -55,6 +56,9 @@ class CCA(_UnstableArchMixin, _PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
+
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component.
@@ -99,7 +103,8 @@ class CCA(_UnstableArchMixin, _PLS):
     PLSSVD
     """
 
-    def __init__(self, n_components=2, scale=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
                          deflation_mode="canonical", mode="B",

@@ -26,7 +26,7 @@ Installing a nightly build is the quickest way to:
 
 ::
 
-  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+  pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
 
 .. _install_bleeding_edge:
@@ -43,13 +43,13 @@ feature, code or documentation improvement).
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
    Github.::
 
-        git clone git://github.com/scikit-learn/scikit-learn.git
+        git clone git://github.com/scikit-learn/scikit-learn.git  # add --depth 1 if your connection is slow
         cd scikit-learn
 
    If you plan on submitting a pull-request, you should clone from your fork
    instead.
 
-#. Install a compiler with OpenMP_ support for your platform. See intructions
+#. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
    and :ref:`compiler_freebsd`.
 
@@ -59,7 +59,7 @@ feature, code or documentation improvement).
 #. Install Cython_ and build the project with pip in :ref:`editable_mode`::
 
         pip install cython
-        pip install --verbose --editable .
+        pip install --verbose --no-build-isolation --editable .
 
 #. Check that the installed scikit-learn has a version number ending with
    `.dev0`::
@@ -71,8 +71,11 @@ feature, code or documentation improvement).
 
 .. note::
 
-    You will have to re-run the ``pip install --editable .`` command every time
-    the source code of a Cython file is updated (ending in `.pyx` or `.pxd`).
+    You will have to run the ``pip install --no-build-isolation --editable .``
+    command every time the source code of a Cython file is updated
+    (ending in `.pyx` or `.pxd`). Use the ``--no-build-isolation`` flag to
+    avoid compiling the whole project each time, only the files you have
+    modified.
 
 Dependencies
 ------------
@@ -83,9 +86,9 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11),
-- SciPy (>= 0.17),
+- Python (>= 3.6),
+- NumPy (>= 1.13.3),
+- SciPy (>= 0.19),
 - Joblib (>= 0.11).
 
 Those dependencies are **automatically installed by pip** if they were missing
@@ -114,10 +117,12 @@ Building Scikit-learn also requires:
 
 .. note::
 
-   It is possible to build scikit-learn without OpenMP support by setting the
-   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
-   not recommended since it will force some estimators to run in sequential
-   mode.
+   If OpenMP is not supported by the compiler, the build will be done with
+   OpenMP functionalities disabled. This is not recommended since it will force
+   some estimators to run in sequential mode instead of leveraging thread-based
+   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+   (before cythonization) will force the build to fail if OpenMP is not
+   supported.
 
 Since version 0.21, scikit-learn automatically detects and use the linear
 algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
@@ -150,9 +155,9 @@ Editable mode
 
 If you run the development version, it is cumbersome to reinstall the package
 each time you update the sources. Therefore it is recommended that you install
-in with the ``pip install --editable .`` command, which allows you to edit the
-code in-place. This builds the extension in place and creates a link to the
-development directory (see `the pip docs
+in with the ``pip install --no-build-isolation --editable .`` command, which
+allows you to edit the code in-place. This builds the extension in place and
+creates a link to the development directory (see `the pip docs
 <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
 
 This is fundamentally similar to using the command ``python setup.py develop``
@@ -205,7 +210,7 @@ environment variables in the current command prompt.
 
 Finally, build scikit-learn from this command prompt::
 
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_macos:
 
@@ -223,9 +228,9 @@ to enable OpenMP support:
 macOS compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you use the conda package manager, you can install the ``compilers``
-meta-package from the conda-forge channel, which provides OpenMP-enabled C/C++
-compilers based on the llvm toolchain.
+If you use the conda package manager (version >= 4.7), you can install the
+``compilers`` meta-package from the conda-forge channel, which provides
+OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
 First install the macOS command line tools::
 
@@ -235,10 +240,10 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        conda-forge::compilers conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. note::
 
@@ -250,7 +255,9 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list compilers llvm-openmp
+    conda list 
+
+which should include ``compilers`` and ``llvm-openmp``.
 
 The compilers meta-package will automatically set custom environment
 variables::
@@ -262,7 +269,8 @@ variables::
     echo $LDFLAGS
 
 They point to files and folders from your ``sklearn-dev`` conda environment
-(in particular in the bin/, include/ and lib/ subfolders).
+(in particular in the bin/, include/ and lib/ subfolders). For instance
+``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
 
 In the log, you should see the compiled extension being built with the clang
 and clang++ compilers installed by conda with the ``-fopenmp`` command line
@@ -297,7 +305,7 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 ``-fopenmp`` flag in the compiler commands)::
 
     make clean
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_linux:
 
@@ -336,7 +344,7 @@ architecture (e.g. ARM), you can install the system versions::
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
+    sudo yum -y install gcc gcc-c++ python3-devel numpy scipy
 
 Linux compilers from conda-forge
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,7 +354,7 @@ in the user folder using conda::
 
     conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
     conda activate sklearn-dev
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
 .. _compiler_freebsd:
 
@@ -369,9 +377,9 @@ can set the environment variables to these locations::
 
 Finally, build the package using the standard command::
 
-    pip install --verbose --editable .
+    pip install --verbose --no-build-isolation --editable .
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 .. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
