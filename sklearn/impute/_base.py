@@ -128,9 +128,9 @@ class SimpleImputer(_BaseImputer):
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed. For pandas dataframes with
-        IntegerArray and `pd.NA` values, `missing_values` should be set to
-        `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     strategy : string, default='mean'
         The imputation strategy.
@@ -478,10 +478,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be indicated (True in the output array), the
-        other values will be marked as False. For pandas dataframes with
-        IntegerArray and `pd.NA` values, `missing_values` should be set to
-        `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     features : str, default=None
         Whether the imputer mask should represent all or a subset of

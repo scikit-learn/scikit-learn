@@ -317,8 +317,8 @@ Changelog
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
 - |Enhancement| :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`, and
-  :class:`impute.SimpleImputer` accepts pandas IntegerArray with nan values.
-  :pr:`16508` by `Thomas Fan`_.
+  :class:`impute.SimpleImputer` accepts pandas' nullable integer dtype with
+  missing values. :pr:`16508` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -493,8 +493,8 @@ Changelog
   :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.StandardScaler`,
   :class:`preprocessing.PowerTransformer`,
   :class:`preprocessing.QuantileTransformer`,
-  :class:`preprocessing.RobustScaler` now supports pandas IntegerArrays with
-  nan values.
+  :class:`preprocessing.RobustScaler` now supports pandas' nullable integer
+  dtype with missing values. :pr:`16508` by `Thomas Fan`_.
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
@@ -577,14 +577,14 @@ Changelog
   matrix from a pandas DataFrame that contains only `SparseArray` columns.
   :pr:`16728` by `Thomas Fan`_.
 
-- |Enhancement| :func:`utils.validation.check_array` supports pandas
-  IntegerArray when `force_all_finite` is set to `False` or `'allow-nan'`
-  in which case the data is converted to floating point values where `pd.NA`
-  values are replaced by `np.nan`. As a consequence, all
-  :mod:`sklearn.preprocessing` transformers that accept numeric inputs with
+- |Enhancement| :func:`utils.validation.check_array` supports pandas'
+  nullable integer dtype with missing values when `force_all_finite` is set to
+  `False` or `'allow-nan'` in which case the data is converted to floating
+  point values where `pd.NA` values are replaced by `np.nan`. As a consequence,
+  all :mod:`sklearn.preprocessing` transformers that accept numeric inputs with
   missing values represented as `np.nan` now also accepts being directly fed
-  pandas dataframes with `pd.Int* or `pd.Uint*` typed columns that use
-  `pd.NA` as a missing value marker. :pr:`16508` by `Thomas Fan`_.
+  pandas dataframes with `pd.Int* or `pd.Uint*` typed columns that use `pd.NA`
+  as a missing value marker. :pr:`16508` by `Thomas Fan`_.
 
 - |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
