@@ -19,6 +19,8 @@ or with conda::
     conda install scikit-learn
 """
 
+# flake8: noqa
+
 ##############################################################################
 # Generalized Linear Models
 # -------------------------
