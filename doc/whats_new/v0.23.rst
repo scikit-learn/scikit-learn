@@ -215,8 +215,9 @@ Changelog
   raise `invalid value encountered in multiply` during `fit`.
   :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
 
-- |Feature| Added `n_components_` attribute to :class:'decomposition.SparsePCA'
-  and :class:'MiniBatchSparsePCA'. :pr:'16981' by :user:'Mateusz Górski <Reksbril>'
+- |Feature| Added `n_components_` attribute to :class:`decomposition.SparsePCA`
+  and :class:`decomposition.MiniBatchSparsePCA`. :pr:`16981` by
+  :user:`Mateusz Górski <Reksbril>`.
 
 :mod:`sklearn.ensemble`
 .......................
