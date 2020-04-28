@@ -135,6 +135,6 @@ print(reg.score(X_test, y_test, sw_test))
 # ---------------------------
 # Due to various ethical concerns related to the Boston dataset, we have
 # decided not to use it anymore in our documentation. It was replaced by other
-# datsets such as the Diabetes or the California Housing datasets. Details can
+# datasets such as the Diabetes or the California Housing datasets. Details can
 # be found in the original issue `here
 # <https://github.com/scikit-learn/scikit-learn/issues/16155>`_.
