@@ -455,9 +455,10 @@ plt.tight_layout()
 # absolute value of the prediction. In this case, the model evaluation would
 # cast the problem as a ranking problem rather than a regression problem.
 #
-# To compare the 3 models from this perspective, one can plot the fraction of
-# the number of claims vs the fraction of exposure for test samples ordered by
-# the model predictions, from safest to riskiest according to each model.
+# To compare the 3 models from this perspective, one can plot the cumulative
+# proportion of claims vs the cumulative proportion of exposure for the test
+# samples order by the model predictions, from safest to riskiest according to
+# each model.
 #
 # This plot is called a Lorenz curve and can be summarized by the Gini index:
 
@@ -502,9 +503,9 @@ ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 ax.plot([0, 1], [0, 1], linestyle="--", color="black",
         label="Random baseline")
 ax.set(
-    title="Cumulated number of claims by model",
-    xlabel='Fraction of exposure (from safest to riskiest)',
-    ylabel='Fraction of number of claims'
+    title="Lorenz curves by model",
+    xlabel='Cumulative proportion of exposure (from safest to riskiest)',
+    ylabel='Cumulative proportion of claims'
 )
 ax.legend(loc="upper left")
 
