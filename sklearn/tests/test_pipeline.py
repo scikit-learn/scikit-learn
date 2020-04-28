@@ -72,6 +72,12 @@ class NoTrans(NoFit):
         return self
 
 
+class OnlyFitTrans(NoFit):
+    def fit_transform(self, X):
+        self.fit(X)
+        return X
+
+
 class NoInvTransf(NoTrans):
     def transform(self, X):
         return X
@@ -424,6 +430,27 @@ def test_pipeline_methods_pca_tsne():
            % (error_estimator, type(error_estimator)))
     with pytest.raises(TypeError, match=re.escape(msg)):
         make_pipeline(error_estimator, 'passthrough')
+
+
+def test_fit_predict_on_nonreusable_pipeline():
+    oft = OnlyFitTrans()
+
+    km = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0)
+
+    separate_pred = km.fit_predict(iris.data)
+
+    pipe = make_pipeline(oft, km_for_pipeline)
+
+    msg = ("Intermediate step '%s' (type %s) does not have "
+           "transform, pipeline is not reusable on test data."
+           % (km_for_pipeline, type(km_for_pipeline)))
+
+
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        pipeline_pred = pipe.fit_predict(iris.data)
+
+    assert_array_almost_equal(pipeline_pred, separate_pred)
 
 
 def test_fit_predict_on_pipeline():
