@@ -31,6 +31,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
+    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
@@ -45,6 +46,26 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
+
+
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
+def test_estimator_cls_parameterize_with_checks():
+    # TODO: remove test in 0.24
+    # Non-regression test for #16707 to ensure that parametrize_with_checks
+    # works with estimator classes
+    param_checks = parametrize_with_checks([LogisticRegression])
+    # Using the generator does not raise
+    list(param_checks.args[1])
+
+
+def test_mark_xfail_checks_with_unconsructable_estimator():
+    class MyEstimator:
+        def __init__(self):
+            raise ValueError("This is bad")
+
+    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
+    assert estimator == MyEstimator
+    assert check == 42
 
 
 @pytest.mark.parametrize(
@@ -86,7 +107,7 @@ def _tested_estimators():
         yield estimator
 
 
-@parametrize_with_checks(_tested_estimators())
+@parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
@@ -96,7 +117,9 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
 def test_check_estimator_generate_only():
+    # TODO in 0.24: remove checks on passing a class
     estimator_cls_gen_checks = check_estimator(LogisticRegression,
                                                generate_only=True)
     all_instance_gen_checks = check_estimator(LogisticRegression(),
@@ -219,3 +242,19 @@ def test_all_tests_are_importable():
                                  '__init__.py or an add_subpackage directive '
                                  'in the parent '
                                  'setup.py'.format(missing_tests))
+
+
+# TODO: remove in 0.24
+def test_class_support_deprecated():
+    # Make sure passing classes to check_estimator or parametrize_with_checks
+    # is deprecated
+
+    msg = "Passing a class is deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        check_estimator(LogisticRegression)
+
+    with pytest.warns(FutureWarning, match=msg):
+        parametrize_with_checks([LogisticRegression])
+
+    # Make sure check_parameters_default_constructible accepts instances now
+    check_parameters_default_constructible('name', LogisticRegression())
