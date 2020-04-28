@@ -2337,6 +2337,8 @@ def check_class_weight_classifiers(name, classifier_orig):
             classifier.set_params(min_weight_fraction_leaf=0.01)
         if hasattr(classifier, "n_iter_no_change"):
             classifier.set_params(n_iter_no_change=20)
+        if hasattr(classifier, "hidden_layer_sizes"):
+            raise SkipTest
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)

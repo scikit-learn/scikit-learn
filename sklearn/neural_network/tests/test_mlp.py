@@ -772,6 +772,3 @@ def test_sample_class_weights(weighted_class):
     samples_with_greater_score = \
         (weighted_score > score).sum() / weighted_score.shape[0]
     assert samples_with_greater_score > threshold
-
-# TODO: test rest of loss functions (regression, binary log-loss),
-#  test partial_fit, test zero sample weights effect
