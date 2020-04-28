@@ -73,7 +73,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # now support :ref:`sample weights <sw_hgbdt>`, and a new Poisson loss function
 # was implemented. In addition, users can define :ref:`monotonic constraints
 # <monotonic_cst_gbdt>` to constrain the predictions based on the variations of
-# specific features. Finally, an automatic early-stopping criteria was added:
+# specific features. Finally, an automatic early-stopping criterion was added:
 # early-stopping is enabled by default when the number of samples exceeds 10k.
 # The following snippet illustrates the use of the Poisson loss.
 
