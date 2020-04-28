@@ -535,10 +535,6 @@ ax.legend(loc="upper left")
 # - The performance of the models can be evaluated by their ability to yield
 #   well-calibrated predictions and a good ranking.
 #
-# - The Gini index reflects the ability of a model to rank predictions
-#   irrespective of their absolute values, and therefore only assess their
-#   ranking power.
-#
 # - The calibration of the model can be assessed by plotting the mean observed
 #   value vs the mean predicted value on groups of test samples binned by
 #   predicted risk.
@@ -550,6 +546,10 @@ ax.legend(loc="upper left")
 #
 # - Using the Poisson loss with a log-link can correct these problems and lead
 #   to a well-calibrated linear model.
+#
+# - The Gini index reflects the ability of a model to rank predictions
+#   irrespective of their absolute values, and therefore only assess their
+#   ranking power.
 #
 # - Despite the improvement in calibration, the ranking power of both linear
 #   models are comparable and well below the ranking power of the Gradient
