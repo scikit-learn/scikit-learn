@@ -7,13 +7,15 @@ from math import log
 
 import numpy as np
 from scipy.linalg import pinvh
+import pytest
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_raise_message
+
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import check_random_state
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
 from sklearn.utils.extmath import fast_logdet
@@ -159,7 +161,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     # Test BayesianRidge and ARDRegression standard dev. for edge case of
     # constant target vector
     # The standard dev. should be relatively small (< 0.01 is tested here)
-    n_samples = 4
+    n_samples = 10
     n_features = 5
     random_state = check_random_state(42)
     constant_value = random_state.rand()
@@ -181,9 +183,9 @@ def test_update_of_sigma_in_ard():
     y = np.array([0, 0])
     clf = ARDRegression(n_iter=1)
     clf.fit(X, y)
-    # With the inputs above, ARDRegression prunes one of the two coefficients
-    # in the first iteration. Hence, the expected shape of `sigma_` is (1, 1).
-    assert clf.sigma_.shape == (1, 1)
+    # With the inputs above, ARDRegression prunes both of the two coefficients
+    # in the first iteration. Hence, the expected shape of `sigma_` is (0, 0).
+    assert clf.sigma_.shape == (0, 0)
     # Ensure that no error is thrown at prediction stage
     clf.predict(X, return_std=True)
 
@@ -200,12 +202,11 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-def test_ard_accuracy_on_easy_problem():
+@pytest.mark.parametrize('seed', range(100))
+@pytest.mark.parametrize('n_samples, n_features', ((10, 100), (100, 10)))
+def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
-    # This particular seed seems to converge poorly in the failure-case
-    # (scipy==1.3.0, sklearn==0.21.2)
-    seed = 45
     X = np.random.RandomState(seed=seed).normal(size=(250, 3))
     y = X[:, 1]
 
@@ -213,9 +214,7 @@ def test_ard_accuracy_on_easy_problem():
     regressor.fit(X, y)
 
     abs_coef_error = np.abs(1 - regressor.coef_[1])
-    # Expect an accuracy of better than 1E-4 in most cases -
-    # Failure-case produces 0.16!
-    assert abs_coef_error < 0.01
+    assert abs_coef_error < 1e-10
 
 
 def test_return_std():
@@ -248,3 +247,28 @@ def test_return_std():
         m2.fit(X, y)
         y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
+
+
+@pytest.mark.parametrize('seed', range(10))
+def test_update_sigma(seed):
+    # make sure the two update_sigma() helpers are equivalent. The woodbury
+    # formula is used when n_samples < n_features, and the other one is used
+    # otherwise.
+
+    rng = np.random.RandomState(seed)
+
+    # set n_samples == n_features to avoid instability issues when inverting
+    # the matrices. Using the woodbury formula would be unstable when
+    # n_samples > n_features
+    n_samples = n_features = 10
+    X = rng.randn(n_samples, n_features)
+    alpha = 1
+    lmbda = np.arange(1, n_features + 1)
+    keep_lambda = np.array([True] * n_features)
+
+    reg = ARDRegression()
+
+    sigma = reg._update_sigma(X, alpha, lmbda, keep_lambda)
+    sigma_woodbury = reg._update_sigma_woodbury(X, alpha, lmbda, keep_lambda)
+
+    np.testing.assert_allclose(sigma, sigma_woodbury)

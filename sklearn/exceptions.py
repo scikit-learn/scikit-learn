@@ -12,7 +12,8 @@ __all__ = ['NotFittedError',
            'FitFailedWarning',
            'NonBLASDotWarning',
            'SkipTestWarning',
-           'UndefinedMetricWarning']
+           'UndefinedMetricWarning',
+           'PositiveSpectrumWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -30,7 +31,7 @@ class NotFittedError(ValueError, AttributeError):
     ... except NotFittedError as e:
     ...     print(repr(e))
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
-    appropriate arguments before using this method."...)
+    appropriate arguments before using this estimator."...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
@@ -61,8 +62,8 @@ class ConvergenceWarning(UserWarning):
     ...                 [1, 0],
     ...                 [1, 0]])  # last point is duplicated
     >>> with warnings.catch_warnings(record=True) as w:
-    ...    km = KMeans(n_clusters=4).fit(X)
-    ...    print(w[-1].message)
+    ...     km = KMeans(n_clusters=4).fit(X)
+    ...     print(w[-1].message)
     Number of distinct clusters (3) found smaller than n_clusters (4).
     Possibly due to duplicate points in X.
 
@@ -83,6 +84,23 @@ class DataConversionWarning(UserWarning):
         - requests a non-copying operation, but a copy is required to meet the
           implementation's data-type expectations;
         - passes an input whose shape can be interpreted ambiguously.
+
+    Examples
+    --------
+    >>> from sklearn.utils import validation
+    >>> Y = [[1],[2],[3]]
+    >>> import warnings
+    >>> from sklearn.exceptions import DataConversionWarning
+    >>> warnings.simplefilter('always', DataConversionWarning)
+    >>> with warnings.catch_warnings(record=True) as w:
+    ...     try:
+    ...         # will trigger warning as Y is a column-vector
+    ...         Y = validation.column_or_1d(Y,warn=True)
+    ...     except ValueError:
+    ...         pass
+    ...     print(w[-1].message)
+    A column-vector y was passed when a 1d array was expected. Please change
+    the shape of y to (n_samples, ), for example using ravel().
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
@@ -138,7 +156,9 @@ class FitFailedWarning(RuntimeWarning):
     ...     print(repr(w[-1].message))
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
-    Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
+    Details:...Traceback (most recent call last):...ValueError:
+    Penalty term must be positive; got (C=-2)...
+
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
@@ -170,4 +190,16 @@ class UndefinedMetricWarning(UserWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.base.
+    """
+
+
+class PositiveSpectrumWarning(UserWarning):
+    """Warning raised when the eigenvalues of a PSD matrix have issues
+
+    This warning is typically raised by ``_check_psd_eigenvalues`` when the
+    eigenvalues of a positive semidefinite (PSD) matrix such as a gram matrix
+    (kernel) present significant negative eigenvalues, or bad conditioning i.e.
+    very small non-zero eigenvalues compared to the largest eigenvalue.
+
+    .. versionadded:: 0.22
     """

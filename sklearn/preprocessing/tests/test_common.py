@@ -24,8 +24,8 @@ from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import RobustScaler
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 iris = load_iris()
 

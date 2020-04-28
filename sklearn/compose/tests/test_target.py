@@ -7,16 +7,16 @@ from sklearn.base import TransformerMixin
 
 from sklearn.dummy import DummyRegressor
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.pipeline import Pipeline
 
-from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
 
 from sklearn import datasets
 
@@ -37,7 +37,7 @@ def test_transform_target_regressor_error():
         regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
-    regr = TransformedTargetRegressor(regressor=Lasso(),
+    regr = TransformedTargetRegressor(regressor=OrthogonalMatchingPursuit(),
                                       transformer=StandardScaler())
     with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
                        "keyword argument 'sample_weight'"):

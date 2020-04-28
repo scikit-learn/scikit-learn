@@ -11,18 +11,19 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils.multiclass import type_of_target
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _to_object_array
 
-from sklearn.preprocessing.label import LabelBinarizer
-from sklearn.preprocessing.label import MultiLabelBinarizer
-from sklearn.preprocessing.label import LabelEncoder
-from sklearn.preprocessing.label import label_binarize
+from sklearn.preprocessing._label import LabelBinarizer
+from sklearn.preprocessing._label import MultiLabelBinarizer
+from sklearn.preprocessing._label import LabelEncoder
+from sklearn.preprocessing._label import label_binarize
 
-from sklearn.preprocessing.label import _inverse_binarize_thresholding
-from sklearn.preprocessing.label import _inverse_binarize_multiclass
-from sklearn.preprocessing.label import _encode
+from sklearn.preprocessing._label import _inverse_binarize_thresholding
+from sklearn.preprocessing._label import _inverse_binarize_multiclass
+from sklearn.preprocessing._label import _encode
 
 from sklearn import datasets
 
@@ -177,7 +178,7 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError):
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
     with pytest.raises(ValueError):
-        label_binarize(np.array([[1, 3], [2, 1]]), [1, 2, 3])
+        label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
 
 
 @pytest.mark.parametrize(
@@ -222,7 +223,7 @@ def test_label_encoder_negative_ints():
 def test_label_encoder_str_bad_shape(dtype):
     le = LabelEncoder()
     le.fit(np.array(["apple", "orange"], dtype=dtype))
-    msg = "bad input shape"
+    msg = "should be a 1d array"
     with pytest.raises(ValueError, match=msg):
         le.transform("apple")
 
@@ -245,7 +246,7 @@ def test_label_encoder_errors():
         le.inverse_transform([-2, -3, -4])
 
     # Fail on inverse_transform("")
-    msg = "bad input shape ()"
+    msg = r"should be a 1d array.+shape \(\)"
     with pytest.raises(ValueError, match=msg):
         le.inverse_transform("")
 
@@ -433,8 +434,7 @@ def test_multilabel_binarizer_same_length_sequence():
 
 
 def test_multilabel_binarizer_non_integer_labels():
-    tuple_classes = np.empty(3, dtype=object)
-    tuple_classes[:] = [(1,), (2,), (3,)]
+    tuple_classes = _to_object_array([(1,), (2,), (3,)])
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
         ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),
@@ -509,13 +509,13 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
         if ((pos_label == 0 or neg_label != 0) and sparse_output):
             with pytest.raises(ValueError):
-                label_binarize(y, classes, neg_label=neg_label,
+                label_binarize(y, classes=classes, neg_label=neg_label,
                                pos_label=pos_label,
                                sparse_output=sparse_output)
             continue
 
         # check label_binarize
-        binarized = label_binarize(y, classes, neg_label=neg_label,
+        binarized = label_binarize(y, classes=classes, neg_label=neg_label,
                                    pos_label=pos_label,
                                    sparse_output=sparse_output)
         assert_array_equal(toarray(binarized), expected)
@@ -576,7 +576,7 @@ def test_label_binarize_multiclass():
     check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
@@ -595,13 +595,17 @@ def test_label_binarize_multilabel():
                                 expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
 def test_invalid_input_label_binarize():
     with pytest.raises(ValueError):
         label_binarize([0, 2], classes=[0, 2], pos_label=0, neg_label=1)
+    with pytest.raises(ValueError, match="continuous target data is not "):
+        label_binarize([1.2, 2.7], classes=[0, 1])
+    with pytest.raises(ValueError, match="mismatch with the labels"):
+        label_binarize([[1, 3]], classes=[1, 2, 3])
 
 
 def test_inverse_binarize_multiclass():

@@ -19,7 +19,7 @@ In both cases, only 10% of the features are informative.
 import numpy as np
 import gc
 from time import time
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_regression
 
 alpha = 0.1
 # alpha = 0.01

@@ -11,7 +11,7 @@ from sklearn.utils._seq_dataset import (
     ArrayDataset32, ArrayDataset64, CSRDataset32, CSRDataset64)
 
 from sklearn.datasets import load_iris
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 iris = load_iris()
 X64 = iris.data.astype(np.float64)

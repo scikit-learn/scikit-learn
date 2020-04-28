@@ -7,9 +7,9 @@ from ._spectral import spectral_clustering, SpectralClustering
 from ._mean_shift import (mean_shift, MeanShift,
                           estimate_bandwidth, get_bin_seeds)
 from ._affinity_propagation import affinity_propagation, AffinityPropagation
-from ._hierarchical import (ward_tree, AgglomerativeClustering, linkage_tree,
-                            FeatureAgglomeration)
-from ._k_means import k_means, KMeans, MiniBatchKMeans
+from ._agglomerative import (ward_tree, AgglomerativeClustering,
+                             linkage_tree, FeatureAgglomeration)
+from ._kmeans import k_means, KMeans, MiniBatchKMeans
 from ._dbscan import dbscan, DBSCAN
 from ._optics import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)

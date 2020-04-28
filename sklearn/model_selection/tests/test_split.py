@@ -4,18 +4,19 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
+from scipy.special import comb
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils._mocking import MockDataFrame
 
@@ -46,8 +47,6 @@ from sklearn.model_selection._split import _build_repr
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.utils.fixes import comb
-
 from sklearn.svm import SVC
 
 X = np.ones(10)
@@ -61,69 +60,6 @@ test_groups = (
     [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
     ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
 digits = load_digits()
-
-
-class MockClassifier:
-    """Dummy classifier to test the cross-validation"""
-
-    def __init__(self, a=0, allow_nd=False):
-        self.a = a
-        self.allow_nd = allow_nd
-
-    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
-            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
-            dummy_str=None, dummy_obj=None, callback=None):
-        """The dummy arguments are to test that this fit function can
-        accept non-array arguments through cross-validation, such as:
-            - int
-            - str (this is actually array-like)
-            - object
-            - function
-        """
-        self.dummy_int = dummy_int
-        self.dummy_str = dummy_str
-        self.dummy_obj = dummy_obj
-        if callback is not None:
-            callback(self)
-
-        if self.allow_nd:
-            X = X.reshape(len(X), -1)
-        if X.ndim >= 3 and not self.allow_nd:
-            raise ValueError('X cannot be d')
-        if sample_weight is not None:
-            assert sample_weight.shape[0] == X.shape[0], (
-                'MockClassifier extra fit_param sample_weight.shape[0]'
-                ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                X.shape[0]))
-        if class_prior is not None:
-            assert class_prior.shape[0] == len(np.unique(y)), (
-                        'MockClassifier extra fit_param class_prior.shape[0]'
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y))))
-        if sparse_sample_weight is not None:
-            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
-                   '.shape[0] is {0}, should be {1}')
-            assert sparse_sample_weight.shape[0] == X.shape[0], \
-                fmt.format(sparse_sample_weight.shape[0], X.shape[0])
-        if sparse_param is not None:
-            fmt = ('MockClassifier extra fit_param sparse_param.shape '
-                   'is ({0}, {1}), should be ({2}, {3})')
-            assert sparse_param.shape == P_sparse.shape, (
-                fmt.format(sparse_param.shape[0],
-                           sparse_param.shape[1],
-                           P_sparse.shape[0], P_sparse.shape[1]))
-        return self
-
-    def predict(self, T):
-        if self.allow_nd:
-            T = T.reshape(len(T), -1)
-        return T[:, 0]
-
-    def score(self, X=None, Y=None):
-        return 1. / (1 + np.abs(self.a))
-
-    def get_params(self, deep=False):
-        return {'a': self.a, 'allow_nd': self.allow_nd}
 
 
 @ignore_warnings
@@ -175,7 +111,7 @@ def test_cross_validator_with_default_params():
         # Test that train, test indices returned are integers
         for train, test in cv.split(X, y, groups):
             assert np.asarray(train).dtype.kind == 'i'
-            assert np.asarray(train).dtype.kind == 'i'
+            assert np.asarray(test).dtype.kind == 'i'
 
         # Test if the repr works without any errors
         assert cv_repr == repr(cv)
@@ -227,13 +163,10 @@ def check_valid_split(train, test, n_samples=None):
         assert train.union(test) == set(range(n_samples))
 
 
-def check_cv_coverage(cv, X, y, groups, expected_n_splits=None):
+def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
-    if expected_n_splits is not None:
-        assert cv.get_n_splits(X, y, groups) == expected_n_splits
-    else:
-        expected_n_splits = cv.get_n_splits(X, y, groups)
+    assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
     iterations = 0
@@ -390,7 +323,8 @@ def test_stratified_kfold_ratios(k, shuffle):
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
-    skf = StratifiedKFold(k, random_state=0, shuffle=shuffle)
+    random_state = None if not shuffle else 0
+    skf = StratifiedKFold(k, random_state=random_state, shuffle=shuffle)
     for train, test in skf.split(X, y):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
@@ -409,9 +343,10 @@ def test_stratified_kfold_label_invariance(k, shuffle):
     X = np.ones(len(y))
 
     def get_splits(y):
+        random_state = None if not shuffle else 0
         return [(list(train), list(test))
                 for train, test
-                in StratifiedKFold(k, random_state=0,
+                in StratifiedKFold(k, random_state=random_state,
                                    shuffle=shuffle).split(X, y)]
 
     splits_base = get_splits(y)
@@ -1025,7 +960,7 @@ def test_repeated_kfold_determinstic_split():
 def test_get_n_splits_for_repeated_kfold():
     n_splits = 3
     n_repeats = 4
-    rkf = RepeatedKFold(n_splits, n_repeats)
+    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rkf.get_n_splits()
 
@@ -1033,7 +968,7 @@ def test_get_n_splits_for_repeated_kfold():
 def test_get_n_splits_for_repeated_stratified_kfold():
     n_splits = 3
     n_repeats = 4
-    rskf = RepeatedStratifiedKFold(n_splits, n_repeats)
+    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rskf.get_n_splits()
 
@@ -1336,16 +1271,16 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(shuffle=True, random_state=0).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
                             list(kf_randomized_iter_wrapped.split(X, y)))
 
     try:
+        splits_are_equal = True
         np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
                                 list(kf_randomized_iter_wrapped.split(X, y)))
-        splits_are_equal = True
     except AssertionError:
         splits_are_equal = False
     assert not splits_are_equal, (
@@ -1421,7 +1356,7 @@ def test_group_kfold():
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", FutureWarning)
         for group in np.unique(groups):
             assert len(np.unique(folds[groups == group])) == 1
 
@@ -1582,3 +1517,12 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+def test_random_state_shuffle_false(Klass):
+    # passing a non-default random_state when shuffle=False makes no sense
+    # TODO 0.24: raise a ValueError instead of a warning
+    with pytest.warns(FutureWarning,
+                      match='has no effect since shuffle is False'):
+        Klass(3, shuffle=False, random_state=0)

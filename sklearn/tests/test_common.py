@@ -17,20 +17,21 @@ from functools import partial
 import pytest
 
 
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin, BiclusterMixin
+from sklearn.base import BiclusterMixin
 
-from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
+    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
@@ -45,6 +46,24 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
+
+
+def test_estimator_cls_parameterize_with_checks():
+    # Non-regression test for #16707 to ensure that parametrize_with_checks
+    # works with estimator classes
+    param_checks = parametrize_with_checks([LogisticRegression])
+    # Using the generator does not raise
+    list(param_checks.args[1])
+
+
+def test_mark_xfail_checks_with_unconsructable_estimator():
+    class MyEstimator:
+        def __init__(self):
+            raise ValueError("This is bad")
+
+    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
+    assert estimator == MyEstimator
+    assert check == 42
 
 
 @pytest.mark.parametrize(
@@ -78,8 +97,6 @@ def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.startswith("_"):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -89,9 +106,10 @@ def _tested_estimators():
 
 
 @parametrize_with_checks(_tested_estimators())
-def test_estimators(estimator, check):
+def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+    with ignore_warnings(category=(FutureWarning,
+                                   ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
@@ -119,30 +137,25 @@ def test_check_estimator_generate_only():
             check(estimator)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
+    # This test requires Cython which is not necessarily there when running
+    # the tests of an installed version of scikit-learn or when scikit-learn
+    # is installed in editable mode by pip build isolation enabled.
+    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
     if not os.path.exists(setup_filename):
-        return
+        pytest.skip('setup.py not available')
+    # XXX unreached code as of v0.22
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
-
-        # This test will run every setup.py and eventually call
-        # check_openmp_support(), which tries to compile a C file that uses
-        # OpenMP, unless SKLEARN_NO_OPENMP is set. Some users might want to run
-        # the tests without having build-support for OpenMP. In particular, mac
-        # users need to set some environment variables to build with openmp
-        # support, and these might not be set anymore at test time. We thus
-        # temporarily set SKLEARN_NO_OPENMP, so that this test runs smoothly.
-        old_env = os.getenv('SKLEARN_NO_OPENMP')
-        os.environ['SKLEARN_NO_OPENMP'] = "True"
 
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
@@ -152,10 +165,6 @@ def test_configure():
                 exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
-        if old_env is not None:
-            os.environ['SKLEARN_NO_OPENMP'] = old_env
-        else:
-            del os.environ['SKLEARN_NO_OPENMP']
         os.chdir(cwd)
 
 
@@ -190,15 +199,13 @@ def test_import_all_consistency():
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
-        if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+        if IS_PYPY and ('_svmlight_format_io' in modname or
+                        'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
-            if getattr(package, name, None) is None:
-                raise AttributeError(
-                    "Module '{0}' has no attribute '{1}'".format(
-                        modname, name))
+            assert hasattr(package, name),\
+                "Module '{0}' has no attribute '{1}'".format(modname, name)
 
 
 def test_root_import_all_completeness():

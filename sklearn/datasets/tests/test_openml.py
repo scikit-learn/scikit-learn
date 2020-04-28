@@ -11,16 +11,16 @@ import pytest
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import (_open_openml_url,
-                                     _get_data_description_by_id,
-                                     _download_data_arff,
-                                     _get_local_path,
-                                     _retry_with_clean_cache,
-                                     _feature_to_dtype)
-from sklearn.utils.testing import (assert_warns_message,
-                                   assert_raise_message)
+from sklearn.datasets._openml import (_open_openml_url,
+                                      _get_data_description_by_id,
+                                      _download_data_arff,
+                                      _get_local_path,
+                                      _retry_with_clean_cache,
+                                      _feature_to_dtype)
+from sklearn.utils._testing import (assert_warns_message,
+                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
-from sklearn.utils.testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -102,7 +102,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
         assert data_by_id.target_names == target_column
-    assert data_by_id.data.dtype == np.float64
+    assert data_by_id.data.dtype == expected_data_dtype
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
@@ -118,11 +118,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if compare_default_target:
         # check whether the data by id and data by id target are equal
         data_by_id_default = fetch_openml(data_id=data_id, cache=False)
-        if data_by_id.data.dtype == np.float64:
-            np.testing.assert_allclose(data_by_id.data,
-                                       data_by_id_default.data)
-        else:
-            assert np.array_equal(data_by_id.data, data_by_id_default.data)
+        np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.target,
                                        data_by_id_default.target)
@@ -257,7 +253,7 @@ def _monkey_patch_webbased_functions(context,
 
     # XXX: Global variable
     if test_offline:
-        context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+        context.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
 
 @pytest.mark.parametrize('feature, expected_dtype', [
@@ -740,7 +736,7 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -759,7 +755,7 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=True)
 
 
@@ -784,7 +780,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -802,7 +798,7 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=True)
 
 
@@ -917,7 +913,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
     response1 = _open_openml_url(openml_path, cache_directory)
@@ -934,7 +930,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 def test_open_openml_url_unlinks_local_path(
         monkeypatch, gzip_response, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -944,7 +940,7 @@ def test_open_openml_url_unlinks_local_path(
                 f.write("")
         raise ValueError("Invalid request")
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
         _open_openml_url(openml_path, cache_directory)
@@ -954,7 +950,7 @@ def test_open_openml_url_unlinks_local_path(
 
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
     os.makedirs(os.path.dirname(location))
@@ -977,7 +973,7 @@ def test_retry_with_clean_cache(tmpdir):
 
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
 
     @_retry_with_clean_cache(openml_path, cache_directory)
@@ -1005,7 +1001,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
                                         data_home=cache_directory,
                                         return_X_y=True)
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen',
                         _mock_urlopen_raise)
 
     X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,

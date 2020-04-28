@@ -11,7 +11,7 @@ from scipy import sparse
 
 import pytest
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import dbscan

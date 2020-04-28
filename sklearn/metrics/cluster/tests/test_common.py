@@ -15,7 +15,7 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 
 # Dictionaries of metrics
@@ -161,7 +161,9 @@ def test_format_invariance(metric_name):
         y = np.array(y)
         yield y, 'array of ints'
         yield y.tolist(), 'list of ints'
-        yield [str(x) for x in y.tolist()], 'list of strs'
+        yield [str(x) + "-a" for x in y.tolist()], 'list of strs'
+        yield (np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
+               'array of strs')
         yield y - 1, 'including negative ints'
         yield y + 1, 'strictly positive ints'
 

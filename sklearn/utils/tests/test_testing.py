@@ -12,7 +12,7 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_raises,
     assert_less,
     assert_greater,
@@ -32,37 +32,45 @@ from sklearn.utils.testing import (
     assert_raises_regex,
     TempMemmap,
     create_memmap_backed_data,
-    _delete_folder)
+    _delete_folder,
+    _convert_container)
 
-from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_less():
     assert 0 < 1
-    assert_raises(AssertionError, assert_less, 1, 0)
+    with pytest.raises(AssertionError):
+        assert_less(1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_greater():
     assert 1 > 0
-    assert_raises(AssertionError, assert_greater, 0, 1)
+    with pytest.raises(AssertionError):
+        assert_greater(0, 1)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_less_equal():
     assert 0 <= 1
     assert 1 <= 1
-    assert_raises(AssertionError, assert_less_equal, 1, 0)
+    with pytest.raises(AssertionError):
+        assert_less_equal(1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_greater_equal():
     assert 1 >= 0
     assert 1 >= 1
-    assert_raises(AssertionError, assert_greater_equal, 0, 1)
+    with pytest.raises(AssertionError):
+        assert_greater_equal(0, 1)
 
 
 def test_set_random_state():
@@ -80,18 +88,17 @@ def test_assert_allclose_dense_sparse():
     y = sparse.csc_matrix(x)
     for X in [x, y]:
         # basic compare
-        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
-                             X, X * 2)
+        with pytest.raises(AssertionError, match=msg):
+            assert_allclose_dense_sparse(X, X*2)
         assert_allclose_dense_sparse(X, X)
 
-    assert_raise_message(ValueError, "Can only compare two sparse",
-                         assert_allclose_dense_sparse, x, y)
+    with pytest.raises(ValueError, match="Can only compare two sparse"):
+        assert_allclose_dense_sparse(x, y)
 
     A = sparse.diags(np.ones(5), offsets=0).tocsr()
     B = sparse.csr_matrix(np.ones((1, 5)))
-
-    assert_raise_message(AssertionError, "Arrays are not equal",
-                         assert_allclose_dense_sparse, B, A)
+    with pytest.raises(AssertionError, match="Arrays are not equal"):
+        assert_allclose_dense_sparse(B, A)
 
 
 def test_assert_raises_msg():
@@ -146,7 +153,7 @@ def test_ignore_warning():
                                                      category=UserWarning))
     assert_warns(UserWarning,
                  ignore_warnings(_multiple_warning_function,
-                                 category=DeprecationWarning))
+                                 category=FutureWarning))
     assert_warns(DeprecationWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=UserWarning))
@@ -247,19 +254,22 @@ class TestWarns(unittest.TestCase):
             # test that assert_warns doesn't have side effects on warnings
             # filters
             assert warnings.filters == filters_orig
-
-        assert_raises(AssertionError, assert_no_warnings, f)
+        with pytest.raises(AssertionError):
+            assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
 
     def test_warn_wrong_warning(self):
         def f():
-            warnings.warn("yo", DeprecationWarning)
+            warnings.warn("yo", FutureWarning)
 
         failed = False
         filters = sys.modules['warnings'].filters[:]
         try:
             try:
                 # Should raise an AssertionError
+
+                # assert_warns has a special handling of "FutureWarning" that
+                # pytest.warns does not have
                 assert_warns(UserWarning, f)
                 failed = True
             except AssertionError:
@@ -475,11 +485,8 @@ class MockMetaEstimator:
 
 
 def test_check_docstring_parameters():
-    try:
-        import numpydoc  # noqa
-    except ImportError:
-        raise SkipTest(
-            "numpydoc is required to test the docstrings")
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
     incorrect = check_docstring_parameters(f_ok)
     assert incorrect == []
@@ -487,10 +494,10 @@ def test_check_docstring_parameters():
     assert incorrect == []
     incorrect = check_docstring_parameters(f_missing, ignore=['b'])
     assert incorrect == []
-    assert_raise_message(RuntimeError, 'Unknown section Results',
-                         check_docstring_parameters, f_bad_sections)
-    assert_raise_message(RuntimeError, 'Unknown section Parameter',
-                         check_docstring_parameters, Klass.f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Results"):
+        check_docstring_parameters(f_bad_sections)
+    with pytest.raises(RuntimeError, match="Unknown section Parameter"):
+        check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
     assert (
@@ -668,5 +675,22 @@ def test_create_memmap_backed_data(monkeypatch):
 def test_deprecated_helpers(callable, args):
     msg = ('is deprecated in version 0.22 and will be removed in version '
            '0.24. Please use "assert" instead')
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         callable(*args)
+
+
+@pytest.mark.parametrize(
+    "constructor_name, container_type",
+    [('list', list),
+     ('tuple', tuple),
+     ('array', np.ndarray),
+     ('sparse', sparse.csr_matrix),
+     ('dataframe', pytest.importorskip('pandas').DataFrame),
+     ('series', pytest.importorskip('pandas').Series),
+     ('index', pytest.importorskip('pandas').Index),
+     ('slice', slice)]
+)
+def test_convert_container(constructor_name, container_type):
+    container = [0, 1]
+    assert isinstance(_convert_container(container, constructor_name),
+                      container_type)

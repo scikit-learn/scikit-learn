@@ -8,14 +8,15 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_raises,
-                                   assert_array_equal,
-                                   assert_allclose_dense_sparse,
-                                   assert_raises_regex,
-                                   assert_warns_message, assert_no_warnings)
+from sklearn.utils._testing import (assert_array_equal,
+                                    assert_allclose_dense_sparse,
+                                    assert_warns_message,
+                                    assert_no_warnings,
+                                    _convert_container)
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
+from sklearn.utils import gen_batches
 from sklearn.utils import _get_column_indices
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
@@ -26,6 +27,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
+from sklearn.utils import _to_object_array
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -47,7 +49,24 @@ def test_make_rng():
     rng_42 = np.random.RandomState(42)
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
-    assert_raises(ValueError, check_random_state, "some invalid seed")
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
+
+
+def test_gen_batches():
+    # Make sure gen_batches errors on invalid batch_size
+
+    assert_array_equal(
+        list(gen_batches(4, 2)),
+        [slice(0, 2, None), slice(2, 4, None)]
+    )
+    msg_zero = "gen_batches got batch_size=0, must be positive"
+    with pytest.raises(ValueError, match=msg_zero):
+        next(gen_batches(4, 0))
+
+    msg_float = "gen_batches got batch_size=0.5, must be an integer"
+    with pytest.raises(TypeError, match=msg_float):
+        next(gen_batches(4, 0.5))
 
 
 def test_deprecated():
@@ -67,7 +86,7 @@ def test_deprecated():
         assert spam == "spam"     # function must remain usable
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
@@ -83,7 +102,7 @@ def test_deprecated():
         assert hasattr(ham, "SPAM")
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
 
@@ -92,10 +111,13 @@ def test_resample():
     assert resample() is None
 
     # Check that invalid arguments yield ValueError
-    assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1],
-                  replace=False, n_samples=3)
-    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    with pytest.raises(ValueError):
+        resample([0], [0, 1])
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], replace=False, n_samples=3)
+
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -194,7 +216,8 @@ def test_column_or_1d():
         if y_type in ["binary", 'multiclass', "continuous"]:
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
-            assert_raises(ValueError, column_or_1d, y)
+            with pytest.raises(ValueError):
+                column_or_1d(y)
 
 
 @pytest.mark.parametrize(
@@ -205,15 +228,19 @@ def test_column_or_1d():
      (np.bool_(True), 'bool'),
      ([0, 1, 2], 'int'),
      (['0', '1', '2'], 'str'),
+     ((0, 1, 2), 'int'),
+     (('0', '1', '2'), 'str'),
      (slice(None, None), None),
      (slice(0, 2), 'int'),
      (np.array([0, 1, 2], dtype=np.int32), 'int'),
      (np.array([0, 1, 2], dtype=np.int64), 'int'),
      (np.array([0, 1, 2], dtype=np.uint8), 'int'),
      ([True, False], 'bool'),
+     ((True, False), 'bool'),
      (np.array([True, False]), 'bool'),
      ('col_0', 'str'),
      (['col_0', 'col_1', 'col_2'], 'str'),
+     (('col_0', 'col_1', 'col_2'), 'str'),
      (slice('begin', 'end'), 'str'),
      (np.array(['col_0', 'col_1', 'col_2']), 'str'),
      (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')]
@@ -227,27 +254,17 @@ def test_determine_key_type_error():
         _determine_key_type(1.0)
 
 
-def _convert_container(container, constructor_name, columns_name=None):
-    if constructor_name == 'list':
-        return list(container)
-    elif constructor_name == 'array':
-        return np.asarray(container)
-    elif constructor_name == 'sparse':
-        return sp.csr_matrix(container)
-    elif constructor_name == 'dataframe':
-        pd = pytest.importorskip('pandas')
-        return pd.DataFrame(container, columns=columns_name)
-    elif constructor_name == 'series':
-        pd = pytest.importorskip('pandas')
-        return pd.Series(container)
-    elif constructor_name == 'slice':
-        return slice(container[0], container[1])
+def test_determine_key_type_slice_error():
+    with pytest.raises(TypeError, match="Only array-like or scalar are"):
+        _determine_key_type(slice(0, 2, 1), accept_slice=False)
 
 
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe"]
 )
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -261,7 +278,9 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -275,7 +294,9 @@ def test_safe_indexing_1d_container(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     # validation of the indices
@@ -328,7 +349,7 @@ def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 def test_safe_indexing_1d_container_mask(array_type, indices_type):
     indices = [False] + [True] * 2 + [False] * 6
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
@@ -340,7 +361,7 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_subset",
     [(0, [[4, 5, 6], [7, 8, 9]]),
@@ -469,6 +490,22 @@ def test_get_column_indices_error(key, err_msg):
         _get_column_indices(X_df, key)
 
 
+@pytest.mark.parametrize(
+    "key",
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
+)
+def test_get_column_indices_pandas_nonunique_columns_error(key):
+    pd = pytest.importorskip('pandas')
+    toy = np.zeros((1, 5), dtype=int)
+    columns = ['col1', 'col1', 'col2', 'col3', 'col2']
+    X = pd.DataFrame(toy, columns=columns)
+
+    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
+    with pytest.raises(ValueError) as exc_info:
+        _get_column_indices(X, key)
+    assert str(exc_info.value) == err_msg
+
+
 def test_shuffle_on_ndim_equals_three():
     def to_tuple(A):    # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
@@ -521,8 +558,9 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
-                        " >=1", next, slices)
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
+                                         " must be >=1"):
+        next(slices)
 
 
 @pytest.mark.parametrize(
@@ -637,19 +675,6 @@ def dummy_func():
 
 
 def test_deprecation_joblib_api(tmpdir):
-    def check_warning(*args, **kw):
-        return assert_warns_message(
-            DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
-
-    # Ensure that the joblib API is deprecated in sklearn.util
-    from sklearn.utils import Parallel, Memory, delayed
-    from sklearn.utils import cpu_count, hash, effective_n_jobs
-    check_warning(Memory, str(tmpdir))
-    check_warning(hash, 1)
-    check_warning(Parallel)
-    check_warning(cpu_count)
-    check_warning(effective_n_jobs, 1)
-    check_warning(delayed, dummy_func)
 
     # Only parallel_backend and register_parallel_backend are not deprecated in
     # sklearn.utils
@@ -657,19 +682,16 @@ def test_deprecation_joblib_api(tmpdir):
     assert_no_warnings(parallel_backend, 'loky', None)
     assert_no_warnings(register_parallel_backend, 'failing', None)
 
-    # Ensure that the deprecation have no side effect in sklearn.utils._joblib
-    from sklearn.utils._joblib import Parallel, Memory, delayed
-    from sklearn.utils._joblib import cpu_count, hash, effective_n_jobs
-    from sklearn.utils._joblib import parallel_backend
-    from sklearn.utils._joblib import register_parallel_backend
-    assert_no_warnings(Memory, str(tmpdir))
-    assert_no_warnings(hash, 1)
-    assert_no_warnings(Parallel)
-    assert_no_warnings(cpu_count)
-    assert_no_warnings(effective_n_jobs, 1)
-    assert_no_warnings(delayed, dummy_func)
-    assert_no_warnings(parallel_backend, 'loky', None)
-    assert_no_warnings(register_parallel_backend, 'failing', None)
-
     from sklearn.utils._joblib import joblib
     del joblib.parallel.BACKENDS['failing']
+
+
+@pytest.mark.parametrize(
+    "sequence",
+    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
+)
+def test_to_object_array(sequence):
+    out = _to_object_array(sequence)
+    assert isinstance(out, np.ndarray)
+    assert out.dtype.kind == 'O'
+    assert out.ndim == 1

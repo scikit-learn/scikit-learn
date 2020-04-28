@@ -7,10 +7,10 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -498,3 +498,9 @@ def test_sparse_coder_parallel_mmap():
 
     sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
     sc.fit_transform(data)
+
+
+def test_sparse_coder_n_features_in():
+    d = np.array([[1, 2, 3], [1, 2, 3]])
+    sc = SparseCoder(d)
+    assert sc.n_features_in_ == d.shape[1]

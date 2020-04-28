@@ -297,7 +297,7 @@ decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 
 Here is an example using
-:class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
+:class:`sklearn.linear_model.SGDClassifier` with the
 ``elasticnet`` penalty. The regularization strength is globally controlled by
 the ``alpha`` parameter. With a sufficiently high ``alpha``,
 one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
@@ -529,7 +529,7 @@ Joblib-based parallelism
 ........................
 
 When the underlying implementation uses joblib, the number of workers
-(threads or processes) that are spawned in parallel can be controled via the
+(threads or processes) that are spawned in parallel can be controlled via the
 ``n_jobs`` parameter.
 
 .. note::
@@ -666,7 +666,7 @@ Python runtime
 
 :working_memory:
 
-    the optimal size of temporary arrays used by some algoritms.
+    the optimal size of temporary arrays used by some algorithms.
 
 .. _environment_variable:
 

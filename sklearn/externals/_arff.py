@@ -98,7 +98,7 @@ and have the following keys:
 The above keys must follow the case which were described, i.e., the keys are
 case sensitive. The attribute type ``attribute_type`` must be one of these
 strings (they are not case sensitive): ``NUMERIC``, ``INTEGER``, ``REAL`` or
-``STRING``. For nominal attributes, the ``atribute_type`` must be a list of
+``STRING``. For nominal attributes, the ``attribute_type`` must be a list of
 strings.
 
 In this format, the XOR dataset presented above can be represented as a python
@@ -147,6 +147,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'feurerm@informatik.uni-freiburg.de, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
+
+from typing import Optional
 
 import re
 import sys
@@ -318,7 +320,7 @@ if PY2:
 
 # EXCEPTIONS ==================================================================
 class ArffException(Exception):
-    message = None
+    message : Optional[str] = None
 
     def __init__(self):
         self.line = -1

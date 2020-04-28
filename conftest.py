@@ -6,6 +6,7 @@
 # the one from site-packages.
 
 import platform
+import sys
 from distutils.version import LooseVersion
 import os
 
@@ -37,9 +38,8 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name in (
-                    'sklearn.feature_extraction.hashing.FeatureHasher',
-                    'sklearn.feature_extraction.text.HashingVectorizer'):
+            if item.name.endswith(('_hash.FeatureHasher',
+                                   'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
     # Skip tests which require internet if the flag is provided
@@ -62,6 +62,10 @@ def pytest_collection_modifyitems(config, items):
             reason = ('doctest are only run when the default numpy int is '
                       '64 bits.')
             skip_doctests = True
+        elif sys.platform.startswith("win32"):
+            reason = ("doctests are not run for Windows because numpy arrays "
+                      "repr is inconsistent across platforms.")
+            skip_doctests = True
     except ImportError:
         pass
 
@@ -83,6 +87,11 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
+    # declare our custom markers to avoid PytestUnknownMarkWarning
+    config.addinivalue_line(
+        "markers",
+        "network: mark a test for execution if network available."
+    )
 
 
 def pytest_unconfigure(config):

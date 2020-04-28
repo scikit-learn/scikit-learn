@@ -12,14 +12,14 @@ from scipy.special import expit
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
@@ -34,7 +34,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_min
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.datasets import make_low_rank_matrix
 
 
 def test_density():
@@ -545,15 +545,8 @@ def test_incremental_variance_numerical_stability():
     A1 = np.full((n_samples // 2, n_features), x2, dtype=np.float64)
     A = np.vstack((A0, A1))
 
-    # Older versions of numpy have different precision
-    # In some old version, np.var is not stable
-    if np.abs(np_var(A) - two_pass_var(A)).max() < 1e-6:
-        stable_var = np_var
-    else:
-        stable_var = two_pass_var
-
     # Naive one pass var: >tol (=1063)
-    assert np.abs(stable_var(A) - one_pass_var(A)).max() > tol
+    assert np.abs(np_var(A) - one_pass_var(A)).max() > tol
 
     # Starting point for online algorithms: after A0
 
@@ -565,7 +558,7 @@ def test_incremental_variance_numerical_stability():
     assert n == A.shape[0]
     # the mean is also slightly unstable
     assert np.abs(A.mean(axis=0) - mean).max() > 1e-6
-    assert np.abs(stable_var(A) - var).max() > tol
+    assert np.abs(np_var(A) - var).max() > tol
 
     # Robust implementation: <tol (177)
     mean, var = A0[0, :], np.zeros(n_features)
@@ -576,7 +569,7 @@ def test_incremental_variance_numerical_stability():
                                       mean, var, n)
     assert_array_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
-    assert tol > np.abs(stable_var(A) - var).max()
+    assert tol > np.abs(np_var(A) - var).max()
 
 
 def test_incremental_variance_ddof():
@@ -648,7 +641,7 @@ def test_stable_cumsum():
 def test_safe_min():
     msg = ("safe_min is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         safe_min(np.ones(10))
 
 
