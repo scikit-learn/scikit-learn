@@ -189,8 +189,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t node_id
 
         cdef double impurity = INFINITY
-        cdef double children_lower_bound
-        cdef double children_upper_bound
+        cdef double lower_bound
+        cdef double upper_bound
+        cdef double lower_bound_left
+        cdef double upper_bound_left
+        cdef double lower_bound_right
+        cdef double upper_bound_right
         cdef double node_value
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
@@ -219,8 +223,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
                 n_constant_features = stack_record.n_constant_features
-                children_lower_bound = stack_record.children_lower_bound
-                children_upper_bound = stack_record.children_upper_bound
+                lower_bound = stack_record.lower_bound
+                upper_bound = stack_record.upper_bound
 
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
@@ -238,7 +242,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (impurity <= min_impurity_split))
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features, children_lower_bound, children_upper_bound)
+                    splitter.node_split(impurity, &split, &n_constant_features, lower_bound, upper_bound)
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
                     # dissimilar to v0.18
@@ -260,15 +264,32 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_value = splitter.criterion.sum_total[node_id] / weighted_n_node_samples
                 if not is_leaf:
+                    if splitter.monotonic_cst[split.feature] == 0:
+                        left_child_min = lower_bound
+                        left_child_max = upper_bound
+                        right_child_min = lower_bound
+                        right_child_max = upper_bound
+                    elif splitter.monotonic_cst[split.feature] == 1:
+                         left_child_min = lower_bound
+                         left_child_max = node_value
+                         right_child_min = node_value
+                         right_child_max = upper_bound
+                    elif splitter.monotonic_cst[split.feature] == -1:
+                         left_child_min = node_value
+                         left_child_max = upper_bound
+                         right_child_min = lower_bound
+                         right_child_max = node_value
+
                     # Push right child on stack
                     rc = stack.push(split.pos, end, depth + 1, node_id, 0,
-                                    split.impurity_right, n_constant_features, node_value, children_upper_bound)
+                                    split.impurity_right, n_constant_features,
+                                    right_child_min, right_child_max)
                     if rc == -1:
                         break
 
                     # Push left child on stack
                     rc = stack.push(start, split.pos, depth + 1, node_id, 1,
-                                    split.impurity_left, n_constant_features, children_lower_bound, node_value)
+                                    split.impurity_left, n_constant_features, left_child_min, left_child_max)
                     if rc == -1:
                         break
 

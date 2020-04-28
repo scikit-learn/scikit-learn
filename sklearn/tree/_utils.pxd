@@ -75,8 +75,8 @@ cdef struct StackRecord:
     bint is_left
     double impurity
     SIZE_t n_constant_features
-    double children_lower_bound
-    double children_upper_bound
+    double lower_bound
+    double upper_bound
 
 cdef class Stack:
     cdef SIZE_t capacity
