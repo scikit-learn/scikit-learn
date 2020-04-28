@@ -2025,9 +2025,10 @@ def assert_leaves_values_monotonic(tree, monotonic_cst):
 
 
 @pytest.mark.parametrize('monotonic_cst', (-1, 1))
+@pytest.mark.parametrize('splitter', ("best", "random"))
 @pytest.mark.parametrize('depth_first', (True, False))
 @pytest.mark.parametrize('seed', range(4))
-def test_nodes_values(monotonic_cst, depth_first, seed):
+def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
@@ -2054,10 +2055,10 @@ def test_nodes_values(monotonic_cst, depth_first, seed):
 
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
-        clf = DecisionTreeRegressor(monotonic_cst=[monotonic_cst])
+        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst])
     else:
         # max_leaf_nodes triggers depth first tree builder
-        clf = DecisionTreeRegressor(monotonic_cst=[monotonic_cst], max_leaf_nodes=5)
+        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], max_leaf_nodes=5)
     clf.fit(X, y)
 
     assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
