@@ -460,6 +460,12 @@ Changelog
   each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :class:`preprocessing.OrdinalEncoder` with `categories='auto'`
+  now warns when fitted with a pandas categorical feature if the encoding
+  provided by the pandas categorical dtype is not a subsequence of the
+  attribute `categories_[i]` where `i` corresponding feature index.
+  :pr:`15050` by `Thomas Fan`_.
+
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 

@@ -703,7 +703,7 @@ def test_encoders_does_not_support_none_values(Encoder):
     ('str_col', ['d', 'z', 'u']),
     ('float_col', [1.0, 3.1, 2.3]),
 ])
-def test_multiple_pandas_category_no_order(Encoder, col, categories):
+def test_multiple_pandas_category_no_order(col, categories):
     # Make sure warning is raised when pandas category ordering isn't
     # consistent with the encoder's
     pd = pytest.importorskip('pandas')
@@ -727,11 +727,10 @@ def test_multiple_pandas_category_no_order(Encoder, col, categories):
                             list(categories))
     with pytest.warns(UserWarning) as record:
         df_copy = df.assign(**{col: df[col].astype(cat_dtype)})
-        Encoder().fit(df_copy)
+        OrdinalEncoder().fit(df_copy)
     assert str(record[0].message) == custom_msg
 
 
-@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 @pytest.mark.parametrize('series, warns', [
     ([0, 0, 0, 0], False),  # encoding: [0]
     ([1, 0, 1, 1], True),  # encoding: [0, 1]
@@ -742,8 +741,8 @@ def test_multiple_pandas_category_no_order(Encoder, col, categories):
     ([0, 0, 0, 3], False),  # encoding: [0, 3]
 ])
 @pytest.mark.parametrize("as_strings", [True, False])
-def test_pandas_category_in_encoders_with_unknown(
-        Encoder, series, warns, as_strings):
+def test_pandas_category_in_ordinalencoders_with_unknown(
+        series, warns, as_strings):
     # The pandas series contains elements that are not seen during fit. `fit`
     # will warn when the catgorical encoding is not subsequence of
     # the pandas encoding.
@@ -759,5 +758,5 @@ def test_pandas_category_in_encoders_with_unknown(
 
     # does not warn
     with pytest.warns(None) as record:
-        Encoder().fit(df)
+        OrdinalEncoder().fit(df)
     assert record if warns else not record
