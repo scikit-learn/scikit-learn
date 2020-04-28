@@ -547,11 +547,11 @@ An example of the HTML output can be seen in the
 **HTML representation of Pipeline** section of 
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 As an alternative, the HTML can be written to a file using
-:func:`~sklearn.utils.display_estimator_html`::
+:func:`~sklearn.utils.estimator_html_repr`::
 
-   >>> from sklearn.utils import display_estimator_html
+   >>> from sklearn.utils import estimator_html_repr
    >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
-   ...     f.write(display_estimator_html(clf))
+   ...     f.write(estimator_html_repr(clf))
 
 .. topic:: Examples:
 

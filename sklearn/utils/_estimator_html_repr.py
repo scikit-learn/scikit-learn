@@ -285,7 +285,7 @@ div.sk-container {
 """.replace('  ', '').replace('\n', '')  # noqa
 
 
-def display_estimator_html(estimator):
+def estimator_html_repr(estimator):
     """Build a HTML representation of an estimator.
 
     Read more in the :ref:`User Guide <visualizing_composite_estimators>`.

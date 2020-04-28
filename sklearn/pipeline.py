@@ -18,7 +18,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .utils._display_estimator_html import _VisualBlock
+from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
