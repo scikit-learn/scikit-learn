@@ -554,18 +554,37 @@ def test_ordinal_encoder_raise_missing(X):
 
 
 def test_ordinal_encoder_handle_unknowns():
-    enc = OrdinalEncoder(handle_unknown='ignore')
-    X_fit = np.array([['a', 'b'], ['c', 'd']], dtype=object)
-    X_trans = np.array([['a', 'bla'], ['xy', 'd']], dtype=object)
+    enc = OrdinalEncoder(unknown_value=-999)
+    X_fit = np.array([['a', 'x'], ['b', 'y'], ['c', 'z']], dtype=object)
+    X_trans = np.array([['c', 'xy'], ['bla', 'y'], ['a', 'x']], dtype=object)
     enc.fit(X_fit)
 
     X_trans_enc = enc.transform(X_trans)
-    exp = np.array([[0, -999], [-999, 1]], dtype=object)
+    exp = np.array([[2, -999], [-999, 1], [0, 0]], dtype=object)
     assert_array_equal(X_trans_enc, exp)
 
     X_trans_inv = enc.inverse_transform(X_trans_enc)
-    inv_exp = np.array([['a', None], [None, 'd']], dtype=object)
+    inv_exp = np.array([['c', None], [None, 'y'], ['a', 'x']], dtype=object)
     assert_array_equal(X_trans_inv, inv_exp)
+
+
+def test_ordinal_encoder_raise_wrong_unknowns():
+    X_fit = np.array([['a', 'x'], ['b', 'y']], dtype=object)
+    X_trans = np.array([['c', 'xy'], ['bla', 'y']], dtype=object)
+
+    enc = OrdinalEncoder(unknown_value="wrong")
+    enc.fit(X_fit)
+    msg = ("The used value for unknown_value wrong is not an integer as "
+           "required.")
+    with pytest.raises(TypeError, match=msg):
+        enc.transform(X_trans)
+
+    enc = OrdinalEncoder(unknown_value=1)
+    enc.fit(X_fit)
+    msg = ("The used value for unknown_value 1 is one of the values already "
+           "used for encoding the seen categories.")
+    with pytest.raises(ValueError, match=msg):
+        enc.transform(X_trans)
 
 
 def test_ordinal_encoder_raise_categories_shape():

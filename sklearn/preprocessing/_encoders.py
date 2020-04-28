@@ -601,7 +601,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20.1
+    .. versionchanged:: 0.23.1
 
     Parameters
     ----------
@@ -618,13 +618,15 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
-    handle_unknown : {'error', 'ignore'}, default='error'
-        Whether to raise an error or ignore if an unknown categorical feature
-        is present during transform (default is to raise). When this parameter
-        is set to 'ignore' and an unknown category is encountered during
-        transform, the resulting ordinal encoded value for this feature will be
-        -999. In the inverse transform, an unknown category will be denoted as
-        None.
+    unknown_value : 'error' or (ordinal) encoded value for unknown cateogry,
+        default='error'
+        Whether to raise an error or use a specific encoded value if an
+        unknown categorical feature is present during transform (default is
+        to raise). When this parameter is set to something else than 'error'
+        and an unknown category is encountered during transform, the resulting
+        (ordinal) encoded value for this feature will be set to this value.
+        Ordinal is not strictly required, a negative value works as well. In
+        the inverse transform, an unknown category will be denoted as None.
 
     Attributes
     ----------
@@ -662,10 +664,10 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', dtype=np.float64,
-                 handle_unknown='error'):
+                 unknown_value='error'):
         self.categories = categories
         self.dtype = dtype
-        self.handle_unknown = handle_unknown
+        self.unknown_value = unknown_value
 
     def fit(self, X, y=None):
         """
@@ -702,11 +704,22 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_int, X_mask = self._transform(X, handle_unknown=self.unknown_value)
 
         # create separate category for unknown values
-        if self.handle_unknown == 'ignore':
-            X_int[~X_mask] = -999
+        if self.unknown_value != 'error':
+            if not isinstance(self.unknown_value, np.int):
+                raise TypeError("The used value for unknown_value {} is not "
+                                "an integer as required."
+                                .format(self.unknown_value))
+            n_features = len(self.categories_)
+            for i in range(n_features):
+                if np.isin(self.unknown_value, np.unique(X_int[:, i])):
+                    raise ValueError(
+                        "The used value for unknown_value {} is one of the "
+                        "values already used for encoding the seen "
+                        "categories.".format(self.unknown_value))
+                X_int[:, i][~X_mask[:, i]] = self.unknown_value
 
         return X_int.astype(self.dtype, copy=False)
 
@@ -743,10 +756,11 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
             # set unknown values to None
-            if self.handle_unknown == 'ignore':
+            if self.unknown_value != 'error':
                 X_tr[:, i] = np.where(
-                    labels == -999, None,
-                    self.categories_[i][np.where(labels == -999, 0, labels)])
+                    labels == self.unknown_value, None,
+                    self.categories_[i][np.where(
+                        labels == self.unknown_value, 0, labels)])
             else:
                 X_tr[:, i] = self.categories_[i][labels]
 
