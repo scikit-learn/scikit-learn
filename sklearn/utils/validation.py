@@ -507,7 +507,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
-                dtypes_orig[i] = np.object
+                dtypes_orig[i] = np.dtype(np.object)
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
