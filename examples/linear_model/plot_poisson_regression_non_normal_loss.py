@@ -430,7 +430,7 @@ for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt,
 plt.tight_layout()
 
 ###############################################################################
-# The dummy regression model predicts a constant frequency. This model is not
+# The dummy regression model predicts a constant frequency. This model does not
 # attribute the same tied rank to all samples but is none-the-less globally
 # well calibrated (to estimate the mean frequency of the entire population).
 #
