@@ -20,21 +20,21 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
 
-# #############################################################################
+# %%
 # Import some data to play with
 X, y = load_iris(return_X_y=True)
 # Add non-informative features
 np.random.seed(0)
 X = np.hstack((X, 2 * np.random.random((X.shape[0], 36))))
 
-# #############################################################################
+# %%
 # Create a feature-selection transform, a scaler and an instance of SVM that we
 # combine together to have an full-blown estimator
 clf = Pipeline([('anova', SelectPercentile(chi2)),
                 ('scaler', StandardScaler()),
                 ('svc', SVC(gamma="auto"))])
 
-# #############################################################################
+# %%
 # Plot the cross-validation score as a function of percentile of features
 score_means = list()
 score_stds = list()

@@ -85,7 +85,7 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
 
 ###############################################################################
 # Impute the missing data and score
-# #################################
+# %%
 # Now we will write a function which will score the results on the differently
 # imputed data. Let's look at each imputer separately:
 #
@@ -243,7 +243,7 @@ mses_california = mses_california * -1
 
 ###############################################################################
 # Plot the results
-# ################
+# %%
 #
 # Finally we are going to visualize the score:
 #

@@ -32,7 +32,7 @@ n_components = n_row * n_col
 image_shape = (64, 64)
 rng = RandomState(0)
 
-# #############################################################################
+# %%
 # Load faces data
 faces, _ = fetch_olivetti_faces(return_X_y=True, shuffle=True,
                                 random_state=rng)
@@ -60,7 +60,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         plt.yticks(())
     plt.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
-# #############################################################################
+# %%
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
@@ -100,12 +100,12 @@ estimators = [
 ]
 
 
-# #############################################################################
+# %%
 # Plot a sample of the input data
 
 plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 
-# #############################################################################
+# %%
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:
@@ -137,7 +137,7 @@ for name, estimator, center in estimators:
 
 plt.show()
 
-# #############################################################################
+# %%
 # Various positivity constraints applied to dictionary learning.
 estimators = [
     ('Dictionary learning',
@@ -169,13 +169,13 @@ estimators = [
 ]
 
 
-# #############################################################################
+# %%
 # Plot a sample of the input data
 
 plot_gallery("First centered Olivetti faces", faces_centered[:n_components],
              cmap=plt.cm.RdBu)
 
-# #############################################################################
+# %%
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:
