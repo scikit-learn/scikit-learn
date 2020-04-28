@@ -73,8 +73,8 @@ class NoTrans(NoFit):
 
 
 class OnlyFitTrans(NoFit):
-    def fit_transform(self, X):
-        self.fit(X)
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
         return X
 
 
