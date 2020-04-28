@@ -5,8 +5,9 @@ Poisson regression and non-normal loss
 
 This example illustrates the use of log-linear Poisson regression on the
 `French Motor Third-Party Liability Claims dataset
-<https://www.openml.org/d/41214>`_ from [1]_ and compares it with models
-learned with least squared error.
+<https://www.openml.org/d/41214>`_ from [1]_ and compares it with a linear
+model fitted with the usual least squared error and a non-linear GBRT model
+fitted with the Poisson loss (and a log-link).
 
 A few definitions:
 
@@ -124,7 +125,8 @@ linear_model_preprocessor = ColumnTransformer(
 #
 # It is worth noting that more than 93% of policyholders have zero claims. If
 # we were to convert this problem into a binary classification task, it would
-# be significantly imbalanced, and even a simplistic model that would only predict mean can achieve an accuracy of 93%.
+# be significantly imbalanced, and even a simplistic model that would only
+# predict mean can achieve an accuracy of 93%.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
 # baseline a "dummy" estimator that constantly predicts the mean frequency of
@@ -186,8 +188,8 @@ score_estimator(dummy, df_test)
 #
 # We start by modeling the target variable with the (l2 penalized) least
 # squares linear regression model, more comonly known as Ridge regression. We
-# use a low penalization `alpha`, as we expect such a linear model to under-fit on such
-# a large dataset.
+# use a low penalization `alpha`, as we expect such a linear model to under-fit
+# on such a large dataset.
 
 from sklearn.linear_model import Ridge
 
@@ -212,8 +214,8 @@ score_estimator(ridge_glm, df_test)
 ##############################################################################
 # Next we fit the Poisson regressor on the target variable. We set the
 # regularization strength ``alpha`` to approximately 1e-6 over number of
-# samples (i.e. `1e-12`) in order to mimic the Ridge regressor whose L2 penalty term scales
-# differently with the number of samples.
+# samples (i.e. `1e-12`) in order to mimic the Ridge regressor whose L2 penalty
+# term scales differently with the number of samples.
 
 from sklearn.linear_model import PoissonRegressor
 
@@ -233,10 +235,10 @@ score_estimator(poisson_glm, df_test)
 # Finally, we will consider a non-linear model, namely Gradient Boosting
 # Regression Trees. Tree-based models do not require the categorical data to be
 # one-hot encoded: instead, we can encode each category label with an arbitrary
-# integer using :class:`~sklearn.preprocessing.OrdinalEncoder`. With this encoding, the
-# trees will treat the categorical features as ordered features, which might
-# not be always a desired behavior. However this effect is limited for deep
-# enough trees which are able to recover the categorical nature of the
+# integer using :class:`~sklearn.preprocessing.OrdinalEncoder`. With this
+# encoding, the trees will treat the categorical features as ordered features,
+# which might not be always a desired behavior. However this effect is limited
+# for deep enough trees which are able to recover the categorical nature of the
 # features. The main advantage of the :class:`preprocessing.OrdinalEncoder`
 # over the :class:`preprocessing.OneHotEncoder` is that it will make training
 # faster.
@@ -333,11 +335,11 @@ plt.tight_layout()
 #
 # Note that we could have used the least squares loss for the
 # ``HistGradientBoostingRegressor`` model. This would wrongly assume a normal
-# distribution the response variable as for the `Ridge` model, and possibly also
-# lead to slightly negative predictions. However the gradient boosted trees
-# would still perform relatively well and in particular better than
-# ``PoissonRegressor`` thanks to the flexibility of the trees combined with
-# the large number of training samples.
+# distribution the response variable as for the `Ridge` model, and possibly
+# also lead to slightly negative predictions. However the gradient boosted
+# trees would still perform relatively well and in particular better than
+# ``PoissonRegressor`` thanks to the flexibility of the trees combined with the
+# large number of training samples.
 #
 # Evaluation of the calibration of predictions
 # --------------------------------------------
@@ -548,10 +550,6 @@ ax.legend(loc="upper left")
 # - Despite the improvement in calibration, the ranking power of both linear
 #   models are comparable and well below the ranking power of the Gradient
 #   Boosting Regression Trees.
-#
-# - The non-linear Gradient Boosting Regression Trees model does not seem to
-#   suffer from significant mis-calibration issues (despite the use of a least
-#   squares loss).
 #
 # - The Poisson deviance computed as an evaluation metric reflects both the
 #   calibration and the ranking power of the model. It also makes a linear
