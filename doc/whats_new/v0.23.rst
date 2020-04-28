@@ -490,8 +490,8 @@ Changelog
 ..............................
 
 - |Fix| :class:`semi_supervised.LabelSpreading` and
-  :class:`semi_supervised.LabelPropagation` avoids by zero when
-  normalizing `label_distributions_`. :pr:`15946` by :user:`ngshya`.
+  :class:`semi_supervised.LabelPropagation` avoids divide by zero warnings
+  when normalizing `label_distributions_`. :pr:`15946` by :user:`ngshya`.
 
 :mod:`sklearn.svm`
 ..................
