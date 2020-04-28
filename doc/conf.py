@@ -214,6 +214,7 @@ html_context = {}
 # finds latest release highlights and places it into HTML context for
 # index.html
 release_highlights_dir = Path("..") / "examples" / "release_highlights"
+# Finds the highlight with the latest version number
 latest_highlights = sorted(release_highlights_dir.glob("*.py"))[-1]
 latest_highlights = latest_highlights.with_suffix('').name
 html_context["release_highlights"] = \
