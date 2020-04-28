@@ -1068,6 +1068,15 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     y_train = y[train]
     X_test = X[test]
     y_test = y[test]
+
+    if not sparse.issparse(X):
+        for array, array_input in ((X_train, X), (y_train, y),
+                                   (X_test, X), (y_test, y)):
+            if array.base is not array_input and not array.flags['WRITEABLE']:
+                # fancy indexing should create a writable copy but it doesn't
+                # for read-only memmaps (cf. numpy#14132).
+                array.setflags(write=True)
+
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
 

@@ -384,6 +384,12 @@ Changelog
   of non-zero coefficients and in the predicted output. :pr:`16849` by
   `Nicolas Hug`_.
 
+- |Fix| Fixed a bug in :class:`linear_model.ElasticNetCV`,
+  :class:`linear_model.MultitaskElasticNetCV`, :class:`linear_model.LassoCV`
+  and :class:`linear_model.MultitaskLassoCV` where fitting would fail when
+  using joblib loky backend. :pr:`14264` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.metrics`
 ......................
 
