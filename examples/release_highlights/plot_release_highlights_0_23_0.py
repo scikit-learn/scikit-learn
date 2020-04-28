@@ -6,7 +6,7 @@ Release Highlights for scikit-learn 0.23
 .. currentmodule:: sklearn
 
 We are pleased to announce the release of scikit-learn 0.23! Many bug fixes
-and improvements were added, as well as some key new features. We detail
+and improvements were added, as well as some new key features. We detail
 below a few of the major features of this release. For an exhaustive list of
 all the changes, please refer to the :ref:`release notes <changes_0_23>`.
 
@@ -48,7 +48,7 @@ print(reg.score(X_test, y_test))
 # ------------------------------------------------
 # The :class:`~sklearn.cluster.KMeans` estimator was entirely re-worked, and it
 # is now significantly faster and more stable. In addition, the Elkan algorithm
-# is now compatible with sparse matrices. The estimator now uses OpenMP based
+# is now compatible with sparse matrices. The estimator uses OpenMP based
 # parallelism instead of relying on joblib, so the `n_jobs` parameter has no
 # effect anymore. For more details on how to control the number of threads,
 # please refer to our :ref:`parallelism` notes.
@@ -70,7 +70,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`. These estimators
 # now support :ref:`sample weights <sw_hgbdt>`, and a new Poisson loss function
-# was implemented. Also, an automatic early-stopping criteria was added:
+# was implemented. Also, an automatic early-stopping criterion was added:
 # early-stopping is enabled by default when the number of samples exceeds 10k.
 # The following snippet illustrates the use of the Poisson loss.
 
