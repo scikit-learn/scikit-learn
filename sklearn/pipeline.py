@@ -874,10 +874,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
-            elif not hasattr(t, "transform"):
-                warnings.warn("Intermediate step '%s' (type %s) does not have "
-                              "transform.  This FeatureUnion will not be "
-                              "usable with test data" % (t, type(t)))
 
     def _iter(self):
         """
