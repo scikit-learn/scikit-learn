@@ -107,9 +107,9 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
-- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
-  optimized implementation. Parallelism is now over the data instead of over
-  initializations allowing better scalability. :pr:`11950` by
+- |Efficiency| |MajorFeature| The critical parts of :class:`cluster.KMeans`
+  have a more optimized implementation. Parallelism is now over the data
+  instead of over initializations allowing better scalability. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`cluster.KMeans` now supports sparse data when
@@ -241,7 +241,7 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
   constraints, useful when features are supposed to have a positive/negative
   effect on the target. :pr:`15582` by `Nicolas Hug`_.
@@ -343,9 +343,10 @@ Changelog
   :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
   and `Olivier Grisel`_.
 
-- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model.Lasso` for dense feature matrix `X`.
-  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |MajorFeature| Support of `sample_weight` in
+  :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` for dense
+  feature matrix `X`. :pr:`15436` by :user:`Christian Lorentzen
+  <lorentzenchr>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
