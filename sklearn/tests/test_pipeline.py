@@ -446,7 +446,6 @@ def test_fit_predict_on_nonreusable_pipeline():
            "transform, pipeline is not reusable on test data."
            % (km_for_pipeline, type(km_for_pipeline)))
 
-
     with pytest.warns(UserWarning, match=re.escape(msg)):
         pipeline_pred = pipe.fit_predict(iris.data)
 
