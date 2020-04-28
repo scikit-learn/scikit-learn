@@ -181,17 +181,18 @@ print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
 ##############################################################################
-# Linear models
-# -------------
+# (Generalized) Linear models
+# ---------------------------
 #
-# We start by modeling the target variable with the (penalized) least squares
-# linear regression model. We use a low penalization as we expect such a linear
-# model to under-fit on such a large dataset.
+# We start by modeling the target variable with the (l2 penalized) least
+# squares linear regression model, more comonly known as Ridge regression. We
+# use a low penalization as we expect such a linear model to under-fit on such
+# a large dataset.
 
 from sklearn.linear_model import Ridge
 
 
-ridge = Pipeline([
+ridge_glm = Pipeline([
     ("preprocessor", linear_model_preprocessor),
     ("regressor", Ridge(alpha=1e-6)),
 ]).fit(df_train, df_train["Frequency"],
@@ -206,39 +207,44 @@ ridge = Pipeline([
 # meta-estimator to map ``y_pred`` to a strictly positive domain.
 
 print("Ridge evaluation:")
-score_estimator(ridge, df_test)
+score_estimator(ridge_glm, df_test)
 
 ##############################################################################
 # Next we fit the Poisson regressor on the target variable. We set the
-# regularization strength ``alpha`` to 1 over number of samples in oder to
-# mimic the Ridge regressor whose L2 penalty term scales differently with the
-# number of samples.
+# regularization strength ``alpha`` to approximately 1e-6 over number of
+# samples in oder to mimic the Ridge regressor whose L2 penalty term scales
+# differently with the number of samples.
 
 from sklearn.linear_model import PoissonRegressor
 
 n_samples = df_train.shape[0]
 
-poisson = Pipeline([
+poisson_glm = Pipeline([
     ("preprocessor", linear_model_preprocessor),
-    ("regressor", PoissonRegressor(alpha=1e-6/n_samples, max_iter=1000))
+    ("regressor", PoissonRegressor(alpha=1e-12, max_iter=300))
 ])
-poisson.fit(df_train, df_train["Frequency"],
-            regressor__sample_weight=df_train["Exposure"])
+poisson_glm.fit(df_train, df_train["Frequency"],
+                regressor__sample_weight=df_train["Exposure"])
 
 print("PoissonRegressor evaluation:")
-score_estimator(poisson, df_test)
+score_estimator(poisson_glm, df_test)
 
 ##############################################################################
 # Finally, we will consider a non-linear model, namely Gradient Boosting
 # Regression Trees. Tree-based models do not require the categorical data to be
 # one-hot encoded: instead, we can encode each category label with an arbitrary
 # integer using :class:`preprocessing.OrdinalEncoder`. With this encoding, the
-# trees will treat the categorical features as ordered features, which
-# might not be always a desired behavior. However this effect is limited for
-# deep enough trees which are able to recover the categorical nature of the
+# trees will treat the categorical features as ordered features, which might
+# not be always a desired behavior. However this effect is limited for deep
+# enough trees which are able to recover the categorical nature of the
 # features. The main advantage of the :class:`preprocessing.OrdinalEncoder`
 # over the :class:`preprocessing.OneHotEncoder` is that it will make training
 # faster.
+#
+# Gradient Boosting also give the possibility to fit the trees with a Poisson
+# loss (with an implicit log-link function) instead of the default
+# least-squares loss. Here we only fit trees with the Poisson loss to keep this
+# example concise.
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -254,15 +260,16 @@ tree_preprocessor = ColumnTransformer(
     ],
     remainder="drop",
 )
-gbrt = Pipeline([
+poisson_gbrt = Pipeline([
     ("preprocessor", tree_preprocessor),
-    ("regressor", HistGradientBoostingRegressor(max_leaf_nodes=128)),
+    ("regressor", HistGradientBoostingRegressor(loss="poisson",
+                                                max_leaf_nodes=128)),
 ])
-gbrt.fit(df_train, df_train["Frequency"],
-         regressor__sample_weight=df_train["Exposure"])
+poisson_gbrt.fit(df_train, df_train["Frequency"],
+                 regressor__sample_weight=df_train["Exposure"])
 
-print("Gradient Boosted Trees evaluation:")
-score_estimator(gbrt, df_test)
+print("Poisson Gradient Boosted Trees evaluation:")
+score_estimator(poisson_gbrt, df_test)
 
 
 ##############################################################################
@@ -294,7 +301,7 @@ for row_idx, label, df in zip(range(2),
     axes[row_idx, 0].set_ylim([1e1, 5e5])
     axes[row_idx, 0].set_ylabel(label + " samples")
 
-    for idx, model in enumerate([ridge, poisson, gbrt]):
+    for idx, model in enumerate([ridge_glm, poisson_glm, poisson_gbrt]):
         y_pred = model.predict(df)
 
         pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins),
@@ -311,17 +318,26 @@ plt.tight_layout()
 # models, we predict the expected frequency of a random variable, so we will
 # have necessarily fewer extreme values than for the observed realizations of
 # that random variable. Additionally, the normal distribution used in ``Ridge``
-# and ``HistGradientBoostingRegressor`` has a constant variance, while for the
-# Poisson distribution used in ``PoissonRegressor``, the variance is
+# has a constant variance, while for the Poisson distribution used in
+# ``PoissonRegressor`` and ``HistGradientBoostingRegressor``, the variance is
 # proportional to the predicted expected value.
 #
-# Thus, among the considered estimators, ``PoissonRegressor`` is a-priori
-# better suited for modeling the long tail distribution of the non-negative
-# data as compared to its ``Ridge`` counter-part.
+# Thus, among the considered estimators, ``PoissonRegressor`` and
+# ````HistGradientBoostingRegressor```` are a-priori better suited for modeling
+# the long tail distribution of the non-negative data as compared to the
+# ``Ridge`` model which makes a wrong assumption on the distribution of the
+# target variable.
 #
-# The ``HistGradientBoostingRegressor`` estimator has more flexibility and is
-# able to predict higher expected values while still assuming a normal
-# distribution with constant variance for the response variable.
+# The ``HistGradientBoostingRegressor`` estimator has the most flexibility and
+# is able to predict higher expected values.
+#
+# Note that we could have used the least squares loss for the
+# ``HistGradientBoostingRegressor`` model. This would wrongly assume a normal
+# distribution the response variable as for the `Ridge` model and possibly also
+# lead to slightly negative predictions. However the gradient boosted trees
+# would still perform relatively well and in particular better than
+# ``PoissonRegressor`` thanks to the flexibility of the trees combined with
+# the large number of training samples.
 #
 # Evaluation of the calibration of predictions
 # --------------------------------------------
@@ -382,17 +398,17 @@ print(f"Actual number of claims: {df_test['ClaimNb'].sum()}")
 fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 plt.subplots_adjust(wspace=0.3)
 
-for axi, model in zip(ax.ravel(), [dummy, ridge, poisson, gbrt]):
+for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt,
+                                   dummy]):
     y_pred = model.predict(df_test)
     y_true = df_test["Frequency"].values
     exposure = df_test["Exposure"].values
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
         y_true, y_pred, sample_weight=exposure, n_bins=10)
 
-    # Name of the model after the class of the estimator used in the last step
-    # of the pipeline.
-    model_name = model.steps[-1][1].__class__.__name__
-    print(f"Predicted number of claims by {model_name}: "
+    # Name of the model after the estimator used in the last step of the
+    # pipeline.
+    print(f"Predicted number of claims by {model[-1]}: "
           f"{np.sum(y_pred * exposure):.1f}")
 
     axi.plot(q, y_pred_seg, marker='x', linestyle="--", label="predictions")
@@ -400,7 +416,7 @@ for axi, model in zip(ax.ravel(), [dummy, ridge, poisson, gbrt]):
     axi.set_xlim(0, 1.0)
     axi.set_ylim(0, 0.5)
     axi.set(
-        title=model[-1].__class__.__name__,
+        title=model[-1],
         xlabel='Fraction of samples sorted by y_pred',
         ylabel='Mean Frequency (y_pred)'
     )
@@ -409,8 +425,8 @@ plt.tight_layout()
 
 ###############################################################################
 # The dummy regression model predicts a constant frequency. This model is not
-# attribute the same tied rank to all samples but is none-the-less well
-# calibrated.
+# attribute the same tied rank to all samples but is none-the-less globally
+# well calibrated (to estimate the mean frequency of the entire population).
 #
 # The ``Ridge`` regression model can predict very low expected frequencies that
 # do not match the data. It can therefore severly under-estimate the risk for
@@ -460,13 +476,12 @@ def lorenz_curve(y_true, y_pred, exposure):
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
-for model in [dummy, ridge, poisson, gbrt]:
+for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
     y_pred = model.predict(df_test)
     cum_exposure, cum_claims = lorenz_curve(df_test["Frequency"], y_pred,
                                             df_test["Exposure"])
     gini = 1 - 2 * auc(cum_exposure, cum_claims)
-    label = "{} (Gini: {:.2f})".format(
-        model[-1].__class__.__name__, gini)
+    label = "{} (Gini: {:.2f})".format(model[-1], gini)
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
@@ -499,7 +514,8 @@ ax.legend(loc="upper left")
 #
 # This last point is expected due to the nature of the problem: the occurrence
 # of accidents is mostly dominated by circumstantial causes that are not
-# captured in the columns of the dataset or that are indeed random.
+# captured in the columns of the dataset and can indeed be considered as purely
+# random.
 #
 # The linear models assume no interactions between the input variables which
 # likely causes under-fitting. Inserting a polynomial feature extractor
