@@ -1707,7 +1707,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_array(X, sparse_format, copy=copy,
+    X = check_array(X, accept_sparse=sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
     if axis == 0:
         X = X.T

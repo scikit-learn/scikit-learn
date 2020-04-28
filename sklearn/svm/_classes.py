@@ -213,6 +213,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             samples. If not provided,
             then each sample is given unit weight.
 
+            .. versionadded:: 0.18
+
         Returns
         -------
         self : object
@@ -397,6 +399,8 @@ class LinearSVR(RegressorMixin, LinearModel):
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
+
+            .. versionadded:: 0.18
 
         Returns
         -------

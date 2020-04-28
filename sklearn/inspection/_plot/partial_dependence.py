@@ -343,7 +343,7 @@ class PartialDependenceDisplay:
     stored as attributes.
 
     Read more in
-    :ref:`sphx_glr_auto_examples_plot_partial_dependence_visualization_api.py`
+    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <visualizations>`.
 
         .. versionadded:: 0.22

@@ -739,6 +739,8 @@ class StratifiedKFold(_BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
 
+    .. versionadded:: 0.18
+
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling

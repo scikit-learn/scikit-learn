@@ -141,6 +141,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.18
+
     flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
@@ -231,6 +233,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
