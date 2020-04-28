@@ -34,7 +34,7 @@ class KNNImputer(_BaseImputer):
         The placeholder for the missing values. All occurrences of
         ``missing_values`` will be imputed. For pandas dataframes with
         IntegerArray and `pd.NA` values, `missing_values` should be set to
-        `np.nan`, since `pd.NA` will be converted to `np.nan.
+        `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
