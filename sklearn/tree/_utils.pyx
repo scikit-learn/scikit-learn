@@ -110,9 +110,8 @@ cdef class Stack:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                  bint is_left, double impurity,
-                  SIZE_t n_constant_features, double children_lower_bound,
-                  double children_upper_bound) nogil except -1:
+                  bint is_left, double impurity, SIZE_t n_constant_features,
+                  double lower_bound, double upper_bound) nogil except -1:
         """Push a new element onto the stack.
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
@@ -135,8 +134,8 @@ cdef class Stack:
         stack[top].is_left = is_left
         stack[top].impurity = impurity
         stack[top].n_constant_features = n_constant_features
-        stack[top].children_lower_bound = children_lower_bound
-        stack[top].children_upper_bound = children_upper_bound
+        stack[top].lower_bound = lower_bound
+        stack[top].upper_bound = upper_bound
 
         # Increment stack pointer
         self.top = top + 1
