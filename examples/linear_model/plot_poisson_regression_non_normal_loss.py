@@ -165,18 +165,19 @@ def score_estimator(estimator, df_test):
           mean_absolute_error(df_test["Frequency"], y_pred,
                               sample_weight=df_test["Exposure"]))
 
-    # ignore non-positive predictions, as they are invalid for
-    # the Poisson deviance
+    # Ignore non-positive predictions, as they are invalid for
+    # the Poisson deviance.
     mask = y_pred > 0
     if (~mask).any():
-        n_clipped, n_samples = (~mask).sum(), mask.shape[0]
-        print(f"WARNING: Estimator yields non-positive predictions for "
-              f"{n_clipped} samples out of {n_samples}. These predictions "
-              f"will be clipped while computing the Poisson deviance.")
+        n_masked, n_samples = (~mask).sum(), mask.shape[0]
+        print(f"WARNING: Estimator yields invalid, non-positive predictions "
+              f" for {n_masked} samples out of {n_samples}. These predictions "
+              f"are ignored when computing the Poisson deviance.")
 
     print("mean Poisson deviance: %.3f" %
-          mean_poisson_deviance(df_test["Frequency"], y_pred.clip(min=1e-6),
-                                sample_weight=df_test["Exposure"]))
+          mean_poisson_deviance(df_test["Frequency"][mask],
+                                y_pred[mask],
+                                sample_weight=df_test["Exposure"][mask]))
 
 
 print("Constant mean frequency evaluation:")
@@ -202,10 +203,10 @@ ridge_glm = Pipeline([
 
 ##############################################################################
 # The Poisson deviance cannot be computed on non-positive values predicted by
-# the model. For models that do return a few non-positive predictions
-# (e.g. :class:`linear_model.Ridge`) we ignore the corresponding samples,
+# the model. For models that do return a few non-positive predictions (e.g.
+# :class:`~sklearn.linear_model.Ridge`) we ignore the corresponding samples,
 # meaning that the obtained Poisson deviance is approximate. An alternative
-# approach could be to use :class:`compose.TransformedTargetRegressor`
+# approach could be to use :class:`~sklearn.compose.TransformedTargetRegressor`
 # meta-estimator to map ``y_pred`` to a strictly positive domain.
 
 print("Ridge evaluation:")
@@ -239,8 +240,9 @@ score_estimator(poisson_glm, df_test)
 # encoding, the trees will treat the categorical features as ordered features,
 # which might not be always a desired behavior. However this effect is limited
 # for deep enough trees which are able to recover the categorical nature of the
-# features. The main advantage of the :class:`preprocessing.OrdinalEncoder`
-# over the :class:`preprocessing.OneHotEncoder` is that it will make training
+# features. The main advantage of the
+# :class:`~sklearn.preprocessing.OrdinalEncoder` over the
+# :class:`~sklearn.preprocessing.OneHotEncoder` is that it will make training
 # faster.
 #
 # Gradient Boosting also gives the possibility to fit the trees with a Poisson
@@ -319,16 +321,18 @@ plt.tight_layout()
 # The experimental data presents a long tail distribution for ``y``. In all
 # models, we predict the expected frequency of a random variable, so we will
 # have necessarily fewer extreme values than for the observed realizations of
-# that random variable. Additionally, the normal distribution used in ``Ridge``
-# has a constant variance, while for the Poisson distribution used in
-# ``PoissonRegressor`` and ``HistGradientBoostingRegressor``, the variance is
-# proportional to the predicted expected value.
+# that random variable. This explains that the mode of the histograms of model
+# predictions doesn't necessarily correspond to the smallest value.
+# Additionally, the normal distribution used in ``Ridge`` has a constant
+# variance, while for the Poisson distribution used in ``PoissonRegressor`` and
+# ``HistGradientBoostingRegressor``, the variance is proportional to the
+# predicted expected value.
 #
 # Thus, among the considered estimators, ``PoissonRegressor`` and
-# ````HistGradientBoostingRegressor```` are a-priori better suited for modeling
-# the long tail distribution of the non-negative data as compared to the
-# ``Ridge`` model which makes a wrong assumption on the distribution of the
-# target variable.
+# ``HistGradientBoostingRegressor`` are a-priori better suited for modeling the
+# long tail distribution of the non-negative data as compared to the ``Ridge``
+# model which makes a wrong assumption on the distribution of the target
+# variable.
 #
 # The ``HistGradientBoostingRegressor`` estimator has the most flexibility and
 # is able to predict higher expected values.
