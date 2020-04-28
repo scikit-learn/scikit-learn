@@ -316,6 +316,10 @@ Changelog
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
+- |Enhancement| :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`, and
+  :class:`impute.SimpleImputer` accepts pandas' nullable integer dtype with
+  missing values. :pr:`16508` by `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -485,6 +489,13 @@ Changelog
   can now contain `None`, where `drop_idx_[i] = None` means that no category
   is dropped for index `i`. :pr:`16585` by :user:`Chiara Marmo <cmarmo>`.
 
+- |Enhancement| :class:`preprocessing.MaxAbsScaler`,
+  :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.StandardScaler`,
+  :class:`preprocessing.PowerTransformer`,
+  :class:`preprocessing.QuantileTransformer`,
+  :class:`preprocessing.RobustScaler` now supports pandas' nullable integer
+  dtype with missing values. :pr:`16508` by `Thomas Fan`_.
+
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
@@ -565,6 +576,15 @@ Changelog
 - |Enhancement| :func:`utils.check_array` now constructs a sparse
   matrix from a pandas DataFrame that contains only `SparseArray` columns.
   :pr:`16728` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.validation.check_array` supports pandas'
+  nullable integer dtype with missing values when `force_all_finite` is set to
+  `False` or `'allow-nan'` in which case the data is converted to floating
+  point values where `pd.NA` values are replaced by `np.nan`. As a consequence,
+  all :mod:`sklearn.preprocessing` transformers that accept numeric inputs with
+  missing values represented as `np.nan` now also accepts being directly fed
+  pandas dataframes with `pd.Int* or `pd.Uint*` typed columns that use `pd.NA`
+  as a missing value marker. :pr:`16508` by `Thomas Fan`_.
 
 - |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
