@@ -107,8 +107,8 @@ cdef struct PriorityHeapRecord:
     double impurity_left
     double impurity_right
     double improvement
-    double children_lower_bound
-    double children_upper_bound
+    double lower_bound
+    double upper_bound
 
 cdef class PriorityHeap:
     cdef SIZE_t capacity
@@ -121,8 +121,8 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right, double children_lower_bound,
-                  double children_upper_bound) nogil except -1
+                  double impurity_right, double lower_bound,
+                  double upper_bound) nogil except -1
     cdef int pop(self, PriorityHeapRecord* res) nogil
 
 # =============================================================================
