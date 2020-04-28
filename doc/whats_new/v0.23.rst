@@ -411,6 +411,14 @@ Changelog
   distance matrix is not square and `affinity=precomputed`.
   :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
+:mod:`sklearn.pipeline`
+......................
+
+- |Fix| :class:`pipeline.Pipeline` can now use estimators that only
+  expose `fit_transform` but not a separate `fit` and `transform`,
+  such as `manifold.TSNE`.
+  :pr:`16714` by :user:`Niklas Böhm <jnboehm>`.
+
 Miscellaneous
 .............
 
