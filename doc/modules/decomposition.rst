@@ -820,6 +820,14 @@ stored components::
     >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
     >>> W_new = model.transform(X_new)
 
+Low-level parallelism
+---------------------
+
+The coordinate descent solver (`solver='cd'`) uses OpenMP based parallelism
+through Cython. The updates of `W` (resp. `H`) are computed in parallel over
+the samples (resp. features). For more details on how to control the
+number of threads, please refer to our :ref:`parallelism` notes.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`

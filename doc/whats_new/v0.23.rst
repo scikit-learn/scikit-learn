@@ -218,6 +218,11 @@ Changelog
 - |Feature| Added `n_components_` attribute to :class:'decomposition.SparsePCA'
   and :class:'MiniBatchSparsePCA'. :pr:'16981' by :user:'Mateusz Górski <Reksbril>'
 
+- |Efficiency| Improved efficiency of :class:`manifold.NMF` when
+  `solver="cd"` by computing the updates of `W` (resp. `H`) in parallel over
+  the samples (resp. features). :pr:`16439` by :user:`<macg0406>` and
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
