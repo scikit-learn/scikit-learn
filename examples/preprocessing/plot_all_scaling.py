@@ -179,7 +179,7 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
                  color='grey', ec='grey')
     hist_X0.axis('off')
 
-###############################################################################
+# %%
 # Two plots will be shown for each scaler/normalizer/transformer. The left
 # figure will show a scatter plot of the full data set while the right figure
 # will exclude the extreme values considering only 99 % of the data set,
@@ -216,7 +216,7 @@ def make_plot(item_idx):
                               label='Color mapping for values of y')
 
 
-########################################################################
+# %%
 # .. _results:
 #
 # Original data
@@ -234,7 +234,7 @@ def make_plot(item_idx):
 
 make_plot(0)
 
-#######################################################################
+# %%
 # StandardScaler
 # --------------
 #
@@ -252,7 +252,7 @@ make_plot(0)
 
 make_plot(1)
 
-##########################################################################
+# %%
 # MinMaxScaler
 # ------------
 #
@@ -266,7 +266,7 @@ make_plot(1)
 
 make_plot(2)
 
-#############################################################################
+# %%
 # MaxAbsScaler
 # ------------
 #
@@ -277,7 +277,7 @@ make_plot(2)
 
 make_plot(3)
 
-##############################################################################
+# %%
 # RobustScaler
 # ------------
 #
@@ -293,7 +293,7 @@ make_plot(3)
 
 make_plot(4)
 
-##############################################################################
+# %%
 # PowerTransformer
 # ----------------
 #
@@ -310,7 +310,7 @@ make_plot(4)
 make_plot(5)
 make_plot(6)
 
-##############################################################################
+# %%
 # QuantileTransformer (Gaussian output)
 # -------------------------------------
 #
@@ -321,7 +321,7 @@ make_plot(6)
 
 make_plot(7)
 
-###################################################################
+# %%
 # QuantileTransformer (uniform output)
 # ------------------------------------
 #
@@ -339,7 +339,7 @@ make_plot(7)
 
 make_plot(8)
 
-##############################################################################
+# %%
 # Normalizer
 # ----------
 #

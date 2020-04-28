@@ -15,7 +15,7 @@ plot functions.
 """
 print(__doc__)
 
-##############################################################################
+# %%
 # Load Data and train model
 # -------------------------
 # For this example, we load a blood transfusion service center data set from
@@ -35,9 +35,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
 clf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Create :class:`ConfusionMatrixDisplay`
-##############################################################################
+# %%
 # With the fitted model, we compute the predictions of the model on the test
 # dataset. These predictions are used to compute the confustion matrix which
 # is plotted with the :class:`ConfusionMatrixDisplay`
@@ -50,9 +50,9 @@ cm = confusion_matrix(y_test, y_pred)
 cm_display = ConfusionMatrixDisplay(cm).plot()
 
 
-##############################################################################
+# %%
 # Create :class:`RocCurveDisplay`
-##############################################################################
+# %%
 # The roc curve requires either the probabilities or the non-thresholded
 # decision values from the estimator. Since the logistic regression provides
 # a decision function, we will use it to plot the roc curve:
@@ -63,9 +63,9 @@ y_score = clf.decision_function(X_test)
 fpr, tpr, _ = roc_curve(y_test, y_score, pos_label=clf.classes_[1])
 roc_display = RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 
-##############################################################################
+# %%
 # Create :class:`PrecisionRecallDisplay`
-##############################################################################
+# %%
 # Similarly, the precision recall curve can be plotted using `y_score` from
 # the prevision sections.
 from sklearn.metrics import precision_recall_curve
@@ -75,9 +75,9 @@ prec, recall, _ = precision_recall_curve(y_test, y_score,
                                          pos_label=clf.classes_[1])
 pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 
-##############################################################################
+# %%
 # Combining the display objects into a single plot
-##############################################################################
+# %%
 # The display objects store the computed values that were passed as arguments.
 # This allows for the visualizations to be easliy combined using matplotlib's
 # API. In the following example, we place the displays next to each other in a

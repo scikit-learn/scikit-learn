@@ -25,9 +25,9 @@ from distutils.version import LooseVersion
 
 print(__doc__)
 
-###############################################################################
+# %%
 # Synthetic example
-###############################################################################
+# %%
 
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -42,7 +42,7 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
 else:
     density_param = {'normed': True}
 
-###############################################################################
+# %%
 # A synthetic random regression problem is generated. The targets ``y`` are
 # modified by: (i) translating all targets such that all entries are
 # non-negative and (ii) applying an exponential function to obtain non-linear
@@ -56,7 +56,7 @@ X, y = make_regression(n_samples=10000, noise=100, random_state=0)
 y = np.exp((y + abs(y.min())) / 200)
 y_trans = np.log1p(y)
 
-###############################################################################
+# %%
 # The following illustrate the probability density functions of the target
 # before and after applying the logarithmic functions.
 
@@ -78,7 +78,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-###############################################################################
+# %%
 # At first, a linear model will be applied on the original targets. Due to the
 # non-linearity, the model trained will not be precise during the
 # prediction. Subsequently, a logarithmic function is used to linearize the
@@ -120,11 +120,11 @@ ax1.set_ylim([0, 2000])
 f.suptitle("Synthetic data", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
-###############################################################################
+# %%
 # Real-world data set
-###############################################################################
+# %%
 
-###############################################################################
+# %%
 # In a similar manner, the boston housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # targets to be predicted corresponds to the weighted distances to the five
@@ -142,7 +142,7 @@ y_trans = quantile_transform(dataset.data[:, target],
                              output_distribution='normal',
                              copy=True).squeeze()
 
-###############################################################################
+# %%
 # A :class:`sklearn.preprocessing.QuantileTransformer` is used such that the
 # targets follows a normal distribution before applying a
 # :class:`sklearn.linear_model.RidgeCV` model.
@@ -164,7 +164,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
-###############################################################################
+# %%
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transform induces a decrease of the MAE.
 

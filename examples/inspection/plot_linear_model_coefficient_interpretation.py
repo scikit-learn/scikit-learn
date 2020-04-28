@@ -36,7 +36,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#############################################################################
+# %%
 # The dataset: wages
 # ------------------
 #
@@ -48,27 +48,27 @@ from sklearn.datasets import fetch_openml
 
 survey = fetch_openml(data_id=534, as_frame=True)
 
-##############################################################################
+# %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
 # target variable (i.e., the variable which we want to predict).
 #
 X = survey.data[survey.feature_names]
 X.describe(include="all")
 
-##############################################################################
+# %%
 # Note that the dataset contains categorical and numerical variables.
 # We will need to take this into account when preprocessing the dataset
 # thereafter.
 
 X.head()
 
-##############################################################################
+# %%
 # Our target for prediction: the wage.
 # Wages are described as floating-point number in dollars per hour.
 y = survey.target.values.ravel()
 survey.target.head()
 
-###############################################################################
+# %%
 # We split the sample into a train and a test dataset.
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
@@ -81,7 +81,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=42
 )
 
-##############################################################################
+# %%
 # First, let's get some insights by looking at the variable distributions and
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
@@ -92,7 +92,7 @@ train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
 _ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 
-##############################################################################
+# %%
 # Looking closely at the WAGE distribution reveals that it has a
 # long tail. For this reason, we should take its logarithm
 # to turn it approximately into a normal distribution (linear models such
@@ -115,7 +115,7 @@ _ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 
 survey.data.info()
 
-#############################################################################
+# %%
 # As seen previously, the dataset contains columns with different data types
 # and we need to apply a specific preprocessing for each data types.
 # In particular categorical variables cannot be included in linear model if not
@@ -140,7 +140,7 @@ preprocessor = make_column_transformer(
     remainder='passthrough'
 )
 
-##############################################################################
+# %%
 # To describe the dataset as a linear model we use a ridge regressor
 # with a very small regularization and to model the logarithm of the WAGE.
 
@@ -158,7 +158,7 @@ model = make_pipeline(
     )
 )
 
-##############################################################################
+# %%
 # Processing the dataset
 # ----------------------
 #
@@ -166,7 +166,7 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Then we check the performance of the computed model plotting its predictions
 # on the test set and computing,
 # for example, the median absolute error of the model.
@@ -190,7 +190,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
 # should lie on the red line.
@@ -219,7 +219,7 @@ coefs = pd.DataFrame(
 
 coefs
 
-##############################################################################
+# %%
 # The AGE coefficient is expressed in "dollars/hour per living years" while the
 # EDUCATION one is expressed in "dollars/hour per years of education". This
 # representation of the coefficients has the benefit of making clear the
@@ -238,7 +238,7 @@ plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Indeed, from the plot above the most important factor in determining WAGE
 # appears to be the
 # variable UNION, even if our intuition might tell us that variables
@@ -260,7 +260,7 @@ X_train_preprocessed.std(axis=0).plot(kind='barh', figsize=(9, 7))
 plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Multiplying the coefficients by the standard deviation of the related
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
@@ -282,7 +282,7 @@ plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Now that the coefficients have been scaled, we can safely compare them.
 #
 # .. warning::
@@ -332,7 +332,7 @@ plt.xlabel('Coefficient importance')
 plt.title('Coefficient importance and its variability')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # The problem of correlated variables
 # -----------------------------------
 #
@@ -355,7 +355,7 @@ plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
               'across folds')
 
-###############################################################################
+# %%
 # Two regions are populated: when the EXPERIENCE coefficient is
 # positive the AGE one is negative and viceversa.
 #
@@ -383,7 +383,7 @@ plt.title('Coefficient importance and its variability')
 plt.xlabel('Coefficient importance')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all models trained during cross-validation.
 #
@@ -407,7 +407,7 @@ preprocessor = make_column_transformer(
     remainder='passthrough'
 )
 
-###############################################################################
+# %%
 # The model will stay unchanged.
 
 model = make_pipeline(
@@ -421,7 +421,7 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Again, we check the performance of the computed
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
@@ -444,7 +444,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # For the coefficient analysis, scaling is not needed this time.
 
 coefs = pd.DataFrame(
@@ -456,7 +456,7 @@ plt.title('Ridge model, small regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
+# %%
 # We now inspect the coefficients across several cross-validation folds.
 
 cv_model = cross_validate(
@@ -475,7 +475,7 @@ plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
+# %%
 # The result is quite similar to the non-normalized case.
 #
 # Linear models with regularization
@@ -503,12 +503,12 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # First we check which value of :math:`\alpha` has been selected.
 
 model[-1].regressor_.alpha_
 
-##############################################################################
+# %%
 # Then we check the quality of the predictions.
 
 y_pred = model.predict(X_train)
@@ -530,7 +530,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # The ability to reproduce the data of the regularized model is similar to
 # the one of the non-regularized model.
 
@@ -543,7 +543,7 @@ plt.title('Ridge model, regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
+# %%
 # The coefficients are significantly different.
 # AGE and EXPERIENCE coefficients are both positive but they now have less
 # influence on the prediction.
@@ -578,7 +578,7 @@ plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
               'across folds')
 
-##############################################################################
+# %%
 # Linear models with sparse coefficients
 # --------------------------------------
 #
@@ -604,12 +604,12 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # First we verify which value of :math:`\alpha` has been selected.
 
 model[-1].regressor_.alpha_
 
-##############################################################################
+# %%
 # Then we check the quality of the predictions.
 
 y_pred = model.predict(X_train)
@@ -631,7 +631,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # For our dataset, again the model is not very predictive.
 
 coefs = pd.DataFrame(
@@ -643,7 +643,7 @@ plt.title('Lasso model, regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-#############################################################################
+# %%
 # A Lasso model identifies the correlation between
 # AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
 #

@@ -20,9 +20,9 @@ again the same transformers over and over.
 Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
 
-###############################################################################
+# %%
 Illustration of ``Pipeline`` and ``GridSearchCV``
-###############################################################################
+# %%
 
 This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 """
@@ -89,9 +89,9 @@ plt.legend(loc='upper left')
 
 plt.show()
 
-###############################################################################
+# %%
 # Caching transformers within a ``Pipeline``
-###############################################################################
+# %%
 # It is sometimes worthwhile storing the state of a specific transformer
 # since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
 # such situations. Therefore, we use the argument ``memory`` to enable caching.
@@ -119,7 +119,7 @@ cached_pipe = Pipeline([('reduce_dim', PCA()),
 memory.clear(warn=False)
 rmtree(location)
 
-###############################################################################
+# %%
 # The ``PCA`` fitting is only computed at the evaluation of the first
 # configuration of the ``C`` parameter of the ``LinearSVC`` classifier. The
 # other configurations of ``C`` will trigger the loading of the cached ``PCA``
