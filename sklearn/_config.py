@@ -7,7 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': True,
-    'repr_html': False,
+    'visual_repr': False,
 }
 
 
@@ -28,7 +28,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, repr_html=None):
+               print_changed_only=None, visual_repr=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -60,9 +60,9 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
-    repr_html : bool, optional
+    visual_repr : bool, optional
         If True, estimators will be displayed with HTML in a jupyter lab or
-        notebook context.
+        notebook context. Default is False.
 
         .. versionadded:: 0.23
 
@@ -77,8 +77,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
-    if repr_html is not None:
-        _global_config['repr_html'] = repr_html
+    if visual_repr is not None:
+        _global_config['visual_repr'] = visual_repr
 
 
 @contextmanager
@@ -109,7 +109,7 @@ def config_context(**new_config):
         .. versionchanged:: 0.23
            Default changed from False to True.
 
-    repr_html : bool, optional
+    visual_repr : bool, optional
         If True, estimators will be displayed with HTML in a jupyter lab or
         notebook context.
 

@@ -533,18 +533,25 @@ above example would be::
 Visualizing Composite Estimators
 ================================
 
-By default, estimators are displayed with a HTML representation when shown in a
+Estimators can be displayed with a HTML representation when shown in a
 jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. An example of the HTML output can be seen below.
+many estimators. This visualization is activated by setting the `visual_html`
+option in :func:`sklearn.set_config`::
+
+  >>> from sklearn import set_config
+  >>> set_config(visual_html=True)   # doctest: +SKIP
+  >>> # diplays HTML representation in a jupyter context
+  >>> column_trans  # doctest: +SKIP
+
+An example of the HTML output can be seen in the 
 **HTML representation of Pipeline** section of 
 :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
 As an alternative, the HTML can be written to a file using
 :func:`~sklearn.utils.display_estimator_html`::
 
-   from sklearn.utils import display_estimator_html
-
-   with open('my_estimator.html', 'w') as f:
-       f.write(display_estimator_html(clf))
+   >>> from sklearn.utils import display_estimator_html
+   >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
+   ...     f.write(display_estimator_html(clf))
 
 .. topic:: Examples:
 
