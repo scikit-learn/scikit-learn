@@ -19,7 +19,7 @@ A few definitions:
 - The **exposure** is the duration of the insurance coverage of a given policy,
   in years.
 
-- the claim **frequency** is the number of claims divided by the exposure,
+- The claim **frequency** is the number of claims divided by the exposure,
   typically measured in number of claims per year.
 
 In this dataset, each sample corresponds to an insurance policy. Available
@@ -124,7 +124,7 @@ linear_model_preprocessor = ColumnTransformer(
 #
 # It is worth noting that more than 93% of policyholders have zero claims. If
 # we were to convert this problem into a binary classification task, it would
-# be significantly imbalanced.
+# be significantly imbalanced, and even a simplistic model that would only predict mean can achieve an accuracy of 93%.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
 # baseline a "dummy" estimator that constantly predicts the mean frequency of
@@ -186,7 +186,7 @@ score_estimator(dummy, df_test)
 #
 # We start by modeling the target variable with the (l2 penalized) least
 # squares linear regression model, more comonly known as Ridge regression. We
-# use a low penalization as we expect such a linear model to under-fit on such
+# use a low penalization `alpha`, as we expect such a linear model to under-fit on such
 # a large dataset.
 
 from sklearn.linear_model import Ridge
@@ -212,7 +212,7 @@ score_estimator(ridge_glm, df_test)
 ##############################################################################
 # Next we fit the Poisson regressor on the target variable. We set the
 # regularization strength ``alpha`` to approximately 1e-6 over number of
-# samples in oder to mimic the Ridge regressor whose L2 penalty term scales
+# samples (i.e. `1e-12`) in order to mimic the Ridge regressor whose L2 penalty term scales
 # differently with the number of samples.
 
 from sklearn.linear_model import PoissonRegressor
@@ -233,7 +233,7 @@ score_estimator(poisson_glm, df_test)
 # Finally, we will consider a non-linear model, namely Gradient Boosting
 # Regression Trees. Tree-based models do not require the categorical data to be
 # one-hot encoded: instead, we can encode each category label with an arbitrary
-# integer using :class:`preprocessing.OrdinalEncoder`. With this encoding, the
+# integer using :class:`~sklearn.preprocessing.OrdinalEncoder`. With this encoding, the
 # trees will treat the categorical features as ordered features, which might
 # not be always a desired behavior. However this effect is limited for deep
 # enough trees which are able to recover the categorical nature of the
@@ -241,7 +241,7 @@ score_estimator(poisson_glm, df_test)
 # over the :class:`preprocessing.OneHotEncoder` is that it will make training
 # faster.
 #
-# Gradient Boosting also give the possibility to fit the trees with a Poisson
+# Gradient Boosting also gives the possibility to fit the trees with a Poisson
 # loss (with an implicit log-link function) instead of the default
 # least-squares loss. Here we only fit trees with the Poisson loss to keep this
 # example concise.
@@ -333,7 +333,7 @@ plt.tight_layout()
 #
 # Note that we could have used the least squares loss for the
 # ``HistGradientBoostingRegressor`` model. This would wrongly assume a normal
-# distribution the response variable as for the `Ridge` model and possibly also
+# distribution the response variable as for the `Ridge` model, and possibly also
 # lead to slightly negative predictions. However the gradient boosted trees
 # would still perform relatively well and in particular better than
 # ``PoissonRegressor`` thanks to the flexibility of the trees combined with
@@ -519,7 +519,7 @@ ax.legend(loc="upper left")
 #
 # The linear models assume no interactions between the input variables which
 # likely causes under-fitting. Inserting a polynomial feature extractor
-# (func:`sklearn.preprocessing.PolynomialFeatures`) indeed increases their
+# (:func:`~sklearn.preprocessing.PolynomialFeatures`) indeed increases their
 # discrimative power by 2 points of Gini index. In particular it improves the
 # ability of the models to identify the top 5% riskiest profiles.
 #
