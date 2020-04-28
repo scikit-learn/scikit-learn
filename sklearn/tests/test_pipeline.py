@@ -443,7 +443,7 @@ def test_fit_predict_on_nonreusable_pipeline():
 
     msg = ("Intermediate step '%s' (type %s) does not have "
            "transform, pipeline is not reusable on test data."
-           % (km_for_pipeline, type(km_for_pipeline)))
+           % (oft, type(oft)))
 
     with pytest.warns(UserWarning, match=re.escape(msg)):
         pipeline_pred = pipe.fit_predict(iris.data)
