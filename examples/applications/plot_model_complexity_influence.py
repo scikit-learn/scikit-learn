@@ -13,8 +13,8 @@ Here, we will use two datasets:
       The task is to predict the disease
       progression
     - 20 Newsgroups dataset for classification. This dataset consists of
-      newsgroup posts. The task is to predict on which (out of 20 topics) is
-      the post
+      newsgroup posts. The task is to predict on which topic (out of 20 topics)
+      the post is written on
 
 We will use three different estimators:
     - SGDClassifier (for classification data) which implements stochastic
@@ -62,7 +62,7 @@ np.random.seed(0)
 #
 # First we are loading both datasets.
 # Note 1: For the 20 newsgroups we are using fetch_20newsgroups_vectorized
-# which returns ready-to-use features. (TODO: add link:).
+# which returns ready-to-use features.
 # Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
 # diabetes dataset is a numpy array.
 #
@@ -90,23 +90,57 @@ classification_data = generate_data('classification')
 
 
 ##############################################################################
+# Benchmark influence
+# -------------------
+# Next, we can calculate the influence of the changing params. We will be
+# collecting the prediction times, prediction powers and complexities for each
+# of the changing value. In each lap we will set the new estimator with set
+# 'tuned_params' and the updated changing param value.
+#
+
+
+def benchmark_influence(conf):
+    """
+    Benchmark influence of :changing_param: on both MSE and latency.
+    """
+    prediction_times = []
+    prediction_powers = []
+    complexities = []
+    for param_value in conf['changing_param_values']:
+        conf['tuned_params'][conf['changing_param']] = param_value
+        estimator = conf['estimator'](**conf['tuned_params'])
+
+        print("Benchmarking %s" % estimator)
+        estimator.fit(conf['data']['X_train'], conf['data']['y_train'])
+        conf['postfit_hook'](estimator)
+        complexity = conf['complexity_computer'](estimator)
+        complexities.append(complexity)
+        start_time = time.time()
+        for _ in range(conf['n_samples']):
+            y_pred = estimator.predict(conf['data']['X_test'])
+        elapsed_time = (time.time() - start_time) / float(conf['n_samples'])
+        prediction_times.append(elapsed_time)
+        pred_score = conf['prediction_performance_computer'](
+            conf['data']['y_test'], y_pred)
+        prediction_powers.append(pred_score)
+        print("Complexity: %d | %s: %.4f | Pred. Time: %fs\n" % (
+            complexity, conf['prediction_performance_label'], pred_score,
+            elapsed_time))
+    return prediction_powers, prediction_times, complexities
+
+
+##############################################################################
 # Choose parameters
 # -----------------------------
 #
-# Now, it's the time to choose the parameters for each of our estimators. We
-# make a dictionary with all the necessary values.
-# 'changing_param' is the name of the parameter we are going to vary. We are
-# 'changing_param_vaues' is the list of the those varying values.
-# 'complexity_label'
+# Now, we will choose the parameters for each of our estimators by making
+# a dictionary with all the necessary values.
+# 'changing_param' is the name of the parameter which will vary in each
+# estimator.
+# complexity will be defined by the 'complexity_label' and calculated using
 # 'complexity_computer'
-# prediction_performance_computer
-# prediction_performance_label
-# postfit_hook'
-# data: depending on the estimator we will pass either classification or
-#       regression data
-# n_samples
-# estimator we are selecting 'changing_param': the parameter which will vary
-# (l1_ratio, nu and n_estimators respectively).
+# Also note that depending on the estimator type we are passing
+# different data
 #
 
 def _count_nonzero_coefficients(estimator):
@@ -153,49 +187,11 @@ configurations = [
 
 
 ##############################################################################
-# Benchmark influence
-# -------------------
-# Finally we can calculate the influence of the changing params. We will be
-# collecting the prediction times, prediction powers and
-# complexities for each of the changing value.
-# In each lap we will set the new estimator with set 'tuned_params' and the
-# updated changing param value.
-#
-
-
-def benchmark_influence(conf):
-    """
-    Benchmark influence of :changing_param: on both MSE and latency.
-    """
-    prediction_times = []
-    prediction_powers = []
-    complexities = []
-    for param_value in conf['changing_param_values']:
-        conf['tuned_params'][conf['changing_param']] = param_value
-        estimator = conf['estimator'](**conf['tuned_params'])
-
-        print("Benchmarking %s" % estimator)
-        estimator.fit(conf['data']['X_train'], conf['data']['y_train'])
-        conf['postfit_hook'](estimator)
-        complexity = conf['complexity_computer'](estimator)
-        complexities.append(complexity)
-        start_time = time.time()
-        for _ in range(conf['n_samples']):
-            y_pred = estimator.predict(conf['data']['X_test'])
-        elapsed_time = (time.time() - start_time) / float(conf['n_samples'])
-        prediction_times.append(elapsed_time)
-        pred_score = conf['prediction_performance_computer'](
-            conf['data']['y_test'], y_pred)
-        prediction_powers.append(pred_score)
-        print("Complexity: %d | %s: %.4f | Pred. Time: %fs\n" % (
-            complexity, conf['prediction_performance_label'], pred_score,
-            elapsed_time))
-    return prediction_powers, prediction_times, complexities
-
-##############################################################################
 # Run the code and plot the results
 # ---------------------------------
-#
+# We are ready to run all our functions by looping though the configurations we
+# set previously and then plotting the inluence of changing parameters on the
+# complexity and the latency of each model.
 #
 
 
@@ -218,17 +214,8 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     host.legend(loc='upper right')
     host.axis["left"].label.set_color(p1.get_color())
     par1.axis["right"].label.set_color(p2.get_color())
-    plt.title('Influence of Model Complexity - %s' % conf['estimator'].
-              __name__)
-    plt.show()
-
-
-# #############################################################################
-# Main code
-# --------------------------------
-# Now that all the functions are set we will run all the estimators and plot
-# the results
-#
+    plt.title("Influence of varying '%s' on %s" % (conf['changing_param'],
+                                                   conf['estimator'].__name__))
 
 
 for conf in configurations:
@@ -236,3 +223,4 @@ for conf in configurations:
         benchmark_influence(conf)
     plot_influence(conf, prediction_performances, prediction_times,
                    complexities)
+plt.show()
