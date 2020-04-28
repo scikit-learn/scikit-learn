@@ -270,15 +270,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         right_child_min = lower_bound
                         right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
-                         left_child_min = lower_bound
-                         left_child_max = node_value
-                         right_child_min = node_value
-                         right_child_max = upper_bound
+                        left_child_min = lower_bound
+                        left_child_max = node_value
+                        right_child_min = node_value
+                        right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == -1:
-                         left_child_min = node_value
-                         left_child_max = upper_bound
-                         right_child_min = lower_bound
-                         right_child_max = node_value
+                        left_child_min = node_value
+                        left_child_max = upper_bound
+                        right_child_min = lower_bound
+                        right_child_max = node_value
 
                     # Push right child on stack
                     rc = stack.push(split.pos, end, depth + 1, node_id, 0,

@@ -101,7 +101,7 @@ cdef class Splitter:
 
     cdef double node_impurity(self) nogil
 
-    cdef inline bint split_passes_monotonic_check(self,
-                                                  INT32_t monotonic_cst,
-                                                  double lower_bound,
-                                                  double upper_bound) nogil
+    cdef inline bint split_passes_monotonicity_check(self,
+                                                    INT32_t monotonic_cst,
+                                                    double lower_bound,
+                                                    double upper_bound) nogil
