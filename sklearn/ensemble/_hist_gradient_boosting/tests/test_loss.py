@@ -83,9 +83,7 @@ def test_derivatives(loss, x0, y_true):
                      maxiter=70, tol=2e-8)
     assert np.allclose(loss.inverse_link_function(optimum), y_true)
     assert np.allclose(loss.pointwise_loss(y_true, optimum), 0)
-
-    gradient = get_gradients(y_true, optimum)
-    assert np.allclose(gradient, 0, atol=1e-7)
+    assert np.allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
