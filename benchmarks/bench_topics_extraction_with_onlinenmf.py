@@ -76,12 +76,8 @@ for bj in range(len(n_components)):
     miny = 999999
     maxy = 0
     for j in range(len(n_features)):
-        timesFr = np.zeros(len(n_samples))
-        timesmbFr = np.zeros(len(n_samples))
         timesKL = np.zeros(len(n_samples))
         timesmbKL = np.zeros(len(n_samples))
-        lossFr = np.zeros(len(n_samples))
-        lossmbFr = np.zeros(len(n_samples))
         lossKL = np.zeros(len(n_samples))
         lossmbKL = np.zeros(len(n_samples))
 
@@ -107,6 +103,7 @@ for bj in range(len(n_components)):
                               max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
             timesKL[i] = time() - t0
             print("done in %0.3fs." % (timesKL[i]))
+            lossKL[i] = nmf.reconstruction_err_
 
             # Fit the NMF model KL
             print("Fitting the online NMF model (generalized Kullback-Leibler "
@@ -121,15 +118,25 @@ for bj in range(len(n_components)):
                                 l1_ratio=.5).fit(tfidf)
             timesmbKL[i] = time() - t0
             print("done in %0.3fs." % (timesmbKL[i]))
+            lossmbKL[i] = minibatch_nmf.reconstruction_err_
 
         ax.append(fig.add_subplot(spec[bj, j], xlabel=xlabel, ylabel=ylabel))
         plt.grid(True)
 
-        str1 = "NMF"
-        str2 = "Online NMF"
+        str1 = "time NMF"
+        str2 = "time Online NMF"
+        str3 = "loss NMF"
+        str4 = "loss Online NMF"
+
         ax_index = j+bj*len(n_features)
         ax[ax_index].plot(n_samples, timesKL, marker='o', label=str1)
         ax[ax_index].plot(n_samples, timesmbKL, marker='o', label=str2)
+
+        ax2 = ax[ax_index].twinx()
+        ax2.set_ylabel('loss')
+
+        ax2.plot(n_samples, lossKL, marker='x', ls='dashed', label=str3)
+        ax2.plot(n_samples, lossmbKL, marker='x', ls='dashed', label=str4)
 
         ax[ax_index].xaxis.set_major_formatter(ticker.EngFormatter())
 
@@ -146,9 +153,11 @@ for bj in range(len(n_components)):
 
     ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.05, 1),
                                         loc='upper left', borderaxespad=0.)
+    ax2.legend(bbox_to_anchor=(1.05, 1),
+                                        loc='lower left', borderaxespad=0.)
     strbatch = "batch size: " + str(batch_size) + \
                "\nn_components: " + str(n_components[bj])
-    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.05, 0.5),
+    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.05, 0.8),
                                           xycoords='axes fraction',
                                           va='center')
 
