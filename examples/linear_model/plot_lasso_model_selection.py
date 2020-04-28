@@ -98,7 +98,7 @@ plt.title('Information-criterion for model selection (training time %.3fs)'
 
 # %%
 # LassoCV: coordinate descent
-
+#
 # Compute paths
 print("Computing regularization path using the coordinate descent lasso...")
 t1 = time.time()
@@ -125,7 +125,7 @@ plt.ylim(ymin, ymax)
 
 # %%
 # LassoLarsCV: least angle regression
-
+#
 # Compute paths
 print("Computing regularization path using the Lars lasso...")
 t1 = time.time()

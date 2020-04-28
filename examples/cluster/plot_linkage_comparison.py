@@ -60,7 +60,7 @@ varied = datasets.make_blobs(n_samples=n_samples,
 
 # %%
 # Run the clustering and plot
-
+#
 # Set up cluster parameters
 plt.figure(figsize=(9 * 1.3 + 2, 14.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,

@@ -93,7 +93,7 @@ rbm_features_classifier = Pipeline(
 
 # %%
 # Training
-
+#
 # Hyper-parameters. These were set by cross-validation,
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
