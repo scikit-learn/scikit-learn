@@ -7,8 +7,11 @@ from numpy.testing import assert_allclose
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
+import joblib
+from distutils.version import LooseVersion
 
 from sklearn.datasets import load_boston
+from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -1020,3 +1023,23 @@ def test_enet_sample_weight_sparse():
     with pytest.raises(ValueError, match="Sample weights do not.*support "
                                          "sparse matrices"):
         reg.fit(X, y, sample_weight=sw, check_input=True)
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+@pytest.mark.parametrize("estimator",
+                         [ElasticNetCV, MultiTaskElasticNetCV,
+                          LassoCV, MultiTaskLassoCV])
+def test_linear_models_cv_fit_for_all_backends(backend, estimator):
+    # LinearModelsCV.fit performs inplace operations on input data which is
+    # memmapped when using loky backend, causing an error due to unexpected
+    # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
+
+    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+        pytest.skip('loky backend does not exist in joblib <0.12')
+
+    # Create a problem sufficiently large to cause memmapping (1MB).
+    n_targets = 1 + (estimator in (MultiTaskElasticNetCV, MultiTaskLassoCV))
+    X, y = make_regression(20000, 10, n_targets=n_targets)
+
+    with joblib.parallel_backend(backend=backend):
+        estimator(n_jobs=2, cv=3).fit(X, y)
