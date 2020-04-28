@@ -408,11 +408,11 @@ def test_pipeline_methods_pca_tsne():
            "transform, pipeline is not reusable on test data."
            % (tsne_for_pipeline, type(tsne_for_pipeline)))
 
-    with pytest.warns(UserWarning, match=re.escape(msg)):
-        pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
-                             'passthrough')
+    pipe = make_pipeline(pca_for_pipeline, tsne_for_pipeline,
+                         'passthrough')
 
-    pipeline_emb = pipe.fit_transform(iris.data)
+    with pytest.warns(UserWarning, match=re.escape(msg)):
+        pipeline_emb = pipe.fit_transform(iris.data)
 
     assert_array_almost_equal(pipeline_emb, separate_emb)
 
