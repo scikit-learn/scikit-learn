@@ -535,11 +535,11 @@ Visualizing Composite Estimators
 
 Estimators can be displayed with a HTML representation when shown in a
 jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. This visualization is activated by setting the `visual_repr`
+many estimators. This visualization is activated by setting the `display`
 option in :func:`sklearn.set_config`::
 
   >>> from sklearn import set_config
-  >>> set_config(visual_repr=True)   # doctest: +SKIP
+  >>> set_config(display=True)   # doctest: +SKIP
   >>> # diplays HTML representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 

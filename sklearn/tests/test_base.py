@@ -515,13 +515,13 @@ def test_warns_on_get_params_non_attribute():
 
 
 def test_repr_mimebundle_():
-    # Checks the visual_repr configuration flag controls the json output
+    # Checks the display configuration flag controls the json output
     tree = DecisionTreeClassifier()
     output = tree._repr_mimebundle_()
     assert "text/plain" in output
     assert "text/html" not in output
 
-    with config_context(visual_repr=True):
+    with config_context(display=True):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
         assert "text/html" in output

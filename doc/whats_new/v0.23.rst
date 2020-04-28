@@ -554,7 +554,7 @@ Miscellaneous
 
 - |MajorFeature| Adds a HTML representation of estimators to be shown in
   a jupyter notebook or lab. This visualization is acitivated by setting the
-  `visual_repr` option in :func:`sklearn.set_config`. :pr:`14180` by
+  `display` option in :func:`sklearn.set_config`. :pr:`14180` by
   `Thomas Fan`_.
 
 - |Enhancement| ``scikit-learn`` now works with ``mypy`` without errors.

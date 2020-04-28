@@ -444,7 +444,7 @@ class BaseEstimator:
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""
         output = {"text/plain": repr(self)}
-        if get_config()["visual_repr"]:
+        if get_config()["display"]:
             output["text/html"] = estimator_html_repr(self)
         return output
 
