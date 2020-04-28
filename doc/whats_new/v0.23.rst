@@ -275,6 +275,11 @@ Changelog
   with log-link useful for modeling count data.
   :pr:`16692` by :user:`Christian Lorentzen <lorentzenchr>`
 
+- |Fix| Fixed a bug where :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` would fail with multiple
+  calls to fit when `warm_start=True`, `early_stopping=True`, and there is no
+  validation set. :pr:`16663` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -283,10 +288,15 @@ Changelog
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
 
+:mod:`sklearn.feature_selection`
+................................
 
 - |Enhancement| Added support for multioutput data in
   :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`.
   :pr:`16103` by :user:`Divyaprabha M <divyaprabha123>`.
+
+- |API| Adds :class:`feature_selection.SelectorMixin` back to public API.
+  :pr:`16132` by :user:`trimeta`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -441,6 +451,11 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
+- |Efficiency| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` has reduced memory footprint when using
+  stochastic solvers, `'sgd'` or `'adam'`, and `shuffle=True`. :pr:`14075` by
+  :user:`meyer89`.
+
 - |Fix| Increases the numerical stability of the logistic loss function in
   :class:`neural_network.MLPClassifier` by clipping the probabilities.
   :pr:`16117` by `Thomas Fan`_.
@@ -460,6 +475,10 @@ Changelog
   each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :class:`preprocessing.OneHotEncoder`'s `drop_idx_` ndarray
+  can now contain `None`, where `drop_idx_[i] = None` means that no category
+  is dropped for index `i`. :pr:`16585` by :user:`Chiara Marmo <cmarmo>`.
+
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
@@ -471,6 +490,13 @@ Changelog
   which was not taking the absolute value of the maximum values before
   normalizing the vectors. :pr:`16632` by
   :user:`Maura Pintor <Maupin1991>` and :user:`Battista Biggio <bbiggio>`.
+
+:mod:`sklearn.semi_supervised`
+..............................
+
+- |Fix| :class:`semi_supervised.LabelSpreading` and
+  :class:`semi_supervised.LabelPropagation` avoids divide by zero warnings
+  when normalizing `label_distributions_`. :pr:`15946` by :user:`ngshya`.
 
 :mod:`sklearn.svm`
 ..................
@@ -538,6 +564,9 @@ Changelog
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
+
+- |FIX| :func:`utils.all_estimators` now only returns public estimators.
+  :pr:`15380` by `Thomas Fan`_.
 
 :mod:`sklearn.cluster`
 ......................
