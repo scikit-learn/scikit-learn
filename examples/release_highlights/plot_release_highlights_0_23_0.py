@@ -129,3 +129,12 @@ X_train, X_test, y_train, y_test, sw_train, sw_test = train_test_split(
 reg = Lasso()
 reg.fit(X_train, y_train, sample_weight=sw_train)
 print(reg.score(X_test, y_test, sw_test))
+
+##############################################################################
+# Usage of the Boston dataset
+# ---------------------------
+# Due to various ethical concerns related to the Boston dataset, we have
+# decided not to use it anymore in our documentation. It was replaced by other
+# datsets such as the Diabetes or the California Housing datasets. Details can
+# be found in the original issue `here
+# <https://github.com/scikit-learn/scikit-learn/issues/16155>`_.
