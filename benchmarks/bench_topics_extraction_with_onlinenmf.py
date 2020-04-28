@@ -154,7 +154,7 @@ for bj in range(len(n_components)):
     ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.05, 1),
                                         loc='upper left', borderaxespad=0.)
     ax2.legend(bbox_to_anchor=(1.05, 1),
-                                        loc='lower left', borderaxespad=0.)
+               loc='lower left', borderaxespad=0.)
     strbatch = "batch size: " + str(batch_size) + \
                "\nn_components: " + str(n_components[bj])
     ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.05, 0.8),
