@@ -288,10 +288,15 @@ Changelog
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
 
+:mod:`sklearn.feature_selection`
+................................
 
 - |Enhancement| Added support for multioutput data in
   :class:`feature_selection.RFE` and :class:`feature_selection.RFECV`.
   :pr:`16103` by :user:`Divyaprabha M <divyaprabha123>`.
+
+- |API| Adds :class:`feature_selection.SelectorMixin` back to public API.
+  :pr:`16132` by :user:`trimeta`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
