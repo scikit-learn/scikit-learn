@@ -16,6 +16,9 @@ from libc.math cimport isnan
 
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
+np.import_array()
+
+
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const unsigned char missing_values_bin_idx,
