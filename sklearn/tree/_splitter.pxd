@@ -30,8 +30,8 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
-    double lower_bound     # Lower bound on value of left child for monotonicity
-    double upper_bound     # Upper bound on value of right child for monotonicity
+    double lower_bound     # Lower bound on value of both children for monotonicity
+    double upper_bound     # Upper bound on value of both children for monotonicity
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -101,7 +101,5 @@ cdef class Splitter:
 
     cdef double node_impurity(self) nogil
 
-    cdef inline bint split_passes_monotonicity_check(self,
-                                                    INT32_t monotonic_cst,
-                                                    double lower_bound,
-                                                    double upper_bound) nogil
+    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst,
+                                        double lower_bound, double upper_bound) nogil

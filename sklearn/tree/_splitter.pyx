@@ -238,9 +238,7 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
-    cdef inline bint split_passes_monotonicity_check(self, INT32_t monotonic_cst,
-                                                     double lower_bound,
-                                                     double upper_bound) nogil:
+    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current split"""
         cdef bint check_lower, check_upper, check_monotonic
         check_lower = (self.criterion.sum_left[0] >= lower_bound * self.criterion.weighted_n_left) \
@@ -253,7 +251,7 @@ cdef class Splitter:
             check_monotonic = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
                                - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
                               * monotonic_cst <= 0
-            return check_monotonic
+            return check_lower & check_upper & check_monotonic
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
@@ -445,7 +443,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            if not self.split_passes_monotonicity_check(monotonic_constraint, lower_bound, upper_bound):
+                            if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -770,7 +768,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    if not self.split_passes_monotonicity_check(monotonic_constraint, lower_bound, upper_bound):
+                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -1323,7 +1321,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            if not self.split_passes_monotonicity_check(monotonic_constraint, lower_bound, upper_bound):
+                            if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -1560,7 +1558,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    if not self.split_passes_monotonicity_check(monotonic_constraint, lower_bound, upper_bound):
+                    if not self.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                         continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
