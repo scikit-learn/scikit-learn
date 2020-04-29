@@ -394,8 +394,7 @@ def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
-            tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow
-            tmp = np.dot(comp_rot, tmp)
+            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
         u, s, v = np.linalg.svd(
