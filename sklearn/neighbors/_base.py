@@ -534,10 +534,6 @@ class KNeighborsMixin:
         """Finds the K-neighbors of a point.
         Returns indices of and distances to the neighbors of each point.
 
-        .. versionchanged:: 0.21
-            Now raises ``NotFittedError``, rather than ``AttributeError``,
-            when called before ``fit``.
-
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
