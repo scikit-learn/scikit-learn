@@ -52,15 +52,16 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    input_type : {"dict", "pair"}, default="dict"
-        Either "dict" (the default) to accept dictionaries over
-        (feature_name, value); "pair" to accept pairs of (feature_name, value);
-        or "string" to accept single strings.
+    input_type : {"dict", "pair", "string"}, default="dict"
+        Determines the type of a given sample. Use "dict" (the
+        default) to accept dictionaries over
+        (feature_name, value); "pair" to accept iterable of tuples of
+        (feature_name, value); or "string" to accept iterable of strings.
         feature_name should be a string, while value should be a number.
         In the case of "string", a value of 1 is implied.
         The feature_name is hashed to find the appropriate column for the
-        feature. The value's sign might be flipped in the output (but see
-        non_negative, below).
+        feature. The value's sign might be flipped when adding it to the
+        output depending on the `alternate_sign` parameter.
     dtype : numpy dtype, default=np.float64
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
@@ -70,9 +71,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
 
-    .. versionchanged:: 0.19
-        ``alternate_sign`` replaces the now deprecated ``non_negative``
-        parameter.
+        .. versionchanged:: 0.19
+            ``alternate_sign`` replaces the now deprecated ``non_negative``
+            parameter.
 
     Examples
     --------
@@ -137,18 +138,16 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        raw_X : iterable over iterable over raw features, length = n_samples
-            Samples. Each sample must be iterable an (e.g., a list or tuple)
-            containing/generating feature names (and optionally values, see
-            the input_type constructor argument) which will be hashed.
-            raw_X need not support the len function, so it can be the result
-            of a generator; n_samples is determined on the fly.
+        raw_X : iterable over samples, length = n_samples
+            The input samples. See the `input_type` parameter for description
+            of accepted input.
+            `raw_X` need not support the len function, so it can be
+            a generator; n_samples is determined on the fly.
 
         Returns
         -------
         X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
-
         """
         raw_X = iter(raw_X)
         if self.input_type == "dict":
@@ -168,6 +167,25 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         X.sum_duplicates()  # also sorts the indices
 
         return X
+
+    def fit_transform(self, raw_X, y=None):
+        """Transform a sequence of instances to a scipy.sparse matrix.
+
+        Parameters
+        ----------
+        raw_X : iterable over samples, length = n_samples
+            The input samples. See the `input_type` parameter for description
+            of accepted input.
+            `raw_X` need not support the len function, so it can be
+            a generator; n_samples is determined on the fly.
+
+        Returns
+        -------
+        X : sparse matrix of shape (n_samples, n_features)
+            Feature matrix, for use with estimators or further transformers.
+        """
+        # Only overridden for the docstring to be correct
+        return self.fit(raw_X).transform(raw_X)
 
     def _more_tags(self):
         return {'X_types': [self.input_type]}

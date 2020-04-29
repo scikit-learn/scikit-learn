@@ -120,32 +120,52 @@ The result is increased speed and reduced memory usage,
 at the expense of inspectability;
 the hasher does not remember what the input features looked like
 and has no ``inverse_transform`` method.
-
-Since the hash function might cause collisions between (unrelated) features,
-a signed hash function is used and the sign of the hash value
-determines the sign of the value stored in the output matrix for a feature.
-This way, collisions are likely to cancel out rather than accumulate error,
-and the expected mean of any output feature's value is zero. This mechanism
-is enabled by default with ``alternate_sign=True`` and is particularly useful
-for small hash table sizes (``n_features < 10000``). For large hash table
-sizes, it can be disabled, to allow the output to be passed to estimators like
-:class:`sklearn.naive_bayes.MultinomialNB` or
-:class:`sklearn.feature_selection.chi2`
-feature selectors that expect non-negative inputs.
-
-:class:`FeatureHasher` accepts either mappings
-(like Python's ``dict`` and its variants in the ``collections`` module),
-``(feature, value)`` pairs, or strings,
-depending on the constructor parameter ``input_type``.
-Mapping are treated as lists of ``(feature, value)`` pairs,
-while single strings have an implicit value of 1,
-so ``['feat1', 'feat2', 'feat3']`` is interpreted as
-``[('feat1', 1), ('feat2', 1), ('feat3', 1)]``.
-If a single feature occurs multiple times in a sample,
-the associated values will be summed
-(so ``('feat', 2)`` and ``('feat', 3.5)`` become ``('feat', 5.5)``).
 The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
+
+The hash function might cause collisions between (unrelated) features, as
+illustrated below were two words in "hi how are you" have the same hash
+value, resulting in a feature value of 2. Also, either "good" or "thanks" is
+mapped to one of "hi how are you"::
+
+  >>> from sklearn.feature_extraction import FeatureHasher
+  >>> h = FeatureHasher(n_features=10, input_type="string",
+  ...                   alternate_sign=False)
+  >>> X = [['hi', 'how', 'are', 'you'], ['good', 'thanks']]
+  >>> h.transform(X).toarray()
+  array([[0., 0., 0., 0., 0., 1., 2., 0., 1., 0.],
+         [0., 0., 0., 0., 0., 0., 0., 0., 1., 1.]])
+
+Using the `alternate_sign` parameter (True by default), an additional signed
+hash function is used to determine whether the entry should be added or
+subtracted from the current feature value.::
+
+  >>> h = FeatureHasher(n_features=10, input_type="string")
+  >>> X = [['hi', 'how', 'are', 'you'], ['good', 'thanks']]
+  >>> h.transform(X).toarray()
+  array([[ 0.,  0.,  0.,  0.,  0., -1.,  0.,  0.,  1.,  0.],
+         [ 0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  1.]])
+
+Notice how some of the signs were flipped, and the value of 2 was canceled
+out into a value of 0. Using `alternate_sign=True` results in each feature
+having an expectation of zero. This is particularly useful for small hash
+table sizes (``n_features < 10000``). For large `n_features` it can be
+disabled, to allow the output to be passed to estimators like
+:class:`sklearn.naive_bayes.MultinomialNB` or
+:class:`sklearn.feature_selection.chi2` feature selectors that expect
+non-negative inputs.
+
+A single sample passed to :class:`FeatureHasher` can be either a mapping
+(like Python's ``dict`` and its variants in the ``collections`` module),
+an iterable of ``(feature, value)`` pairs, or an iterable of strings. The
+``input_type`` parameter determines what kind of input will be accepted.
+Mappings are treated as lists of ``(feature, value)`` pairs,
+while single strings have an implicit value of 1:
+``['feat1', 'feat2', 'feat3']`` is equivalent to
+``[('feat1', 1), ('feat2', 1), ('feat3', 1)]``.
+If a single feature occurs multiple times in a sample,
+the associated values will be summed:
+``('feat', 2)`` and ``('feat', 3.5)`` become ``('feat', 5.5)``.
 
 Feature hashing can be employed in document classification,
 but unlike :class:`text.CountVectorizer`,
