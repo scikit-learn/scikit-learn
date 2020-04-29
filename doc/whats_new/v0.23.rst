@@ -567,6 +567,9 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |Feature| Adds :func:`utils.estimator_html_repr` for returning a
+  HTML representation of an estimator. :pr:`14180` by `Thomas Fan`_.
+
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
 
@@ -604,6 +607,11 @@ Changelog
 
 Miscellaneous
 .............
+
+- |MajorFeature| Adds a HTML representation of estimators to be shown in
+  a jupyter notebook or lab. This visualization is acitivated by setting the
+  `display` option in :func:`sklearn.set_config`. :pr:`14180` by
+  `Thomas Fan`_.
 
 - |Enhancement| ``scikit-learn`` now works with ``mypy`` without errors.
   :pr:`16726` by `Roman Yurchak`_.
