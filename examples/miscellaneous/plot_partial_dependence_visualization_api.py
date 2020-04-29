@@ -10,9 +10,9 @@ customize the plot with the visualization API.
 
 .. note::
 
-    See also :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+    See also :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 
-"""
+"""  # noqa
 print(__doc__)
 
 import pandas as pd

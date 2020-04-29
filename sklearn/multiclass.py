@@ -48,6 +48,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
+from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -164,6 +165,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -201,7 +205,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     array([2, 0, 1])
 
     """
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -390,6 +395,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Returns
         -------
         T : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -515,8 +524,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
-
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -643,6 +652,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Returns
         -------
         Y : array-like of shape (n_samples, n_classes)
+
+            .. versionchanged:: 0.19
+                output shape changed to ``(n_samples,)`` to conform to
+                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
 
@@ -699,10 +712,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         than one-vs-the-rest.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the codebook.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        The generator used to initialize the codebook.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -753,8 +765,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-
-    def __init__(self, estimator, code_size=1.5, random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size

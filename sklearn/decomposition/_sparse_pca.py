@@ -9,6 +9,7 @@ from scipy import linalg
 
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
@@ -179,6 +180,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     error_ : array
         Vector of errors at each iteration.
 
+    n_components_ : int
+        Estimated number of components.
+
+        .. versionadded:: 0.23
+
     n_iter_ : int
         Number of iterations run.
 
@@ -231,7 +237,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         International Conference on Artificial Intelligence and Statistics
         (AISTATS), PMLR 9:366-373, 2010.
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
                  U_init=None, V_init=None, verbose=False, random_state=None,
                  normalize_components='deprecated'):
@@ -295,6 +302,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
+        self.n_components_ = len(self.components_)
+
         self.explained_variance_, self.explained_variance_ratio_ = \
             _get_explained_variance(X, self.components_, self.ridge_alpha)
         self.error_ = E
@@ -333,7 +342,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 "check_methods_subset_invariance":
                 "fails for the transform method"
             }
@@ -411,6 +420,11 @@ class MiniBatchSparsePCA(SparsePCA):
     components_ : array of shape (n_components, n_features)
         Sparse components extracted from the data.
 
+    n_components_ : int
+        Estimated number of components.
+
+        .. versionadded:: 0.23
+
     n_iter_ : int
         Number of iterations run.
 
@@ -447,7 +461,8 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
                  normalize_components='deprecated'):
@@ -506,6 +521,7 @@ class MiniBatchSparsePCA(SparsePCA):
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
+        self.n_components_ = len(self.components_)
 
         self.explained_variance_, self.explained_variance_ratio_ = \
             _get_explained_variance(X, self.components_, self.ridge_alpha)

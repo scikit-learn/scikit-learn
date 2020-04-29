@@ -324,7 +324,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     # Note: need to copy _dispatch to prevent instances of the builtin
     # PrettyPrinter class to call methods of _EstimatorPrettyPrinter (see issue
     # 12906)
-    _dispatch = pprint.PrettyPrinter._dispatch.copy()
+    # mypy error: "Type[PrettyPrinter]" has no attribute "_dispatch"
+    _dispatch = pprint.PrettyPrinter._dispatch.copy()  # type: ignore
     _dispatch[BaseEstimator.__repr__] = _pprint_estimator
     _dispatch[KeyValTuple.__repr__] = _pprint_key_val_tuple
 

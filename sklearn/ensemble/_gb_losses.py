@@ -6,10 +6,9 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 
 from ..tree._tree import TREE_LEAF
-from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..dummy import DummyClassifier
 from ..dummy import DummyRegressor
