@@ -187,6 +187,10 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |API| The `StreamHandler` was removed from `sklearn.logger`. To continue to
+  receive logging messages from :mod:`sklearn.datasets`, a handler should
+  be added to `sklearn.logger`. :pr:`16451` by :user:`Christoph Deil <cdeil>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
