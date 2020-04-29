@@ -318,7 +318,7 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity,
                          rec.impurity_left, rec.impurity_right,
-                         rec.children_lower_bound, rec.children_upper_bound)
+                         rec.lower_bound, rec.upper_bound)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -360,8 +360,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
-        cdef double children_lower_bound
-        cdef double children_upper_bound
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
@@ -370,6 +368,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef PriorityHeapRecord record
         cdef PriorityHeapRecord split_node_left
         cdef PriorityHeapRecord split_node_right
+        cdef double middle_value
+        cdef double left_child_min
+        cdef double left_child_max
+        cdef double right_child_min
+        cdef double right_child_max
 
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
@@ -410,7 +413,23 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                 else:
                     # Node is expandable
-                    node_value = splitter.criterion.sum_total[0] / splitter.criterion.weighted_n_node_samples
+                    middle_value = tree.value[record.node_id]
+
+                    if splitter.monotonic_cst[node.feature] == 0:
+                        left_child_min = record.lower_bound
+                        left_child_max = record.upper_bound
+                        right_child_min = record.lower_bound
+                        right_child_max = record.upper_bound
+                    elif splitter.monotonic_cst[node.feature] == 1:
+                        left_child_min = record.lower_bound
+                        left_child_max = middle_value
+                        right_child_min = middle_value
+                        right_child_max = record.upper_bound
+                    elif splitter.monotonic_cst[node.feature] == -1:
+                        left_child_min = middle_value
+                        left_child_max = record.upper_bound
+                        right_child_min = record.lower_bound
+                        right_child_max = middle_value
 
                     # Decrement number of split nodes available
                     max_split_nodes -= 1
@@ -421,8 +440,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                               record.impurity_left,
                                               IS_NOT_FIRST, IS_LEFT, node,
                                               record.depth + 1,
-                                              record.children_lower_bound,
-                                              record.children_upper_bound,
+                                              left_child_min,
+                                              left_child_max,
                                               &split_node_left)
                     if rc == -1:
                         break
@@ -436,8 +455,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                               record.impurity_right,
                                               IS_NOT_FIRST, IS_NOT_LEFT, node,
                                               record.depth + 1,
-                                              record.children_lower_bound,
-                                              record.children_upper_bound,
+                                              right_child_min,
+                                              right_child_max,
                                               &split_node_right)
                     if rc == -1:
                         break
@@ -466,8 +485,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cdef inline int _add_split_node(self, Splitter splitter, Tree tree,
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
-                                    SIZE_t depth, double children_lower_bound,
-                                    double children_upper_bound,
+                                    SIZE_t depth, double lower_bound,
+                                    double upper_bound,
                                     PriorityHeapRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
@@ -496,8 +515,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    impurity <= min_impurity_split)
 
         if not is_leaf:
-            splitter.node_split(impurity, &split, &n_constant_features, children_lower_bound,
-                                children_upper_bound)
+            splitter.node_split(impurity, &split, &n_constant_features, lower_bound,
+                                upper_bound)
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
             is_leaf = (is_leaf or split.pos >= end or
@@ -529,6 +548,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = split.improvement
             res.impurity_left = split.impurity_left
             res.impurity_right = split.impurity_right
+            res.lower_bound = lower_bound
+            res.upper_bound = upper_bound
 
         else:
             # is leaf => 0 improvement
@@ -537,8 +558,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.improvement = 0.0
             res.impurity_left = impurity
             res.impurity_right = impurity
-            res.children_lower_bound = children_lower_bound if is_left else node_value
-            res.children_upper_bound = node_value if is_left else children_upper_bound
+            res.lower_bound = lower_bound
+            res.upper_bound = upper_bound
 
         return 0
 
