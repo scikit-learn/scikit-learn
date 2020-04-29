@@ -184,7 +184,7 @@ print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
 ##############################################################################
-# (Generalized) Linear models
+# (Generalized) linear models
 # ---------------------------
 #
 # We start by modeling the target variable with the (l2 penalized) least
@@ -217,6 +217,12 @@ score_estimator(ridge_glm, df_test)
 # regularization strength ``alpha`` to approximately 1e-6 over number of
 # samples (i.e. `1e-12`) in order to mimic the Ridge regressor whose L2 penalty
 # term scales differently with the number of samples.
+#
+# Since the Poisson regressor internally models the log of the expected target
+# value instead of the expected value directly (log vs identity link function),
+# the relationship between X and y is not exactly linear anymore. Therefore the
+# Poisson regressor is called a Generalized Linear Model (GLM) rather than a
+# vanilla linear model as is the case for Ridge regression.
 
 from sklearn.linear_model import PoissonRegressor
 
@@ -233,6 +239,9 @@ print("PoissonRegressor evaluation:")
 score_estimator(poisson_glm, df_test)
 
 ##############################################################################
+# Gradient Boosting Regression Trees for Poisson regression
+# ---------------------------------------------------------
+#
 # Finally, we will consider a non-linear model, namely Gradient Boosting
 # Regression Trees. Tree-based models do not require the categorical data to be
 # one-hot encoded: instead, we can encode each category label with an arbitrary
