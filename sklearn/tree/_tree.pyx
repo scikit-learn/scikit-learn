@@ -195,7 +195,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double upper_bound_left
         cdef double lower_bound_right
         cdef double upper_bound_right
-        cdef double node_value
+        cdef double middle_value
         cdef SIZE_t n_constant_features
         cdef bint is_leaf
         cdef bint first = 1
@@ -262,7 +262,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
 
-                node_value = splitter.criterion.sum_total[node_id] / weighted_n_node_samples
+                middle_value = tree.value[node_id]
+
                 if not is_leaf:
                     if splitter.monotonic_cst[split.feature] == 0:
                         left_child_min = lower_bound
@@ -271,14 +272,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
                         left_child_min = lower_bound
-                        left_child_max = node_value
-                        right_child_min = node_value
+                        left_child_max = middle_value
+                        right_child_min = middle_value
                         right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == -1:
-                        left_child_min = node_value
+                        left_child_min = middle_value
                         left_child_max = upper_bound
                         right_child_min = lower_bound
-                        right_child_max = node_value
+                        right_child_max = middle_value
 
                     # Push right child on stack
                     rc = stack.push(split.pos, end, depth + 1, node_id, 0,
