@@ -122,7 +122,7 @@ def test_gnb_priors_sum_isclose():
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
                        0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    clf = GaussianNB(priors)
+    clf = GaussianNB(priors=priors)
     # smoke test for issue #9633
     clf.fit(X, Y)
 
@@ -663,7 +663,7 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = "X must not contain negative values."
+    error_msg = "Negative values in data passed to CategoricalNB (input X)"
     assert_raise_message(ValueError, error_msg, clf.predict, X)
     assert_raise_message(ValueError, error_msg, clf.fit, X, y)
 

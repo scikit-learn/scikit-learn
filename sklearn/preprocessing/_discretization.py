@@ -16,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -23,6 +24,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -113,9 +116,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
     """
 
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
+    @_deprecate_positional_args
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
@@ -137,7 +142,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, dtype='numeric')
+        X = self._validate_data(X, dtype='numeric')
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:

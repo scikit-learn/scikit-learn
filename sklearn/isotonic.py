@@ -6,12 +6,13 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
-from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight
-from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
+
+from .base import BaseEstimator, TransformerMixin, RegressorMixin
+from .utils import check_array, check_consistent_length
+from .utils.validation import _check_sample_weight, _deprecate_positional_args
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
 __all__ = ['check_increasing', 'isotonic_regression',
@@ -170,6 +171,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
 
+    increasing_ : bool
+        Inferred value for ``increasing``.
+
     Notes
     -----
     Ties are broken using the secondary method from Leeuw, 1977.
@@ -198,7 +202,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     >>> iso_reg.predict([.1, .2])
     array([1.8628..., 3.7256...])
     """
-    def __init__(self, y_min=None, y_max=None, increasing=True,
+    @_deprecate_positional_args
+    def __init__(self, *, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
         self.y_max = y_max
@@ -247,12 +252,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
-        # Store _X_ and _y_ to maintain backward compat during the deprecation
-        # period of X_ and y_
-        self._X_ = X = unique_X
-        self._y_ = y = isotonic_regression(unique_y, unique_sample_weight,
-                                           self.y_min, self.y_max,
-                                           increasing=self.increasing_)
+        X = unique_X
+        y = isotonic_regression(unique_y, unique_sample_weight,
+                                self.y_min, self.y_max,
+                                increasing=self.increasing_)
 
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)

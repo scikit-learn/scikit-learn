@@ -17,15 +17,17 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
-from ..utils import check_array, check_X_y
+from ..utils import check_array
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 
-from . import _cd_fast as cd_fast
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from . import _cd_fast as cd_fast  # type: ignore
 
 
 def _set_order(X, y, order='C'):
@@ -129,7 +131,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     if Xy is None:
         X_sparse = sparse.isspmatrix(X)
         sparse_center = X_sparse and (fit_intercept or normalize)
-        X = check_array(X, 'csc',
+        X = check_array(X, accept_sparse='csc',
                         copy=(copy_X and fit_intercept and not X_sparse))
         if not X_sparse:
             # X can be touched inplace thanks to the above line
@@ -433,10 +435,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+        X = check_array(X, accept_sparse='csc', dtype=[np.float64, np.float32],
                         order='F', copy=copy_X)
-        y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
-                        ensure_2d=False)
+        y = check_array(y, accept_sparse='csc', dtype=X.dtype.type,
+                        order='F', copy=False, ensure_2d=False)
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
             Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
@@ -689,7 +691,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -751,9 +754,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # when bypassing checks
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = check_X_y(X, y, accept_sparse='csc',
-                             order='F', dtype=[np.float64, np.float32],
-                             copy=X_copied, multi_output=True, y_numeric=True)
+            X, y = self._validate_data(X, y, accept_sparse='csc',
+                                       order='F',
+                                       dtype=[np.float64, np.float32],
+                                       copy=X_copied, multi_output=True,
+                                       y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
@@ -1000,7 +1005,8 @@ class Lasso(ElasticNet):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -1062,6 +1068,15 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     y_train = y[train]
     X_test = X[test]
     y_test = y[test]
+
+    if not sparse.issparse(X):
+        for array, array_input in ((X_train, X), (y_train, y),
+                                   (X_test, X), (y_test, y)):
+            if array.base is not array_input and not array.flags['WRITEABLE']:
+                # fancy indexing should create a writable copy but it doesn't
+                # for read-only memmaps (cf. numpy#14132).
+                array.setflags(write=True)
+
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
 
@@ -1089,7 +1104,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, 'csc', dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse='csc', dtype=dtype,
+                          order=X_order)
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1151,8 +1167,52 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
         """
-        y = check_array(y, copy=False, dtype=[np.float64, np.float32],
-                        ensure_2d=False)
+        # This makes sure that there is no duplication in memory.
+        # Dealing right with copy_X is important in the following:
+        # Multiple functions touch X and subsamples of X and can induce a
+        # lot of duplication of memory
+        copy_X = self.copy_X and self.fit_intercept
+
+        check_y_params = dict(copy=False, dtype=[np.float64, np.float32],
+                              ensure_2d=False)
+        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
+            # Keep a reference to X
+            reference_to_old_X = X
+            # Let us not impose fortran ordering so far: it is
+            # not useful for the cross-validation loop and will be done
+            # by the model fitting itself
+
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
+            check_X_params = dict(accept_sparse='csc',
+                                  dtype=[np.float64, np.float32], copy=False)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
+            if sparse.isspmatrix(X):
+                if (hasattr(reference_to_old_X, "data") and
+                   not np.may_share_memory(reference_to_old_X.data, X.data)):
+                    # X is a sparse matrix and has been copied
+                    copy_X = False
+            elif not np.may_share_memory(reference_to_old_X, X):
+                # X has been copied
+                copy_X = False
+            del reference_to_old_X
+        else:
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr. We also want to allow y to be 64 or 32 but check_X_y only
+            # allows to convert for 64.
+            check_X_params = dict(accept_sparse='csc',
+                                  dtype=[np.float64, np.float32], order='F',
+                                  copy=copy_X)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
+            copy_X = False
+
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
 
@@ -1184,34 +1244,6 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
-
-        # This makes sure that there is no duplication in memory.
-        # Dealing right with copy_X is important in the following:
-        # Multiple functions touch X and subsamples of X and can induce a
-        # lot of duplication of memory
-        copy_X = self.copy_X and self.fit_intercept
-
-        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
-            # Keep a reference to X
-            reference_to_old_X = X
-            # Let us not impose fortran ordering so far: it is
-            # not useful for the cross-validation loop and will be done
-            # by the model fitting itself
-            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                            copy=False)
-            if sparse.isspmatrix(X):
-                if (hasattr(reference_to_old_X, "data") and
-                   not np.may_share_memory(reference_to_old_X.data, X.data)):
-                    # X is a sparse matrix and has been copied
-                    copy_X = False
-            elif not np.may_share_memory(reference_to_old_X, X):
-                # X has been copied
-                copy_X = False
-            del reference_to_old_X
-        else:
-            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                            order='F', copy=copy_X)
-            copy_X = False
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
@@ -1462,7 +1494,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
@@ -1658,7 +1692,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+    @_deprecate_positional_args
+    def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
@@ -1797,7 +1832,8 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -1831,9 +1867,15 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = check_array(X, dtype=[np.float64, np.float32], order='F',
-                        copy=self.copy_X and self.fit_intercept)
-        y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
+
+        # Need to validate separately here.
+        # We can't pass multi_ouput=True because that would allow y to be csr.
+        check_X_params = dict(dtype=[np.float64, np.float32], order='F',
+                              copy=self.copy_X and self.fit_intercept)
+        check_y_params = dict(ensure_2d=False)
+        X, y = self._validate_data(X, y, validate_separately=(check_X_params,
+                                                              check_y_params))
+        y = y.astype(X.dtype)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1979,7 +2021,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -2158,7 +2201,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+    @_deprecate_positional_args
+    def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
@@ -2329,7 +2373,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv=None, verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):

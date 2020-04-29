@@ -19,7 +19,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
-from .utils.validation import check_non_negative
+from .utils.validation import check_non_negative, _deprecate_positional_args
 
 
 class RBFSampler(TransformerMixin, BaseEstimator):
@@ -40,10 +40,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        weights and random offset when fitting the training data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -81,8 +81,8 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     Benjamin Recht.
     (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
-
-    def __init__(self, gamma=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
@@ -104,7 +104,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
             Returns the transformer.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -154,10 +154,10 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        weights and random offset when fitting the training data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -187,8 +187,8 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
-
-    def __init__(self, skewedness=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, skewedness=1., n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
         self.random_state = random_state
@@ -210,7 +210,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
             Returns the transformer.
         """
 
-        X = check_array(X)
+        X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -318,8 +318,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
     2011
     """
-
-    def __init__(self, sample_steps=2, sample_interval=None):
+    @_deprecate_positional_args
+    def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
@@ -337,7 +337,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         check_non_negative(X, 'X in AdditiveChi2Sampler.fit')
 
         if self.sample_interval is None:
@@ -482,10 +482,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         How many data points will be used to construct the mapping.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the uniform sampling without
+        replacement of n_components of the training data to construct the basis
+        kernel.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -534,8 +535,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-
-    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
+    @_deprecate_positional_args
+    def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
@@ -556,7 +557,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Training data.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 
