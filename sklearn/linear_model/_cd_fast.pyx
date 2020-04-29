@@ -620,18 +620,17 @@ def enet_coordinate_descent_gram(floating[::1] w,
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
-                                       floating l2_reg,
-                                       floating[::1, :] X,
-                                       floating[::1, :] Y,
-                                       int max_iter, floating tol, object rng,
-                                       bint random=0):
+def enet_coordinate_descent_multi_task(
+        floating[::1, :] W, floating l1_reg, floating l2_reg,
+        np.ndarray[floating, ndim=2, mode='fortran'] X,
+        np.ndarray[floating, ndim=2, mode='fortran'] Y,
+        int max_iter, floating tol, object rng, bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
         We minimize
 
-        (1/2) * norm(y - X w, 2)^2 + l1_reg ||w||_21 + (1/2) * l2_reg norm(w, 2)^2
+        0.5 * norm(Y - X W.T, 2)^2 + l1_reg ||W.T||_21 + 0.5 * l2_reg norm(W.T, 2)^2
 
     """
 
@@ -674,6 +673,9 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
+    cdef floating* X_ptr = &X[0, 0]
+    cdef floating* Y_ptr = &Y[0, 0]
+
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
@@ -681,17 +683,18 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     with nogil:
         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
         for ii in range(n_features):
-            norm_cols_X[ii] = _nrm2(n_samples, &X[0, ii], 1) ** 2
+            norm_cols_X[ii] = _nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
 
         # R = Y - np.dot(X, W.T)
-        _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
+        _copy(n_samples * n_tasks, Y_ptr, 1, &R[0, 0], 1)
         for ii in range(n_features):
             for jj in range(n_tasks):
                 if W[jj, ii] != 0:
-                    _axpy(n_samples, -W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
+                    _axpy(n_samples, -W[jj, ii], X_ptr + ii * n_samples, 1,
+                          &R[0, jj], 1)
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
-        tol = tol * _nrm2(n_samples * n_tasks, &Y[0, 0], 1) ** 2
+        tol = tol * _nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -720,7 +723,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     # for such small vectors
                 for jj in range(n_tasks):
                     if w_ii[jj] != 0:
-                        _axpy(n_samples, w_ii[jj], &X[0, ii], 1, &R[0, jj], 1)
+                        _axpy(n_samples, w_ii[jj], X_ptr + ii * n_samples, 1,
+                              &R[0, jj], 1)
 
                 # Using numpy:
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
@@ -729,7 +733,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 #       n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
                 # Using BLAS Level 1 (faster small vectors like here):
                 for jj in range(n_tasks):
-                    tmp[jj] = _dot(n_samples, &X[0, ii], 1, &R[0, jj], 1)
+                    tmp[jj] = _dot(n_samples, X_ptr + ii * n_samples, 1,
+                                   &R[0, jj], 1)
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = _nrm2(n_tasks, &tmp[0], 1)
@@ -751,7 +756,8 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     # Using BLAS Level 1 (faster small vectors like here):
                 for jj in range(n_tasks):
                     if W[jj, ii] != 0:
-                        _axpy(n_samples, -W[jj, ii], &X[0, ii], 1, &R[0, jj], 1)
+                        _axpy(n_samples, -W[jj, ii], X_ptr + ii * n_samples, 1,
+                              &R[0, jj], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = diff_abs_max(n_tasks, &W[0, ii], &w_ii[0])
@@ -772,7 +778,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 for ii in range(n_features):
                     for jj in range(n_tasks):
                         XtA[ii, jj] = _dot(
-                            n_samples, &X[0, ii], 1, &R[0, jj], 1
+                            n_samples, X_ptr + ii * n_samples, 1, &R[0, jj], 1
                             ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
