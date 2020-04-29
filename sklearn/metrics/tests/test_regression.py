@@ -56,6 +56,18 @@ def test_regression_metrics(n_samples=50):
                         np.sum(1 / y_true) / (4 * n))
 
 
+def test_mean_squared_error_multioutput_raw_value_squared():
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/pull/16323
+    mse1 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=True
+    )
+    mse2 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=False
+    )
+    assert np.sqrt(mse1) == pytest.approx(mse2)
+
+
 def test_multioutput_regression():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
@@ -114,27 +126,27 @@ def test_regression_metrics_at_limits():
         mean_tweedie_deviance([0.], [0.], power=power)
     assert_almost_equal(mean_tweedie_deviance([0.], [0.], power=0), 0.00, 2)
 
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=1.0)
 
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], power=power),
                     2 / (2 - power))
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 2.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power), 0.00,
                     atol=1e-8)
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 3.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power),
                     0.00, atol=1e-8)
 
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
 

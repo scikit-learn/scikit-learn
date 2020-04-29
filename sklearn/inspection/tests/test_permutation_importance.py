@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
@@ -33,7 +33,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
     rng = np.random.RandomState(42)
     n_repeats = 5
 
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 

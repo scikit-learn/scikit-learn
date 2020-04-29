@@ -756,6 +756,17 @@ def test_dtype_of_classifier_probas(strategy):
     assert probas.dtype == np.float64
 
 
+@pytest.mark.filterwarnings("ignore:The default value of strategy.*")  # 0.24
+@pytest.mark.parametrize('Dummy', (DummyRegressor, DummyClassifier))
+def test_n_features_in_(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    d = Dummy()
+    assert not hasattr(d, 'n_features_in_')
+    d.fit(X, y)
+    assert d.n_features_in_ is None
+
+
 @pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
 def test_outputs_2d_deprecation(Dummy):
     X = [[1, 2]]
