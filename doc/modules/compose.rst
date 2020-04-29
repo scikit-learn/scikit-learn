@@ -539,7 +539,7 @@ many estimators. This visualization is activated by setting the
 `display` option in :func:`sklearn.set_config`::
 
   >>> from sklearn import set_config
-  >>> set_config(display=True)   # doctest: +SKIP
+  >>> set_config(display='diagram')   # doctest: +SKIP
   >>> # diplays HTML representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
