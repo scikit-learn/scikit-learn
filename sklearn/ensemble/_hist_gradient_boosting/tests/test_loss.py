@@ -9,6 +9,7 @@ import pytest
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.utils._testing import skip_if_32bit
 
 
 def get_derivatives_helper(loss):
@@ -58,8 +59,7 @@ def get_derivatives_helper(loss):
 ])
 @pytest.mark.skipif(sp_version == (1, 2, 0),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
-@pytest.mark.skipif(Y_DTYPE != np.float64,
-                    reason='Newton internally uses float64 != Y_DTYPE')
+@skip_if_32bit
 def test_derivatives(loss, x0, y_true):
     # Check that gradients are zero when the loss is minimized on 1D array
     # using Halley's method with the first and second order derivatives
