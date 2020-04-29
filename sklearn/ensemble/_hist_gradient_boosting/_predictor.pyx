@@ -19,6 +19,8 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset
 
+np.import_array()
+
 
 def _predict_from_numeric_data(
         node_struct [:] nodes,

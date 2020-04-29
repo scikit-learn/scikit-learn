@@ -32,6 +32,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
+from .utils.validation import _deprecate_positional_args
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -139,6 +140,8 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -177,7 +180,8 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    def __init__(self, priors=None, var_smoothing=1e-9):
+    @_deprecate_positional_args
+    def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
@@ -745,7 +749,8 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -781,6 +786,8 @@ class ComplementNB(_BaseDiscreteNB):
     particularly suited for imbalanced data sets.
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -847,7 +854,8 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
                  norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -961,7 +969,8 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
@@ -1072,7 +1081,8 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior

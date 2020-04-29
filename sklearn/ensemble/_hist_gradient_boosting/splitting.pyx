@@ -33,6 +33,8 @@ from ._bitset cimport init_bitset
 from ._bitset cimport insert_bitset
 from ._bitset cimport in_bitset
 
+np.import_array()
+
 
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
