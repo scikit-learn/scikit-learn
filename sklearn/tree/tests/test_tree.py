@@ -1993,19 +1993,19 @@ def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
     values = monotonic_cst * tree_.value
 
     for i in range(tree_.node_count):
-        if tree_.feature[i] >= 0:
+        if tree_.children_left[i] > i and tree_.children_right[i] > i:
             # Check monotonicity
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
-            assert(values[i_left] <= values[i_right])
-            val_middle = (values[i_left] + values[i_right]) / 2
+            assert(float(values[i_left]) <= float(values[i_right]))
+            val_middle = float(values[i])
             # Check bounds
-            if tree_.feature[i_left] >= 0:
+            if tree_.children_left[i_left] > i_left and tree_.children_right[i_right] > i_right:
                 i_left_right = tree_.children_right[i_left]
-                assert(values[i_left_right] <= val_middle)
+                assert(float(values[i_left_right]) <= val_middle)
             if tree_.feature[i_right] >= 0:
                 i_right_left = tree_.children_left[i_right]
-                assert(val_middle <= values[i_right_left])
+                assert(val_middle <= float(values[i_right_left]))
 
 
 def assert_tree_monotonic(clf, monotonic_cst):
@@ -2028,14 +2028,11 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
     #
     #       root
     #      /    \
-    #     5     10    # middle = 7.5
-    #    / \   / \
-    #   a  b  c  d
+    #     5     10
+    #    / \   /  \
+    #   a  b  c   d
     #
-    # a <= b <= middle <= c <= d (assert_children_values_monotonic_bounded)
-    # a <= b <= c <= d (assert_leaves_values_monotonic)
-    #
-    # The last one is a consequence of the first, but can't hurt to check
+    # a <= b <= root <= c <= d (assert_children_values_monotonic_bounded)
 
     rng = np.random.RandomState(seed)
     n_samples = 1000
