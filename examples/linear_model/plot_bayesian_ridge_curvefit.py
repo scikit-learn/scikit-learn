@@ -37,7 +37,7 @@ from sklearn.linear_model import BayesianRidge
 def func(x): return np.sin(2*np.pi*x)
 
 
-# %%
+# #############################################################################
 # Generate sinusoidal data with noise
 size = 25
 rng = np.random.RandomState(1234)
@@ -46,13 +46,13 @@ y_train = func(x_train) + rng.normal(scale=0.1, size=size)
 x_test = np.linspace(0., 1., 100)
 
 
-# %%
+# #############################################################################
 # Fit by cubic polynomial
 n_order = 3
 X_train = np.vander(x_train, n_order + 1, increasing=True)
 X_test = np.vander(x_test, n_order + 1, increasing=True)
 
-# %%
+# #############################################################################
 # Plot the true and predicted curves with log marginal likelihood (L)
 reg = BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True)
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))

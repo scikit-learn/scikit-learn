@@ -47,7 +47,7 @@ y = y[y != 2]
 
 X /= X.max()  # Normalize X to speed-up convergence
 
-# %%
+# #############################################################################
 # Demo path functions
 
 cs = l1_min_c(X, y, loss='log') * np.logspace(0, 7, 16)
