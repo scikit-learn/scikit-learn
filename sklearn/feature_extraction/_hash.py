@@ -55,8 +55,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     input_type : {"dict", "pair", "string"}, default="dict"
         Determines the type of a given sample. Use "dict" (the
         default) to accept dictionaries over
-        (feature_name, value); "pair" to accept iterable of tuples of
-        (feature_name, value); or "string" to accept iterable of strings.
+        (feature_name, value); "pair" to accept iterables of tuples of
+        (feature_name, value); or "string" to accept iterables of strings.
         feature_name should be a string, while value should be a number.
         In the case of "string", a value of 1 is implied.
         The feature_name is hashed to find the appropriate column for the
