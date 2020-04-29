@@ -2000,7 +2000,7 @@ def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
             assert(float(values[i_left]) <= float(values[i_right]))
             val_middle = float(values[i])
             # Check bounds
-            if tree_.children_left[i_left] > i_left and tree_.children_right[i_right] > i_right:
+            if tree_.feature[i_left] >= 0:
                 i_left_right = tree_.children_right[i_left]
                 assert(float(values[i_left_right]) <= val_middle)
             if tree_.feature[i_right] >= 0:
@@ -2042,10 +2042,15 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
 
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
-        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], random_state=seed)
+        clf = DecisionTreeRegressor(splitter=splitter,
+                                    monotonic_cst=[monotonic_cst],
+                                    random_state=seed)
     else:
         # max_leaf_nodes triggers depth first tree builder
-        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], max_leaf_nodes=n_samples, random_state=seed)
+        clf = DecisionTreeRegressor(splitter=splitter,
+                                    monotonic_cst=[monotonic_cst],
+                                    max_leaf_nodes=n_samples,
+                                    random_state=seed)
     clf.fit(X, y)
 
     assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
