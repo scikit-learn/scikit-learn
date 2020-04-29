@@ -23,7 +23,7 @@ We will model the complexity influence on three different estimators:
       :class:`sklearn.svm.NuSVR`
     - GradientBoostingRegressor (for regression data) which builds an additive
       model in a forward stage-wise fashion
-      :class:`ensemble.GradientBoostingRegressor`
+      :class:`sklearn.ensemble.GradientBoostingRegressor`
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters. Next, we will measure the influence on both
@@ -63,7 +63,7 @@ np.random.seed(0)
 #
 # Note 1: We are using fetch_20newsgroups_vectorized
 # :func:`sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
-# newsgroups dataaset. It returns ready-to-use features.
+# newsgroups data set. It returns ready-to-use features.
 #
 # Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
 # diabetes dataset is a numpy array.
