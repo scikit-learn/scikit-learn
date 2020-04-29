@@ -2,10 +2,13 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.dummy import DummyRegressor
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -192,6 +195,45 @@ def test_least_absolute_deviation():
                                          random_state=0)
     gbdt.fit(X, y)
     assert gbdt.score(X, y) > .9
+
+
+@pytest.mark.parametrize('y', [([1., -2., 0.]), ([0., 0., 0.])])
+def test_poisson_y_positive(y):
+    # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
+    err_msg = r"loss='poisson' requires non-negative y and sum\(y\) > 0."
+    gbdt = HistGradientBoostingRegressor(loss='poisson', random_state=0)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(np.zeros(shape=(len(y), 1)), y)
+
+
+def test_poisson():
+    # For Poisson distributed target, Poisson loss should give better results
+    # than least squares measured in Poisson deviance as metric.
+    rng = np.random.RandomState(42)
+    n_train, n_test, n_features = 500, 100, 100
+    X = make_low_rank_matrix(n_samples=n_train+n_test, n_features=n_features,
+                             random_state=rng)
+    # We create a log-linear Poisson model and downscale coef as it will get
+    # exponentiated.
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=n_test,
+                                                        random_state=rng)
+    gbdt_pois = HistGradientBoostingRegressor(loss='poisson', random_state=rng)
+    gbdt_ls = HistGradientBoostingRegressor(loss='least_squares',
+                                            random_state=rng)
+    gbdt_pois.fit(X_train, y_train)
+    gbdt_ls.fit(X_train, y_train)
+    dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
+
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        metric_pois = mean_poisson_deviance(y, gbdt_pois.predict(X))
+        # least_squares might produce non-positive predictions => clip
+        metric_ls = mean_poisson_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15,
+                                                     None))
+        metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
+        assert metric_pois < metric_ls
+        assert metric_pois < metric_dummy
 
 
 def test_binning_train_validation_are_separated():
