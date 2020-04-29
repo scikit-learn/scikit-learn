@@ -1985,13 +1985,8 @@ def test_montonic_constraints():
         assert(np.min(y2 - y0) >= 0)
 
 
-def is_increasing(a):
-    return (np.diff(a) >= 0.0).all()
-
-
-def is_decreasing(a):
-    return (np.diff(a) <= 0.0).all()
-
+def is_monotonic(a, cst):
+    return (cst * np.diff(a) >= 0.0).all()
 
 def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
     # Flip values so that only need to check for increasing constraint
@@ -2013,15 +2008,10 @@ def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
                 assert(val_middle <= values[i_right_left])
 
 
-def assert_leaves_values_monotonic(tree, monotonic_cst):
-    leaf_values = []
-    for i in range(tree.node_count):
-        if tree.feature[i] < 0:
-            leaf_values.append(float(tree.value[i]))
-    if monotonic_cst == 1:
-        assert is_increasing(leaf_values)
-    elif monotonic_cst == -1:
-        assert is_decreasing(leaf_values)
+def assert_tree_monotonic(clf, monotonic_cst):
+    X_grid = np.arange(0, 1, 0.01).reshape(-1, 1)
+    y_pred_grid = clf.predict(X_grid)
+    assert is_monotonic(y_pred_grid, monotonic_cst)
 
 
 @pytest.mark.parametrize('monotonic_cst', (-1, 1))
@@ -2055,14 +2045,14 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
 
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
-        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst])
+        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], random_state=seed)
     else:
         # max_leaf_nodes triggers depth first tree builder
-        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], max_leaf_nodes=5)
+        clf = DecisionTreeRegressor(splitter=splitter, monotonic_cst=[monotonic_cst], max_leaf_nodes=n_samples, random_state=seed)
     clf.fit(X, y)
 
     assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
-    assert_leaves_values_monotonic(clf.tree_, monotonic_cst)
+    assert_tree_monotonic(clf, monotonic_cst)
 
 
 def test_classes_deprecated():
