@@ -6,7 +6,7 @@ Model Complexity Influence
 Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
-Here, we will use two datasets:
+We will be using two datasets:
 
     - Diabetes dataset for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
@@ -16,7 +16,7 @@ Here, we will use two datasets:
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
       the post is written on
 
-We will use three different estimators:
+We will model the complexity influence on three different estimators:
     - SGDClassifier (for classification data) which implements stochastic
       gradient descent learning
       :class:`sklearn.linear_model.SGDClassifier`
@@ -61,8 +61,8 @@ np.random.seed(0)
 # -------------
 #
 # First we are loading both datasets.
-# Note 1: For the 20 newsgroups we are using fetch_20newsgroups_vectorized
-# which returns ready-to-use features.
+# Note 1: We are using fetch_20newsgroups_vectorized to download 20 newsgroups.
+# It returns ready-to-use features.
 # Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
 # diabetes dataset is a numpy array.
 #
@@ -92,10 +92,12 @@ classification_data = generate_data('classification')
 ##############################################################################
 # Benchmark influence
 # -------------------
-# Next, we can calculate the influence of the changing params. We will be
-# collecting the prediction times, prediction powers and complexities for each
-# of the changing value. In each lap we will set the new estimator with set
-# 'tuned_params' and the updated changing param value.
+# Next, we can calculate the influence of the changing params on the given
+# estimator. In each lap we will set the estimator with the new value of
+# 'changing param' and we will be collecting the prediction times, prediction
+# powers and complexities to see how those changes affect the estimator.  We
+# will calculate the complexity using 'complexity_computer' passed as a
+# parameter.
 #
 
 
@@ -133,7 +135,7 @@ def benchmark_influence(conf):
 # Choose parameters
 # -----------------------------
 #
-# Now, we will choose the parameters for each of our estimators by making
+# We are choosing the parameters for each of our estimators by making
 # a dictionary with all the necessary values.
 # 'changing_param' is the name of the parameter which will vary in each
 # estimator.
