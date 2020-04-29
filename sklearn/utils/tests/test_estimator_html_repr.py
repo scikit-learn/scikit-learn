@@ -197,6 +197,8 @@ def test_stacking_classsifer(final_estimator):
     html_output = estimator_html_repr(clf)
 
     assert str(clf) in html_output
+    # If final_estimator's default changes from LogisticRegression
+    # this should be updated
     if final_estimator is None:
         assert "LogisticRegression(" in html_output
     else:

@@ -506,6 +506,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         return self._transform(X)
 
     def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
         if self.final_estimator is None:
             final_estimator = LogisticRegression()
         else:
@@ -683,6 +685,8 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         return self._transform(X)
 
     def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
         if self.final_estimator is None:
             final_estimator = RidgeCV()
         else:
