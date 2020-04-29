@@ -711,16 +711,14 @@ def enet_coordinate_descent_multi_task(
                 # w_ii = W[:, ii] # Store previous value
                 _copy(n_tasks, &W[0, ii], 1, &w_ii[0], 1)
 
-                # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                # if (w_ii[0] != 0.):  # faster than testing full norm for non-zeros, yet unsafe
-                    # Using Numpy:
-                    # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                    # Using Blas Level2:
-                    # _ger(RowMajor, n_samples, n_tasks, 1.0,
-                    #      &X[0, ii], 1,
-                    #      &w_ii[0], 1, &R[0, 0], n_tasks)
-                    # Using Blas Level1 and for loop for avoid slower threads
-                    # for such small vectors
+                # Using Numpy:
+                # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
+                # Using Blas Level2:
+                # _ger(RowMajor, n_samples, n_tasks, 1.0,
+                #      &X[0, ii], 1,
+                #      &w_ii[0], 1, &R[0, 0], n_tasks)
+                # Using Blas Level1 and for loop for avoid slower threads
+                # for such small vectors
                 for jj in range(n_tasks):
                     if w_ii[jj] != 0:
                         _axpy(n_samples, w_ii[jj], X_ptr + ii * n_samples, 1,
@@ -731,7 +729,7 @@ def enet_coordinate_descent_multi_task(
                 # Using BLAS Level 2:
                 # _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
                 #       n_tasks, &X[0, ii], 1, 0.0, &tmp[0], 1)
-                # Using BLAS Level 1 (faster small vectors like here):
+                # Using BLAS Level 1 (faster for small vectors like here):
                 for jj in range(n_tasks):
                     tmp[jj] = _dot(n_samples, X_ptr + ii * n_samples, 1,
                                    &R[0, jj], 1)
@@ -744,16 +742,14 @@ def enet_coordinate_descent_multi_task(
                 _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
                       &W[0, ii], 1)
 
-                # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                # if (W[0, ii] != 0.):  # faster than testing full col norm, but unsafe
-                    # Using numpy:
-                    # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
-                    # Using BLAS Level 2:
-                    # Update residual : rank 1 update
-                    # _ger(RowMajor, n_samples, n_tasks, -1.0,
-                    #      &X[0, ii], 1, &W[0, ii], 1,
-                    #      &R[0, 0], n_tasks)
-                    # Using BLAS Level 1 (faster small vectors like here):
+                # Using numpy:
+                # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
+                # Using BLAS Level 2:
+                # Update residual : rank 1 update
+                # _ger(RowMajor, n_samples, n_tasks, -1.0,
+                #      &X[0, ii], 1, &W[0, ii], 1,
+                #      &R[0, 0], n_tasks)
+                # Using BLAS Level 1 (faster for small vectors like here):
                 for jj in range(n_tasks):
                     if W[jj, ii] != 0:
                         _axpy(n_samples, -W[jj, ii], X_ptr + ii * n_samples, 1,
