@@ -40,3 +40,49 @@ Classes included in this module are :class:`PLSRegression`
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`
+
+
+
+- PLS1: single output
+- PLS2: multioutput
+
+They're all transformers (they optionally use Y tho)
+All can predict except for PLSSVD
+
+
+PLSRegression:
+   deflation_mode="regression", mode="A", norm_y_weights=False, algorith='nipals'
+PLSCAnonincal
+   deflation_mode="canonical", mode="A", norm_y_weights=True,
+   algorithm=algorithm
+CCA:
+   deflation_mode="canonical", mode="B", norm_y_weights=True, algorithm="nipals"
+PLSSVD
+   mentioned slide 19
+   http://vision.cse.psu.edu/seminars/talks/PLSpresentation.pdf, called
+   Bookstein
+   Also discussed in survey from Wegelin. says it can be used for predicting
+   too
+
+   Can only transform data, not predict
+
+
+So norm_y_weights = (deflation == canonical)???
+
+2 block vs.... ????? I think they're all 2-block
+
+With a single output (make_regression, bigger or lower n_features):
+- PLSRegression: OK, good score
+- PLSCanonical: warning, bad score
+- CCA: warning, good score
+With multioutpt: no warnings. results OK
+
+
+Look at slide 17 http://www.eigenvector.com/Docs/Wise_pls_properties.pdf for
+tests about orthogonality and stuff
+
+PLS1 i.e. PLSReg with single target is a regularization technique similar to
+ridge.
+
+They should all be equivalent when n_component == 1 (wegelin). (maybe not CCA
+tho)

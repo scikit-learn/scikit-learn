@@ -23,18 +23,19 @@ from ..exceptions import ConvergenceWarning
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
-def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
-                                 norm_y_weights=False):
-    """Inner loop of the iterative NIPALS algorithm.
+# TODO: change use of NIPALS since it's only the inner loop
+def _get_first_singular_vectors_nipals(X, Y, mode="A", max_iter=500, tol=1e-06,
+                                       norm_y_weights=False):
+    """Returns the first left and right singular vectors of X'Y.
 
-    Provides an alternative to the svd(X'Y); returns the first left and right
-    singular vectors of X'Y.  See PLS for the meaning of the parameters.  It is
-    similar to the Power method for determining the eigenvectors and
-    eigenvalues of a X'Y.
+    Provides an alternative to the svd(X'Y); See PLS for the meaning of the
+    parameters. It is similar to the Power method for determining the
+    eigenvectors and eigenvalues of a X'Y.
     """
     for col in Y.T:
         if np.any(np.abs(col) > np.finfo(np.double).eps):
-            y_score = col.reshape(len(col), 1)
+            # Maybe this should use the col w/ the biggest abs value instead??
+            y_score = col
             break
 
     x_weights_old = 0
@@ -57,10 +58,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     while True:
         # 1.1 Update u: the X weights
         if mode == "B":
-            if X_pinv is None:
-                # We use slower pinv2 (same as np.linalg.pinv) for stability
-                # reasons
-                X_pinv = pinv2(X, check_finite=False, cond=cond_X)
+            # We use slower pinv2 (same as np.linalg.pinv) for stability
+            X_pinv = pinv2(X, check_finite=False, cond=cond_X)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
@@ -76,9 +75,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         x_score = np.dot(X, x_weights)
         # 2.1 Update y_weights
         if mode == "B":
-            if Y_pinv is None:
-                # compute once pinv(Y)
-                Y_pinv = pinv2(Y, check_finite=False, cond=cond_Y)
+            Y_pinv = pinv2(Y, check_finite=False, cond=cond_Y)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
@@ -101,11 +98,12 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     return x_weights, y_weights, ite
 
 
-def _svd_cross_product(X, Y):
+def _get_first_singular_vectors_svd(X, Y):
+    """Returns the first left and right singular vectors of X'Y."""
     C = np.dot(X.T, Y)
-    U, s, Vh = svd(C, full_matrices=False)
-    u = U[:, [0]]
-    v = Vh.T[:, [0]]
+    U, _, Vt = svd(C, full_matrices=False)
+    u = U[:, 0]
+    v = Vt[0, :]
     return u, v
 
 
@@ -133,6 +131,16 @@ def _center_scale_xy(X, Y, scale=True):
         x_std = np.ones(X.shape[1])
         y_std = np.ones(Y.shape[1])
     return X, Y, x_mean, y_mean, x_std, y_std
+
+
+def _svd_flip_1d(u, v):
+    """Same as svd_flip but works on 1d arrays, and is inplace"""
+    # svd_flip would force us to convert to 2d array and would also return 2d
+    # arrays. We don't want that.
+    biggest_abs_val_idx = np.argmax(np.abs(u))
+    sign = np.sign(u[biggest_abs_val_idx])
+    u *= sign
+    v *= sign
 
 
 class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
@@ -272,12 +280,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
 
-        # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
         X = self._validate_data(X, dtype=np.float64, copy=self.copy,
                                 ensure_min_samples=2)
@@ -300,12 +307,13 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                              'implemented with svd algorithm')
         if self.deflation_mode not in ["canonical", "regression"]:
             raise ValueError('The deflation mode is unknown')
+
+        assert self.norm_y_weights == (self.deflation_mode == 'canonical')
+
         # Scale (in place)
-        X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
+        Xk, Yk, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
             _center_scale_xy(X, Y, self.scale))
-        # Residuals (deflated) matrices
-        Xk = X
-        Yk = Y
+
         # Results matrices
         self.x_scores_ = np.zeros((n, self.n_components))
         self.y_scores_ = np.zeros((n, self.n_components))
@@ -315,32 +323,43 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         self.y_loadings_ = np.zeros((q, self.n_components))
         self.n_iter_ = []
 
-        # NIPALS algo: outer loop, over components
+        # This whole thing corresponds to the algorithm in section 4.1 of the
+        # review from Wegelin. Brief notation mapping from code to paper:
+        # k: r
+        # x_weights: u
+        # y_weights: v
+        # x_scores: xi (the letter xi)
+        # y_scores: omega
+        # x_loadings: gamma.T
+        # y_loadings: lambda.T
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
+                # That thing is raised with W2A and PLSSVD whenever target is
+                # single output??????
                 warnings.warn('Y residual constant at iteration %s' % k)
                 break
-            # 1) weights estimation (inner loop)
-            # -----------------------------------
+            # Find first left and right singular vectors of the X.T.dot(Y)
+            # cross-covariance matrix. Either by Nipals, or just using pure SVD
+            # TODO: is NIPALS a good name at all?????????
             if self.algorithm == "nipals":
                 # Replace columns that are all close to zero with zeros
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
                 x_weights, y_weights, n_iter_ = \
-                    _nipals_twoblocks_inner_loop(
-                        X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
+                    _get_first_singular_vectors_nipals(
+                        Xk, Yk, mode=self.mode, max_iter=self.max_iter,
                         tol=self.tol, norm_y_weights=self.norm_y_weights)
                 self.n_iter_.append(n_iter_)
+
             elif self.algorithm == "svd":
-                x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
-            # Forces sign stability of x_weights and y_weights
-            # Sign undeterminacy issue from svd if algorithm == "svd"
-            # and from platform dependent computation if algorithm == 'nipals'
-            x_weights, y_weights = svd_flip(x_weights, y_weights.T)
-            y_weights = y_weights.T
+                x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
+
+            # inplace sign flip for consistency accross solvers and archs
+            _svd_flip_1d(x_weights, y_weights)
+
             # compute scores
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
@@ -348,39 +367,32 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             else:
                 y_ss = np.dot(y_weights.T, y_weights)
             y_scores = np.dot(Yk, y_weights) / y_ss
+
             # test for null variance
             if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
                 warnings.warn('X scores are null at iteration %s' % k)
                 break
-            # 2) Deflation (in place)
-            # ----------------------
-            # Possible memory footprint reduction may done here: in order to
-            # avoid the allocation of a data chunk for the rank-one
-            # approximations matrix which is then subtracted to Xk, we suggest
-            # to perform a column-wise deflation.
-            #
-            # - regress Xk's on x_score
-            x_loadings = np.dot(Xk.T, x_scores) / np.dot(x_scores.T, x_scores)
-            # - subtract rank-one approximations to obtain remainder matrix
-            Xk -= np.dot(x_scores, x_loadings.T)
+
+            # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
+            x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
+            Xk -= np.outer(x_scores, x_loadings)
+
             if self.deflation_mode == "canonical":
-                # - regress Yk's on y_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, y_scores)
-                              / np.dot(y_scores.T, y_scores))
-                Yk -= np.dot(y_scores, y_loadings.T)
+                # regress Yk on y_score
+                y_loadings = np.dot(y_scores, Yk) / np.dot(y_scores, y_scores)
+                Yk -= np.outer(y_scores, y_loadings)
             if self.deflation_mode == "regression":
-                # - regress Yk's on x_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, x_scores)
-                              / np.dot(x_scores.T, x_scores))
-                Yk -= np.dot(x_scores, y_loadings.T)
-            # 3) Store weights, scores and loadings # Notation:
-            self.x_scores_[:, k] = x_scores.ravel()  # T
-            self.y_scores_[:, k] = y_scores.ravel()  # U
-            self.x_weights_[:, k] = x_weights.ravel()  # W
-            self.y_weights_[:, k] = y_weights.ravel()  # C
-            self.x_loadings_[:, k] = x_loadings.ravel()  # P
-            self.y_loadings_[:, k] = y_loadings.ravel()  # Q
-        # Such that: X = TP' + Err and Y = UQ' + Err
+                # regress Yk on x_score
+                y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
+                Yk -= np.outer(x_scores, y_loadings)
+
+            # Notation: X = TP' + Err and Y = UQ' + Err
+            self.x_scores_[:, k] = x_scores  # T
+            self.y_scores_[:, k] = y_scores  # U
+            self.x_weights_[:, k] = x_weights  # W
+            self.y_weights_[:, k] = y_weights  # C
+            self.x_loadings_[:, k] = x_loadings  # P
+            self.y_loadings_[:, k] = y_loadings  # Q
 
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
@@ -659,13 +671,13 @@ class PLSRegression(_PLS):
         super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
-            norm_y_weights=False, max_iter=max_iter, tol=tol,
-            copy=copy)
+            norm_y_weights=False, algorithm='nipals', max_iter=max_iter,
+            tol=tol, copy=copy)
 
 
 class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
-    algorithm [Tenenhaus 1998] p.204, referred as PLS-C2A in [Wegelin 2000].
+    algorithm [Tenenhaus 1998] p.204, referred as PLS-W2A in [Wegelin 2000].
 
     This class inherits from PLS with mode="A" and deflation_mode="canonical",
     norm_y_weights=True and algorithm="nipals", but svd should provide similar
