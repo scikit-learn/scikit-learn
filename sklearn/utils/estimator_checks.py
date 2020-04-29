@@ -13,6 +13,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 import joblib
+import pytest
 
 from . import IS_PYPY
 from .. import config_context
@@ -100,6 +101,8 @@ def _yield_checks(name, estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    # Test the pickle size is estimated correctly with many features
+    yield check_estimators_pickle_many_features
 
 
 def _yield_classifier_checks(name, classifier):
@@ -1578,6 +1581,11 @@ def check_estimators_pickle(name, estimator_orig):
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
+    assert X.shape[1] <= 5, "Few features; lots overhead in small msg"
+    actual_bytes = len(pickled_estimator)
+    est_bytes = estimator.nbytes
+    assert actual_bytes <= 3 * est_bytes
+
     result = dict()
     for method in check_methods:
         if hasattr(estimator, method):
@@ -1586,6 +1594,24 @@ def check_estimators_pickle(name, estimator_orig):
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
         assert_allclose_dense_sparse(result[method], unpickled_result)
+
+
+def check_estimators_pickle_many_features(name, estimator_orig):
+    """ Test that sys.getsizeof is (approximately) accurate """
+    X, y = make_blobs(n_samples=30, random_state=0, n_features=100)
+
+    # some estimators can't do features less than 0
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    y = _enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
+    encoded_bytes = len(pickle.dumps(estimator))
+    estimated_bytes = estimator.nbytes
+    assert encoded_bytes == pytest.approx(estimated_bytes, rel=0.20)
 
 
 @ignore_warnings(category=FutureWarning)
