@@ -1324,3 +1324,9 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver='sag').fit(X, y)
+
+    
+def test_ridge_alpha_boundary_warning():
+    ridge = RidgeCV(alphas=[0.1, 1])
+    X, y = X_diabetes, y_diabetes
+    assert_warns(UserWarning, ridge.fit, X, y)
