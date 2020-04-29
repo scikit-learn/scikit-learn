@@ -521,7 +521,7 @@ def test_repr_mimebundle_():
     assert "text/plain" in output
     assert "text/html" not in output
 
-    with config_context(estimator_display='diagram'):
+    with config_context(display='diagram'):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
         assert "text/html" in output

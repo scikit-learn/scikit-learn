@@ -93,7 +93,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
 # representation of the estimator is displayed as follows:
-set_config(estimator_display='diagram')
+set_config(display='diagram')
 clf
 
 ###############################################################################

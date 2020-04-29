@@ -7,7 +7,7 @@ _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': True,
-    'estimator_display': 'text',
+    'display': 'text',
 }
 
 
@@ -28,7 +28,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, estimator_display=None):
+               print_changed_only=None, display=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -60,7 +60,7 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
-    estimator_display : {'text', 'diagram'}, optional
+    display : {'text', 'diagram'}, optional
         If 'diagram', estimators will be displayed as text in a jupyter lab
         of notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
@@ -78,8 +78,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
-    if estimator_display is not None:
-        _global_config['estimator_display'] = estimator_display
+    if display is not None:
+        _global_config['display'] = display
 
 
 @contextmanager
@@ -110,7 +110,7 @@ def config_context(**new_config):
         .. versionchanged:: 0.23
            Default changed from False to True.
 
-    estimator_display : {'text', 'diagram'}, optional
+    display : {'text', 'diagram'}, optional
         If 'diagram', estimators will be displayed as text in a jupyter lab
         of notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
