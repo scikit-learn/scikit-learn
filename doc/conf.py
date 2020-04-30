@@ -221,6 +221,11 @@ latest_highlights = latest_highlights.with_suffix('').name
 html_context["release_highlights"] = \
     f"auto_examples/release_highlights/{latest_highlights}"
 
+# get version from higlight name assuming highlights have the form
+# plot_release_highlights_0_22_0
+highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
+html_context["release_highlights_version"] = highlight_version
+
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
