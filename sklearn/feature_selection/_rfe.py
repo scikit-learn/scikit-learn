@@ -63,7 +63,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         If `None`, half of the features are selected.
         If integer, the parameter is the absolute number of features to select.
         If float between 0 and 1, it is the fraction of features to select.
-        If float larger than 1, it is converted to integer and represents the absolute number of features to select.
+        If float larger than 1, it is converted to integer and represents the
+        absolute number of features to select.
 
 
     step : int or float, optional (default=1)
