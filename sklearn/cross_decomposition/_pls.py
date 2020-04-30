@@ -296,9 +296,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         p = X.shape[1]
         q = Y.shape[1]
 
-        if self.n_components < 1 or self.n_components > p:
-            raise ValueError('Invalid number of components: %d' %
-                             self.n_components)
+        if not 1 <= self.n_components <= p:
+            raise ValueError(
+                f"n_components({self.n_components}) should be no lower than "
+                f"1 and no greater than n_features={p}."
+            )
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError("Got algorithm %s when only 'svd' "
                              "and 'nipals' are known" % self.algorithm)
@@ -357,7 +359,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             elif self.algorithm == "svd":
                 x_weights, y_weights = _get_first_singular_vectors_svd(Xk, Yk)
 
-            # inplace sign flip for consistency accross solvers and archs
+            # inplace sign flip for consistency across solvers and archs
             _svd_flip_1d(x_weights, y_weights)
 
             # compute scores
@@ -910,10 +912,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
-        if self.n_components > max(Y.shape[1], X.shape[1]):
-            raise ValueError("Invalid number of components n_components=%d"
-                             " with X of shape %s and Y of shape %s."
-                             % (self.n_components, str(X.shape), str(Y.shape)))
+        if not 1 <= self.n_components <= X.shape[1]:
+            raise ValueError(
+                f"n_components({self.n_components}) should be no lower than "
+                f"1 and lower than no greater than n_features={X.shape[1]}."
+            )
 
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
