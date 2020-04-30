@@ -17,7 +17,7 @@ Documentation can be found under the
 
 But there are many other ways to help. In particular answering queries on the
 [issue tracker](https://github.com/scikit-learn/scikit-learn/issues),
-investigating bugs, and [reviewing other developers' pull
+investigating bugs, and [reviewing other developer's pull
 requests](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines)
 are very valuable contributions that decrease the burden on the project
 maintainers.
