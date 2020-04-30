@@ -810,7 +810,7 @@ or for a specific estimator::
 
   asv run -b LogisticRegression my_branch^!
 
-The `-b` also accepts a regular expression for a more complex subset of
+The `-b` flag also accepts a regular expression for a more complex subset of
 benchmarks to run.
 
 You can also run the benchmark suite using the version of scikit-learn already
