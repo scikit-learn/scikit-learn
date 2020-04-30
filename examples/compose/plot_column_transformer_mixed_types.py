@@ -87,6 +87,15 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
+##############################################################################
+# HTML representation of ``Pipeline``
+###############################################################################
+# When the ``Pipeline`` is printed out in a jupyter notebook an HTML
+# representation of the estimator is displayed as follows:
+from sklearn import set_config
+set_config(display='diagram')
+clf
+
 ###############################################################################
 # Use ``ColumnTransformer`` by selecting column by data types
 ###############################################################################

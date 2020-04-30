@@ -23,6 +23,7 @@ from sklearn import datasets
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
+from sklearn import config_context
 import pickle
 
 
@@ -511,3 +512,16 @@ def test_warns_on_get_params_non_attribute():
         params = est.get_params()
 
     assert params['param'] is None
+
+
+def test_repr_mimebundle_():
+    # Checks the display configuration flag controls the json output
+    tree = DecisionTreeClassifier()
+    output = tree._repr_mimebundle_()
+    assert "text/plain" in output
+    assert "text/html" not in output
+
+    with config_context(display='diagram'):
+        output = tree._repr_mimebundle_()
+        assert "text/plain" in output
+        assert "text/html" in output
