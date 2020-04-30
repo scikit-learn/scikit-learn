@@ -5,7 +5,7 @@ Categorical Support in Gradient Boosting
 
 .. currentmodule:: sklearn
 
-This example, we will compare the performance of
+In this example, we will compare the performance of
 :class:`~ensemble.HistGradientBoostingRegressor` using one hot encoding
 and with native categorical support.
 
@@ -46,8 +46,7 @@ from sklearn.preprocessing import OneHotEncoder
 preprocessor = make_column_transformer(
     (OneHotEncoder(sparse=False, handle_unknown='ignore'),
      make_column_selector(dtype_include='category')),
-    remainder='passthrough'
-)
+    remainder='passthrough')
 
 hist_one_hot = make_pipeline(preprocessor,
                              HistGradientBoostingRegressor(random_state=0))

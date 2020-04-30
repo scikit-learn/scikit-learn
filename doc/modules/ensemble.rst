@@ -1098,37 +1098,40 @@ supported for multiclass context.
 
 .. _categorical_support_gbdt:
 
-Categorical Support
--------------------
+Categorical Features Support
+----------------------------
 
 For datasets with categorical data, :class:`HistGradientBoostingClassifier`
-and :class:`HistGradientBoostingRegressor` has native support for splitting
+and :class:`HistGradientBoostingRegressor` have native support for splitting
 on categorical features. This is often better than one hot encoding because
-it leads to faster training times and trees with less depth. When splitting
-a node, the categorical feature will be split into two subsets: one going to
-the left child and the other going to the right child. First, the histogram
-for each categorical feature is first sorted according to the ratio:
-`sum of gradient / sum of hessian` in each bin. Then the best split is found
-by considering splits along the stored histogram.
+it leads to faster training times and trees with less depth. The canonical way
+of considering categorical splits is to consider all of the :math`2^{K - 1} -
+1` partitions where `K` is the number of categories. This can quickly become
+prohibitive when `K` is large.  Fortunately, since gradient boosting trees are
+always regression trees (even for classification problems), there exist a
+faster strategy that can yield equivalent splits. First, the categories of a
+feature are sorted according to the ratio `sum_gradient_k / sum_hessians_k` of
+each category `k`. Once the categories are sorted, one can consider *continuous
+partitions*, i.e. treat the categories as if they were ordered continuous
+values (see Fisher [Fisher1958]_ for a formal proof). As a result, only `K - 1`
+splits need to be considered instead of :math`2^{K - 1} - 1`.
 
-If the cardinality of a categorical feature is greater than `max_bins`, then
-the top `max_bins` categories based on cardinality will be kept and the less
-frequent categories will be considered missing. If there are missing values
-during training, the missing will be considered its own category. When
-predicting, categories that were unknown during fit time, will be consider
-missing.
+If there are missing values during training, the missing values will be
+considered as a single category. When predicting, categories that were unknown
+during fit time, will be consider missing. If the cardinality of a categorical
+feature is greater than `max_bins`, then the top `max_bins` categories based on
+cardinality will be kept, and the less frequent categories will be considered
+as missing. 
 
 To enable categorical support, a boolean mask can be passed to the
 `categorical` parameter. In the following, the first feature will be
-treated as categorical and the second feature is nummerical::
+treated as categorical and the second feature as nummerical::
 
   >>> gbdt = HistGradientBoostingRegressor(categorical=[True, False])
 
 Another way to enable categorical support is to pass `'pandas'` to the
-`categorical` parameter. This will infer the categorical features using panda's
+`categorical` parameter. This will infer the categorical features using pandas'
 categorical dtype during `fit`.
-
-  >>> gbdt = HistGradientBoostingRegressor(categorical='pandas')
 
 .. topic:: Examples:
 
@@ -1196,6 +1199,8 @@ Finally, many parts of the implementation of
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
+  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
+     <https://www.tandfonline.com/doi/abs/10.1080/01621459.1958.10501479>`_
 
 .. _voting_classifier:
 
