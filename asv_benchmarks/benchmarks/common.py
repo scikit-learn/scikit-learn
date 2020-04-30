@@ -100,7 +100,6 @@ class Benchmark(ABC):
         data_size = 'large'
 
     @property
-    @classmethod
     @abstractmethod
     def params(self):
         pass
@@ -190,7 +189,6 @@ class Predictor(ABC):
                 return np.allclose(y_val_pred_base, y_val_pred)
 
     @property
-    @classmethod
     @abstractmethod
     def params(self):
         pass
@@ -217,7 +215,6 @@ class Transformer(ABC):
                 return np.allclose(X_val_t_base, X_val_t)
 
     @property
-    @classmethod
     @abstractmethod
     def params(self):
         pass
