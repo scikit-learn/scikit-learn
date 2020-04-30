@@ -762,6 +762,84 @@ To test code coverage, you need to install the `coverage
 
 3. Loop.
 
+Monitoring performance
+======================
+
+When proposing changes to the existing code base, it's important to make sure
+that they don't introduce performance regressions. Scikit-learn uses
+`asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
+performance of a selection of common estimators and functions. The benchmark
+suite can be found in the `scikit-learn/asv_benchmarks` directory.
+
+To use all features of asv, you will need either `conda` or `virtualenv`. For
+more details please check the `asv installation webpage
+<https://asv.readthedocs.io/en/latest/installing.html>`_.
+
+First of all you need to install the development version of asv::
+
+  pip install git+https://github.com/airspeed-velocity/asv
+
+and change your directory to `asv_benchmarks/`. The benchmark suite is
+configured to run against your local clone of scikit-learn. Make sure it is up
+to date::
+
+  git fetch upstream
+
+You can run the benchmarks against any commit. For example to benchmark the
+latest commit on the master branch::
+
+  asv run upstream/master^!
+
+You can compare the performances of two commits. For example, comparing master
+and the branch you are working on::
+
+  asv continuous upstream/master my_branch
+
+By default it will only report the benchmarks that have change by at least 10%.
+You can control this ratio with the `-f` flag.
+
+Running the full test suite can take up to two hours. Usually, when working on
+a specific module or estimator, you only need the benchmark report for this
+module or estimator. You can run specific benchmarks using the `-b` flag. In
+the benchmark suite, the benchmarks are organized following the same structure
+as scikit-learn. To run the benchmarks for the `linear_model` module only::
+
+  asv run -b linear_model my_branch^!
+
+or for a specific estimator::
+
+  asv run -b LogisticRegression my_branch^!
+
+The `-b` also accepts a regular expression for a more complex subset of
+benchmarks to run.
+
+You can also run the benchmark suite using the version of scikit-learn already
+installed in your current Python environment::
+
+  asv run --python=same
+
+It's particulary useful when you installed scikit-learn in editable mode. By
+default the results are not saved when using an existing installation. To save
+the results you must specify a commit hash::
+
+  asv run --python=same --set-commit-hash=<commit hash>
+
+Benchmarks are saved and organized by machine, environment and commit. To see
+the list of all saved benchmarks::
+
+  asv show
+
+and to see the report of a specific run::
+
+  asv show <commit hash>
+
+The benchmark suite supports additional configurable options which can be set
+in the `benchmarks/conf.json` configuration file. For example, the benchmarks
+can run for a provided list of values for the `n_jobs` parameter.
+
+More information on how to write a benchmark and how to use asv can be found in
+the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
+
 Issue Tracker Tags
 ==================
 
