@@ -105,7 +105,7 @@ print('Estimated covariance matrix:\n'
 # whereas the MLE based distances are more influenced by the outlier
 # red points.
 
-fig, ax = plt.subplots(figsize=(10,5))
+fig, ax = plt.subplots(figsize=(10, 5))
 # Plot data set
 inlier_plot = ax.scatter(X[:, 0], X[:, 1],
                          color='black', label='inliers')
