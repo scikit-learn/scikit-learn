@@ -1988,6 +1988,7 @@ def test_montonic_constraints():
 def is_monotonic(a, cst):
     return (cst * np.diff(a) >= 0.0).all()
 
+
 def assert_children_values_monotonic_bounded(tree_, monotonic_cst):
     # Flip values so that only need to check for increasing constraint
     values = monotonic_cst * tree_.value
@@ -2028,9 +2029,9 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
     #
     #       root
     #      /    \
-    #     5     10
-    #    / \   /  \
-    #   a  b  c   d
+    #     5      10
+    #    / \    /  \
+    #   a   b  c    d
     #
     # a <= b <= root <= c <= d (assert_children_values_monotonic_bounded)
 
