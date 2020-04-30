@@ -3,7 +3,7 @@ r"""
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
 
-An example to show covariance estimation with Mahalanobis
+This example shows covariance estimation with Mahalanobis
 distances on Gaussian distributed data.
 
 For Gaussian distributed data, the distance of an observation
@@ -15,7 +15,7 @@ Mahalanobis distance:
     d_{(\mu,\Sigma)}(x_i)^2 = (x_i - \mu)'\Sigma^{-1}(x_i - \mu)
 
 where :math:`\mu` and :math:`\Sigma` are the location and the covariance of
-the underlying Gaussian distribution.
+the underlying Gaussian distributions.
 
 In practice, :math:`\mu` and :math:`\Sigma` are replaced by some
 estimates. The standard covariance maximum likelihood estimate (MLE) is very
@@ -34,9 +34,8 @@ estimator of covariance. The idea behind the MCD is to find
 :math:`\frac{n_\text{samples}+n_\text{features}+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
-standards estimates of location and covariance.
-
-The MCD was introduced by P.J.Rousseuw in [1].
+standards estimates of location and covariance. The MCD was introduced by
+P.J.Rousseuw in [1].
 
 This example illustrates how the Mahalanobis distances are affected by
 outlying data. Observations drawn from a contaminating distribution
@@ -85,8 +84,8 @@ X[-n_outliers:] = np.dot(np.random.randn(n_outliers, n_features), outliers_cov)
 #
 # Below we fit MCD and MLE based covariance estimators to our data and print
 # the estimated covariance matrices. Note that the estimated variance of
-# feature 2 is much higher with the MLE based estimator (7.51) than
-# that of the MCD robust estimator (1.22). This shows that the MCD based
+# feature 2 is much higher with the MLE based estimator (7.5) than
+# that of the MCD robust estimator (1.2). This shows that the MCD based
 # robust estimator is much more resistant to the outlier samples, which were
 # designed to have a much larger variance in feature 2.
 
