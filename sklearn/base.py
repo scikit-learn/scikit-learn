@@ -13,7 +13,6 @@ from collections import defaultdict
 import platform
 import inspect
 import re
-import html
 
 import numpy as np
 
@@ -438,15 +437,21 @@ class BaseEstimator:
 
         return out
 
+    @property
     def _repr_html_(self):
         """HTML representation of estimator.
 
-        This is defined to display the HTML representation in sphinx-gallery.
+        Used to display the HTML representation in sphinx-gallery.
         Jupyer kernels will use `_repr_mimebundle_`.
         """
-        if get_config()["display"] == 'diagram':
-            return estimator_html_repr(self)
-        return None
+        if get_config()["display"] != 'diagram':
+            raise AttributeError("_repr_html_ is only defined when the "
+                                 "'display' configuration option is set to "
+                                 "'diagram'")
+        return self.__repr_html_
+
+    def __repr_html_(self):
+        return estimator_html_repr(self)
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""

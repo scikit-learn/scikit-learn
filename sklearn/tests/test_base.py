@@ -4,7 +4,6 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
-import html
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -531,8 +530,9 @@ def test_repr_mimebundle_():
 def test_repr_html_wraps():
     # Checks the display configuration flag controls the html output
     tree = DecisionTreeClassifier()
-    output = tree._repr_html_()
-    assert output is None
+    msg = "_repr_html_ is only defined when"
+    with pytest.raises(AttributeError, match=msg):
+        output = tree._repr_html_()
 
     with config_context(display='diagram'):
         output = tree._repr_html_()
