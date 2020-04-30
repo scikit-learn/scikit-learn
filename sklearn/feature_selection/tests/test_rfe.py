@@ -107,7 +107,7 @@ def test_rfe():
 def test_rfe_negative_n_features():
     clf = SVC(kernel="linear")
     with pytest.raises(ValueError, match=r"n_features_to_select must be *"):
-        rfe = RFE(estimator=clf, n_features_to_select=-1, step=0.1)
+        RFE(estimator=clf, n_features_to_select=-1, step=0.1)
 
 
 def test_rfe_percent_n_features():

@@ -178,7 +178,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             n_features_to_select = int(n_features * self.n_features_to_select)
         else:
             n_features_to_select = (self.n_features_to_select
-                                    if isinstance(self.n_features_to_select, \
+                                    if isinstance(self.n_features_to_select,
                                                   numbers.Integral)
                                     else int(self.n_features_to_select))
 
