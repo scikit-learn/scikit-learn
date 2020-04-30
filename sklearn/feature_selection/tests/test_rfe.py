@@ -103,10 +103,12 @@ def test_rfe():
     assert rfe.score(X, y) == clf.score(iris.data, iris.target)
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
+
 def test_rfe_negative_n_features():
     clf = SVC(kernel="linear")
     with pytest.raises(ValueError, match=r"n_features_to_select must be *"):
         rfe = RFE(estimator=clf, n_features_to_select=-1, step=0.1)
+
 
 def test_rfe_percent_n_features():
     # test that the results are the same
@@ -128,6 +130,7 @@ def test_rfe_percent_n_features():
     assert all(rfe_perc.ranking_ == rfe_num.ranking_)
     assert (rfe_perc.n_features_ == rfe_num.n_features_)
     assert all(rfe_perc.support_ == rfe_num.support_)
+
 
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
