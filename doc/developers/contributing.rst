@@ -762,7 +762,7 @@ To test code coverage, you need to install the `coverage
 
 3. Loop.
 
-Monitoring performance
+Monitoring performance [*]_
 ======================
 
 When proposing changes to the existing code base, it's important to make sure
@@ -1137,3 +1137,6 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
+
+.. [*] This section is heavily inspired from the `pandas documentation 
+       <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
