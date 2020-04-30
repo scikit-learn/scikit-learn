@@ -834,7 +834,7 @@ and to see the report of a specific run::
   asv show <commit hash>
 
 The benchmark suite supports additional configurable options which can be set
-in the `benchmarks/conf.json` configuration file. For example, the benchmarks
+in the `benchmarks/config.json` configuration file. For example, the benchmarks
 can run for a provided list of values for the `n_jobs` parameter.
 
 More information on how to write a benchmark and how to use asv can be found in
