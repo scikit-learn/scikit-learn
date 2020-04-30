@@ -108,9 +108,9 @@ print('Estimated covariance matrix:\n'
 fig, ax = plt.subplots(figsize=(10,5))
 # Plot data set
 inlier_plot = ax.scatter(X[:, 0], X[:, 1],
-                              color='black', label='inliers')
+                         color='black', label='inliers')
 outlier_plot = ax.scatter(X[:, 0][-n_outliers:], X[:, 1][-n_outliers:],
-                               color='red', label='outliers')
+                          color='red', label='outliers')
 ax.set_xlim(ax.get_xlim()[0], 10.)
 ax.set_title("Mahalanobis distances of a contaminated data set")
 
@@ -131,9 +131,9 @@ robust_contour = ax.contour(xx, yy, np.sqrt(mahal_robust_cov),
 
 # Add legend
 ax.legend([emp_cov_contour.collections[1], robust_contour.collections[1],
-                inlier_plot, outlier_plot],
-               ['MLE dist', 'MCD dist', 'inliers', 'outliers'],
-               loc="upper right", borderaxespad=0)
+          inlier_plot, outlier_plot],
+          ['MLE dist', 'MCD dist', 'inliers', 'outliers'],
+          loc="upper right", borderaxespad=0)
 
 plt.show()
 
@@ -146,30 +146,34 @@ plt.show()
 # distribution of inlier samples for robust MCD based Mahalanobis distances.
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
-plt.subplots_adjust(hspace=-.1, wspace=.6, top=.95, bottom=.05)
+plt.subplots_adjust(wspace=.6)
 
+# Calculate cubic root of MLE Mahalanobis distances for samples
 emp_mahal = emp_cov.mahalanobis(X - np.mean(X, 0)) ** (0.33)
+# Plot boxplots
 ax1.boxplot([emp_mahal[:-n_outliers], emp_mahal[-n_outliers:]], widths=.25)
-ax1.plot(np.full(n_samples - n_outliers, 1.26),
-             emp_mahal[:-n_outliers], '+k', markeredgewidth=1)
-ax1.plot(np.full(n_outliers, 2.26),
-             emp_mahal[-n_outliers:], '+k', markeredgewidth=1)
+# Plot individual samples
+ax1.plot(np.full(n_samples - n_outliers, 1.26), emp_mahal[:-n_outliers],
+                 '+k', markeredgewidth=1)
+ax1.plot(np.full(n_outliers, 2.26), emp_mahal[-n_outliers:],
+                 '+k', markeredgewidth=1)
 ax1.axes.set_xticklabels(('inliers', 'outliers'), size=15)
 ax1.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$", size=16)
 ax1.set_title("Using non-robust estimates\n(Maximum Likelihood)")
-plt.yticks(())
 
+# Calculate cubic root of MCD Mahalanobis distances for samples
 robust_mahal = robust_cov.mahalanobis(X - robust_cov.location_) ** (0.33)
+# Plot boxplots
 ax2.boxplot([robust_mahal[:-n_outliers], robust_mahal[-n_outliers:]],
-                widths=.25)
-ax2.plot(np.full(n_samples - n_outliers, 1.26),
-             robust_mahal[:-n_outliers], '+k', markeredgewidth=1)
-ax2.plot(np.full(n_outliers, 2.26),
-             robust_mahal[-n_outliers:], '+k', markeredgewidth=1)
+            widths=.25)
+# Plot individual samples
+ax2.plot(np.full(n_samples - n_outliers, 1.26), robust_mahal[:-n_outliers],
+                 '+k', markeredgewidth=1)
+ax2.plot(np.full(n_outliers, 2.26), robust_mahal[-n_outliers:],
+                 '+k', markeredgewidth=1)
 ax2.axes.set_xticklabels(('inliers', 'outliers'), size=15)
 ax2.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$", size=16)
 ax2.set_title("Using robust estimates\n(Minimum Covariance Determinant)")
-plt.yticks(())
 
 plt.show()
 
