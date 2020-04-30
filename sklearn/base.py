@@ -446,7 +446,7 @@ class BaseEstimator:
         """
         if get_config()["display"] == 'diagram':
             return estimator_html_repr(self)
-        return f"<code>{html.escape(repr(self))}</code>"
+        return None
 
     def _repr_mimebundle_(self, **kwargs):
         """Mime bundle used by jupyter kernels to display estimator"""

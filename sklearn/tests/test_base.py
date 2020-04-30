@@ -532,7 +532,7 @@ def test_repr_html_wraps():
     # Checks the display configuration flag controls the html output
     tree = DecisionTreeClassifier()
     output = tree._repr_html_()
-    assert output == f"<code>{html.escape(repr(tree))}</code>"
+    assert output is None
 
     with config_context(display='diagram'):
         output = tree._repr_html_()
