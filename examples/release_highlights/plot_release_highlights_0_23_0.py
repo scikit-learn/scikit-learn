@@ -39,7 +39,8 @@ from sklearn.linear_model import PoissonRegressor
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)
 X = rng.randn(n_samples, n_features)
-y = ((10 + X[:, 5]) * 10).astype(int)  # easy target correlated with X[:, 5]
+# positive integer target correlated with X[:, 5] with many zeros:
+y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 reg = PoissonRegressor()
 reg.fit(X_train, y_train)
@@ -107,7 +108,8 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 X = rng.randn(n_samples, n_features)
-y = ((10 + X[:, 5]) * 10).astype(int)  # easy target correlated with X[:, 5]
+# positive integer target correlated with X[:, 5] with many zeros:
+y = rng.poisson(lam=np.exp(X[:, 5]) / 2)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 reg = HistGradientBoostingRegressor(loss='poisson', learning_rate=.01)
 reg.fit(X_train, y_train)
