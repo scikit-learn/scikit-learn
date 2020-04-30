@@ -576,8 +576,11 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Feature| Adds :func:`utils.estimator_html_repr` for returning a
-  HTML representation of an estimator. :pr:`14180` by `Thomas Fan`_.
+- |MajorFeature| Estimators can now be displayed with a rich html
+  representation. This can be enabled in Jupyter notebooks by setting
+  `display='diagram'` in :func:`~sklearn.set_config`. The raw html can be
+  returned by using :func:`utils.estimator_html_repr`.
+  :pr:`14180` by `Thomas Fan`_.
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.

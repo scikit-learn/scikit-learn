@@ -46,6 +46,33 @@ reg.fit(X_train, y_train)
 print(reg.score(X_test, y_test))
 
 ##############################################################################
+# Rich HTML representation for estimators
+# ---------------------------------------
+# Estimators can now be rendered in html in notebooks by enabling the
+# `display='diagram'` option. This is particularly useful to visualize
+# pipelines and composite estimators. Clic on the entries to expand and see
+# details.
+from sklearn import set_config
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.compose import make_column_transformer
+from sklearn.linear_model import LogisticRegression
+set_config(display='diagram')
+
+num_proc = make_pipeline(SimpleImputer(strategy='median'), StandardScaler())
+
+cat_proc = make_pipeline(
+    SimpleImputer(strategy='constant', fill_value='missing'),
+    OneHotEncoder(handle_unknown='ignore'))
+
+preprocessor = make_column_transformer((num_proc, ('feat1', 'feat3')),
+                                       (cat_proc, ('feat0', 'feat2')))
+
+clf = make_pipeline(preprocessor, LogisticRegression())
+clf
+
+##############################################################################
 # Scalability and stability improvements to KMeans
 # ------------------------------------------------
 # The :class:`~sklearn.cluster.KMeans` estimator was entirely re-worked, and it
