@@ -58,9 +58,9 @@ from sklearn.covariance import EmpiricalCovariance, MinCovDet
 # --------------
 #
 # First we generate a dataset of 125 samples and 2 features. Both features
-# are Gaussian distributed with mean of 0 but feature 1 has standard
-# deviation = 2 and feature 2 has standard deviation = 1. Next, 25 samples are
-# replaced with Gaussian outlier samples where feature 1 has standard
+# are Gaussian distributed with mean of 0 but feature 1 has a standard
+# deviation = 2 and feature 2 has a standard deviation = 1. Next, 25 samples
+# are replaced with Gaussian outlier samples where feature 1 has standard
 # devation = 1 and feature 2 has standard deviation = 7.
 
 # for consistent results
@@ -138,9 +138,12 @@ ax.legend([emp_cov_contour.collections[1], robust_contour.collections[1],
 plt.show()
 
 # %%
-# For visualization purpose, the cubic root of the Mahalanobis distances
-# are represented in the boxplot, as suggested by Wilson and Hilferty [2].
-# 
+# Finally, we highlight the ability of MCD based Mahalanobis distances to
+# distinguish outliers. We take the cubic root of the Mahalanobis distances,
+# yielding approximately normal distributions (as suggested by Wilson and
+# Hilferty [2]), then plot the values of inlier and outlier samples with
+# boxplots. The distribution of outlier samples is more separated from the
+# distribution of inlier samples for robust MCD based Mahalanobis distances.
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 plt.subplots_adjust(hspace=-.1, wspace=.6, top=.95, bottom=.05)
