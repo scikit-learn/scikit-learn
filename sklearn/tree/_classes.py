@@ -36,6 +36,7 @@ from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -82,7 +83,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion,
                  splitter,
                  max_depth,
@@ -146,8 +148,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if check_input:
-            X = self._validate_data(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None)
+            # Need to validate separately here.
+            # We can't pass multi_ouput=True because that would allow y to be
+            # csr.
+            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+            check_y_params = dict(ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y,
+                                       validate_separately=(check_X_params,
+                                                            check_y_params))
             if issparse(X):
                 X.sort_indices()
 
@@ -809,7 +817,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion="gini",
                  splitter="best",
                  max_depth=None,
@@ -1152,18 +1161,19 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.datasets import load_diabetes
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-    >>> X, y = load_boston(return_X_y=True)
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> regressor = DecisionTreeRegressor(random_state=0)
     >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
-    array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
-            0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
+    array([-0.39..., -0.46...,  0.02...,  0.06..., -0.50...,
+           0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion="mse",
                  splitter="best",
                  max_depth=None,
@@ -1493,7 +1503,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> cls.score(X_test, y_test)
     0.8947...
     """
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion="gini",
                  splitter="random",
                  max_depth=None,
@@ -1697,20 +1708,21 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.datasets import load_diabetes
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.ensemble import BaggingRegressor
     >>> from sklearn.tree import ExtraTreeRegressor
-    >>> X, y = load_boston(return_X_y=True)
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
     >>> extra_tree = ExtraTreeRegressor(random_state=0)
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.7447...
+    0.33...
     """
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  criterion="mse",
                  splitter="random",
                  max_depth=None,
