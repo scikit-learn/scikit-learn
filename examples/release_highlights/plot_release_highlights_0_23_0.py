@@ -51,7 +51,7 @@ print(reg.score(X_test, y_test))
 # ---------------------------------------
 # Estimators can now be rendered in html in notebooks by enabling the
 # `display='diagram'` option. This is particularly useful to visualize
-# pipelines and composite estimators. Clic on the entries to expand and see
+# pipelines and composite estimators. Click on the entries to expand and see
 # details.
 from sklearn import set_config
 from sklearn.pipeline import make_pipeline
