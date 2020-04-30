@@ -1930,8 +1930,40 @@ def test_prune_tree_raises_negative_ccp_alpha():
         clf.set_params(ccp_alpha=-1.0)
         clf._prune_tree()
 
-    with TempMemmap((X, y)) as (X_read_only, y_read_only):
-        DecisionTreeClassifier().fit(X_read_only, y_read_only)
+
+def test_classes_deprecated():
+    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
+    y = [0.5, 2.5, 3.5, 5.5]
+    clf = DecisionTreeRegressor()
+    clf = clf.fit(X, y)
+
+    match = ("attribute is to be deprecated from version "
+             "0.22 and will be removed in 0.24.")
+
+    with pytest.warns(FutureWarning, match=match):
+        n = len(clf.classes_)
+        assert n == clf.n_outputs_
+
+    with pytest.warns(FutureWarning, match=match):
+        assert len(clf.n_classes_) == clf.n_outputs_
+
+
+def check_apply_path_readonly(name):
+    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
+                                                          copy=False))
+    y_readonly = create_memmap_backed_data(np.array(y_small,
+                                                    dtype=tree._tree.DTYPE))
+    est = ALL_TREES[name]()
+    est.fit(X_readonly, y_readonly)
+    assert_array_equal(est.predict(X_readonly),
+                       est.predict(X_small))
+    assert_array_equal(est.decision_path(X_readonly).todense(),
+                       est.decision_path(X_small).todense())
+
+
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_apply_path_readonly_all_trees(name):
+    check_apply_path_readonly(name)
 
 
 def test_montonic_constraints():
@@ -2072,38 +2104,3 @@ def test_nodes_values(monotonic_cst, splitter, depth_first, seed):
 
     assert_children_values_monotonic_bounded(clf.tree_, monotonic_cst)
     assert_tree_monotonic(clf, monotonic_cst)
-
-
-def test_classes_deprecated():
-    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
-    y = [0.5, 2.5, 3.5, 5.5]
-    clf = DecisionTreeRegressor()
-    clf = clf.fit(X, y)
-
-    match = ("attribute is to be deprecated from version "
-             "0.22 and will be removed in 0.24.")
-
-    with pytest.warns(FutureWarning, match=match):
-        n = len(clf.classes_)
-        assert n == clf.n_outputs_
-
-    with pytest.warns(FutureWarning, match=match):
-        assert len(clf.n_classes_) == clf.n_outputs_
-
-
-def check_apply_path_readonly(name):
-    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
-                                                          copy=False))
-    y_readonly = create_memmap_backed_data(np.array(y_small,
-                                                    dtype=tree._tree.DTYPE))
-    est = ALL_TREES[name]()
-    est.fit(X_readonly, y_readonly)
-    assert_array_equal(est.predict(X_readonly),
-                       est.predict(X_small))
-    assert_array_equal(est.decision_path(X_readonly).todense(),
-                       est.decision_path(X_small).todense())
-
-
-@pytest.mark.parametrize("name", ALL_TREES)
-def test_apply_path_readonly_all_trees(name):
-    check_apply_path_readonly(name)
