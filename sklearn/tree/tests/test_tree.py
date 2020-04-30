@@ -1985,6 +1985,22 @@ def test_montonic_constraints():
         assert(np.min(y2 - y0) >= 0)
 
 
+def test_multiclass_raises():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=0)
+    y[0] = 0
+    monotonic_cst = np.zeros(X.shape[1])
+    monotonic_cst[0] = -1
+    monotonic_cst[1] = 1
+    for name, TreeClassifier in CLF_TREES.items():
+        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst,
+                             random_state=0)
+        if hasattr(est, "random_state"):
+            est.set_params(**{"random_state": 0})
+
+        with pytest.raises(ValueError):
+            est.fit(X, y)
+
+
 def is_monotonic(a, cst):
     return (cst * np.diff(a) >= 0.0).all()
 

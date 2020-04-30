@@ -347,6 +347,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                     fill_value=0,
                                     dtype=np.int32)
         else:
+            if self.n_outputs_ > 1:
+                raise ValueError("Monotonic constraints are not supported with "
+                                 "multiple output")
+            if is_classifier(self) and self.n_classes_[0] > 2:
+                raise ValueError("Monotonic constraints are not supported with "
+                                 "multiclass classification")
             monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
 
         if monotonic_cst.shape[0] != X.shape[1]:
