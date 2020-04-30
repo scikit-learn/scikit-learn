@@ -763,7 +763,7 @@ To test code coverage, you need to install the `coverage
 3. Loop.
 
 Monitoring performance [*]_
-======================
+===========================
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
