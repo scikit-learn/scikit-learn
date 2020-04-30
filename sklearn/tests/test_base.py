@@ -4,6 +4,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import html
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
@@ -525,3 +526,14 @@ def test_repr_mimebundle_():
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
         assert "text/html" in output
+
+
+def test_repr_html_wraps():
+    # Checks the display configuration flag controls the html output
+    tree = DecisionTreeClassifier()
+    output = tree._repr_html_()
+    assert output == f"<code>{html.escape(repr(tree))}</code>"
+
+    with config_context(display='diagram'):
+        output = tree._repr_html_()
+        assert "<style>" in output
