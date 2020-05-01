@@ -717,7 +717,7 @@ def enet_coordinate_descent_multi_task(
                 # _ger(RowMajor, n_samples, n_tasks, 1.0,
                 #      &X[0, ii], 1,
                 #      &w_ii[0], 1, &R[0, 0], n_tasks)
-                # Using Blas Level1 and for loop for avoid slower threads
+                # Using Blas Level1 and for loop to avoid slower threads
                 # for such small vectors
                 for jj in range(n_tasks):
                     if w_ii[jj] != 0:
