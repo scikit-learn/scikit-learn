@@ -483,7 +483,6 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   ...                     [0.7, 0.2, 0.1]])
   >>> top_k_accuracy_score(y_true, y_score, k=2)
   0.75
-  # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
   3
 
