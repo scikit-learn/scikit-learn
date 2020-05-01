@@ -1423,27 +1423,26 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
 
 
 def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
-                         sample_weight=None):
+                         sample_weight=None, labels=None):
     """Top-k Accuracy classification score.
 
     This metric computes the number of times where the correct label is among
     the top `k` labels predicted (ranked by predicted scores). Note that the
     multilabel case isn't covered here.
 
-    If `k = 1`, :func:`accuracy_score` is called instead.
-
     Read more in the :ref:`User Guide <top_k_accuracy_score>`
 
     Parameters
     ----------
     y_true : array-like of shape (n_samples,)
-        True labels. Expected to be a sequence of int in the range
-        [0, n_classes - 1].
+        True labels.
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores. These can be either probability estimates or
-        non-thresholded decision values as returned by :term:`predict_proba` or
-        :term:`decision_function`, respectively.
+        non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers). The order of the class
+        scores must correspond to the order of ``labels``, if provided, or else
+        to the numerical or lexicographical order of the labels in ``y_true``.
 
     k : int, default=2
         Number of guesses allowed to find the correct label.
@@ -1454,6 +1453,11 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If `None`, all samples are given the same weight.
+
+    labels : array-like of shape (n_classes,), default=None
+        Multiclass only. List of labels that index the classes in ``y_score``.
+        If ``None``, the numerical or lexicographical order of the labels in
+        ``y_true`` is used.
 
     Returns
     -------
@@ -1469,7 +1473,7 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
     Notes
     -----
     In cases where two or more labels are assigned equal predicted scores,
-    the labels with the smallest indices will be chosen first. This might
+    the labels with the highest indices will be chosen first. This might
     impact the result if the correct label falls after the threshold because
     of that.
 
@@ -1488,42 +1492,62 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
     # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-    >>> top_k_accuracy_score([0, 0, 0, 0], y_score, k=2)
-    0.75
 
     """
-    if k == 1:
-        return accuracy_score(y_true, y_score, normalize, sample_weight)
-
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true_type = type_of_target(y_true)
-
-    if y_true_type not in {'binary', 'multiclass'}:
-        raise ValueError(
-            "'y_true' type must be 'binary' or 'multiclass', got "
-            f"'{y_true_type}' instead."
-        )
-
+    y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
     y_score = check_array(y_score)
+    check_consistent_length(y_true, y_score, sample_weight)
+    y_type = type_of_target(y_true)
+    y_score_n_col = y_score.shape[1]
 
-    n_classes = y_score.shape[1]
+    if y_type not in {'binary', 'multiclass'}:
+        raise ValueError(
+            f"y type must be 'binary' or 'multiclass', got '{y_type}' instead."
+        )
+
+    if labels is None:
+        classes = _encode(y_true)
+        n_classes = len(classes)
+
+        if n_classes != y_score_n_col:
+                raise ValueError(
+                    f"Number of classes in 'y_true' ({n_classes}) not equal "
+                    f"to the number of columns in 'y_score' ({y_score_n_col})."
+                )
+    else:
+        labels = column_or_1d(labels)
+        classes = _encode(labels)
+        n_labels = len(labels)
+        n_classes = len(classes)
+
+        if n_classes != n_labels:
+            raise ValueError("Parameter 'labels' must be unique.")
+
+        if not np.array_equal(classes, labels):
+            raise ValueError("Parameter 'labels' must be ordered.")
+
+        if n_classes != y_score_n_col:
+            raise ValueError(
+                f"Number of given labels ({n_classes}) not equal to the "
+                f"number of columns in 'y_score' ({y_score_n_col})."
+            )
+
+        if len(np.setdiff1d(y_true, classes)):
+            raise ValueError(
+                "'y_true' contains labels not in parameter 'labels'."
+            )
+
     if k >= n_classes:
-        raise ValueError(
-            f"'k' ({k}) can't be greater than or equal to 'n_classes' "
-            f"({n_classes}). This will result in a perfect score and is "
-            "therefore meaningless."
+        warnings.warn(
+            f"'k' ({k}) greater than or equal to 'n_classes' ({n_classes}) "
+            "will result in a perfect score and is therefore meaningless.",
+            UndefinedMetricWarning
         )
 
-    n_classes_y_true = y_true.max() + 1
-    if n_classes_y_true > n_classes:
-        raise ValueError(
-            f"Number of classes in 'y_true' ({n_classes_y_true}) is greater "
-            f"than the number of columns in 'y_score' ({n_classes})."
-        )
-
-    sorted_pred = np.argsort(-y_score, axis=1)
-    hits = [y in pred[:k] for y, pred in zip(y_true, sorted_pred)]
+    _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+    sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
+    hits = [y in pred[:k] for y, pred in zip(y_true_encoded, sorted_pred)]
 
     if normalize:
         return np.average(hits, weights=sample_weight)

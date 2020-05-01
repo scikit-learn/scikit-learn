@@ -1475,71 +1475,22 @@ def test_partial_roc_auc_score():
 
 
 @pytest.mark.parametrize('y_true, k, normalize, sample_weight, true_score', [
-    ([0, 0, 0, 0], 2, True, None, 1),
-    ([0, 1, 2, 3], 2, True, None, .25),
-    ([0, 1, 2, 3], 2, False, None, 1),
-    ([0, 1, 2, 3], 2, True, [3, 1, 1, 1], .5),
-    ([0, 1, 2, 3], 3, True, None, .5),
-    ([0, 1, 2, 3], 3, False, None, 2),
-    ([0, 1, 2, 3], 3, False, [1, 2, 1, 1], 3),
+    ([0, 1, 2, 3], 1, True, None, 0.25),
+    ([0, 1, 2, 3], 1, False, None, 1),
+    ([0, 1, 2, 3], 2, True, None, 0.5),
+    ([0, 1, 2, 3], 2, False, [2, 2, 1, 1], 4),
+    ([0, 1, 2, 3], 3, True, None, 0.75),
+    ([0, 1, 2, 3], 3, True, [0, 1, 1, 2], 0.5),
 ])
 def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
     y_score = np.array([
-        [0.4, 0.3, 0.1, 0.2],
-        [0.3, 0.2, 0.3, 0.2],
-        [0.3, 0.4, 0.1, 0.2],
-        [0.3, 0.4, 0.2, 0.1],
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.3, 0.4, 0.2],
+        [0.4, 0.1, 0.2, 0.3],
+        [0.3, 0.2, 0.4, 0.1],
     ])
     assert top_k_accuracy_score(y_true, y_score, k, normalize,
                                 sample_weight) == pytest.approx(true_score)
-
-
-@pytest.mark.parametrize('y_true, true_score', [
-    ([0, 0, 0, 0], .5),
-    ([0, 0, 0, 1], .75),
-    ([0, 0, 1, 1], 1)
-])
-def test_top_k_accuracy_score_binary(y_true, true_score):
-    y_score = [0, 0, 1, 1]
-    assert top_k_accuracy_score(y_true, y_score, k=1) == true_score
-
-
-@pytest.mark.parametrize('y_true, y_score, k, msg', [
-    (
-        [.57, 1, 2],
-        np.array([
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]),
-        2,
-        "'y_true' type must be 'binary' or 'multiclass', got 'continuous'"
-    ),
-    (
-        [0, 1, 2],
-        np.array([
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]),
-        3,
-        r"'k' \(3\) can't be greater than or equal to 'n_classes' \(3\)"
-    ),
-    (
-        [3, 1, 2],
-        np.array([
-            [0.4, 0.3, 0.3],
-            [0.3, 0.4, 0.3],
-            [0.4, 0.5, 0.1],
-        ]),
-        2,
-        r"Number of classes in 'y_true' \(4\) is greater than the number of "
-        r"columns in 'y_score' \(3\)."
-    ),
-])
-def test_top_k_accuracy_score_error(y_true, y_score, k, msg):
-    with pytest.raises(ValueError, match=msg):
-        top_k_accuracy_score(y_true, y_score, k=k)
 
 
 def test_top_k_accuracy_score_increasing():
@@ -1559,3 +1510,80 @@ def test_top_k_accuracy_score_increasing():
         ]
 
         assert np.all(np.diff(scores) > 0)
+
+
+@pytest.mark.parametrize('y_true, k, true_score', [
+    ([0, 1, 2, 3], 1, 0.25),
+    ([0, 1, 2, 3], 2, 0.5),
+    ([0, 1, 2, 3], 3, 1),
+])
+def test_top_k_accuracy_score_ties(y_true, k, true_score):
+    # Make sure highest indices labels are chosen first in case of ties
+    y_score = np.array([
+        [5, 5, 7, 0],
+        [1, 5, 5, 5],
+        [0, 0, 3, 3],
+        [1, 1, 1, 1],
+    ])
+    assert top_k_accuracy_score(y_true, y_score,
+                                k) == pytest.approx(true_score)
+
+
+@pytest.mark.parametrize('y_true, k', [
+    ([0, 1, 2, 3], 4),
+    ([0, 1, 2, 3], 5),
+])
+def test_top_k_accuracy_score_warning(y_true, k):
+    y_score = np.array([
+        [0.4, 0.3, 0.2, 0.1],
+        [0.1, 0.4, 0.3, 0.2],
+        [0.2, 0.1, 0.4, 0.3],
+        [0.3, 0.2, 0.1, 0.4],
+    ])
+    w = UndefinedMetricWarning
+    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k)
+    assert score == 1
+
+
+@pytest.mark.parametrize('y_true, labels, msg', [
+    (
+        [.57, 1, 2],
+        None,
+        "y type must be 'binary' or 'multiclass', got 'continuous'"
+    ),
+    (
+        [0, 0, 0],
+        None,
+        r"Number of classes in 'y_true' \(1\) not equal to the number of "
+        r"columns in 'y_score' \(3\)."
+    ),
+    (
+        ['c', 'a', 'b'],
+        ['a', 'b', 'b', 'c'],
+        "Parameter 'labels' must be unique."
+    ),
+    (
+        ['c', 'a', 'b'],
+        ['a', 'c', 'b'],
+        "Parameter 'labels' must be ordered."
+    ),
+    (
+        [0, 1, 2],
+        [0, 1, 2, 3],
+        r"Number of given labels \(4\) not equal to the number of columns in "
+        r"'y_score' \(3\)."
+    ),
+    (
+        [0, 1, 2],
+        [0, 1, 3],
+        "'y_true' contains labels not in parameter 'labels'."
+    ),
+])
+def test_top_k_accuracy_score_error(y_true, labels, msg):
+    y_score = np.array([
+        [0.4, 0.3, 0.3],
+        [0.3, 0.4, 0.3],
+        [0.4, 0.5, 0.1],
+    ])
+    with pytest.raises(ValueError, match=msg):
+        top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
