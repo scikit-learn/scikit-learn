@@ -1560,7 +1560,7 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
 
     _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
     sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
-    hits = [y in pred[:k] for y, pred in zip(y_true_encoded, sorted_pred)]
+    hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
 
     if normalize:
         return np.average(hits, weights=sample_weight)
