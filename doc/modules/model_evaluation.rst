@@ -451,7 +451,7 @@ In the multilabel case with binary label indicators: ::
 
 .. _top_k_accuracy_score:
 
-Top-k Accuracy score
+Top-k accuracy score
 --------------------
 
 The :func:`top_k_accuracy_score` function is a generalization of
@@ -462,14 +462,14 @@ predicted scores. :func:`accuracy_score` is the special case of `k = 1`.
 The function covers the binary and multiclass classification cases but not the
 multilabel case.
 
-If :math:`\hat{y}_{i,j}` is the predicted class corresponding to :math:`j`-th
-largest predicted score for the :math:`i`-th sample and :math:`y_i` is the
+If :math:`\hat{f}_{i,j}` is the predicted class for the :math:`i`-th sample
+corresponding to the :math:`j`-th largest predicted score and :math:`y_i` is the
 corresponding true value, then the fraction of correct predictions over
 :math:`n_\text{samples}` is defined as
 
 .. math::
 
-   \texttt{top-k accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{y}_{i,j} = y_i)
+   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
 
 where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
 `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -483,10 +483,9 @@ where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
   ...                     [0.7, 0.2, 0.1]])
   >>> top_k_accuracy_score(y_true, y_score, k=2)
   0.75
+  # Not normalizing gives the number of "correctly" classified samples
   >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
   3
-  >>> top_k_accuracy_score([0, 0, 0, 0], y_score, k=2)
-  0.75
 
 .. _balanced_accuracy_score:
 
