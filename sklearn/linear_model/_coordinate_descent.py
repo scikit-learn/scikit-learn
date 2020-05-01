@@ -1155,12 +1155,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def _get_model(self):
         """Model to be fitted after the best alpha has been determined."""
-        return
 
     @abstractmethod
     def _is_multitask(self):
         """Bool indicating if the class is meant for mutidimensional target."""
-        return
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
