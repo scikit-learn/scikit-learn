@@ -485,7 +485,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError("sample_weight is not supported "
                              "for multiclass one-vs-one ROC AUC, "
                              "'sample_weight' must be None in this case.")
-        _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+        y_true_encoded = _encode(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
