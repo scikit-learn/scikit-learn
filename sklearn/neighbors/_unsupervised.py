@@ -3,6 +3,7 @@ from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
 from ._base import UnsupervisedMixin
+from ..utils.validation import _deprecate_positional_args
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
@@ -78,7 +79,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
-      >>> neigh = NearestNeighbors(2, 0.4)
+      >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
       >>> neigh.fit(samples)
       NearestNeighbors(...)
 
@@ -105,7 +106,8 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, radius=1.0,
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=None):
         super().__init__(

@@ -213,6 +213,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             samples. If not provided,
             then each sample is given unit weight.
 
+            .. versionadded:: 0.18
+
         Returns
         -------
         self : object
@@ -397,6 +399,8 @@ class LinearSVR(RegressorMixin, LinearModel):
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -1240,6 +1244,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         We have the relation: decision_function = score_samples - `offset_`.
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
+
+        .. versionadded:: 0.20
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)

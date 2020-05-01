@@ -356,6 +356,7 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -579,7 +580,10 @@ def test_check_regressor_data_not_an_array():
                         EstimatorInconsistentForPandas())
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
 def test_check_estimator_required_parameters_skip():
+    # TODO: remove whole test in 0.24 since passes classes to check_estimator()
+    # isn't supported anymore
     class MyEstimator(BaseEstimator):
         _required_parameters = ["special_parameter"]
 
