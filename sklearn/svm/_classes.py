@@ -5,6 +5,7 @@ from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
 
@@ -177,9 +178,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-
-    def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
-                 C=1.0, multi_class='ovr', fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
+                 tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
                  random_state=None, max_iter=1000):
         self.dual = dual
@@ -211,6 +212,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -364,7 +367,8 @@ class LinearSVR(RegressorMixin, LinearModel):
         various loss functions and regularization regimes.
     """
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
                  loss='epsilon_insensitive', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0,
                  random_state=None, max_iter=1000):
@@ -395,6 +399,8 @@ class LinearSVR(RegressorMixin, LinearModel):
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -627,7 +633,8 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -838,7 +845,8 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', break_ties=False,
@@ -855,7 +863,7 @@ class NuSVC(BaseSVC):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_class_weight_classifiers': 'class_weight is ignored.'
@@ -992,7 +1000,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
@@ -1137,7 +1146,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = 'nu_svr'
 
-    def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
+    @_deprecate_positional_args
+    def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
@@ -1235,6 +1245,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+        .. versionadded:: 0.20
+
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
@@ -1245,13 +1257,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     >>> clf = OneClassSVM(gamma='auto').fit(X)
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
-    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
     """
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 

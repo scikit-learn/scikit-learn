@@ -174,7 +174,7 @@ class SimpleImputer(BaseEstimator):
         self.copy = copy
 
 
-def test_basic():
+def test_basic(print_changed_only_false):
     # Basic pprint test
     lr = LogisticRegression()
     expected = """
@@ -189,8 +189,7 @@ LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
 
 
 def test_changed_only():
-    # Make sure the changed_only param is correctly used
-    set_config(print_changed_only=True)
+    # Make sure the changed_only param is correctly used when True (default)
     lr = LogisticRegression(C=99)
     expected = """LogisticRegression(C=99)"""
     assert lr.__repr__() == expected
@@ -216,10 +215,8 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     # make sure array parameters don't throw error (see #13583)
     repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
-    set_config(print_changed_only=False)
 
-
-def test_pipeline():
+def test_pipeline(print_changed_only_false):
     # Render a pipeline object
     pipeline = make_pipeline(StandardScaler(), LogisticRegression(C=999))
     expected = """
@@ -240,7 +237,7 @@ Pipeline(memory=None,
     assert pipeline.__repr__() == expected
 
 
-def test_deeply_nested():
+def test_deeply_nested(print_changed_only_false):
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
@@ -277,7 +274,7 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     assert rfe.__repr__() == expected
 
 
-def test_gridsearch():
+def test_gridsearch(print_changed_only_false):
     # render a gridsearch
     param_grid = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                    'C': [1, 10, 100, 1000]},
@@ -302,7 +299,7 @@ GridSearchCV(cv=5, error_score='raise-deprecating',
     assert gs.__repr__() == expected
 
 
-def test_gridsearch_pipeline():
+def test_gridsearch_pipeline(print_changed_only_false):
     # render a pipeline inside a gridsearch
     pp = _EstimatorPrettyPrinter(compact=True, indent=1, indent_at_name=True)
 
@@ -372,7 +369,7 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
     assert repr_ == expected
 
 
-def test_n_max_elements_to_show():
+def test_n_max_elements_to_show(print_changed_only_false):
 
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
@@ -461,7 +458,7 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert pp.pformat(gs) == expected
 
 
-def test_bruteforce_ellipsis():
+def test_bruteforce_ellipsis(print_changed_only_false):
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 

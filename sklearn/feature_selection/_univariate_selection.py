@@ -146,7 +146,7 @@ def f_classif(X, y):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -277,7 +277,8 @@ def f_regression(X, y, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                     dtype=np.float64)
     n_samples = X.shape[0]
 
     # compute centered values
@@ -363,6 +364,9 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 ######################################################################
 # Specific filters
@@ -379,6 +383,8 @@ class SelectPercentile(_BaseFilter):
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
+
+        .. versionadded:: 0.18
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -462,6 +468,8 @@ class SelectKBest(_BaseFilter):
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
+
+        .. versionadded:: 0.18
 
     k : int or "all", optional, default=10
         Number of top features to select.
