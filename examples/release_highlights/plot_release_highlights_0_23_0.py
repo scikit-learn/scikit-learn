@@ -140,7 +140,8 @@ plot_partial_dependence(gbdt_cst, X, features=[0],
     line_kw={'linewidth': 4, 'label': 'constrained'}, ax=disp.axes_)
 disp.axes_[0, 0].plot(X[:, 0], y, 'o', alpha=.5, zorder=-1, label='samples')
 disp.axes_[0, 0].set_ylim(-3, 3); disp.axes_[0, 0].set_xlim(-1, 1)
-plt.legend(); plt.show()
+plt.legend()
+plt.show()
 
 ##############################################################################
 # Sample-weight support for Lasso and ElasticNet
