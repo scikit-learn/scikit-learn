@@ -37,7 +37,6 @@ from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
-from ._classification import accuracy_score
 
 
 def auc(x, y):
@@ -1525,10 +1524,10 @@ def top_k_accuracy_score(y_true, y_score, k=2, normalize=True,
         n_classes = len(classes)
 
         if n_classes != y_score_n_col:
-                raise ValueError(
-                    f"Number of classes in 'y_true' ({n_classes}) not equal "
-                    f"to the number of columns in 'y_score' ({y_score_n_col})."
-                )
+            raise ValueError(
+                f"Number of classes in 'y_true' ({n_classes}) not equal "
+                f"to the number of columns in 'y_score' ({y_score_n_col})."
+            )
     else:
         labels = column_or_1d(labels)
         classes = _encode(labels)
