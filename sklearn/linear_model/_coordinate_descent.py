@@ -1152,6 +1152,16 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
         self.selection = selection
 
+    @abstractmethod
+    def _get_model(self):
+        """Model to be fitted after the best alpha has been determined."""
+        return
+
+    @abstractmethod
+    def _is_multitask(self):
+        """Bool indicating if the class is meant for mutidimensional target."""
+        return
+
     def fit(self, X, y):
         """Fit linear model with coordinate descent
 
@@ -1193,7 +1203,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                                                             check_y_params))
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
-                   not np.may_share_memory(reference_to_old_X.data, X.data)):
+                        not np.may_share_memory(reference_to_old_X.data, X.data)):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
@@ -1216,19 +1226,10 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
 
-        if hasattr(self, 'l1_ratio'):
-            model_str = 'ElasticNet'
-        else:
-            model_str = 'Lasso'
-
-        if isinstance(self, ElasticNetCV) or isinstance(self, LassoCV):
-            if model_str == 'ElasticNet':
-                model = ElasticNet()
-            else:
-                model = Lasso()
+        if not self._is_multitask():
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
-                                 "MultiTask%sCV" % (model_str))
+                                 "MultiTask%s" % self.__class__.__name__)
             y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
@@ -1236,11 +1237,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                                 "passed")
             elif y.ndim == 1:
                 raise ValueError("For mono-task outputs, use "
-                                 "%sCV" % (model_str))
-            if model_str == 'ElasticNet':
-                model = MultiTaskElasticNet()
-            else:
-                model = MultiTaskLasso()
+                                 "%sCV" % self.__class__.__name__[9:])
+
+        model = self._get_model()
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
@@ -1507,6 +1506,12 @@ class LassoCV(RegressorMixin, LinearModelCV):
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
 
+    def _get_model(self):
+        return Lasso()
+
+    def _is_multitask(self):
+        return False
+
     def _more_tags(self):
         return {'multioutput': False}
 
@@ -1714,6 +1719,12 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+
+    def _get_model(self):
+        return ElasticNet()
+
+    def _is_multitask(self):
+        return False
 
     def _more_tags(self):
         return {'multioutput': False}
@@ -2222,6 +2233,12 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.random_state = random_state
         self.selection = selection
 
+    def _get_model(self):
+        return MultiTaskElasticNet()
+
+    def _is_multitask(self):
+        return True
+
     def _more_tags(self):
         return {'multioutput_only': True}
 
@@ -2385,6 +2402,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+    def _get_model(self):
+        return MultiTaskLasso()
+
+    def _is_multitask(self):
+        return True
 
     def _more_tags(self):
         return {'multioutput_only': True}
