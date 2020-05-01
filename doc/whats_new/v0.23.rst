@@ -9,6 +9,10 @@ Version 0.23.0
 
 **In Development**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
+
 
 .. include:: changelog_legend.inc
 
@@ -103,9 +107,9 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
-- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
-  optimized implementation. Parallelism is now over the data instead of over
-  initializations allowing better scalability. :pr:`11950` by
+- |Efficiency| |MajorFeature| The critical parts of :class:`cluster.KMeans`
+  have a more optimized implementation. Parallelism is now over the data
+  instead of over initializations allowing better scalability. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`cluster.KMeans` now supports sparse data when
@@ -123,6 +127,10 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`cluster.AgglomerativeCluClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 - |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
   :class:`cluster.SpectralCoclustering` and
@@ -234,7 +242,7 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
   constraints, useful when features are supposed to have a positive/negative
   effect on the target. :pr:`15582` by `Nicolas Hug`_.
@@ -340,9 +348,10 @@ Changelog
   :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
   and `Olivier Grisel`_.
 
-- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model.Lasso` for dense feature matrix `X`.
-  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |MajorFeature| Support of `sample_weight` in
+  :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` for dense
+  feature matrix `X`. :pr:`15436` by :user:`Christian Lorentzen
+  <lorentzenchr>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
@@ -567,8 +576,11 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Feature| Adds :func:`utils.estimator_html_repr` for returning a
-  HTML representation of an estimator. :pr:`14180` by `Thomas Fan`_.
+- |MajorFeature| Estimators can now be displayed with a rich html
+  representation. This can be enabled in Jupyter notebooks by setting
+  `display='diagram'` in :func:`~sklearn.set_config`. The raw html can be
+  returned by using :func:`utils.estimator_html_repr`.
+  :pr:`14180` by `Thomas Fan`_.
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
@@ -597,13 +609,6 @@ Changelog
 
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
-
-:mod:`sklearn.cluster`
-......................
-
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
-  distance matrix is not square and `affinity=precomputed`.
-  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 Miscellaneous
 .............
