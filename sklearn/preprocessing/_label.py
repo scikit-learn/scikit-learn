@@ -34,46 +34,8 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
-    # only used in _encode below, see docstring there for details
-    if uniques is None:
-        if encode:
-            uniques, encoded = np.unique(values, return_inverse=True)
-            return uniques, encoded
-        else:
-            # unique sorts
-            return np.unique(values)
-    if encode:
-        if check_unknown:
-            diff = _encode_check_unknown(values, uniques)
-            if diff:
-                raise ValueError("y contains previously unseen labels: %s"
-                                 % str(diff))
-        encoded = np.searchsorted(uniques, values)
-        return uniques, encoded
-    else:
-        return uniques
-
-
-def _encode_python(values, uniques=None, encode=False):
-    # only used in _encode below, see docstring there for details
-    if uniques is None:
-        uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-    if encode:
-        table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
-        return uniques, encoded
-    else:
-        return uniques
-
-
-def _encode(values, uniques=None, encode=False, check_unknown=True):
-    """Helper function to factorize (find uniques) and encode values.
+def _encode(values, *, uniques, check_unknown=True):
+    """Helper function encode values.
 
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
@@ -86,12 +48,10 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     ----------
     values : array
         Values to factorize or encode.
-    uniques : array, optional
-        If passed, uniques are not determined from passed values (this
+    uniques : array
+        Uniques are not determined from passed values (this
         can be because the user specified categories, or because they
         already have been determined in fit).
-    encode : bool, default False
-        If True, also encode the values into integer codes based on `uniques`.
     check_unknown : bool, default True
         If True, check for values in ``values`` that are not in ``unique``
         and raise an error. This is ignored for object dtype, and treated as
@@ -101,25 +61,67 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
 
     Returns
     -------
-    uniques
-        If ``encode=False``. The unique values are sorted if the `uniques`
-        parameter was None (and thus inferred from the data).
-    (uniques, encoded)
-        If ``encode=True``.
-
+    encoded : ndarray
+        Encoded values
     """
     if values.dtype == object:
+        table = {val: i for i, val in enumerate(uniques)}
         try:
-            res = _encode_python(values, uniques, encode)
-        except TypeError:
-            types = sorted(t.__qualname__
-                           for t in set(type(v) for v in values))
-            raise TypeError("Encoders require their input to be uniformly "
-                            f"strings or numbers. Got {types}")
-        return res
+            return np.array([table[v] for v in values])
+        except KeyError as e:
+            raise ValueError(f"y contains previously unseen labels: {str(e)}")
     else:
-        return _encode_numpy(values, uniques, encode,
-                             check_unknown=check_unknown)
+        if check_unknown:
+            diff = _encode_check_unknown(values, uniques)
+            if diff:
+                raise ValueError(f"y contains previously unseen labels: "
+                                 f"{str(diff)}")
+        return np.searchsorted(uniques, values)
+
+
+def _unique_python(values, *, return_inverse):
+    # Only used in _uniques below, see docstring there for details
+    try:
+        uniques = sorted(set(values))
+        uniques = np.array(uniques, dtype=values.dtype)
+    except TypeError:
+        types = sorted(t.__qualname__
+                       for t in set(type(v) for v in values))
+        raise TypeError("Encoders require their input to be uniformly "
+                        f"strings or numbers. Got {types}")
+
+    ret = (uniques, )
+
+    if return_inverse:
+        table = {val: i for i, val in enumerate(uniques)}
+        inverse = np.array([table[v] for v in values])
+        ret += (inverse, )
+
+    if len(ret) == 1:
+        ret = ret[0]
+
+    return ret
+
+
+def _unique(values, *, return_inverse=False):
+    """Helper function to find uniques with support for python objects.
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+
+    Parameters
+    ----------
+    unique : ndarray
+        The sorted uniique values
+
+    unique_inverse : ndarray
+        The indicies to reconstruct the original array from the unique array.
+        Only provided if `return_inverse` is True.
+    """
+    if values.dtype == object:
+        return _unique_python(values, return_inverse=return_inverse)
+    # numerical
+    return np.unique(values, return_inverse=return_inverse)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -237,7 +239,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _encode(y)
+        self.classes_ = _unique(y)
         return self
 
     def fit_transform(self, y):
@@ -253,7 +255,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        self.classes_, y = _encode(y, encode=True)
+        self.classes_, y = _unique(y, return_inverse=True)
         return y
 
     def transform(self, y):
@@ -274,8 +276,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         if _num_samples(y) == 0:
             return np.array([])
 
-        _, y = _encode(y, uniques=self.classes_, encode=True)
-        return y
+        return _encode(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

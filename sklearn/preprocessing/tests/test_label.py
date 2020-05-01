@@ -24,6 +24,7 @@ from sklearn.preprocessing._label import label_binarize
 from sklearn.preprocessing._label import _inverse_binarize_thresholding
 from sklearn.preprocessing._label import _inverse_binarize_multiclass
 from sklearn.preprocessing._label import _encode
+from sklearn.preprocessing._label import _unique
 
 from sklearn import datasets
 
@@ -626,12 +627,9 @@ def test_inverse_binarize_multiclass():
           np.array(['a', 'b', 'c']))],
         ids=['int64', 'object', 'str'])
 def test_encode_util(values, expected):
-    uniques = _encode(values)
+    uniques = _unique(values)
     assert_array_equal(uniques, expected)
-    uniques, encoded = _encode(values, encode=True)
-    assert_array_equal(uniques, expected)
-    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
-    _, encoded = _encode(values, uniques, encode=True)
+    encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
 
@@ -643,14 +641,14 @@ def test_encode_check_unknown():
     # Default is True, raise error
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=True)
+        _encode(values, uniques=uniques, check_unknown=True)
 
     # dont raise error if False
-    _encode(values, uniques, encode=True, check_unknown=False)
+    _encode(values, uniques=uniques, check_unknown=False)
 
     # parameter is ignored for object dtype
     uniques = np.array(['a', 'b', 'c'], dtype=object)
     values = np.array(['a', 'b', 'c', 'd'], dtype=object)
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=False)
+        _encode(values, uniques=uniques, check_unknown=False)
