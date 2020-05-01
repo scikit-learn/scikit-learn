@@ -1203,7 +1203,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                                                             check_y_params))
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
-                        not np.may_share_memory(reference_to_old_X.data, X.data)):
+                   not np.may_share_memory(reference_to_old_X.data, X.data)):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
