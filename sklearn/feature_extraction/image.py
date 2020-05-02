@@ -349,6 +349,8 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     The resulting patches are allocated in a dedicated array.
 
+    Returns the patches in row-major order from the original 2D image.
+
     Read more in the :ref:`User Guide <image_feature_extraction>`.
 
     Parameters
@@ -364,7 +366,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     max_patches : int or float, default=None
         The maximum number of patches to extract. If `max_patches` is a float
         between 0 and 1, it is taken to be a proportion of the total number
-        of patches.
+        of patches. If max_patches is None, all patches are returned.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator used for random sampling when
