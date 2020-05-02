@@ -14,8 +14,8 @@ License: BSD 3 clause
 import warnings
 import numpy as np
 
-from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -203,10 +203,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
     """
-
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
-                 metric_params=None, cluster_method='xi', eps=None, xi=0.05,
-                 predecessor_correction=True, min_cluster_size=None,
+    @_deprecate_positional_args
+    def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
+                 p=2, metric_params=None, cluster_method='xi', eps=None,
+                 xi=0.05, predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
         self.max_eps = max_eps
         self.min_samples = min_samples
@@ -244,7 +244,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, dtype=np.float)
+        X = self._validate_data(X, dtype=np.float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
@@ -529,7 +529,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
             # in the dict params
             _params['p'] = p
         dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                   metric, n_jobs=None,
+                                   metric=metric, n_jobs=None,
                                    **_params).ravel()
 
     rdists = np.maximum(dists, core_distances_[point_index])

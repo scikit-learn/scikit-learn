@@ -25,7 +25,6 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
 
@@ -1123,14 +1122,6 @@ def test_sample_weight_invalid():
     sample_weight = np.array(0)
     expected_err = r"Singleton.* cannot be considered a valid collection"
     with pytest.raises(TypeError, match=expected_err):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(101)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(99)
-    with pytest.raises(ValueError):
         clf.fit(X, y, sample_weight=sample_weight)
 
 

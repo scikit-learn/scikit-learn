@@ -1,5 +1,0 @@
-pylint:
-  disable:
-    - unpacking-non-sequence
-ignore-paths:
-    - sklearn/externals

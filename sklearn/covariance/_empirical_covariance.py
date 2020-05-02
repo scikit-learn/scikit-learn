@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
 from ..metrics.pairwise import pairwise_distances
+from ..utils.validation import _deprecate_positional_args
 
 
 def log_likelihood(emp_cov, precision):
@@ -78,6 +79,7 @@ def empirical_covariance(X, assume_centered=False):
            [0.25, 0.25, 0.25]])
     """
     X = np.asarray(X)
+
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
 
@@ -142,7 +144,8 @@ class EmpiricalCovariance(BaseEstimator):
     array([0.0622..., 0.0193...])
 
     """
-    def __init__(self, store_precision=True, assume_centered=False):
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
 
@@ -198,7 +201,7 @@ class EmpiricalCovariance(BaseEstimator):
         -------
         self : object
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

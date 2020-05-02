@@ -459,7 +459,11 @@ In the binary case, balanced accuracy is equal to the arithmetic mean of
 (true positive rate) and `specificity
 <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
 rate), or the area under the ROC curve with binary predictions rather than
-scores.
+scores:
+
+.. math::
+
+   \texttt{balanced-accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )
 
 If the classifier performs equally well on either class, this term reduces to
 the conventional accuracy (i.e., the number of correct predictions divided by

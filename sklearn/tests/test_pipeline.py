@@ -34,6 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 iris = load_iris()
 
@@ -1159,6 +1161,49 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
 
 
 def test_feature_union_fit_params():

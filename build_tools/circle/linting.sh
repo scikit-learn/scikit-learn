@@ -141,6 +141,8 @@ else
     check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
     check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
         --config ./examples/.flake8
+    # check code for unused imports
+    flake8 --exclude=sklearn/externals/ --select=F401 sklearn/ examples/
 fi
 echo -e "No problem detected by flake8\n"
 

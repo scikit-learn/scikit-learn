@@ -67,6 +67,8 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -426,12 +428,14 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
-    param_dict = {"C": 1.0}
+    param_dict = {"C": 1}
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'int'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
@@ -445,8 +449,10 @@ def test_grid_search_bad_param_grid():
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'str'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
@@ -1808,6 +1814,23 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_n_features_in():
+    # make sure grid search and random search delegate n_features_in to the
+    # best estimator
+    n_features = 4
+    X, y = make_classification(n_features=n_features)
+    gbdt = HistGradientBoostingClassifier()
+    param_grid = {'max_iter': [3, 4]}
+    gs = GridSearchCV(gbdt, param_grid)
+    rs = RandomizedSearchCV(gbdt, param_grid, n_iter=1)
+    assert not hasattr(gs, 'n_features_in_')
+    assert not hasattr(rs, 'n_features_in_')
+    gs.fit(X, y)
+    rs.fit(X, y)
+    assert gs.n_features_in_ == n_features
+    assert rs.n_features_in_ == n_features
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():

@@ -18,7 +18,7 @@ from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 from .utils import deprecated
-
+from .utils.validation import _deprecate_positional_args
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
@@ -98,8 +98,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     >>> dummy_clf.score(X, y)
     0.75
     """
-
-    def __init__(self, strategy="warn", random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="warn", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -155,6 +155,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
+
+        self.n_features_in_ = None  # No input validation is done for X
 
         check_consistent_length(X, y)
 
@@ -354,7 +356,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             return [np.log(p) for p in proba]
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        return {
+            'poor_score': True, 'no_validation': True,
+            '_xfail_checks': {
+                'check_methods_subset_invariance':
+                'fails for the predict method'
+            }
+        }
 
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
@@ -387,7 +395,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."
@@ -453,8 +462,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> dummy_regr.score(X, y)
     0.0
     """
-
-    def __init__(self, strategy="mean", constant=None, quantile=None):
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile
@@ -483,6 +492,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                              % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
+        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -551,6 +561,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -613,7 +625,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."
