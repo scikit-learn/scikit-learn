@@ -10,9 +10,9 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.linalg import pinv2, svd
-from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import _UnstableArchMixin
 from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
@@ -276,13 +276,37 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         p = X.shape[1]
         q = Y.shape[1]
 
-        max_n_components = min(n, p, q)  # see Wegelin page 12
-        # if not 1 <= self.n_components <= max_n_components:
-        if not 1 <= self.n_components <= p:
-            raise ValueError(
-                f"n_components({self.n_components}) should be no lower than "
-                f"1 and no greater than n_features={p}."
-            )
+        n_components = self.n_components
+        if self.deflation_mode == 'regression':
+            # With PLSRegression n_components is bounded by the rank of (X.T X)
+            # see Wegelin page 25
+            rank_upper_bound = p
+            if not 1 <= n_components <= rank_upper_bound:
+                # TODO: raise an error in 0.26
+                warnings.warn(
+                    f"As of version 0.24, n_components({n_components}) should "
+                    f"be in [1, n_features]."
+                    f"n_components={rank_upper_bound} will be used instead. "
+                    f"In version 0.26, an error will be raised.",
+                    FutureWarning
+                )
+                n_components = rank_upper_bound
+        else:
+            # With CCA and PLSCanonical, n_components is bounded by the rank of
+            # X and the rank of Y: see Wegelin page 12
+            rank_upper_bound = min(n, p, q)
+            if not 1 <= self.n_components <= rank_upper_bound:
+                # TODO: raise an error in 0.26
+                warnings.warn(
+                    f"As of version 0.24, n_components({n_components}) should "
+                    f"be in [1, min(n_features, n_targets)] = "
+                    f"[1, {rank_upper_bound}]. "
+                    f"n_components={rank_upper_bound} will be used instead. "
+                    f"In version 0.26, an error will be raised.",
+                    FutureWarning
+                )
+                n_components = rank_upper_bound
+
         if self.algorithm not in ("svd", "nipals"):
             raise ValueError("Got algorithm %s when only 'svd' "
                              "and 'nipals' are known" % self.algorithm)
@@ -299,19 +323,19 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             _center_scale_xy(X, Y, self.scale))
 
         # Results matrices
-        self.x_scores_ = np.zeros((n, self.n_components))
-        self.y_scores_ = np.zeros((n, self.n_components))
-        self.x_weights_ = np.zeros((p, self.n_components))
-        self.y_weights_ = np.zeros((q, self.n_components))
-        self.x_loadings_ = np.zeros((p, self.n_components))
-        self.y_loadings_ = np.zeros((q, self.n_components))
+        self.x_scores_ = np.zeros((n, n_components))
+        self.y_scores_ = np.zeros((n, n_components))
+        self.x_weights_ = np.zeros((p, n_components))
+        self.y_weights_ = np.zeros((q, n_components))
+        self.x_loadings_ = np.zeros((p, n_components))
+        self.y_loadings_ = np.zeros((q, n_components))
         self.n_iter_ = []
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
         # review from Wegelin. See below for a notation mapping from code to
         # paper.
         Y_eps = np.finfo(Yk.dtype).eps
-        for k in range(self.n_components):
+        for k in range(n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
                 # Yk constant
                 # That thing is raised with W2A and PLSSVD whenever target is
@@ -799,6 +823,113 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
 
+class CCA(_UnstableArchMixin, _PLS):
+    """CCA Canonical Correlation Analysis.
+
+    CCA inherits from PLS with mode="B" and deflation_mode="canonical".
+
+    Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    Parameters
+    ----------
+    n_components : int, (default 2).
+        number of components to keep.
+
+    scale : boolean, (default True)
+        whether to scale the data?
+
+    max_iter : an integer, (default 500)
+        the maximum number of iterations of the NIPALS inner loop
+
+    tol : non-negative real, default 1e-06.
+        the tolerance used in the iterative algorithm
+
+    copy : boolean
+        Whether the deflation be done on a copy. Let the default value
+        to True unless you don't care about side effects
+
+    Attributes
+    ----------
+    x_weights_ : array, [p, n_components]
+        X block weights vectors.
+
+    y_weights_ : array, [q, n_components]
+        Y block weights vectors.
+
+    x_loadings_ : array, [p, n_components]
+        X block loadings vectors.
+
+    y_loadings_ : array, [q, n_components]
+        Y block loadings vectors.
+
+    x_scores_ : array, [n_samples, n_components]
+        X scores.
+
+    y_scores_ : array, [n_samples, n_components]
+        Y scores.
+
+    x_rotations_ : array, [p, n_components]
+        X block to latents rotations.
+
+    y_rotations_ : array, [q, n_components]
+        Y block to latents rotations.
+
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
+
+    n_iter_ : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component.
+
+    Notes
+    -----
+    For each component k, find the weights u, v that maximizes
+    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
+
+    Note that it maximizes only the correlations between the scores.
+
+    The residual matrix of X (Xk+1) block is obtained by the deflation on the
+    current X score: x_score.
+
+    The residual matrix of Y (Yk+1) block is obtained by deflation on the
+    current Y score.
+
+    Examples
+    --------
+    >>> from sklearn.cross_decomposition import CCA
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> cca = CCA(n_components=1)
+    >>> cca.fit(X, Y)
+    CCA(n_components=1)
+    >>> X_c, Y_c = cca.transform(X, Y)
+
+    References
+    ----------
+
+    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
+    emphasis on the two-block case. Technical Report 371, Department of
+    Statistics, University of Washington, Seattle, 2000.
+
+    In french but still a reference:
+    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
+    Editions Technic.
+
+    See also
+    --------
+    PLSCanonical
+    PLSSVD
+    """
+
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
+                 max_iter=500, tol=1e-06, copy=True):
+        super().__init__(n_components=n_components, scale=scale,
+                         deflation_mode="canonical", mode="B",
+                         norm_y_weights=True, algorithm="nipals",
+                         max_iter=max_iter, tol=tol, copy=copy)
+
+
 class PLSSVD(TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
@@ -896,10 +1027,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Y = Y.reshape(-1, 1)
 
         # we'll compute the SVD of the cross-covariance matrix = X.T.dot(Y)
-        # This matrix rank is at most min(n_features, n_targets) so
+        # This matrix rank is at most min(n_samples, n_features, n_targets) so
         # n_components cannot be bigger than that.
         n_components = self.n_components
-        rank_upper_bound = min(X.shape[1], Y.shape[1])
+        rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
         if not 1 <= n_components <= rank_upper_bound:
             # TODO: raise an error in 0.26
             warnings.warn(

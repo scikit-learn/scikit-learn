@@ -429,30 +429,35 @@ def test_scale_and_stability(Est):
         assert_array_almost_equal(Y_s_score, Y_score)
 
 
-@pytest.mark.parametrize('Est', (PLSCanonical, PLSRegression))
+@pytest.mark.parametrize('Est', (PLSSVD, PLSCanonical, CCA))
 @pytest.mark.parametrize('n_components', (0, 4))
-def test_pls_errors(Est, n_components):
-    d = load_linnerud()
-    X = d.data
-    Y = d.target
-    est = Est(n_components=n_components)
-    with pytest.raises(ValueError, match="should be no lower than 1 and "):
-        est.fit(X, Y)
-
-
-@pytest.mark.parametrize('n_components', (0, 4))
-def test_plssvd_n_components(n_components):
-    # n_components should be in [1, min(n_features, n_targets)]
+def test_n_components_bounds(Est, n_components):
+    # n_components should be in [1, min(n_samples, n_features, n_targets)]
     # TODO: catch error instead of warning in 0.26
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = PLSSVD(n_components=n_components)
+    est = Est(n_components=n_components)
     with pytest.warns(FutureWarning,
                       match="n_components=3 will be used instead"):
         est.fit(X, Y)
         # make sure upper bound of rank is used as a fallback
         assert est.transform(X).shape[1] == 3
+
+
+@pytest.mark.parametrize('n_components', (0, 6))
+def test_n_components_bounds_pls_regression(n_components):
+    # For PLSRegression, the upper bound for n_components is n_features
+    # TODO: catch error instead of warning in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = PLSRegression(n_components=n_components)
+    with pytest.warns(FutureWarning,
+                      match="n_components=5 will be used instead"):
+        est.fit(X, Y)
+        # make sure upper bound of rank is used as a fallback
+        assert est.transform(X).shape[1] == 5
 
 
 def test_plssvd_scores_deprected():
