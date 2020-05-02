@@ -118,6 +118,9 @@ and tasks.
 
 **Structured learning**
 
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ Machine learning 
+  toolkit for time-series data.
+
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
 
 - `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification
