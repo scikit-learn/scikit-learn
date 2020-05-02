@@ -127,8 +127,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None, n_jobs=None,
-                 pre_dispatch='2*n_jobs', verbose=0):
+    def __init__(self, base_estimator=None, *, method='sigmoid',
+                 cv=None, n_jobs=None, pre_dispatch='2*n_jobs',
+                 verbose=0):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -199,26 +200,32 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
 
-            parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, pre_dispatch=self.pre_dispatch)
+            parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                                pre_dispatch=self.pre_dispatch)
 
             with parallel:
-                def _fit_calibrated_classifier(estimator, X, y, train, test, sample_weight=None):
+                def _fit_calibrated_classifier(estimator, X, y, train, test,
+                                               sample_weight=None):
 
-                    if sample_weight is not None and base_estimator_supports_sw:
-                        estimator.fit(X[train], y[train], sample_weight=sample_weight[train])
+                    if sample_weight is not None \
+                            and base_estimator_supports_sw:
+                        estimator.fit(X[train], y[train],
+                                      sample_weight=sample_weight[train])
                     else:
                         estimator.fit(X[train], y[train])
 
                     calibrated_classifier = _CalibratedClassifier(
                         estimator, method=self.method, classes=self.classes_)
                     sw = None if sample_weight is None else sample_weight[test]
-                    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
+                    calibrated_classifier.fit(X[test], y[test],
+                                              sample_weight=sw)
                     return calibrated_classifier
 
-                self.calibrated_classifiers_ = parallel(delayed(_fit_calibrated_classifier)(clone(base_estimator),
-                                                       X, y,
-                                                       train=train, test=test,
-                                                       sample_weight=sample_weight)
+                self.calibrated_classifiers_ = parallel(delayed(
+                    _fit_calibrated_classifier)(clone(base_estimator),
+                                                X, y,
+                                                train=train, test=test,
+                                                sample_weight=sample_weight)
                                for train, test
                                in cv.split(X, y))
 
