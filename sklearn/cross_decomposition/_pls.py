@@ -38,22 +38,28 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
     y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
     x_weights_old = 100  # init to big value for first convergence check
 
+    if mode == 'B':
+        # Precompute pseudo inverse matrices
+        # Basically: X_pinv = (X.T X)^-1 X.T
+        # Which requires inverting a (n_features, n_features) matrix.
+        # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
+        # B) will be unstable if n_features > n_samples or n_targets >
+        # n_samples
+        X_pinv = pinv2(X, check_finite=False)
+        Y_pinv = pinv2(Y, check_finite=False)
+
     for i in range(max_iter):
         if mode == "B":
-            X_pinv = pinv2(X, check_finite=False)
             x_weights = np.dot(X_pinv, y_score)
         else:
-            # Mode A regress each X column on y_score
             x_weights = np.dot(X.T, y_score) / np.dot(y_score, y_score)
 
         x_weights /= np.sqrt(np.dot(x_weights, x_weights)) + eps
         x_score = np.dot(X, x_weights)
 
         if mode == "B":
-            Y_pinv = pinv2(Y, check_finite=False)
             y_weights = np.dot(Y_pinv, x_score)
         else:
-            # Mode A regress each Y column on x_score
             y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
 
         if norm_y_weights:
@@ -270,6 +276,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         p = X.shape[1]
         q = Y.shape[1]
 
+        max_n_components = min(n, p, q)  # see Wegelin page 12
+        # if not 1 <= self.n_components <= max_n_components:
         if not 1 <= self.n_components <= p:
             raise ValueError(
                 f"n_components({self.n_components}) should be no lower than "
@@ -300,14 +308,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         self.n_iter_ = []
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
-        # review from Wegelin. Brief notation mapping from code to paper:
-        # k: r
-        # x_weights: u
-        # y_weights: v
-        # x_scores: xi (the letter xi)
-        # y_scores: omega
-        # x_loadings: gamma
-        # y_loadings: delta
+        # review from Wegelin. See below for a notation mapping from code to
+        # paper.
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):

@@ -22,23 +22,6 @@ def assert_matrix_orthogonal(M):
     assert_array_almost_equal(K, np.diag(np.diag(K)))
 
 
-def test_nipals_vs_svd():
-    # Make sure nipals and svd algorithms are equivalent
-    d = load_linnerud()
-    X = d.data
-    Y = d.target
-
-    pls_nipals = PLSCanonical(algorithm='nipals', n_components=X.shape[1])
-    pls_svd = PLSCanonical(algorithm="svd", n_components=X.shape[1])
-    pls_nipals.fit(X, Y)
-    pls_svd.fit(X, Y)
-
-    for attr in ('x_loadings_', 'y_loadings_', 'x_weights_', 'y_weights_',
-                 'x_scores_', 'y_scores_'):
-        assert_allclose(getattr(pls_nipals, attr), getattr(pls_svd, attr),
-                        rtol=1e-2)
-
-
 def test_pls_canonical_basics():
     # Basic checks for PLSCanonical
     d = load_linnerud()
