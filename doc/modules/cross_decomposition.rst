@@ -67,10 +67,6 @@ PLSSVD
    Can only transform data, not predict
 
 
-So norm_y_weights = (deflation == canonical)???
-
-2 block vs.... ????? I think they're all 2-block
-
 With a single output (make_regression, bigger or lower n_features):
 - PLSRegression: OK, good score
 - PLSCanonical: warning, bad score
