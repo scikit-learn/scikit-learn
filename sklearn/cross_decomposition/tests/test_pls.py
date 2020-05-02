@@ -475,6 +475,16 @@ def test_plssvd_scores_deprected():
         assert_allclose(est.y_scores_, est.transform(X, Y)[1])
 
 
+@pytest.mark.parametrize('Est', (PLSRegression, PLSCanonical, CCA))
+def test_norm_y_weights_deprecation(Est):
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = Est().fit(X, Y)
+    with pytest.warns(FutureWarning, match="norm_y_weights was deprecated"):
+        est.norm_y_weights
+
+
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (100, 200)])
 @pytest.mark.parametrize('seed', range(10))
 def test_singular_value_helpers(n_samples, n_features, seed):

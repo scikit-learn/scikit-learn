@@ -239,12 +239,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     @abstractmethod
     def __init__(self, n_components=2, *, scale=True,
                  deflation_mode="regression",
-                 mode="A", algorithm="nipals", norm_y_weights=False,
-                 max_iter=500, tol=1e-06, copy=True):
+                 mode="A", algorithm="nipals", max_iter=500, tol=1e-06,
+                 copy=True):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
-        self.norm_y_weights = norm_y_weights
         self.scale = scale
         self.algorithm = algorithm
         self.max_iter = max_iter
@@ -308,15 +307,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 n_components = rank_upper_bound
 
         if self.algorithm not in ("svd", "nipals"):
-            raise ValueError("Got algorithm %s when only 'svd' "
-                             "and 'nipals' are known" % self.algorithm)
-        if self.algorithm == "svd" and self.mode == "B":
-            raise ValueError('Incompatible configuration: mode B is not '
-                             'implemented with svd algorithm')
-        if self.deflation_mode not in ["canonical", "regression"]:
-            raise ValueError('The deflation mode is unknown')
+            raise ValueError("algorithm should be 'svd' or 'nipals', got "
+                             f"{self.algorithm}.")
 
-        assert self.norm_y_weights == (self.deflation_mode == 'canonical')
+        self._norm_y_weights = (self.deflation_mode == 'canonical')  # 0.26
+        norm_y_weights = self._norm_y_weights
 
         # Scale (in place)
         Xk, Yk, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
@@ -336,12 +331,6 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # paper.
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(n_components):
-            if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
-                # Yk constant
-                # That thing is raised with W2A and PLSSVD whenever target is
-                # single output??????
-                warnings.warn('Y residual constant at iteration %s' % k)
-                break
             # Find first left and right singular vectors of the X.T.dot(Y)
             # cross-covariance matrix.
             if self.algorithm == "nipals":
@@ -352,7 +341,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 x_weights, y_weights, n_iter_ = \
                     _get_first_singular_vectors_power_method(
                         Xk, Yk, mode=self.mode, max_iter=self.max_iter,
-                        tol=self.tol, norm_y_weights=self.norm_y_weights)
+                        tol=self.tol, norm_y_weights=norm_y_weights)
                 self.n_iter_.append(n_iter_)
 
             elif self.algorithm == "svd":
@@ -363,7 +352,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
             # compute scores, i.e. the projections of X and Y
             x_scores = np.dot(Xk, x_weights)
-            if self.norm_y_weights:
+            if norm_y_weights:
                 y_ss = 1
             else:
                 y_ss = np.dot(y_weights, y_weights)
@@ -529,6 +518,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         """
         return self.fit(X, y).transform(X, y)
 
+    @deprecated("Attribute norm_y_weights was deprecated in version 0.24 and "
+                "will be removed in 0.26.")
+    @property
+    def norm_y_weights(self):
+        return self._norm_y_weights
+
     def _more_tags(self):
         return {'poor_score': True,
                 'requires_y': False}
@@ -670,7 +665,7 @@ class PLSRegression(_PLS):
         super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
-            norm_y_weights=False, algorithm='nipals', max_iter=max_iter,
+            algorithm='nipals', max_iter=max_iter,
             tol=tol, copy=copy)
 
 
@@ -819,7 +814,7 @@ class PLSCanonical(_PLS):
         super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="canonical", mode="A",
-            norm_y_weights=True, algorithm=algorithm,
+            algorithm=algorithm,
             max_iter=max_iter, tol=tol, copy=copy)
 
 
@@ -926,8 +921,8 @@ class CCA(_UnstableArchMixin, _PLS):
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
                          deflation_mode="canonical", mode="B",
-                         norm_y_weights=True, algorithm="nipals",
-                         max_iter=max_iter, tol=tol, copy=copy)
+                         algorithm="nipals", max_iter=max_iter, tol=tol,
+                         copy=copy)
 
 
 class PLSSVD(TransformerMixin, BaseEstimator):
