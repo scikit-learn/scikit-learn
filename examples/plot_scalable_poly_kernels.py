@@ -92,7 +92,7 @@ print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 # We repeat the experiment 5 times to compensate for the stochastic nature
 # of :class:`PolynomialSampler`.
 
-n_runs = 5
+n_runs = 3
 for n_components in [250, 500, 1000, 2000]:
 
     ps_lsvm_time = 0
