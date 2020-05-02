@@ -317,17 +317,16 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Xk, Yk, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
             _center_scale_xy(X, Y, self.scale))
 
-        # Results matrices
-        self.x_scores_ = np.zeros((n, n_components))
-        self.y_scores_ = np.zeros((n, n_components))
-        self.x_weights_ = np.zeros((p, n_components))
-        self.y_weights_ = np.zeros((q, n_components))
-        self.x_loadings_ = np.zeros((p, n_components))
-        self.y_loadings_ = np.zeros((q, n_components))
+        self.x_weights_ = np.zeros((p, n_components))  # U
+        self.y_weights_ = np.zeros((q, n_components))  # V
+        self._x_scores = np.zeros((n, n_components))  # Xi
+        self._y_scores = np.zeros((n, n_components))  # Omega
+        self.x_loadings_ = np.zeros((p, n_components))  # Gamma
+        self.y_loadings_ = np.zeros((q, n_components))  # Delta
         self.n_iter_ = []
 
         # This whole thing corresponds to the algorithm in section 4.1 of the
-        # review from Wegelin. See below for a notation mapping from code to
+        # review from Wegelin. See above for a notation mapping from code to
         # paper.
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(n_components):
@@ -371,12 +370,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
                 Yk -= np.outer(x_scores, y_loadings)
 
-            self.x_weights_[:, k] = x_weights  # U
-            self.y_weights_[:, k] = y_weights  # V
-            self.x_scores_[:, k] = x_scores  # Xi
-            self.y_scores_[:, k] = y_scores  # Omega
-            self.x_loadings_[:, k] = x_loadings  # Gamma
-            self.y_loadings_[:, k] = y_loadings  # Delta
+            self.x_weights_[:, k] = x_weights
+            self.y_weights_[:, k] = y_weights
+            self._x_scores[:, k] = x_scores
+            self._y_scores[:, k] = y_scores
+            self.x_loadings_[:, k] = x_loadings
+            self.y_loadings_[:, k] = y_loadings
 
         # X was approximated as Xi . Gamma.T + X_(R+1)
         # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
@@ -523,6 +522,31 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     @property
     def norm_y_weights(self):
         return self._norm_y_weights
+
+    @property
+    def x_scores_(self):
+        # TODO: raise error in 0.26 instead
+        if not isinstance(self, PLSRegression):
+            pass
+            warnings.warn(
+                "Attribute x_scores_ was deprecated in version 0.24 and "
+                "will be removed in 0.26. Use est.transform(X) on the "
+                "training data instead.",
+                FutureWarning
+            )
+        return self._x_scores
+
+    @property
+    def y_scores_(self):
+        # TODO: raise error in 0.26 instead
+        if not isinstance(self, PLSRegression):
+            warnings.warn(
+                "Attribute y_scores_ was deprecated in version 0.24 and "
+                "will be removed in 0.26. Use est.transform(X) on the "
+                "training data instead.",
+                FutureWarning
+            )
+        return self._y_scores
 
     def _more_tags(self):
         return {'poor_score': True,

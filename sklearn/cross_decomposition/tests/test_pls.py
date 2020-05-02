@@ -33,13 +33,13 @@ def test_pls_canonical_basics():
 
     assert_matrix_orthogonal(pls.x_weights_)
     assert_matrix_orthogonal(pls.y_weights_)
-    assert_matrix_orthogonal(pls.x_scores_)
-    assert_matrix_orthogonal(pls.y_scores_)
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
 
     # Check X = TP' and Y = UQ'
-    T = pls.x_scores_
+    T = pls._x_scores
     P = pls.x_loadings_
-    U = pls.y_scores_
+    U = pls._y_scores
     Q = pls.y_loadings_
     # Need to scale first
     Xc, Yc, x_mean, y_mean, x_std, y_std = _center_scale_xy(
@@ -49,10 +49,10 @@ def test_pls_canonical_basics():
 
     # Check that rotations on training data lead to scores
     Xt = pls.transform(X)
-    assert_array_almost_equal(Xt, pls.x_scores_)
+    assert_array_almost_equal(Xt, pls._x_scores)
     Xt, Yt = pls.transform(X, Y)
-    assert_array_almost_equal(Xt, pls.x_scores_)
-    assert_array_almost_equal(Yt, pls.y_scores_)
+    assert_array_almost_equal(Xt, pls._x_scores)
+    assert_array_almost_equal(Yt, pls._y_scores)
 
     # Check that inverse_transform works
     X_back = pls.inverse_transform(Xt)
@@ -202,8 +202,8 @@ def test_sanity_check_pls_canonical():
     assert_matrix_orthogonal(pls.x_weights_)
     assert_matrix_orthogonal(pls.y_weights_)
 
-    assert_matrix_orthogonal(pls.x_scores_)
-    assert_matrix_orthogonal(pls.y_scores_)
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
 
 
 def test_sanity_check_pls_canonical_random():
@@ -300,23 +300,23 @@ def test_sanity_check_pls_canonical_random():
     assert_matrix_orthogonal(pls.x_weights_)
     assert_matrix_orthogonal(pls.y_weights_)
 
-    assert_matrix_orthogonal(pls.x_scores_)
-    assert_matrix_orthogonal(pls.y_scores_)
+    assert_matrix_orthogonal(pls._x_scores)
+    assert_matrix_orthogonal(pls._y_scores)
 
 
 def test_convergence_fail():
+    # Make sure ConvergenceWarning is raised if max_iter is too small
     d = load_linnerud()
     X = d.data
     Y = d.target
-    pls_nipals = PLSCanonical(n_components=X.shape[1],
-                              max_iter=2, tol=1e-10)
+    pls_nipals = PLSCanonical(n_components=X.shape[1], max_iter=2)
     with pytest.warns(ConvergenceWarning):
         pls_nipals.fit(X, Y)
 
 
 @pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 0.26
 @pytest.mark.parametrize('Est', (PLSSVD, PLSRegression, PLSCanonical))
-def test_n_components(Est):
+def test_attibutes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
     d = load_linnerud()
     X = d.data
@@ -461,14 +461,16 @@ def test_n_components_bounds_pls_regression(n_components):
         assert est.transform(X).shape[1] == 5
 
 
-def test_plssvd_scores_deprected():
+@pytest.mark.parametrize('Est', (PLSSVD, CCA, PLSCanonical))
+def test_scores_deprecations(Est):
     # Make sure x_scores_ and y_scores_ are deprecated.
+    # It's not deprecated for PLSRegression because y_score_ is different from
+    # transform(Y_train)
     # TODO: remove attributes and test in 0.26
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = PLSSVD()
-    est.fit(X, Y)
+    est = Est().fit(X, Y)
     with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
         assert_allclose(est.x_scores_, est.transform(X))
     with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
@@ -501,3 +503,15 @@ def test_singular_value_helpers(n_samples, n_features, seed):
     rtol = 1e-1
     assert_allclose(u1, u2, rtol=rtol)
     assert_allclose(v1, v2, rtol=rtol)
+
+
+def test_one_component_equivalence():
+    # PLSSVD, PLSRegression and PLSCanonical should all be equivalent when
+    # n_components is 1
+    X, Y = make_regression(100, 10, n_targets=5, random_state=0)
+    svd = PLSSVD(n_components=1).fit(X, Y).transform(X)
+    reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
+    canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
+
+    assert_allclose(svd, reg, rtol=1e-2)
+    assert_allclose(svd, canonical, rtol=1e-2)
