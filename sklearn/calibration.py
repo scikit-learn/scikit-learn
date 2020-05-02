@@ -12,6 +12,7 @@ from inspect import signature
 
 from math import log
 import numpy as np
+from joblib import delayed, Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -75,6 +76,32 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    pre_dispatch : int, or str, default=n_jobs
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A str, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -100,10 +127,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None, n_jobs=None,
+                 pre_dispatch='2*n_jobs', verbose=0):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -168,20 +199,28 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
 
-            for train, test in cv.split(X, y):
-                this_estimator = clone(base_estimator)
+            parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, pre_dispatch=self.pre_dispatch)
 
-                if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X[train], y[train],
-                                       sample_weight=sample_weight[train])
-                else:
-                    this_estimator.fit(X[train], y[train])
+            with parallel:
+                def _fit_calibrated_classifier(estimator, X, y, train, test, sample_weight=None):
 
-                calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_)
-                sw = None if sample_weight is None else sample_weight[test]
-                calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
-                self.calibrated_classifiers_.append(calibrated_classifier)
+                    if sample_weight is not None and base_estimator_supports_sw:
+                        estimator.fit(X[train], y[train], sample_weight=sample_weight[train])
+                    else:
+                        estimator.fit(X[train], y[train])
+
+                    calibrated_classifier = _CalibratedClassifier(
+                        estimator, method=self.method, classes=self.classes_)
+                    sw = None if sample_weight is None else sample_weight[test]
+                    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
+                    return calibrated_classifier
+
+                self.calibrated_classifiers_ = parallel(delayed(_fit_calibrated_classifier)(clone(base_estimator),
+                                                       X, y,
+                                                       train=train, test=test,
+                                                       sample_weight=sample_weight)
+                               for train, test
+                               in cv.split(X, y))
 
         return self
 
