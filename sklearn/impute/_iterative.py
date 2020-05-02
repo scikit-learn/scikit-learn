@@ -218,8 +218,8 @@ class IterativeImputer(_BaseImputer):
                  initial_strategy="mean",
                  imputation_order='ascending',
                  skip_complete=False,
-                 min_value=None,
-                 max_value=None,
+                 min_value=-np.inf,
+                 max_value=np.inf,
                  verbose=0,
                  random_state=None,
                  add_indicator=False):
