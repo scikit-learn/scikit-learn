@@ -84,5 +84,20 @@ tests about orthogonality and stuff
 PLS1 i.e. PLSReg with single target is a regularization technique similar to
 ridge.
 
-They should all be equivalent when n_component == 1 (wegelin). (maybe not CCA
-tho)
+tests todo:
+- xscores should be X_trans and same for y (at least for W2A)
+- scores should be orthogonal
+- The rank-one approximation matrices of X (and of Y) should be mutually
+  orthogonal (eq 3)
+- The rank-one approximations should be orthogonal to the residuals (eq 4)
+  not sure we can test that tho
+- all methods should be equivalent when n_component == 1 (wegelin). (maybe
+  not CCA tho)
+
+
+The inner loop algo and the param option should just be called "power method"
+or 'Wold' instead of nipals. See review p. 11
+
+Neither W2A or PLSSVD can do more iteration than min(n_features, n_targets)
+
+PLSSVD: XI.T OMEGA sohuld be diagonal (p.15)

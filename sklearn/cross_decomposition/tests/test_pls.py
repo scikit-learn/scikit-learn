@@ -441,7 +441,7 @@ def test_scale_and_stability(Est):
         assert_array_almost_equal(Y_s_score, Y_score)
 
 
-@pytest.mark.parametrize('Est', (PLSCanonical, PLSRegression, PLSSVD))
+@pytest.mark.parametrize('Est', (PLSCanonical, PLSRegression))
 @pytest.mark.parametrize('n_components', (0, 4))
 def test_pls_errors(Est, n_components):
     d = load_linnerud()
@@ -450,3 +450,32 @@ def test_pls_errors(Est, n_components):
     est = Est(n_components=n_components)
     with pytest.raises(ValueError, match="should be no lower than 1 and "):
         est.fit(X, Y)
+
+
+@pytest.mark.parametrize('n_components', (0, 4))
+def test_plssvd_n_components(n_components):
+    # n_components should be in [1, min(n_features, n_targets)]
+    # TODO: catch error instead of warning in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = PLSSVD(n_components=n_components)
+    with pytest.warns(FutureWarning,
+                      match="n_components=3 will be used instead"):
+        est.fit(X, Y)
+        # make sure upper bound of rank is used as a fallback
+        assert est.transform(X).shape[1] == 3
+
+
+def test_plssvd_scores_deprected():
+    # Make sure x_scores_ and y_scores_ are deprecated.
+    # TODO: remove attributes and test in 0.26
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 5)
+    Y = rng.randn(10, 3)
+    est = PLSSVD()
+    est.fit(X, Y)
+    with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
+        est.x_scores_
+    with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
+        est.y_scores_

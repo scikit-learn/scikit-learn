@@ -19,6 +19,7 @@ from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
+from ..utils.deprecation import deprecated
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -827,10 +828,12 @@ class PLSCanonical(_PLS):
 
 
 class PLSSVD(TransformerMixin, BaseEstimator):
-    """Partial Least Square SVD
+    """Partial Least Square SVD.
 
-    Simply perform a svd on the crosscovariance matrix: X'Y
-    There are no iterative deflation here.
+    This transformer simply performs a SVD on the crosscovariance matrix X'Y.
+    It is able to project both the training data `X` and the targets `Y`. The
+    training data X is projected on the left singular vectors, while the
+    targets are projected on the right singular vectors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -839,44 +842,55 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     Parameters
     ----------
     n_components : int, default 2
-        Number of components to keep.
+        The number of components to keep. Should be in `[1,
+        min(n_features, n_targets)]`.
 
     scale : boolean, default True
-        Whether to scale X and Y.
+        Whether to scale `X` and `Y`.
 
     copy : boolean, default True
-        Whether to copy X and Y, or perform in-place computations.
+        Whether to copy `X` and `Y` in fit before applying centering, and
+        potentially scaling. If False, these operations will be done inplace,
+        modifying both arrays.
 
     Attributes
     ----------
-    x_weights_ : array, [p, n_components]
-        X block weights vectors.
+    x_weights_ : ndarray of shape (n_features, n_components)
+        The left singular vectors of the SVD of the cross-covariance matrix.
+        Used to project `X` in `transform`.
 
-    y_weights_ : array, [q, n_components]
-        Y block weights vectors.
+    y_weights_ : ndarray of (n_targets, n_components)
+        The right singular vectors of the SVD of the cross-covariance matrix.
+        Used to project `X` in `transform`.
 
-    x_scores_ : array, [n_samples, n_components]
-        X scores.
+    x_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training samples.
 
-    y_scores_ : array, [n_samples, n_components]
-        Y scores.
+        .. deprecated:: 0.24
+           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
+
+    y_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training targets.
+
+        .. deprecated:: 0.24
+           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
 
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.cross_decomposition import PLSSVD
     >>> X = np.array([[0., 0., 1.],
-    ...     [1.,0.,0.],
-    ...     [2.,2.,2.],
-    ...     [2.,5.,4.]])
+    ...               [1., 0., 0.],
+    ...               [2., 2., 2.],
+    ...               [2., 5., 4.]])
     >>> Y = np.array([[0.1, -0.2],
-    ...     [0.9, 1.1],
-    ...     [6.2, 5.9],
-    ...     [11.9, 12.3]])
-    >>> plsca = PLSSVD(n_components=2)
-    >>> plsca.fit(X, Y)
-    PLSSVD()
-    >>> X_c, Y_c = plsca.transform(X, Y)
+    ...               [0.9, 1.1],
+    ...               [6.2, 5.9],
+    ...               [11.9, 12.3]])
+    >>> pls = PLSSVD(n_components=2).fit(X, Y)
+    >>> X_c, Y_c = pls.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
 
@@ -897,14 +911,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training samples
 
-        Y : array-like of shape (n_samples, n_targets)
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Targets
         """
-        # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = self._validate_data(X, dtype=np.float64, copy=self.copy,
                                 ensure_min_samples=2)
@@ -912,48 +923,71 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
-        if not 1 <= self.n_components <= X.shape[1]:
-            raise ValueError(
-                f"n_components({self.n_components}) should be no lower than "
-                f"1 and lower than no greater than n_features={X.shape[1]}."
+        # we'll compute the SVD of the cross-covariance matrix = X.T.dot(Y)
+        # This matrix rank is at most min(n_features, n_targets) so
+        # n_components cannot be bigger than that.
+        n_components = self.n_components
+        rank_upper_bound = min(X.shape[1], Y.shape[1])
+        if not 1 <= n_components <= rank_upper_bound:
+            # TODO: raise an error in 0.26
+            warnings.warn(
+                f"As of version 0.24, n_components({n_components}) should be "
+                f"in [1, min(n_features, n_targets)] = "
+                f"[1, {rank_upper_bound}]. "
+                f"n_components={rank_upper_bound} will be used instead. "
+                f"In version 0.26, an error will be raised.",
+                FutureWarning
             )
+            n_components = rank_upper_bound
 
-        # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
             _center_scale_xy(X, Y, self.scale))
-        # svd(X'Y)
-        C = np.dot(X.T, Y)
 
-        # The arpack svds solver only works if the number of extracted
-        # components is smaller than rank(X) - 1. Hence, if we want to extract
-        # all the components (C.shape[1]), we have to use another one. Else,
-        # let's use arpacks to compute only the interesting components.
-        if self.n_components >= np.min(C.shape):
-            U, s, V = svd(C, full_matrices=False)
-        else:
-            U, s, V = svds(C, k=self.n_components)
-        # Deterministic output
-        U, V = svd_flip(U, V)
-        V = V.T
-        self.x_scores_ = np.dot(X, U)
-        self.y_scores_ = np.dot(Y, V)
+        # Compute SVD of cross-covariance matrix
+        C = np.dot(X.T, Y)
+        U, s, Vt = svd(C, full_matrices=False)
+        U = U[:, :n_components]
+        Vt = Vt[:n_components]
+        U, Vt = svd_flip(U, Vt)
+        V = Vt.T
+
+        self._x_scores = np.dot(X, U)  # TODO: remove in 0.26
+        self._y_scores = np.dot(Y, V)  # TODO: remove in 0.26
         self.x_weights_ = U
         self.y_weights_ = V
         return self
 
+    @deprecated("Attribute x_scores_ was deprecated in version 0.24 and "
+                "will be removed in 0.26. Use est.transform(X) on the "
+                "training data instead.")
+    @property
+    def x_scores_(self):
+        return self._x_scores
+
+    @deprecated("Attribute y_scores_ was deprecated in version 0.24 and "
+                "will be removed in 0.26. Use est.transform(X, Y) on the "
+                "training data instead.")
+    @property
+    def y_scores_(self):
+        return self._y_scores
+
     def transform(self, X, Y=None):
         """
-        Apply the dimension reduction learned on the train data.
+        Apply the dimensionality reduction learned on the training data.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training samples
 
-        Y : array-like of shape (n_samples, n_targets)
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Targets
+
+        Returns
+        -------
+        out : array-like or tuple of array-like:
+            The transformed data X_tranformed if Y is not None,
+            (X_transformed, Y_transformed) otherwise
         """
         check_is_fitted(self)
         X = check_array(X, dtype=np.float64)
@@ -969,20 +1003,20 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return x_scores
 
     def fit_transform(self, X, y=None):
-        """Learn and apply the dimension reduction on the train data.
+        """Learn and apply the dimensionality reduction on the training data.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training samples
 
-        y : array-like of shape (n_samples, n_targets)
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Targets
 
         Returns
         -------
-        x_scores if Y is not given, (x_scores, y_scores) otherwise.
+        out : array-like or tuple of array-like:
+            The transformed data X_tranformed if Y is not None,
+            (X_transformed, Y_transformed) otherwise
         """
         return self.fit(X, y).transform(X, y)
