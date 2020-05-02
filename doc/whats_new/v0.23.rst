@@ -404,6 +404,13 @@ Changelog
   using joblib loky backend. :pr:`14264` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| Speed up :class:`linear_model.MultiTaskLasso`,
+  :class:`linear_model.MultiTaskLassoCV`, :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV` by avoiding slower
+  BLAS Level 2 calls on small arrays
+  :pr:`17021` by :user:`Alex Gramfort <agramfort>` and
+  :user:`Mathurin Massias <mathurinm>`.
+
 :mod:`sklearn.metrics`
 ......................
 
