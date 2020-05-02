@@ -24,88 +24,65 @@ from ..utils.deprecation import deprecated
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
-# TODO: change use of NIPALS since it's only the inner loop
-def _get_first_singular_vectors_nipals(X, Y, mode="A", max_iter=500, tol=1e-06,
-                                       norm_y_weights=False):
-    """Returns the first left and right singular vectors of X'Y.
+def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
+                                             tol=1e-06, norm_y_weights=False):
+    """Return the first left and right singular vectors of X'Y.
 
-    Provides an alternative to the svd(X'Y); See PLS for the meaning of the
-    parameters. It is similar to the Power method for determining the
-    eigenvectors and eigenvalues of a X'Y.
+    Provides an alternative to the svd(X'Y) and uses the power method instead.
+    With norm_y_weights to True and in mode A, this corresponds to the
+    algorithm section 11.3 of the Wegelin's review, except this starts at the
+    "update saliences" part.
     """
-    for col in Y.T:
-        if np.any(np.abs(col) > np.finfo(np.double).eps):
-            # Maybe this should use the col w/ the biggest abs value instead??
-            y_score = col
-            break
 
-    x_weights_old = 0
-    ite = 1
-    X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
+    y_score = next(col for col in Y.T if np.any(np.abs(col) > eps))
+    x_weights_old = 100  # init to big value for first convergence check
 
-    if mode == "B":
-        # Uses condition from scipy<1.3 in pinv2 which was changed in
-        # https://github.com/scipy/scipy/pull/10067. In scipy 1.3, the
-        # condition was changed to depend on the largest singular value
-        X_t = X.dtype.char.lower()
-        Y_t = Y.dtype.char.lower()
-        factor = {'f': 1E3, 'd': 1E6}
-
-        cond_X = factor[X_t] * eps
-        cond_Y = factor[Y_t] * eps
-
-    # Inner loop of the Wold algo.
-    while True:
-        # 1.1 Update u: the X weights
+    for i in range(max_iter):
         if mode == "B":
-            # We use slower pinv2 (same as np.linalg.pinv) for stability
-            X_pinv = pinv2(X, check_finite=False, cond=cond_X)
+            X_pinv = pinv2(X, check_finite=False)
             x_weights = np.dot(X_pinv, y_score)
-        else:  # mode A
+        else:
             # Mode A regress each X column on y_score
-            x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
-        # If y_score only has zeros x_weights will only have zeros. In
-        # this case add an epsilon to converge to a more acceptable
-        # solution
-        if np.dot(x_weights.T, x_weights) < eps:
-            x_weights += eps
-        # 1.2 Normalize u
-        x_weights /= np.sqrt(np.dot(x_weights.T, x_weights)) + eps
-        # 1.3 Update x_score: the X latent scores
+            x_weights = np.dot(X.T, y_score) / np.dot(y_score, y_score)
+
+        x_weights /= np.sqrt(np.dot(x_weights, x_weights)) + eps
         x_score = np.dot(X, x_weights)
-        # 2.1 Update y_weights
+
         if mode == "B":
-            Y_pinv = pinv2(Y, check_finite=False, cond=cond_Y)
+            Y_pinv = pinv2(Y, check_finite=False)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
             y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
-        # 2.2 Normalize y_weights
+
         if norm_y_weights:
-            y_weights /= np.sqrt(np.dot(y_weights.T, y_weights)) + eps
-        # 2.3 Update y_score: the Y latent scores
-        y_score = np.dot(Y, y_weights) / (np.dot(y_weights.T, y_weights) + eps)
-        # y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+            y_weights /= np.sqrt(np.dot(y_weights, y_weights)) + eps
+
+        # FIXME: what's with the division here??
+        y_score = np.dot(Y, y_weights) / (np.dot(y_weights, y_weights) + eps)
+
         x_weights_diff = x_weights - x_weights_old
-        if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
-            break
-        if ite == max_iter:
-            warnings.warn('Maximum number of iterations reached',
-                          ConvergenceWarning)
+        if np.dot(x_weights_diff, x_weights_diff) < tol or Y.shape[1] == 1:
             break
         x_weights_old = x_weights
-        ite += 1
-    return x_weights, y_weights, ite
+
+    n_iter = i + 1
+    if n_iter == max_iter:
+        warnings.warn('Maximum number of iterations reached',
+                      ConvergenceWarning)
+
+    return x_weights, y_weights, n_iter
 
 
 def _get_first_singular_vectors_svd(X, Y):
-    """Returns the first left and right singular vectors of X'Y."""
+    """Return the first left and right singular vectors of X'Y.
+
+    Here the whole SVD is computed.
+    """
     C = np.dot(X.T, Y)
     U, _, Vt = svd(C, full_matrices=False)
-    u = U[:, 0]
-    v = Vt[0, :]
-    return u, v
+    return U[:, 0], Vt[0, :]
 
 
 def _center_scale_xy(X, Y, scale=True):
@@ -245,10 +222,6 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
 
-    In French but still a reference:
-    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
-
     See also
     --------
     PLSCanonical
@@ -333,8 +306,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # y_weights: v
         # x_scores: xi (the letter xi)
         # y_scores: omega
-        # x_loadings: gamma.T
-        # y_loadings: lambda.T
+        # x_loadings: gamma
+        # y_loadings: delta
         Y_eps = np.finfo(Yk.dtype).eps
         for k in range(self.n_components):
             if np.all(np.dot(Yk.T, Yk) < np.finfo(np.double).eps):
@@ -344,15 +317,14 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 warnings.warn('Y residual constant at iteration %s' % k)
                 break
             # Find first left and right singular vectors of the X.T.dot(Y)
-            # cross-covariance matrix. Either by Nipals, or just using pure SVD
-            # TODO: is NIPALS a good name at all?????????
+            # cross-covariance matrix.
             if self.algorithm == "nipals":
                 # Replace columns that are all close to zero with zeros
                 Yk_mask = np.all(np.abs(Yk) < 10 * Y_eps, axis=0)
                 Yk[:, Yk_mask] = 0.0
 
                 x_weights, y_weights, n_iter_ = \
-                    _get_first_singular_vectors_nipals(
+                    _get_first_singular_vectors_power_method(
                         Xk, Yk, mode=self.mode, max_iter=self.max_iter,
                         tol=self.tol, norm_y_weights=self.norm_y_weights)
                 self.n_iter_.append(n_iter_)
@@ -363,18 +335,13 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             # inplace sign flip for consistency across solvers and archs
             _svd_flip_1d(x_weights, y_weights)
 
-            # compute scores
+            # compute scores, i.e. the projections of X and Y
             x_scores = np.dot(Xk, x_weights)
             if self.norm_y_weights:
                 y_ss = 1
             else:
-                y_ss = np.dot(y_weights.T, y_weights)
+                y_ss = np.dot(y_weights, y_weights)
             y_scores = np.dot(Yk, y_weights) / y_ss
-
-            # test for null variance
-            if np.dot(x_scores.T, x_scores) < np.finfo(np.double).eps:
-                warnings.warn('X scores are null at iteration %s' % k)
-                break
 
             # Deflation: subtract rank-one approx to obtain Xk+1 and Yk+1
             x_loadings = np.dot(x_scores, Xk) / np.dot(x_scores, x_scores)
@@ -389,37 +356,40 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
                 y_loadings = np.dot(x_scores, Yk) / np.dot(x_scores, x_scores)
                 Yk -= np.outer(x_scores, y_loadings)
 
-            # Notation: X = TP' + Err and Y = UQ' + Err
-            self.x_scores_[:, k] = x_scores  # T
-            self.y_scores_[:, k] = y_scores  # U
-            self.x_weights_[:, k] = x_weights  # W
-            self.y_weights_[:, k] = y_weights  # C
-            self.x_loadings_[:, k] = x_loadings  # P
-            self.y_loadings_[:, k] = y_loadings  # Q
+            self.x_weights_[:, k] = x_weights  # U
+            self.y_weights_[:, k] = y_weights  # V
+            self.x_scores_[:, k] = x_scores  # Xi
+            self.y_scores_[:, k] = y_scores  # Omega
+            self.x_loadings_[:, k] = x_loadings  # Gamma
+            self.y_loadings_[:, k] = y_loadings  # Delta
 
-        # 4) rotations from input space to transformed space (scores)
-        # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
-        # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
+        # X was approximated as Xi . Gamma.T + X_(R+1)
+        # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
+        # whatever is left to fully reconstruct X, and can be 0 if X is of rank
+        # n_components.
+        # Similiarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+
+        # Transformation matrices (rotations_)
+        # X_rot = U (Gamma.T . U)^-1
+        # Y_rot = V (Omega.T . V)^-1
+        # Note that, with the training data and ommitting X_(R+1), we have
+        # transform(X) =def= X . X_rot == Xi . Gamma.T . X_rot = Xi
+        # Same for tranform(Y_train)
         self.x_rotations_ = np.dot(
             self.x_weights_,
             pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
                   check_finite=False))
-        if Y.shape[1] > 1:
-            self.y_rotations_ = np.dot(
-                self.y_weights_,
-                pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
-                      check_finite=False))
-        else:
-            self.y_rotations_ = np.ones(1)
+        self.y_rotations_ = np.dot(
+            self.y_weights_, pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
+                                   check_finite=False))
 
         if True or self.deflation_mode == "regression":
             # FIXME what's with the if?
-            # Estimate regression coefficient
-            # Regress Y on T
-            # Y = TQ' + Err,
-            # Then express in function of X
-            # Y = X W(P'W)^-1Q' + Err = XB + Err
-            # => B = W*Q' (p x q)
+            # We regress Y on the transformed training data, i.e. Xi
+            # Which means the model is Y_pred = Xi . Delta.T + err,
+            # Xi is by def X . X_rot
+            # which leads to Y_pred = X . X_rot . Delta.T + err
+            # and so the coefficients matrix is X_rot . Delta.T
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
             self.coef_ = self.coef_ * self.y_std_
         return self

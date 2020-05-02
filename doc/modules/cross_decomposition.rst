@@ -101,3 +101,5 @@ or 'Wold' instead of nipals. See review p. 11
 Neither W2A or PLSSVD can do more iteration than min(n_features, n_targets)
 
 PLSSVD: XI.T OMEGA sohuld be diagonal (p.15)
+
+x_scores_ correspond to the transform of the training data.

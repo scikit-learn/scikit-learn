@@ -1,12 +1,18 @@
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_allclose)
 
 from sklearn.datasets import load_linnerud
-from sklearn.cross_decomposition import _pls as pls_
-from sklearn.cross_decomposition._pls import _center_scale_xy
+from sklearn.cross_decomposition._pls import (
+    _center_scale_xy,
+    _get_first_singular_vectors_power_method,
+    _get_first_singular_vectors_svd,
+    _svd_flip_1d
+)
 from sklearn.cross_decomposition import CCA
 from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
+from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 
@@ -29,9 +35,8 @@ def test_nipals_vs_svd():
 
     for attr in ('x_loadings_', 'y_loadings_', 'x_weights_', 'y_weights_',
                  'x_scores_', 'y_scores_'):
-        assert_array_almost_equal(getattr(pls_nipals, attr),
-                                  getattr(pls_svd, attr),
-                                  decimal=5)
+        assert_allclose(getattr(pls_nipals, attr), getattr(pls_svd, attr),
+                        rtol=1e-2)
 
 
 def test_pls_canonical_basics():
@@ -79,7 +84,7 @@ def test_sanity_check_pls_regression():
     X = d.data
     Y = d.target
 
-    pls = pls_.PLSRegression(n_components=X.shape[1])
+    pls = PLSRegression(n_components=X.shape[1])
     pls.fit(X, Y)
 
     expected_x_weights = np.array(
@@ -172,7 +177,7 @@ def test_sanity_check_pls_canonical():
     X = d.data
     Y = d.target
 
-    pls = pls_.PLSCanonical(n_components=X.shape[1])
+    pls = PLSCanonical(n_components=X.shape[1])
     pls .fit(X, Y)
 
     expected_x_weights = np.array(
@@ -476,6 +481,24 @@ def test_plssvd_scores_deprected():
     est = PLSSVD()
     est.fit(X, Y)
     with pytest.warns(FutureWarning, match="x_scores_ was deprecated"):
-        est.x_scores_
+        assert_allclose(est.x_scores_, est.transform(X))
     with pytest.warns(FutureWarning, match="y_scores_ was deprecated"):
-        est.y_scores_
+        assert_allclose(est.y_scores_, est.transform(X, Y)[1])
+
+
+@pytest.mark.parametrize('n_samples, n_features', [(100, 10), (100, 200)])
+@pytest.mark.parametrize('seed', range(10))
+def test_singular_value_helpers(n_samples, n_features, seed):
+    # Make sure SVD and power method give approximately the same results
+    X, Y = make_regression(n_samples, n_features, n_targets=5,
+                           random_state=seed)
+    u1, v1, _ = _get_first_singular_vectors_power_method(X, Y,
+                                                         norm_y_weights=True)
+    u2, v2 = _get_first_singular_vectors_svd(X, Y)
+
+    _svd_flip_1d(u1, v1)
+    _svd_flip_1d(u2, v2)
+
+    rtol = 1e-1
+    assert_allclose(u1, u2, rtol=rtol)
+    assert_allclose(v1, v2, rtol=rtol)
