@@ -314,6 +314,7 @@ def test_convergence_fail():
         pls_nipals.fit(X, Y)
 
 
+@pytest.mark.filterwarnings('ignore:.*scores_ was deprecated')  # 0.26
 @pytest.mark.parametrize('Est', (PLSSVD, PLSRegression, PLSCanonical))
 def test_n_components(Est):
     # Make sure attributes are of the correct shape depending on n_components
@@ -335,7 +336,7 @@ def test_univariate_equivalence(Est):
     X = d.data
     Y = d.target
 
-    est = Est()
+    est = Est(n_components=1)
     one_d_coeff = est.fit(X, Y[:, 0]).coef_
     two_d_coeff = est.fit(X, Y[:, :1]).coef_
 
