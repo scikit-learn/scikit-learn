@@ -18,10 +18,8 @@ must be used on subsequent datasets, whether it's test data or
 data in a production system. Otherwise, the feature space will change,
 and the model will not be able to perform effectively.
 
-**Wrong**
-
-The train dataset is scaled, but not the test dataset, so model
-performance on the test dataset is worse than expected::
+For the following example, let's create a synthetic dataset with a
+single feature::
 
     >>> from sklearn.metrics import mean_squared_error
     >>> from sklearn.datasets import make_regression
@@ -33,6 +31,12 @@ performance on the test dataset is worse than expected::
     >>> X, y = make_regression(random_state=random_state, n_features=1)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ... X, y, test_size=0.4, random_state=random_state)
+
+**Wrong**
+
+The train dataset is scaled, but not the test dataset, so model
+performance on the test dataset is worse than expected::
+
     >>> scaler = StandardScaler()
     >>> scaler.fit_transform(X_train)
     >>> X_train_transformed = scaler.transform(X_train)
@@ -47,16 +51,6 @@ A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to chain
 transformations with estimators, and decreases the possibility of
 forgetting a transformation::
 
-    >>> from sklearn.metrics import mean_squared_error
-    >>> from sklearn.datasets import make_regression
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> from sklearn.linear_model import LinearRegression
-    ...
-    >>> random_state = 42
-    >>> X, y = make_regression(random_state=random_state, n_features=1)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ... X, y, test_size=0.4, random_state=random_state)
     >>> model = make_pipeline(StandardScaler(), LinearRegression())
     >>> model.fit(X_train, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
