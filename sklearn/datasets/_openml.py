@@ -471,8 +471,8 @@ def _load_arff_response(url, data_home, return_type, encode_nominal,
             if actual_md5_checksum.hexdigest() != md5_checksum:
                 raise ValueError("md5 checksum of local file for " + url
                                  + " does not match description. "
-                                 "Downloaded file could have been modified / corrupted,"
-                                 "clean cache and retry...")
+                                 "Downloaded file could have been modified / "
+                                 "corrupted, clean cache and retry...")
 
         arff = _arff.load(_stream_checksum_generator(response),
                           return_type=return_type,
@@ -480,8 +480,8 @@ def _load_arff_response(url, data_home, return_type, encode_nominal,
         return parse_arff(arff)
 
 
-def _download_data_to_bunch(url, sparse, data_home, *, as_frame, features_list, data_columns, target_columns, shape,
-                            md5_checksum):
+def _download_data_to_bunch(url, sparse, data_home, *, as_frame, features_list,
+                            data_columns, target_columns, shape, md5_checksum):
     """Download OpenML ARFF and convert to Bunch of data"""
     # NB: this function is long in order to handle retry for any failure
     #     during the streaming parse of the ARFF.
@@ -831,7 +831,8 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
                                     features_list=features_list, shape=shape,
                                     target_columns=target_columns,
                                     data_columns=data_columns,
-                                    md5_checksum=data_description["md5_checksum"])
+                                    md5_checksum=data_description[
+                                        "md5_checksum"])
 
     if return_X_y:
         return bunch.data, bunch.target
