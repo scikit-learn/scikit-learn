@@ -10,18 +10,28 @@ from sklearn.tree import DecisionTreeClassifier
 
 
 class CalibratedClassifierCVBenchmark(object):
+    """
+    Utilities to benchmark CalibratedClassifierCV.
+
+    """
 
     def __init__(self):
-        self.X, self.y = make_classification(n_samples=10, n_features=2,
-                                             n_informative=2, n_redundant=0,
+        self.X, self.y = make_classification(n_samples=100000, n_features=10,
+                                             n_informative=3, n_redundant=0,
                                              random_state=42)
 
     def to_benchmark(self, *args, **kwargs):
         raise NotImplementedError
 
-    def benchmark(self, func):
+    def benchmark(self, func, n_trials = 10):
+        """
+        Return a proxy function to run benchmark
+        on the original one.
 
-        n_trials = 10
+        :param func: function
+        :param n_trials: number of execution for the benchmark
+        :return:
+        """
 
         def proxy(*args, **key_args):
 
@@ -42,29 +52,23 @@ class CalibratedClassifierCVBenchmark(object):
     def _run_benchmark(self):
         for values in itertools.product(*self.params):
             args = dict(zip(self.param_names, values))
-            print(self.__class__.__name__, args)
+            print(self.__class__.__name__, args, end=" ")
             self.benchmark(self.to_benchmark)(**args)
         print()
 
     def run_all(self):
+        """
+        Run all the benchmark defined in classes
+        extending CalibratedClassifierCVBenchmark.
+
+        :return:
+        """
         for benchmark_class in self.__class__.__subclasses__():
             benchmark_class()._run_benchmark()
+            print()
 
 
-class BenchmarkNJobs(CalibratedClassifierCVBenchmark):
-
-    params = [[1, 2, 3, 4]]
-
-    param_names = ['n_jobs']
-
-    def to_benchmark(self, n_jobs):
-        """"""
-        clf = LogisticRegression()
-        clf_c = CalibratedClassifierCV(clf, n_jobs=n_jobs)
-        clf_c.fit(self.X, self.y)
-
-
-class BenchmarkAlgo(CalibratedClassifierCVBenchmark):
+class BenchmarkNJobsAlgo(CalibratedClassifierCVBenchmark):
 
     ESTIMATORS = {
         'LogisticReg.': LogisticRegression(),
@@ -73,13 +77,13 @@ class BenchmarkAlgo(CalibratedClassifierCVBenchmark):
         'RandomForest': RandomForestClassifier(),
     }
 
-    params = [list(ESTIMATORS)]
+    params = [list(ESTIMATORS), [1, 2, 4, 8]]
 
-    param_names = ['estimator_name']
+    param_names = ['estimator_name', 'n_jobs']
 
-    def to_benchmark(self, estimator_name):
+    def to_benchmark(self, estimator_name, n_jobs):
         clf = self.ESTIMATORS[estimator_name]
-        clf_c = CalibratedClassifierCV(clf)
+        clf_c = CalibratedClassifierCV(clf, n_jobs=n_jobs)
         clf_c.fit(self.X, self.y)
 
 
@@ -97,11 +101,11 @@ class BenchmarkCV(CalibratedClassifierCVBenchmark):
 
 class BenchmarkNJobsCV(CalibratedClassifierCVBenchmark):
 
-    params = [[1, 2, 3, 4], [2, 3, 4, 5]]
+    params = [[2, 3, 4, 5], [1, 2, 4, 8]]
 
-    param_names = ['n_jobs', 'cv']
+    param_names = ['cv', 'n_jobs']
 
-    def to_benchmark(self, n_jobs, cv):
+    def to_benchmark(self, cv, n_jobs):
         clf = LogisticRegression()
         clf_c = CalibratedClassifierCV(clf, n_jobs=n_jobs, cv=cv)
         clf_c.fit(self.X, self.y)
