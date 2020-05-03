@@ -50,12 +50,6 @@ enhance the functionality of scikit-learn's estimators.
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
 
-- `ML Frontend <https://github.com/jeff1evesque/machine-learning>`_ provides
-  dataset management and SVM fitting/prediction through
-  `web-based <https://github.com/jeff1evesque/machine-learning#web-interface>`_
-  and `programmatic <https://github.com/jeff1evesque/machine-learning#programmatic-interface>`_
-  interfaces.
-
 - `Scikit-Learn Laboratory
   <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
   wrapper around scikit-learn that makes it easy to run machine learning
@@ -160,8 +154,8 @@ and tasks.
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
-- `scikit-multilearn <https://scikit.ml>`_ Multi-label classification with
-  focus on label space manipulation.
+- `scikit-multilearn <https://github.com/scikit-multilearn/scikit-multilearn>`_
+  Multi-label classification with focus on label space manipulation.
 
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence
   learning using sliding window segmentation.
