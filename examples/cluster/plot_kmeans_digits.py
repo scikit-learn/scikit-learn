@@ -39,12 +39,12 @@ from sklearn.preprocessing import scale
 
 np.random.seed(42)
 
-digits = load_digits()
-data = scale(digits.data)
+X_digits, y_digits = load_digits(return_X_y=True)
+data = scale(X_digits)
 
 n_samples, n_features = data.shape
-n_digits = len(np.unique(digits.target))
-labels = digits.target
+n_digits = len(np.unique(y_digits))
+labels = y_digits
 
 sample_size = 300
 
@@ -65,8 +65,7 @@ def bench_k_means(estimator, name, data):
              metrics.completeness_score(labels, estimator.labels_),
              metrics.v_measure_score(labels, estimator.labels_),
              metrics.adjusted_rand_score(labels, estimator.labels_),
-             metrics.adjusted_mutual_info_score(labels,  estimator.labels_,
-                                                average_method='arithmetic'),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
              metrics.silhouette_score(data, estimator.labels_,
                                       metric='euclidean',
                                       sample_size=sample_size)))

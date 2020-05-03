@@ -47,8 +47,8 @@ n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here
 # half positive samples and half negative samples. Probability in this
 # blob is therefore 0.5.
 centers = [(-5, -5), (0, 0), (5, 5)]
-X, y = make_blobs(n_samples=n_samples, n_features=2, cluster_std=1.0,
-                  centers=centers, shuffle=False, random_state=42)
+X, y = make_blobs(n_samples=n_samples, centers=centers, shuffle=False,
+                  random_state=42)
 
 y[:n_samples // 2] = 0
 y[n_samples // 2:] = 1

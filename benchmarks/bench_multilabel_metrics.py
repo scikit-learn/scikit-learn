@@ -2,8 +2,6 @@
 """
 A comparison of multilabel target formats and metrics over them
 """
-from __future__ import division
-from __future__ import print_function
 
 from timeit import timeit
 from functools import partial
@@ -18,7 +16,7 @@ import numpy as np
 from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (f1_score, accuracy_score, hamming_loss,
                              jaccard_similarity_score)
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 
 METRICS = {

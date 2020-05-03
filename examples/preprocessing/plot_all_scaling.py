@@ -47,8 +47,6 @@ of the results_.
 #          Thomas Unterthiner
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import numpy as np
 
 import matplotlib as mpl

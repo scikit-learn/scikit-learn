@@ -46,9 +46,6 @@ Here is a sample output of a run on a quad-core machine::
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 from pprint import pprint
 from time import time
 import logging
@@ -90,7 +87,7 @@ print()
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
     ('tfidf', TfidfTransformer()),
-    ('clf', SGDClassifier(tol=1e-3)),
+    ('clf', SGDClassifier()),
 ])
 
 # uncommenting more parameters will give better exploring power but will
@@ -113,8 +110,7 @@ if __name__ == "__main__":
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, cv=5,
-                               n_jobs=-1, verbose=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
 
     print("Performing grid search...")
     print("pipeline:", [name for name, _ in pipeline.steps])

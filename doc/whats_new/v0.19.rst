@@ -227,7 +227,7 @@ New features
 Classifiers and regressors
 
 - Added :class:`multioutput.ClassifierChain` for multi-label
-  classification. By `Adam Kleczewski <adamklec>`_.
+  classification. By :user:`Adam Kleczewski <adamklec>`.
 
 - Added solver ``'saga'`` that implements the improved version of Stochastic
   Average Gradient, in :class:`linear_model.LogisticRegression` and

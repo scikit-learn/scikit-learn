@@ -25,13 +25,13 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn import datasets, linear_model
 
-diabetes = datasets.load_diabetes()
+X, y = datasets.load_diabetes(return_X_y=True)
 indices = (0, 1)
 
-X_train = diabetes.data[:-20, indices]
-X_test = diabetes.data[-20:, indices]
-y_train = diabetes.target[:-20]
-y_test = diabetes.target[-20:]
+X_train = X[:-20, indices]
+X_test = X[-20:, indices]
+y_train = y[:-20]
+y_test = y[-20:]
 
 ols = linear_model.LinearRegression()
 ols.fit(X_train, y_train)
@@ -58,7 +58,8 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     ax.w_yaxis.set_ticklabels([])
     ax.w_zaxis.set_ticklabels([])
 
-#Generate the three different figures from different views
+
+# Generate the three different figures from different views
 elev = 43.5
 azim = -110
 plot_figs(1, elev, azim, X_train, ols)

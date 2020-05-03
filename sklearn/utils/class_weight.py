@@ -4,6 +4,8 @@
 
 import numpy as np
 
+from .validation import _deprecate_positional_args
+
 
 def compute_class_weight(class_weight, classes, y):
     """Estimate class weights for unbalanced datasets.
@@ -69,7 +71,8 @@ def compute_class_weight(class_weight, classes, y):
     return weight
 
 
-def compute_sample_weight(class_weight, y, indices=None):
+@_deprecate_positional_args
+def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
     Parameters
@@ -92,7 +95,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         For multi-output, the weights of each column of y will be multiplied.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
     indices : array-like, shape (n_subsample,), or None

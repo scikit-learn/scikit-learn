@@ -32,8 +32,6 @@ of the latent structured data of the Wikipedia content.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 from bz2 import BZ2File
 import os
 from datetime import datetime
@@ -43,8 +41,6 @@ from time import time
 import numpy as np
 
 from scipy import sparse
-
-from joblib import Memory
 
 from sklearn.decomposition import randomized_svd
 from urllib.request import urlopen
@@ -75,8 +71,6 @@ for url, filename in resources:
 
 # #############################################################################
 # Loading the redirect files
-
-memory = Memory(cachedir=".")
 
 
 def index(redirects, index_map, k):
@@ -112,7 +106,7 @@ def get_redirects(redirects_filename):
     for l, source in enumerate(redirects.keys()):
         transitive_target = None
         target = redirects[source]
-        seen = set([source])
+        seen = {source}
         while True:
             transitive_target = target
             target = redirects.get(target)
@@ -126,8 +120,6 @@ def get_redirects(redirects_filename):
     return redirects
 
 
-# disabling joblib as the pickling of large dicts seems much too slow
-#@memory.cache
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 
@@ -172,7 +164,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
-names = dict((i, name) for name, i in index_map.items())
+names = {i: name for name, i in index_map.items()}
 
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
@@ -226,6 +218,6 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
 
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
-scores = centrality_scores(X, max_iter=100, tol=1e-10)
+scores = centrality_scores(X, max_iter=100)
 print("done in %0.3fs" % (time() - t0))
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])

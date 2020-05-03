@@ -9,10 +9,10 @@ import pytest
 from distutils.version import LooseVersion
 from scipy import __version__ as scipy_version
 from scipy.spatial.distance import cdist
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_raises_regex
 
 
 def dist_func(x1, x2, p):
@@ -23,8 +23,8 @@ rng = check_random_state(0)
 d = 4
 n1 = 20
 n2 = 25
-X1 = rng.random_sample((n1, d)).astype('float64')
-X2 = rng.random_sample((n2, d)).astype('float64')
+X1 = rng.random_sample((n1, d)).astype('float64', copy=False)
+X2 = rng.random_sample((n2, d)).astype('float64', copy=False)
 
 # make boolean arrays: ones and zeros
 X1_bool = X1.round(0)
@@ -191,7 +191,7 @@ def test_bad_pyfunc_metric():
 
 def test_input_data_size():
     # Regression test for #6288
-    # Previoulsly, a metric requiring a particular input dimension would fail
+    # Previously, a metric requiring a particular input dimension would fail
     def custom_metric(x, y):
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
@@ -199,6 +199,6 @@ def test_input_data_size():
     rng = check_random_state(0)
     X = rng.rand(10, 3)
 
-    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
-    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X))
+    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
