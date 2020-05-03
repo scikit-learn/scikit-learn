@@ -38,8 +38,7 @@ The train dataset is scaled, but not the test dataset, so model
 performance on the test dataset is worse than expected::
 
     >>> scaler = StandardScaler()
-    >>> scaler.fit_transform(X_train)
-    >>> X_train_transformed = scaler.transform(X_train)
+    >>> X_train_transformed = scaler.fit_transform(X_train)
     >>> model = LinearRegression()
     >>> model.fit(X_train_transformed, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
