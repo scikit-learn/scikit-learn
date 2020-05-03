@@ -53,7 +53,7 @@ forgetting a transformation::
     >>> model = make_pipeline(StandardScaler(), LinearRegression()).fit(
     ... X_train, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
-    1.28...e-29
+    0.00...
 
 Next steps
 ----------
