@@ -19,8 +19,10 @@ data in a production system. Otherwise, the feature space will change,
 and the model will not be able to perform effectively.
 
 **Wrong**
+
 The train dataset is scaled, but not the test dataset, so model
-performance on the test dataset is worse than expected.
+performance on the test dataset is worse than expected::
+
     >>> from sklearn.metrics import mean_squared_error
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.model_selection import train_test_split
@@ -40,9 +42,11 @@ performance on the test dataset is worse than expected.
     46.74189827160753
 
 **Right**
+
 A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to chain
 transformations with estimators, and decreases the possibility of
-forgetting a transformation.
+forgetting a transformation::
+
     >>> from sklearn.metrics import mean_squared_error
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.model_selection import train_test_split
