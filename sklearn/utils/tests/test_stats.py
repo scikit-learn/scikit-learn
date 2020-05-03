@@ -17,6 +17,15 @@ def test_weighted_percentile_negative_percentile_raises():
                   percentile=percentile)
 
 
+def test_weighted_percentile_no_weights():
+    weight = np.array([0, 0])
+    data = np.array([0, 1])
+    percentile = 50
+    expected = 0
+    actual = _weighted_percentile(data, weight, percentile=percentile)
+    assert_equal(expected, actual)
+
+
 def test_weighted_percentile_median_interpolated_list():
     weight = [1, 1]
     data = [0, 1]
