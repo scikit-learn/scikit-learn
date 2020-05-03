@@ -12,11 +12,10 @@ from sklearn.tree import DecisionTreeClassifier
 class CalibratedClassifierCVBenchmark(object):
     """
     Utilities to benchmark CalibratedClassifierCV.
-
     """
 
     def __init__(self):
-        self.X, self.y = make_classification(n_samples=100000, n_features=10,
+        self.X, self.y = make_classification(n_samples=10000, n_features=10,
                                              n_informative=3, n_redundant=0,
                                              random_state=42)
 
