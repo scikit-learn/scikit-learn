@@ -112,9 +112,6 @@ and tasks.
 
 **Deep neural networks etc.**
 
-- `sklearn_theano <https://sklearn-theano.github.io/>`_ scikit-learn compatible
-  estimators, transformers, and datasets which use Theano internally
-
 - `nolearn <https://github.com/dnouri/nolearn>`_ A number of wrappers and
   abstractions around existing neural network libraries
 
