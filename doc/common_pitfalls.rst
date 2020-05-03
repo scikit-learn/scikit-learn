@@ -42,7 +42,7 @@ performance on the test dataset is worse than expected::
     >>> X_train_transformed = scaler.fit_transform(X_train)
     >>> model = LinearRegression().fit(X_train_transformed, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
-    46.74189827160753
+    46.74...
 
 **Right**
 
@@ -53,7 +53,7 @@ forgetting a transformation::
     >>> model = make_pipeline(StandardScaler(), LinearRegression()).fit(
     ... X_train, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
-    1.288339280718175e-29
+    1.28...e-29
 
 Next steps
 ----------
