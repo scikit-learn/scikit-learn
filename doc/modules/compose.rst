@@ -144,7 +144,7 @@ or by name::
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
- * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
@@ -383,11 +383,6 @@ and ignored by setting to ``'drop'``::
 ColumnTransformer for heterogeneous data
 ========================================
 
-.. warning::
-
-    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
-    class is experimental and the API is subject to change.
-
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
@@ -532,6 +527,31 @@ above example would be::
                     transformers=[('onehotencoder', OneHotEncoder(), ['city']),
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
+
+.. _visualizing_composite_estimators:
+
+Visualizing Composite Estimators
+================================
+
+Estimators can be displayed with a HTML representation when shown in a
+jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by setting the
+`display` option in :func:`sklearn.set_config`::
+
+  >>> from sklearn import set_config
+  >>> set_config(display='diagram')   # doctest: +SKIP
+  >>> # diplays HTML representation in a jupyter context
+  >>> column_trans  # doctest: +SKIP
+
+An example of the HTML output can be seen in the 
+**HTML representation of Pipeline** section of 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+As an alternative, the HTML can be written to a file using
+:func:`~sklearn.utils.estimator_html_repr`::
+
+   >>> from sklearn.utils import estimator_html_repr
+   >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
+   ...     f.write(estimator_html_repr(clf))
 
 .. topic:: Examples:
 

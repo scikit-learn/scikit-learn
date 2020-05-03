@@ -638,7 +638,7 @@ def test_matthews_corrcoef_against_jurman():
         for k in range(N)
     ])
     mcc_jurman = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight)
+    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight=sample_weight)
 
     assert_almost_equal(mcc_ours, mcc_jurman, 10)
 
@@ -654,7 +654,7 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
 
-    y_true_inv2 = label_binarize(y_true, ["a", "b"])
+    y_true_inv2 = label_binarize(y_true, classes=["a", "b"])
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
@@ -725,7 +725,8 @@ def test_matthews_corrcoef_multiclass():
     y_true = [0, 0, 1, 1, 2]
     y_pred = [1, 1, 0, 0, 2]
     sample_weight = [1, 1, 1, 1, 0]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred, sample_weight), -1)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred,
+                                          sample_weight=sample_weight), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning
@@ -734,7 +735,7 @@ def test_matthews_corrcoef_multiclass():
     sample_weight = [1, 1, 0, 0]
     mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
                                matthews_corrcoef, y_true, y_pred,
-                               sample_weight)
+                               sample_weight=sample_weight)
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -908,10 +909,28 @@ def test_confusion_matrix_multiclass_subset_labels():
     assert_array_equal(cm, [[18, 0],
                             [0, 0]])
 
-    # check for exception when none of the specified labels are in y_true
-    with pytest.raises(ValueError):
-        confusion_matrix(y_true, y_pred,
-                         labels=[extra_label, extra_label + 1])
+
+@pytest.mark.parametrize(
+    "labels, err_msg",
+    [([], "'labels' should contains at least one label."),
+     ([3, 4], "At least one label specified must be in y_true")],
+    ids=["empty list", "unknown labels"]
+)
+def test_confusion_matrix_error(labels, err_msg):
+    y_true, y_pred, _ = make_prediction(binary=False)
+    with pytest.raises(ValueError, match=err_msg):
+        confusion_matrix(y_true, y_pred, labels=labels)
+
+
+@pytest.mark.parametrize(
+    'labels', (None, [0, 1], [0, 1, 2]),
+    ids=['None', 'binary', 'multiclass']
+)
+def test_confusion_matrix_on_zero_length_input(labels):
+    expected_n_classes = len(labels) if labels else 0
+    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=np.int)
+    cm = confusion_matrix([], [], labels=labels)
+    assert_array_equal(cm, expected)
 
 
 def test_confusion_matrix_dtype():

@@ -64,7 +64,7 @@
             <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Prev</a>
           {%- endif %}
           {%- if parents -%}
-            <a href="{{ parents[-1].link }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title }}">Up</a>
+            <a href="{{ parents[-1].link|e }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title|striptags }}">Up</a>
           {%- else %}
             <a href="#" role="button" class="btn sk-btn-rellink disabled py-1">Up</a>
           {%- endif %}

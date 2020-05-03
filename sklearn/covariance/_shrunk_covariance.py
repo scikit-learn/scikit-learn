@@ -18,6 +18,7 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 # ShrunkCovariance estimator
@@ -117,7 +118,8 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     where mu = trace(cov) / n_features
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         super().__init__(store_precision=store_precision,
                          assume_centered=assume_centered)
@@ -140,7 +142,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         -------
         self : object
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
         if self.assume_centered:
@@ -388,7 +390,8 @@ class LedoitWolf(EmpiricalCovariance):
     Ledoit and Wolf, Journal of Multivariate Analysis, Volume 88, Issue 2,
     February 2004, pages 365-411.
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  block_size=1000):
         super().__init__(store_precision=store_precision,
                          assume_centered=assume_centered)
@@ -412,7 +415,7 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -531,6 +534,27 @@ class OAS(EmpiricalCovariance):
       coefficient in the convex combination used for the computation
       of the shrunk estimate. Range is [0, 1].
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import OAS
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                             cov=real_cov,
+    ...                             size=500)
+    >>> oas = OAS().fit(X)
+    >>> oas.covariance_
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> oas.precision_
+    array([[ 1.7833..., -1.2431... ],
+           [-1.2431...,  3.3889...]])
+    >>> oas.shrinkage_
+    0.0195...
+
     Notes
     -----
     The regularised covariance is:
@@ -562,7 +586,7 @@ class OAS(EmpiricalCovariance):
         -------
         self : object
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:

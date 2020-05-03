@@ -19,10 +19,12 @@ from math import log
 
 import numpy as np
 from scipy import sparse as sp
+from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array, check_consistent_length
-from ...utils.fixes import comb, _astype_copy_false
+from ...utils.validation import _deprecate_positional_args
+from ...utils.fixes import _astype_copy_false
 
 
 def _comb2(n):
@@ -76,7 +78,8 @@ def _generalized_average(U, V, average_method):
                          "'arithmetic', or 'max'")
 
 
-def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
+@_deprecate_positional_args
+def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -240,7 +243,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
+@_deprecate_positional_args
+def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -462,7 +466,8 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-def v_measure_score(labels_true, labels_pred, beta=1.0):
+@_deprecate_positional_args
+def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
@@ -562,7 +567,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
                                               beta=beta)[2]
 
 
-def mutual_info_score(labels_true, labels_pred, contingency=None):
+@_deprecate_positional_args
+def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
@@ -645,10 +651,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
-    return mi.sum()
+    return np.clip(mi.sum(), 0.0, None)
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred,
+@_deprecate_positional_args
+def adjusted_mutual_info_score(labels_true, labels_pred, *,
                                average_method='arithmetic'):
     """Adjusted Mutual Information between two clusterings.
 
@@ -769,7 +776,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred,
+@_deprecate_positional_args
+def normalized_mutual_info_score(labels_true, labels_pred, *,
                                  average_method='arithmetic'):
     """Normalized Mutual Information between two clusterings.
 
@@ -869,8 +877,11 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     return nmi
 
 
-def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
+@_deprecate_positional_args
+def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
+
+    .. versionadded:: 0.18
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
     the precision and recall::

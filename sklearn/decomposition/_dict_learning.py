@@ -17,7 +17,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -1013,7 +1013,8 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     """
     _required_parameters = ["dictionary"]
 
-    def __init__(self, dictionary, transform_algorithm='omp',
+    @_deprecate_positional_args
+    def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
@@ -1042,6 +1043,10 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         return self
+
+    @property
+    def n_features_in_(self):
+        return self.components_.shape[1]
 
 
 class DictionaryLearning(SparseCodingMixin, BaseEstimator):
@@ -1179,7 +1184,8 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     SparsePCA
     MiniBatchSparsePCA
     """
-    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=None, code_init=None, dict_init=None, verbose=False,
@@ -1217,7 +1223,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1384,7 +1390,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_components=None, alpha=1, n_iter=1000,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
                  dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1424,7 +1431,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
             X, self.n_components, self.alpha,
@@ -1443,6 +1450,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
         self.iter_offset_ = self.n_iter
+        self.random_state_ = random_state
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):

@@ -17,7 +17,7 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils.validation import check_memory
+from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 
@@ -453,8 +453,12 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         if affinity == 'precomputed':
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
-            # by pdist: it is a flat array containing the upper triangular of
-            # the distance matrix.
+            # by sklearn.metrics.pairwise_distances.
+            if X.shape[0] != X.shape[1]:
+                raise ValueError(
+                    'Distance matrix should be square, '
+                    'Got matrix of shape {X.shape}'
+                )
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         elif affinity == 'l2':
@@ -732,6 +736,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
+        .. versionadded:: 0.20
+            Added the 'single' option
+
     distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -776,8 +783,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
 
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', distance_threshold=None):
@@ -805,7 +812,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_data(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:
@@ -1025,8 +1032,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> X_reduced.shape
     (1797, 32)
     """
-
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
@@ -1051,9 +1058,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        ensure_min_features=2, estimator=self)
-        return AgglomerativeClustering.fit(self, X.T, **params)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                ensure_min_features=2, estimator=self)
+        # save n_features_in_ attribute here to reset it after, because it will
+        # be overridden in AgglomerativeClustering since we passed it X.T.
+        n_features_in_ = self.n_features_in_
+        AgglomerativeClustering.fit(self, X.T, **params)
+        self.n_features_in_ = n_features_in_
+        return self
 
     @property
     def fit_predict(self):

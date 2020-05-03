@@ -498,3 +498,9 @@ def test_sparse_coder_parallel_mmap():
 
     sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
     sc.fit_transform(data)
+
+
+def test_sparse_coder_n_features_in():
+    d = np.array([[1, 2, 3], [1, 2, 3]])
+    sc = SparseCoder(d)
+    assert sc.n_features_in_ == d.shape[1]
