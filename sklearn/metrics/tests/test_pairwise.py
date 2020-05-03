@@ -350,7 +350,7 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     with pytest.raises(TypeError):
-        pairwise_kernels(X, Y, "rbf", **params)
+        pairwise_kernels(X, Y, metric="rbf", **params)
 
 
 @pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
@@ -481,6 +481,19 @@ def test_pairwise_distances_chunked_reduce():
     assert len(S_chunks) > 1
     # atol is for diagonal where S is explicitly zeroed on the diagonal
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
+
+
+def test_pairwise_distances_chunked_reduce_none():
+    # check that the reduce func is allowed to return None
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    S_chunks = pairwise_distances_chunked(X, None,
+                                          reduce_func=lambda dist, start: None,
+                                          working_memory=2 ** -16)
+    assert isinstance(S_chunks, GeneratorType)
+    S_chunks = list(S_chunks)
+    assert len(S_chunks) > 1
+    assert all(chunk is None for chunk in S_chunks)
 
 
 @pytest.mark.parametrize('good_reduce', [
@@ -871,6 +884,23 @@ def test_nan_euclidean_distances_not_trival(missing_value):
     assert_allclose(D6, D7)
 
 
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
+    # First feature is the only feature that is non-nan and in both
+    # samples. The result of `nan_euclidean_distances` with squared=True
+    # should be non-negative. The non-squared version should all be close to 0.
+    X = np.array([[-122.27, 648., missing_value, 37.85],
+                  [-122.27, missing_value, 2.34701493, missing_value]])
+
+    dist_squared = nan_euclidean_distances(X, missing_values=missing_value,
+                                           squared=True)
+    assert np.all(dist_squared >= 0)
+
+    dist = nan_euclidean_distances(X, missing_values=missing_value,
+                                   squared=False)
+    assert_allclose(dist, 0.0)
+
+
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
     rng = np.random.RandomState(1337)
@@ -1251,8 +1281,16 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
         expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        dist = np.vstack(tuple(dist_function(X, Y,
-                                             metric=metric, n_jobs=n_jobs)))
+        # TODO: Remove warn_checker in 0.25
+        if y_is_x:
+            warn_checker = pytest.warns(None)
+        else:
+            warn_checker = pytest.warns(FutureWarning,
+                                        match="to be specified if Y is passed")
+        with warn_checker:
+            dist = np.vstack(tuple(dist_function(X, Y,
+                                                 metric=metric,
+                                                 n_jobs=n_jobs)))
 
         assert_allclose(dist, expected_dist_explicit_params)
         assert_allclose(dist, expected_dist_default_params)

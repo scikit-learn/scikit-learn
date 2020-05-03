@@ -39,6 +39,15 @@ DOCSTRING_WHITELIST = [
     "SGDClassifier.score",
     "SGDClassifier.sparsify",
     "SGDClassifier.densify",
+    "VotingClassifier.fit",
+    "VotingClassifier.transform",
+    "VotingClassifier.predict",
+    "VotingClassifier.score",
+    "VotingClassifier.predict_proba",
+    "VotingClassifier.set_params",
+    "VotingClassifier.get_params",
+    "VotingClassifier.named_estimators",
+    "VotingClassifier$",
 ]
 
 

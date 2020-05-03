@@ -191,7 +191,7 @@ def test_bad_pyfunc_metric():
 
 def test_input_data_size():
     # Regression test for #6288
-    # Previoulsly, a metric requiring a particular input dimension would fail
+    # Previously, a metric requiring a particular input dimension would fail
     def custom_metric(x, y):
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
@@ -199,6 +199,6 @@ def test_input_data_size():
     rng = check_random_state(0)
     X = rng.rand(10, 3)
 
-    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
-    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X))
+    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)

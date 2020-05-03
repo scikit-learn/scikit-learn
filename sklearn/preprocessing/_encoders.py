@@ -7,8 +7,8 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._label import _encode, _encode_check_unknown
 
@@ -186,15 +186,25 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    drop : 'first' or a array-like of shape (n_features,), default=None
+        .. versionadded:: 0.20
+
+    drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
+            default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression.
 
+        However, dropping one category breaks the symmetry of the original
+        representation and can therefore induce a bias in downstream models,
+        for instance for penalized linear classification or regression models.
+
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
+        - 'if_binary' : drop the first category in each feature with two
+          categories. Features with 1 or more than 2 categories are
+          left intact.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
@@ -221,9 +231,13 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
-        be dropped for each feature. None if all the transformed features will
-        be retained.
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+          to be dropped for each feature.
+        - ``drop_idx_[i] = None`` if no category is to be dropped from the
+          feature with index ``i``, e.g. when `drop='if_binary'` and the
+          feature isn't binary.
+        - ``drop_idx_ = None`` if all the transformed features will be
+          retained.
 
     See Also
     --------
@@ -245,6 +259,9 @@ class OneHotEncoder(_BaseEncoder):
     values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
+
+    One can discard categories not seen during `fit`:
+
     >>> enc = OneHotEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
@@ -260,15 +277,26 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.get_feature_names(['gender', 'group'])
     array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
       dtype=object)
+
+    One can always drop the first column for each feature:
+
     >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 0., 0.],
            [1., 1., 0.]])
+
+    Or drop a column for feature only having 2 categories:
+
+    >>> drop_binary_enc = OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_binary_enc.transform([['Female', 1], ['Male', 2]]).toarray()
+    array([[0., 1., 0., 0.],
+           [1., 0., 1., 0.]])
     """
 
-    def __init__(self, categories='auto', drop=None, sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -293,15 +321,28 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, str) and self.drop == 'first'):
-            return np.zeros(len(self.categories_), dtype=np.int_)
-        elif not isinstance(self.drop, str):
+        elif isinstance(self.drop, str):
+            if self.drop == 'first':
+                return np.zeros(len(self.categories_), dtype=np.object)
+            elif self.drop == 'if_binary':
+                return np.array([0 if len(cats) == 2 else None
+                                for cats in self.categories_], dtype=np.object)
+            else:
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
+                raise ValueError(msg.format(type(self.drop)))
+
+        else:
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
                 droplen = len(self.drop)
             except (ValueError, TypeError):
-                msg = ("Wrong input for parameter `drop`. Expected "
-                       "'first', None or array of objects, got {}")
+                msg = (
+                    "Wrong input for parameter `drop`. Expected "
+                    "'first', 'if_binary', None or array of objects, got {}"
+                    )
                 raise ValueError(msg.format(type(self.drop)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
@@ -320,11 +361,8 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(msg)
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=np.int_)
-        else:
-            msg = ("Wrong input for parameter `drop`. Expected "
-                   "'first', None or array of objects, got {}")
-            raise ValueError(msg.format(type(self.drop)))
+                             zip(self.drop, self.categories_)],
+                            dtype=np.object)
 
     def fit(self, X, y=None):
         """
@@ -391,26 +429,38 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, n_features = X_int.shape
 
-        if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1)
-
+        if self.drop_idx_ is not None:
+            to_drop = self.drop_idx_.copy()
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
-
             keep_cells = X_int != to_drop
-            X_mask &= keep_cells
+            n_values = []
+            for i, cats in enumerate(self.categories_):
+                n_cats = len(cats)
+
+                # drop='if_binary' but feature isn't binary
+                if to_drop[i] is None:
+                    # set to cardinality to not drop from X_int
+                    to_drop[i] = n_cats
+                    n_values.append(n_cats)
+                else:  # dropped
+                    n_values.append(n_cats - 1)
+
+            to_drop = to_drop.reshape(1, -1)
             X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - 1 for cats in self.categories_]
+            X_mask &= keep_cells
         else:
             n_values = [len(cats) for cats in self.categories_]
 
         mask = X_mask.ravel()
-        n_values = np.array([0] + n_values)
-        feature_indices = np.cumsum(n_values)
+        feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
-        indptr = X_mask.sum(axis=1).cumsum()
-        indptr = np.insert(indptr, 0, 0)
-        data = np.ones(n_samples * n_features)[mask]
+
+        indptr = np.empty(n_samples + 1, dtype=np.int)
+        indptr[0] = 0
+        np.sum(X_mask, axis=1, out=indptr[1:])
+        np.cumsum(indptr[1:], out=indptr[1:])
+        data = np.ones(indptr[-1])
 
         out = sparse.csr_matrix((data, indices, indptr),
                                 shape=(n_samples, feature_indices[-1]),
@@ -442,12 +492,14 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        if self.drop is None:
+        if self.drop_idx_ is None:
             n_transformed_features = sum(len(cats)
                                          for cats in self.categories_)
         else:
-            n_transformed_features = sum(len(cats) - 1
-                                         for cats in self.categories_)
+            n_transformed_features = sum(
+                len(cats) - 1 if to_drop is not None else len(cats)
+                for cats, to_drop in zip(self.categories_, self.drop_idx_)
+            )
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -463,7 +515,7 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if self.drop is None:
+            if self.drop_idx_ is None or self.drop_idx_[i] is None:
                 cats = self.categories_[i]
             else:
                 cats = np.delete(self.categories_[i], self.drop_idx_[i])
@@ -478,7 +530,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
-            labels = np.asarray(_argmax(sub, axis=1)).flatten()
+            labels = np.asarray(sub.argmax(axis=1)).flatten()
             X_tr[:, i] = cats[labels]
             if self.handle_unknown == 'ignore':
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
@@ -486,9 +538,9 @@ class OneHotEncoder(_BaseEncoder):
                 if unknown.any():
                     found_unknown[i] = unknown
             # drop will either be None or handle_unknown will be error. If
-            # self.drop is not None, then we can safely assume that all of
+            # self.drop_idx_ is not None, then we can safely assume that all of
             # the nulls in each column are the dropped value
-            elif self.drop is not None:
+            elif self.drop_idx_ is not None:
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
                     X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
@@ -535,7 +587,7 @@ class OneHotEncoder(_BaseEncoder):
         for i in range(len(cats)):
             names = [
                 input_features[i] + '_' + str(t) for t in cats[i]]
-            if self.drop is not None:
+            if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
 
@@ -553,7 +605,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20.1
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -605,7 +657,8 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
 

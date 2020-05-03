@@ -11,6 +11,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
+from ..utils.validation import _deprecate_positional_args
 
 
 def _tosequence(X):
@@ -47,18 +48,17 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    dtype : callable, optional
+    dtype : dtype, default=np.float64
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
-    separator : string, optional
+    separator : str, default="="
         Separator string used when constructing new features for one-hot
         coding.
-    sparse : boolean, optional.
+    sparse : bool, default=True
         Whether transform should produce scipy.sparse matrices.
-        True by default.
-    sort : boolean, optional.
+    sort : bool, default=True
         Whether ``feature_names_`` and ``vocabulary_`` should be
-        sorted when fitting. True by default.
+        sorted when fitting.
 
     Attributes
     ----------
@@ -90,8 +90,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OrdinalEncoder : handles nominal/categorical
       features encoded as columns of arbitrary data types.
     """
-
-    def __init__(self, dtype=np.float64, separator="=", sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
                  sort=True):
         self.dtype = dtype
         self.separator = separator
@@ -241,13 +241,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Sample matrix.
-        dict_type : callable, optional
+        dict_type : type, default=dict
             Constructor for feature mappings. Must conform to the
             collections.Mapping API.
 
         Returns
         -------
-        D : list of dict_type objects, length = n_samples
+        D : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
         # COO matrix is not subscriptable
@@ -276,7 +276,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : Mapping or iterable over Mappings, length = n_samples
+        X : Mapping or iterable over Mappings of shape (n_samples,)
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
 
@@ -324,7 +324,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         support : array-like
             Boolean mask or list of indices (as returned by the get_support
             member of feature selectors).
-        indices : boolean, optional
+        indices : bool, default=False
             Whether support is a list of indices.
 
         Returns

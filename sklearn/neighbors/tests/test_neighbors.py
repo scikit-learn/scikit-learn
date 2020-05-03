@@ -649,6 +649,30 @@ def test_radius_neighbors_boundary_handling():
         assert_array_equal(results[0], [0, 1])
 
 
+def test_radius_neighbors_returns_array_of_objects():
+    # check that we can pass precomputed distances to
+    # NearestNeighbors.radius_neighbors()
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/16036
+    X = csr_matrix(np.ones((4, 4)))
+    X.setdiag([0, 0, 0, 0])
+
+    nbrs = neighbors.NearestNeighbors(radius=0.5, algorithm='auto',
+                                      leaf_size=30,
+                                      metric='precomputed').fit(X)
+    neigh_dist, neigh_ind = nbrs.radius_neighbors(X, return_distance=True)
+
+    expected_dist = np.empty(X.shape[0], dtype=object)
+    expected_dist[:] = [np.array([0]), np.array([0]), np.array([0]),
+                        np.array([0])]
+    expected_ind = np.empty(X.shape[0], dtype=object)
+    expected_ind[:] = [np.array([0]), np.array([1]), np.array([2]),
+                       np.array([3])]
+
+    assert_array_equal(neigh_dist, expected_dist)
+    assert_array_equal(neigh_ind, expected_ind)
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
@@ -1221,9 +1245,9 @@ def test_callable_metric():
         return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     X = np.random.RandomState(42).rand(20, 2)
-    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto',
+    nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                        metric=custom_metric)
-    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute',
+    nbrs2 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                        metric=custom_metric)
 
     nbrs1.fit(X)
@@ -1315,7 +1339,7 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
-        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, metric=metric).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
@@ -1327,7 +1351,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
 
     # Raise error when wrong parameters are supplied,
-    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
     assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
                   metric='euclidean')

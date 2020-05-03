@@ -1,19 +1,17 @@
 
 from time import time
-from distutils.version import LooseVersion
 from collections import namedtuple
 import warnings
 
-import scipy
 from scipy import stats
 import numpy as np
 
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, _safe_indexing
+from ..utils import (check_array, check_random_state, _safe_indexing,
+                     is_scalar_nan)
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
-from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 
 from ._base import _BaseImputer
@@ -34,6 +32,8 @@ class IterativeImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
+    .. versionadded:: 0.21
+
     .. note::
 
       This estimator is still **experimental** for now: the predictions
@@ -52,9 +52,11 @@ class IterativeImputer(_BaseImputer):
         If ``sample_posterior`` is True, the estimator must support
         ``return_std`` in its ``predict`` method.
 
-    missing_values : int, np.nan, optional (default=np.nan)
+    missing_values : int, np.nan, default=np.nan
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -62,7 +64,7 @@ class IterativeImputer(_BaseImputer):
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
         ``True`` if using ``IterativeImputer`` for multiple imputations.
 
-    max_iter : int, optional (default=10)
+    max_iter : int, default=10
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
@@ -70,10 +72,10 @@ class IterativeImputer(_BaseImputer):
         where `X_t` is `X` at iteration `t. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
-    tol : float, optional (default=1e-3)
+    tol : float, default=1e-3
         Tolerance of the stopping condition.
 
-    n_nearest_features : int, optional (default=None)
+    n_nearest_features : int, default=None
         Number of other features to use to estimate the missing values of
         each feature column. Nearness between features is measured using
         the absolute correlation coefficient between each feature pair (after
@@ -83,12 +85,12 @@ class IterativeImputer(_BaseImputer):
         imputed target feature. Can provide significant speed-up when the
         number of features is huge. If ``None``, all features will be used.
 
-    initial_strategy : str, optional (default="mean")
+    initial_strategy : str, default='mean'
         Which strategy to use to initialize the missing values. Same as the
         ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
-    imputation_order : str, optional (default="ascending")
+    imputation_order : str, default='ascending'
         The order in which the features will be imputed. Possible values:
 
         "ascending"
@@ -102,34 +104,36 @@ class IterativeImputer(_BaseImputer):
         "random"
             A random order for each round.
 
-    skip_complete : boolean, optional (default=False)
+    skip_complete : boolean, default=False
         If ``True`` then features with missing values during ``transform``
         which did not have any missing values during ``fit`` will be imputed
         with the initial imputation method only. Set to ``True`` if you have
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float, optional (default=None)
-        Minimum possible imputed value. Default of ``None`` will set minimum
-        to negative infinity.
+    min_value : float or array-like of shape (n_features,), default=None.
+        Minimum possible imputed value. Broadcast to shape (n_features,) if
+        scalar. If array-like, expects shape (n_features,), one min value for
+        each feature. `None` (default) is converted to -np.inf.
 
-    max_value : float, optional (default=None)
-        Maximum possible imputed value. Default of ``None`` will set maximum
-        to positive infinity.
+    max_value : float or array-like of shape (n_features,), default=None.
+        Maximum possible imputed value. Broadcast to shape (n_features,) if
+        scalar. If array-like, expects shape (n_features,), one max value for
+        each feature. `None` (default) is converted to np.inf.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
         as functions are evaluated. The higher, the more verbose. Can be 0, 1,
         or 2.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use. Randomizes
         selection of estimator features if n_nearest_features is not None, the
         ``imputation_order`` if ``random``, and the sampling from posterior if
         ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
-    add_indicator : boolean, optional (default=False)
+    add_indicator : boolean, default=False
         If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
@@ -172,7 +176,7 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer  
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
@@ -204,9 +208,8 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
     def __init__(self,
-                 estimator=None,
+                 estimator=None, *,
                  missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,
@@ -294,9 +297,9 @@ class IterativeImputer(_BaseImputer):
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
             X_train = _safe_indexing(X_filled[:, neighbor_feat_idx],
-                                    ~missing_row_mask)
+                                     ~missing_row_mask)
             y_train = _safe_indexing(X_filled[:, feat_idx],
-                                    ~missing_row_mask)
+                                     ~missing_row_mask)
             estimator.fit(X_train, y_train)
 
         # if no missing values, don't predict
@@ -314,35 +317,26 @@ class IterativeImputer(_BaseImputer):
             # (results in inf sample)
             positive_sigmas = sigmas > 0
             imputed_values[~positive_sigmas] = mus[~positive_sigmas]
-            mus_too_low = mus < self._min_value
-            imputed_values[mus_too_low] = self._min_value
-            mus_too_high = mus > self._max_value
-            imputed_values[mus_too_high] = self._max_value
+            mus_too_low = mus < self._min_value[feat_idx]
+            imputed_values[mus_too_low] = self._min_value[feat_idx]
+            mus_too_high = mus > self._max_value[feat_idx]
+            imputed_values[mus_too_high] = self._max_value[feat_idx]
             # the rest can be sampled without statistical issues
             inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
             mus = mus[inrange_mask]
             sigmas = sigmas[inrange_mask]
-            a = (self._min_value - mus) / sigmas
-            b = (self._max_value - mus) / sigmas
+            a = (self._min_value[feat_idx] - mus) / sigmas
+            b = (self._max_value[feat_idx] - mus) / sigmas
 
-            if scipy.__version__ < LooseVersion('0.18'):
-                # bug with vector-valued `a` in old scipy
-                imputed_values[inrange_mask] = [
-                    stats.truncnorm(a=a_, b=b_,
-                                    loc=loc_, scale=scale_).rvs(
-                                        random_state=self.random_state_)
-                    for a_, b_, loc_, scale_
-                    in zip(a, b, mus, sigmas)]
-            else:
-                truncated_normal = stats.truncnorm(a=a, b=b,
-                                                   loc=mus, scale=sigmas)
-                imputed_values[inrange_mask] = truncated_normal.rvs(
-                    random_state=self.random_state_)
+            truncated_normal = stats.truncnorm(a=a, b=b,
+                                               loc=mus, scale=sigmas)
+            imputed_values[inrange_mask] = truncated_normal.rvs(
+                random_state=self.random_state_)
         else:
             imputed_values = estimator.predict(X_test)
             imputed_values = np.clip(imputed_values,
-                                     self._min_value,
-                                     self._max_value)
+                                     self._min_value[feat_idx],
+                                     self._max_value[feat_idx])
 
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
@@ -443,7 +437,7 @@ class IterativeImputer(_BaseImputer):
         X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
 
-        tolerance : float, optional (default=1e-6)
+        tolerance : float, default=1e-6
             ``abs_corr_mat`` can have nans, which will be replaced
             with ``tolerance``.
 
@@ -501,8 +495,8 @@ class IterativeImputer(_BaseImputer):
         else:
             force_all_finite = True
 
-        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite=force_all_finite)
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+                                force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)
@@ -521,6 +515,38 @@ class IterativeImputer(_BaseImputer):
         mask_missing_values = mask_missing_values[:, valid_mask]
 
         return Xt, X_filled, mask_missing_values
+
+    @staticmethod
+    def _validate_limit(limit, limit_type, n_features):
+        """Validate the limits (min/max) of the feature values
+        Converts scalar min/max limits to vectors of shape (n_features,)
+
+        Parameters
+        ----------
+        limit: scalar or array-like
+            The user-specified limit (i.e, min_value or max_value)
+        limit_type: string, "max" or "min"
+            n_features: Number of features in the dataset
+
+        Returns
+        -------
+        limit: ndarray, shape(n_features,)
+            Array of limits, one for each feature
+        """
+        limit_bound = np.inf if limit_type == "max" else -np.inf
+        limit = limit_bound if limit is None else limit
+        if np.isscalar(limit):
+            limit = np.full(n_features, limit)
+        limit = check_array(
+            limit, force_all_finite=False, copy=False, ensure_2d=False
+        )
+        if not limit.shape[0] == n_features:
+            raise ValueError(
+                f"'{limit_type}_value' should be of "
+                f"shape ({n_features},) when an array-like "
+                f"is provided. Got {limit.shape}, instead."
+            )
+        return limit
 
     def fit_transform(self, X, y=None):
         """Fits the imputer on X and return the transformed X.
@@ -563,9 +589,6 @@ class IterativeImputer(_BaseImputer):
 
         self.imputation_sequence_ = []
 
-        self._min_value = -np.inf if self.min_value is None else self.min_value
-        self._max_value = np.inf if self.max_value is None else self.max_value
-
         self.initial_imputer_ = None
         super()._fit_indicator(X)
         X_indicator = super()._transform_indicator(X)
@@ -578,6 +601,15 @@ class IterativeImputer(_BaseImputer):
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
+
+        self._min_value = IterativeImputer._validate_limit(
+            self.min_value, "min", X.shape[1])
+        self._max_value = IterativeImputer._validate_limit(
+            self.max_value, "max", X.shape[1])
+
+        if not np.all(np.greater(self._max_value, self._min_value)):
+            raise ValueError(
+                "One (or more) features have min_value >= max_value.")
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)

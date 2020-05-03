@@ -559,11 +559,12 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible. 
-When this paramenter is not None, ``handle_unknown`` must be set to 
+since co-linearity would cause the covariance matrix to be non-invertible.
+When this parameter is not None, ``handle_unknown`` must be set to
 ``error``::
 
-    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> X = [['male', 'from US', 'uses Safari'],
+    ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
@@ -571,8 +572,26 @@ When this paramenter is not None, ``handle_unknown`` must be set to
     array([[1., 1., 1.],
            [0., 0., 0.]])
 
-See :ref:`dict_feature_extraction` for categorical features that are represented
-as a dict, not as scalars.
+One might want to drop one of the two columns only for features with 2
+categories. In this case, you can set the parameter `drop='if_binary'`.
+
+    >>> X = [['male', 'US', 'Safari'],
+    ...      ['female', 'Europe', 'Firefox'],
+    ...      ['female', 'Asia', 'Chrome']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 0., 0., 1., 0., 0., 1.],
+           [0., 0., 1., 0., 0., 1., 0.],
+           [0., 1., 0., 0., 1., 0., 0.]])
+
+In the transformed `X`, the first column is the encoding of the feature with
+categories "male"/"female", while the remaining 6 columns is the encoding of
+the 2 features with respectively 3 categories each.
+
+See :ref:`dict_feature_extraction` for categorical features that are
+represented as a dict, not as scalars.
 
 .. _preprocessing_discretization:
 
