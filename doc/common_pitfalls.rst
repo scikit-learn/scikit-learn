@@ -26,11 +26,11 @@ performance on the test dataset is worse than expected.
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.linear_model import LinearRegression
-    >>>
+    ...
     >>> random_state = 42
     >>> X, y = make_regression(random_state=random_state, n_features=1)
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.4, random_state=random_state)
+    ... X, y, test_size=0.4, random_state=random_state)
     >>> scaler = StandardScaler()
     >>> scaler.fit_transform(X_train)
     >>> X_train_transformed = scaler.transform(X_train)
@@ -48,11 +48,11 @@ forgetting a transformation.
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.linear_model import LinearRegression
-
+    ...
     >>> random_state = 42
     >>> X, y = make_regression(random_state=random_state, n_features=1)
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.4, random_state=random_state)
+    ... X, y, test_size=0.4, random_state=random_state)
     >>> model = make_pipeline(StandardScaler(), LinearRegression())
     >>> model.fit(X_train, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
