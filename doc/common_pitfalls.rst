@@ -6,9 +6,8 @@ anti-patterns that occur when using ``scikit-learn``. It provides
 examples of what **not** to do, along with a corresponding correct
 example.
 
-
-Using a different preprocessing flow on train and test data.
-----------------------------------------
+Inconsistent preprocessing
+--------------------------
 
 scikit-learn provides a library of :ref:`data-transforms`, which
 may clean (see :ref:`preprocessing`), reduce
@@ -22,45 +21,42 @@ and the model will not be able to perform effectively.
 **Wrong**
 The train dataset is scaled, but not the test dataset, so model
 performance on the test dataset is worse than expected.
-      >>> from sklearn.metrics import mean_squared_error
-      >>> from sklearn.datasets import make_regression
-      >>> from sklearn.model_selection import train_test_split
-      >>> from sklearn.preprocessing import StandardScaler
-      >>> from sklearn.linear_model import LinearRegression
-      >>>
-      >>> random_state = 42
-      >>> X, y = make_regression(random_state=random_state, n_features=1)
-      >>> X_train, X_test, y_train, y_test = train_test_split(
-      X, y, test_size=0.4, random_state=random_state)
-      >>> scaler = StandardScaler()
-      >>> scaler.fit_transform(X_train)
-      >>> X_train_transformed = scaler.transform(X_train)
-      >>> model = LinearRegression()
-      >>> model.fit(X_train_transformed, y_train)
-      >>> mean_squared_error(y_test, model.predict(X_test))
-      46.74189827160753
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> random_state = 42
+    >>> X, y = make_regression(random_state=random_state, n_features=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.4, random_state=random_state)
+    >>> scaler = StandardScaler()
+    >>> scaler.fit_transform(X_train)
+    >>> X_train_transformed = scaler.transform(X_train)
+    >>> model = LinearRegression()
+    >>> model.fit(X_train_transformed, y_train)
+    >>> mean_squared_error(y_test, model.predict(X_test))
+    46.74189827160753
 
 **Right**
 A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to chain
 transformations with estimators, and decreases the possibility of
 forgetting a transformation.
-      >>> from sklearn.metrics import mean_squared_error
-      >>> from sklearn.datasets import make_regression
-      >>> from sklearn.model_selection import train_test_split
-      >>> from sklearn.preprocessing import StandardScaler
-      >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LinearRegression
 
-      >>> random_state = 42
-      >>> X, y = make_regression(random_state=random_state, n_features=1)
-      >>> X_train, X_test, y_train, y_test = train_test_split(
-      X, y, test_size=0.4, random_state=random_state)
-      >>> model = make_pipeline(StandardScaler(), LinearRegression())
-      >>> model.fit(X_train, y_train)
-      >>> mean_squared_error(y_test, model.predict(X_test))
-      1.288339280718175e-29
-
-
-
+    >>> random_state = 42
+    >>> X, y = make_regression(random_state=random_state, n_features=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.4, random_state=random_state)
+    >>> model = make_pipeline(StandardScaler(), LinearRegression())
+    >>> model.fit(X_train, y_train)
+    >>> mean_squared_error(y_test, model.predict(X_test))
+    1.288339280718175e-29
 
 Next steps
 ----------
