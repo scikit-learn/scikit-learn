@@ -941,8 +941,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         else:
             if use_sample_weight:
-                raise ValueError("Not supported for multi-output" +\
-                                " classification.")
+                raise ValueError("Not supported for multi-output" +
+                                 " classification.")
 
             all_proba = []
 

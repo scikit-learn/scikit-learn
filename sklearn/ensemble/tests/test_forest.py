@@ -211,7 +211,8 @@ def check_probability(name):
         clf.fit(iris.data, iris.target)
         assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                                   np.ones(iris.data.shape[0]))
-        assert_array_almost_equal(np.sum(clf.predict_proba(iris.data, use_sample_weight=True),
+        assert_array_almost_equal(np.sum(clf.predict_proba(iris.data,
+                                  use_sample_weight=True),
                                   axis=1), np.ones(iris.data.shape[0]))
         assert_array_almost_equal(clf.predict_proba(iris.data),
                                   np.exp(clf.predict_log_proba(iris.data)))
@@ -857,6 +858,7 @@ def check_min_weight_fraction_leaf(name):
             total_weight * est.min_weight_fraction_leaf), (
                 "Failed with {0} min_weight_fraction_leaf={1}".format(
                     name, est.min_weight_fraction_leaf))
+
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_weight_fraction_leaf(name):
