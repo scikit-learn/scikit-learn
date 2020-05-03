@@ -39,8 +39,7 @@ performance on the test dataset is worse than expected::
 
     >>> scaler = StandardScaler()
     >>> X_train_transformed = scaler.fit_transform(X_train)
-    >>> model = LinearRegression()
-    >>> model.fit(X_train_transformed, y_train)
+    >>> model = LinearRegression().fit(X_train_transformed, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
     46.74189827160753
 
@@ -50,8 +49,8 @@ A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to chain
 transformations with estimators, and decreases the possibility of
 forgetting a transformation::
 
-    >>> model = make_pipeline(StandardScaler(), LinearRegression())
-    >>> model.fit(X_train, y_train)
+    >>> model = make_pipeline(StandardScaler(), LinearRegression()).fit(
+    ... X_train, y_train)
     >>> mean_squared_error(y_test, model.predict(X_test))
     1.288339280718175e-29
 
