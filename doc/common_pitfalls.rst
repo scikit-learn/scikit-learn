@@ -10,7 +10,7 @@ example.
 Using a different preprocessing flow on train and test data.
 ----------------------------------------
 
-scikit-learn provides a library of :ref: `_data-transforms`, which
+scikit-learn provides a library of :ref:`data-transforms`, which
 may clean (see :ref:`preprocessing`), reduce
 (see :ref:`data_reduction`), expand (see :ref:`kernel_approximation`)
 or generate (see :ref:`feature_extraction`) feature representations.
