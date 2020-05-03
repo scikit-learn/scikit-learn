@@ -124,6 +124,31 @@ def test_sample_weight():
         assert diff > 0.1
 
 
+def test_parallel_execution():
+    """Test parallel calibration"""
+    n_samples = 100
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42)
+    X_train, y_train = X[:n_samples], y[:n_samples]
+    X_test = X[n_samples:]
+
+    for method in ['sigmoid', 'isotonic']:
+        base_estimator = LinearSVC(random_state=42)
+
+        cal_clf__parallel = CalibratedClassifierCV(base_estimator,
+                                                   method=method)
+        cal_clf__parallel.fit(X_train, y_train)
+        probs__parallel = cal_clf__parallel.predict_proba(X_test)
+
+        cal_clf_sequential = CalibratedClassifierCV(base_estimator,
+                                                    method=method,
+                                                    n_jobs=1)
+        cal_clf_sequential.fit(X_train, y_train)
+        probs_sequential = cal_clf_sequential.predict_proba(X_test)
+
+        assert np.equal(probs__parallel, probs_sequential).all()
+
+
 def test_calibration_multiclass():
     """Test calibration for multiclass """
     # test multi-class setting with classifier that implements
