@@ -17,6 +17,7 @@ import os
 import warnings
 import re
 from packaging.version import parse
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -207,6 +208,23 @@ htmlhelp_basename = 'scikit-learndoc'
 
 # If true, the reST sources are included in the HTML build as _sources/name.
 html_copy_source = True
+
+# Adds variables into templates
+html_context = {}
+# finds latest release highlights and places it into HTML context for
+# index.html
+release_highlights_dir = Path("..") / "examples" / "release_highlights"
+# Finds the highlight with the latest version number
+latest_highlights = sorted(release_highlights_dir.glob(
+                           "plot_release_highlights_*.py"))[-1]
+latest_highlights = latest_highlights.with_suffix('').name
+html_context["release_highlights"] = \
+    f"auto_examples/release_highlights/{latest_highlights}"
+
+# get version from higlight name assuming highlights have the form
+# plot_release_highlights_0_22_0
+highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
+html_context["release_highlights_version"] = highlight_version
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
