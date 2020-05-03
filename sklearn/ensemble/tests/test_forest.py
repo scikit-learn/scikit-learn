@@ -472,9 +472,15 @@ def check_parallel(name, X, y):
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(X)
+    if name in FOREST_CLASSIFIERS:
+        y1_sample_weights = forest.predict(X, use_sample_weight=True)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(X)
+    if name in FOREST_CLASSIFIERS:
+        y2_sample_weights = forest.predict(X, use_sample_weight=True)
     assert_array_almost_equal(y1, y2, 3)
+    if name in FOREST_CLASSIFIERS:
+        assert_array_almost_equal(y1_sample_weights, y2_sample_weights, 3)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
