@@ -90,7 +90,7 @@ After being fitted, the model can then be used to predict new values::
 SVMs decision function (detailed in the :ref:`svm_mathematical_formulation`)
 depends on some subset of the training data, called the support vectors. Some
 properties of these support vectors can be found in attributes
-``support_vectors_``, ``support_`` and ``n_support``::
+``support_vectors_``, ``support_`` and ``n_support_``::
 
     >>> # get support vectors
     >>> clf.support_vectors_
