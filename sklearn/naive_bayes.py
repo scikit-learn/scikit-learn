@@ -194,11 +194,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     def __init__(self, models):
         self.models = models
-        self.models_ = None
-        self.classes_ = None
-        self.n_features_ = None
-        self._cols = None
-        self._df_cols = None
         self._is_fitted = False
 
     def fit(self, X, y):
