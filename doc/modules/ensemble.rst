@@ -1018,6 +1018,8 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
+.. _sw_hgbdt:
+
 Sample weight support
 ---------------------
 

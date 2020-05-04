@@ -8,7 +8,7 @@
         <h1 class="sk-landing-header text-white text-monospace">scikit-learn</h1>
         <h4 class="sk-landing-subheader text-white font-italic mb-3">Machine Learning in Python</h4>
         <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
-        <a class="btn sk-landing-btn mb-1" href="whats_new/v{{ version }}.html" role="button">What's New in {{ release }}</a>
+        <a class="btn sk-landing-btn mb-1" href="{{ pathto(release_highlights) }}" role="button">Release Highlights for {{ release_highlights_version }}</a>
         <a class="btn sk-landing-btn mb-1" href="https://github.com/scikit-learn/scikit-learn" role="button">GitHub</a>
       </div>
       <div class="col-md-6 d-flex">
@@ -160,7 +160,7 @@
         </li>
         <li><strong>March 2020.</strong> scikit-learn 0.22.2 is available for download (<a href="whats_new/v0.22.html#version-0-22-2">Changelog</a>).
         <li><strong>January 2020.</strong> scikit-learn 0.22.1 is available for download (<a href="whats_new/v0.22.html#version-0-22-1">Changelog</a>).
-        <li><strong>December 2019.</strong> scikit-learn 0.22 is available for download (<a href="whats_new/v0.22.html#version-0-22-0">Changelog</a>).
+        <li><strong>December 2019.</strong> scikit-learn 0.22 is available for download (<a href="whats_new/v0.22.html#version-0-22-0">Changelog</a> and <a href="{{ pathto('auto_examples/release_highlights/plot_release_highlights_0_22_0') }}">Release Highlights</a>).
         </li>
         <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
         </li>

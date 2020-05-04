@@ -98,7 +98,6 @@ ax2.set_title("Multi-layer Perceptron")
 # which will plot the partial dependence curves of each model on the same axes.
 # The length of the axes list must be equal to the number of plots drawn.
 
-# Sets this image as the thumbnail for sphinx gallery
 # sphinx_gallery_thumbnail_number = 4
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
 tree_disp.plot(ax=[ax1, ax2], line_kw={"label": "Decision Tree"})

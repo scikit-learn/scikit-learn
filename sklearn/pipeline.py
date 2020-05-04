@@ -18,6 +18,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
+from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -623,6 +624,21 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
+    def _sk_visual_block_(self):
+        _, estimators = zip(*self.steps)
+
+        def _get_name(name, est):
+            if est is None or est == 'passthrough':
+                return f'{name}: passthrough'
+            # Is an estimator
+            return f'{name}: {est.__class__.__name__}'
+        names = [_get_name(name, est) for name, est in self.steps]
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock('serial', estimators,
+                            names=names,
+                            name_details=name_details,
+                            dash_wrapped=False)
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
@@ -1003,6 +1019,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def n_features_in_(self):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    def _sk_visual_block_(self):
+        names, transformers = zip(*self.transformer_list)
+        return _VisualBlock('parallel', transformers, names=names)
 
 
 def make_union(*transformers, **kwargs):
