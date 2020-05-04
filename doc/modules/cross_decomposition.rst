@@ -46,11 +46,12 @@ PLSCanonical
 
 We here describe the algorithm used in :class:`PLSCanonical`. The other
 estimators use variants of this algorithm, and are detailed below.
+We recommend section [1]_ for more details and comparisons between these
+algorithms. In [1]_, :class:`PLSCanonical` corresponds to "PLSW2A".
 
-We follow the description given in section 4.1 of [1]_. Given two centered
-matrices :math:`X \in \mathbb{R}^{n \times d}` and :math:`Y \in \mathbb{R}^{n
-\times t}`, and a number of components :math:`K`, :class:`PLSCanonical`
-procedes as follows:
+Given two centered matrices :math:`X \in \mathbb{R}^{n \times d}` and
+:math:`Y \in \mathbb{R}^{n \times t}`, and a number of components :math:`K`,
+:class:`PLSCanonical` procedes as follows:
 
 Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
 :math:`k \in [1, K]`:
@@ -157,7 +158,9 @@ of components is limited by `min(n_samples, n_features, n_targets)` in
 `min(n_samples, n_features)`.
 
 :class:`PLSRegression` is also known as PLS1 (single targets) and PLS2
-(multiple targets).
+(multiple targets). Much like :class:`~sklearn.linear_model.Lasso`,
+:class:`PLSRegression` is a form of regularized linear regression where the
+number of components controls the strength of the regularization.
 
 Canonical Correlation Analysis
 ------------------------------

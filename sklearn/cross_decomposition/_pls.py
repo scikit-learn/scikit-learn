@@ -298,7 +298,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self
 
     def transform(self, X, Y=None, copy=True):
-        """Apply the dimension reduction learned on the train data.
+        """Apply the dimension reduction
 
         Parameters
         ----------
@@ -361,7 +361,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return X_reconstructed
 
     def predict(self, X, copy=True):
-        """Apply the dimension reduction learned on the train data.
+        """Predict targets of given samples
 
         Parameters
         ----------
@@ -907,7 +907,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     def transform(self, X, Y=None):
         """
-        Apply the dimensionality reduction learned on the training data.
+        Apply the dimensionality reduction
 
         Parameters
         ----------
@@ -937,7 +937,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         return x_scores
 
     def fit_transform(self, X, y=None):
-        """Learn and apply the dimensionality reduction on the training data.
+        """Learn and apply the dimensionality reduction
 
         Parameters
         ----------
