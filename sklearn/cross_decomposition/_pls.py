@@ -65,7 +65,6 @@ def _get_first_singular_vectors_power_method(X, Y, mode="A", max_iter=500,
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights, y_weights)) + eps
 
-        # FIXME: what's with the division here??
         y_score = np.dot(Y, y_weights) / (np.dot(y_weights, y_weights) + eps)
 
         x_weights_diff = x_weights - x_weights_old
@@ -458,8 +457,8 @@ class PLSRegression(_PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `1, min(n_samples,
-        n_features, n_targets]`.
+        Number of components to keep. Should be in `[1, min(n_samples,
+        n_features, n_targets)]`.
 
     scale : boolean, default=True
         Whether to scale `X` and `Y`.
@@ -556,8 +555,8 @@ class PLSCanonical(_PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `1, min(n_samples,
-        n_features, n_targets]`.
+        Number of components to keep. Should be in `[1, min(n_samples,
+        n_features, n_targets)]`.
 
     scale : boolean, default=True
         Whether to scale `X` and `Y`.
@@ -667,8 +666,8 @@ class CCA(_UnstableArchMixin, _PLS):
     Parameters
     ----------
     n_components : int, default=2
-        Number of components to keep. Should be in `1, min(n_samples,
-        n_features, n_targets]`.
+        Number of components to keep. Should be in `[1, min(n_samples,
+        n_features, n_targets)]`.
 
     scale : boolean, default=True
         Whether to scale `X` and `Y`.

@@ -24,7 +24,7 @@ multidimensional variance direction in the Y space. In other words, PLS
 projects both `X` and `Y` into a lower-dimensional subspace such that the
 covariance between `tranformed(X)` and `transformed(Y)` is maximal.
 
-PLS draws similarity with Principal Component Regression, where the samples
+PLS draws similarities with Principal Component Regression, where the samples
 are first projected into a lower-dimensional subspace, and the targets `y`
 are predicted using `transformed(X)`. One issue with PCR is that the
 dimensionality reduction is unsupervized, and may lose some important
@@ -98,7 +98,7 @@ To transform :math:`X` into :math:`T`, we need to find a projection matrix
 :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting :math:`P = U(\Gamma^T
 U)^{-1}`, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi (\Gamma^T U)
 (\Gamma^T U)^{-1} = \Xi` as desired. The rotation matrix :math:`P` can be
-accesed from the `x_rotations_` attribute.
+accessed from the `x_rotations_` attribute.
 
 Similarly, :math:`Y` can be transformed using the rotation matrix
 :math:`V(\Delta^T V)^{-1}`, accessed via the `y_rotations_` attribute.
@@ -107,19 +107,19 @@ Predicting the targets Y
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 To predict the targets of some data :math:`X`, we are looking for a
-coefficient matrix :math:`\Beta \in R^{d \times t}` such that :math:`Y =
-X\Beta`.
+coefficient matrix :math:`\beta \in R^{d \times t}` such that :math:`Y =
+X\beta`.
 
 The idea is to try to predict the transformed targets :math:`\Omega` as a
 function of the tranformed samples :math:`\Xi`, by computing :math:`\alpha
 \in \mathcal{R}` such that :math:`\Omega = \alpha \Xi`.
 
-Then, we have :math:`Y = \Omega \Gamma^T = \alpha \Xi \gamma^T`, and since
+Then, we have :math:`Y = \Omega \Gamma^T = \alpha \Xi \Gamma^T`, and since
 :math:`\Xi` is the transformed training data we have that :math:`Y = X \alpha
-P \Gamma^T`, and as a result the coefficient matrix :math:`\Beta = \alpha P
+P \Gamma^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
 \Gamma^T`.
 
-:math:`\Beta` can be accessed through the `coef_` attribute.
+:math:`\beta` can be accessed through the `coef_` attribute.
 
 PLSSVD
 ------
@@ -164,14 +164,14 @@ Canonical Correlation Analysis
 
 Canonical Correlation Analysis was developed prior and independently to PLS.
 But it turns out that :class:`CCA` is a special case of PLS, and corresponds
-to PLS in "Mode B" in the litterature.
+to PLS in "Mode B" in the literature.
 
 :class:`CCA` differs from :class:`PLSCanonical` in the way the weights
 :math:`u_k` and :math:`v_k` are computed in the power method of step a).
 Details can be found in section 10 of [1]_.
 
-Since :math:`CCA` involves the inversion of :math:`X_k^TX` and
-:math:`Y_k^TY`, this estimator can be unstable if the number of features or
+Since :class:`CCA` involves the inversion of :math:`X_k^TX_k` and
+:math:`Y_k^TY_k`, this estimator can be unstable if the number of features or
 targets is greater than the number of samples.
 
 
