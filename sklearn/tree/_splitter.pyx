@@ -241,13 +241,13 @@ cdef class Splitter:
     cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current split"""
         cdef bint check_lower, check_upper, check_monotonic
-        check_lower = (self.criterion.sum_left[0] >= lower_bound * self.criterion.weighted_n_left) \
-                      & (self.criterion.sum_right[0] >= lower_bound * self.criterion.weighted_n_right)
-        check_upper = (self.criterion.sum_left[0] <= upper_bound * self.criterion.weighted_n_left) \
-                      & (self.criterion.sum_right[0] <= upper_bound * self.criterion.weighted_n_right)
         if monotonic_cst == 0: # No constraint
-            return check_lower & check_upper
+            return 1
         else:
+            check_lower = (self.criterion.sum_left[0] >= lower_bound * self.criterion.weighted_n_left) \
+                          & (self.criterion.sum_right[0] >= lower_bound * self.criterion.weighted_n_right)
+            check_upper = (self.criterion.sum_left[0] <= upper_bound * self.criterion.weighted_n_left) \
+                          & (self.criterion.sum_right[0] <= upper_bound * self.criterion.weighted_n_right)
             check_monotonic = (self.criterion.sum_left[0] * self.criterion.weighted_n_right
                                - self.criterion.sum_right[0] * self.criterion.weighted_n_left) \
                               * monotonic_cst <= 0
