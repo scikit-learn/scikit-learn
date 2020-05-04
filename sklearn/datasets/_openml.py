@@ -246,12 +246,8 @@ def _convert_arff_data(arff, col_slice_x, col_slice_y, shape=None):
     """
     arff_data = arff['data']
     if isinstance(arff_data, Generator):
-        if shape[0] == -1:
-            count = -1
-        else:
-            count = shape[0] * shape[1]
         data = np.fromiter(itertools.chain.from_iterable(arff_data),
-                           dtype='float64', count=count)
+                           dtype='float64')
         data = data.reshape(*shape)
         X = data[:, col_slice_x]
         y = data[:, col_slice_y]

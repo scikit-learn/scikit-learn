@@ -1193,7 +1193,13 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     assert 'animal' not in dataset['feature_names']
 
 
-def test_fetch_openml_verify_checksum(monkeypatch):
+@pytest.mark.parametrize('as_frame,cache', [
+    (True, True),
+    (True, False),
+    (False, True),
+    (False, False)
+])
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -1212,11 +1218,13 @@ def test_fetch_openml_verify_checksum(monkeypatch):
             modified_gzip.write(data)
 
         # should fail checksum validation
+        if as_frame:
+            pytest.importorskip('pandas')
         with pytest.raises(ValueError) as exc:
-            sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
-                                          as_frame=True)
+            sklearn.datasets.fetch_openml(data_id=data_id, cache=cache,
+                                          as_frame=as_frame)
         # exception message should have file-path
-        assert "1666876" in repr(exc)
+        assert "1666876" in str(exc)
     finally:
         shutil.copy(backup_data_path, original_data_path)
         os.remove(backup_data_path)
