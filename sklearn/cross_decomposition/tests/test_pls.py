@@ -14,6 +14,7 @@ from sklearn.cross_decomposition import CCA
 from sklearn.cross_decomposition import PLSSVD, PLSRegression, PLSCanonical
 from sklearn.datasets import make_regression
 from sklearn.utils import check_random_state
+from sklearn.utils.extmath import svd_flip
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -515,3 +516,18 @@ def test_one_component_equivalence():
 
     assert_allclose(svd, reg, rtol=1e-2)
     assert_allclose(svd, canonical, rtol=1e-2)
+
+
+def test_svd_flip_1d():
+    # Make sure svd_flip_1d is equivalent to svd_flip
+    u = np.array([1, -4, 2])
+    v = np.array([1, 2, 3])
+
+    u_expected, v_expected = svd_flip(u.reshape(-1, 1), v.reshape(1, -1))
+    _svd_flip_1d(u, v)  # inplace
+
+    assert_allclose(u, u_expected.ravel())
+    assert_allclose(u, [-1, 4, -2])
+
+    assert_allclose(v, v_expected.ravel())
+    assert_allclose(v, [-1, -2, -3])
