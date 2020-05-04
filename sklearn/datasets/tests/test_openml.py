@@ -1224,7 +1224,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache):
             sklearn.datasets.fetch_openml(data_id=data_id, cache=cache,
                                           as_frame=as_frame)
         # exception message should have file-path
-        assert "1666876" in str(exc)
+        assert exc.match("1666876")
     finally:
         shutil.copy(backup_data_path, original_data_path)
         os.remove(backup_data_path)
