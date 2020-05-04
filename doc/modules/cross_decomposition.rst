@@ -38,14 +38,14 @@ predictors has more variables than observations, and when there is
 multicollinearity among the features. By contrast, standard linear regression
 would fail in these cases unless it is regularized.
 
-Classes included in this module are :class:`PLSRegression`
+Classes included in this module are :class:`PLSRegression`,
 :class:`PLSCanonical`, :class:`CCA` and :class:`PLSSVD`
 
 PLSCanonical
 ------------
 
 We here describe the algorithm used in :class:`PLSCanonical`. The other
-estimators use variants of this algorithm, which we also detail below.
+estimators use variants of this algorithm, and are detailed below.
 
 This algorithm is also described in section 4.1 of [1]_. Given two centered
 matrices :math:`X \in \mathcal{R}^{n \times d}` and :math:`Y \in
@@ -85,10 +85,9 @@ the projections of the training data :math:`X` and :math:`Y`, respectively.
 
 Step *a)* may be performed in two ways: either by computing the whole SVD of
 :math:`C` and only retain the singular vectors with the biggest singular
-values, or by directly computing the singular vectors using the power method,
-which correspons to the `'nipals'` option of the `algorithm` parameter.
+values, or by directly computing the singular vectors using the power method (cf section 11.3 in [1]_),
+which corresponds to the `'nipals'` option of the `algorithm` parameter.
 
-The power method corresponds to section 11.3 in [1]_.
 
 Transforming data
 ^^^^^^^^^^^^^^^^^
@@ -124,10 +123,10 @@ P \Gamma^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
 PLSSVD
 ------
 
-:class:`PLSSVD` is a sort of simplified version of :class:`PLSCanonical`
+:class:`PLSSVD` is a simplified version of :class:`PLSCanonical`
 described earlier: instead of iteratively deflating the matrices :math:`X_k`
-and :math:`Y_k`, :class:`PLSSVD` just computes the SVD of :math:`C = X^TY`
-*once*, and stores the `n_components` singular vectors corresponding to the
+and :math:`Y_k`, :class:`PLSSVD` computes the SVD of :math:`C = X^TY`
+only *once*, and stores the `n_components` singular vectors corresponding to the
 biggest singular values in the matrices `U` and `V`, corresponding to the
 `x_weights_` and `y_weights_` attributes. Here, the transformed data is
 simply `transformed(X) = XU` and `transformed(Y) = YV`.
@@ -143,15 +142,15 @@ The :class:`PLSRegression` estimator is similar to
 differences:
 
 - at step a) in the power method to compute :math:`u_k` and :math:`v_k`,
-  :math:`v_k` is never normlized.
+  :math:`v_k` is never normalized.
 - at step c), the targets :math:`Y_k` are approximated using the projection
   of :math:`X_k` (i.e. :math:`\xi_k`) instead of the projection of
   :math:`Y_k` (i.e. :math:`\omega_k`). In other words, the loadings
   computation is different. As a result, the deflation in step d) will also
   be affected.
 
-These two modifications will affect the output of `predict` and `transform`,
-which won't be the same as for :class:`PLSCanonical`. Also, while the number
+These two modifications affect the output of `predict` and `transform`,
+which are not the same as for :class:`PLSCanonical`. Also, while the number
 of components is limited by `min(n_samples, n_features, n_targets)` in
 :class:`PLSCanonical`, here the limit is the rank of :math:`X^TX`, i.e.
 `min(n_samples, n_features)`.
