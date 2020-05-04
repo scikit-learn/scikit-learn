@@ -146,6 +146,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
+        .. versionadded:: 0.20
+
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
@@ -391,6 +393,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The lower, the more abnormal.
         """
         # code structure from ForestClassifier/predict_proba
+
         check_is_fitted(self)
 
         # Check data
