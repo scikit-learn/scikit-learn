@@ -262,8 +262,10 @@ Other packages useful for data analysis and machine learning.
 Recommendation Engine packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- `GraphLab <https://turi.com/products/create/docs/graphlab.toolkits.recommender.html>`_ Implementation
-  of classical recommendation techniques (in C++, with Python bindings).
+ - `GraphLab
+   <https://turi.com/products/create/docs/graphlab.toolkits.recommender.html>`_
+   Implementation of classical recommendation techniques (in C++, with
+   Python bindings).
 
 - `implicit <https://github.com/benfred/implicit>`_, Library for implicit
   feedback datasets.
