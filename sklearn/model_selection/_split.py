@@ -825,7 +825,7 @@ class TimeSeriesSplit(_BaseKFold):
     @_deprecate_positional_args
     def __init__(self,
                  n_splits=5,
-                 *
+                 *,
                  max_train_size=None,
                  test_size=None,
                  gap=0):
