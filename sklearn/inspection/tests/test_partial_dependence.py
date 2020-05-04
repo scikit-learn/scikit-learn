@@ -211,7 +211,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     if method == 'brute':
         pdp, predictions = _partial_dependence_brute(est, grid, features, X,
-                                        response_method='auto')
+                                                     response_method='auto')
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
 
