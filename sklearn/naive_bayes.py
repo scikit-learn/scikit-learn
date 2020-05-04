@@ -341,10 +341,12 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
             _, estimator, cols = model
 
-            # Check naive bayes estimator for format
-            # `fit` and `_joint_log_likelihood` attributes
+            # Check if user specified say `GaussianNB()` instead of `GaussianNB`
             if callable(estimator):
                 raise ValueError("Estimator should be a callable specified.")
+
+            # Check naive bayes estimator for format
+            # `fit` and `_joint_log_likelihood` attributes
             if not (hasattr(estimator, "fit")
                     or hasattr(estimator, "_joint_log_likelihood")):
                 raise TypeError("Naive bayes estimator should implement "
