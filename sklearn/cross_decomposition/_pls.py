@@ -303,12 +303,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Samples to transform
 
         Y : array-like of shape (n_samples, n_targets)
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+            Target vectors
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -368,8 +366,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Samples
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -915,7 +912,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training samples
+            Samples to be transformed
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets

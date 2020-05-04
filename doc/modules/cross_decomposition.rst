@@ -47,15 +47,15 @@ PLSCanonical
 We here describe the algorithm used in :class:`PLSCanonical`. The other
 estimators use variants of this algorithm, and are detailed below.
 
-This algorithm is also described in section 4.1 of [1]_. Given two centered
-matrices :math:`X \in \mathcal{R}^{n \times d}` and :math:`Y \in
-\mathcal{R}^{n \times t}`, and a number of components :math:`K`,
-:class:`PLSCanonical` procedes as follows:
+We follow the description given in section 4.1 of [1]_. Given two centered
+matrices :math:`X \in \mathbb{R}^{n \times d}` and :math:`Y \in \mathbb{R}^{n
+\times t}`, and a number of components :math:`K`, :class:`PLSCanonical`
+procedes as follows:
 
 Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
 :math:`k \in [1, K]`:
 
-- a) compute :math:`u_k \in \mathcal{R}^d` and :math:`v_k \in \mathcal{R}^t`,
+- a) compute :math:`u_k \in \mathbb{R}^d` and :math:`v_k \in \mathbb{R}^t`,
   the first left and right singular vectors of the cross-covariance matrix
   :math:`C = X_k^T Y_k`.
   :math:`u_k` and :math:`v_k` are called the *weights*.
@@ -66,7 +66,7 @@ Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
 - b) Project :math:`X_k` and :math:`Y_k` on the singular vectors to obtain
   *scores*: :math:`\xi_k = X_k u_k` and :math:`\omega_k = Y_k v_k`
 - c) Regress :math:`X_k` on :math:`\xi_k`, i.e. find a vector :math:`\gamma_k
-  \in \mathcal{R}^d` such that the rank-1 matrix :math:`\xi_k \gamma_k^T`
+  \in \mathbb{R}^d` such that the rank-1 matrix :math:`\xi_k \gamma_k^T`
   is as close as possible to :math:`X_k`. Do the same on :math:`Y_k` with
   :math:`\omega_k` to obtain :math:`\delta_k`. The vectors
   :math:`\gamma_k` and :math:`\delta_k` are called the *loadings*.
@@ -75,8 +75,8 @@ Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
   :math:`Y_{k + 1} = Y_k - \omega_k \delta_k^T`.
 
 At the end, we have approximated :math:`X` as a sum of rank-1 matrices:
-:math:`X = \Xi \Gamma^T` where :math:`\Xi \in \mathcal{R}^{n \times K}`
-contains the scores in its columns, and :math:`\Gamma^T \in \mathcal{R}^{K
+:math:`X = \Xi \Gamma^T` where :math:`\Xi \in \mathbb{R}^{n \times K}`
+contains the scores in its columns, and :math:`\Gamma^T \in \mathbb{R}^{K
 \times d}` contains the loadings in its rows. Similarly for :math:`Y`, we
 have :math:`Y = \Omega \Delta^T`.
 
@@ -92,12 +92,13 @@ which corresponds to the `'nipals'` option of the `algorithm` parameter.
 Transforming data
 ^^^^^^^^^^^^^^^^^
 
-To transform :math:`X` into :math:`T`, we need to find a projection matrix
-:math:`P` such that :math:`T = XP`. We know that for the training data,
-:math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting :math:`P = U(\Gamma^T
-U)^{-1}`, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi (\Gamma^T U)
-(\Gamma^T U)^{-1} = \Xi` as desired. The rotation matrix :math:`P` can be
-accessed from the `x_rotations_` attribute.
+To transform :math:`X` into :math:`\top{X}`, we need to find a projection
+matrix :math:`P` such that :math:`\top{X} = XP`. We know that for the
+training data, :math:`\Xi = XP`, and :math:`X = \Xi \Gamma^T`. Setting
+:math:`P = U(\Gamma^T U)^{-1}` where :math:`U` is the matrix with the
+:math:`u_k` in the columns, we have :math:`XP = X U(\Gamma^T U)^{-1} = \Xi
+(\Gamma^T U) (\Gamma^T U)^{-1} = \Xi` as desired. The rotation matrix
+:math:`P` can be accessed from the `x_rotations_` attribute.
 
 Similarly, :math:`Y` can be transformed using the rotation matrix
 :math:`V(\Delta^T V)^{-1}`, accessed via the `y_rotations_` attribute.
@@ -111,12 +112,12 @@ X\beta`.
 
 The idea is to try to predict the transformed targets :math:`\Omega` as a
 function of the tranformed samples :math:`\Xi`, by computing :math:`\alpha
-\in \mathcal{R}` such that :math:`\Omega = \alpha \Xi`.
+\in \mathbb{R}` such that :math:`\Omega = \alpha \Xi`.
 
-Then, we have :math:`Y = \Omega \Gamma^T = \alpha \Xi \Gamma^T`, and since
+Then, we have :math:`Y = \Omega \Delta^T = \alpha \Xi \Delta^T`, and since
 :math:`\Xi` is the transformed training data we have that :math:`Y = X \alpha
-P \Gamma^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
-\Gamma^T`.
+P \Delta^T`, and as a result the coefficient matrix :math:`\beta = \alpha P
+\Delta^T`.
 
 :math:`\beta` can be accessed through the `coef_` attribute.
 
@@ -126,8 +127,8 @@ PLSSVD
 :class:`PLSSVD` is a simplified version of :class:`PLSCanonical`
 described earlier: instead of iteratively deflating the matrices :math:`X_k`
 and :math:`Y_k`, :class:`PLSSVD` computes the SVD of :math:`C = X^TY`
-only *once*, and stores the `n_components` singular vectors corresponding to the
-biggest singular values in the matrices `U` and `V`, corresponding to the
+only *once*, and stores the `n_components` singular vectors corresponding to
+the biggest singular values in the matrices `U` and `V`, corresponding to the
 `x_weights_` and `y_weights_` attributes. Here, the transformed data is
 simply `transformed(X) = XU` and `transformed(Y) = YV`.
 
