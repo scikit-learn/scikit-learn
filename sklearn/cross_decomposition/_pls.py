@@ -510,13 +510,13 @@ class PLSRegression(_PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape(n_features, n_targets)
-        The coefficients of the linear model such that `Y` is approximted as
+    coef_ : ndarray of shape (n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty is `algorithm='svd'`.
+        component. Empty if `algorithm='svd'`.
 
     Examples
     --------
@@ -616,13 +616,13 @@ class PLSCanonical(_PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape(n_features, n_targets)
-        The coefficients of the linear model such that `Y` is approximted as
+    coef_ : ndarray of shape (n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty is `algorithm='svd'`.
+        component. Empty if `algorithm='svd'`.
 
 
     Examples
@@ -727,13 +727,13 @@ class CCA(_UnstableArchMixin, _PLS):
     y_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `Y`.
 
-    coef_ : ndarray of shape(n_features, n_targets)
-        The coefficients of the linear model such that `Y` is approximted as
+    coef_ : ndarray of shape (n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximated as
         `Y = X @ coef_`.
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
-        component. Empty is `algorithm='svd'`.
+        component. Empty if `algorithm='svd'`.
 
     Examples
     --------
