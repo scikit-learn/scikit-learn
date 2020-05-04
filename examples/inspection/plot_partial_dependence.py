@@ -4,17 +4,17 @@ Partial Dependence and Individual Conditional Expectation Plots
 ===============================================================
 
 Partial dependence plots show the dependence between the target function [2]_
-and a set of 'target' features, marginalizing over the values of all other
+and a set of features of interest, marginalizing over the values of all other
 features (the complement features). Due to the limits of human perception, the
-size of the 'target' feature set must be small (usually, one or two) thus the
-target features are usually chosen among the most important features.
+size of the set of features of interest must be small (usually, one or two)
+thus they are usually chosen among the most important features.
 
 Similarly, an individual conditional expectation (ICE) plot [3]_
-shows the dependence between the target function and a 'target' feature.
+shows the dependence between the target function and a feature of interest.
 However, unlike partial dependence plots, which show the average effect of the
-'target' features, ICE plots visualize the dependence of the prediction on a
+features of interest, ICE plots visualize the dependence of the prediction on a
 feature for each instance separately, with one line per instance. Only one
-'target' feature is supported for ICE plots.
+feature of interest is supported for ICE plots.
 
 This example shows how to obtain partial dependence and ICE plots from a
 :class:`~sklearn.neural_network.MLPRegressor` and a
@@ -204,8 +204,8 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # 2D interaction plots
 # --------------------
 #
-# PDPs with two target features enable us to visualize interactions among them.
-# However, ICEs cannot be plotted in an easy manner and thus interpreted.
+# PDPs with two features of interest enable us to visualize interactions among
+# them. However, ICEs cannot be plotted in an easy manner and thus interpreted.
 # Another consideration is linked to the performance to compute the PDPs. With
 # the tree-based algorithm, when only PDPs are requested, they can be computed
 # on an efficient way using the `'recursion'` method.
