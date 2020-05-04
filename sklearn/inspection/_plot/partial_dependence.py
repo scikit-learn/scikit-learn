@@ -194,12 +194,12 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
-        - kind='average' results in the traditional PD plot;
-        - kind='individual' results in the ICE plot.
+        - ``kind='average'`` results in the traditional PD plot;
+        - ``kind='individual'`` results in the ICE plot.
 
-       Note that the fast method='recursion' option is only available for
-       kind='average'. Plotting individual dependencies requires using the
-       slower method='brute' option.
+       Note that the fast ``method='recursion'`` option is only available for
+       ``kind='average'``. Plotting individual dependencies requires using the
+       slower ``method='brute'`` option.
 
         .. versionadded:: 0.23
 
@@ -443,12 +443,12 @@ class PartialDependenceDisplay:
         Whether to plot the partial dependence averaged across all the samples
         in the dataset or one line per sample or both.
 
-        - kind='average' results in the traditional PD plot;
-        - kind='individual' results in the ICE plot.
+        - ``kind='average'`` results in the traditional PD plot;
+        - ``kind='individual'`` results in the ICE plot.
 
-       Note that the fast method='recursion' option is only available for
-       kind='average'. Plotting individual dependencies requires using the
-       slower method='brute' option.
+       Note that the fast ``method='recursion'`` option is only available for
+       ``kind='average'``. Plotting individual dependencies requires using the
+       slower ``method='brute'`` option.
 
         .. versionadded:: 0.23
 

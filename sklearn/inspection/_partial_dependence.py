@@ -309,14 +309,15 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     -------
     predictions : ndarray or :class:`~sklearn.utils.Bunch`
 
-        - kind='legacy', ndarray of shape (n_outputs, len(values[0]),
+        - ``kind='legacy'``, ndarray of shape (n_outputs, len(values[0]),
             len(values[1]), ...)
                 The predictions for all the points in the grid, averaged
                 over all samples in X (or over the training data if ``method``
                 is 'recursion').
 
-        - kind='individual', 'average' or 'both', :class:`~sklearn.utils.Bunch`
-            Dictionary-like object, with the following attributes.
+        - ``kind='individual'``, ``'average'`` or ``'both'``,
+            :class:`~sklearn.utils.Bunch` Dictionary-like object, with the
+            following attributes.
 
             individual : ndarray of shape (n_outputs, n_instances,
                 len(values[0]), len(values[1]), ...)
