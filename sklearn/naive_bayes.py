@@ -192,7 +192,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     array([1])
     """
 
-    def __init__(self, models):
+    # FIXME add `class_prior` and `fit_prior`
+    def __init__(self, models, class_prior, fit_prior):
         self.models = models
         self._is_fitted = False
 
