@@ -73,6 +73,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model inspection and visualisation**
 
+- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
+  decision tree visualization and model interpretation.
+
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
   debugging/inspecting machine learning models and explaining their
   predictions.
