@@ -545,15 +545,8 @@ def test_incremental_variance_numerical_stability():
     A1 = np.full((n_samples // 2, n_features), x2, dtype=np.float64)
     A = np.vstack((A0, A1))
 
-    # Older versions of numpy have different precision
-    # In some old version, np.var is not stable
-    if np.abs(np_var(A) - two_pass_var(A)).max() < 1e-6:
-        stable_var = np_var
-    else:
-        stable_var = two_pass_var
-
     # Naive one pass var: >tol (=1063)
-    assert np.abs(stable_var(A) - one_pass_var(A)).max() > tol
+    assert np.abs(np_var(A) - one_pass_var(A)).max() > tol
 
     # Starting point for online algorithms: after A0
 
@@ -565,7 +558,7 @@ def test_incremental_variance_numerical_stability():
     assert n == A.shape[0]
     # the mean is also slightly unstable
     assert np.abs(A.mean(axis=0) - mean).max() > 1e-6
-    assert np.abs(stable_var(A) - var).max() > tol
+    assert np.abs(np_var(A) - var).max() > tol
 
     # Robust implementation: <tol (177)
     mean, var = A0[0, :], np.zeros(n_features)
@@ -576,7 +569,7 @@ def test_incremental_variance_numerical_stability():
                                       mean, var, n)
     assert_array_equal(n, A.shape[0])
     assert_array_almost_equal(A.mean(axis=0), mean)
-    assert tol > np.abs(stable_var(A) - var).max()
+    assert tol > np.abs(np_var(A) - var).max()
 
 
 def test_incremental_variance_ddof():

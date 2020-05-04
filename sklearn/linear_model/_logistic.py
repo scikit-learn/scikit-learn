@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -27,11 +27,9 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
-from ..utils.fixes import logsumexp
 from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils import deprecated
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
@@ -585,12 +583,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
-        'liblinear'.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
@@ -736,10 +730,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0 = w0.ravel()
         target = Y_multi
         if solver == 'lbfgs':
-            func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
+            def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
-            func = lambda x, *args: _multinomial_loss(x, *args)[0]
-            grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
+            def func(x, *args): return _multinomial_loss(x, *args)[0]
+            def grad(x, *args): return _multinomial_loss_grad(x, *args)[1]
             hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
@@ -748,7 +742,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
-            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            def grad(x, *args): return _logistic_loss_and_grad(x, *args)[1]
             hess = _logistic_grad_hess
         warm_start_sag = {'coef': np.expand_dims(w0, axis=1)}
 
@@ -922,12 +916,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' and
-        'liblinear'.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     max_squared_sum : float, default=None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -1098,12 +1088,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *class_weight='balanced'*
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
-        'liblinear'.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1169,7 +1155,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     l1_ratio : float, default=None
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
-        used if ``penalty='elasticnet'`. Setting ``l1_ratio=0`` is equivalent
+        used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
@@ -1261,8 +1247,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, penalty='l2', *, dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
@@ -1321,8 +1307,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
-                        raise ValueError("l1_ratio must be between 0 and 1;"
-                                         " got (l1_ratio=%r)" % self.l1_ratio)
+                raise ValueError("l1_ratio must be between 0 and 1;"
+                                 " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
@@ -1351,11 +1337,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = [np.float64, np.float32]
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=_dtype,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
-        n_samples, n_features = X.shape
 
         multi_class = _check_multi_class(self.multi_class, solver,
                                          len(self.classes_))
@@ -1431,6 +1417,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
+        n_features = X.shape[1]
         if multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
         else:
@@ -1656,12 +1643,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Used when `solver='sag'`, 'saga' or 'liblinear' to shuffle the data.
         Note that this only applies to the solver and not the cross-validation
-        generator.
+        generator. See :term:`Glossary <random_state>` for details.
 
     l1_ratios : list of float, default=None
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -1754,7 +1738,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     LogisticRegression
 
     """
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
+    @_deprecate_positional_args
+    def __init__(self, *, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='auto',
@@ -1827,9 +1812,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 "LogisticRegressionCV."
             )
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C",
-                         accept_large_sparse=solver != 'liblinear')
+        X, y = self._validate_data(X, y, accept_sparse='csr', dtype=np.float64,
+                                   order="C",
+                                   accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
 
         class_weight = self.class_weight

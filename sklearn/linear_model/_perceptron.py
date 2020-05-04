@@ -1,6 +1,7 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
 
+from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
 
 
@@ -53,11 +54,10 @@ class Perceptron(BaseSGDClassifier):
         for more details.
 
     random_state : int, RandomState instance, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Used to shuffle the training data, when ``shuffle`` is set to
+        ``True``. Pass an int for reproducible output across multiple
+        function calls.
+        See :term:`Glossary <random_state>`.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.
@@ -144,7 +144,8 @@ class Perceptron(BaseSGDClassifier):
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,

@@ -67,6 +67,8 @@ from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -426,12 +428,14 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
-    param_dict = {"C": 1.0}
+    param_dict = {"C": 1}
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'int'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
@@ -445,8 +449,10 @@ def test_grid_search_bad_param_grid():
     clf = SVC(gamma='auto')
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence"
-        "(but not a string) or np.ndarray.",
+        "Parameter grid for parameter (C) needs to"
+        " be a list or numpy array, but got (<class 'str'>)."
+        " Single values need to be wrapped in a list"
+        " with one element.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones((3, 2))}
@@ -1119,7 +1125,6 @@ def test_random_search_cv_results_multimetric():
 
     n_splits = 3
     n_search_iter = 30
-    scoring = ('accuracy', 'recall')
 
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
     params = dict(C=np.logspace(-4, 1, 3),
@@ -1145,9 +1150,8 @@ def test_random_search_cv_results_multimetric():
 
             compare_cv_results_multimetric_with_single(*random_searches,
                                                        iid=iid)
-            if refit:
-                compare_refit_methods_when_refit_with_acc(
-                    random_searches[0], random_searches[1], refit)
+            compare_refit_methods_when_refit_with_acc(
+                random_searches[0], random_searches[1], refit)
 
 
 @pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
@@ -1184,11 +1188,12 @@ def compare_cv_results_multimetric_with_single(
 
 def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     """Compare refit multi-metric search methods with single metric methods"""
+    assert search_acc.refit == refit
     if refit:
         assert search_multi.refit == 'accuracy'
     else:
         assert not search_multi.refit
-    assert search_acc.refit == refit
+        return  # search cannot predict/score without refit
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
     for method in ('predict', 'predict_proba', 'predict_log_proba'):
@@ -1306,6 +1311,8 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
+# FIXME remove test_fit_grid_point as the function will be removed on 0.25
+@ignore_warnings(category=FutureWarning)
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold()
@@ -1332,6 +1339,21 @@ def test_fit_grid_point():
                          "sklearn.model_selection.cross_validate instead.",
                          fit_grid_point, X, y, svc, params, train, test,
                          {'score': scorer}, verbose=True)
+
+
+# FIXME remove test_fit_grid_point_deprecated as
+# fit_grid_point will be removed on 0.25
+def test_fit_grid_point_deprecated():
+    X, y = make_classification(random_state=0)
+    svc = LinearSVC(random_state=0)
+    scorer = make_scorer(accuracy_score)
+    msg = ("fit_grid_point is deprecated in version 0.23 "
+           "and will be removed in version 0.25")
+    params = {'C': 0.1}
+    train, test = next(StratifiedKFold().split(X, y))
+
+    with pytest.warns(FutureWarning, match=msg):
+        fit_grid_point(X, y, svc, params, train, test, scorer, verbose=False)
 
 
 def test_pickle():
@@ -1792,6 +1814,23 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_n_features_in():
+    # make sure grid search and random search delegate n_features_in to the
+    # best estimator
+    n_features = 4
+    X, y = make_classification(n_features=n_features)
+    gbdt = HistGradientBoostingClassifier()
+    param_grid = {'max_iter': [3, 4]}
+    gs = GridSearchCV(gbdt, param_grid)
+    rs = RandomizedSearchCV(gbdt, param_grid, n_iter=1)
+    assert not hasattr(gs, 'n_features_in_')
+    assert not hasattr(rs, 'n_features_in_')
+    gs.fit(X, y)
+    rs.fit(X, y)
+    assert gs.n_features_in_ == n_features
+    assert rs.n_features_in_ == n_features
 
 
 def test_search_cv__pairwise_property_delegated_to_base_estimator():

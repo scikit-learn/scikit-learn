@@ -25,11 +25,13 @@ from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
+from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+                         check_symmetric, check_scalar,
+                         _deprecate_positional_args)
 from .. import get_config
 
 
@@ -51,6 +53,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "DataConversionWarning", "estimator_html_repr"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -58,10 +61,14 @@ _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
-    """Container object for datasets
+    """Container object exposing keys as attributes
 
-    Dictionary-like object that exposes its keys as attributes.
+    Bunch objects are sometimes used as an output for functions and methods.
+    They extend dictionaries by enabling values to be accessed by key,
+    `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
+    Examples
+    --------
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -73,7 +80,6 @@ class Bunch(dict):
     >>> b.c = 6
     >>> b['c']
     6
-
     """
 
     def __init__(self, **kwargs):
@@ -310,10 +316,10 @@ def safe_indexing(X, indices, axis=0):
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
-    return _safe_indexing(X, indices, axis)
+    return _safe_indexing(X, indices, axis=axis)
 
 
-def _safe_indexing(X, indices, axis=0):
+def _safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -416,7 +422,7 @@ def _get_column_indices(X, key):
         return np.atleast_1d(idx).tolist()
     elif key_dtype == 'str':
         try:
-            all_columns = list(X.columns)
+            all_columns = X.columns
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
@@ -425,10 +431,10 @@ def _get_column_indices(X, key):
         elif isinstance(key, slice):
             start, stop = key.start, key.stop
             if start is not None:
-                start = all_columns.index(start)
+                start = all_columns.get_loc(start)
             if stop is not None:
                 # pandas indexing with strings is endpoint included
-                stop = all_columns.index(stop) + 1
+                stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
             return list(range(n_columns)[slice(start, stop)])
@@ -436,13 +442,18 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         try:
-            column_indices = [all_columns.index(col) for col in columns]
-        except ValueError as e:
-            if 'not in list' in str(e):
-                raise ValueError(
-                    "A given column is not a column of the dataframe"
-                ) from e
-            raise
+            column_indices = []
+            for col in columns:
+                col_idx = all_columns.get_loc(col)
+                if not isinstance(col_idx, numbers.Integral):
+                    raise ValueError(f"Selected columns, {columns}, are not "
+                                     "unique in dataframe")
+                column_indices.append(col_idx)
+
+        except KeyError as e:
+            raise ValueError(
+                "A given column is not a column of the dataframe"
+            ) from e
 
         return column_indices
     else:
@@ -476,11 +487,10 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     stratify : array-like or None (default=None)
         If not None, data is split in a stratified fashion, using this as
@@ -621,11 +631,10 @@ def shuffle(*arrays, **options):
     Other Parameters
     ----------------
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Determines random number generation for shuffling
+        the data.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
@@ -677,7 +686,8 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
-def safe_sqr(X, copy=True):
+@_deprecate_positional_args
+def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
     Parameters
@@ -716,7 +726,8 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-def gen_batches(n, batch_size, min_batch_size=0):
+@_deprecate_positional_args
+def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -748,6 +759,12 @@ def gen_batches(n, batch_size, min_batch_size=0):
     >>> list(gen_batches(7, 3, min_batch_size=2))
     [slice(0, 3, None), slice(3, 7, None)]
     """
+    if not isinstance(batch_size, numbers.Integral):
+        raise TypeError("gen_batches got batch_size=%s, must be an"
+                        " integer" % batch_size)
+    if batch_size <= 0:
+        raise ValueError("gen_batches got batch_size=%s, must be"
+                         " positive" % batch_size)
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
@@ -759,7 +776,8 @@ def gen_batches(n, batch_size, min_batch_size=0):
         yield slice(start, n)
 
 
-def gen_even_slices(n, n_packs, n_samples=None):
+@_deprecate_positional_args
+def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
     Parameters
@@ -817,6 +835,45 @@ def tosequence(x):
         return x
     else:
         return list(x)
+
+
+def _to_object_array(sequence):
+    """Convert sequence to a 1-D NumPy array of object dtype.
+
+    numpy.array constructor has a similar use but it's output
+    is ambiguous. It can be 1-D NumPy array of object dtype if
+    the input is a ragged array, but if the input is a list of
+    equal length arrays, then the output is a 2D numpy.array.
+    _to_object_array solves this ambiguity by guarantying that
+    the output is a 1-D NumPy array of objects for any input.
+
+    Parameters
+    ----------
+    sequence : array-like of shape (n_elements,)
+        The sequence to be converted.
+
+    Returns
+    -------
+    out : ndarray of shape (n_elements,), dtype=object
+        The converted sequence into a 1-D NumPy array of object dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _to_object_array
+    >>> _to_object_array([np.array([0]), np.array([1])])
+    array([array([0]), array([1])], dtype=object)
+    >>> _to_object_array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    >>> np.array([np.array([0]), np.array([1])])
+    array([[0],
+       [1]])
+    >>> np.array([np.array([0]), np.array([1, 2])])
+    array([array([0]), array([1, 2])], dtype=object)
+    """
+    out = np.empty(len(sequence), dtype=object)
+    out[:] = sequence
+    return out
 
 
 def indices_to_mask(indices, mask_length):
@@ -905,8 +962,8 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-def get_chunk_n_rows(row_bytes, max_n_rows=None,
-                     working_memory=None):
+@_deprecate_positional_args
+def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """Calculates how many rows can be processed within working_memory
 
     Parameters

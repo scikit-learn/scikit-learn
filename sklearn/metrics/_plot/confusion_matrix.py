@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 
 
@@ -21,8 +22,9 @@ class ConfusionMatrixDisplay:
     confusion_matrix : ndarray of shape (n_classes, n_classes)
         Confusion matrix.
 
-    display_labels : ndarray of shape (n_classes,)
-        Display labels for plot.
+    display_labels : ndarray of shape (n_classes,), default=None
+        Display labels for plot. If None, display labels are set from 0 to
+        `n_classes - 1`.
 
     Attributes
     ----------
@@ -39,11 +41,12 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
     """
-    def __init__(self, confusion_matrix, display_labels):
+    def __init__(self, confusion_matrix, *, display_labels=None):
         self.confusion_matrix = confusion_matrix
         self.display_labels = display_labels
 
-    def plot(self, include_values=True, cmap='viridis',
+    @_deprecate_positional_args
+    def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None, ax=None):
         """Plot visualization.
 
@@ -61,7 +64,7 @@ class ConfusionMatrixDisplay:
 
         values_format : str, default=None
             Format specification for values in confusion matrix. If `None`,
-            the format specification is '.2g'.
+            the format specification is 'd' or '.2g' whichever is shorter.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -83,28 +86,41 @@ class ConfusionMatrixDisplay:
         n_classes = cm.shape[0]
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
-
         cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(256)
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
-            if values_format is None:
-                values_format = '.2g'
 
             # print text with appropriate color depending on background
             thresh = (cm.max() + cm.min()) / 2.0
+
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
-                self.text_[i, j] = ax.text(j, i,
-                                           format(cm[i, j], values_format),
-                                           ha="center", va="center",
-                                           color=color)
+
+                if values_format is None:
+                    text_cm = format(cm[i, j], '.2g')
+                    if cm.dtype.kind != 'f':
+                        text_d = format(cm[i, j], 'd')
+                        if len(text_d) < len(text_cm):
+                            text_cm = text_d
+                else:
+                    text_cm = format(cm[i, j], values_format)
+
+                self.text_[i, j] = ax.text(
+                    j, i, text_cm,
+                    ha="center", va="center",
+                    color=color)
+
+        if self.display_labels is None:
+            display_labels = np.arange(n_classes)
+        else:
+            display_labels = self.display_labels
 
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(n_classes),
                yticks=np.arange(n_classes),
-               xticklabels=self.display_labels,
-               yticklabels=self.display_labels,
+               xticklabels=display_labels,
+               yticklabels=display_labels,
                ylabel="True label",
                xlabel="Predicted label")
 
@@ -116,7 +132,8 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, labels=None,
+@_deprecate_positional_args
+def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
@@ -129,7 +146,8 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -164,7 +182,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     values_format : str, default=None
         Format specification for values in confusion matrix. If `None`,
-        the format specification is '.2g'.
+        the format specification is 'd' or '.2g' whichever is shorter.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
@@ -176,6 +194,22 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.metrics import plot_confusion_matrix
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.svm import SVC
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...         X, y, random_state=0)
+    >>> clf = SVC(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
+    >>> plot_confusion_matrix(clf, X_test, y_test)  # doctest: +SKIP
+    >>> plt.show()  # doctest: +SKIP
     """
     check_matplotlib_support("plot_confusion_matrix")
 
