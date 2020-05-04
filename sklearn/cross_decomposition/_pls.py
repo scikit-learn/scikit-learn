@@ -131,109 +131,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
-    This class implements the generic PLS algorithm, constructors' parameters
-    allow to obtain a specific implementation such as:
+    This class implements the generic PLS algorithm.
 
-    - PLS2 regression, i.e., PLS 2 blocks, mode A, with asymmetric deflation
-      and unnormalized y weights such as defined by [Tenenhaus 1998] p. 132.
-      With univariate response it implements PLS1.
-
-    - PLS canonical, i.e., PLS 2 blocks, mode A, with symmetric deflation and
-      normalized y weights such as defined by [Tenenhaus 1998] (p. 132) and
-      [Wegelin et al. 2000]. This parametrization implements the original Wold
-      algorithm.
-
-    We use the terminology defined by [Wegelin et al. 2000].
-    This implementation uses the PLS Wold 2 blocks algorithm based on two
-    nested loops:
-        (i) The outer loop iterate over components.
-        (ii) The inner loop estimates the weights vectors. This can be done
-        with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
-        SVD on residuals cross-covariance matrices.
-
-    n_components : int, number of components to keep. (default 2).
-
-    scale : boolean, scale data? (default True)
-
-    deflation_mode : str, "canonical" or "regression". See notes.
-
-    mode : "A" classical PLS and "B" CCA. See notes.
-
-    norm_y_weights : boolean, normalize Y weights to one? (default False)
-
-    algorithm : string, "nipals" or "svd"
-        The algorithm used to estimate the weights. It will be called
-        n_components times, i.e. once for each iteration of the outer loop.
-
-    max_iter : int (default 500)
-        The maximum number of iterations
-        of the NIPALS inner loop (used only if algorithm="nipals")
-
-    tol : non-negative real, default 1e-06
-        The tolerance used in the iterative algorithm.
-
-    copy : boolean, default True
-        Whether the deflation should be done on a copy. Let the default
-        value to True unless you don't care about side effects.
-
-    Attributes
-    ----------
-    x_weights_ : array, [p, n_components]
-        X block weights vectors.
-
-    y_weights_ : array, [q, n_components]
-        Y block weights vectors.
-
-    x_loadings_ : array, [p, n_components]
-        X block loadings vectors.
-
-    y_loadings_ : array, [q, n_components]
-        Y block loadings vectors.
-
-    x_scores_ : array, [n_samples, n_components]
-        X scores.
-
-    y_scores_ : array, [n_samples, n_components]
-        Y scores.
-
-    x_rotations_ : array, [p, n_components]
-        X block to latents rotations.
-
-    y_rotations_ : array, [q, n_components]
-        Y block to latents rotations.
-
-    x_mean_ : array, [p]
-        X mean for each predictor.
-
-    y_mean_ : array, [q]
-        Y mean for each response variable.
-
-    x_std_ : array, [p]
-        X standard deviation for each predictor.
-
-    y_std_ : array, [q]
-        Y standard deviation for each response variable.
-
-    coef_ : array, [p, q]
-        The coefficients of the linear model: ``Y = X coef_ + Err``
-
-    n_iter_ : array-like
-        Number of iterations of the NIPALS inner loop for each
-        component. Not useful if the algorithm given is "svd".
-
-    References
-    ----------
-
-    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
-    emphasis on the two-block case. Technical Report 371, Department of
-    Statistics, University of Washington, Seattle, 2000.
-
-    See also
-    --------
-    PLSCanonical
-    PLSRegression
-    CCA
-    PLS_SVD
+    Main ref: Wegelin, a survey of Partial Least Squares (PLS) methods,
+    with emphasis on the two-block case
+    https://www.stat.washington.edu/research/reports/2000/tr371.pdf
     """
 
     @abstractmethod
@@ -383,12 +285,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         # n_components.
         # Similiarly, Y was approximated as Omega . Delta.T + Y_(R+1)
 
-        # Transformation matrices (rotations_)
-        # X_rot = U (Gamma.T . U)^-1
-        # Y_rot = V (Omega.T . V)^-1
-        # Note that, with the training data and ommitting X_(R+1), we have
-        # transform(X) =def= X . X_rot == Xi . Gamma.T . X_rot = Xi
-        # Same for tranform(Y_train)
+        # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
             self.x_weights_,
             pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
@@ -397,15 +294,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             self.y_weights_, pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
                                    check_finite=False))
 
-        if True or self.deflation_mode == "regression":
-            # FIXME what's with the if?
-            # We regress Y on the transformed training data, i.e. Xi
-            # Which means the model is Y_pred = Xi . Delta.T + err,
-            # Xi is by def X . X_rot
-            # which leads to Y_pred = X . X_rot . Delta.T + err
-            # and so the coefficients matrix is X_rot . Delta.T
-            self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coef_ = self.coef_ * self.y_std_
+        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        self.coef_ = self.coef_ * self.y_std_
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -517,8 +407,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         """
         return self.fit(X, y).transform(X, y)
 
-    @deprecated("Attribute norm_y_weights was deprecated in version 0.24 and "
-                "will be removed in 0.26.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute norm_y_weights was deprecated in version 0.24 and "
+        "will be removed in 0.26.")
     @property
     def norm_y_weights(self):
         return self._norm_y_weights
@@ -556,10 +448,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 class PLSRegression(_PLS):
     """PLS regression
 
-    PLSRegression implements the PLS 2 blocks regression known as PLS2 or PLS1
-    in case of one dimensional response.
-    This class inherits from _PLS with mode="A", deflation_mode="regression",
-    norm_y_weights=False and algorithm="nipals".
+    PLSRegression is also known as PLS2 or PLS1, depending on the number of
+    targets.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -567,100 +457,67 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2)
-        Number of components to keep.
+    n_components : int, default=2
+        Number of components to keep. Should be in `1, min(n_samples,
+        n_features, n_targets]`.
 
-    scale : boolean, (default True)
-        whether to scale the data
+    scale : boolean, default=True
+        Whether to scale `X` and `Y`.
 
-    max_iter : an integer, (default 500)
-        the maximum number of iterations of the NIPALS inner loop (used
-        only if algorithm="nipals")
+    algorithm : {'nipals', 'svd'}, default='nipals'
+        The algorithm used to estimate the first singular vectors of the
+        cross-covariance matrix. 'nipals' uses the power method while 'svd'
+        will compute the whole SVD.
 
-    tol : non-negative real
-        Tolerance used in the iterative algorithm default 1e-06.
+    max_iter : int, default=500
+        the maximum number of iterations of the power method when
+        `algorithm='nipals'`. Ignored otherwise.
 
-    copy : boolean, default True
-        Whether the deflation should be done on a copy. Let the default
-        value to True unless you don't care about side effect
+    tol : real, default 1e-06
+        The tolerance used as convergence criteria in the power method: the
+        algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
+        than `tol`, where `u` corresponds to the left singular vector.
+
+    copy : boolean, default=True
+        Whether to copy `X` and `Y` in fit before applying centering, and
+        potentially scaling. If False, these operations will be done inplace,
+        modifying both arrays.
 
     Attributes
     ----------
-    x_weights_ : array, [p, n_components]
-        X block weights vectors.
+    x_weights_ : ndarray of shape (n_features, n_components)
+        The left singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    y_weights_ : array, [q, n_components]
-        Y block weights vectors.
+    y_weights_ : ndarray of shape (n_targets, n_components)
+        The right singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    x_loadings_ : array, [p, n_components]
-        X block loadings vectors.
+    x_loadings_ : ndarray of shape (n_features, n_components)
+        The loadings of `X`.
 
-    y_loadings_ : array, [q, n_components]
-        Y block loadings vectors.
+    y_loadings_ : ndarray of shape (n_targets, n_components)
+        The loadings of `Y`.
 
-    x_scores_ : array, [n_samples, n_components]
-        X scores.
+    x_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training samples.
 
-    y_scores_ : array, [n_samples, n_components]
-        Y scores.
+    y_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training targets.
 
-    x_rotations_ : array, [p, n_components]
-        X block to latents rotations.
+    x_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `X`.
 
-    y_rotations_ : array, [q, n_components]
-        Y block to latents rotations.
+    y_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `Y`.
 
-    coef_ : array, [p, q]
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+    coef_ : ndarray of shape(n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximted as
+        `Y = X @ coef_`.
 
-    n_iter_ : array-like
-        Number of iterations of the NIPALS inner loop for each
-        component.
-
-    Notes
-    -----
-    Matrices::
-
-        T: x_scores_
-        U: y_scores_
-        W: x_weights_
-        C: y_weights_
-        P: x_loadings_
-        Q: y_loadings_
-
-    Are computed such that::
-
-        X = T P.T + Err and Y = U Q.T + Err
-        T[:, k] = Xk W[:, k] for k in range(n_components)
-        U[:, k] = Yk C[:, k] for k in range(n_components)
-        x_rotations_ = W (P.T W)^(-1)
-        y_rotations_ = C (Q.T C)^(-1)
-
-    where Xk and Yk are residual matrices at iteration k.
-
-    `Slides explaining
-    PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
-
-
-    For each component k, find weights u, v that optimizes:
-    ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
-
-    Note that it maximizes both the correlations between the scores and the
-    intra-block variances.
-
-    The residual matrix of X (Xk+1) block is obtained by the deflation on
-    the current X score: x_score.
-
-    The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current X score. This performs the PLS regression known as PLS2. This
-    mode is prediction oriented.
-
-    This implementation provides the same results that 3 PLS packages
-    provided in the R language (R-project):
-
-        - "mixOmics" with function pls(X, Y, mode = "regression")
-        - "plspm " with function plsreg2(X, Y)
-        - "pls" with function oscorespls.fit(X, Y)
+    n_iter_ : list of shape (n_components,)
+        Number of iterations of the power method, for each
+        component. Empty is `algorithm='svd'`.
 
     Examples
     --------
@@ -671,18 +528,14 @@ class PLSRegression(_PLS):
     >>> pls2.fit(X, Y)
     PLSRegression()
     >>> Y_pred = pls2.predict(X)
-
-    References
-    ----------
-
-    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
-    emphasis on the two-block case. Technical Report 371, Department of
-    Statistics, University of Washington, Seattle, 2000.
-
-    In french but still a reference:
-    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
     """
+
+    # This implementation provides the same results that 3 PLS packages
+    # provided in the R language (R-project):
+    #     - "mixOmics" with function pls(X, Y, mode = "regression")
+    #     - "plspm " with function plsreg2(X, Y)
+    #     - "pls" with function oscorespls.fit(X, Y)
+
     @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
@@ -694,12 +547,7 @@ class PLSRegression(_PLS):
 
 
 class PLSCanonical(_PLS):
-    """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
-    algorithm [Tenenhaus 1998] p.204, referred as PLS-W2A in [Wegelin 2000].
-
-    This class inherits from PLS with mode="A" and deflation_mode="canonical",
-    norm_y_weights=True and algorithm="nipals", but svd should provide similar
-    results up to numerical errors.
+    """Partial Least Squares transformer and regressor.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -707,105 +555,76 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2).
-        Number of components to keep
+    n_components : int, default=2
+        Number of components to keep. Should be in `1, min(n_samples,
+        n_features, n_targets]`.
 
-    scale : boolean, (default True)
-        Option to scale data
+    scale : boolean, default=True
+        Whether to scale `X` and `Y`.
 
-    algorithm : string, "nipals" or "svd"
-        The algorithm used to estimate the weights. It will be called
-        n_components times, i.e. once for each iteration of the outer loop.
+    algorithm : {'nipals', 'svd'}, default='nipals'
+        The algorithm used to estimate the first singular vectors of the
+        cross-covariance matrix. 'nipals' uses the power method while 'svd'
+        will compute the whole SVD.
 
-    max_iter : an integer, (default 500)
-        the maximum number of iterations of the NIPALS inner loop (used
-        only if algorithm="nipals")
+    max_iter : int, default=500
+        the maximum number of iterations of the power method when
+        `algorithm='nipals'`. Ignored otherwise.
 
-    tol : non-negative real, default 1e-06
-        the tolerance used in the iterative algorithm
+    tol : real, default 1e-06
+        The tolerance used as convergence criteria in the power method: the
+        algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
+        than `tol`, where `u` corresponds to the left singular vector.
 
-    copy : boolean, default True
-        Whether the deflation should be done on a copy. Let the default
-        value to True unless you don't care about side effect
+    copy : boolean, default=True
+        Whether to copy `X` and `Y` in fit before applying centering, and
+        potentially scaling. If False, these operations will be done inplace,
+        modifying both arrays.
 
     Attributes
     ----------
-    x_weights_ : array, shape = [p, n_components]
-        X block weights vectors.
+    x_weights_ : ndarray of shape (n_features, n_components)
+        The left singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    y_weights_ : array, shape = [q, n_components]
-        Y block weights vectors.
+    y_weights_ : ndarray of shape (n_targets, n_components)
+        The right singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    x_loadings_ : array, shape = [p, n_components]
-        X block loadings vectors.
+    x_loadings_ : ndarray of shape (n_features, n_components)
+        The loadings of `X`.
 
-    y_loadings_ : array, shape = [q, n_components]
-        Y block loadings vectors.
+    y_loadings_ : ndarray of shape (n_targets, n_components)
+        The loadings of `Y`.
 
-    x_scores_ : array, shape = [n_samples, n_components]
-        X scores.
+    x_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training samples.
 
-    y_scores_ : array, shape = [n_samples, n_components]
-        Y scores.
+        .. deprecated:: 0.24
+           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
 
-    x_rotations_ : array, shape = [p, n_components]
-        X block to latents rotations.
+    y_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training targets.
 
-    y_rotations_ : array, shape = [q, n_components]
-        Y block to latents rotations.
+        .. deprecated:: 0.24
+           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
 
-    coef_ : array of shape (p, q)
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+    x_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `X`.
 
-    n_iter_ : array-like
-        Number of iterations of the NIPALS inner loop for each
-        component. Not useful if the algorithm provided is "svd".
+    y_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `Y`.
 
-    Notes
-    -----
-    Matrices::
+    coef_ : ndarray of shape(n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximted as
+        `Y = X @ coef_`.
 
-        T: x_scores_
-        U: y_scores_
-        W: x_weights_
-        C: y_weights_
-        P: x_loadings_
-        Q: y_loadings__
+    n_iter_ : list of shape (n_components,)
+        Number of iterations of the power method, for each
+        component. Empty is `algorithm='svd'`.
 
-    Are computed such that::
-
-        X = T P.T + Err and Y = U Q.T + Err
-        T[:, k] = Xk W[:, k] for k in range(n_components)
-        U[:, k] = Yk C[:, k] for k in range(n_components)
-        x_rotations_ = W (P.T W)^(-1)
-        y_rotations_ = C (Q.T C)^(-1)
-
-    where Xk and Yk are residual matrices at iteration k.
-
-    `Slides explaining PLS
-    <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
-
-    For each component k, find weights u, v that optimize::
-
-        max corr(Xk u, Yk v) * std(Xk u) std(Yk u), such that ``|u| = |v| = 1``
-
-    Note that it maximizes both the correlations between the scores and the
-    intra-block variances.
-
-    The residual matrix of X (Xk+1) block is obtained by the deflation on the
-    current X score: x_score.
-
-    The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current Y score. This performs a canonical symmetric version of the PLS
-    regression. But slightly different than the CCA. This is mostly used
-    for modeling.
-
-    This implementation provides the same results that the "plspm" package
-    provided in the R language (R-project), using the function plsca(X, Y).
-    Results are equal or collinear with the function
-    ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
-    relies in the fact that mixOmics implementation does not exactly implement
-    the Wold algorithm since it does not normalize y_weights to one.
 
     Examples
     --------
@@ -817,21 +636,19 @@ class PLSCanonical(_PLS):
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
-    References
-    ----------
-
-    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
-    emphasis on the two-block case. Technical Report 371, Department of
-    Statistics, University of Washington, Seattle, 2000.
-
-    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
-
     See also
     --------
     CCA
     PLSSVD
     """
+    # This implementation provides the same results that the "plspm" package
+    # provided in the R language (R-project), using the function plsca(X, Y).
+    # Results are equal or collinear with the function
+    # ``pls(..., mode = "canonical")`` of the "mixOmics" package. The
+    # difference relies in the fact that mixOmics implementation does not
+    # exactly implement the Wold algorithm since it does not normalize
+    # y_weights to one.
+
     @_deprecate_positional_args
     def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
@@ -843,75 +660,81 @@ class PLSCanonical(_PLS):
 
 
 class CCA(_UnstableArchMixin, _PLS):
-    """CCA Canonical Correlation Analysis.
-
-    CCA inherits from PLS with mode="B" and deflation_mode="canonical".
+    """Canonical Correlation Analysis, also known as "Mode B" PLS.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
     Parameters
     ----------
-    n_components : int, (default 2).
-        number of components to keep.
+    n_components : int, default=2
+        Number of components to keep. Should be in `1, min(n_samples,
+        n_features, n_targets]`.
 
-    scale : boolean, (default True)
-        whether to scale the data?
+    scale : boolean, default=True
+        Whether to scale `X` and `Y`.
 
-    max_iter : an integer, (default 500)
-        the maximum number of iterations of the NIPALS inner loop
+    algorithm : {'nipals', 'svd'}, default='nipals'
+        The algorithm used to estimate the first singular vectors of the
+        cross-covariance matrix. 'nipals' uses the power method while 'svd'
+        will compute the whole SVD.
 
-    tol : non-negative real, default 1e-06.
-        the tolerance used in the iterative algorithm
+    max_iter : int, default=500
+        the maximum number of iterations of the power method when
+        `algorithm='nipals'`. Ignored otherwise.
 
-    copy : boolean
-        Whether the deflation be done on a copy. Let the default value
-        to True unless you don't care about side effects
+    tol : real, default 1e-06
+        The tolerance used as convergence criteria in the power method: the
+        algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
+        than `tol`, where `u` corresponds to the left singular vector.
+
+    copy : boolean, default=True
+        Whether to copy `X` and `Y` in fit before applying centering, and
+        potentially scaling. If False, these operations will be done inplace,
+        modifying both arrays.
 
     Attributes
     ----------
-    x_weights_ : array, [p, n_components]
-        X block weights vectors.
+    x_weights_ : ndarray of shape (n_features, n_components)
+        The left singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    y_weights_ : array, [q, n_components]
-        Y block weights vectors.
+    y_weights_ : ndarray of shape (n_targets, n_components)
+        The right singular vectors of the cross-covariance matrices of each
+        iteration.
 
-    x_loadings_ : array, [p, n_components]
-        X block loadings vectors.
+    x_loadings_ : ndarray of shape (n_features, n_components)
+        The loadings of `X`.
 
-    y_loadings_ : array, [q, n_components]
-        Y block loadings vectors.
+    y_loadings_ : ndarray of shape (n_targets, n_components)
+        The loadings of `Y`.
 
-    x_scores_ : array, [n_samples, n_components]
-        X scores.
+    x_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training samples.
 
-    y_scores_ : array, [n_samples, n_components]
-        Y scores.
+        .. deprecated:: 0.24
+           `x_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
 
-    x_rotations_ : array, [p, n_components]
-        X block to latents rotations.
+    y_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training targets.
 
-    y_rotations_ : array, [q, n_components]
-        Y block to latents rotations.
+        .. deprecated:: 0.24
+           `y_scores_` is deprecated in 0.24 and will be removed in 0.26. You
+           can just call `transform` on the training data instead.
 
-    coef_ : array of shape (p, q)
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+    x_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `X`.
 
-    n_iter_ : array-like
-        Number of iterations of the NIPALS inner loop for each
-        component.
+    y_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `Y`.
 
-    Notes
-    -----
-    For each component k, find the weights u, v that maximizes
-    max corr(Xk u, Yk v), such that ``|u| = |v| = 1``
+    coef_ : ndarray of shape(n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximted as
+        `Y = X @ coef_`.
 
-    Note that it maximizes only the correlations between the scores.
-
-    The residual matrix of X (Xk+1) block is obtained by the deflation on the
-    current X score: x_score.
-
-    The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current Y score.
+    n_iter_ : list of shape (n_components,)
+        Number of iterations of the power method, for each
+        component. Empty is `algorithm='svd'`.
 
     Examples
     --------
@@ -922,17 +745,6 @@ class CCA(_UnstableArchMixin, _PLS):
     >>> cca.fit(X, Y)
     CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
-
-    References
-    ----------
-
-    Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
-    emphasis on the two-block case. Technical Report 371, Department of
-    Statistics, University of Washington, Seattle, 2000.
-
-    In french but still a reference:
-    Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
-    Editions Technic.
 
     See also
     --------
@@ -963,14 +775,14 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default 2
+    n_components : int, default=2
         The number of components to keep. Should be in `[1,
-        min(n_features, n_targets)]`.
+        min(n_samples, n_features, n_targets)]`.
 
-    scale : boolean, default True
+    scale : boolean, default=True
         Whether to scale `X` and `Y`.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
         potentially scaling. If False, these operations will be done inplace,
         modifying both arrays.
@@ -1079,16 +891,20 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         self.y_weights_ = V
         return self
 
-    @deprecated("Attribute x_scores_ was deprecated in version 0.24 and "
-                "will be removed in 0.26. Use est.transform(X) on the "
-                "training data instead.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute x_scores_ was deprecated in version 0.24 and "
+        "will be removed in 0.26. Use est.transform(X) on the "
+        "training data instead.")
     @property
     def x_scores_(self):
         return self._x_scores
 
-    @deprecated("Attribute y_scores_ was deprecated in version 0.24 and "
-                "will be removed in 0.26. Use est.transform(X, Y) on the "
-                "training data instead.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute y_scores_ was deprecated in version 0.24 and "
+        "will be removed in 0.26. Use est.transform(X, Y) on the "
+        "training data instead.")
     @property
     def y_scores_(self):
         return self._y_scores
