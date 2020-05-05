@@ -2,8 +2,8 @@ import numbers
 from itertools import chain
 from itertools import count
 import warnings
-
 from math import ceil
+
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
