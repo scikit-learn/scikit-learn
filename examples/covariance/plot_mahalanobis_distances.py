@@ -50,7 +50,7 @@ observation ranking and clustering.
 
     See also :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`
 
-"""
+"""  # noqa: E501
 
 import numpy as np
 import matplotlib.pyplot as plt
