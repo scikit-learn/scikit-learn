@@ -687,7 +687,7 @@ m.fab, Michael Shoemaker, Michał Słapek, Mina Naghshhnejad, mo, Mohamed
 Maskani, Mojca Bertoncelj, narendramukherjee, ngshya, Nicholas Won, Nicolas
 Hug, nicolasservel, Niklas, @nkish, Noa Tamir, Oleksandr Pavlyk, olicairns,
 Oliver Urs Lenz, Olivier Grisel, parsons-kyle-89, Paula, Pete Green, Pierre
-Delanoue, pspachtholz, Pulkit Mehta, Qizhi  Jiang, Quang Nguyễn, rachelcjordan,
+Delanoue, pspachtholz, Pulkit Mehta, Qizhi  Jiang, Quang Nguyen, rachelcjordan,
 raduspaimoc, Reshama Shaikh, Riccardo Folloni, Rick Mackenbach, Ritchie Ng,
 Roman Feldbauer, Roman Yurchak, Rory Hartong-Redden, Rüdiger Busche, Rushabh
 Vasani, Sambhav Kothari, Samesh Lakhotia, Samuel Duan, SanthoshBala18, Santiago
