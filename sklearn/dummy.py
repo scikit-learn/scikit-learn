@@ -561,6 +561,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)

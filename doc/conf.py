@@ -281,6 +281,11 @@ class SubSectionTitleOrder:
 
     def __call__(self, directory):
         src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+
+        # Forces Release Highlights to the top
+        if os.path.basename(src_path) == "release_highlights":
+            return "0"
+
         readme = os.path.join(src_path, "README.txt")
 
         try:
@@ -387,6 +392,3 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
-
-# Reduces the output of estimators
-sklearn.set_config(print_changed_only=True)

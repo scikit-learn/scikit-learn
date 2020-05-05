@@ -4,6 +4,7 @@ from .. import roc_curve
 from .base import _check_classifer_response_method
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
+from ...utils.validation import _deprecate_positional_args
 
 
 class RocCurveDisplay:
@@ -53,14 +54,14 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
-
-    def __init__(self, fpr, tpr, roc_auc=None, estimator_name=None):
+    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
         self.estimator_name = estimator_name
 
-    def plot(self, ax=None, name=None, **kwargs):
+    @_deprecate_positional_args
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -110,7 +111,8 @@ class RocCurveDisplay:
         return self
 
 
-def plot_roc_curve(estimator, X, y, sample_weight=None,
+@_deprecate_positional_args
+def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.

@@ -31,6 +31,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
@@ -101,7 +102,8 @@ def auc(x, y):
     return area
 
 
-def average_precision_score(y_true, y_score, average="macro", pos_label=1,
+@_deprecate_positional_args
+def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
@@ -243,7 +245,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+@_deprecate_positional_args
+def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                   max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
@@ -594,7 +597,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred, pos_label=None,
+@_deprecate_positional_args
+def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds
 
@@ -683,7 +687,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
-def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
+@_deprecate_positional_args
+def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC)
 
@@ -813,7 +818,9 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def label_ranking_average_precision_score(y_true, y_score, *,
+                                          sample_weight=None):
     """Compute ranking-based average precision
 
     Label ranking average precision (LRAP) is the average over each ground
@@ -840,6 +847,8 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -899,7 +908,8 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     return out
 
 
-def coverage_error(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure
 
     Compute how far we need to go through the ranked scores to cover all
@@ -958,7 +968,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
-def label_ranking_loss(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure
 
     Compute the average number of label pairs that are incorrectly ordered
@@ -1022,7 +1033,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
         all_at_reversed_rank = np.bincount(unique_inverse,
-                                        minlength=len(unique_scores))
+                                           minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of
@@ -1163,7 +1174,8 @@ def _check_dcg_target_type(y_true):
                 supported_fmt, y_type))
 
 
-def dcg_score(y_true, y_score, k=None,
+@_deprecate_positional_args
+def dcg_score(y_true, y_score, *, k=None,
               log_base=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
@@ -1320,7 +1332,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
-def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
+@_deprecate_positional_args
+def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
+               ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
