@@ -209,7 +209,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         of the dataset to be used to plot ICE curves. If `int`, represents the
         absolute number samples to use.
 
-        Note that the full dataset is still used to calculate partial
+        Note that the full dataset is still used to calculate averaged partial
         dependence when `kind='both'`.
 
         .. versionadded:: 0.24
