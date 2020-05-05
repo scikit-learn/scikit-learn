@@ -36,6 +36,7 @@ except NameError:
     WindowsError = None
 
 from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -50,6 +51,7 @@ from sklearn.utils import IS_PYPY, _IS_32BIT
 __all__ = ["assert_raises",
            "assert_raises_regexp",
            "assert_array_equal",
+           "assert_almost_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_approx_equal", "assert_allclose",
            "assert_run_python_script", "SkipTest"]
