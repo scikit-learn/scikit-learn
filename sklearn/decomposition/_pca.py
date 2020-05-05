@@ -373,14 +373,14 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, V = self._fit(X)
+        U, S, Vt = self._fit(X)
         U = U[:, :self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= sqrt(X.shape[0] - 1)
         else:
-            # X_new = X * V = U * S * V^T * V = U * S
+            # X_new = X * V = U * S * Vt * V = U * S
             U *= S[:self.n_components_]
 
         return U
@@ -451,11 +451,11 @@ class PCA(_BasePCA):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
-        U, V = svd_flip(U, V)
+        U, Vt = svd_flip(U, Vt)
 
-        components_ = V
+        components_ = Vt
 
         # Get variance explained by singular values
         explained_variance_ = (S ** 2) / (n_samples - 1)
@@ -491,7 +491,7 @@ class PCA(_BasePCA):
             explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, V
+        return U, S, Vt
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
@@ -530,22 +530,22 @@ class PCA(_BasePCA):
         if svd_solver == 'arpack':
             # random init solution, as ARPACK does it internally
             v0 = random_state.uniform(-1, 1, size=min(X.shape))
-            U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
-            U, V = svd_flip(U[:, ::-1], V[::-1])
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
 
         elif svd_solver == 'randomized':
             # sign flipping is done inside
-            U, S, V = randomized_svd(X, n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=True,
-                                     random_state=random_state)
+            U, S, Vt = randomized_svd(X, n_components=n_components,
+                                      n_iter=self.iterated_power,
+                                      flip_sign=True,
+                                      random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_ = V
+        self.components_ = Vt
         self.n_components_ = n_components
 
         # Get variance explained by singular values
@@ -562,7 +562,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.
 
-        return U, S, V
+        return U, S, Vt
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.
