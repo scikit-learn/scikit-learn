@@ -134,7 +134,7 @@ ames = fetch_openml(name="house_prices", as_frame=True)
 X = ames.data.select_dtypes(np.number)
 # Remove columns with NaN or Inf values
 X = X.drop(columns=['LotFrontage', 'GarageYrBlt', 'MasVnrArea'])
-y = ames.target.to_numpy()
+y = ames.target
 y_trans = quantile_transform(y.to_frame(),
                              n_quantiles=900,
                              output_distribution='normal',
@@ -164,6 +164,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
+#
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transformation results in an increase in R^2 and large decrease of the
 # MAE. The residual plot (predicted target - true target vs predicted target)
