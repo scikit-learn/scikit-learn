@@ -145,8 +145,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         warnings.warn(("'random_state' has been introduced in 0.23. "
                        "It will be set to None starting from 0.25 which "
                        "means that results will differ at every function "
-                       "call. To silence this warning and obtain the same "
-                       "results as before 0.23, set it to 0."),
+                       "call. Set 'random_state' to None to silence this "
+                       "warning, or to 0 to keep the behavior of versions "
+                       "<0.23."),
                       FutureWarning)
         random_state = 0
     random_state = check_random_state(random_state)
