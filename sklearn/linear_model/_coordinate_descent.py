@@ -1153,7 +1153,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         self.selection = selection
 
     @abstractmethod
-    def _get_model(self):
+    def _get_estimator(self):
         """Model to be fitted after the best alpha has been determined."""
 
     @abstractmethod
@@ -1201,7 +1201,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                                                             check_y_params))
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
-                   not np.may_share_memory(reference_to_old_X.data, X.data)):
+                        not np.may_share_memory(reference_to_old_X.data, X.data)):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
@@ -1237,7 +1237,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                 raise ValueError("For mono-task outputs, use "
                                  "%sCV" % self.__class__.__name__[9:])
 
-        model = self._get_model()
+        model = self._get_estimator()
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
@@ -1504,7 +1504,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
 
-    def _get_model(self):
+    def _get_estimator(self):
         return Lasso()
 
     def _is_multitask(self):
@@ -1718,7 +1718,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.random_state = random_state
         self.selection = selection
 
-    def _get_model(self):
+    def _get_estimator(self):
         return ElasticNet()
 
     def _is_multitask(self):
@@ -2231,7 +2231,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         self.random_state = random_state
         self.selection = selection
 
-    def _get_model(self):
+    def _get_estimator(self):
         return MultiTaskElasticNet()
 
     def _is_multitask(self):
@@ -2401,7 +2401,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
 
-    def _get_model(self):
+    def _get_estimator(self):
         return MultiTaskLasso()
 
     def _is_multitask(self):
