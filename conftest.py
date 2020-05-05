@@ -13,7 +13,6 @@ import os
 import pytest
 from _pytest.doctest import DoctestItem
 
-from sklearn import set_config
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
 
