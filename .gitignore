@@ -79,8 +79,9 @@ sklearn/utils/_seq_dataset.pxd
 sklearn/linear_model/_sag_fast.pyx
 
 # deprecated paths
-# TODO: Remove in 0.24
-# All of these files should have a match in _build_utils/deprecated_modules.py
+# All of these files were deprecated and automatically generated in 0.22, and
+# removed in 0.24. We keep them in gitignore otherwise users would need to
+# manually delete them
 sklearn/utils/mocking.py
 
 sklearn/ensemble/bagging.py
