@@ -46,7 +46,7 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.inspection`
-......................
+.........................
 
 - |Feature| :func:`inspection.partial_dependence` and
   :func:`inspection.plot_partial_dependence` now support calculating and plotting
