@@ -39,9 +39,6 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
 
-- `pyensemble <https://github.com/dclambert/pyensemble>`_ An implementation of
-  Caruana et al's Ensemble Selection algorithm in Python, based on scikit-learn
-
 - `scikit-optimize <https://scikit-optimize.github.io/>`_
   A library to minimize (very) expensive and noisy black-box functions. It
   implements several methods for sequential model-based optimization, and
@@ -132,10 +129,6 @@ and tasks.
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
 
-- `Extreme Learning Machines <https://github.com/dclambert/Python-ELM>`_
-  Implementation of ELM (random layer + ridge) with a scikit-learn compatible
-  interface.
-
 - `skorch <https://github.com/dnouri/skorch>`_ A scikit-learn compatible
   neural network library that wraps PyTorch.
 
@@ -172,16 +165,10 @@ and tasks.
 - `seglearn <https://github.com/dmbee/seglearn>`_ Time series and sequence
   learning using sliding window segmentation.
 
-- `libOPF <https://github.com/LibOPF/LibOPF>`_ Optimal path forest classifier
-
-- `random-output-trees <https://github.com/arjoly/random-output-trees>`_
-  Randomized output tree for multilabel / multi-output regression tasks
+- `libOPF <https://github.com/jppbsi/LibOPF>`_ Optimal path forest classifier
 
 - `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
   implementation compatible with scikit-learn
-
-- `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_ scikit-learn
-  compatible wrapper around the GLM module in statsmodel.
 
 **Decomposition and clustering**
 
@@ -203,12 +190,6 @@ and tasks.
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
-
-- `pyIPCA <https://github.com/pickle27/pyIPCA>`_ Incremental Principal
-  Component Analysis
-
-- `scikit-protopy <https://github.com/dvro/scikit-protopy>`_ scikit-learn
-  compatible prototype selection and generation algorithms.
 
 **Pre-processing**
 
@@ -279,13 +260,3 @@ Domain specific packages
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
-
-Snippets and tidbits
----------------------
-
-Code snippets that do not follow the fit / predict / transform API.
-
-- `Adaptive Lasso <https://gist.github.com/1610922>`_
-
-- Generating data with `non-parametric Gaussian mixture models <https://gist.github.com/2011426>`_
-  Useful if you need "random" data that should have non-trivial structure.
