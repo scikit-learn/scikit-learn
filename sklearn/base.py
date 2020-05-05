@@ -437,8 +437,25 @@ class BaseEstimator:
 
         return out
 
+    @property
     def _repr_html_(self):
-        """HTML representation of estimator"""
+        """HTML representation of estimator.
+
+        This is redundant with the logic of `_repr_mimebundle_`. The latter
+        should be favorted in the long term, `_repr_html_` is only
+        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        """
+        if get_config()["display"] != 'diagram':
+            raise AttributeError("_repr_html_ is only defined when the "
+                                 "'display' configuration option is set to "
+                                 "'diagram'")
+        return self._repr_html_inner
+
+    def _repr_html_inner(self):
+        """This function is returned by the @property `_repr_html_` to make
+        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
+        on `get_config()["display"]`.
+        """
         return estimator_html_repr(self)
 
     def _repr_mimebundle_(self, **kwargs):
