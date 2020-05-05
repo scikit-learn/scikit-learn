@@ -139,6 +139,7 @@ for bj in range(len(n_components)):
         ax2.plot(n_samples, lossmbKL, marker='x', ls='dashed', label=str4)
 
         ax[ax_index].xaxis.set_major_formatter(ticker.EngFormatter())
+        ax2.yaxis.set_major_formatter(ticker.EngFormatter())
 
         strdesc = "n_features " + str(n_features[j])
 
@@ -151,13 +152,13 @@ for bj in range(len(n_components)):
         ax_index = j+bj*len(n_features)
         ax[ax_index].set_ylim(miny-10, maxy+10)
 
-    ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.05, 1),
+    ax[(bj+1)*len(n_features)-1].legend(bbox_to_anchor=(1.2, 1),
                                         loc='upper left', borderaxespad=0.)
-    ax2.legend(bbox_to_anchor=(1.05, 1),
+    ax2.legend(bbox_to_anchor=(1.2, 1),
                loc='lower left', borderaxespad=0.)
-    strbatch = "batch size: " + str(batch_size) + \
-               "\nn_components: " + str(n_components[bj])
-    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.05, 0.8),
+    strbatch = "batch size:\n" + str(batch_size) + \
+               "\nn_components:\n" + str(n_components[bj])
+    ax[(bj+1)*len(n_features)-1].annotate(strbatch, (1.2, 0.7),
                                           xycoords='axes fraction',
                                           va='center')
 
