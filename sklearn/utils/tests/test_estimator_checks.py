@@ -428,7 +428,7 @@ def test_check_estimator():
     sys.stdout = string_buffer
     try:
         check_estimator(NoSparseClassifier())
-    except:
+    except Exception:
         pass
     finally:
         sys.stdout = old_stdout

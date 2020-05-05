@@ -110,14 +110,7 @@ def test_estimators(estimator, check, request):
 def test_check_estimator_generate_only():
     all_instance_gen_checks = check_estimator(LogisticRegression(),
                                               generate_only=True)
-    assert isgenerator(estimator_cls_gen_checks)
     assert isgenerator(all_instance_gen_checks)
-
-    estimator_cls_checks = list(estimator_cls_gen_checks)
-    all_instance_checks = list(all_instance_gen_checks)
-
-    # all classes checks include check_parameters_default_constructible
-    assert len(estimator_cls_checks) == len(all_instance_checks) + 1
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
