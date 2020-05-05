@@ -79,7 +79,7 @@ get_build_type() {
         auto_example_files="$(echo "$img_fig_lines" | grep auto_examples | awk -F "/" '{print $NF}')"
 
         # remove "sphx_glr_" from path and accept replace _(\d\d\d|thumb).png with .py
-        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_([[:digit:]][[:digit:]][[:digit:]]|thumb).png/.py/')"
+        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -E 's/_([[:digit:]][[:digit:]][[:digit:]]|thumb).png/.py/')"
 
         # get unique values
         examples_in_rst="$(echo "$scripts_names" | uniq )"
@@ -169,11 +169,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging
+  joblib memory_profiler packaging seaborn
 
 source activate testenv
-pip install sphinx-gallery==0.3.1
-pip install numpydoc==0.9
+pip install sphinx-gallery
+pip install numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py build_ext --inplace -j 3

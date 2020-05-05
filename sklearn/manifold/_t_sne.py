@@ -16,14 +16,15 @@ from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
-from ..utils import check_array
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
+from ..utils.validation import _deprecate_positional_args
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
-from . import _barnes_hut_tsne
+# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
+from . import _barnes_hut_tsne  # type: ignore
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -396,7 +397,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
+@_deprecate_positional_args
+def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -437,6 +439,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
         documentation of argument metric in sklearn.pairwise.pairwise_distances
         for a list of available metrics.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     trustworthiness : float
@@ -450,8 +454,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
     np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
-    ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
-        return_distance=False)
+    ind_X_embedded = NearestNeighbors(n_neighbors=n_neighbors).fit(
+            X_embedded).kneighbors(return_distance=False)
 
     # We build an inverted index of neighbors in the input space: For sample i,
     # we define `inverted_index[i]` as the inverted index of sorted distances:
@@ -555,12 +559,11 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.  Note that different initializations might result in
-        different local minima of the cost function.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator. Pass an int for reproducible
+        results across multiple function calls. Note that different
+        initializations might result in different local minima of the cost
+        function. See :term: `Glossary <random_state>`.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -633,7 +636,8 @@ class TSNE(BaseEstimator):
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
 
-    def __init__(self, n_components=2, perplexity=30.0,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
@@ -662,11 +666,12 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.method == 'barnes_hut':
-            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr'],
+                                    ensure_min_samples=2,
+                                    dtype=[np.float32, np.float64])
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+            X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                    dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "

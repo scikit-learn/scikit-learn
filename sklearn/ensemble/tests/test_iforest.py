@@ -21,7 +21,7 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_diabetes, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
@@ -37,12 +37,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 
 def test_iforest():
@@ -63,8 +63,8 @@ def test_iforest():
 def test_iforest_sparse():
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "bootstrap": [True, False]})
@@ -157,8 +157,8 @@ def test_iforest_parallel_regression():
     """Check parallel regression."""
     rng = check_random_state(0)
 
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = IsolationForest(n_jobs=3,
@@ -226,8 +226,8 @@ def test_max_samples_consistency():
 def test_iforest_subsampled_features():
     # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     clf = IsolationForest(max_features=0.8)
     clf.fit(X_train, y_train)

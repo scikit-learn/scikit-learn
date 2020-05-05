@@ -190,11 +190,11 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     with pytest.raises(TypeError, match=pattern):
         scoring_validator(estimator)
 
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert isinstance(scorer, _PredictScorer)
 
     # Test the allow_none parameter for check_scoring alone
@@ -274,11 +274,11 @@ def test_check_scoring_gridsearchcv():
     # slightly redundant non-regression test.
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
-    scorer = check_scoring(grid, "f1")
+    scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     pipe = make_pipeline(LinearSVC())
-    scorer = check_scoring(pipe, "f1")
+    scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     # check that cross_val_score definitely calls the scorer
@@ -544,13 +544,13 @@ def test_scorer_memmap_input(name):
 
 def test_scoring_is_not_metric():
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), f1_score)
+        check_scoring(LogisticRegression(), scoring=f1_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), roc_auc_score)
+        check_scoring(LogisticRegression(), scoring=roc_auc_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(Ridge(), r2_score)
+        check_scoring(Ridge(), scoring=r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(KMeans(), cluster_module.adjusted_rand_score)
+        check_scoring(KMeans(), scoring=cluster_module.adjusted_rand_score)
 
 
 def test_deprecated_scorer():
@@ -649,7 +649,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
 
 def test_multimetric_scorer_sanity_check():
-    # scoring dictionary returned is the same as calling each scorer seperately
+    # scoring dictionary returned is the same as calling each scorer separately
     scorers = {'a1': 'accuracy', 'a2': 'accuracy',
                'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
                'ra1': 'roc_auc', 'ra2': 'roc_auc'}
@@ -664,13 +664,13 @@ def test_multimetric_scorer_sanity_check():
 
     result = multi_scorer(clf, X, y)
 
-    seperate_scores = {
+    separate_scores = {
         name: get_scorer(name)(clf, X, y)
         for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
 
     for key, value in result.items():
         score_name = scorers[key]
-        assert_allclose(value, seperate_scores[score_name])
+        assert_allclose(value, separate_scores[score_name])
 
 
 @pytest.mark.parametrize('scorer_name, metric', [

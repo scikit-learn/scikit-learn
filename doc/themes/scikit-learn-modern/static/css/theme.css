@@ -37,6 +37,7 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   white-space: nowrap;
+  padding: 0.15rem;
 }
 
 nav {
@@ -89,7 +90,7 @@ div.highlight {
 
 div.highlight pre {
   margin-bottom: 0;
-  line-height: 1rem;
+  line-height: 1.2rem;
 }
 
 div.highlight a {
@@ -512,11 +513,21 @@ div.sk-sidebar-toc-logo {
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-  width: 120%;
+  width: 252px;
   overflow-x: hidden;
   overflow-y: scroll;
   height: 100vh;
   padding-right: 1.75rem;
+
+  /* Hide scrollbar for IE and Edge */
+  -ms-overflow-style: none;
+
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+}
+
+div.sk-sidebar-toc-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 div.sk-sidebar-toc-wrapper::after {
@@ -950,6 +961,44 @@ div.sphx-glr-thumbcontainer {
     left: 98%;
     width: 20ex;
   }
+}
+
+/* Pandas dataframe css */
+/* Taken from: https://github.com/spatialaudio/nbsphinx/blob/fb3ba670fc1ba5f54d4c487573dbc1b4ecf7e9ff/src/nbsphinx.py#L587-L619 */
+/* FIXME: to be removed when sphinx-gallery >= 5.0 will be released */
+
+table.dataframe {
+  border: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-color: transparent;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+table.dataframe thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+table.dataframe tr,
+table.dataframe th,
+table.dataframe td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+table.dataframe th {
+  font-weight: bold;
+}
+table.dataframe tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+table.dataframe tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
 }
 
 /* rellinks */

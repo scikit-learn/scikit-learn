@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from time import time
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -16,7 +17,6 @@ from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -154,7 +154,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape  (n_samples, n_features)
 
         random_state : RandomState
-            A random number generator instance.
+            A random number generator instance that controls the random seed
+            used for the method chosen to initialize the parameters.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
@@ -165,9 +166,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
-            init_kmeans = cluster.KMeans(n_clusters=self.n_components,
-                                         n_init=1, random_state=random_state)
-            label = init_kmeans.fit(X, sample_weight=sample_weight_copy).labels_
+            label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
+                                   random_state=random_state).fit(X, sample_weight=sample_weight_copy).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
@@ -253,12 +253,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         X = _check_X(X, self.n_components, ensure_min_samples=2)
+        self._check_n_features(X, reset=True)
         self._check_initial_parameters(X)
 
         sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
         # if we enable warm_start, we will have a unique initialisation
-        do_init = not (self.warm_start and hasattr(self, 'converged_'))
+        do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
         max_lower_bound = -np.infty
@@ -507,7 +508,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     self.means_, self.covariances_, n_samples_comp)])
 
         y = np.concatenate([np.full(sample, j, dtype=int)
-                            for j, sample in enumerate(n_samples_comp)])
+                           for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)
 

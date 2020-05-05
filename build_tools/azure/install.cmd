@@ -15,6 +15,8 @@ IF "%PYTHON_ARCH%"=="64" (
 
     call activate %VIRTUALENV%
 
+    pip install threadpoolctl
+
     IF "%PYTEST_VERSION%"=="*" (
         pip install pytest
     ) else (
@@ -22,7 +24,7 @@ IF "%PYTHON_ARCH%"=="64" (
     )
     pip install pytest-xdist
 ) else (
-    pip install numpy scipy cython pytest wheel pillow joblib
+    pip install numpy scipy cython pytest wheel pillow joblib threadpoolctl
 )
 if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov

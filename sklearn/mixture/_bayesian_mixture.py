@@ -15,7 +15,7 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -164,10 +164,12 @@ class BayesianGaussianMixture(BaseMixture):
                 float                    if 'spherical'
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls the random seed given to the method chosen to initialize the
+        parameters (see `init_params`).
+        In addition, it controls the generation of random samples from the
+        fitted distribution (see the method `sample`).
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -306,8 +308,8 @@ class BayesianGaussianMixture(BaseMixture):
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
        <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
-
-    def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, *, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weight_concentration_prior_type='dirichlet_process',
                  weight_concentration_prior=None,
