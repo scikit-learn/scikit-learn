@@ -30,11 +30,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
-    check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -45,25 +43,6 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
-
-
-def test_mark_xfail_checks_with_unconsructable_estimator():
-    class MyEstimator:
-        def __init__(self):
-            raise ValueError("This is bad")
-
-    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
-    assert estimator == MyEstimator
-    assert check == 42
-
-
-@pytest.mark.parametrize(
-        'name, Estimator',
-        all_estimators()
-)
-def test_parameters_default_constructible(name, Estimator):
-    # Test that estimators are default-constructible
-    check_parameters_default_constructible(name, Estimator)
 
 
 def _sample_func(x, y=1):
