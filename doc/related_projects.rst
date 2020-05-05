@@ -21,6 +21,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Data formats**
 
+- `Fast svmlight / libsvm file loader <https://github.com/mblondel/svmlight-loader>`_
+  Fast and memory-efficient svmlight / libsvm file loader for Python.
+
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
 
@@ -38,12 +41,6 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
-
-- `scikit-optimize <https://scikit-optimize.github.io/>`_
-  A library to minimize (very) expensive and noisy black-box functions. It
-  implements several methods for sequential model-based optimization, and
-  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
-  cross-validated parameter search using any of these strategies.
 
 **Experimentation frameworks**
 
@@ -67,12 +64,20 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
-- `Fast svmlight / libsvm file loader <https://github.com/mblondel/svmlight-loader>`_
-  Fast and memory-efficient svmlight / libsvm file loader for Python.
-
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
+
+**Model selection**
+
+- `scikit-optimize <https://scikit-optimize.github.io/>`_
+  A library to minimize (very) expensive and noisy black-box functions. It
+  implements several methods for sequential model-based optimization, and
+  includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
+  cross-validated parameter search using any of these strategies.
+
+- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
+   algorithms instead of gridsearch in scikit-learn.
 
 **Model export for production**
 
@@ -238,9 +243,6 @@ Recommendation Engine packages
 
 - `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
   datasets.
-
-- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-   algorithms instead of gridsearch in scikit-learn.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
