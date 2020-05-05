@@ -35,3 +35,10 @@ Changelog
   :func:`inspection.plot_partial_dependence` now support calculating and plotting
   Individual Conditional Expectation (ICE) curves controlled by the ``kind``
   parameter. :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.20, including:

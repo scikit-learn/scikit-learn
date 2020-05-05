@@ -11,13 +11,14 @@ from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin):
+class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
+                         OutlierMixin, NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -116,6 +117,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
+        .. versionadded:: 0.20
+
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -147,6 +150,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
+        .. versionadded:: 0.20
+
     Examples
     --------
     >>> import numpy as np
@@ -163,7 +168,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=20, *, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="auto", novelty=False, n_jobs=None):
         super().__init__(

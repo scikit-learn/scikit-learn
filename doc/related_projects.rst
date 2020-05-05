@@ -73,6 +73,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model inspection and visualisation**
 
+- `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A python library for
+  decision tree visualization and model interpretation.
+
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
   debugging/inspecting machine learning models and explaining their
   predictions.
@@ -117,6 +120,9 @@ scikit-learn for additional learning algorithms, infrastructures
 and tasks.
 
 **Structured learning**
+
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series 
+  that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
 
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
 
