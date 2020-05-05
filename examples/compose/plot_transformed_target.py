@@ -145,21 +145,21 @@ y_trans = quantile_transform(y.to_frame(),
 # the target distribution before applying a
 # :class:`~sklearn.linear_model.RidgeCV` model.
 
-f, (ax0, ax1) = plt.subplots(1, 2, sharey='row')
+f, (ax0, ax1) = plt.subplots(1, 2)
 
 ax0.hist(y, bins=100, **density_param)
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
-ax0.set_title('Target distribution')
-ax0.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
+ax0.text(s='Target distribution', x=1.2e5, y=1e-5, fontsize=12)
+ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 ax1.hist(y_trans, bins=100, **density_param)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
-ax1.set_title('Transformed target distribution')
+ax1.text(s='Transformed target distribution', x=-7, y=0.4888, fontsize=12)
 
-f.suptitle("Ames housing data: selling price", y=0.035)
-f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+f.suptitle("Ames housing data: selling price", y=0.022)
+f.tight_layout()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
