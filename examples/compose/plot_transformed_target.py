@@ -156,10 +156,10 @@ ax0.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 ax1.hist(y_trans, bins=100, **density_param)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
-ax1.text(s='Transformed target distribution', x=-7, y=0.4888, fontsize=12)
+ax1.text(s='Transformed target distribution', x=-6.8, y=0.4888, fontsize=12)
 
 f.suptitle("Ames housing data: selling price", y=0.022)
-f.tight_layout()
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
