@@ -301,9 +301,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         kind='average'. Plotting individual dependencies requires using the
         slower method='brute' option.
 
-        Note that 'legacy' will not be available from 0.26
-
         .. versionadded:: 0.24
+        .. deprecated:: 0.24
+            `kind='legacy'` is deprecated and will be removed in 0.26.
+            It is intended to migrate from the ndarray output to
+            :class:`~sklearn.utils.Bunch` output.
+
 
     Returns
     -------
