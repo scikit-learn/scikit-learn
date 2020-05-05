@@ -528,6 +528,31 @@ above example would be::
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
 
+.. _visualizing_composite_estimators:
+
+Visualizing Composite Estimators
+================================
+
+Estimators can be displayed with a HTML representation when shown in a
+jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by setting the
+`display` option in :func:`sklearn.set_config`::
+
+  >>> from sklearn import set_config
+  >>> set_config(display='diagram')   # doctest: +SKIP
+  >>> # diplays HTML representation in a jupyter context
+  >>> column_trans  # doctest: +SKIP
+
+An example of the HTML output can be seen in the 
+**HTML representation of Pipeline** section of 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+As an alternative, the HTML can be written to a file using
+:func:`~sklearn.utils.estimator_html_repr`::
+
+   >>> from sklearn.utils import estimator_html_repr
+   >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
+   ...     f.write(estimator_html_repr(clf))
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`

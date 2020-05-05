@@ -9,6 +9,10 @@ Version 0.23.0
 
 **In Development**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
+
 
 .. include:: changelog_legend.inc
 
@@ -103,9 +107,9 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
-- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
-  optimized implementation. Parallelism is now over the data instead of over
-  initializations allowing better scalability. :pr:`11950` by
+- |Efficiency| |MajorFeature| The critical parts of :class:`cluster.KMeans`
+  have a more optimized implementation. Parallelism is now over the data
+  instead of over initializations allowing better scalability. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`cluster.KMeans` now supports sparse data when
@@ -123,6 +127,10 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.Birch` where the `n_clusters` parameter
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`cluster.AgglomerativeCluClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 - |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
   :class:`cluster.SpectralCoclustering` and
@@ -180,7 +188,7 @@ Changelog
 - |Enhancement| Added ``return_centers`` parameter  in
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
-  :pr:`15709` by :user:`<shivamgargsya>` and
+  :pr:`15709` by :user:`shivamgargsya` and
   :user:`Venkatachalam N <venkyyuvy>`.
 
 - |Enhancement| Functions :func:`datasets.make_circles` and
@@ -190,6 +198,12 @@ Changelog
 - |Fix| :func:`datasets.make_multilabel_classification` now generates
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
+
+- |API| The `StreamHandler` was removed from `sklearn.logger` to avoid
+  double logging of messages in common cases where a hander is attached
+  to the root logger, and to follow the Python logging documentation
+  recommendation for libraries to leave the log message handling to
+  users and application code. :pr:`16451` by :user:`Christoph Deil <cdeil>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -202,8 +216,8 @@ Changelog
   ``csc`` matrices. :pr:`16837` by :user:`wornbb`.
 
 - |Fix| :class:`decomposition.PCA` with a float `n_components` parameter, will
-   exclusively choose the components that explain the variance greater than
-   `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
+  exclusively choose the components that explain the variance greater than
+  `n_components`. :pr:`15669` by :user:`Krishna Chaitanya <krishnachaitanya9>`
 
 - |Fix| :class:`decomposition.PCA` with `n_components='mle'` now correctly
   handles small eigenvalues, and does not infer 0 as the correct number of
@@ -219,8 +233,9 @@ Changelog
   raise `invalid value encountered in multiply` during `fit`.
   :pr:`16718` by :user:`Gui Miotto <gui-miotto>`.
 
-- |Feature| Added `n_components_` attribute to :class:'decomposition.SparsePCA'
-  and :class:'MiniBatchSparsePCA'. :pr:'16981' by :user:'Mateusz Górski <Reksbril>'
+- |Feature| Added `n_components_` attribute to :class:`decomposition.SparsePCA`
+  and :class:`decomposition.MiniBatchSparsePCA`. :pr:`16981` by
+  :user:`Mateusz Górski <Reksbril>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -237,7 +252,7 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
   constraints, useful when features are supposed to have a positive/negative
   effect on the target. :pr:`15582` by `Nicolas Hug`_.
@@ -306,7 +321,7 @@ Changelog
 ...............................
 
 - |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
-  :pr:`15503` by :user:`Sam Dixon` <sam-dixon>.
+  :pr:`15503` by :user:`Sam Dixon <sam-dixon>`.
 
 - |Fix| Fixed bug in :class:`gaussian_process.GaussianProcessRegressor` that
   caused predicted standard deviations to only be between 0 and 1 when
@@ -319,6 +334,10 @@ Changelog
 - |Enhancement| :class:`impute.IterativeImputer` accepts both scalar and array-like inputs for
   ``max_value`` and ``min_value``. Array-like inputs allow a different max and min to be specified
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
+
+- |Enhancement| :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`, and
+  :class:`impute.SimpleImputer` accepts pandas' nullable integer dtype with
+  missing values. :pr:`16508` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
 .........................
@@ -339,9 +358,10 @@ Changelog
   :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
   and `Olivier Grisel`_.
 
-- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model:Lasso` for dense feature matrix `X`.
-  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |MajorFeature| Support of `sample_weight` in
+  :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` for dense
+  feature matrix `X`. :pr:`15436` by :user:`Christian Lorentzen
+  <lorentzenchr>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
@@ -394,6 +414,13 @@ Changelog
   using joblib loky backend. :pr:`14264` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| Speed up :class:`linear_model.MultiTaskLasso`,
+  :class:`linear_model.MultiTaskLassoCV`, :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV` by avoiding slower
+  BLAS Level 2 calls on small arrays
+  :pr:`17021` by :user:`Alex Gramfort <agramfort>` and
+  :user:`Mathurin Massias <mathurinm>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -435,9 +462,9 @@ Changelog
   type and details.
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
-- |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
-  when `y=None`.
-  :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+- |Fix| :func:`model_selection.cross_val_predict` supports
+  `method="predict_proba"` when `y=None`.:pr:`15918` by
+  :user:`Luca Kubin <lkubin>`.
 
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
   be removed in 0.25. :pr:`16401` by
@@ -488,6 +515,13 @@ Changelog
 - |Enhancement| :class:`preprocessing.OneHotEncoder`'s `drop_idx_` ndarray
   can now contain `None`, where `drop_idx_[i] = None` means that no category
   is dropped for index `i`. :pr:`16585` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Enhancement| :class:`preprocessing.MaxAbsScaler`,
+  :class:`preprocessing.MinMaxScaler`, :class:`preprocessing.StandardScaler`,
+  :class:`preprocessing.PowerTransformer`,
+  :class:`preprocessing.QuantileTransformer`,
+  :class:`preprocessing.RobustScaler` now supports pandas' nullable integer
+  dtype with missing values. :pr:`16508` by `Thomas Fan`_.
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
@@ -559,16 +593,31 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
+- |MajorFeature| Estimators can now be displayed with a rich html
+  representation. This can be enabled in Jupyter notebooks by setting
+  `display='diagram'` in :func:`~sklearn.set_config`. The raw html can be
+  returned by using :func:`utils.estimator_html_repr`.
+  :pr:`14180` by `Thomas Fan`_.
+
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
 
-- |Enhancement| add warning in :func:`utils.validation.check_array` for
+- |Enhancement| add warning in :func:`utils.check_array` for
   pandas sparse DataFrame.
   :pr:`16021` by :user:`Rushabh Vasani <rushabh-v>`.
 
-- |Enhancement| :func:`utils.validation.check_array` now constructs a sparse
-  matrix from a pandas DataFrame that contains only `SparseArray`s.
+- |Enhancement| :func:`utils.check_array` now constructs a sparse
+  matrix from a pandas DataFrame that contains only `SparseArray` columns.
   :pr:`16728` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.validation.check_array` supports pandas'
+  nullable integer dtype with missing values when `force_all_finite` is set to
+  `False` or `'allow-nan'` in which case the data is converted to floating
+  point values where `pd.NA` values are replaced by `np.nan`. As a consequence,
+  all :mod:`sklearn.preprocessing` transformers that accept numeric inputs with
+  missing values represented as `np.nan` now also accepts being directly fed
+  pandas dataframes with `pd.Int* or `pd.Uint*` typed columns that use `pd.NA`
+  as a missing value marker. :pr:`16508` by `Thomas Fan`_.
 
 - |API| Passing classes to :func:`utils.estimator_checks.check_estimator` and
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
@@ -578,15 +627,13 @@ Changelog
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
-:mod:`sklearn.cluster`
-......................
-
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
-  distance matrix is not square and `affinity=precomputed`.
-  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
-
 Miscellaneous
 .............
+
+- |MajorFeature| Adds a HTML representation of estimators to be shown in
+  a jupyter notebook or lab. This visualization is acitivated by setting the
+  `display` option in :func:`sklearn.set_config`. :pr:`14180` by
+  `Thomas Fan`_.
 
 - |Enhancement| ``scikit-learn`` now works with ``mypy`` without errors.
   :pr:`16726` by `Roman Yurchak`_.

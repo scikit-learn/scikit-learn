@@ -17,9 +17,11 @@ import re
 import numpy as np
 
 from . import __version__
+from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
 _DEFAULT_TAGS = {
@@ -434,6 +436,34 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    @property
+    def _repr_html_(self):
+        """HTML representation of estimator.
+
+        This is redundant with the logic of `_repr_mimebundle_`. The latter
+        should be favorted in the long term, `_repr_html_` is only
+        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        """
+        if get_config()["display"] != 'diagram':
+            raise AttributeError("_repr_html_ is only defined when the "
+                                 "'display' configuration option is set to "
+                                 "'diagram'")
+        return self._repr_html_inner
+
+    def _repr_html_inner(self):
+        """This function is returned by the @property `_repr_html_` to make
+        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
+        on `get_config()["display"]`.
+        """
+        return estimator_html_repr(self)
+
+    def _repr_mimebundle_(self, **kwargs):
+        """Mime bundle used by jupyter kernels to display estimator"""
+        output = {"text/plain": repr(self)}
+        if get_config()["display"] == 'diagram':
+            output["text/html"] = estimator_html_repr(self)
+        return output
 
 
 class ClassifierMixin:
