@@ -45,6 +45,11 @@ distances. Using MCD-based
 Mahalanobis distances, the two populations become
 distinguishable. Associated applications include outlier detection,
 observation ranking and clustering.
+
+.. note::
+
+    See also :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`
+
 """
 
 import numpy as np
