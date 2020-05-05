@@ -1,10 +1,7 @@
 import pytest
-import types
 import numpy as np
-import warnings
 
 from sklearn.dummy import DummyClassifier
-from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import choose_check_classifiers_labels
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.utils.estimator_checks import enforce_estimator_tags_y
