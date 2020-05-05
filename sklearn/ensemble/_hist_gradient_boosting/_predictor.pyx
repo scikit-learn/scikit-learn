@@ -61,17 +61,16 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
-        else:
-            if isnan(numeric_data[row, node.feature_idx]):
-                if node.missing_go_to_left:
-                    node = nodes[node.left]
-                else:
-                    node = nodes[node.right]
+        elif isnan(numeric_data[row, node.feature_idx]):
+            if node.missing_go_to_left:
+                node = nodes[node.left]
             else:
-                if numeric_data[row, node.feature_idx] <= node.threshold:
-                    node = nodes[node.left]
-                else:
-                    node = nodes[node.right]
+                node = nodes[node.right]
+        else:
+            if numeric_data[row, node.feature_idx] <= node.threshold:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
 
 
 def _predict_from_binned_data(
@@ -109,17 +108,16 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
-        else:
-            if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
-                if node.missing_go_to_left:
-                    node = nodes[node.left]
-                else:
-                    node = nodes[node.right]
+        elif binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
+            if node.missing_go_to_left:
+                node = nodes[node.left]
             else:
-                if binned_data[row, node.feature_idx] <= node.bin_threshold:
-                    node = nodes[node.left]
-                else:
-                    node = nodes[node.right]
+                node = nodes[node.right]
+        else:
+            if binned_data[row, node.feature_idx] <= node.bin_threshold:
+                node = nodes[node.left]
+            else:
+                node = nodes[node.right]
 
 def _compute_partial_dependence(
     node_struct [:] nodes,

@@ -26,11 +26,11 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
+from .common cimport BITSET_INNER_DTYPE_C
+from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint
-from .common cimport X_BITSET_DTYPE_C
-from .common cimport X_BITSET_INNER_DTYPE_C
 from ._bitset cimport init_bitset
-from ._bitset cimport insert_bitset
+from ._bitset cimport set_bitset
 from ._bitset cimport in_bitset
 
 np.import_array()
@@ -52,7 +52,7 @@ cdef struct split_info_struct:
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
     unsigned char is_categorical
-    X_BITSET_DTYPE_C cat_threshold
+    BITSET_DTYPE_C cat_threshold
 
 
 # used for categorical splits
@@ -291,9 +291,9 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            X_BITSET_INNER_DTYPE_C [:] cat_threshold_mv = \
+            BITSET_INNER_DTYPE_C [:] cat_threshold_mv = \
                 split_info.cat_threshold
-            X_BITSET_DTYPE_C cat_threshold = &cat_threshold_mv[0]
+            BITSET_DTYPE_C cat_threshold = &cat_threshold_mv[0]
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
@@ -501,7 +501,7 @@ cdef class Splitter:
             if (categorical[best_feature_idx] and
                     not has_missing_values[best_feature_idx] and
                     split_info.n_samples_left > split_info.n_samples_right):
-                insert_bitset(self.missing_values_bin_idx,
+                set_bitset(self.missing_values_bin_idx,
                               split_info.cat_threshold)
 
         out = SplitInfo(
@@ -943,11 +943,11 @@ cdef class Splitter:
             if best_direction == 1:  # left
                 for i in range(best_sort_thres + 1):
                     bin_idx = cat_sort_infos[i].bin_idx
-                    insert_bitset(bin_idx, split_info.cat_threshold)
+                    set_bitset(bin_idx, split_info.cat_threshold)
             else:
                 for i in range(best_sort_thres + 1):
                     bin_idx = cat_sort_infos[used_bin - 1 - i].bin_idx
-                    insert_bitset(bin_idx, split_info.cat_threshold)
+                    set_bitset(bin_idx, split_info.cat_threshold)
 
         free(cat_sort_infos)
 
@@ -1024,7 +1024,7 @@ cdef inline unsigned char sample_goes_left(
         X_BINNED_DTYPE_C split_bin_idx,
         X_BINNED_DTYPE_C bin_value,
         unsigned char is_categorical,
-        X_BITSET_DTYPE_C cat_threshold) nogil:
+        BITSET_DTYPE_C cat_threshold) nogil:
     """Helper to decide whether sample should go to left or right child."""
 
     if is_categorical:
