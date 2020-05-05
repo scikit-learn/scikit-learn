@@ -785,10 +785,27 @@ to date::
 
   git fetch upstream
 
-You can run the benchmarks against any commit. For example to benchmark the
-latest commit on the master branch::
+In the benchmark suite, the benchmarks are organized following the same
+structure as scikit-learn. For example, you can run the benchmarks for the
+`linear_model` module only::
 
-  asv run upstream/master^!
+  asv run -b linear_model upstream/master^!
+
+or for a specific estimator::
+
+  asv run -b LogisticRegression upstream/master^!
+
+You can run the benchmarks against any commit, the branch you are working on
+for example::
+
+  asv run -b linear_model my_branch^!
+
+Simply remove the `-b` flag to run the full benchmark suite::
+
+  asv run my_branch^!
+
+However this can take up to two hours. The `-b` flag also accepts a regular
+expression for a more complex subset of benchmarks to run.
 
 You can compare the performances of two commits. For example, comparing master
 and the branch you are working on::
@@ -797,21 +814,6 @@ and the branch you are working on::
 
 By default it will only report the benchmarks that have change by at least 10%.
 You can control this ratio with the `-f` flag.
-
-Running the full test suite can take up to two hours. Usually, when working on
-a specific module or estimator, you only need the benchmark report for this
-module or estimator. You can run specific benchmarks using the `-b` flag. In
-the benchmark suite, the benchmarks are organized following the same structure
-as scikit-learn. To run the benchmarks for the `linear_model` module only::
-
-  asv run -b linear_model my_branch^!
-
-or for a specific estimator::
-
-  asv run -b LogisticRegression my_branch^!
-
-The `-b` flag also accepts a regular expression for a more complex subset of
-benchmarks to run.
 
 You can also run the benchmark suite using the version of scikit-learn already
 installed in your current Python environment::
