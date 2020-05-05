@@ -77,7 +77,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 ###############################################################################
 # At first, a linear model will be applied on the original targets. Due to the
-# non-linearity, the model trained will not be precise during the
+# non-linearity, the model trained will not be precise during
 # prediction. Subsequently, a logarithmic function is used to linearize the
 # targets, allowing better prediction even with a similar linear model as
 # reported by the median absolute error (MAE).
@@ -165,14 +165,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
-# the transform induces an increase in R^2 and large decrease of the MAE. The
-# residual plot (predicted target - true target vs predicted target) without
-# target transformation takes on a curved, 'reverse smile' shape due to
-# residual values that tend to vary depending on the value of predicted target.
+# the transformation results in an increase in R^2 and large decrease of the
+# MAE. The residual plot (predicted target - true target vs predicted target)
+# without target transformation takes on a curved, 'reverse smile' shape due to
+# residual values that vary depending on the value of predicted target.
 # With target transformation, the shape is more linear indicating better model
 # fit.
 
-f, (ax0, ax1) = plt.subplots(2, 2, sharey='row')
+f, (ax0, ax1) = plt.subplots(2, 2, sharey='row', figsize=(6.5, 8))
 
 regr = RidgeCV()
 regr.fit(X_train, y_train)
@@ -220,6 +220,5 @@ ax1[1].set_xlabel('Predicted target')
 ax1[1].ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
 
 f.suptitle("Ames housing data: selling price", y=0.035)
-f.tight_layout(rect=[0.05, 0.05, 1, 1.7])
 
 plt.show()
