@@ -143,6 +143,10 @@ Changelog
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |API| The ``random_state`` parameter has been added to 
+  :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
+  and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.compose`
 ......................
 
