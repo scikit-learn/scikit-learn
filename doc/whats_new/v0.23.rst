@@ -7,7 +7,7 @@
 Version 0.23.0
 ==============
 
-**In Development**
+**May 12 2020**
 
 For a short description of the main highlights of the release, please
 refer to
@@ -659,3 +659,43 @@ Code and Documentation Contributors
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
 project since version 0.20, including:
+
+Abbie Popa, Adrin Jalali, Aleksandra Kocot, Alexandre Batisse, Alexandre
+Gramfort, Alex Henrie, Alex Itkes, Alex Liang, alexshacked, Alonso Silva
+Allende, Ana Casado, Andreas Mueller, Angela Ambroz, Ankit810, Arie Pratama
+Sutiono, Arunav Konwar, Baptiste Maingret, Benjamin Beier Liu, bernie gray,
+Bharathi Srinivasan, Bharat Raghunathan, Bibhash Chandra Mitra, Brian Wignall,
+brigi, Brigitta Sipőcz, Carlos H Brandt, CastaChick, castor, cgsavard, Chiara
+Marmo, Chris Gregory, Christian Kastner, Christian Lorentzen, Corrie
+Bartelheimer, Daniël van Gelder, Daphne, David Breuer, david-cortes, dbauer9,
+Divyaprabha M, Edward Qian, Ekaterina Borovikova, ELNS, Emily Taylor, Erich
+Schubert, Eric Leung, Evgeni Chasnovski, Fabiana, Facundo Ferrín, Fan,
+Franziska Boenisch, Gael Varoquaux, Gaurav Sharma, Geoffrey Bolmier, Georgi
+Peev, gholdman1, Gonthier Nicolas, Gregory Morse, Gregory R. Lee, Guillaume
+Lemaitre, Gui Miotto, Hailey Nguyen, Hanmin Qin, Hao Chun Chang, HaoYin, Hélion
+du Mas des Bourboux, Himanshu Garg, Hirofumi Suzuki, huangk10, Hugo van
+Kemenade, Hye Sung Jung, indecisiveuser, inderjeet, J-A16, Jérémie du
+Boisberranger, Jin-Hwan CHO, JJmistry, Joel Nothman, Johann Faouzi, Jon Haitz
+Legarreta Gorroño, Juan Carlos Alfaro Jiménez, judithabk6, jumon, Kathryn
+Poole, Katrina Ni, Kesshi Jordan, Kevin Loftis, Kevin Markham,
+krishnachaitanya9, Lam Gia Thuan, Leland McInnes, Lisa Schwetlick, lkubin, Loic
+Esteve, lopusz, lrjball, lucgiffon, lucyleeow, Lucy Liu, Lukas Kemkes, Maciej J
+Mikulski, Madhura Jayaratne, Magda Zielinska, maikia, Mandy Gu, Manimaran,
+Manish Aradwad, Maren Westermann, Maria, Mariana Meireles, Marie Douriez,
+Marielle, Mateusz Górski, mathurinm, Matt Hall, Maura Pintor, mc4229, meyer89,
+m.fab, Michael Shoemaker, Michał Słapek, Mina Naghshhnejad, mo, Mohamed
+Maskani, Mojca Bertoncelj, narendramukherjee, ngshya, Nicholas Won, Nicolas
+Hug, nicolasservel, Niklas, @nkish, Noa Tamir, Oleksandr Pavlyk, olicairns,
+Oliver Urs Lenz, Olivier Grisel, parsons-kyle-89, Paula, Pete Green, Pierre
+Delanoue, pspachtholz, Pulkit Mehta, Qizhi  Jiang, Quang Nguyễn, rachelcjordan,
+raduspaimoc, Reshama Shaikh, Riccardo Folloni, Rick Mackenbach, Ritchie Ng,
+Roman Feldbauer, Roman Yurchak, Rory Hartong-Redden, Rüdiger Busche, Rushabh
+Vasani, Sambhav Kothari, Samesh Lakhotia, Samuel Duan, SanthoshBala18, Santiago
+M. Mola, Sarat Addepalli, scibol, Sebastian Kießling, SergioDSR, Sergul Aydore,
+Shiki-H, shivamgargsya, SHUBH CHATTERJEE, Siddharth Gupta, simonamaggio,
+smarie, Snowhite, stareh, Stephen Blystone, Stephen Marsh, Sunmi Yoon,
+SylvainLan, talgatomarov, tamirlan1, th0rwas, theoptips, Thomas J Fan, Thomas
+Li, Thomas Schmitt, Tim Nonner, Tim Vink, Tiphaine Viard, Tirth Patel, Titus
+Christian, Tom Dupré la Tour, trimeta, Vachan D A, Vandana Iyer, Venkatachalam
+N, waelbenamara, wconnell, wderose, wenliwyan, Windber, wornbb, Yu-Hang "Maxin"
+Tang
