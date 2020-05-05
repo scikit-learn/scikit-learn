@@ -255,11 +255,6 @@ Changelog
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
 
-- |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support calculating and plotting
-  Individual Conditional Expectation (ICE) curves controlled by the ``kind``
-  parameter. :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
-
 :mod:`sklearn.linear_model`
 ...........................
 

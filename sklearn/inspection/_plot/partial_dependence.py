@@ -201,7 +201,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
        ``kind='average'``. Plotting individual dependencies requires using the
        slower ``method='brute'`` option.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -212,7 +212,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         Note that the full dataset is still used to calculate partial
         dependence when `kind='both'`.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -450,7 +450,7 @@ class PartialDependenceDisplay:
        ``kind='average'``. Plotting individual dependencies requires using the
        slower ``method='brute'`` option.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     subsample : float, int or None, default=1000
         Sampling for ICE curves when `kind` is 'individual' or 'both'.
@@ -461,7 +461,7 @@ class PartialDependenceDisplay:
         Note that the full dataset is still used to calculate partial
         dependence when `kind='both'`.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Attributes
     ----------

@@ -301,9 +301,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         kind='average'. Plotting individual dependencies requires using the
         slower method='brute' option.
 
-        Note that 'legacy' will not be available from 0.25
+        Note that 'legacy' will not be available from 0.26
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -486,12 +486,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
     if kind == 'legacy':
         warnings.warn(
-            "A Bunch will be returned in place of 'predictions' from 0.25 with"
+            "A Bunch will be returned in place of 'predictions' from 0.26 with"
             " partial dependence results accessible via the 'average' key. In"
             " the meantime, pass kind='average' to get the future behaviour.",
             FutureWarning
         )
-        # TODO 0.25: Remove kind == 'legacy' section
+        # TODO 0.26: Remove kind == 'legacy' section
         return averaged_predictions, values
     elif kind == 'average':
         return Bunch(average=averaged_predictions), values

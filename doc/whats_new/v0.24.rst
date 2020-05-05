@@ -1,0 +1,37 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_24:
+
+Version 0.24.0
+==============
+
+**In Development**
+
+
+.. include:: changelog_legend.inc
+
+Put the changes in their relevant module.
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.inspection`
+......................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support calculating and plotting
+  Individual Conditional Expectation (ICE) curves controlled by the ``kind``
+  parameter. :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
