@@ -134,7 +134,7 @@ ames = fetch_openml(name="house_prices", as_frame=True)
 X = ames.data.select_dtypes(np.number)
 # Remove columns with NaN or Inf values
 X = X.drop(columns=['LotFrontage', 'GarageYrBlt', 'MasVnrArea'])
-y = ames.target
+y = ames.target.to_numpy()
 y_trans = quantile_transform(y.to_frame(),
                              n_quantiles=900,
                              output_distribution='normal',
