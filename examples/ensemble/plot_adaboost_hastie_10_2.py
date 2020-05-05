@@ -3,11 +3,11 @@
 Discrete versus Real AdaBoost
 =============================
 
-This example is based on Figure 10.2 from Hastie et al 2009 [1] and illustrates
-the difference in performance between the discrete SAMME [2] boosting
-algorithm and real SAMME.R boosting algorithm. Both algorithms are evaluated
-on a binary classification task where the target Y is a non-linear function
-of 10 input features.
+This example is based on Figure 10.2 from Hastie et al 2009 [1]_ and
+illustrates the difference in performance between the discrete SAMME [2]_
+boosting algorithm and real SAMME.R boosting algorithm. Both algorithms are
+evaluated on a binary classification task where the target Y is a non-linear
+function of 10 input features.
 
 Discrete SAMME AdaBoost adapts based on errors in predicted class labels
 whereas real SAMME.R uses the predicted class probabilities.

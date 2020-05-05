@@ -19,7 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn import svm
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import LabelSpreading
 
 rng = np.random.RandomState(0)
 
@@ -37,12 +37,10 @@ y_50 = np.copy(y)
 y_50[rng.rand(len(y)) < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
 # data since we want to plot the support vectors
-ls30 = (label_propagation.LabelSpreading().fit(X, y_30),
-        y_30)
-ls50 = (label_propagation.LabelSpreading().fit(X, y_50),
-        y_50)
-ls100 = (label_propagation.LabelSpreading().fit(X, y), y)
-rbf_svc = (svm.SVC(kernel='rbf').fit(X, y), y)
+ls30 = (LabelSpreading().fit(X, y_30), y_30)
+ls50 = (LabelSpreading().fit(X, y_50), y_50)
+ls100 = (LabelSpreading().fit(X, y), y)
+rbf_svc = (svm.SVC(kernel='rbf', gamma=.5).fit(X, y), y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -71,9 +69,9 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
 
     # Plot also the training points
     colors = [color_map[y] for y in y_train]
-    plt.scatter(X[:, 0], X[:, 1], c=colors, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=colors, edgecolors='black')
 
     plt.title(titles[i])
 
-plt.text(.90, 0, "Unlabeled points are colored white")
+plt.suptitle("Unlabeled points are colored white", y=0.1)
 plt.show()

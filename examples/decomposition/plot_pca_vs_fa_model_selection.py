@@ -39,7 +39,7 @@ from sklearn.model_selection import GridSearchCV
 
 print(__doc__)
 
-###############################################################################
+# #############################################################################
 # Create the data
 
 n_samples, n_features, rank = 1000, 50, 10
@@ -55,7 +55,7 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-###############################################################################
+# #############################################################################
 # Fit the models
 
 n_components = np.arange(0, n_features, 5)  # options for n_components

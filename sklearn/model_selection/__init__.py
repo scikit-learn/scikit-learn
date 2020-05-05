@@ -7,6 +7,8 @@ from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
 from ._split import LeavePGroupsOut
 from ._split import LeavePOut
+from ._split import RepeatedKFold
+from ._split import RepeatedStratifiedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
@@ -16,6 +18,7 @@ from ._split import check_cv
 
 from ._validation import cross_val_score
 from ._validation import cross_val_predict
+from ._validation import cross_validate
 from ._validation import learning_curve
 from ._validation import permutation_test_score
 from ._validation import validation_curve
@@ -36,6 +39,8 @@ __all__ = ('BaseCrossValidator',
            'LeaveOneOut',
            'LeavePGroupsOut',
            'LeavePOut',
+           'RepeatedKFold',
+           'RepeatedStratifiedKFold',
            'ParameterGrid',
            'ParameterSampler',
            'PredefinedSplit',
@@ -46,6 +51,7 @@ __all__ = ('BaseCrossValidator',
            'check_cv',
            'cross_val_predict',
            'cross_val_score',
+           'cross_validate',
            'fit_grid_point',
            'learning_curve',
            'permutation_test_score',

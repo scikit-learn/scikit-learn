@@ -22,7 +22,7 @@ Axes3D
 # Locally linear embedding of the swiss roll
 
 from sklearn import manifold, datasets
-X, color = datasets.samples_generator.make_swiss_roll(n_samples=1500)
+X, color = datasets.make_swiss_roll(n_samples=1500)
 
 print("Computing LLE embedding")
 X_r, err = manifold.locally_linear_embedding(X, n_neighbors=12,
@@ -33,13 +33,9 @@ print("Done. Reconstruction error: %g" % err)
 # Plot result
 
 fig = plt.figure()
-try:
-    # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(211, projection='3d')
-    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
-except:
-    ax = fig.add_subplot(211)
-    ax.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
+
+ax = fig.add_subplot(211, projection='3d')
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
 
 ax.set_title("Original data")
 ax = fig.add_subplot(212)

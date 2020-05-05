@@ -1,9 +1,15 @@
 import numpy as np
-from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
-                                   assert_array_equal, assert_true,
-                                   assert_raise_message)
+from numpy.testing import assert_approx_equal
+
+from sklearn.utils._testing import (assert_array_almost_equal,
+                                   assert_array_equal, assert_raise_message,
+                                   assert_warns)
 from sklearn.datasets import load_linnerud
-from sklearn.cross_decomposition import pls_, CCA
+from sklearn.cross_decomposition import _pls as pls_
+from sklearn.cross_decomposition import CCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
+from sklearn.exceptions import ConvergenceWarning
 
 
 def test_pls():
@@ -72,6 +78,12 @@ def test_pls():
                               err_msg="rotation on X failed")
     assert_array_almost_equal(Yr, plsca.y_scores_,
                               err_msg="rotation on Y failed")
+
+    # Check that inverse_transform works
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xreconstructed = plsca.inverse_transform(Xr)
+    assert_array_almost_equal(Xreconstructed, X,
+                              err_msg="inverse_transform failed")
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
@@ -164,17 +176,17 @@ def test_pls():
     p_noise = 10
     q_noise = 5
     # 2 latents vars:
-    np.random.seed(11)
-    l1 = np.random.normal(size=n)
-    l2 = np.random.normal(size=n)
+    rng = check_random_state(11)
+    l1 = rng.normal(size=n)
+    l2 = rng.normal(size=n)
     latents = np.array([l1, l1, l2, l2]).T
-    X = latents + np.random.normal(size=4 * n).reshape((n, 4))
-    Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
+    X = latents + rng.normal(size=4 * n).reshape((n, 4))
+    Y = latents + rng.normal(size=4 * n).reshape((n, 4))
     X = np.concatenate(
-        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+        (X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
     Y = np.concatenate(
-        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
-    np.random.seed(None)
+        (Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+
     pls_ca = pls_.PLSCanonical(n_components=3)
     pls_ca.fit(X, Y)
 
@@ -255,6 +267,56 @@ def test_pls():
     check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
     check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
 
+    # 4) Another "Non regression test" of PLS Regression (PLS2):
+    #    Checking behavior when the first column of Y is constant
+    # ===============================================
+    # The results were compared against a modified version of plsreg2
+    # from the R-package plsdepot
+    X = d.data
+    Y = d.target
+    Y[:, 0] = 1
+    pls_2 = pls_.PLSRegression(n_components=X.shape[1])
+    pls_2.fit(X, Y)
+
+    x_weights = np.array(
+        [[-0.6273573, 0.007081799, 0.7786994],
+         [-0.7493417, -0.277612681, -0.6011807],
+         [-0.2119194, 0.960666981, -0.1794690]])
+    x_weights_sign_flip = pls_2.x_weights_ / x_weights
+
+    x_loadings = np.array(
+        [[-0.6273512, -0.22464538, 0.7786994],
+         [-0.6643156, -0.09871193, -0.6011807],
+         [-0.5125877, 1.01407380, -0.1794690]])
+    x_loadings_sign_flip = pls_2.x_loadings_ / x_loadings
+
+    y_loadings = np.array(
+        [[0.0000000, 0.0000000, 0.0000000],
+         [0.4357300, 0.5828479, 0.2174802],
+         [-0.1353739, -0.2486423, -0.1810386]])
+
+    # R/python sign flip should be the same in x_weight and x_rotation
+    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip, 4)
+
+    # This test that R / python give the same result up to column
+    # sign indeterminacy
+    assert_array_almost_equal(np.abs(x_loadings_sign_flip), 1, 4)
+    assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
+
+    # For the PLSRegression with default parameters, it holds that
+    # y_loadings==y_weights. In this case we only test that R/python
+    # give the same result for the y_loadings irrespective of the sign
+    assert_array_almost_equal(np.abs(pls_2.y_loadings_), np.abs(y_loadings), 4)
+
+
+def test_convergence_fail():
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    pls_bynipals = pls_.PLSCanonical(n_components=X.shape[1],
+                                     max_iter=2, tol=1e-10)
+    assert_warns(ConvergenceWarning, pls_bynipals.fit, X, Y)
+
 
 def test_PLSSVD():
     # Let's check the PLSSVD doesn't return all possible component but just
@@ -266,7 +328,7 @@ def test_PLSSVD():
     for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
         pls = clf(n_components=n_components)
         pls.fit(X, Y)
-        assert_equal(n_components, pls.y_scores_.shape[1])
+        assert n_components == pls.y_scores_.shape[1]
 
 
 def test_univariate_pls_regression():
@@ -303,7 +365,7 @@ def test_predict_transform_copy():
     assert_array_equal(X_copy, X)
     assert_array_equal(Y_copy, Y)
     # also check that mean wasn't zero before (to make sure we didn't touch it)
-    assert_true(np.all(X.mean(axis=0) != 0))
+    assert np.all(X.mean(axis=0) != 0)
 
 
 def test_scale_and_stability():
@@ -351,6 +413,7 @@ def test_scale_and_stability():
             assert_array_almost_equal(X_s_score, X_score)
             assert_array_almost_equal(Y_s_score, Y_score)
 
+
 def test_pls_errors():
     d = load_linnerud()
     X = d.data
@@ -358,4 +421,30 @@ def test_pls_errors():
     for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
                 pls_.PLSSVD()]:
         clf.n_components = 4
-        assert_raise_message(ValueError, "Invalid number of components", clf.fit, X, Y)
+        assert_raise_message(ValueError, "Invalid number of components",
+                             clf.fit, X, Y)
+
+
+def test_pls_scaling():
+    # sanity check for scale=True
+    n_samples = 1000
+    n_targets = 5
+    n_features = 10
+
+    rng = check_random_state(0)
+
+    Q = rng.randn(n_targets, n_features)
+    Y = rng.randn(n_samples, n_targets)
+    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X *= 1000
+    X_scaled = StandardScaler().fit_transform(X)
+
+    pls = pls_.PLSRegression(n_components=5, scale=True)
+
+    pls.fit(X, Y)
+    score = pls.score(X, Y)
+
+    pls.fit(X_scaled, Y)
+    score_scaled = pls.score(X_scaled, Y)
+
+    assert_approx_equal(score, score_scaled)

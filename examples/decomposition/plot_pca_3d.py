@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 
 
-###############################################################################
+# #############################################################################
 # Create the data
 
 e = np.exp(1)
@@ -55,7 +55,7 @@ a /= norm
 b /= norm
 
 
-###############################################################################
+# #############################################################################
 # Plot the figures
 def plot_figs(fig_num, elev, azim):
     fig = plt.figure(fig_num, figsize=(4, 3))
@@ -72,8 +72,6 @@ def plot_figs(fig_num, elev, azim):
     pca.fit(Y)
     pca_score = pca.explained_variance_ratio_
     V = pca.components_
-
-    x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
 
     x_pca_axis, y_pca_axis, z_pca_axis = 3 * V.T
     x_pca_plane = np.r_[x_pca_axis[:2], - x_pca_axis[1::-1]]

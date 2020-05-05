@@ -39,12 +39,12 @@ from sklearn.preprocessing import scale
 
 np.random.seed(42)
 
-digits = load_digits()
-data = scale(digits.data)
+X_digits, y_digits = load_digits(return_X_y=True)
+data = scale(X_digits)
 
 n_samples, n_features = data.shape
-n_digits = len(np.unique(digits.target))
-labels = digits.target
+n_digits = len(np.unique(y_digits))
+labels = y_digits
 
 sample_size = 300
 
@@ -84,7 +84,7 @@ bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               data=data)
 print(82 * '_')
 
-###############################################################################
+# #############################################################################
 # Visualize the results on PCA-reduced data
 
 reduced_data = PCA(n_components=2).fit_transform(data)
