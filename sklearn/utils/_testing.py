@@ -47,9 +47,7 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
-                          RegressorMixin, TransformerMixin)
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
 
 
 __all__ = ["assert_raises",
