@@ -48,7 +48,6 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
-from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..datasets import (load_iris, load_boston, make_blobs,

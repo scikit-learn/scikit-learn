@@ -13,7 +13,6 @@
 import os
 import os.path as op
 import inspect
-import pkgutil
 import warnings
 import sys
 import functools
@@ -23,7 +22,6 @@ from subprocess import TimeoutExpired
 
 import scipy as sp
 from functools import wraps
-from operator import itemgetter
 from inspect import signature
 
 import shutil
@@ -38,7 +36,6 @@ except NameError:
     WindowsError = None
 
 from numpy.testing import assert_allclose
-from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal

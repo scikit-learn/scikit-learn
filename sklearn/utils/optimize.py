@@ -18,7 +18,6 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
-from . import deprecated
 
 
 class _LineSearchError(RuntimeError):
