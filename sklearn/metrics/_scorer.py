@@ -127,9 +127,6 @@ class _BaseScorer:
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-        # XXX After removing the deprecated scorers (v0.24) remove the
-        # XXX deprecation_msg property again and remove __call__'s body again
-        self._deprecation_msg = None
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -162,10 +159,6 @@ class _BaseScorer:
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg,
-                          category=FutureWarning,
-                          stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)
 
@@ -668,10 +661,6 @@ neg_brier_score_scorer = make_scorer(brier_score_loss,
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
-deprecation_msg = ('Scoring method brier_score_loss was renamed to '
-                   'neg_brier_score in version 0.22 and will '
-                   'be removed in 0.24.')
-brier_score_loss_scorer._deprecation_msg = deprecation_msg
 
 
 # Clustering scores
