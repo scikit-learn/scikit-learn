@@ -293,7 +293,6 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         np.testing.assert_allclose(pdp_forest, pdp_tree)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('est', (
     GradientBoostingClassifier(random_state=0),
     HistGradientBoostingClassifier(random_state=0),
@@ -312,15 +311,14 @@ def test_recursion_decision_function(est, target_feature):
 
     preds_1, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
-                                    method='recursion')
+                                    method='recursion', kind='average')
     preds_2, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
-                                    method='brute')
+                                    method='brute', kind='average')
 
-    assert_allclose(preds_1, preds_2, atol=1e-7)
+    assert_allclose(preds_1['average'], preds_2['average'], atol=1e-7)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('est', (
     LinearRegression(),
     GradientBoostingRegressor(random_state=0),
@@ -346,10 +344,12 @@ def test_partial_dependence_easy_target(est, power):
     est.fit(X, y)
 
     averaged_predictions, values = partial_dependence(
-        est, features=[target_variable], X=X, grid_resolution=1000)
+        est, features=[target_variable], X=X, grid_resolution=1000,
+        kind='average'
+    )
 
     new_X = values[0].reshape(-1, 1)
-    new_y = averaged_predictions[0]
+    new_y = averaged_predictions['average'][0]
     # add polynomial features if needed
     new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
 
@@ -485,7 +485,6 @@ def test_partial_dependence_unknown_feature_string(estimator):
         partial_dependence(estimator, df, features)
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
@@ -494,12 +493,11 @@ def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
-    partial_dependence(estimator, list(X), [0])
+    partial_dependence(estimator, list(X), [0], kind='average')
 
 
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 @ignore_warnings(category=FutureWarning)
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.
@@ -510,15 +508,14 @@ def test_warning_recursion_non_constant_init():
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, X, [0], method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion', kind='average')
 
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, X, [0], method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion', kind='average')
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
@@ -540,9 +537,9 @@ def test_partial_dependence_sample_weight():
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)
 
-    pdp, values = partial_dependence(clf, X, features=[1])
+    pdp, values = partial_dependence(clf, X, features=[1], kind='average')
 
-    assert np.corrcoef(pdp, values)[0, 1] > 0.99
+    assert np.corrcoef(pdp['average'], values)[0, 1] > 0.99
 
 
 def test_hist_gbdt_sw_not_supported():
@@ -557,7 +554,6 @@ def test_hist_gbdt_sw_not_supported():
 
 # TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 @ignore_warnings(category=FutureWarning)
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_partial_dependence_pipeline():
     # check that the partial dependence support pipeline
     iris = load_iris()
@@ -571,20 +567,20 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features], grid_resolution=10
+        pipe, iris.data, features=[features], grid_resolution=10,
+        kind='average'
     )
     pdp_clf, values_clf = partial_dependence(
         clf, scaler.transform(iris.data), features=[features],
-        grid_resolution=10
+        grid_resolution=10, kind='average'
     )
-    assert_allclose(pdp_pipe, pdp_clf)
+    assert_allclose(pdp_pipe['average'], pdp_clf['average'])
     assert_allclose(
         values_pipe[0],
         values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
     )
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator",
     [LogisticRegression(max_iter=1000, random_state=0),
@@ -616,7 +612,7 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pipe = make_pipeline(preprocessor, estimator)
     pipe.fit(df, iris.target)
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10
+        pipe, df, features=features, grid_resolution=10, kind='average'
     )
 
     # the column transformer will reorder the column when transforming
@@ -631,10 +627,11 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
     clf = clone(estimator).fit(X_proc, iris.target)
     pdp_clf, values_clf = partial_dependence(
-        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10,
+        kind='average'
     )
 
-    assert_allclose(pdp_pipe, pdp_clf)
+    assert_allclose(pdp_pipe['average'], pdp_clf['average'])
     if preprocessor is not None:
         scaler = preprocessor.named_transformers_['standardscaler']
         assert_allclose(
@@ -645,7 +642,6 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
         assert_allclose(values_pipe[1], values_clf[1])
 
 
-@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "features, expected_pd_shape",
     [(0, (3, 10)),
@@ -669,10 +665,10 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
     )
     pipe.fit(df, iris.target)
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10
+        pipe, df, features=features, grid_resolution=10, kind='average'
     )
-    assert pdp_pipe.shape == expected_pd_shape
-    assert len(values_pipe) == len(pdp_pipe.shape) - 1
+    assert pdp_pipe['average'].shape == expected_pd_shape
+    assert len(values_pipe) == len(pdp_pipe['average'].shape) - 1
 
 
 @pytest.mark.parametrize(
