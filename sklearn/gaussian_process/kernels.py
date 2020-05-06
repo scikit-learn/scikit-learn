@@ -159,16 +159,8 @@ class Kernel(metaclass=ABCMeta):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            try:
-                value = getattr(self, arg)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
-            params[arg] = value
+            params[arg] = getattr(self, arg)
+
         return params
 
     def set_params(self, **params):
