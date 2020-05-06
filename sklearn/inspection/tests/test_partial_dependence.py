@@ -685,3 +685,19 @@ def test_partial_dependence_unfitted(estimator):
         partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
     with pytest.raises(NotFittedError, match="is not fitted yet"):
         partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
+
+
+@pytest.mark.parametrize('Estimator, data', [
+    (LinearRegression, multioutput_regression_data),
+    (LogisticRegression, binary_classification_data)])
+def test_kind_average_and_average_of_individual(Estimator, data):
+    est = Estimator()
+    (X, y), n_targets = data
+    est.fit(X, y)
+
+    pdp_avg, _ = partial_dependence(est, X=X, features=[1, 2],
+                                           kind='average')
+    pdp_ind, _ = partial_dependence(est, X=X, features=[1, 2],
+                                           kind='individual')
+    avg_ind = np.mean(pdp_ind['individual'], axis=1)
+    assert_allclose(avg_ind, pdp_avg['average'])
