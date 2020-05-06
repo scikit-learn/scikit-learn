@@ -701,3 +701,16 @@ def test_kind_average_and_average_of_individual(Estimator, data):
                                            kind='individual')
     avg_ind = np.mean(pdp_ind['individual'], axis=1)
     assert_allclose(avg_ind, pdp_avg['average'])
+
+
+def test_warning_for_kind_legacy():
+    est = LogisticRegression()
+    (X, y), n_targets = binary_classification_data
+    est.fit(X, y)
+
+    err_msg = "A Bunch will be returned in place of 'predictions' from 0.26"
+    with pytest.warns(FutureWarning, match=err_msg):
+        partial_dependence(est, X=X, features=[1, 2])
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        partial_dependence(est, X=X, features=[1, 2], kind='legacy')
