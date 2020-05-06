@@ -228,7 +228,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = _find_binning_thresholds(
             X, max_bins, categorical=self.is_categorical_)
 
-        if self.is_categorical_ is not None and np.sum(self.is_categorical_) != 0:
+        if (self.is_categorical_ is not None and
+                np.sum(self.is_categorical_) != 0):
             self.bin_categories_ = _find_categories(
                 X, max_bins, categorical=self.is_categorical_)
         else:
