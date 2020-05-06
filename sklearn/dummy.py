@@ -17,7 +17,6 @@ from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from .utils import deprecated
 from .utils.validation import _deprecate_positional_args
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -384,6 +383,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """

@@ -23,7 +23,6 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
 from inspect import signature
-import warnings
 
 import numpy as np
 from scipy.special import kv, gamma

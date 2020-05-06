@@ -5,7 +5,6 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-import warnings
 from typing import List
 
 import numpy as np

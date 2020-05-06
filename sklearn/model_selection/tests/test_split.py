@@ -1523,5 +1523,5 @@ def test_leave_p_out_empty_trainset():
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     with pytest.raises(ValueError,
-                      match='has no effect since shuffle is False'):
+                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)

@@ -21,7 +21,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
-import warnings
 
 import numpy as np
 

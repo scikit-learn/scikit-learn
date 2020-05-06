@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT, deprecated
+from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args

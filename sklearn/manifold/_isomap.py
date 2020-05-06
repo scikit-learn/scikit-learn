@@ -6,7 +6,6 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path

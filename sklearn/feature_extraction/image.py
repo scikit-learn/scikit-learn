@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import check_array, check_random_state, deprecated
+from ..utils import check_array, check_random_state
 from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 

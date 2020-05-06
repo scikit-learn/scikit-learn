@@ -41,7 +41,6 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
 from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
-from .utils import deprecated
 
 
 __all__ = ["SparseRandomProjection",

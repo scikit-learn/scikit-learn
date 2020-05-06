@@ -1,7 +1,6 @@
 import numbers
 from itertools import chain
 from itertools import count
-import warnings
 
 import numpy as np
 from scipy import sparse

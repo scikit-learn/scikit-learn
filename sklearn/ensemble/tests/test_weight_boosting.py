@@ -12,7 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils._testing import assert_array_equal, assert_array_less
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises, assert_raises_regexp
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.base import clone

@@ -35,7 +35,6 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
-from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
@@ -886,13 +885,13 @@ def test_grid_search_cv_results():
     assert all((cv_results['param_C'].mask[i] and
                 cv_results['param_gamma'].mask[i] and
                 not cv_results['param_degree'].mask[i])
-                for i in range(n_candidates)
-                if cv_results['param_kernel'][i] == 'linear')
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'linear')
     assert all((not cv_results['param_C'].mask[i] and
                 not cv_results['param_gamma'].mask[i] and
                 cv_results['param_degree'].mask[i])
-                for i in range(n_candidates)
-                if cv_results['param_kernel'][i] == 'rbf')
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'rbf')
 
 
 def test_random_search_cv_results():
@@ -929,13 +928,13 @@ def test_random_search_cv_results():
     assert all((cv_results['param_C'].mask[i] and
                 cv_results['param_gamma'].mask[i] and
                 not cv_results['param_degree'].mask[i])
-                for i in range(n_candidates)
-                if cv_results['param_kernel'][i] == 'linear')
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'linear')
     assert all((not cv_results['param_C'].mask[i] and
                 not cv_results['param_gamma'].mask[i] and
                 cv_results['param_degree'].mask[i])
-                for i in range(n_candidates)
-                if cv_results['param_kernel'][i] == 'rbf')
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'rbf')
 
 
 @pytest.mark.parametrize(
@@ -1001,7 +1000,7 @@ def test_grid_search_cv_results_multimetric():
 
     grid_searches = []
     for scoring in ({'accuracy': make_scorer(accuracy_score),
-                        'recall': make_scorer(recall_score)},
+                     'recall': make_scorer(recall_score)},
                     'accuracy', 'recall'):
         grid_search = GridSearchCV(SVC(), cv=n_splits,
                                    param_grid=params,
@@ -1032,10 +1031,10 @@ def test_random_search_cv_results_multimetric():
                 probability = False
             clf = SVC(probability=probability, random_state=42)
             random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
-                                                cv=n_splits,
-                                                param_distributions=params,
-                                                scoring=scoring,
-                                                refit=refit, random_state=0)
+                                               cv=n_splits,
+                                               param_distributions=params,
+                                               scoring=scoring,
+                                               refit=refit, random_state=0)
             random_search.fit(X, y)
             random_searches.append(random_search)
 
