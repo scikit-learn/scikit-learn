@@ -696,9 +696,9 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     est.fit(X, y)
 
     pdp_avg, _ = partial_dependence(est, X=X, features=[1, 2],
-                                           kind='average')
+                                    kind='average')
     pdp_ind, _ = partial_dependence(est, X=X, features=[1, 2],
-                                           kind='individual')
+                                    kind='individual')
     avg_ind = np.mean(pdp_ind['individual'], axis=1)
     assert_allclose(avg_ind, pdp_avg['average'])
 
