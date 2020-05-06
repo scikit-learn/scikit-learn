@@ -1295,8 +1295,6 @@ def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),

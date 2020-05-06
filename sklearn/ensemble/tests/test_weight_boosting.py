@@ -499,8 +499,6 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default changes
-@ignore_warnings
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target

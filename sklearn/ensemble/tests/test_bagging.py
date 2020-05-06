@@ -52,8 +52,6 @@ diabetes.data = diabetes.data[perm]
 diabetes.target = diabetes.target[perm]
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
-@ignore_warnings(category=FutureWarning)
 def test_classification():
     # Check classification for various parameter settings.
     rng = check_random_state(0)

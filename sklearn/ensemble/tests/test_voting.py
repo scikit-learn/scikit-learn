@@ -467,7 +467,6 @@ def test_transform():
     )
 
 
-# TODO: Remove drop=None in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(
