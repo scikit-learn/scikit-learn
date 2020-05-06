@@ -227,7 +227,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
-        has_estimator = any(est == 'drop' for est in estimators)
+        has_estimator = any(est != 'drop' for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
