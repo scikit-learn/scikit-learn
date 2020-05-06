@@ -291,14 +291,14 @@ public:
 class Kernel: public QMatrix {
 public:
 #ifdef _DENSE_REP
-	Kernel(int l, PREFIX(node) * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * x, const svm_parameter& param, BlasFunctions *blas_functions);
 #else
-	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param);
+	Kernel(int l, PREFIX(node) * const * x, const svm_parameter& param, BlasFunctions *blas_functions);
 #endif
 	virtual ~Kernel();
 
 	static double k_function(const PREFIX(node) *x, const PREFIX(node) *y,
-				 const svm_parameter& param);
+				 const svm_parameter& param, BlasFunctions *blas_functions);
 	virtual Qfloat *get_Q(int column, int len) const = 0;
 	virtual double *get_QD() const = 0;
 	virtual void swap_index(int i, int j) const	// no so const...
@@ -306,15 +306,12 @@ public:
 		swap(x[i],x[j]);
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
-	static void set_blas(BlasFunctions *blas);
-	static void free_blas();
+	BlasFunctions *m_blas;
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
 
 private:
-	static BlasFunctions *m_blas;
-	static int blas_status;
 #ifdef _DENSE_REP
 	PREFIX(node) *x;
 #else
@@ -328,26 +325,26 @@ private:
 	const double gamma;
 	const double coef0;
 
-	static double dot(const PREFIX(node) *px, const PREFIX(node) *py);
+	static double dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions);
 #ifdef _DENSE_REP
-	static double dot(const PREFIX(node) &px, const PREFIX(node) &py);
+	static double dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions *blas_functions);
 #endif
 
 	double kernel_linear(int i, int j) const
 	{
-		return dot(x[i],x[j]);
+		return dot(x[i],x[j],m_blas);
 	}
 	double kernel_poly(int i, int j) const
 	{
-		return powi(gamma*dot(x[i],x[j])+coef0,degree);
+		return powi(gamma*dot(x[i],x[j],m_blas)+coef0,degree);
 	}
 	double kernel_rbf(int i, int j) const
 	{
-		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
+		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j],m_blas)));
 	}
 	double kernel_sigmoid(int i, int j) const
 	{
-		return tanh(gamma*dot(x[i],x[j])+coef0);
+		return tanh(gamma*dot(x[i],x[j],m_blas)+coef0);
 	}
 	double kernel_precomputed(int i, int j) const
 	{
@@ -360,13 +357,14 @@ private:
 };
 
 #ifdef _DENSE_REP
-Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * x_, const svm_parameter& param, BlasFunctions *blas_functions)
 #else
-Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
+Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param, BlasFunctions *blas_functions)
 #endif
 :kernel_type(param.kernel_type), degree(param.degree),
  gamma(param.gamma), coef0(param.coef0)
 {
+	m_blas = blas_functions;
 	switch(kernel_type)
 	{
 		case LINEAR:
@@ -392,7 +390,7 @@ Kernel::Kernel(int l, PREFIX(node) * const * x_, const svm_parameter& param)
 	{
 		x_square = new double[l];
 		for(int i=0;i<l;i++)
-			x_square[i] = dot(x[i],x[i]);
+			x_square[i] = dot(x[i],x[i],blas_functions);
 	}
 	else
 		x_square = 0;
@@ -405,25 +403,25 @@ Kernel::~Kernel()
 }
 
 #ifdef _DENSE_REP
-double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 
 	int dim = min(px->dim, py->dim);
-	sum = m_blas->dot(dim, px->values, 1, py->values, 1);
+	sum = blas_functions->dot(dim, px->values, 1, py->values, 1);
 	return sum;
 }
 
-double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py)
+double Kernel::dot(const PREFIX(node) &px, const PREFIX(node) &py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 
 	int dim = min(px.dim, py.dim);
-	sum = m_blas->dot(dim, px.values, 1, py.values, 1);
+	sum = blas_functions->dot(dim, px.values, 1, py.values, 1);
 	return sum;
 }
 #else
-double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
+double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py, BlasFunctions *blas_functions)
 {
 	double sum = 0;
 	while(px->index != -1 && py->index != -1)
@@ -446,29 +444,15 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 }
 #endif
 
-void Kernel::set_blas(BlasFunctions *blas)
-{
-	if (Kernel::blas_status==0)
-		Kernel::m_blas=blas;
-	Kernel::blas_status++;
-}
-
-void Kernel::free_blas()
-{
-	Kernel::blas_status--;
-	if (Kernel::blas_status==0)
-		Kernel::m_blas=NULL;
-}
-
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
-			  const svm_parameter& param)
+			  const svm_parameter& param, BlasFunctions *blas_functions)
 {
 	switch(param.kernel_type)
 	{
 		case LINEAR:
-			return dot(x,y);
+			return dot(x,y,blas_functions);
 		case POLY:
-			return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
+			return powi(param.gamma*dot(x,y,blas_functions)+param.coef0,param.degree);
 		case RBF:
 		{
 			double sum = 0;
@@ -479,7 +463,7 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			{
 				m_array[i] = x->values[i] - y->values[i];
 			}
-			sum = m_blas->dot(dim, m_array, 1, m_array, 1);
+			sum = blas_functions->dot(dim, m_array, 1, m_array, 1);
 			free(m_array);
 			for (; i < x->dim; i++)
 				sum += x->values[i] * x->values[i];
@@ -525,7 +509,7 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return exp(-param.gamma*sum);
 		}
 		case SIGMOID:
-			return tanh(param.gamma*dot(x,y)+param.coef0);
+			return tanh(param.gamma*dot(x,y,blas_functions)+param.coef0);
 		case PRECOMPUTED:  //x: test (validation), y: SV
                     {
 #ifdef _DENSE_REP
@@ -538,8 +522,6 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable 
 	}
 }
-BlasFunctions* NAMESPACE::Kernel::m_blas=NULL;
-int NAMESPACE::Kernel::blas_status=0;
 // An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
 // Solves:
 //
@@ -1432,8 +1414,8 @@ double Solver_NU::calculate_rho()
 class SVC_Q: public Kernel
 { 
 public:
-	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_)
-	:Kernel(prob.l, prob.x, param)
+	SVC_Q(const PREFIX(problem)& prob, const svm_parameter& param, const schar *y_, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		clone(y,y_,prob.l);
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
@@ -1482,8 +1464,8 @@ private:
 class ONE_CLASS_Q: public Kernel
 {
 public:
-	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param)
-	:Kernel(prob.l, prob.x, param)
+	ONE_CLASS_Q(const PREFIX(problem)& prob, const svm_parameter& param, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
 		QD = new double[prob.l];
@@ -1528,8 +1510,8 @@ private:
 class SVR_Q: public Kernel
 { 
 public:
-	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
-	:Kernel(prob.l, prob.x, param)
+	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param, BlasFunctions *blas_functions)
+	:Kernel(prob.l, prob.x, param, blas_functions)
 	{
 		l = prob.l;
 		cache = new Cache(l,(long int)(param.cache_size*(1<<20)));
@@ -1605,7 +1587,7 @@ private:
 //
 static void solve_c_svc(
 	const PREFIX(problem) *prob, const svm_parameter* param,
-	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn)
+	double *alpha, Solver::SolutionInfo* si, double Cp, double Cn, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *minus_ones = new double[l];
@@ -1631,7 +1613,7 @@ static void solve_c_svc(
 	}
 
 	Solver s;
-	s.Solve(l, SVC_Q(*prob,*param,y), minus_ones, y,
+	s.Solve(l, SVC_Q(*prob,*param,y, blas_functions), minus_ones, y,
 		alpha, C, param->eps, si, param->shrinking,
                 param->max_iter);
 
@@ -1654,7 +1636,7 @@ static void solve_c_svc(
 
 static void solve_nu_svc(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int i;
 	int l = prob->l;
@@ -1696,7 +1678,7 @@ static void solve_nu_svc(
 		zeros[i] = 0;
 
 	Solver_NU s;
-	s.Solve(l, SVC_Q(*prob,*param,y), zeros, y,
+	s.Solve(l, SVC_Q(*prob,*param,y,blas_functions), zeros, y,
 		alpha, C, param->eps, si,  param->shrinking, param->max_iter);
 	double r = si->r;
 
@@ -1718,7 +1700,7 @@ static void solve_nu_svc(
 
 static void solve_one_class(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *zeros = new double[l];
@@ -1751,7 +1733,7 @@ static void solve_one_class(
 	}
 
 	Solver s;
-	s.Solve(l, ONE_CLASS_Q(*prob,*param), zeros, ones,
+	s.Solve(l, ONE_CLASS_Q(*prob,*param,blas_functions), zeros, ones,
 		alpha, C, param->eps, si, param->shrinking, param->max_iter);
 
         delete[] C;
@@ -1761,7 +1743,7 @@ static void solve_one_class(
 
 static void solve_epsilon_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *alpha2 = new double[2*l];
@@ -1784,7 +1766,7 @@ static void solve_epsilon_svr(
 	}
 
 	Solver s;
-	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
+	s.Solve(2*l, SVR_Q(*prob,*param,blas_functions), linear_term, y,
 		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
 
 	double sum_alpha = 0;
@@ -1803,7 +1785,7 @@ static void solve_epsilon_svr(
 
 static void solve_nu_svr(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	double *C = new double[2*l];
@@ -1833,7 +1815,7 @@ static void solve_nu_svr(
 	}
 
 	Solver_NU s;
-	s.Solve(2*l, SVR_Q(*prob,*param), linear_term, y,
+	s.Solve(2*l, SVR_Q(*prob,*param,blas_functions), linear_term, y,
 		alpha2, C, param->eps, si, param->shrinking, param->max_iter);
 
 	info("epsilon = %f\n",-si->r);
@@ -1858,7 +1840,7 @@ struct decision_function
 
 static decision_function svm_train_one(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double Cp, double Cn, int *status)
+	double Cp, double Cn, int *status, BlasFunctions *blas_functions)
 {
 	double *alpha = Malloc(double,prob->l);
 	Solver::SolutionInfo si;
@@ -1866,23 +1848,23 @@ static decision_function svm_train_one(
 	{
  		case C_SVC:
 			si.upper_bound = Malloc(double,prob->l); 
- 			solve_c_svc(prob,param,alpha,&si,Cp,Cn);
+ 			solve_c_svc(prob,param,alpha,&si,Cp,Cn,blas_functions);
  			break;
  		case NU_SVC:
 			si.upper_bound = Malloc(double,prob->l); 
- 			solve_nu_svc(prob,param,alpha,&si);
+ 			solve_nu_svc(prob,param,alpha,&si,blas_functions);
  			break;
  		case ONE_CLASS:
 			si.upper_bound = Malloc(double,prob->l); 
- 			solve_one_class(prob,param,alpha,&si);
+ 			solve_one_class(prob,param,alpha,&si,blas_functions);
  			break;
  		case EPSILON_SVR:
 			si.upper_bound = Malloc(double,2*prob->l); 
- 			solve_epsilon_svr(prob,param,alpha,&si);
+ 			solve_epsilon_svr(prob,param,alpha,&si,blas_functions);
  			break;
  		case NU_SVR:
 			si.upper_bound = Malloc(double,2*prob->l); 
- 			solve_nu_svr(prob,param,alpha,&si);
+ 			solve_nu_svr(prob,param,alpha,&si,blas_functions);
  			break;
 	}
 
@@ -2369,7 +2351,6 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *param,
         int *status, BlasFunctions *blas_functions)
 {
-	NAMESPACE::Kernel::set_blas(blas_functions);
 	PREFIX(problem) newprob;
 	remove_zero_weight(&newprob, prob);
 	prob = &newprob;
@@ -2402,7 +2383,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			model->probA[0] = NAMESPACE::svm_svr_probability(prob,param,blas_functions);
 		}
 
-                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status);
+                NAMESPACE::decision_function f = NAMESPACE::svm_train_one(prob,param,0,0, status,blas_functions);
 		model->rho = Malloc(double,1);
 		model->rho[0] = f.rho;
 
@@ -2519,7 +2500,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				if(param->probability)
                                     NAMESPACE::svm_binary_svc_probability(&sub_prob,param,weighted_C[i],weighted_C[j],probA[p],probB[p], status, blas_functions);
 
-				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status);
+				f[p] = NAMESPACE::svm_train_one(&sub_prob,param,weighted_C[i],weighted_C[j], status, blas_functions);
 				for(k=0;k<ci;k++)
 					if(!nonzero[si+k] && fabs(f[p].alpha[k]) > 0)
 						nonzero[si+k] = true;
@@ -2647,7 +2628,6 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	free(newprob.x);
 	free(newprob.y);
 	free(newprob.W);
-	NAMESPACE::Kernel::free_blas();
 	return model;
 }
 
@@ -2820,7 +2800,6 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 
 double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values, BlasFunctions *blas_functions)
 {
-	NAMESPACE::Kernel::set_blas(blas_functions);
 	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
@@ -2831,14 +2810,13 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
-                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                    sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 #else
-                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+                sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
 #endif
 		sum -= model->rho[0];
 		*dec_values = sum;
 
-		NAMESPACE::Kernel::free_blas();
 		if(model->param.svm_type == ONE_CLASS)
 			return (sum>0)?1:-1;
 		else
@@ -2852,9 +2830,9 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		double *kvalue = Malloc(double,l);
 		for(i=0;i<l;i++)
 #ifdef _DENSE_REP
-                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
 #else
-                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param,blas_functions);
 #endif
 
 		int *start = Malloc(int,nr_class);
@@ -2901,7 +2879,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		free(kvalue);
 		free(start);
 		free(vote);
-		NAMESPACE::Kernel::free_blas();
 		return model->label[vote_max_idx];
 	}
 }
