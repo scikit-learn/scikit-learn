@@ -306,7 +306,6 @@ public:
 		swap(x[i],x[j]);
 		if(x_square) swap(x_square[i],x_square[j]);
 	}
-	BlasFunctions *m_blas;
 protected:
 
 	double (Kernel::*kernel_function)(int i, int j) const;
@@ -318,6 +317,8 @@ private:
 	const PREFIX(node) **x;
 #endif
 	double *x_square;
+	// scipy blas pointer
+	BlasFunctions *m_blas;
 
 	// svm_parameter
 	const int kernel_type;
