@@ -86,7 +86,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         # Uses 'drop' as placeholder for dropped estimators
         est_iter = iter(self.estimators_)
         for name, est in self.estimators:
-            current_est = est if est != 'drop' else next(est_iter)
+            current_est = est if est == 'drop' else next(est_iter)
             self.named_estimators_[name] = current_est
 
         return self
