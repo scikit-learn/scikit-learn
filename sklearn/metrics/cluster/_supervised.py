@@ -881,6 +881,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
+    .. versionadded:: 0.18
+
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
     the precision and recall::
 

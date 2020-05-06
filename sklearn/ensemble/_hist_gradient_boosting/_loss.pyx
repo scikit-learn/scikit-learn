@@ -15,6 +15,8 @@ from libc.math cimport exp, log
 from .common cimport Y_DTYPE_C
 from .common cimport G_H_DTYPE_C
 
+np.import_array()
+
 
 def _update_gradients_least_squares(
         G_H_DTYPE_C [::1] gradients,  # OUT

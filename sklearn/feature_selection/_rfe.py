@@ -410,6 +410,8 @@ class RFECV(RFE):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.18
+
     Attributes
     ----------
     n_features_ : int

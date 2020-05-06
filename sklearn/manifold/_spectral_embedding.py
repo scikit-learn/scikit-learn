@@ -301,7 +301,8 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
+        ml = smoothed_aggregation_solver(check_array(laplacian,
+                                                     accept_sparse='csr'))
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()

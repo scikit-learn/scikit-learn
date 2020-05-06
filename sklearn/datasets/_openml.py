@@ -23,6 +23,7 @@ from ..utils import Bunch
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fetch_openml']
 
@@ -608,7 +609,8 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
-def fetch_openml(name=None, version='active', data_id=None, data_home=None,
+@_deprecate_positional_args
+def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
                  as_frame=False):
     """Fetch dataset from openml by name or dataset id.

@@ -66,8 +66,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.
 
+        .. versionadded:: 0.18
+
     inv_kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to inverse_func.
+
+        .. versionadded:: 0.18
 
     Examples
     --------
