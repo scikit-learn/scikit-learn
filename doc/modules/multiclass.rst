@@ -372,20 +372,35 @@ Error-Correcting Output-Codes
 =============================
 
 Output-code based strategies are fairly different from one-vs-the-rest and
-one-vs-one. With these strategies, each class is represented in a Euclidean
-space, where each dimension can only be 0 or 1. Another way to put it is
-that each class is represented by a binary code (an array of 0 and 1). The
-matrix which keeps track of the location/code of each class is called the
-code book. The code size is the dimensionality of the aforementioned space.
+one-vs-one. With these strategies, each class is represented by a binary 
+code (an array of 0 and 1). The matrix which keeps track of the location/code 
+of each class is called the code book. For instance, the following 10-bit 
+code book can be constructed for a 6-class task:
+
+|       |                       Code Book                 |
+|-------|----|----|----|----|----|----|----|----|----|----|
+| Class | f0 | f1 | f2 | f3 | f4 | f5 | f6 | f7 | f8 | f9 |
+|-------|----|----|----|----|----|----|----|----|----|----|
+|   0   | 1  | 0  | 0  | 1  | 0  | 0  | 1  | 0  | 1  | 0  |
+|   1   | 0  | 1  | 1  | 1  | 0  | 0  | 0  | 0  | 1  | 0  |
+|   2   | 1  | 0  | 0  | 1  | 0  | 0  | 0  | 1  | 1  | 1  |
+|   3   | 0  | 1  | 1  | 1  | 0  | 1  | 1  | 1  | 0  | 0  |
+|   4   | 1  | 1  | 1  | 0  | 1  | 0  | 1  | 1  | 0  | 0  |
+|   5   | 0  | 1  | 0  | 0  | 1  | 1  | 0  | 0  | 1  | 1  |
+
+In this example, each class is assigned a unique binary string of length 10, 
+also called a codeword. For example, class 0 has the codeword 10010010101.
+At fitting time, one binary classifier is learned for each column. For example,
+for the first column, a binary classifier is built to separate classes 0, 2, 4
+from classes 1, 3, 5. A total of 10 binary classifiers are trained in this way. 
+At prediction time, the output from the 10 classifiers creates a new codeword, 
+and the new sample will be associated to the the class whose codeword is closest.
+
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
 book as advocated in [3]_ although more elaborate methods may be added in the
 future.
-
-At fitting time, one binary classifier per bit in the code book is fitted.
-At prediction time, the classifiers are used to project new points in the
-class space and the class closest to the points is chosen.
 
 In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
 control the number of classifiers which will be used. It is a percentage of the
