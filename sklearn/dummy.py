@@ -19,6 +19,7 @@ from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 from .utils.validation import _deprecate_positional_args
 
+
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.

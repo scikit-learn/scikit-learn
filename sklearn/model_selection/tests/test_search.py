@@ -1614,16 +1614,12 @@ def test_custom_run_search():
 
     results = mycv.cv_results_
     check_results(results, gscv)
-    # TODO: remove in v0.24, the deprecation goes away then.
-    with pytest.warns(FutureWarning,
-                      match="attribute is to be deprecated from version 0.22"):
-        for attr in dir(gscv):
-            if (attr[0].islower() and attr[-1:] == '_' and
-                    attr not in {'cv_results_', 'best_estimator_',
-                                 'refit_time_',
-                                 }):
-                assert getattr(gscv, attr) == getattr(mycv, attr), \
-                    "Attribute %s not equal" % attr
+    for attr in dir(gscv):
+        if (attr[0].islower() and attr[-1:] == '_' and
+                attr not in {'cv_results_', 'best_estimator_',
+                             'refit_time_', 'classes_'}):
+            assert getattr(gscv, attr) == getattr(mycv, attr), \
+                "Attribute %s not equal" % attr
 
 
 def test__custom_fit_no_run_search():
