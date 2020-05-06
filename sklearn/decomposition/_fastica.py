@@ -20,6 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fastica', 'FastICA']
 
@@ -390,7 +391,8 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()
@@ -424,13 +426,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : array-like, shape (n_samples, n_components)
         """
+
+        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                                ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
-
-        # make interface compatible with other decompositions
-        # a copy is required only for non whitened data
-        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                        ensure_min_samples=2).T
 
         alpha = fun_args.get('alpha', 1.0)
         if not 1 <= alpha <= 2:

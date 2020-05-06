@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -145,7 +145,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, tol=1e-2, copy=True,
+                 max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
                  iterated_power=3, rotation=None, random_state=0):
         self.n_components = n_components
@@ -176,7 +178,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -394,8 +396,7 @@ def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
-            tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow
-            tmp = np.dot(comp_rot, tmp)
+            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
         elif method == "quartimax":
             tmp = 0
         u, s, v = np.linalg.svd(

@@ -23,7 +23,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin, BiclusterMixin
+from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
@@ -31,6 +31,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
+    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
@@ -45,6 +46,26 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
+
+
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
+def test_estimator_cls_parameterize_with_checks():
+    # TODO: remove test in 0.24
+    # Non-regression test for #16707 to ensure that parametrize_with_checks
+    # works with estimator classes
+    param_checks = parametrize_with_checks([LogisticRegression])
+    # Using the generator does not raise
+    list(param_checks.args[1])
+
+
+def test_mark_xfail_checks_with_unconsructable_estimator():
+    class MyEstimator:
+        def __init__(self):
+            raise ValueError("This is bad")
+
+    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
+    assert estimator == MyEstimator
+    assert check == 42
 
 
 @pytest.mark.parametrize(
@@ -86,8 +107,8 @@ def _tested_estimators():
         yield estimator
 
 
-@parametrize_with_checks(_tested_estimators())
-def test_estimators(estimator, check):
+@parametrize_with_checks(list(_tested_estimators()))
+def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
                                    ConvergenceWarning,
@@ -96,7 +117,9 @@ def test_estimators(estimator, check):
         check(estimator)
 
 
+@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
 def test_check_estimator_generate_only():
+    # TODO in 0.24: remove checks on passing a class
     estimator_cls_gen_checks = check_estimator(LogisticRegression,
                                                generate_only=True)
     all_instance_gen_checks = check_estimator(LogisticRegression(),
@@ -131,7 +154,8 @@ def test_configure():
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
     if not os.path.exists(setup_filename):
-        return
+        pytest.skip('setup.py not available')
+    # XXX unreached code as of v0.22
     try:
         os.chdir(setup_path)
         old_argv = sys.argv
@@ -184,10 +208,8 @@ def test_import_all_consistency():
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
-            if getattr(package, name, None) is None:
-                raise AttributeError(
-                    "Module '{0}' has no attribute '{1}'".format(
-                        modname, name))
+            assert hasattr(package, name),\
+                "Module '{0}' has no attribute '{1}'".format(modname, name)
 
 
 def test_root_import_all_completeness():
@@ -220,3 +242,19 @@ def test_all_tests_are_importable():
                                  '__init__.py or an add_subpackage directive '
                                  'in the parent '
                                  'setup.py'.format(missing_tests))
+
+
+# TODO: remove in 0.24
+def test_class_support_deprecated():
+    # Make sure passing classes to check_estimator or parametrize_with_checks
+    # is deprecated
+
+    msg = "Passing a class is deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        check_estimator(LogisticRegression)
+
+    with pytest.warns(FutureWarning, match=msg):
+        parametrize_with_checks([LogisticRegression])
+
+    # Make sure check_parameters_default_constructible accepts instances now
+    check_parameters_default_constructible('name', LogisticRegression())

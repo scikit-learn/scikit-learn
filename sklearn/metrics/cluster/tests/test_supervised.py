@@ -337,3 +337,14 @@ def test_fowlkes_mallows_score_properties():
     # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
+
+
+@pytest.mark.parametrize('labels_true, labels_pred', [
+    (['a'] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1, 1, 0, 0, 1, 1], ['a'] * 6),
+    ([1, 1, 0, 0, 1, 1], [1] * 6),
+])
+def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
+    # non-regression test for #16355
+    assert mutual_info_score(labels_true, labels_pred) >= 0

@@ -21,6 +21,7 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
+from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -28,10 +29,10 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
-from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
+from .utils.validation import _deprecate_positional_args
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -139,6 +140,8 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -177,7 +180,8 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    def __init__(self, priors=None, var_smoothing=1e-9):
+    @_deprecate_positional_args
+    def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
@@ -203,6 +207,7 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
+        X, y = self._validate_data(X, y)
         y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
@@ -472,7 +477,7 @@ class _BaseDiscreteNB(_BaseNB):
         return check_array(X, accept_sparse='csr')
 
     def _check_X_y(self, X, y):
-        return check_X_y(X, y, accept_sparse='csr')
+        return self._validate_data(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -569,8 +574,9 @@ class _BaseDiscreteNB(_BaseNB):
         # We convert it to np.float64 to support sample_weight consistently
         Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -621,9 +627,9 @@ class _BaseDiscreteNB(_BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             sample_weight = np.atleast_2d(sample_weight)
-            Y *= check_array(sample_weight).T
+            Y *= sample_weight.T
 
         class_prior = self.class_prior
 
@@ -743,7 +749,8 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -779,6 +786,8 @@ class ComplementNB(_BaseDiscreteNB):
     particularly suited for imbalanced data sets.
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -845,7 +854,8 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
                  norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -959,7 +969,8 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
@@ -1070,7 +1081,8 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1145,18 +1157,19 @@ class CategoricalNB(_BaseDiscreteNB):
         return super().partial_fit(X, y, classes,
                                    sample_weight=sample_weight)
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_X(self, X):
         X = check_array(X, dtype='int', accept_sparse=False,
                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
-        X, y = check_X_y(X, y, dtype='int', accept_sparse=False,
-                         force_all_finite=True)
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
+                                   force_all_finite=True)
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):

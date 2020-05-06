@@ -62,6 +62,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ["RandomForestClassifier",
@@ -158,9 +159,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         if class_weight == 'subsample':
             with catch_warnings():
                 simplefilter('ignore', DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight('auto', y, indices)
+                curr_sample_weight *= compute_sample_weight('auto', y,
+                                                            indices=indices)
         elif class_weight == 'balanced_subsample':
-            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
+            curr_sample_weight *= compute_sample_weight('balanced', y,
+                                                        indices=indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
@@ -180,7 +183,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -249,7 +252,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             that the samples goes through the nodes. The matrix is of CSR
             format.
 
-        n_nodes_ptr : ndarray of size (n_estimators + 1,)
+        n_nodes_ptr : ndarray of shape (n_estimators + 1,)
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
 
@@ -293,10 +296,15 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self : object
         """
         # Validate or convert input data
-        X = check_array(X, accept_sparse="csc", dtype=DTYPE)
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        if issparse(y):
+            raise ValueError(
+                "sparse multilabel-indicator for y is not supported."
+            )
+        X, y = self._validate_data(X, y, multi_output=True,
+                                   accept_sparse="csc", dtype=DTYPE)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -415,8 +423,16 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @property
     def feature_importances_(self):
         """
-        Return the feature importances (the higher, the more important the
-           feature).
+        The impurity-based feature importances.
+
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
         Returns
         -------
@@ -467,7 +483,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -722,7 +738,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
@@ -833,6 +849,36 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         self.oob_score_ /= self.n_outputs_
 
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray of shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray of shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray of shape (n_samples,)
+            The value of the partial dependence function on each grid point.
+        """
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        averaged_predictions = np.zeros(shape=grid.shape[0],
+                                        dtype=np.float64, order='C')
+
+        for tree in self.estimators_:
+            # Note: we don't sum in parallel because the GIL isn't released in
+            # the fast method.
+            tree.tree_.compute_partial_dependence(
+                grid, target_features, averaged_predictions)
+        # Average over the forest
+        averaged_predictions /= len(self.estimators_)
+
+        return averaged_predictions
 
 class RandomForestClassifier(ForestClassifier):
     """
@@ -841,9 +887,9 @@ class RandomForestClassifier(ForestClassifier):
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and uses averaging to
     improve the predictive accuracy and control over-fitting.
-    The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if
-    `bootstrap=True` (default).
+    The sub-sample size is controlled with the `max_samples` parameter if
+    `bootstrap=True` (default), otherwise the whole dataset is used to build
+    each tree.
 
     Read more in the :ref:`User Guide <forest>`.
 
@@ -892,7 +938,7 @@ class RandomForestClassifier(ForestClassifier):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -918,7 +964,7 @@ class RandomForestClassifier(ForestClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -936,7 +982,7 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=0
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -949,7 +995,7 @@ class RandomForestClassifier(ForestClassifier):
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
@@ -962,7 +1008,7 @@ class RandomForestClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1031,7 +1077,7 @@ class RandomForestClassifier(ForestClassifier):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,) or a list of such arrays
+    classes_ : ndarray of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
@@ -1046,7 +1092,15 @@ class RandomForestClassifier(ForestClassifier):
         The number of outputs when ``fit`` is performed.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1059,21 +1113,9 @@ class RandomForestClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.datasets import make_classification
-
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit(X, y)
-    RandomForestClassifier(max_depth=2, random_state=0)
-    >>> print(clf.feature_importances_)
-    [0.14205973 0.76664038 0.0282433  0.06305659]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
+    DecisionTreeClassifier, ExtraTreesClassifier
 
     Notes
     -----
@@ -1092,15 +1134,24 @@ class RandomForestClassifier(ForestClassifier):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    See Also
+    Examples
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
+    >>> clf.fit(X, y)
+    RandomForestClassifier(...)
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1155,15 +1206,15 @@ class RandomForestRegressor(ForestRegressor):
     A random forest is a meta estimator that fits a number of classifying
     decision trees on various sub-samples of the dataset and uses averaging
     to improve the predictive accuracy and control over-fitting.
-    The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if
-    `bootstrap=True` (default).
+    The sub-sample size is controlled with the `max_samples` parameter if
+    `bootstrap=True` (default), otherwise the whole dataset is used to build
+    each tree.
 
     Read more in the :ref:`User Guide <forest>`.
 
     Parameters
     ----------
-    n_estimators : int, default=10
+    n_estimators : int, default=100
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
@@ -1210,7 +1261,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1236,7 +1287,7 @@ class RandomForestRegressor(ForestRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1254,7 +1305,7 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=0
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1266,7 +1317,7 @@ class RandomForestRegressor(ForestRegressor):
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, default=False
         whether to use out-of-bag samples to estimate
@@ -1279,7 +1330,7 @@ class RandomForestRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls both the randomness of the bootstrapping of the samples used
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
@@ -1323,7 +1374,15 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1339,20 +1398,9 @@ class RandomForestRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestRegressor
-    >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(n_features=4, n_informative=2,
-    ...                        random_state=0, shuffle=False)
-    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)
-    RandomForestRegressor(max_depth=2, random_state=0)
-    >>> print(regr.feature_importances_)
-    [0.18146984 0.81473937 0.00145312 0.00233767]
-    >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-8.32987858]
+    DecisionTreeRegressor, ExtraTreesRegressor
 
     Notes
     -----
@@ -1375,18 +1423,26 @@ class RandomForestRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
-    See Also
+    Examples
     --------
-    DecisionTreeRegressor, ExtraTreesRegressor
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
+    >>> regr.fit(X, y)
+    RandomForestRegressor(...)
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-8.32987858]
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1445,7 +1501,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Parameters
     ----------
-    n_estimators : int, default=10
+    n_estimators : int, default=100
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
@@ -1487,7 +1543,7 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1513,7 +1569,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1531,7 +1587,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=0
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1556,7 +1612,7 @@ class ExtraTreesClassifier(ForestClassifier):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1622,14 +1678,14 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    base_estimator_ : ExtraTreeClassifier
+    base_estimator_ : ExtraTreesClassifier
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape (n_classes,) or a list of such arrays
+    classes_ : ndarray of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
@@ -1638,7 +1694,15 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1657,6 +1721,12 @@ class ExtraTreesClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
+    RandomForestClassifier : Ensemble Classifier based on trees with optimal
+        splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1664,6 +1734,11 @@ class ExtraTreesClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    References
+    ----------
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+           trees", Machine Learning, 63(1), 3-42, 2006.
 
     Examples
     --------
@@ -1675,21 +1750,10 @@ class ExtraTreesClassifier(ForestClassifier):
     ExtraTreesClassifier(random_state=0)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
-
-    References
-    ----------
-
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
-           trees", Machine Learning, 63(1), 3-42, 2006.
-
-    See Also
-    --------
-    sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
-    RandomForestClassifier : Ensemble Classifier based on trees with optimal
-        splits.
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1750,7 +1814,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Parameters
     ----------
-    n_estimators : int, default=10
+    n_estimators : int, default=100
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
@@ -1797,7 +1861,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1823,7 +1887,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1841,7 +1905,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=0
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -1865,7 +1929,7 @@ class ExtraTreesRegressor(ForestRegressor):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls 3 sources of randomness:
 
         - the bootstrapping of the samples used when building trees
@@ -1913,7 +1977,15 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
-        The feature importances (the higher, the more important the feature).
+        The impurity-based feature importances.
+        The higher, the more important the feature.
+        The importance of a feature is computed as the (normalized)
+        total reduction of the criterion brought by that feature.  It is also
+        known as the Gini importance.
+
+        Warning: impurity-based feature importances can be misleading for
+        high cardinality features (many unique values). See
+        :func:`sklearn.inspection.permutation_importance` as an alternative.
 
     n_features_ : int
         The number of features.
@@ -1929,6 +2001,11 @@ class ExtraTreesRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
+    See Also
+    --------
+    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
+    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1939,17 +2016,25 @@ class ExtraTreesRegressor(ForestRegressor):
 
     References
     ----------
-
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
 
-    See Also
+    Examples
     --------
-    sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
-    RandomForestRegressor: Ensemble regressor using trees with optimal splits.
+    >>> from sklearn.datasets import load_diabetes
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import ExtraTreesRegressor
+    >>> X, y = load_diabetes(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = ExtraTreesRegressor(n_estimators=100, random_state=0).fit(
+    ...    X_train, y_train)
+    >>> reg.score(X_test, y_test)
+    0.2708...
     """
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -2013,7 +2098,7 @@ class RandomTreesEmbedding(BaseForest):
 
     Parameters
     ----------
-    n_estimators : int, default=10
+    n_estimators : int, default=100
         Number of trees in the forest.
 
         .. versionchanged:: 0.22
@@ -2051,7 +2136,7 @@ class RandomTreesEmbedding(BaseForest):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -2061,7 +2146,7 @@ class RandomTreesEmbedding(BaseForest):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -2079,7 +2164,7 @@ class RandomTreesEmbedding(BaseForest):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=0
+    min_impurity_split : float, default=None
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
@@ -2100,7 +2185,7 @@ class RandomTreesEmbedding(BaseForest):
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState, default=None
         Controls the generation of the random `y` used to fit the trees
         and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.
@@ -2126,13 +2211,27 @@ class RandomTreesEmbedding(BaseForest):
            visual codebooks using randomized clustering forests"
            NIPS 2007
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomTreesEmbedding
+    >>> X = [[0,0], [1,0], [0,1], [-1,0], [0,-1]]
+    >>> random_trees = RandomTreesEmbedding(
+    ...    n_estimators=5, random_state=0, max_depth=1).fit(X)
+    >>> X_sparse_embedding = random_trees.transform(X)
+    >>> X_sparse_embedding.toarray()
+    array([[0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.],
+           [0., 1., 0., 1., 0., 1., 0., 1., 0., 1.],
+           [1., 0., 1., 0., 1., 0., 1., 0., 1., 0.],
+           [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
     criterion = 'mse'
     max_features = 1
 
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -2184,6 +2283,9 @@ class RandomTreesEmbedding(BaseForest):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
@@ -2208,6 +2310,9 @@ class RandomTreesEmbedding(BaseForest):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data used to build forests. Use ``dtype=np.float32`` for
             maximum efficiency.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits

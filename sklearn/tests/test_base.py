@@ -196,6 +196,14 @@ def test_clone_estimator_types():
     assert clf.empty is clf2.empty
 
 
+def test_clone_class_rather_than_instance():
+    # Check that clone raises expected error message when
+    # cloning class rather than instance
+    msg = "You should provide an instance of scikit-learn estimator"
+    with pytest.raises(TypeError, match=msg):
+        clone(MyEstimator)
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
@@ -203,10 +211,10 @@ def test_repr():
     test = T(K(), K())
     assert (
         repr(test) ==
-        "T(a=K(c=None, d=None), b=K(c=None, d=None))")
+        "T(a=K(), b=K())")
 
     some_est = T(a=["long_params"] * 1000)
-    assert len(repr(some_est)) == 495
+    assert len(repr(some_est)) == 485
 
 
 def test_str():

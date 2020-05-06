@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from matplotlib import cm
-from sklearn.utils.fixes import logsumexp
+from scipy.special import logsumexp
 
 print(__doc__)
 

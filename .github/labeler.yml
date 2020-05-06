@@ -1,0 +1,80 @@
+module:cluster:
+- sklearn/cluster/**/*
+
+module:common:
+- sklearn/common/**/*
+
+module:compose:
+- sklearn/compose/**/*
+
+module:covariance:
+- sklearn/covariance/**/*
+
+module:cross_decomposition:
+- sklearn/cross_decomposition/**/*
+
+module:datasets:
+- sklearn/datasets/**/*
+
+module:decomposition:
+- sklearn/decomposition/**/*
+
+module:ensemble:
+- sklearn/ensemble/**/*
+
+module:feature_extraction:
+- sklearn/feature_extraction/**/*
+
+module:feature_selection:
+- sklearn/feature_selection/**/*
+
+module:gaussian_process:
+- sklearn/gaussian_process/**/*
+
+module:impute:
+- sklearn/impute/**/*
+
+module:inspection:
+- sklearn/inspection/**/*
+
+module:linear_model:
+- sklearn/linear_model/**/*
+
+module:manifold:
+- sklearn/manifold/**/*
+
+module:metrics:
+- sklearn/metrics/**/*
+
+module:mixture:
+- sklearn/mixture/**/*
+
+module:model_selection:
+- sklearn/model_selection/**/*
+
+module:naive_bayes:
+- sklearn/naive_bayes.py
+
+module:neighbors:
+- sklearn/neighbors/**/*
+
+module:neural_network:
+- sklearn/neural_network/**/*
+
+module:pipeline:
+- sklearn/pipeline.py
+
+module:preprocessing:
+- sklearn/preprocessing/**/*
+
+module:semi_supervised:
+- sklearn/semi_supervised/**/*
+
+module:svm:
+- sklearn/svm/**/*
+
+module:tree:
+- sklearn/tree/**/*
+
+module:utils:
+- sklearn/utils/**/*
