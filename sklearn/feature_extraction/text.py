@@ -505,12 +505,6 @@ class _VectorizerMixin:
                               " since 'analyzer' != 'word'")
 
 
-@deprecated("VectorizerMixin is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class VectorizerMixin(_VectorizerMixin):
-    pass
-
-
 class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
@@ -1854,15 +1848,6 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
-        copy : bool, default=True
-            Whether to copy X and operate on the copy or perform in-place
-            operations.
-
-            .. deprecated:: 0.22
-               The `copy` parameter is unused and was deprecated in version
-               0.22 and will be removed in 0.24. This parameter will be
-               ignored.
-
         Returns
         -------
         X : sparse matrix of (n_samples, n_features)
@@ -1870,12 +1855,6 @@ class TfidfVectorizer(CountVectorizer):
         """
         check_is_fitted(self, msg='The TF-IDF vectorizer is not fitted')
 
-        # FIXME Remove copy parameter support in 0.24
-        if copy != "deprecated":
-            msg = ("'copy' param is unused and has been deprecated since "
-                   "version 0.22. Backward compatibility for 'copy' will "
-                   "be removed in 0.24.")
-            warnings.warn(msg, FutureWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
