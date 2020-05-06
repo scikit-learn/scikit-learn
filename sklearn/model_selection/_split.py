@@ -419,7 +419,7 @@ class KFold(_BaseKFold):
     See also
     --------
     StratifiedKFold
-        Takes group information into account to avoid building folds with
+        Takes class information into account to avoid building folds with
         imbalanced class distributions (for binary or multiclass
         classification tasks).
 
@@ -456,7 +456,7 @@ class GroupKFold(_BaseKFold):
     distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
+    samples is approximately the same in each fold.
 
     Parameters
     ----------
