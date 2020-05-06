@@ -788,10 +788,3 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
-
-
-# TODO: remove in 0.24
-@deprecated("MultiOutputEstimator is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class MultiOutputEstimator(_MultiOutputEstimator):
-    pass
