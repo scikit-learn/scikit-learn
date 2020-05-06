@@ -258,6 +258,7 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
+    yield check_parameters_default_constructible
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
