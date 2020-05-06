@@ -40,6 +40,7 @@ else:
 ###############################################################################
 # A synthetic random regression dataset is generated. The targets ``y`` are
 # modified by:
+#
 #   1. translating all targets such that all entries are
 #      non-negative (by adding the absolute value of the lowest ``y``) and
 #   2. applying an exponential function to obtain non-linear
@@ -50,7 +51,7 @@ else:
 # regression model and using it for prediction.
 
 X, y = make_regression(n_samples=10000, noise=100, random_state=0)
-y = np.exp((y + abs(y.min())) / 200)
+y = np.expm1((y + abs(y.min())) / 200)
 y_trans = np.log1p(y)
 
 ###############################################################################
@@ -145,7 +146,7 @@ y_trans = quantile_transform(y.to_frame(),
 # the target distribution before applying a
 # :class:`~sklearn.linear_model.RidgeCV` model.
 
-f, (ax0, ax1) = plt.subplots(1, 2, figsize=(6.5, 5))
+f, (ax0, ax1) = plt.subplots(1, 2)
 
 ax0.hist(y, bins=100, **density_param)
 ax0.set_ylabel('Probability')
@@ -158,13 +159,12 @@ ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.text(s='Transformed target distribution', x=-6.8, y=0.479, fontsize=12)
 
-f.suptitle("Ames housing data: selling price", y=0.022)
-f.tight_layout(rect=[0., 0., 0.95, 0.9])
+f.suptitle("Ames housing data: selling price", y=0.035)
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
 ###############################################################################
-#
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transformation results in an increase in R^2 and large decrease of the
 # MAE. The residual plot (predicted target - true target vs predicted target)
