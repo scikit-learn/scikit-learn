@@ -99,7 +99,7 @@ def test_categorical_predictor(thresholds, expected_predictions):
     # Test predictor outputs are correct with categorical features
 
     cat_threshold = _construct_bitset(thresholds)
-    X = np.array([[0, 4, 60, 124, 240, 255]], dtype=X_BINNED_DTYPE).T
+    X_binned = np.array([[0, 4, 60, 124, 240, 255]], dtype=X_BINNED_DTYPE).T
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
 
     # We just construct a simple tree with 1 root and 2 children
@@ -119,8 +119,9 @@ def test_categorical_predictor(thresholds, expected_predictions):
     nodes[2]['value'] = 0
 
     predictor = TreePredictor(nodes)
-    # missing_values_bin_idx for categories because it is already encoded
-    # in cat_threshold
-    predictions = predictor.predict_binned(X, missing_values_bin_idx=255)
+    # missing_values_bin_idx is ignored for categories because it is already
+    # encoded in cat_threshold
+    predictions = predictor.predict_binned(X_binned,
+                                           missing_values_bin_idx=255)
 
     assert_allclose(predictions, expected_predictions)

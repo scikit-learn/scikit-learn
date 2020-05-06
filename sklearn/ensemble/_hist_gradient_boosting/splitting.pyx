@@ -155,8 +155,8 @@ cdef class Splitter:
         const unsigned int [::1] n_bins_non_missing
         unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
+        const unsigned char [::1] is_categorical
         const char [::1] monotonic_cst
-        const unsigned char [::1] categorical
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -172,8 +172,8 @@ cdef class Splitter:
                  const unsigned int [::1] n_bins_non_missing,
                  const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
+                 const unsigned char [::1] is_categorical,
                  const char [::1] monotonic_cst,
-                 const unsigned char [::1] categorical,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -186,7 +186,7 @@ cdef class Splitter:
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
-        self.is_categorical_ = categorical
+        self.is_categorical = is_categorical
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
@@ -439,7 +439,7 @@ cdef class Splitter:
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
             const char [::1] monotonic_cst = self.monotonic_cst
-            const unsigned char [::1] categorical = self.is_categorical_
+            const unsigned char [::1] is_categorical = self.is_categorical
 
         with nogil:
 
@@ -465,8 +465,8 @@ cdef class Splitter:
                 # https://arxiv.org/abs/1603.02754
 
                 split_infos[feature_idx].is_categorical = \
-                    categorical[feature_idx]
-                if categorical[feature_idx]:
+                    is_categorical[feature_idx]
+                if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
@@ -498,7 +498,7 @@ cdef class Splitter:
             # For categorical splits, where there are no missing
             # values during fiitting, samples with missing values during
             # predict() will go to whichever child has the most samples.
-            if (categorical[best_feature_idx] and
+            if (is_categorical[best_feature_idx] and
                     not has_missing_values[best_feature_idx] and
                     split_info.n_samples_left > split_info.n_samples_right):
                 set_bitset(self.missing_values_bin_idx,
@@ -518,7 +518,7 @@ cdef class Splitter:
             split_info.value_left,
             split_info.value_right,
             split_info.is_categorical,
-            np.array(split_info.cat_threshold, dtype=np.uint32)
+            np.asarray(split_info.cat_threshold, dtype=np.uint32)
         )
         free(split_infos)
         return out

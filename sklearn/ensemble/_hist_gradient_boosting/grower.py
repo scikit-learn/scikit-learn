@@ -237,7 +237,7 @@ class TreeGrower:
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned, n_bins_non_missing, missing_values_bin_idx,
-            has_missing_values, monotonic_cst, is_categorical,
+            has_missing_values, is_categorical, monotonic_cst,
             l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.n_bins_non_missing = n_bins_non_missing

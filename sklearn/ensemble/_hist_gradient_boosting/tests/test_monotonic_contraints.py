@@ -298,13 +298,13 @@ def test_bounded_value_min_gain_to_split():
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1],
         dtype=np.int8)
-    categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     children_lower_bound, children_upper_bound = -np.inf, np.inf
 
     min_gain_to_split = 2000
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
-                        has_missing_values, monotonic_cst, categorical,
+                        has_missing_values, is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)

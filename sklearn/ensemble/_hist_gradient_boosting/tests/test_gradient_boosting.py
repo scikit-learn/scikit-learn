@@ -754,7 +754,7 @@ def test_categorical_sanity(insert_missing):
 
     # even indicies are categorical
     categorical = np.zeros(X.shape[1], dtype=bool)
-    categorical[::2] = 1
+    categorical[::2] = True
 
     X[:, categorical] = KBinsDiscretizer(
         encode='ordinal', n_bins=20).fit_transform(X[:, categorical])

@@ -51,14 +51,14 @@ def test_histogram_split(n_bins):
             monotonic_cst = np.array(
                 [MonotonicConstraint.NO_CST] * X_binned.shape[1],
                 dtype=np.int8)
-            categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+            is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
             missing_values_bin_idx = n_bins - 1
             splitter = Splitter(X_binned,
                                 n_bins_non_missing,
                                 missing_values_bin_idx,
                                 has_missing_values,
+                                is_categorical,
                                 monotonic_cst,
-                                categorical,
                                 l2_regularization,
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split,
@@ -122,10 +122,10 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1],
         dtype=np.int8)
-    categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
-                        has_missing_values, monotonic_cst, categorical,
+                        has_missing_values, is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split, constant_hessian)
 
@@ -237,10 +237,10 @@ def test_split_indices():
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1],
         dtype=np.int8)
-    categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
-                        has_missing_values, monotonic_cst, categorical,
+                        has_missing_values, is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -301,10 +301,10 @@ def test_min_gain_to_split():
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1],
         dtype=np.int8)
-    categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
-                        has_missing_values, monotonic_cst, categorical,
+                        has_missing_values, is_categorical,  monotonic_cst,
                         l2_regularization,
                         min_hessian_to_split, min_samples_leaf,
                         min_gain_to_split, hessians_are_constant)
@@ -445,11 +445,11 @@ def test_splitting_missing_values(X_binned, all_gradients,
     monotonic_cst = np.array(
         [MonotonicConstraint.NO_CST] * X_binned.shape[1],
         dtype=np.int8)
-    categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing,
                         missing_values_bin_idx, has_missing_values,
-                        monotonic_cst, categorical,
+                        is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -535,12 +535,12 @@ def test_splitting_categorical_no_splits(X_binned, has_missing_values,
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
     monotonic_cst = np.array([MonotonicConstraint.NO_CST] * X_binned.shape[1],
                              dtype=np.int8)
-    categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
 
     splitter = Splitter(X_binned, n_bins_non_missing,
                         missing_values_bin_idx, has_missing_values,
-                        monotonic_cst, categorical,
+                        is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -555,22 +555,30 @@ def test_splitting_categorical_no_splits(X_binned, has_missing_values,
     assert split_info.gain == -1
 
 
-def _assert_threshold_in_bitset(thresholds, bitset):
-    # bitset is assumed to be an array 4 of uint64
-    for threshold in thresholds:
+def _assert_threshold_is_bitset(expected_thresholds, bitset):
+    # bitset is assumed to be an array 8 of uint32
+
+    # form bitset from threshold
+    expected_threshold_bitset = np.zeros(8, dtype=np.uint32)
+    for threshold in expected_thresholds:
         i1 = threshold // 32
         i2 = threshold % 32
-        assert (bitset[i1] >> np.uint32(i2)) & np.uint32(1)
+        expected_threshold_bitset[i1] |= (1 << i2)
+
+    # check for equality
+    assert_array_equal(expected_threshold_bitset, bitset)
 
 
 @pytest.mark.parametrize(
-    "X_binned, all_gradients, thresholds, n_bins_non_missing,"
+    "X_binned, all_gradients, expected_thresholds, n_bins_non_missing,"
     "missing_values_bin_idx, has_missing_values",
     [
         # 3 categories (finds threshold by going left first)
+        # since there is no missing value during training, the
+        # missing_values_bin_idx goes to the left bin with 22 samples
         ([0, 1, 2] * 11,  # X_binned
          [1, 10, 1] * 11,  # all_gradients
-         [0, 2],  # thresholds
+         [0, 2, 3],  # expected_thresholds
          3,  # n_bins_non_missing
          3,  # missing_values_bin_idx
          False),  # has_missing_values
@@ -579,7 +587,7 @@ def _assert_threshold_in_bitset(thresholds, bitset):
         # threshold includes the missing value value
         ([0, 1, 2, 3, 4] * 11 + [1] * 50,  # X_binned
          [1, 10, 1, 1, 1] * 11 + [10] * 50,  # all_gradients
-         [1, 5],  # threshold
+         [1, 5],  # expected_thresholds
          5,  # n_bins_non_missing
          5,  # missing_values_bin_idx
          False),  # has_missing_values
@@ -587,7 +595,7 @@ def _assert_threshold_in_bitset(thresholds, bitset):
         # 4 categories (including missing value)
         ([0, 1, 2] * 11 + [9] * 11,  # X_binned
          [1, 5, 1] * 11 + [1] * 11,  # all_gradients
-         [1],  # thresholds
+         [1],  # expected_thresholds
          3,  # n_bins_non_missing
          9,  # missing_values_bin_idx
          True),   # has_missing_values
@@ -595,7 +603,7 @@ def _assert_threshold_in_bitset(thresholds, bitset):
         # split is on the missing value
         ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
          [1, 1, 1, 1, 1] * 11 + [20] * 12,  # all_gradients
-         [255],  # thresholds
+         [255],  # expected_thresholds
          5,  # n_bins_non_missing
          255,  # missing_values_bin_idx
          True),   # has_missing_values
@@ -603,7 +611,7 @@ def _assert_threshold_in_bitset(thresholds, bitset):
         # split on even categories
         (list(range(60)) * 12,  # X_binned
          [1, 10] * 360,  # all_gradients
-         list(range(0, 60, 2)),  # thresholds
+         list(range(0, 60, 2)),  # expected_thresholds
          59,  # n_bins_non_missing
          59,  # missing_values_bin_idx
          True),  # has_missing_values
@@ -611,12 +619,13 @@ def _assert_threshold_in_bitset(thresholds, bitset):
         # split on every 8 categories
         (list(range(256)) * 12,  # X_binned
          [1, 1, 1, 1, 1, 1, 1, 10] * 384,  # all_gradients
-         list(range(7, 256, 8)),  # thresholds
+         list(range(7, 256, 8)),  # expected_thresholds
          255,  # n_bins_non_missing
          255,  # missing_values_bin_idx
          True),  # has_missing_values
      ])
-def test_splitting_categorical_sanity(X_binned, all_gradients, thresholds,
+def test_splitting_categorical_sanity(X_binned, all_gradients,
+                                      expected_thresholds,
                                       n_bins_non_missing,
                                       missing_values_bin_idx,
                                       has_missing_values):
@@ -647,11 +656,11 @@ def test_splitting_categorical_sanity(X_binned, all_gradients, thresholds,
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
     monotonic_cst = np.array([MonotonicConstraint.NO_CST] * X_binned.shape[1],
                              dtype=np.int8)
-    categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
+    is_categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
 
     splitter = Splitter(X_binned, n_bins_non_missing,
                         missing_values_bin_idx, has_missing_values,
-                        monotonic_cst, categorical,
+                        is_categorical, monotonic_cst,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -664,12 +673,12 @@ def test_splitting_categorical_sanity(X_binned, all_gradients, thresholds,
                                           sum_gradients, sum_hessians, value)
 
     assert split_info.is_categorical
-    _assert_threshold_in_bitset(thresholds, split_info.cat_threshold)
+    _assert_threshold_is_bitset(expected_thresholds, split_info.cat_threshold)
 
     # make sure samples are split correctly
     samples_left, samples_right, _ = splitter.split_indices(
         split_info, splitter.partition)
 
-    left_mask = np.isin(X_binned.ravel(), thresholds)
+    left_mask = np.isin(X_binned.ravel(), expected_thresholds)
     assert_array_equal(sample_indices[left_mask], samples_left)
     assert_array_equal(sample_indices[~left_mask], samples_right)
