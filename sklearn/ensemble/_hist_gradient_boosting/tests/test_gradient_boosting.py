@@ -764,9 +764,9 @@ def test_categorical_sanity(insert_missing):
         mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
         X[mask] = np.nan
 
-    est = HistGradientBoostingRegressor(categorical=categorical,
+    est = HistGradientBoostingRegressor(categorical_features=categorical,
                                         random_state=0).fit(X, y)
-    assert_array_equal(est.categorical_features_, categorical)
+    assert_array_equal(est.is_categorical_, categorical)
 
     y_pred = est.predict(X)
     assert r2_score(y, y_pred) >= 0.8
@@ -812,9 +812,9 @@ def test_categorical_pandas():
         df.iloc[:, idx] = (df.iloc[:, 0].cat.rename_categories(
             [f'cat_name_{i}' for i in range(20)]))
 
-    est = HistGradientBoostingRegressor(categorical='pandas',
+    est = HistGradientBoostingRegressor(categorical_features='pandas',
                                         random_state=0).fit(df, y)
-    assert_array_equal(est.categorical_features_, categorical)
+    assert_array_equal(est.is_categorical_, categorical)
 
     y_pred = est.predict(df)
     assert r2_score(y, y_pred) >= 0.8
@@ -833,7 +833,7 @@ def test_categorical_spec_errors(Est):
     # Test errors when categories are specified incorrectly
     X, y = make_classification(random_state=0, n_features=4)
     categorical = [True, True, False, False, True]
-    est = Est(categorical=categorical)
+    est = Est(categorical_features=categorical)
 
     msg = (r"categorical must be an array-like of bool with shape "
            r"\(n_features,\)")
@@ -844,4 +844,5 @@ def test_categorical_spec_errors(Est):
     categorical = [True, True, False, False]
     msg = "categorical features can not have monotonic constraints"
     with pytest.raises(ValueError, match=msg):
-        Est(categorical=categorical, monotonic_cst=monotonic_cst).fit(X, y)
+        Est(categorical_features=categorical,
+            monotonic_cst=monotonic_cst).fit(X, y)

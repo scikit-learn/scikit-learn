@@ -186,7 +186,7 @@ cdef class Splitter:
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
-        self.categorical = categorical
+        self.is_categorical_ = categorical
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
@@ -439,7 +439,7 @@ cdef class Splitter:
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
             const char [::1] monotonic_cst = self.monotonic_cst
-            const unsigned char [::1] categorical = self.categorical
+            const unsigned char [::1] categorical = self.is_categorical_
 
         with nogil:
 

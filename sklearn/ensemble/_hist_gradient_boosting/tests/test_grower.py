@@ -408,11 +408,11 @@ def test_grow_tree_categories():
 
     all_gradients = np.array([1, 10] * 11, dtype=G_H_DTYPE)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
-    categorical = np.ones(1, dtype=np.uint8)
+    is_categorical = np.ones(1, dtype=np.uint8)
 
     grower = TreeGrower(X_binned, all_gradients, all_hessians,
                         n_bins=4, shrinkage=1.0, min_samples_leaf=1,
-                        categorical=categorical)
+                        is_categorical=is_categorical)
     grower.grow()
     assert grower.n_nodes == 3
 

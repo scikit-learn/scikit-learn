@@ -191,7 +191,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                  random_state=None):
         self.n_bins = n_bins
         self.subsample = subsample
-        self.categorical = categorical
+        self.is_categorical_ = categorical
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -226,18 +226,18 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             X = X.take(subset, axis=0)
 
         self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, categorical=self.categorical)
+            X, max_bins, categorical=self.is_categorical_)
 
-        if self.categorical is not None and np.sum(self.categorical) != 0:
+        if self.is_categorical_ is not None and np.sum(self.is_categorical_) != 0:
             self.bin_categories_ = _find_categories(
-                X, max_bins, categorical=self.categorical)
+                X, max_bins, categorical=self.is_categorical_)
         else:
             self.bin_categories_ = []
 
         n_bins_non_missing = []
 
         if self.bin_categories_:
-            categorical_indices = np.flatnonzero(self.categorical)
+            categorical_indices = np.flatnonzero(self.is_categorical_)
             cat_idx_to_bin = dict(zip(categorical_indices,
                                       self.bin_categories_))
 
@@ -292,7 +292,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
                          binned)
             if self.bin_categories_:
-                categorical_indices = np.flatnonzero(self.categorical)
+                categorical_indices = np.flatnonzero(self.is_categorical_)
                 _map_cat_to_bins(X, categorical_indices,
                                  self.bin_categories_,
                                  self.missing_values_bin_idx_, binned)
@@ -301,7 +301,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             n_categories = len(self.bin_categories_)
             binned = np.zeros((n_samples, n_categories), dtype=X_BINNED_DTYPE,
                               order='F')
-            _map_cat_to_bins(X[:, self.categorical],
+            _map_cat_to_bins(X[:, self.is_categorical_],
                              np.arange(n_categories),
                              self.bin_categories_,
                              self.missing_values_bin_idx_, binned)
