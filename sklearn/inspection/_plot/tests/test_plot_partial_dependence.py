@@ -37,7 +37,8 @@ def clf_diabetes(diabetes):
 
 
 @pytest.mark.parametrize("grid_resolution", [10, 20])
-def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes, diabetes):
+def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
+                                 diabetes):
     # Test partial dependence plot function.
     # Use columns 0 & 2 as 1 is not quantitative (sex)
     feature_names = diabetes.feature_names
