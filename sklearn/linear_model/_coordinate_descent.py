@@ -1733,9 +1733,9 @@ class MultiTaskElasticNet(Lasso):
 
     Where::
 
-        ||W||_21 = sum_i sqrt(sum_j w_ij ^ 2)
+        ||W||_21 = sum_i sqrt(sum_j W_ij ^ 2)
 
-    i.e. the sum of norm of each row.
+    i.e. the sum of norms of each row.
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
@@ -1829,8 +1829,8 @@ class MultiTaskElasticNet(Lasso):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
@@ -1867,12 +1867,11 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-
         # Need to validate separately here.
         # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(dtype=[np.float64, np.float32], order='F',
                               copy=self.copy_X and self.fit_intercept)
-        check_y_params = dict(ensure_2d=False)
+        check_y_params = dict(ensure_2d=False, order='F')
         X, y = self._validate_data(X, y, validate_separately=(check_X_params,
                                                               check_y_params))
         y = y.astype(X.dtype)
@@ -2000,13 +1999,13 @@ class MultiTaskLasso(MultiTaskElasticNet):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    >>> clf.fit([[0, 1], [1, 2], [2, 4]], [[0, 0], [1, 1], [2, 3]])
     MultiTaskLasso(alpha=0.1)
     >>> print(clf.coef_)
-    [[0.89393398 0.        ]
-     [0.89393398 0.        ]]
+    [[0.         0.60809415]
+    [0.         0.94592424]]
     >>> print(clf.intercept_)
-    [0.10606602 0.10606602]
+    [-0.41888636 -0.87382323]
 
     See also
     --------
@@ -2018,8 +2017,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
@@ -2196,8 +2195,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     path = staticmethod(enet_path)
 
@@ -2368,8 +2367,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     -----
     The algorithm used to fit the model is coordinate descent.
 
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
+    To avoid unnecessary memory duplication the X and y arguments of the fit
+    method should be directly passed as Fortran-contiguous numpy arrays.
     """
     path = staticmethod(lasso_path)
 

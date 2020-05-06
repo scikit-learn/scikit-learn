@@ -882,9 +882,9 @@ def test_convergence_warnings():
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
 
-    # check that the model fails to converge
+    # check that the model fails to converge (a negative dual gap cannot occur)
     with pytest.warns(ConvergenceWarning):
-        MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
+        MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
