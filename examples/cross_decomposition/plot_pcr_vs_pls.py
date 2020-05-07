@@ -20,6 +20,8 @@ The main difference is that the transformation is supervised. Therefore, it
 does not suffer from the issue we just mentionned.
 """
 
+print(__doc__)
+
 ##############################################################################
 # The data
 # --------
@@ -52,7 +54,7 @@ plt.show()
 ##############################################################################
 # Projection on one component and predictive power
 # ------------------------------------------------
-# 
+#
 # We now create two regressors: PCR and PLS, and for our illustration purposes
 # we set the number of components to 1. For both models, we plot the first
 # component against the target. As expected, the PCA transformation of PCR has
@@ -60,7 +62,7 @@ plt.show()
 # the first component having a very low predictive power on the target. On the
 # other hand, the PLS regressor manages to capture the effect of the second
 # feature thanks to its use of target information during the transformation.
-# 
+#
 # We also print the R-squared scores of both estimators, which further confirms
 # that PLS is a better alternative than PCR in this case.
 
