@@ -10,7 +10,7 @@ This example compares `Principal Component Regression
 toy dataset. Our goal is to illustrate how PLS can outperform PCR when the
 target is strongly correlated with some features that have a low variance.
 
-PCR simply consists in applying :class:`~sklearn.decomposition.PCA` to the
+PCR consists in applying :class:`~sklearn.decomposition.PCA` to the
 training data (possibly performing dimensionality reduction), and then
 training a regressor on the transformed training samples. In
 :class:`~sklearn.decomposition.PCA`, the transformation is purely
