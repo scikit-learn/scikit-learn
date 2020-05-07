@@ -41,6 +41,17 @@ def configuration(parent_package='', top_path=None):
                          depends=libsvm_depends,
                          )
 
+    config.add_extension('_newrand',
+                         sources=['_newrand.pyx'],
+                         include_dirs=[numpy.get_include(),
+                                       join('src', 'libsvm'),
+                                       join('src', 'newrand')],
+                         libraries=['libsvm-skl'],
+                         depends=[join('src', 'newrand', 'newrand.h'),
+                                  join('src', 'newrand', 'newrand-cache.cpp'),
+                                  join('src', 'newrand', 'newrand-cache.h')],
+                         )
+
     # liblinear module
     libraries = []
     if os.name == 'posix':

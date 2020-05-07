@@ -1,10 +1,12 @@
 import numpy as np
 from scipy import sparse as sp
+from scipy import stats
 
 import pytest
 
 from sklearn.svm._bounds import l1_min_c
 from sklearn.svm import LinearSVC
+from sklearn.svm._newrand import set_seed_wrap, bounded_rand_int_wrap
 from sklearn.linear_model import LogisticRegression
 
 from sklearn.utils._testing import assert_raise_message
@@ -74,3 +76,36 @@ def test_ill_posed_min_c():
 def test_unsupported_loss():
     with pytest.raises(ValueError):
         l1_min_c(dense_X, Y1, loss='l1')
+
+
+def test_set_seed():
+    def _test(seed, val):
+        # TODO currently causes 99% coverage in test_bounds.py
+        if seed is not None:
+            set_seed_wrap(seed)
+        x = bounded_rand_int_wrap(100)
+        assert(x == val), 'Expected {} but got {} instead'.format(val, x)
+
+    # _test(None, 81)
+    # TODO should be default seed for std::mt19937,
+    # but different results on jupyter lab
+    _test(5489, 81)  # default seed for std::mt19937
+    _test(0, 54)
+    _test(4294967295, 9)  # max unsigned int size
+
+
+def test_bounded_rand_int():
+    orig_range = 2147483647  # max int as input to bounded_rand_int
+    n_pts = 1000
+    n_iter = 100
+    ks_pvals = []
+    uniform_dist = stats.uniform(loc=0, scale=orig_range)
+    for _ in range(n_iter):
+        # Deterministic random sampling
+        sample = [bounded_rand_int_wrap(orig_range) for _ in range(n_pts)]
+        res = stats.kstest(sample, uniform_dist.cdf)
+        ks_pvals.append(res.pvalue)
+    avg_pval = np.mean(ks_pvals)
+    assert(avg_pval > 0.05),\
+        'p-value of {} not > 0.05, '\
+        'therefore distribution isn\'t uniform'.format(avg_pval)

@@ -33,7 +33,7 @@ void set_seed(unsigned custom_seed) {
 }
 
 // - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
-inline int bounded_rand_int(int orig_range) {
+int bounded_rand_int(int orig_range) {
     // "LibSVM / LibLinear Original way" - make a 31bit or 63bit positive
     // random number and use modulo to make it fit in the range
     // return abs( (int)mt_rand()) % orig_range;
