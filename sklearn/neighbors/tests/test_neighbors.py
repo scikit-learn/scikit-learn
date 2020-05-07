@@ -1458,7 +1458,7 @@ def test_k_and_radius_neighbors_duplicates():
 
         # Mask the first duplicates when n_duplicates > n_neighbors.
         X = np.ones((3, 1))
-        nn = neighbors.NearestNeighbors(n_neighbors=1)
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm='brute')
         nn.fit(X)
         dist, ind = nn.kneighbors()
         assert_array_equal(dist, np.zeros((3, 1)))
