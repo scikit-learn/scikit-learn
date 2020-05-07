@@ -22,7 +22,7 @@ from ._bitset cimport in_bitset
 np.import_array()
 
 
-def _predict_from_numeric_data(
+def _predict_from_non_binned_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const X_BINNED_DTYPE_C [:, :] categorical_data,

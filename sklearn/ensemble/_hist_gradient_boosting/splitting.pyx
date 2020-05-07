@@ -55,7 +55,8 @@ cdef struct split_info_struct:
     BITSET_DTYPE_C cat_bitset
 
 
-# used for categorical splits
+# used in categorical splits for sorting categories by increasing values of
+# sum_gradients / sum_hessians
 cdef struct categorical_info:
     X_BINNED_DTYPE_C bin_idx
     Y_DTYPE_C value
@@ -296,9 +297,9 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             unsigned char is_categorical = split_info.is_categorical
-            BITSET_INNER_DTYPE_C [:] cat_bitset_mv = \
+            BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = \
                 split_info.cat_bitset
-            BITSET_DTYPE_C cat_bitset = &cat_bitset_mv[0]
+            BITSET_DTYPE_C cat_bitset = &cat_bitset_tmp[0]
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
@@ -792,8 +793,8 @@ cdef class Splitter:
             unsigned int end = self.n_bins_non_missing[feature_idx]
             unsigned int missing_values_bin_idx = self.missing_values_bin_idx
             categorical_info * cat_sort_infos
-            unsigned int sort_idx
-            unsigned int used_bin = 0
+            unsigned int sorted_idx
+            unsigned int n_used_bin = 0
             const hist_struct[::1] feature_hist = histograms[feature_idx, :]
             Y_DTYPE_C sum_gradients_bin
             Y_DTYPE_C sum_hessians_bin
@@ -801,12 +802,12 @@ cdef class Splitter:
             # Reduces the effect of noises in categorical features,
             # especially for categoires with few data
             # TODO: Make this user adjustable?
-            unsigned int CAT_SMOOTH = 10
+            unsigned int MIN_CAT_SUPPORT = 10
             # Used for find best split
             unsigned int MAX_CAT_THRESHOLD = 32
             unsigned int max_num_cat
             # holds directional information
-            int[2] find_direction, start_position
+            int[2] search_direction, start_position
             int direction, position
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
@@ -819,29 +820,30 @@ cdef class Splitter:
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
             unsigned int best_n_samples_left
-            unsigned int best_sort_thres
+            unsigned int best_sorted_thres
 
         cat_sort_infos = <categorical_info *> malloc(
             (end + has_missing_values) * sizeof(categorical_info))
 
-        # filter out categoires based on CAT_SMOOTH
+        # fill cat_sort_infos while filtering out categories based on
+        # MIN_CAT_SUPPORT
         for bin_idx in range(end):
-            if feature_hist[bin_idx].count >= CAT_SMOOTH:
-                cat_sort_infos[used_bin].bin_idx = bin_idx
+            if feature_hist[bin_idx].count >= MIN_CAT_SUPPORT:
+                cat_sort_infos[n_used_bin].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
                 if self.hessians_are_constant:
                     sum_hessians_bin = feature_hist[bin_idx].count
                 else:
                     sum_hessians_bin = feature_hist[bin_idx].sum_hessians
 
-                cat_sort_infos[used_bin].value = \
-                    sum_gradients_bin / (sum_hessians_bin + CAT_SMOOTH)
-                used_bin += 1
+                cat_sort_infos[n_used_bin].value = \
+                    sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                n_used_bin += 1
 
         # check missing bin
         if has_missing_values:
-            if feature_hist[missing_values_bin_idx].count >= CAT_SMOOTH:
-                cat_sort_infos[used_bin].bin_idx = missing_values_bin_idx
+            if feature_hist[missing_values_bin_idx].count >= MIN_CAT_SUPPORT:
+                cat_sort_infos[n_used_bin].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = \
                     feature_hist[missing_values_bin_idx].sum_gradients
                 if self.hessians_are_constant:
@@ -851,31 +853,31 @@ cdef class Splitter:
                     sum_hessians_bin = \
                         feature_hist[missing_values_bin_idx].sum_hessians
 
-                cat_sort_infos[used_bin].value = \
-                    sum_gradients_bin / (sum_hessians_bin + CAT_SMOOTH)
-                used_bin += 1
+                cat_sort_infos[n_used_bin].value = \
+                    sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
+                n_used_bin += 1
 
         # not enough categories to form a split
-        if used_bin <= 1:
+        if n_used_bin <= 1:
             free(cat_sort_infos)
             return
 
-        qsort(cat_sort_infos, used_bin, sizeof(categorical_info),
+        qsort(cat_sort_infos, n_used_bin, sizeof(categorical_info),
               compare_cat_infos)
 
-        max_num_cat = min(MAX_CAT_THRESHOLD, (used_bin + 1) / 2)
+        max_num_cat = min(MAX_CAT_THRESHOLD, (n_used_bin + 1) / 2)
 
         # Decide if categories from the left or right will go to the left node
-        find_direction[0], find_direction[1] = 1, -1
-        start_position[0], start_position[1] = 0, used_bin - 1
+        search_direction[0], search_direction[1] = 1, -1
+        start_position[0], start_position[1] = 0, n_used_bin - 1
 
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for i in range(2):
-            direction, position = find_direction[i], start_position[i]
+            direction, position = search_direction[i], start_position[i]
             sum_gradient_left, sum_hessian_left = 0., 0.
             n_samples_left = 0
-            for sort_idx in range(max_num_cat):
+            for sorted_idx in range(max_num_cat):
                 bin_idx = cat_sort_infos[position].bin_idx;
                 position += direction
 
@@ -903,15 +905,15 @@ cdef class Splitter:
                                    loss_current_node, monotonic_cst,
                                    lower_bound, upper_bound,
                                    self.l2_regularization)
-
                 if gain > best_gain and gain > self.min_gain_to_split:
                     found_better_split = True
                     best_gain = gain
-                    best_sort_thres = sort_idx
+                    best_sorted_thres = sorted_idx
                     best_sum_gradient_left = sum_gradient_left
                     best_sum_hessian_left = sum_hessian_left
                     best_n_samples_left = n_samples_left
                     best_direction = direction
+
 
         if found_better_split:
             split_info.gain = best_gain
@@ -941,26 +943,26 @@ cdef class Splitter:
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            # create bitset with values from best_sort_idx
+            # create bitset with values from best_sorted_thres
             init_bitset(split_info.cat_bitset)
 
             if best_direction == 1:  # left
-                for i in range(best_sort_thres + 1):
+                for i in range(best_sorted_thres + 1):
                     bin_idx = cat_sort_infos[i].bin_idx
                     set_bitset(bin_idx, split_info.cat_bitset)
             else:
-                for i in range(best_sort_thres + 1):
-                    bin_idx = cat_sort_infos[used_bin - 1 - i].bin_idx
+                for i in range(best_sorted_thres + 1):
+                    bin_idx = cat_sort_infos[n_used_bin - 1 - i].bin_idx
                     set_bitset(bin_idx, split_info.cat_bitset)
 
         free(cat_sort_infos)
 
 
-cdef int compare_cat_infos(const void * l, const void * r) nogil:
+cdef int compare_cat_infos(const void * a, const void * b) nogil:
     cdef:
-        categorical_info l_info = (<categorical_info *>l)[0]
-        categorical_info r_info = (<categorical_info *>r)[0]
-    return <int>(l_info.value - r_info.value)
+        categorical_info a_info = (<categorical_info *>a)[0]
+        categorical_info b_info = (<categorical_info *>b)[0]
+    return <int>(a_info.value - b_info.value)
 
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
