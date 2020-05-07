@@ -4,20 +4,27 @@ Principal Component Regression vs Partial Least Squares Regression
 ==================================================================
 
 This example compares Principal Component Regression (PCR) and Partial Least
-Squares Regression (PLS) on a toy dataset.
+Squares Regression (PLS) on a toy dataset. Our goal is to illustrate how PLS
+can outperform PCR when the target is strongly correlated with some features
+that have a low variance.
 
 PCR simply consists in applying :class:`~sklearn.decomposition.PCA` to the
-training data, and then train a regressor on the transformed training sample
-`X`. in :class:`~sklearn.decomposition.PCA`, the transformation is purely
-unsupervized, meaning that no information about the targets are used.
-As a result, PCR may perform poorly in some datasets where the target is
-correlated with features that have a low variance: if dimensionality
-reduction is applied, these features will be dropped in the transformed data.
+training data (possibly performing dimensionality reduction), and then
+training a regressor on the transformed training samples. In
+:class:`~sklearn.decomposition.PCA`, the transformation is purely
+unsupervized, meaning that no information about the targets is used. As a
+result, PCR may perform poorly in some datasets where the target is
+correlated with features that have a low variance. Indeed, the dimensionality
+reduction of PCA tries to only keep the features that have a high variance.
+Those that have a low variance will be dropped, and the final regressor will
+not be able to leverage these features (or, strictly speaking, linear
+combinations thereof).
 
-
-PLS is both a transformer and a regressor, and it is quite similar to PCR.
-The main difference is that the transformation is supervised. Therefore, it
-does not suffer from the issue we just mentionned.
+PLS is both a transformer and a regressor, and it is quite similar to PCR: it
+also applies a dimensionality reduction to the samples before applying a
+linear regressor to the transformed data. The main difference with PCR is
+that the transformation is supervised. Therefore, as we will see in this
+example, it does not suffer from the issue we just mentioned.
 """
 
 print(__doc__)
@@ -26,8 +33,9 @@ print(__doc__)
 # The data
 # --------
 #
-# We start by creating a simple datasets with two features. The target `y` is
-# strongly correlated with the second feature, which has a low variance.
+# We start by creating a simple dataset with two features. The target `y` is
+# strongly correlated with the second feature, which has a low variance. The
+# first feature has a higher variance but no predictive power on the target.
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,11 +65,13 @@ plt.show()
 #
 # We now create two regressors: PCR and PLS, and for our illustration purposes
 # we set the number of components to 1. For both models, we plot the first
-# component against the target. As expected, the PCA transformation of PCR has
-# dropped the second feature because it has a low variance, whichs results in
-# the first component having a very low predictive power on the target. On the
-# other hand, the PLS regressor manages to capture the effect of the second
-# feature thanks to its use of target information during the transformation.
+# component against the target.
+#
+# As expected, the PCA transformation of PCR has dropped the second feature
+# because it has a low variance, which results in the first component having a
+# very low predictive power on the target. On the other hand, the PLS regressor
+# manages to capture the effect of the second feature thanks to its use of
+# target information during the transformation.
 #
 # We also print the R-squared scores of both estimators, which further confirms
 # that PLS is a better alternative than PCR in this case.
@@ -81,7 +91,7 @@ pca = pcr.named_steps['pca']  # retrieve the PCA step of the pipeline
 pls = PLSRegression(n_components=1)
 pls.fit(X_train, y_train)
 
-fig, axes = plt.subplots(1, 2)
+fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 axes[0].scatter(pca.transform(X_test), y_test)
 axes[0].set(xlabel='first component', ylabel='y', title='PCR / PCA')
 axes[1].scatter(pls.transform(X_test), y_test)
