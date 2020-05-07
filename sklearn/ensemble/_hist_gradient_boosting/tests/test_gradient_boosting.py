@@ -752,9 +752,11 @@ def test_custom_loss(Est, loss, X, y):
     (make_regression, HistGradientBoostingRegressor),
     (make_classification, HistGradientBoostingClassifier)
 ])
-def test_categorical_sanity(insert_missing, make_dataset, Est):
+@pytest.mark.parametrize("bool_categorical_parameter", [True, False])
+def test_categorical_sanity(insert_missing, make_dataset, Est,
+                            bool_categorical_parameter):
     # Test support categories with or without missing data
-    X, y = make_dataset(n_samples=1000, n_features=10, random_state=0)
+    X, y = make_dataset(n_samples=1000, n_features=8, random_state=0)
 
     # even indicies are categorical
     categorical = np.zeros(X.shape[1], dtype=bool)
@@ -768,7 +770,12 @@ def test_categorical_sanity(insert_missing, make_dataset, Est):
         mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
         X[mask] = np.nan
 
-    est = Est(max_iter=20, categorical_features=categorical,
+    if bool_categorical_parameter:
+        categorical_features = categorical
+    else:
+        categorical_features = np.flatnonzero(categorical)
+
+    est = Est(max_iter=20, categorical_features=categorical_features,
               random_state=0).fit(X, y)
     assert_array_equal(est.is_categorical_, categorical)
 
@@ -777,7 +784,7 @@ def test_categorical_sanity(insert_missing, make_dataset, Est):
 
     X_test = np.zeros((1, X.shape[1]), dtype=float)
     X_test[:, ::2] = 30  # unknown category
-    X_test[:, 5:] = np.nan  # sets the last 10 features to be missing
+    X_test[:, 5:] = np.nan  # sets remaining
 
     # Does not error on unknown or missing categories
     est.predict(X_test)
@@ -833,20 +840,25 @@ def test_categorical_pandas():
 
 @pytest.mark.parametrize('Est', (HistGradientBoostingClassifier,
                                  HistGradientBoostingRegressor))
-def test_categorical_spec_errors(Est):
+@pytest.mark.parametrize("categorical_features, monotonic_cst, expected_msg", [
+    (["hello", "world"], None,
+     ("categorical_features must be an array-like of bool, array-like of "
+      "ints, or 'pandas'")),
+    ([0, -1], None,
+     (r"categorical_features set as integer indicies must be in "
+      r"\[0, n_features\)")),
+    ([True, True, False, False, True], None,
+     r"categorical_features set as a boolean mask must have shape "
+     r"\(n_features,\)"),
+    ([True, True, False, False], [0, -1, 0, 1],
+     "categorical features can not have monotonic constraints"),
+])
+def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
+                                 expected_msg):
     # Test errors when categories are specified incorrectly
     X, y = make_classification(random_state=0, n_features=4)
-    categorical = [True, True, False, False, True]
-    est = Est(categorical_features=categorical)
+    est = Est(categorical_features=categorical_features,
+              monotonic_cst=monotonic_cst)
 
-    msg = (r"categorical must be an array-like of bool with shape "
-           r"\(n_features,\)")
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=expected_msg):
         est.fit(X, y)
-
-    monotonic_cst = [0, -1, 0, 1]
-    categorical = [True, True, False, False]
-    msg = "categorical features can not have monotonic constraints"
-    with pytest.raises(ValueError, match=msg):
-        Est(categorical_features=categorical,
-            monotonic_cst=monotonic_cst).fit(X, y)

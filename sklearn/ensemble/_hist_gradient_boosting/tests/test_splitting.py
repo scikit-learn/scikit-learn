@@ -555,7 +555,7 @@ def test_splitting_categorical_no_splits(X_binned, has_missing_values,
     assert split_info.gain == -1
 
 
-def _assert_threshold_is_bitset(expected_thresholds, bitset):
+def _assert_threshold_equals_bitset(expected_thresholds, bitset):
     # bitset is assumed to be an array 8 of uint32
 
     # form bitset from threshold
@@ -673,7 +673,7 @@ def test_splitting_categorical_sanity(X_binned, all_gradients,
                                           sum_gradients, sum_hessians, value)
 
     assert split_info.is_categorical
-    _assert_threshold_is_bitset(expected_thresholds, split_info.cat_bitset)
+    _assert_threshold_equals_bitset(expected_thresholds, split_info.cat_bitset)
 
     # make sure samples are split correctly
     samples_left, samples_right, _ = splitter.split_indices(

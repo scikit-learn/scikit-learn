@@ -102,23 +102,38 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.is_categorical_ = None
             return
 
-        error_msg = ("categorical must be an array-like of bool with shape "
-                     "(n_features,) or 'pandas'")
-
         # for pandas dataframes
-        if hasattr(X_orig, "dtypes"):
-            cat_feats = np.asarray(X_orig.dtypes == 'category')
+        if (isinstance(self.categorical_features, str) and
+                self.categorical_features == 'pandas' and
+                hasattr(X_orig, "dtypes")):
+            cat_features_input = np.asarray(X_orig.dtypes == 'category')
         else:
-            cat_feats = np.asarray(self.categorical_features)
+            cat_features_input = np.asarray(self.categorical_features)
 
-        if cat_feats.dtype.kind != 'b' or cat_feats.shape[0] != n_features:
-            raise ValueError(error_msg)
+        if cat_features_input.dtype.kind not in ('i', 'b'):
+            raise ValueError("categorical_features must be an array-like of "
+                             "bool, array-like of ints, or 'pandas'")
 
-        if np.sum(cat_feats) == 0:
+        # check for categorical features as indicies
+        if cat_features_input.dtype.kind == 'i':
+            if (np.max(cat_features_input) >= n_features
+                    or np.min(cat_features_input) < 0):
+                raise ValueError("categorical_features set as integer "
+                                 "indicies must be in [0, n_features)")
+            cat_feats = np.zeros(n_features, dtype=bool)
+            cat_feats[cat_features_input] = True
+
+        if cat_features_input.dtype.kind == 'b':
+            if cat_features_input.shape[0] != n_features:
+                raise ValueError("categorical_features set as a boolean mask "
+                                 "must have shape (n_features,)")
+            cat_feats = cat_features_input
+
+        if np.any(cat_feats):
+            self.is_categorical_ = np.asarray(cat_feats, dtype=bool)
+        else:
             # no categories
             self.is_categorical_ = None
-        else:
-            self.is_categorical_ = np.asarray(cat_feats, dtype=bool)
 
         # categorical features can not have monotonic constraints
         if (self.is_categorical_ is not None and
@@ -879,6 +894,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         - None : no features will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indicies indicating categorical
+        features.
         - `'pandas'` : categorical features will be infered using pandas
         categorical dtypes
 
@@ -1101,6 +1118,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         - None : no features will be considered categorical.
         - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indicies indicating categorical
+        features.
         - `'pandas'` : categorical features will be infered using pandas
         categorical dtypes
 
