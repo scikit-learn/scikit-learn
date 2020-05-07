@@ -86,9 +86,9 @@ def test_set_seed():
         x = bounded_rand_int_wrap(100)
         assert(x == val), 'Expected {} but got {} instead'.format(val, x)
 
-    # _test(None, 81)
     # TODO should be default seed for std::mt19937,
     # but different results on jupyter lab
+    # _test(None, 81)
     _test(5489, 81)  # default seed for std::mt19937
     _test(0, 54)
     _test(4294967295, 9)  # max unsigned int size
