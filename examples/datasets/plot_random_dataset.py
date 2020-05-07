@@ -4,8 +4,8 @@ Plot randomly generated classification dataset
 ==============================================
 
 This example plots several randomly generated classification datasets.
-All datasets have 2 features, plotted on the x and y axis, for easy
-visualization. The color of each point represents its class label.
+For easy visualization, all datasets have 2 features, plotted on the x and y
+axis. The color of each point represents its class label.
 
 The first 4 plots use the :func:`~sklearn.datasets.make_classification` with
 different numbers of informative features, clusters per class and classes.
