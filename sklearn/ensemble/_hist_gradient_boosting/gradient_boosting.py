@@ -242,7 +242,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(
             n_bins=n_bins,
-            categorical=self.is_categorical_,
+            is_categorical=self.is_categorical_,
             random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
@@ -624,8 +624,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
         else:
             # F-aligned array
-            X_binned = self.bin_mapper_.transform(
-                X, categorical_only=categorical_only)
+            if categorical_only:
+                X_binned = self.bin_mapper_.transform_categories_only(X)
+            else:
+                X_binned = self.bin_mapper_.transform(X)
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)

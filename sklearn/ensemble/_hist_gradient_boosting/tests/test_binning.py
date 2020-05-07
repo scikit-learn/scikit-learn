@@ -5,7 +5,7 @@ import pytest
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
     _find_binning_thresholds as _find_binning_thresholds_orig,
-    _map_to_bins
+    _map_num_to_bins
 )
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
@@ -18,6 +18,8 @@ DATA = np.random.RandomState(42).normal(
 ).astype(X_DTYPE)
 
 
+# TODO: This helper can be removed because tests does not require sampling
+# anymore
 def _find_binning_thresholds(data, max_bins=255, subsample=int(2e5),
                              random_state=None):
     # Just a redef to avoid having to pass arguments all the time (as the
@@ -98,12 +100,12 @@ def test_bin_mapper_n_features_transform():
 
 
 @pytest.mark.parametrize('max_bins', [16, 128, 255])
-def test_map_to_bins(max_bins):
+def test_map_num_to_bins(max_bins):
     bin_thresholds = _find_binning_thresholds(DATA, max_bins=max_bins,
                                               random_state=0)
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
+    _map_num_to_bins(DATA, bin_thresholds, last_bin_idx, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -319,17 +321,17 @@ def test_infinite_values():
     assert_array_equal(bin_mapper.transform(X), expected_binned_X)
 
 
-@pytest.mark.parametrize("categorical", [None, np.array([False])])
-def test_categorical_only_transform_error_with_no_categoricals(categorical):
+@pytest.mark.parametrize("is_categorical", [None, np.array([False])])
+def test_categorical_only_transform_error_with_no_categoricals(is_categorical):
     X = np.arange(10, dtype=float).reshape(-1, 1)
-    bin_mapper = _BinMapper(n_bins=5, categorical=categorical).fit(X)
+    bin_mapper = _BinMapper(n_bins=5, is_categorical=is_categorical).fit(X)
 
     assert len(bin_mapper.bin_categories_) == 0
 
-    msg = ("categorical_only=True can only be set when there are "
-           "categorical features")
+    msg = ("transform_categories_only can only be set when "
+           "there are categorical features in fit")
     with pytest.raises(ValueError, match=msg):
-        bin_mapper.transform(X, categorical_only=True)
+        bin_mapper.transform_categories_only(X)
 
 
 @pytest.mark.parametrize("n_bins", [7, 15, 256])
@@ -339,7 +341,7 @@ def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
     X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
                   [0] * 4 + [9] + [7] * 5], dtype=float).T
 
-    bin_mapper = _BinMapper(n_bins=n_bins, categorical=np.array([True])).fit(X)
+    bin_mapper = _BinMapper(n_bins=n_bins, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [6]
     assert_allclose(bin_mapper.bin_categories_, [[0, 1, 4, 7, 9, 10]])
 
@@ -370,7 +372,7 @@ def test_categorical_n_bins_less_than_cardinality(
     X_test = np.array([[10, 1, -1, 9, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T
 
     bin_mapper = _BinMapper(n_bins=n_bins,
-                            categorical=np.array([True])).fit(X)
+                            is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [n_bins - 1]
     assert_allclose(bin_mapper.bin_categories_, [expected_bin_categories])
     X_trans = bin_mapper.transform(X_test)
@@ -390,7 +392,7 @@ def test_categorical_n_bins_less_than_cardinality_ties():
 
     # With 4 bins used for non missing values. categories 1, 2, 3, 4
     # will have their own bin, the rest will be placed in the missing bin.
-    bin_mapper = _BinMapper(n_bins=5, categorical=np.array([True])).fit(X)
+    bin_mapper = _BinMapper(n_bins=5, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [4]
     assert_allclose(bin_mapper.bin_categories_, [[1, 2, 3, 4]])
 
@@ -400,7 +402,7 @@ def test_categorical_n_bins_less_than_cardinality_ties():
 
     # With 3 bins usd for non missing values. categoires 1, 2
     # will have their own bin, the rest will be placed in the missing bin.
-    bin_mapper = _BinMapper(n_bins=3, categorical=np.array([True])).fit(X)
+    bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]
     assert_allclose(bin_mapper.bin_categories_, [[1, 2]])
 
@@ -415,7 +417,7 @@ def test_categorical_default_categories_are_missing(missing_value):
     X = np.array([[0] * 10 + [1] * 12 +
                   [missing_value] * 13], dtype=X_DTYPE).T
 
-    bin_mapper = _BinMapper(n_bins=3, categorical=np.array([True])).fit(X)
+    bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]
     assert_array_equal(bin_mapper.bin_categories_, [[0, 1]])
 
@@ -439,7 +441,7 @@ def test_categorical_with_numerical_features(n_bins,
     X = np.c_[X1, X2]
 
     bin_mapper = _BinMapper(n_bins=n_bins,
-                            categorical=np.array([False, True])).fit(X)
+                            is_categorical=np.array([False, True])).fit(X)
     assert_array_equal(bin_mapper.n_bins_non_missing_,
                        expected_n_bins_non_missing)
     bin_thresholds = bin_mapper.bin_thresholds_
@@ -454,5 +456,5 @@ def test_categorical_with_numerical_features(n_bins,
     # check that transform on mixed data contains the same result
     # as transform on the categorical
     X_trans_all = bin_mapper.transform(X)
-    X_trans_cats = bin_mapper.transform(X, categorical_only=True)
+    X_trans_cats = bin_mapper.transform_categories_only(X)
     assert_array_equal(X_trans_all[:, [1]], X_trans_cats)
