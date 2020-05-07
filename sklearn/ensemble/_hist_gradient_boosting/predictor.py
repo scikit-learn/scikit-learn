@@ -6,7 +6,7 @@ This module contains the TreePredictor class which is used for prediction.
 import numpy as np
 
 from .common import Y_DTYPE
-from ._predictor import _predict_from_non_binned_data
+from ._predictor import _predict_from_data
 from ._predictor import _predict_from_binned_data
 from ._predictor import _compute_partial_dependence
 
@@ -31,7 +31,8 @@ class TreePredictor:
         return int(self.nodes['depth'].max())
 
     def predict(self, X, X_binned_cat=None, orig_feature_to_binned_cat=None):
-        """Predict raw values for non-binned data.
+        """Predict raw values for non-binned numerical data and binned
+        categorical data.
 
         Parameters
         ----------
@@ -50,7 +51,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_non_binned_data(
+        _predict_from_data(
             self.nodes, X, X_binned_cat, orig_feature_to_binned_cat, out)
         return out
 

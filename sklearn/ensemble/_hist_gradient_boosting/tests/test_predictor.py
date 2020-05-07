@@ -10,7 +10,7 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF, X_BINNED_DTYPE,
-    X_BITSET_INNER_DTYPE)
+    X_BITSET_INNER_DTYPE, X_DTYPE)
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -123,5 +123,12 @@ def test_categorical_predictor(thresholds, expected_predictions):
     # encoded in cat_bitset
     predictions = predictor.predict_binned(X_binned,
                                            missing_values_bin_idx=255)
+    assert_allclose(predictions, expected_predictions)
 
+    # There is only categorical features thus X = X_binned
+    # maps from original feature to categorical feature in X_binned
+    orig_feature_to_binned_cat = np.array([0], dtype=int)
+    predictions = predictor.predict(
+        X_binned.astype(X_DTYPE), X_binned_cat=X_binned,
+        orig_feature_to_binned_cat=orig_feature_to_binned_cat)
     assert_allclose(predictions, expected_predictions)
