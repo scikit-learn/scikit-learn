@@ -107,9 +107,9 @@ imputation round are returned.
 
    This estimator is still **experimental** for now: default parameters or
    details of behaviour might change without any deprecation cycle,
-   specifically convergence criteria (`issue 14338 <https://github.com/scikit-learn/scikit-learn/issues/14338>`_),
-   default estimators (`issue 13286 <https://github.com/scikit-learn/scikit-learn/issues/13286>`_),
-   and use of random state (`issue 15611 <https://github.com/scikit-learn/scikit-learn/issues/15611>`_).
+   specifically convergence criteria (:issue:`14338`),
+   default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`).
    To use it, you need to explicitly import ``enable_iterative_imputer``.
 
 ::
