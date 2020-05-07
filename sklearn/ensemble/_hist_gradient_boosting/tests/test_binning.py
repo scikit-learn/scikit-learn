@@ -334,7 +334,7 @@ def test_categorical_only_transform_error_with_no_categoricals(is_categorical):
         bin_mapper.transform_categories_only(X)
 
 
-@pytest.mark.parametrize("n_bins", [7, 15, 256])
+@pytest.mark.parametrize("n_bins", [15, 256])
 def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
     # test when n_bins is large enough to hold all categories (+ missing
     # values bin which is always allocated)
@@ -360,6 +360,8 @@ def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
     "n_bins, expected_trans, expected_bin_categories",
     [
         (3, [2, 2, 2, 2, 2, 1, 2, 2, 0], [0, 7]),
+        # 0 is choosen instead of 10 because it comes before in lexicon
+        # order
         (4, [2, 3, 3, 3, 3, 1, 3, 3, 0], [0, 7, 10]),
         (5, [3, 1, 4, 4, 4, 2, 4, 4, 0], [0, 1, 7, 10]),
         (6, [4, 1, 5, 5, 5, 3, 2, 5, 0], [0, 1, 4, 7, 10]),
@@ -422,9 +424,9 @@ def test_categorical_default_categories_are_missing(missing_value):
     assert bin_mapper.n_bins_non_missing_ == [2]
     assert_array_equal(bin_mapper.bin_categories_[0], [0, 1])
 
-    X_test = np.array([[0, 1, missing_value, 2]], dtype=X_DTYPE).T
+    X_test = np.array([[0, 1, -1, 2, np.nan]], dtype=X_DTYPE).T
     X_trans = bin_mapper.transform(X_test)
-    expected_trans = np.array([[0, 1, 2, 2]]).T
+    expected_trans = np.array([[0, 1, 2, 2, 2]]).T
     assert_array_equal(X_trans, expected_trans)
 
 

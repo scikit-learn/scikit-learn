@@ -748,9 +748,13 @@ def test_custom_loss(Est, loss, X, y):
 
 
 @pytest.mark.parametrize("insert_missing", [False, True])
-def test_categorical_sanity(insert_missing):
+@pytest.mark.parametrize("make_dataset, Est", [
+    (make_regression, HistGradientBoostingRegressor),
+    (make_classification, HistGradientBoostingClassifier)
+])
+def test_categorical_sanity(insert_missing, make_dataset, Est):
     # Test support categories with or without missing data
-    X, y = make_regression(n_samples=5000, n_features=20, random_state=0)
+    X, y = make_dataset(n_samples=1000, n_features=10, random_state=0)
 
     # even indicies are categorical
     categorical = np.zeros(X.shape[1], dtype=bool)
@@ -764,8 +768,8 @@ def test_categorical_sanity(insert_missing):
         mask = rng.binomial(1, 0.01, size=X.shape).astype(np.bool)
         X[mask] = np.nan
 
-    est = HistGradientBoostingRegressor(categorical_features=categorical,
-                                        random_state=0).fit(X, y)
+    est = Est(max_iter=20, categorical_features=categorical,
+              random_state=0).fit(X, y)
     assert_array_equal(est.is_categorical_, categorical)
 
     y_pred = est.predict(X)
@@ -773,7 +777,7 @@ def test_categorical_sanity(insert_missing):
 
     X_test = np.zeros((1, X.shape[1]), dtype=float)
     X_test[:, ::2] = 30  # unknown category
-    X_test[:, 10:] = np.nan  # sets the last 10 features to be missing
+    X_test[:, 5:] = np.nan  # sets the last 10 features to be missing
 
     # Does not error on unknown or missing categories
     est.predict(X_test)

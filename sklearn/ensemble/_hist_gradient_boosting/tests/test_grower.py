@@ -421,5 +421,5 @@ def test_grow_tree_categories():
     assert root['count'] == 22
     assert root['depth'] == 0
     assert root['is_categorical']
-    assert root['cat_threshold'][0] == 1
-    np.testing.assert_array_equal(root['cat_threshold'], [1] + [0] * 7)
+    assert root['cat_bitset'][0] == 1
+    np.testing.assert_array_equal(root['cat_bitset'], [1] + [0] * 7)

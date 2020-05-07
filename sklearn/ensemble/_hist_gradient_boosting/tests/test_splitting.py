@@ -673,7 +673,7 @@ def test_splitting_categorical_sanity(X_binned, all_gradients,
                                           sum_gradients, sum_hessians, value)
 
     assert split_info.is_categorical
-    _assert_threshold_is_bitset(expected_thresholds, split_info.cat_threshold)
+    _assert_threshold_is_bitset(expected_thresholds, split_info.cat_bitset)
 
     # make sure samples are split correctly
     samples_left, samples_right, _ = splitter.split_indices(

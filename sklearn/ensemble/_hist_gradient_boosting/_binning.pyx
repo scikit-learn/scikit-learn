@@ -79,7 +79,7 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
                      dict bin_categories,
                      const unsigned char missing_values_bin_idx,
-                     X_BINNED_DTYPE_C [::1, :] binned):
+                     X_BINNED_DTYPE_C [:, :] binned):
     """Encode categories.
 
     Missing values and unknown values are mapped to the missing bin.

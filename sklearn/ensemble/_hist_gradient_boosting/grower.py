@@ -558,7 +558,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['is_categorical'] = split_info.is_categorical
 
         if split_info.is_categorical:
-            node['cat_threshold'] = split_info.cat_threshold
+            node['cat_bitset'] = split_info.cat_bitset
         else:
             if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
                 # Split is on the last non-missing bin: it's a "split on nans".

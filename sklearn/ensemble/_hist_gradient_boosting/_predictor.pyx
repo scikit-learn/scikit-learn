@@ -57,7 +57,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 
         if node.is_categorical:
             cat_idx = orig_feature_to_binned_cat[node.feature_idx]
-            if in_bitset(categorical_data[row, cat_idx], node.cat_threshold):
+            if in_bitset(categorical_data[row, cat_idx], node.cat_bitset):
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
@@ -104,7 +104,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
         if node.is_categorical:
             if in_bitset(binned_data[row, node.feature_idx],
-                         node.cat_threshold):
+                         node.cat_bitset):
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
