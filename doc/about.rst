@@ -13,7 +13,7 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
@@ -96,86 +96,348 @@ following paper:
 Artwork
 -------
 
-High quality PNG and SVG logos are available in the `doc/logos/ <https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_ source directory.
+High quality PNG and SVG logos are available in the `doc/logos/
+<https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_
+source directory.
 
 .. image:: images/scikit-learn-logo-notext.png
    :align: center
 
 Funding
 -------
+Scikit-Learn is a community driven project, however institutional and private
+grants help to assure its sustainability.
+
+The project would like to thank the following funders. 
+
+...................................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
+the `Scikit-Learn Consortium at Inria Foundation
+<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
+Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
+
+.. raw:: html
+
+   </div>
+
+.. |msn| image:: images/microsoft.png
+   :width: 100pt
+   :target: https://www.microsoft.com/
+
+.. |bcg| image:: images/bcg.png
+   :width: 100pt
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+.. |axa| image:: images/axa.png
+   :width: 50pt
+   :target: https://www.axa.fr/
+
+.. |bnp| image:: images/bnp.png
+   :width: 150pt
+   :target: https://www.bnpparibascardif.com/
+
+.. |fujitsu| image:: images/fujitsu.png
+   :width: 100pt
+   :target: https://www.fujitsu.com/global/
+
+.. |intel| image:: images/intel.png
+   :width: 70pt
+   :target: https://www.intel.com/
+
+.. |nvidia| image:: images/nvidia.png
+   :width: 70pt
+   :target: https://www.nvidia.com/
+
+.. |dataiku| image:: images/dataiku.png
+   :width: 70pt
+   :target: https://www.dataiku.com/
+
+.. |inria| image:: images/inria-logo.jpg
+   :width: 100pt
+   :target: https://www.inria.fr
+
+
+.. raw:: html
+
+   <div class="sk-sponsor-div-box">
+
+.. table::
+   :class: sk-sponsor-table align-default
+
+   +---------+----------+
+   | |msn|   |  |bcg|   |
+   +---------+----------+
+   |                    |
+   +---------+----------+ 
+   |  |axa|  |   |bnp|  |
+   +---------+----------+
+   ||fujitsu||  |intel| |
+   +---------+----------+
+   |                    |
+   +---------+----------+
+   ||dataiku|| |nvidia| |
+   +---------+----------+
+   |                    |
+   +---------+----------+
+   |       |inria|      |
+   +---------+----------+
+
+.. raw:: html
+
+   </div>
+   </div>
+
+........  
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/columbia.png 
+   :width: 50pt
+   :align: center
+   :target: https://www.columbia.edu/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div-box">
+
+Andreas Müller received a grant to improve scikit-learn from the
+`Alfred P. Sloan Foundation <https://sloan.org>`_ .
+This grant supports the position of Nicolas Hug and Thomas J. Fan.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sloan_banner.png
+   :width: 100pt
+   :align: center
+   :target: https://sloan.org/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+...........
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
+July 2017.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
+   :width: 100pt
+   :align: center
+   :target: https://sydney.edu.au/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+Past Sponsors
+.............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
 
 `INRIA <https://www.inria.fr>`_ actively supports this project. It has
 provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
 (2012-2013) and Olivier Grisel (2013-2017) to work on this project
 full-time. It also hosts coding sprints and other events.
 
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
 .. image:: images/inria-logo.jpg
-   :width: 200pt
+   :width: 100pt
    :align: center
    :target: https://www.inria.fr
 
-`Paris-Saclay Center for Data Science <https://www.datascience-paris-saclay.fr/>`_
+.. raw:: html
+
+   </div>
+   </div>
+
+.....................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Paris-Saclay Center for Data Science
+<https://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
-(2014-2015) and 50% of the time of Guillaume Lemaitre (2016-2017).
+(2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
+time of Joris van den Bossche (2017-2018).
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
 
 .. image:: images/cds-logo.png
-   :width: 200pt
+   :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
 
+.. raw:: html
+
+   </div>
+   </div>
+
+............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
+   :width: 100pt
+   :align: center
+   :target: https://www.anaconda.com/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+..........................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
 `NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
-funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan Data Science
-Environment also funds several students to work on the project part-time.
+funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
+Data Science Environment also funds several students to work on the project
+part-time.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
 
 .. image:: images/nyu_short_color.png
-   :width: 200pt
+   :width: 100pt
    :align: center
    :target: https://cds.nyu.edu/mooresloan/
 
+.. raw:: html
 
-`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar (2014),
-Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot (2016-2017)
-and Albert Thomas (2017) to work on scikit-learn.
+   </div>
+   </div>
+
+........................
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
+(2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
+(2016-2017) and Albert Thomas (2017) to work on scikit-learn.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
 
 .. image:: themes/scikit-learn/static/img/telecom.png
-   :width: 100pt
+   :width: 50pt
    :align: center
    :target: https://www.telecom-paristech.fr/
 
+.. raw:: html
 
-`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016.
+   </div>
+   </div>
 
-.. image:: themes/scikit-learn/static/img/columbia.png
-   :width: 100pt
-   :align: center
-   :target: https://www.columbia.edu/
+.....................
 
-Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
+.. raw:: html
 
-.. image:: images/sloan_banner.png
-   :width: 200pt
-   :align: center
-   :target: https://sloan.org/
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
 
-`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since July 2017.
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+(2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
+(2018-2019) to work part time on scikit-learn during their PhDs. It also
+funded a scikit-learn coding sprint in 2015.
 
-.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
-   :width: 200pt
-   :align: center
-   :target: https://sydney.edu.au/
+.. raw:: html
 
-`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015-2016),
-Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias (2018-2019) to work part time
-on scikit-learn during their PhDs. It also funded a scikit-learn coding sprint in 2015.
+   </div>
+   <div class="sk-sponsor-div-box">
 
 .. image:: themes/scikit-learn/static/img/digicosme.png
-   :width: 200pt
+   :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
 
-The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
-to work on scikit-learn through the
-`Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
+.. raw:: html
+
+   </div>
+   </div>
+
+......................
+
+The following students were sponsored by `Google
+<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
 - 2007 - David Cournapeau
@@ -188,29 +450,43 @@ program.
 
 .. _Vlad Niculae: https://vene.ro/
 
-It also provided funding for sprints and events around scikit-learn. If
-you would like to participate in the next Google Summer of code
-program, please see `this page
-<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_.
+...................
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <https://pbs.dartmouth.edu/>`_).
 
-The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
-2011 Granada sprint. More information can be found `here
-<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
+Sprints
+-------
 
-`tinyclues <https://www.tinyclues.com/>`_ funded the 2011 international Granada
-sprint.
+The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
+Also some participants could attend thanks to the support of the `Alfred P.
+Sloan Foundation <https://sloan.org>`_, the `Python Software
+Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
+<https://dataia.eu/en>`_.
 
+.....................
+
+The 2013 International Paris Sprint was made possible thanks to the support of
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
+<https://www.tinyclues.com/>`_, the `French Python Association
+<https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
+<https://www.frs-fnrs.be/-fnrs>`_.
+
+..............
+
+The 2011 International Granada sprint was made possible thanks to the support
+of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
+<https://www.tinyclues.com/>`_.
 
 Donating to the project
-~~~~~~~~~~~~~~~~~~~~~~~
+.......................
 
-If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
+If you are interested in donating to the project or to one of our code-sprints,
+you can use the *Paypal* button below or the `NumFOCUS Donations Page
+<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
+please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -220,8 +496,9 @@ scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.
 
-The received donations for the scikit-learn project mostly will go towards covering travel-expenses
-for code sprints, as well as towards the organization budget of the project [#f1]_.
+The received donations for the scikit-learn project mostly will go towards
+covering travel-expenses for code sprints, as well as towards the organization
+budget of the project [#f1]_.
 
 .. raw :: html
 
@@ -243,69 +520,20 @@ for code sprints, as well as towards the organization budget of the project [#f1
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of the donated funds to pay for other project expenses such as DNS, hosting or continuous integration services.
-
-
-The 2013 Paris international sprint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-|center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
-
- |end-div|
-
-
-
-.. |center-div| raw:: html
-
-    <div style="text-align: center; margin: -7px 0 -10px 0;">
-
-
-.. |telecom| image:: themes/scikit-learn/static/img/telecom.png
-   :width: 120pt
-   :target: https://www.telecom-paristech.fr/
-
-
-.. |tinyclues| image:: https://www.tinyclues.com/web/wp-content/uploads/2016/06/Tinyclues-PNG-logo.png
-   :width: 120pt
-   :target: https://www.tinyclues.com/
-
-
-.. |afpy| image:: https://www.afpy.org/static/images/logo.svg
-   :width: 120pt
-   :target: https://www.afpy.org
-
-
-.. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
-   :width: 120pt
-   :target: http://www.svi.cnrs-bellevue.fr
-
-.. |FNRS| image:: http://www.fnrs.be/en/images/FRS-FNRS_rose_transp.png
-   :width: 120pt
-   :target: http://www.frs-fnrs.be/
-
-.. figure:: images/dysco.png
-   :width: 120pt
-   :target: https://sites.uclouvain.be/dysco/
-
-   IAP VII/19 - DYSCO
-
-.. |end-div| raw:: html
-
-  </div>
-
-*For more information on this sprint, see* `here
-<https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`__
-
+.. [#f1] Regarding the organization budget, in particular, we might use some of
+         the donated funds to pay for other project expenses such as DNS,
+         hosting or continuous integration services.
 
 Infrastructure support
 ----------------------
 
 - We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account to
-  automatically build the documentation and the example gallery from for the
+  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account
+  to automatically build the documentation and the example gallery from for the
   development version of scikit-learn using `this tool
   <https://github.com/scikit-learn/sklearn-docbuilder>`_.
 
-- We would also like to thank `Shining Panda
-  <http://shiningpanda.com/>`_ for free CPU time on their Continuous
-  Integration server.
+- We would also like to thank `Microsoft Azure
+  <https://azure.microsoft.com/en-us/>`_, `Travis Cl <https://travis-ci.org/>`_,
+  `CircleCl <https://circleci.com/>`_ for free CPU time on their Continuous
+  Integration servers.

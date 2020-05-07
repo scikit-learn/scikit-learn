@@ -9,15 +9,15 @@ import pytest
 
 from scipy import sparse
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
 from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 
 n_clusters = 3
@@ -155,3 +155,16 @@ def test_bin_seeds():
                       cluster_std=0.1, random_state=0)
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
+
+
+@pytest.mark.parametrize('max_iter', [1, 100])
+def test_max_iter(max_iter):
+    clusters1, _ = mean_shift(X, max_iter=max_iter)
+    ms = MeanShift(max_iter=max_iter).fit(X)
+    clusters2 = ms.cluster_centers_
+
+    assert ms.n_iter_ <= ms.max_iter
+    assert len(clusters1) == len(clusters2)
+
+    for c1, c2 in zip(clusters1, clusters2):
+        assert np.allclose(c1, c2)

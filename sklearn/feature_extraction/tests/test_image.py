@@ -6,11 +6,13 @@ import numpy as np
 import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
+import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
-    reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import assert_raises, ignore_warnings
+    reconstruct_from_patches_2d, PatchExtractor, _extract_patches,
+    extract_patches)
+from sklearn.utils._testing import ignore_warnings
 
 
 def test_img_to_graph():
@@ -172,10 +174,10 @@ def test_extract_patches_max_patches():
     patches = extract_patches_2d(face, (p_h, p_w), max_patches=0.5)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=2.0)
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=-1.0)
+    with pytest.raises(ValueError):
+        extract_patches_2d(face, (p_h, p_w), max_patches=2.0)
+    with pytest.raises(ValueError):
+        extract_patches_2d(face, (p_h, p_w), max_patches=-1.0)
 
 
 def test_extract_patch_same_size_image():
@@ -302,8 +304,8 @@ def test_extract_patches_strided():
          last_patch) in zip(image_shapes, patch_sizes, patch_steps,
                             expected_views, last_patches):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
-        patches = extract_patches(image, patch_shape=patch_size,
-                                  extraction_step=patch_step)
+        patches = _extract_patches(image, patch_shape=patch_size,
+                                   extraction_step=patch_step)
 
         ndim = len(image_shape)
 
@@ -320,7 +322,7 @@ def test_extract_patches_square():
     i_h, i_w = face.shape
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
-    patches = extract_patches(face, patch_shape=p)
+    patches = _extract_patches(face, patch_shape=p)
     assert patches.shape == (expected_n_patches[0],
                              expected_n_patches[1], p, p)
 
@@ -328,5 +330,15 @@ def test_extract_patches_square():
 def test_width_patch():
     # width and height of the patch should be less than the image
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    assert_raises(ValueError, extract_patches_2d, x, (4, 1))
-    assert_raises(ValueError, extract_patches_2d, x, (1, 4))
+    with pytest.raises(ValueError):
+        extract_patches_2d(x, (4, 1))
+    with pytest.raises(ValueError):
+        extract_patches_2d(x, (1, 4))
+
+
+# TODO: Remove in 0.24
+def test_extract_patches_deprecated():
+    msg = ("The function feature_extraction.image.extract_patches has been "
+           "deprecated in 0.22 and will be removed in 0.24.")
+    with pytest.warns(FutureWarning, match=msg):
+        extract_patches(downsampled_face)

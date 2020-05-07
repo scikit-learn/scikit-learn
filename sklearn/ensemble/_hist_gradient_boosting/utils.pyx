@@ -9,8 +9,8 @@ from cython.parallel import prange
 
 from ...base import is_classifier
 from .binning import _BinMapper
-from .types cimport G_H_DTYPE_C
-from .types cimport Y_DTYPE_C
+from .common cimport G_H_DTYPE_C
+from .common cimport Y_DTYPE_C
 
 
 def get_equivalent_estimator(estimator, lib='lightgbm'):
@@ -38,11 +38,12 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     if sklearn_params['loss'] == 'auto':
         raise ValueError('auto loss is not accepted. We need to know if '
                          'the problem is binary or multiclass classification.')
-    if sklearn_params['n_iter_no_change'] is not None:
+    if sklearn_params['early_stopping']:
         raise NotImplementedError('Early stopping should be deactivated.')
 
     lightgbm_loss_mapping = {
         'least_squares': 'regression_l2',
+        'least_absolute_deviation': 'regression_l1',
         'binary_crossentropy': 'binary',
         'categorical_crossentropy': 'multiclass'
     }
@@ -75,6 +76,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     # XGB
     xgboost_loss_mapping = {
         'least_squares': 'reg:linear',
+        'least_absolute_deviation': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'reg:logistic',
         'categorical_crossentropy': 'multi:softmax'
     }
@@ -98,6 +100,8 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     # Catboost
     catboost_loss_mapping = {
         'least_squares': 'RMSE',
+        # catboost does not support MAE when leaf_estimation_method is Newton
+        'least_absolute_deviation': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
         'binary_crossentropy': 'Logloss',
         'categorical_crossentropy': 'MultiClass'
     }

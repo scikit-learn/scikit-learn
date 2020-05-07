@@ -16,133 +16,53 @@ set -e
 # Fail fast
 build_tools/travis/travis_fastfail.sh
 
-echo 'List files from cached directories'
-echo 'pip:'
+echo "List files from cached directories"
+echo "pip:"
 ls $HOME/.cache/pip
 
-if [ $TRAVIS_OS_NAME = "linux" ]
-then
-	export CC=/usr/lib/ccache/gcc
-	export CXX=/usr/lib/ccache/g++
-	# Useful for debugging how ccache is used
-	# export CCACHE_LOGFILE=/tmp/ccache.log
-	# ~60M is used by .ccache when compiling from scratch at the time of writing
-	ccache --max-size 100M --show-stats
-elif [ $TRAVIS_OS_NAME = "osx" ]
-then
-    # enable OpenMP support for Apple-clang
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-fi
+export CC=/usr/lib/ccache/gcc
+export CXX=/usr/lib/ccache/g++
+# Useful for debugging how ccache is used
+# export CCACHE_LOGFILE=/tmp/ccache.log
+# ~60M is used by .ccache when compiling from scratch at the time of writing
+ccache --max-size 100M --show-stats
 
-make_conda() {
-	TO_INSTALL="$@"
-    # Deactivate the travis-provided virtual environment and setup a
-    # conda-based environment instead
-    # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
-    deactivate || :
+# Deactivate the travis-provided virtual environment and setup a
+# conda-based environment instead
+# If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
+deactivate || :
 
-    # Install miniconda
-    if [ $TRAVIS_OS_NAME = "osx" ]
-	then
-		fname=Miniconda3-latest-MacOSX-x86_64.sh
-	else
-		fname=Miniconda3-latest-Linux-x86_64.sh
-	fi
-    wget https://repo.continuum.io/miniconda/$fname \
-        -O miniconda.sh
-    MINICONDA_PATH=$HOME/miniconda
-    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-    export PATH=$MINICONDA_PATH/bin:$PATH
-    conda update --yes conda
+# Install miniconda
+fname=Miniconda3-latest-Linux-x86_64.sh
+wget https://repo.continuum.io/miniconda/$fname -O miniconda.sh
+MINICONDA_PATH=$HOME/miniconda
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+export PATH=$MINICONDA_PATH/bin:$PATH
+conda update --yes conda
 
-    conda create -n testenv --yes $TO_INSTALL
-    source activate testenv
-}
+# Create environment and install dependencies
+conda create -n testenv --yes python=3.7
+source activate testenv
 
-if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
-                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
-
-    if [[ -n "$PANDAS_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
-    fi
-
-    if [[ -n "$PYAMG_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
-    fi
-
-    if [[ -n "$PILLOW_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
-    fi
-
-    if [[ -n "$JOBLIB_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
-    fi
-	  make_conda $TO_INSTALL
-
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    # At the time of writing numpy 1.9.1 is included in the travis
-    # virtualenv but we want to use the numpy installed through apt-get
-    # install.
-    deactivate
-    # Create a new virtualenv using system site packages for python, numpy
-    # and scipy
-    virtualenv --system-site-packages --python=python3 testvenv
-    source testvenv/bin/activate
-    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
-
-elif [[ "$DISTRIB" == "scipy-dev" ]]; then
-    make_conda python=3.7
-    pip install --upgrade pip setuptools
-
-    echo "Installing numpy and scipy master wheels"
-    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
-    echo "Installing joblib master"
-    pip install https://github.com/joblib/joblib/archive/master.zip
-    echo "Installing pillow master"
-    pip install https://github.com/python-pillow/Pillow/archive/master.zip
-    pip install pytest==4.6.4 pytest-cov
-fi
-
-if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage codecov
-fi
-
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    pip install sphinx numpydoc  # numpydoc requires sphinx
-fi
+pip install --upgrade pip setuptools
+echo "Installing numpy and scipy master wheels"
+dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+echo "Installing joblib master"
+pip install https://github.com/joblib/joblib/archive/master.zip
+echo "Installing pillow master"
+pip install https://github.com/python-pillow/Pillow/archive/master.zip
+pip install pytest==4.6.4 pytest-cov
 
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    pass
-"
+
 python setup.py develop
-if [ $TRAVIS_OS_NAME = "linux" ]
-then
-	ccache --show-stats
-fi
+
+ccache --show-stats
 # Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
 
