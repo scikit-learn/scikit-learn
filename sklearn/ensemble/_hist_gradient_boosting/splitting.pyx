@@ -461,24 +461,27 @@ cdef class Splitter:
                 # (min_samples_leaf, etc) and the grower will later turn the
                 # node into a leaf.
                 split_infos[feature_idx].gain = -1
-
-                # We will scan bins from left to right (in all cases), and if
-                # there are any missing values, we will also scan bins from
-                # right to left. This way, we can consider whichever case
-                # yields the best gain: either missing values go to the right
-                # (left to right scan) or to the left (right to left case).
-                # See algo 3 from the XGBoost paper
-                # https://arxiv.org/abs/1603.02754
-
                 split_infos[feature_idx].is_categorical = \
                     is_categorical[feature_idx]
+
                 if is_categorical[feature_idx]:
+                    # While numerical features need to scan in both directions
+                    # when there are missing values, categorical features does
+                    # not need to do this because it treats missing values
+                    # as a native category
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
                         value, monotonic_cst[feature_idx], lower_bound,
                         upper_bound, &split_infos[feature_idx])
                 else:
+                    # We will scan bins from left to right (in all cases), and
+                    # if there are any missing values, we will also scan bins
+                    # from right to left. This way, we can consider whichever
+                    # case yields the best gain: either missing values go to
+                    # the right (left to right scan) or to the left (right to
+                    # left case). See algo 3 from the XGBoost paper
+                    # https://arxiv.org/abs/1603.02754
                     self._find_best_bin_to_split_left_to_right(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
@@ -504,11 +507,10 @@ cdef class Splitter:
             # For categorical splits, where there are no missing
             # values during fitting, samples with missing values during
             # predict() will go to whichever child has the most samples.
-            if (is_categorical[best_feature_idx] and
-                    not has_missing_values[best_feature_idx] and
-                    split_info.n_samples_left > split_info.n_samples_right):
-                set_bitset(self.missing_values_bin_idx,
-                              split_info.cat_bitset)
+            # if (is_categorical[best_feature_idx] and
+            #         not has_missing_values[best_feature_idx] and
+            #         split_info.n_samples_left > split_info.n_samples_right):
+            #     set_bitset(self.missing_values_bin_idx, split_info.cat_bitset)
 
         out = SplitInfo(
             split_info.gain,
@@ -807,7 +809,7 @@ cdef class Splitter:
             unsigned int MAX_CAT_THRESHOLD = 32
             unsigned int max_num_cat
             # holds directional information
-            int[2] search_direction, start_position
+            int[2] scan_direction, start_position
             int direction, position
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
@@ -868,13 +870,13 @@ cdef class Splitter:
         max_num_cat = min(MAX_CAT_THRESHOLD, (n_used_bin + 1) / 2)
 
         # Decide if categories from the left or right will go to the left node
-        search_direction[0], search_direction[1] = 1, -1
+        scan_direction[0], scan_direction[1] = 1, -1
         start_position[0], start_position[1] = 0, n_used_bin - 1
 
         loss_current_node = _loss_from_value(value, sum_gradients)
 
         for i in range(2):
-            direction, position = search_direction[i], start_position[i]
+            direction, position = scan_direction[i], start_position[i]
             sum_gradient_left, sum_hessian_left = 0., 0.
             n_samples_left = 0
             for sorted_idx in range(max_num_cat):
