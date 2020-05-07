@@ -962,7 +962,7 @@ cdef int compare_cat_infos(const void * a, const void * b) nogil:
     cdef:
         categorical_info a_info = (<categorical_info *>a)[0]
         categorical_info b_info = (<categorical_info *>b)[0]
-    return <int>(a_info.value - b_info.value)
+    return 1 if a_info.value > b_info.value else -1
 
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
