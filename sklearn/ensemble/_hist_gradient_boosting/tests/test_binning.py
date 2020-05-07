@@ -341,9 +341,10 @@ def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
     X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
                   [0] * 4 + [9] + [7] * 5], dtype=float).T
 
-    bin_mapper = _BinMapper(n_bins=n_bins, is_categorical=np.array([True])).fit(X)
+    bin_mapper = _BinMapper(n_bins=n_bins,
+                            is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [6]
-    assert_allclose(bin_mapper.bin_categories_, [[0, 1, 4, 7, 9, 10]])
+    assert_allclose(bin_mapper.bin_categories_[0], [0, 1, 4, 7, 9, 10])
 
     X_trans = bin_mapper.transform(
         np.array([[10, 1, -1, 9, np.nan, 7, 4, 100, 0]], dtype=X_DTYPE).T)
@@ -374,7 +375,7 @@ def test_categorical_n_bins_less_than_cardinality(
     bin_mapper = _BinMapper(n_bins=n_bins,
                             is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [n_bins - 1]
-    assert_allclose(bin_mapper.bin_categories_, [expected_bin_categories])
+    assert_allclose(bin_mapper.bin_categories_[0], expected_bin_categories)
     X_trans = bin_mapper.transform(X_test)
 
     # missing, negative, unknown values are mapped to the missing bin
@@ -394,7 +395,7 @@ def test_categorical_n_bins_less_than_cardinality_ties():
     # will have their own bin, the rest will be placed in the missing bin.
     bin_mapper = _BinMapper(n_bins=5, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [4]
-    assert_allclose(bin_mapper.bin_categories_, [[1, 2, 3, 4]])
+    assert_allclose(bin_mapper.bin_categories_[0], [1, 2, 3, 4])
 
     X_trans = bin_mapper.transform(X_test)
     expected_trans = np.array([[0, 1, 2, 3, 4, 4, 4]]).T
@@ -404,7 +405,7 @@ def test_categorical_n_bins_less_than_cardinality_ties():
     # will have their own bin, the rest will be placed in the missing bin.
     bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]
-    assert_allclose(bin_mapper.bin_categories_, [[1, 2]])
+    assert_allclose(bin_mapper.bin_categories_[0], [1, 2])
 
     X_trans = bin_mapper.transform(X_test)
     expected_trans = np.array([[0, 1, 2, 2, 2, 2, 2]]).T
@@ -419,7 +420,7 @@ def test_categorical_default_categories_are_missing(missing_value):
 
     bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]
-    assert_array_equal(bin_mapper.bin_categories_, [[0, 1]])
+    assert_array_equal(bin_mapper.bin_categories_[0], [0, 1])
 
     X_test = np.array([[0, 1, missing_value, 2]], dtype=X_DTYPE).T
     X_trans = bin_mapper.transform(X_test)
@@ -451,7 +452,7 @@ def test_categorical_with_numerical_features(n_bins,
 
     bin_categories = bin_mapper.bin_categories_
     assert len(bin_categories) == 1
-    assert_array_equal(bin_categories[0], np.arange(10, 15))
+    assert_array_equal(bin_categories[1], np.arange(10, 15))
 
     # check that transform on mixed data contains the same result
     # as transform on the categorical

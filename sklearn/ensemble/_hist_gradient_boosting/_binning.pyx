@@ -77,8 +77,7 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 
 
 def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
-                     const long [:] categorical_indicies,
-                     list bin_catgories,
+                     dict bin_categories,
                      const unsigned char missing_values_bin_idx,
                      X_BINNED_DTYPE_C [::1, :] binned):
     """Encode categories.
@@ -89,11 +88,9 @@ def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
     ----------
     data : ndarray of shape (n_samples, n_features)
         data to encoded.
-    categorical_indices : list of int
-        columns in ``data`` that are categorical.
-    bin_categories : list of arrays
-        categories learned during training that corresponds to
-        ``categorical_indices``.
+    bin_categories : dict of int to arrays
+        For each categorical feature, this gives a maps categorical indicies
+        to the categories corresponding to each bin.
     missing_values_bin_idx : uint8
         The index of the bin where missing values are mapped.
     binned : ndarray, shape (n_samples, n_features)
@@ -103,8 +100,7 @@ def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
         long feature_idx
         X_DTYPE_C [:] categories
 
-    for i, feature_idx in enumerate(categorical_indicies):
-        categories = bin_catgories[i]
+    for feature_idx, categories in bin_categories.items():
         _map_cat_col_to_bins(data[:, feature_idx], categories,
                              missing_values_bin_idx, binned[:, feature_idx])
 
