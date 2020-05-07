@@ -14,7 +14,7 @@ import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
-from sklearn.datasets import load_digits, load_boston, load_iris
+from sklearn.datasets import load_digits, load_diabetes, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from io import StringIO
@@ -42,12 +42,17 @@ y_digits_binary = y_digits[:200]
 classification_datasets = [(X_digits_multi, y_digits_multi),
                            (X_digits_binary, y_digits_binary)]
 
-boston = load_boston()
+# boston = load_boston()
 
-Xboston = StandardScaler().fit_transform(boston.data)[: 200]
-yboston = boston.target[:200]
+# Xboston = StandardScaler().fit_transform(boston.data)[: 200]
+# yboston = boston.target[:200]
 
-regression_datasets = [(Xboston, yboston)]
+diabetes = load_diabetes()
+
+Xdiabetes = StandardScaler().fit_transform(diabetes.data)[: 200]
+ydiabetes = diabetes.target[:200]
+
+regression_datasets = [(Xdiabetes, ydiabetes)]
 
 iris = load_iris()
 
@@ -252,17 +257,17 @@ def test_lbfgs_classification(X, y):
 
 @pytest.mark.parametrize('X,y', regression_datasets)
 def test_lbfgs_regression(X, y):
-    # Test lbfgs on the boston dataset, a regression problems.
+    # Test lbfgs on the diabetes dataset, a regression problems.
     for activation in ACTIVATION_TYPES:
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
         if activation == 'identity':
-            assert mlp.score(X, y) > 0.84
+            assert mlp.score(X, y) > 0.50
         else:
             # Non linear models perform much better than linear bottleneck:
-            assert mlp.score(X, y) > 0.95
+            assert mlp.score(X, y) > 0.92
 
 
 @pytest.mark.parametrize('X,y', classification_datasets)
@@ -400,8 +405,8 @@ def test_partial_fit_unseen_classes():
 def test_partial_fit_regression():
     # Test partial_fit on regression.
     # `partial_fit` should yield the same results as 'fit' for regression.
-    X = Xboston
-    y = yboston
+    X = Xdiabetes
+    y = ydiabetes
 
     for momentum in [0, .9]:
         mlp = MLPRegressor(solver='sgd', max_iter=100, activation='relu',
