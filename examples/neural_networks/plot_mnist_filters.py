@@ -18,27 +18,39 @@ the weight matrix as a 28x28 pixel image.
 
 To make the example run faster, we use very few hidden units, and train only
 for a very short time. Training longer would result in weights with a much
-smoother spatial appearance.
+smoother spatial appearance. The example will throw a warning because it
+doesn't converge, in this case this is what we want because of CI's time
+constraints.
 """
-print(__doc__)
+
+import warnings
 
 import matplotlib.pyplot as plt
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.neural_network import MLPClassifier
 
-mnist = fetch_mldata("MNIST original")
+print(__doc__)
+
+# Load data from https://www.openml.org/d/554
+X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+X = X / 255.
+
 # rescale the data, use the traditional train/test split
-X, y = mnist.data / 255., mnist.target
 X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 
-# mlp = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-#                     solver='sgd', verbose=10, tol=1e-4, random_state=1)
 mlp = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10, alpha=1e-4,
-                    solver='sgd', verbose=10, tol=1e-4, random_state=1,
+                    solver='sgd', verbose=10, random_state=1,
                     learning_rate_init=.1)
 
-mlp.fit(X_train, y_train)
+# this example won't converge because of CI's time constraints, so we catch the
+# warning and are ignore it here
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=ConvergenceWarning,
+                            module="sklearn")
+    mlp.fit(X_train, y_train)
+
 print("Training set score: %f" % mlp.score(X_train, y_train))
 print("Test set score: %f" % mlp.score(X_test, y_test))
 

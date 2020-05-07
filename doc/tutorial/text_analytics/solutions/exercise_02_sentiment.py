@@ -2,7 +2,7 @@
 
 Sentiment analysis can be casted as a binary text classification problem,
 that is fitting a linear classifier on features extracted from the text
-of the user messages so as to guess wether the opinion of the author is
+of the user messages so as to guess whether the opinion of the author is
 positive or negative.
 
 In this examples we will use a movie review dataset.

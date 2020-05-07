@@ -106,7 +106,7 @@ node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
 
 print('Rules used to predict sample %s: ' % sample_id)
 for node_id in node_index:
-    if leave_id[sample_id] != node_id:
+    if leave_id[sample_id] == node_id:
         continue
 
     if (X_test[sample_id, feature[node_id]] <= threshold[node_id]):

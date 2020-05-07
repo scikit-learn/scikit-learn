@@ -218,7 +218,7 @@ fit only one component.
 
 On the following figure we are fitting a dataset not well-depicted by a
 Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
-class:`BayesianGaussianMixture` controls the number of components used to fit
+:class:`BayesianGaussianMixture` controls the number of components used to fit
 this data. We also present on the last two plots a random sampling generated
 from the two resulting mixtures.
 

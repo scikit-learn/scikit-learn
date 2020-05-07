@@ -24,9 +24,6 @@ Logistic regression on raw pixel values is presented for comparison. The
 example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
 """
-
-from __future__ import print_function
-
 print(__doc__)
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
@@ -40,6 +37,7 @@ from sklearn import linear_model, datasets, metrics
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
+from sklearn.base import clone
 
 
 # #############################################################################
@@ -67,29 +65,31 @@ def nudge_dataset(X, Y):
          [0, 0, 0],
          [0, 1, 0]]]
 
-    shift = lambda x, w: convolve(x.reshape((8, 8)), mode='constant',
-                                  weights=w).ravel()
+    def shift(x, w):
+        return convolve(x.reshape((8, 8)), mode='constant', weights=w).ravel()
+
     X = np.concatenate([X] +
                        [np.apply_along_axis(shift, 1, X, vector)
                         for vector in direction_vectors])
     Y = np.concatenate([Y for _ in range(5)], axis=0)
     return X, Y
 
+
 # Load Data
-digits = datasets.load_digits()
-X = np.asarray(digits.data, 'float32')
-X, Y = nudge_dataset(X, digits.target)
+X, y = datasets.load_digits(return_X_y=True)
+X = np.asarray(X, 'float32')
+X, Y = nudge_dataset(X, y)
 X = (X - np.min(X, 0)) / (np.max(X, 0) + 0.0001)  # 0-1 scaling
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
-                                                    test_size=0.2,
-                                                    random_state=0)
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=0)
 
 # Models we will use
-logistic = linear_model.LogisticRegression()
+logistic = linear_model.LogisticRegression(solver='newton-cg', tol=1)
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
-classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
+rbm_features_classifier = Pipeline(
+    steps=[('rbm', rbm), ('logistic', logistic)])
 
 # #############################################################################
 # Training
@@ -98,32 +98,30 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.06
-rbm.n_iter = 20
+rbm.n_iter = 10
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
-logistic.C = 6000.0
+logistic.C = 6000
 
 # Training RBM-Logistic Pipeline
-classifier.fit(X_train, Y_train)
+rbm_features_classifier.fit(X_train, Y_train)
 
-# Training Logistic regression
-logistic_classifier = linear_model.LogisticRegression(C=100.0)
-logistic_classifier.fit(X_train, Y_train)
+# Training the Logistic regression classifier directly on the pixel
+raw_pixel_classifier = clone(logistic)
+raw_pixel_classifier.C = 100.
+raw_pixel_classifier.fit(X_train, Y_train)
 
 # #############################################################################
 # Evaluation
 
-print()
+Y_pred = rbm_features_classifier.predict(X_test)
 print("Logistic regression using RBM features:\n%s\n" % (
-    metrics.classification_report(
-        Y_test,
-        classifier.predict(X_test))))
+    metrics.classification_report(Y_test, Y_pred)))
 
+Y_pred = raw_pixel_classifier.predict(X_test)
 print("Logistic regression using raw pixel features:\n%s\n" % (
-    metrics.classification_report(
-        Y_test,
-        logistic_classifier.predict(X_test))))
+    metrics.classification_report(Y_test, Y_pred)))
 
 # #############################################################################
 # Plotting

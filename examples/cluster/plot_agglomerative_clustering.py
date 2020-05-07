@@ -65,13 +65,13 @@ for connectivity in (None, knn_graph):
             model.fit(X)
             elapsed_time = time.time() - t0
             plt.scatter(X[:, 0], X[:, 1], c=model.labels_,
-                        cmap=plt.cm.spectral)
+                        cmap=plt.cm.nipy_spectral)
             plt.title('linkage=%s\n(time %.2fs)' % (linkage, elapsed_time),
                       fontdict=dict(verticalalignment='top'))
             plt.axis('equal')
             plt.axis('off')
 
-            plt.subplots_adjust(bottom=0, top=.89, wspace=0,
+            plt.subplots_adjust(bottom=0, top=.83, wspace=0,
                                 left=0, right=1)
             plt.suptitle('n_cluster=%i, connectivity=%r' %
                          (n_clusters, connectivity is not None), size=17)
