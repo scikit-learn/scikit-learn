@@ -3,16 +3,18 @@
 Principal Component Regression vs Partial Least Squares Regression
 ==================================================================
 
-This example compares Principal Component Regression (PCR) and Partial Least
-Squares Regression (PLS) on a toy dataset. Our goal is to illustrate how PLS
-can outperform PCR when the target is strongly correlated with some features
-that have a low variance.
+This example compares `Principal Component Regression
+<https://en.wikipedia.org/wiki/Principal_component_regression>`_ (PCR) and
+`Partial Least Squares Regression
+<https://en.wikipedia.org/wiki/Partial_least_squares_regression>`_ (PLS) on a
+toy dataset. Our goal is to illustrate how PLS can outperform PCR when the
+target is strongly correlated with some features that have a low variance.
 
 PCR simply consists in applying :class:`~sklearn.decomposition.PCA` to the
 training data (possibly performing dimensionality reduction), and then
 training a regressor on the transformed training samples. In
 :class:`~sklearn.decomposition.PCA`, the transformation is purely
-unsupervized, meaning that no information about the targets is used. As a
+unsupervised, meaning that no information about the targets is used. As a
 result, PCR may perform poorly in some datasets where the target is
 correlated with features that have a low variance. Indeed, the dimensionality
 reduction of PCA tries to only keep the features that have a high variance.
@@ -67,15 +69,6 @@ plt.show()
 # we set the number of components to 1. For both models, we plot the first
 # component against the target.
 #
-# As expected, the PCA transformation of PCR has dropped the second feature
-# because it has a low variance, which results in the first component having a
-# very low predictive power on the target. On the other hand, the PLS regressor
-# manages to capture the effect of the second feature thanks to its use of
-# target information during the transformation.
-#
-# We also print the R-squared scores of both estimators, which further confirms
-# that PLS is a better alternative than PCR in this case.
-
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
@@ -98,6 +91,19 @@ axes[1].scatter(pls.transform(X_test), y_test)
 axes[1].set(xlabel='first component', ylabel='y', title='PLS')
 plt.tight_layout()
 plt.show()
+
+##############################################################################
+# As expected, the unsupervized PCA transformation of PCR has dropped the
+# second feature because it has a low variance, despite it being the most
+# predictive feature. This results in the first component having a low
+# predictive power on the target. On the other hand, the PLS regressor manages
+# to capture the effect of the second feature thanks to its use of target
+# information during the transformation: it can recogize that the second
+# feature should not be dropped.
+#
+# We also print the R-squared scores of both estimators, which further confirms
+# that PLS is a better alternative than PCR in this case:
+
 print(f"PCR r-squared {pcr.score(X_test, y_test):.3f}")
 print(f"PLS r-squared {pls.score(X_test, y_test):.3f}")
 
