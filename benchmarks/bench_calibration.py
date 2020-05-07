@@ -21,9 +21,13 @@ class CalibratedClassifierCVBenchmark(object):
     def __init__(self, n_samples=10000, n_trials=10):
         self.n_samples = n_samples
         self.n_trials = n_trials
-        self.X, self.y = make_classification(n_samples=self.n_samples, n_features=10,
-                                             n_informative=3, n_redundant=0,
-                                             random_state=42)
+        self.X, self.y = make_classification(
+            n_samples=self.n_samples,
+            n_features=10,
+            n_informative=3,
+            n_redundant=0,
+            random_state=42,
+        )
 
     def to_benchmark(self, *args, **kwargs):
         raise NotImplementedError
@@ -70,10 +74,21 @@ class CalibratedClassifierCVBenchmark(object):
 
         ticks = list(range(len(means)))
         ax = plt.gca()
-        ax.bar(ticks, means, yerr=std, align='center', alpha=0.5, ecolor='black', capsize=10)
-        ax.set_ylabel('Execution time (in sec.)')
+        ax.bar(
+            ticks,
+            means,
+            yerr=std,
+            align="center",
+            alpha=0.5,
+            ecolor="black",
+            capsize=10,
+        )
+        ax.set_ylabel("Execution time (in sec.)")
         ax.set_xticks(ticks)
-        xlabels = ["\n".join(list(map(lambda x: f"{x[0]}: {x[1]}", k.items()))) for k in key_args]
+        xlabels = [
+            "\n".join(list(map(lambda x: f"{x[0]}: {x[1]}", k.items())))
+            for k in key_args
+        ]
         ax.set_xticklabels(xlabels, rotation=90)
         plt.title(benchmark_class.__doc__)
         ax.yaxis.grid(True)
@@ -100,13 +115,13 @@ class BenchmarkNJobsSingleThreadAlgo(CalibratedClassifierCVBenchmark):
     """ Time vs algo. and threads numbers."""
 
     ESTIMATORS = {
-        'LogisticReg.': LogisticRegression(),
-        'CART': DecisionTreeClassifier()
+        "LogisticReg.": LogisticRegression(),
+        "CART": DecisionTreeClassifier(),
     }
 
     params = [list(ESTIMATORS), [1, 2, 4, 8]]
 
-    param_names = ['estimator_name', 'n_jobs']
+    param_names = ["estimator_name", "n_jobs"]
 
     def to_benchmark(self, estimator_name, n_jobs):
         clf = self.ESTIMATORS[estimator_name]
@@ -118,13 +133,13 @@ class BenchmarkNJobsMultiThreadAlgo(CalibratedClassifierCVBenchmark):
     """ Time vs algo. and threads numbers."""
 
     ESTIMATORS = {
-        'ExtraTrees': ExtraTreesClassifier(),
-        'RandomForest': RandomForestClassifier()
+        "ExtraTrees": ExtraTreesClassifier(),
+        "RandomForest": RandomForestClassifier(),
     }
 
     params = [list(ESTIMATORS), [1, 2, 4, 8]]
 
-    param_names = ['estimator_name', 'n_jobs']
+    param_names = ["estimator_name", "n_jobs"]
 
     def to_benchmark(self, estimator_name, n_jobs):
         clf = self.ESTIMATORS[estimator_name]
@@ -137,7 +152,7 @@ class BenchmarkCV(CalibratedClassifierCVBenchmark):
 
     params = [[2, 3, 4, 5]]
 
-    param_names = ['cv']
+    param_names = ["cv"]
 
     def to_benchmark(self, cv):
         clf = LogisticRegression()
@@ -150,7 +165,7 @@ class BenchmarkNJobsCV(CalibratedClassifierCVBenchmark):
 
     params = [[2, 3, 4, 5], [1, 2, 4, 8]]
 
-    param_names = ['cv', 'n_jobs']
+    param_names = ["cv", "n_jobs"]
 
     def to_benchmark(self, cv, n_jobs):
         clf = LogisticRegression()
