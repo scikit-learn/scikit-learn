@@ -719,7 +719,8 @@ class OrdinalEncoder(_BaseEncoder):
                                 .format(self.unknown_value))
             n_features = len(self.categories_)
             for i in range(n_features):
-                if np.isin(self.unknown_value, np.unique(X_int[:, i])):
+                if np.isin(self.unknown_value,
+                           range(len(self.categories_[i]))):
                     raise ValueError(
                         "The used value for unknown_value {} is one of the "
                         "values already used for encoding the seen "
