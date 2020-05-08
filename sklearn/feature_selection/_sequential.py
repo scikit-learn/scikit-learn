@@ -4,10 +4,8 @@ Sequential feature selection
 
 import numpy as np
 
-from .base import SelectorMixin
-from ..base import BaseEstimator
-from ..base import MetaEstimatorMixin
-from ..base import clone
+from ._base import SelectorMixin
+from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import _safe_indexing
 from ..model_selection import cross_val_score
