@@ -725,8 +725,9 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     wikipedia: https://en.wikipedia.org/wiki/Wasserstein_metric
 
     .. math::
-       D(X, Y, X_d, Y_d) = EuclideanDistance(X, Y) +
+       D(X, Y, X_d, Y_d) = PairwiseEuclideanDistance(X, Y) +
         sum(X_d[i]+Y_d[i]-2*sqrt(X_d[i]*Y_d[i])) for i in range(n_features)
+        for every pair of X and Y
 
     Parameters
     ----------
