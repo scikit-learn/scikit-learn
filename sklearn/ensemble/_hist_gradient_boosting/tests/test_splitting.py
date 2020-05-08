@@ -573,15 +573,15 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
     "X_binned, all_gradients, expected_thresholds, n_bins_non_missing,"
     "missing_values_bin_idx, has_missing_values",
     [
-        # 3 categories (finds threshold by going left first)
+        # 3 categories
         # since there is no missing value during training, the
         # missing values should go to the left bin with 22 samples but
         # this is done in the grower
-        ([0, 1, 2] * 11,  # X_binned
-         [1, 20, 1] * 11,  # all_gradients
-         [0, 2],  # expected_thresholds
-         3,  # n_bins_non_missing
-         3,  # missing_values_bin_idx
+        ([0, 1, 2, 3] * 11,  # X_binned
+         [1, 20, 1, 1] * 11,  # all_gradients
+         [1],  # expected_thresholds
+         4,  # n_bins_non_missing
+         4,  # missing_values_bin_idx
          False),  # has_missing_values
 
         # 5 categories where the left node has more samples
