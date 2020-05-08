@@ -123,4 +123,5 @@ print("Features selected by backward sequential selection: "
 # needs to fit a model once, while SFS needs to cross-validate many different
 # models for each of the iterations. SFS however works with any model, while
 # :class:`~sklearn.feature_selection.SelectFromModel` requires the underlying
-# estimator to expose a `coef_` attribute or a `feature_importance_` attribute.
+# estimator to expose a `coef_` attribute or a `feature_importances_`
+# attribute.

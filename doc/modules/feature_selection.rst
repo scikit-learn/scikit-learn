@@ -287,6 +287,12 @@ of selected features: if we have 10 features and ask for 7 selected features,
 forward selection would need to perform 7 iterations while backward selection
 would only need to perform 3.
 
+SFS differs from :class:`~sklearn.feature_selection.RFE` and
+:class:`~sklearn.feature_selection.SelectFromModel` in that it does not
+require the underlying model to expose a `coef_` or `feature_importances_`
+attribute. It may however be slower considering that more models need to be
+evaluated, compared to the other approaches.
+
 .. topic:: Examples
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`

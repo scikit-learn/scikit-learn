@@ -166,8 +166,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         cloned_estimator = clone(self.estimator)
 
         # the current mask corresponds to the set of features:
-        # - that we have already selected when doing forward selection
-        # - that we have already excluded when doing backward selection
+        # - that we have already *selected* if we do forward selection
+        # - that we have already *excluded* if we do backward selection
         current_mask = set()
         n_iterations = (self.n_features_to_select_ if self.forward
                         else X.shape[1] - self.n_features_to_select_)
@@ -192,14 +192,15 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         candidate_feature_indices = all_features - current_mask
         scores = {}
         for feature_idx in candidate_feature_indices:
-            new_mask = current_mask | {feature_idx}
+            candidate_mask = current_mask | {feature_idx}
             if not self.forward:
-                # transform new_mask into its complement, i.e. change its
-                # semantic from "features to remove" into "features to keep"
-                # because _safe_indexing only understands the latter
-                # TODO: remove when _safe_indexing supports "complement"
-                new_mask = all_features - new_mask
-            X_new = _safe_indexing(X, list(new_mask), axis=1)
+                # For backward selection, we transform candidate_mask into its
+                # complement, i.e. we change its semantic from "features to
+                # remove" to "features to keep" because _safe_indexing only
+                # understands the latter
+                # TODO: maybe remove when _safe_indexing supports "complement"
+                candidate_mask = all_features - candidate_mask
+            X_new = _safe_indexing(X, list(candidate_mask), axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch).mean()

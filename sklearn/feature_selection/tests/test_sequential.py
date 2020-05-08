@@ -61,7 +61,7 @@ def test_sanity(seed, forward, n_features_to_select,
                        expected_selected_features)
 
 
-def test_sparse_data():
+def test_sparse_support():
     # Make sure sparse data is supported
 
     X, y = make_regression(n_features=10)
@@ -70,7 +70,8 @@ def test_sparse_data():
     sfs.fit(X, y)
     sfs.transform(X)
 
-def test_nans():
+
+def test_nan_support():
     # Make sure nans are OK if the underlying estimator supports nans
 
     rng = np.random.RandomState(0)
