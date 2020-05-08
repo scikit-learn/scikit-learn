@@ -6,6 +6,8 @@ from numpy.testing import assert_array_equal
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 
 @pytest.mark.parametrize('n_features_to_select', (0, 5))
@@ -67,3 +69,19 @@ def test_sparse_data():
     sfs = SequentialFeatureSelector(LinearRegression(), cv=2)
     sfs.fit(X, y)
     sfs.transform(X)
+
+def test_nans():
+    # Make sure nans are OK if the underlying estimator supports nans
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 10
+    X, y = make_regression(n_samples, n_features, random_state=0)
+    nan_mask = rng.randint(0, 2, size=(n_samples, n_features), dtype=bool)
+    X[nan_mask] = np.nan
+    sfs = SequentialFeatureSelector(HistGradientBoostingRegressor(), cv=2)
+    sfs.fit(X, y)
+    sfs.transform(X)
+
+    with pytest.raises(ValueError, match='Input contains NaN'):
+        # LinearRegression does not support nans
+        SequentialFeatureSelector(LinearRegression(), cv=2).fit(X, y)

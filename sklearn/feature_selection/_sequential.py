@@ -130,7 +130,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         self.n_jobs = n_jobs
 
     def fit(self, X, y):
-        """Perform feature selection and learn model from training data.
+        """Learn the features to select.
 
         Parameters
         ----------
