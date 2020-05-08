@@ -469,7 +469,6 @@ def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     else:
         prediction = predict(X, check_input=False)
     with lock:
-        print(out, len(out))
         if len(out) == 1:
             if out_sample_weight:
                 out[0] += proba * normalizer[:, np.newaxis]
