@@ -44,8 +44,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.module`
-.....................
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| Added :class:`feature_selection.SequentialFeatureSelector`
+  which implements forward and backward sequential feature selection.
+  :pr:`6545` by `Sebastian Raschka`_ and :pr:`17159` by `Nicolas Hug`_.
 
 
 Code and Documentation Contributors
