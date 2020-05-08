@@ -547,6 +547,7 @@ From text
    feature_selection.SelectFdr
    feature_selection.SelectFromModel
    feature_selection.SelectFwe
+   feature_selection.SequentialFeatureSelector
    feature_selection.RFE
    feature_selection.RFECV
    feature_selection.VarianceThreshold

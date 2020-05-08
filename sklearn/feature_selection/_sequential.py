@@ -1,13 +1,6 @@
 """
 Sequential feature selection
-
 """
-
-# Author: Sebastian Raschka <se.raschka@gmail.com>
-#
-# License: BSD 3 clause
-
-from itertools import combinations
 
 import numpy as np
 
@@ -16,133 +9,119 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..utils.validation import check_is_fitted
+from ..utils import _safe_indexing
 from ..model_selection import cross_val_score
-from ..metrics.scorer import check_scoring
 
 
-class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
-                                SelectorMixin):
-    """Feature selector that selects features via greedy search.
+class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
+                                BaseEstimator):
+    """Transformer that performs Sequential Feature Selection.
 
     This Sequential Feature Selector adds (forward selection) or
-    removes (backward selection) the features (X) to form a feature subset
-    in a greedy fashion that optimizes the extrinsic performance metric
-    of a Regressor or Classifier on the desired ouputs (y).
+    removes (backward selection) features to form a feature subset in a
+    greedy fashion. At each stage, this estimator chooses the best feature to
+    add or remove based on the cross-validation score of an estimator.
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
+    .. versionadded:: 0.24
+
     Parameters
     ----------
-    estimator : scikit-learn Classifier or Regressor
-        Invoking the ``fit`` method on the ``SequentialFeatureSelector``
-        will fit a clone of the original estimator that
-        will be stored in the class attribute ``self.estimators_``.
+    estimator : estimator instance
+        An unfitted estimator
 
-    n_features : int or tuple (default=1)
-        An integer arguments specifies the number of features to select,
-        where n_features < the full feature set.
-        Optionally, a tuple containing a min and max value can be provided
-        so that the feature selector will return a feature subset between
-        with min <= n_features <= max that scored highest in the evaluation.
-        For example, the tuple (1, 4) will return any combination from
-        1 up to 4 features instead of a fixed number
-        of features ``n_features``.
+    n_features_to_select : int, default=None
+        The number of features to select. If None, half of the features
+        are selected.
 
-    scoring : str, callable, or None (default=None)
-        A string (see :term:`scoring`) or a scorer
-        callable object / function with signature ``scorer(estimator, X, y)``.
+    forward : bool, default=True
+        Whether to perform forward selection or backward selection
 
-    forward : bool (default=True)
-        Performs forward selection if True and backward selection, otherwise.
+    scoring : str, callable, list/tuple or dict, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-    cv : int or cross-validation generator, or an iterable (default=5)
-        Determines the cross-validation splitting strategy for
-        feature selection. Possible inputs for cv are:
-        - 0 or None, don't use cross validation
-        - integer > 1, to specify the number of folds in a (Stratified)KFold
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train, test splits.
-        For integer/None inputs, if the estimator is a classifier
-        and ```y`` is either binary or multiclass, ``StratifiedKFold`` is used.
-        In all other cases, ``KFold`` is used.
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
 
-    n_jobs : int (default=1)
-        The number of CPUs to use for cross validation.
+        If None, the estimator's score method is used.
 
-    pre_dispatch : int, or string (default: '2*n_jobs')
-        Controls the number of jobs that get dispatched
-        during parallel execution in cross_val_score.
-        Reducing this number can be useful to avoid an explosion of
-        memory consumption when more jobs get dispatched than CPUs can process.
-        This parameter can be:
-        - None, in which case all the jobs are immediately created and spawned.
-          Use this for lightweight and fast-running jobs,
-          to avoid delays due to on-demand spawning of the jobs
-        - An int, giving the exact number of total jobs that are spawned
-        - A string, giving an expression as a function
-            of ``n_jobs``, as in ``2*n_jobs``
+    cv : int, cross-validation generator or an iterable, default=None
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    pre_dispatch : int, or str, default=None
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A str, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
 
     Attributes
     ----------
-    support_ : array of shape [n_features]
+    n_features_to_select_ : int
+        The number of features that were selected. It corresponds to
+        `n_features_to_select` unless the parameter was None.
+
+    support_ : ndarray of bool of shape (n_features,)
         The mask of selected features.
-
-    score_ : float
-        Cross validation average score of the selected subset.
-
-    subsets_ : dict
-        A dictionary containing the best selected feature subset
-        for each feature subset size selected by the
-        sequential feature selection algorithm.
-        Here the dictionary keys are the lengths k of these feature subsets.
-        The dictionary values are dictionaries themselves with the following
-        keys: 'support' (tuple of indices of the feature subset)
-              'cv_scores' (list individual cross-validation scores)
-              'avg_score' (average cross-validation score)
 
     Examples
     --------
-    The following example shows how to use the sequential feature selector
-    with default settings to select a feature subset, consisting of
-    1 to 3 features, from iris. The selection criteria for this
-    feature subset is the average cross-validation performance
-    (cv=5 by default) of the ``estimator`` (here: KNN)
-    during the greedy forward selection search.
-
-        >>> from sklearn.feature_selection import SequentialFeatureSelector
-        >>> from sklearn.neighbors import KNeighborsClassifier
-        >>> from sklearn.datasets import load_iris
-        >>> iris = load_iris()
-        >>> X, y = iris.data, iris.target
-        >>> knn = KNeighborsClassifier(n_neighbors=3)
-        >>> sfs = SequentialFeatureSelector(knn, n_features=(1, 3))
-        >>> sfs = sfs.fit(X, y)
-        >>> sfs.score_  # doctest: +ELLIPSIS
-        0.9733...
-        >>> sfs.support_
-        array([ True, False,  True,  True], dtype=bool)
-        >>> sfs.transform(X).shape
-        (150, 3)
+    >>> from sklearn.feature_selection import SequentialFeatureSelector
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> X, y = load_iris(return_X_y=True)
+    >>> knn = KNeighborsClassifier(n_neighbors=3)
+    >>> sfs = SequentialFeatureSelector(knn, n_features_to_select=3)
+    >>> sfs.fit(X, y)
+    SequentialFeatureSelector(estimator=KNeighborsClassifier(n_neighbors=3),
+                              n_features_to_select=3)
+    >>> sfs.get_support()
+    array([ True, False,  True,  True])
+    >>> sfs.transform(X).shape
+    (150, 3)
 
     See also
     --------
-    RFE : Recursive feature elimination selection of the best
-    number of features
-
-    References
-    ----------
-    .. [1] Ferri, F. J., Pudil P., Hatef, M., Kittler, J., "Comparative
-           study of techniques for large-scale feature selection,"
-           Pattern Recognition in Practice IV : 403-413, 1994
-
+    RFE : Recursive feature elimination selection of the best number of
+          features
+    SelectFromModel : Feature selection based on importance weights
     """
-    def __init__(self, estimator, n_features=1,
-                 forward=True, scoring=None,
-                 cv=5, n_jobs=1,
-                 pre_dispatch='2*n_jobs'):
+    def __init__(self, estimator, n_features_to_select=None, forward=True,
+                 scoring=None, cv=5, n_jobs=None, pre_dispatch='2*n_jobs'):
 
         self.estimator = estimator
-        self.n_features = n_features
+        self.n_features_to_select = n_features_to_select
         self.forward = forward
         self.pre_dispatch = pre_dispatch
         self.scoring = scoring
@@ -154,181 +133,82 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
-        y : array-like, shape = [n_samples]
+        X : array-like of shape (n_samples, n_features)
+            Training vectors.
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
         self : object
-
         """
 
-        if not (isinstance(self.n_features, int) or
-                isinstance(self.n_features, tuple)):
-            raise ValueError('n_features must be a positive integer'
-                             ' or tuple')
+        tags = self._get_tags()
+        X, y = self._validate_data(
+            X, y, accept_sparse="csc",
+            ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
 
-        if isinstance(self.n_features, int) and (
-                    self.n_features < 1 or
-                    self.n_features > X.shape[1]):
-            raise ValueError('n_features must be a positive integer'
-                             ' between 1 and X.shape[1], got %s'
-                             % (self.n_features, ))
-
-        if isinstance(self.n_features, tuple):
-            if len(self.n_features) != 2:
-                raise ValueError('n_features tuple must consist of 2'
-                                 ' elements a min and a max value.')
-
-            if self.n_features[0] not in range(1, X.shape[1] + 1):
-                raise ValueError('n_features tuple min value must'
-                                 ' be in range(1, X.shape[1]+1).')
-
-            if self.n_features[1] not in range(1, X.shape[1] + 1):
-                raise ValueError('n_features tuple max value must'
-                                 ' be in range(1, X.shape[1]+1).')
-
-            if self.n_features[0] > self.n_features[1]:
-                raise ValueError('The min n_features value must be'
-                                 ' smaller than the max'
-                                 ' n_features value.')
-
-        if isinstance(self.n_features, tuple):
-            select_in_range = True
+        if self.n_features_to_select is None:
+            self.n_features_to_select_ = X.shape[1] // 2
         else:
-            select_in_range = False
-            k_to_select = self.n_features
+            self.n_features_to_select_ = self.n_features_to_select
 
-        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
+        if not 1 <= self.n_features_to_select_ < X.shape[1]:
+            raise ValueError(
+                "n_features_to_select must be in [1, n_features - 1] = "
+                f"[1, {X.shape[1] - 1}]. Got {self.n_features_to_select_}."
+            )
 
         cloned_estimator = clone(self.estimator)
 
-        self._n_features = X.shape[1]
-        self.subsets_ = {}
-        orig_set = set(range(self._n_features))
-        if self.forward:
-            if select_in_range:
-                k_to_select = self.n_features[1]
-            k_idx = ()
-            k = 0
-        else:
-            if select_in_range:
-                k_to_select = self.n_features[0]
-            k_idx = tuple(range(self._n_features))
-            k = len(k_idx)
-            k_score = self._calc_score(X, y, k_idx, cloned_estimator)
-            self.subsets_[k] = {
-                'support': k_idx,
-                'cv_scores': k_score,
-                'avg_score': np.mean(k_score)
-                }
+        # the current mask corresponds to the set of features:
+        # - that we have already selected when doing forward selection
+        # - that we have already excluded when doing backward selection
+        current_mask = set()
+        n_iterations = (self.n_features_to_select_ if self.forward
+                        else X.shape[1] - self.n_features_to_select_)
+        for _ in range(n_iterations):
+            new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
+                                                         y, current_mask)
+            current_mask.add(new_feature_idx)
 
-        best_subset = None
-        k_score = 0
+        # transform the mask into a proper boolean mask of selected features
+        self.support_ = np.full(X.shape[1], fill_value=not self.forward,
+                                dtype=bool)
+        self.support_[list(current_mask)] = self.forward
 
-        while k != k_to_select:
-            prev_subset = set(k_idx)
-            if self.forward:
-                k_idx, k_score, cv_scores = self._inclusion(
-                    orig_set=orig_set,
-                    subset=prev_subset,
-                    X=X,
-                    y=y,
-                    estimator=cloned_estimator
-                )
-            else:
-                k_idx, k_score, cv_scores = self._exclusion(
-                    feature_set=prev_subset,
-                    X=X,
-                    y=y,
-                    estimator=cloned_estimator
-                )
-
-            k = len(k_idx)
-            if k not in self.subsets_ or (self.subsets_[k]['avg_score'] <
-                                          k_score):
-                self.subsets_[k] = {
-                    'support': k_idx,
-                    'cv_scores': cv_scores,
-                    'avg_score': k_score
-                }
-
-        if select_in_range:
-            max_score = float('-inf')
-            for k in self.subsets_:
-                if (k < self.n_features[0] or
-                        k > self.n_features[1]):
-                    continue
-                if self.subsets_[k]['avg_score'] > max_score:
-                    max_score = self.subsets_[k]['avg_score']
-                    best_subset = k
-            k_score = max_score
-            k_idx = self.subsets_[best_subset]['support']
-
-        self.support_ = k_idx
-        self.support_ = self._get_support_mask()
-        self.score_ = k_score
         return self
 
-    def _calc_score(self, X, y, indices, estimator):
-        if self.cv:
-            scores = cross_val_score(estimator,
-                                     X[:, indices], y,
-                                     cv=self.cv,
-                                     scoring=self._scorer,
-                                     n_jobs=self.n_jobs,
-                                     pre_dispatch=self.pre_dispatch)
-        else:
-            estimator.fit(X[:, indices], y)
-            scores = np.array([self._scorer(estimator,
-                               X[:, indices], y)])
-        return scores
-
-    def _inclusion(self, orig_set, subset, X, y, estimator):
-        all_avg_scores = []
-        all_cv_scores = []
-        all_subsets = []
-        res = (None, None, None)
-        remaining = orig_set - subset
-        if remaining:
-            for feature in remaining:
-                new_subset = tuple(subset | {feature})
-                cv_scores = self._calc_score(X, y, new_subset, estimator)
-                all_avg_scores.append(np.nanmean(cv_scores))
-                all_cv_scores.append(cv_scores)
-                all_subsets.append(new_subset)
-            best = np.argmax(all_avg_scores)
-            res = (all_subsets[best],
-                   all_avg_scores[best],
-                   all_cv_scores[best])
-        return res
-
-    def _exclusion(self, feature_set, X, y, estimator, fixed_feature=None):
-        n = len(feature_set)
-        res = (None, None, None)
-        if n > 1:
-            all_avg_scores = []
-            all_cv_scores = []
-            all_subsets = []
-            for p in combinations(feature_set, r=n - 1):
-                if fixed_feature and fixed_feature not in set(p):
-                    continue
-                cv_scores = self._calc_score(X, y, p, estimator)
-                all_avg_scores.append(np.nanmean(cv_scores))
-                all_cv_scores.append(cv_scores)
-                all_subsets.append(p)
-            best = np.argmax(all_avg_scores)
-            res = (all_subsets[best],
-                   all_avg_scores[best],
-                   all_cv_scores[best])
-        return res
+    def _get_best_new_feature(self, estimator, X, y, current_mask):
+        # Return the best new feature to add to the current_mask, i.e. return
+        # the best new feature to add (resp. remove) when doing forward
+        # selection (resp. backward selection)
+        all_features = set(range(X.shape[1]))
+        candidate_feature_indices = all_features - current_mask
+        scores = {}
+        for feature_idx in candidate_feature_indices:
+            new_mask = current_mask | {feature_idx}
+            if not self.forward:
+                # transform new_mask into its complement, i.e. change its
+                # semantic from "features to remove" into "features to keep"
+                # because _safe_indexing only understands the latter
+                # TODO: remove when _safe_indexing supports "complement"
+                new_mask = all_features - new_mask
+            X_new = _safe_indexing(X, list(new_mask), axis=1)
+            scores[feature_idx] = cross_val_score(
+                estimator, X_new, y, cv=self.cv, scoring=self.scoring,
+                n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch).mean()
+        return max(scores, key=lambda feature_idx: scores[feature_idx])
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'support_')
-        mask = np.zeros((self._n_features,), dtype=np.bool)
-        # list to avoid IndexError in old NumPy versions
-        mask[list(self.support_)] = True
-        return mask
+        check_is_fitted(self)
+        return self.support_
+
+    def _more_tags(self):
+        estimator_tags = self.estimator._get_tags()
+        return {'allow_nan': estimator_tags.get('allow_nan', True),
+                'requires_y': True,
+                }
