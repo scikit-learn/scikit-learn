@@ -18,7 +18,7 @@ def test_bad_n_features_to_select(n_features_to_select):
 
 
 @pytest.mark.parametrize('forward', (True, False))
-@pytest.mark.parametrize('n_features_to_select', (3, 5, 7, None))
+@pytest.mark.parametrize('n_features_to_select', (1, 5, 9, None))
 def test_n_features_to_select(forward, n_features_to_select):
     # Make sure n_features_to_select is respected
 
