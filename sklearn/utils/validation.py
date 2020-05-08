@@ -590,7 +590,6 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
             cat_df = pd.DataFrame(cat_dict)
             array = pd.concat((array.loc[:, ~cat_mask], cat_df),
                               axis='columns')[orig_columns]
-    print(array)
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)

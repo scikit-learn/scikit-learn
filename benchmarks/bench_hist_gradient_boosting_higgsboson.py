@@ -27,7 +27,6 @@ parser.add_argument('--subsample', type=int, default=None)
 parser.add_argument('--max-bins', type=int, default=255)
 parser.add_argument('--no-predict', action="store_true", default=False)
 parser.add_argument('--cache-loc', type=str, default='/tmp')
-parser.add_argument('--categorical', action="store_true", default=False)
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
