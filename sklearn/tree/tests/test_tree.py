@@ -300,6 +300,29 @@ def test_probability():
                             err_msg="Failed with {0}".format(name))
 
 
+def test_probability_using_sample_weights():
+    # Predict probabilities with sample weights with toy example
+
+    for name, Tree in CLF_TREES.items():
+        clf = Tree(random_state=0)
+        clf.fit(X, y)
+        sample_weight_element0 = np.array([[1., 0.], [0., 1.], [0., 1.]])
+        sample_weight_element1_dt = np.array([3., 3., 3.])
+        sample_weight_element1_et = np.array([2., 3., 3.])
+        assert_array_equal(clf.predict_proba(T, use_sample_weight=True)[0],
+                           sample_weight_element0,
+                           "Failed with {0}".format(name))
+
+        if name == 'DecisionTreeClassifier':
+            assert_array_equal(clf.predict_proba(T, use_sample_weight=True)[1],
+                               sample_weight_element1_dt,
+                               "Failed with {0}".format(name))
+        else:
+            assert_array_equal(clf.predict_proba(T, use_sample_weight=True)[1],
+                               sample_weight_element1_et,
+                               "Failed with {0}".format(name))
+
+
 def test_arrayrepr():
     # Check the array representation.
     # Check resize

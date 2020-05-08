@@ -886,7 +886,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : DecisionTreeClassifier
             Fitted estimator.
         """
-
         super().fit(
             X, y,
             sample_weight=sample_weight,
@@ -894,7 +893,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             X_idx_sorted=X_idx_sorted)
         return self
 
-    def predict_proba(self, X, check_input=True):
+    def predict_proba(self, X, check_input=True, use_sample_weight=False):
         """Predict class probabilities of the input samples X.
 
         The predicted class probability is the fraction of samples of the same
@@ -911,26 +910,40 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        use_sample_weight :s bool, default=False
+            Return normalizer with proba for cases where n_outputs == 1.
+            Noramlizer is the number of samples in the training set that
+            falls into the same leaf as the input sample
+
         Returns
         -------
         proba : ndarray of shape (n_samples, n_classes) or list of n_outputs \
             such arrays if n_outputs > 1
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        normalizer : returned iff
+            use_sample_weight == True and self.n_outputs == 1
+            number of samples in the leaf, returned as a number
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
-
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
 
+            if use_sample_weight:
+                return proba, normalizer[:, 0]
             return proba
 
         else:
+            if use_sample_weight:
+                raise ValueError("Not supported for multi-output" +
+                                 " classification.")
+
             all_proba = []
 
             for k in range(self.n_outputs_):

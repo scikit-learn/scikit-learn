@@ -456,20 +456,33 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
 
-def _accumulate_prediction(predict, X, out, lock):
+def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     """
     This is a utility function for joblib's Parallel.
 
     It can't go locally in ForestClassifier or ForestRegressor, because joblib
     complains that it cannot pickle it when placed there.
     """
-    prediction = predict(X, check_input=False)
+    if out_sample_weight:
+        proba, normalizer = predict(X, check_input=False,
+                                    use_sample_weight=True)
+    else:
+        prediction = predict(X, check_input=False)
     with lock:
         if len(out) == 1:
-            out[0] += prediction
+            if out_sample_weight:
+                out[0] += proba * normalizer[:, np.newaxis]
+                out_sample_weight[0] += normalizer
+            else:
+                out[0] += prediction
         else:
-            for i in range(len(out)):
-                out[i] += prediction[i]
+            if out_sample_weight:
+                for i in range(len(out)):
+                    out[i] += proba[i] * normalizer[i][:, np.newaxis]
+                    out_sample_weight[i] += normalizer[i]
+            else:
+                for i in range(len(out)):
+                    out[i] += prediction[i]
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
@@ -605,7 +618,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         return y, expanded_class_weight
 
-    def predict(self, X):
+    def predict(self, X, use_sample_weight=False):
         """
         Predict class for X.
 
@@ -621,12 +634,16 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
+        use_sample_weight : boolean variable with default False,
+            if set to True, will predict with predict_proba where
+            use_sample_weight will be set to True instead of the default False
+
         Returns
         -------
         y : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
-        proba = self.predict_proba(X)
+        proba = self.predict_proba(X, use_sample_weight=use_sample_weight)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
@@ -645,7 +662,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return predictions
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, use_sample_weight=False):
         """
         Predict class probabilities for X.
 
@@ -660,6 +677,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
+        use_sample_weight : bool, default=False
+            The predicted class probabilities of an input sample is the
+            weighted sum of class probabilities from each tree in the forest.
+            Weights are calculated by the number of samples in the training
+            set in the node the input sample falls into. Class probabilities
+            are then normalized to sum to 1 for each input sample.
 
         Returns
         -------
@@ -679,14 +703,27 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
-                                            lock)
-            for e in self.estimators_)
+        if not use_sample_weight:
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
+                                                lock, None)
+                for e in self.estimators_)
 
-        for proba in all_proba:
-            proba /= len(self.estimators_)
+            for proba in all_proba:
+                proba /= len(self.estimators_)
+        else:
+            all_sample_weights = [np.zeros(X.shape[0], dtype=np.float64)
+                                  for j in np.atleast_1d(self.n_classes_)]
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_accumulate_prediction)(e.predict_proba,
+                                                X, all_proba, lock,
+                                                all_sample_weights)
+                for e in self.estimators_)
+            for proba in all_proba:
+                this_normalizer = proba.sum(axis=1)
+                proba /= this_normalizer[:, np.newaxis]
 
         if len(all_proba) == 1:
             return all_proba[0]

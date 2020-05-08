@@ -117,11 +117,13 @@ def check_classification_toy(name):
     clf = ForestClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_equal(clf.predict(T, use_sample_weight=True), true_result)
     assert 10 == len(clf)
 
     clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
+    assert_array_equal(clf.predict(T, use_sample_weight=True), true_result)
     assert 10 == len(clf)
 
     # also test apply
@@ -209,6 +211,9 @@ def check_probability(name):
         clf.fit(iris.data, iris.target)
         assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                                   np.ones(iris.data.shape[0]))
+        assert_array_almost_equal(np.sum(clf.predict_proba(iris.data,
+                                  use_sample_weight=True),
+                                  axis=1), np.ones(iris.data.shape[0]))
         assert_array_almost_equal(clf.predict_proba(iris.data),
                                   np.exp(clf.predict_log_proba(iris.data)))
 
@@ -467,9 +472,15 @@ def check_parallel(name, X, y):
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(X)
+    if name in FOREST_CLASSIFIERS:
+        y1_sample_weights = forest.predict(X, use_sample_weight=True)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(X)
+    if name in FOREST_CLASSIFIERS:
+        y2_sample_weights = forest.predict(X, use_sample_weight=True)
     assert_array_almost_equal(y1, y2, 3)
+    if name in FOREST_CLASSIFIERS:
+        assert_array_almost_equal(y1_sample_weights, y2_sample_weights, 3)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
@@ -533,6 +544,10 @@ def check_multioutput(name):
             assert log_proba[0].shape == (4, 2)
             assert log_proba[1].shape == (4, 4)
 
+            msg = "Not supported for multi-output classification."
+            with pytest.raises(ValueError, match=msg):
+                est.predict_proba(X_test, use_sample_weight=True)
+
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_multioutput(name):
@@ -567,6 +582,10 @@ def test_multioutput_string(name):
         assert len(log_proba) == 2
         assert log_proba[0].shape == (4, 2)
         assert log_proba[1].shape == (4, 4)
+
+        msg = "Not supported for multi-output classification."
+        with pytest.raises(ValueError, match=msg):
+            est.predict_proba(X_test, use_sample_weight=True)
 
 
 def check_classes_shape(name):
@@ -845,6 +864,7 @@ def check_min_weight_fraction_leaf(name):
             total_weight * est.min_weight_fraction_leaf), (
                 "Failed with {0} min_weight_fraction_leaf={1}".format(
                     name, est.min_weight_fraction_leaf))
+
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_weight_fraction_leaf(name):
