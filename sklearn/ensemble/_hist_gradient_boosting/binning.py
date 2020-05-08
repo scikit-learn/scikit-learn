@@ -126,8 +126,8 @@ def _find_categories(data, max_bins, is_categorical):
             categories = categories[~both]
 
         # keep at most max_bins categories
-        # needs to be sorted, because `_encode_categories` will use
-        # np.searchsorted for encoding
+        # needs to be sorted, because `_map_cat_col_to_bins` will assumes
+        # that the categories are sorted
         bin_categories[idx] = np.sort(categories[:max_bins])
 
     return bin_categories
