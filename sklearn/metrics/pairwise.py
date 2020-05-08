@@ -719,6 +719,50 @@ def haversine_distances(X, Y=None):
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
+def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
+    """Computes the pairwise wasserstein distances of two groups of 
+    data points with uncertainties
+    wikipedia: https://en.wikipedia.org/wiki/Wasserstein_metric
+
+    .. math::
+       D(X, Y, X_d, Y_d) = EuclideanDistance(X, Y) +
+        sum(X_d[i]+Y_d[i]-2*sqrt(X_d[i]*Y_d[i])) for i in range(n_features)
+
+    Parameters
+    ----------
+    X    : array_like, shape (n_samples_1, n_features)
+
+    Y    : array_like, shape (n_samples_2, n_features)
+
+    X_d  : array_like, shape (n_samples_1, n_features)
+
+    Y_d  : array_like, shape (n_samples_2, n_features)
+    
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+    
+    Examples
+    --------
+    Let's assume we collected 3D data points measurements from two
+    experiments A and B; along with each measurement, we have the 
+    uncertainties as well. Let's compute pairwise distances 
+    between data points in A and data points in B, taking uncertainties
+    into consideration. 
+
+    >>> from sklearn.metrics.pairwise import wasserstein_distances
+    >>> A = [[1.1, 2.2, 1.1],[1.2, 2.3, 4.1],[-3.2, 0.1, -2.1]]
+    >>> B = [[0.1, 5.2, 1.1],[-1.2, 1.3, 4.1],[-9.2, 11.1, -2.1]]
+    >>> A_uncrtnty = [[0.01, 0.02, 0.01],[0.02, 0.03, 0.01],[0.02, 0.01, 0.01]]
+    >>> B_uncrtnty = [[0.01, 0.01, 0.01],[0.02, 0.01, 0.05],[0.01, 0.01, 0.03]]
+    >>> result = haversine_distances(A, B, A_uncrtnty, B_uncrtnty)
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    """
+
+    pass
 
 @_deprecate_positional_args
 def manhattan_distances(X, Y=None, *, sum_over_features=True):
